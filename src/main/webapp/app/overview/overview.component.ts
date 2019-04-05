@@ -9,7 +9,7 @@ import { TUM_REGEX } from 'app/app.constants';
 @Component({
     selector: 'jhi-overview',
     templateUrl: './overview.component.html',
-    styles: []
+    styles: [],
 })
 export class OverviewComponent implements OnInit {
     public courses: Course[];
@@ -26,17 +26,15 @@ export class OverviewComponent implements OnInit {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
-        private courseScoreCalculationService: CourseScoreCalculationService
+        private courseScoreCalculationService: CourseScoreCalculationService,
     ) {
         this.loadAndFilterCourses();
-
     }
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
             this.isTumStudent = !!user.login.match(TUM_REGEX);
         });
-
     }
 
     loadAndFilterCourses() {
@@ -50,10 +48,10 @@ export class OverviewComponent implements OnInit {
                             return !this.courses.find(el => el.id === course.id);
                         });
                     },
-                    (response: string) => this.onError(response)
+                    (response: string) => this.onError(response),
                 );
             },
-            (response: string) => this.onError(response)
+            (response: string) => this.onError(response),
         );
     }
 
@@ -67,7 +65,6 @@ export class OverviewComponent implements OnInit {
             setTimeout(() => {
                 this.courseToRegister = null;
                 this.showCourseSelection = false;
-
             }, 3000);
         }
     }
@@ -88,16 +85,14 @@ export class OverviewComponent implements OnInit {
                     setTimeout(() => {
                         this.courseToRegister = null;
                         this.addedSuccessful = false;
-
                     }, 3000);
                     this.loadAndFilterCourses();
-
                 },
                 error => {
                     console.log(error);
                     this.loading = false;
                     this.courseToRegister = null;
-                }
+                },
             );
         }
     }
@@ -124,5 +119,4 @@ export class OverviewComponent implements OnInit {
         }
         return relevantExercise;
     }
-
 }

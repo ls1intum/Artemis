@@ -7,12 +7,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
-    constructor(
-        private router: Router,
-        private accountService: AccountService,
-        private stateStorageService: StateStorageService,
-        private localStorage: LocalStorageService
-    ) {}
+    constructor(private router: Router, private accountService: AccountService, private stateStorageService: StateStorageService, private localStorage: LocalStorageService) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         // save the jwt token from get parameter for lti launch requests
@@ -56,7 +51,7 @@ export class UserRouteAccessService implements CanActivate {
                     }
                 });
                 return false;
-            })
+            }),
         );
     }
 }

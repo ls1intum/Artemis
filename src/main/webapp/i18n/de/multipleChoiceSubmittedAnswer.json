@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "multipleChoiceSubmittedAnswer" : {
+        "multipleChoiceSubmittedAnswer": {
             "home": {
                 "title": "Multiple Choice Submitted Answers",
                 "createLabel": "Multiple Choice Submitted Answer erstellen",

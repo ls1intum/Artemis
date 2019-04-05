@@ -13,16 +13,15 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-exercise',
-    templateUrl: './quiz-exercise.component.html'
+    templateUrl: './quiz-exercise.component.html',
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-
     QuizStatus = {
         HIDDEN: 'Hidden',
         VISIBLE: 'Visible',
         ACTIVE: 'Active',
         CLOSED: 'Closed',
-        OPEN_FOR_PRACTICE: 'Open for Practice'
+        OPEN_FOR_PRACTICE: 'Open for Practice',
     };
 
     @Input() quizExercises: QuizExercise[] = [];
@@ -34,10 +33,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         private accountService: AccountService,
-        route: ActivatedRoute
+        route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
-
     }
 
     protected loadExercises(): void {
@@ -51,7 +49,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.emitExerciseCount(this.quizExercises.length);
                 this.setQuizExercisesStatus();
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -104,7 +102,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
             (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
-            }
+            },
         );
     }
 
@@ -133,7 +131,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
             (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
-            }
+            },
         );
     }
 
@@ -180,7 +178,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
             (res: HttpErrorResponse) => {
                 this.onError(res);
                 this.loadOne(quizExerciseId);
-            }
+            },
         );
     }
 

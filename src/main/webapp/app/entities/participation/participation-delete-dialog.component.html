@@ -1,21 +1,20 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete(participation.id, deleteBuildPlan, deleteRepository)">
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.delete.title">Confirm delete operation</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
-                (click)="clear()">&times;</button>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="arTeMiSApp.participation.delete.question" [translateValues]="{student: participation.student.firstName}">Are you sure you want to delete this Participation?</p>
+        <p jhiTranslate="arTeMiSApp.participation.delete.question" [translateValues]="{ student: participation.student.firstName }">
+            Are you sure you want to delete this Participation?
+        </p>
         <div *ngIf="participation.exercise.type === PROGRAMMING">
             <div class="form-check">
-                <input type="checkbox" name="deleteBuildPlan" id="field_deleteBuildPlan"
-                       [(ngModel)]="deleteBuildPlan" />
+                <input type="checkbox" name="deleteBuildPlan" id="field_deleteBuildPlan" [(ngModel)]="deleteBuildPlan" />
                 <label class="form-check-label" for="field_deleteBuildPlan" jhiTranslate="arTeMiSApp.participation.deleteBuildPlan">Delete build plan</label>
             </div>
             <div class="form-check">
-                <input type="checkbox" name="deleteRepository" id="field_deleteRepository"
-                       [(ngModel)]="deleteRepository" />
+                <input type="checkbox" name="deleteRepository" id="field_deleteRepository" [(ngModel)]="deleteRepository" />
                 <label class="form-check-label" for="field_deleteRepository" jhiTranslate="arTeMiSApp.participation.deleteRepository">Delete repository</label>
             </div>
         </div>
@@ -24,8 +23,6 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-danger">
-            <fa-icon icon="times"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>
-        </button>
+        <button type="submit" class="btn btn-danger"><fa-icon icon="times"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span></button>
     </div>
 </form>

@@ -9,13 +9,8 @@ import { CategorySelectorComponent } from 'app/components/category-selector/cate
 
 @NgModule({
     imports: [ArTEMiSSharedModule, ArTEMiSColorSelectorModule, ReactiveFormsModule, TagInputModule, BrowserAnimationsModule],
-    declarations: [
-        CategorySelectorComponent
-    ],
-    exports: [
-        CategorySelectorComponent
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [CategorySelectorComponent],
+    exports: [CategorySelectorComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSCategorySelectorModule {
-}
+export class ArTEMiSCategorySelectorModule {}

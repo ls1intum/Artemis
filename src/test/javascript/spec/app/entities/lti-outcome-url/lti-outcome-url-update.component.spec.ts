@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [LtiOutcomeUrlUpdateComponent]
+                declarations: [LtiOutcomeUrlUpdateComponent],
             })
                 .overrideTemplate(LtiOutcomeUrlUpdateComponent, '')
                 .compileComponents();

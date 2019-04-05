@@ -5,7 +5,7 @@ import { Lecture } from 'app/entities/lecture';
 
 export const enum AttachmentType {
     FILE = 'FILE',
-    URL = 'URL'
+    URL = 'URL',
 }
 
 export class Attachment implements BaseEntity {

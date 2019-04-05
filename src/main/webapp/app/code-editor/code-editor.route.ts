@@ -12,8 +12,8 @@ export const codeEditorRoute: Routes = [
             pageTitle: 'arTeMiSApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
-            repositoryCache: {}
+            repositoryCache: {},
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];

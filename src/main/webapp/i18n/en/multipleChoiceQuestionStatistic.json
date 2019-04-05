@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "multipleChoiceQuestionStatistic" : {
+        "multipleChoiceQuestionStatistic": {
             "home": {
                 "title": "Multiple Choice Question Statistics",
                 "createLabel": "Create a new Multiple Choice Question Statistic",

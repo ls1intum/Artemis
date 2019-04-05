@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [QuizExerciseUpdateComponent]
+                declarations: [QuizExerciseUpdateComponent],
             })
                 .overrideTemplate(QuizExerciseUpdateComponent, '')
                 .compileComponents();

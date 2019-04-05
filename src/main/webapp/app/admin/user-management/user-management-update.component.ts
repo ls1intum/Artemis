@@ -5,7 +5,7 @@ import { JhiLanguageHelper, User, UserService } from 'app/core';
 
 @Component({
     selector: 'jhi-user-mgmt-update',
-    templateUrl: './user-management-update.component.html'
+    templateUrl: './user-management-update.component.html',
 })
 export class UserMgmtUpdateComponent implements OnInit {
     user: User;
@@ -13,12 +13,7 @@ export class UserMgmtUpdateComponent implements OnInit {
     authorities: any[];
     isSaving: boolean;
 
-    constructor(
-        private languageHelper: JhiLanguageHelper,
-        private userService: UserService,
-        private route: ActivatedRoute,
-        private router: Router
-    ) {}
+    constructor(private languageHelper: JhiLanguageHelper, private userService: UserService, private route: ActivatedRoute, private router: Router) {}
 
     ngOnInit() {
         this.isSaving = false;

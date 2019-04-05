@@ -18,16 +18,10 @@ import { RouterModule } from '@angular/router';
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
     imports: [CommonModule, SortByModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule],
-    declarations: [
-        TextAssessmentComponent,
-        TextSelectDirective,
-        TextAssessmentEditorComponent,
-        TextAssessmentDetailComponent,
-        TextAssessmentDashboardComponent
-    ],
+    declarations: [TextAssessmentComponent, TextSelectDirective, TextAssessmentEditorComponent, TextAssessmentDetailComponent, TextAssessmentDashboardComponent],
     exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSTextAssessmentModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

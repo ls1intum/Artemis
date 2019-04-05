@@ -9,7 +9,7 @@ import { User } from '../../core';
 
 @Component({
     selector: 'jhi-register',
-    templateUrl: './register.component.html'
+    templateUrl: './register.component.html',
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
@@ -21,12 +21,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     success: boolean;
     modalRef: NgbModalRef;
 
-    constructor(
-        private languageService: JhiLanguageService,
-        private registerService: Register,
-        private elementRef: ElementRef,
-        private renderer: Renderer
-    ) {}
+    constructor(private languageService: JhiLanguageService, private registerService: Register, private elementRef: ElementRef, private renderer: Renderer) {}
 
     ngOnInit() {
         this.success = false;
@@ -51,7 +46,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
                     () => {
                         this.success = true;
                     },
-                    response => this.processError(response)
+                    response => this.processError(response),
                 );
             });
         }

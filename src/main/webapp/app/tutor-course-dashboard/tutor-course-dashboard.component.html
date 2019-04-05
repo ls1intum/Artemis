@@ -3,10 +3,9 @@
 
     <div class="header-container  bg-primary text-white">
         <h4 class="card-header">
-            <strong>{{"arTeMiSApp.tutorCourseDashboard.pageHeader" | translate}} {{course.title}}</strong>
+            <strong>{{ 'arTeMiSApp.tutorCourseDashboard.pageHeader' | translate }} {{ course.title }}</strong>
             &nbsp;
-            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor"
-               routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{ course.id }}/dashboard" routerLinkActive="active">
                 <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
             </a>
         </h4>
@@ -14,79 +13,77 @@
 
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
-            <p class="h3">{{"arTeMiSApp.tutorCourseDashboard.yourAssessments" | translate}}:</p>
-            <p class="font-weight-bold">{{numberOfTutorAssessments}}</p>
+            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
+            <p class="font-weight-bold">{{ numberOfTutorAssessments }}</p>
         </div>
         <div class="col-4 text-center">
-            <p class="h3">{{"arTeMiSApp.tutorCourseDashboard.totalAssessments" | translate}}:</p>
-            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}}
-                ({{numberOfAssessments / numberOfSubmissions * 100}}%)</p>
+            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
+            <p class="font-weight-bold">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ (numberOfAssessments / numberOfSubmissions) * 100 }}%)</p>
         </div>
     </div>
 
     <div class="row justify-content-around">
         <div class="col-4 text-center">
-            <p class="h3">{{"arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments" | translate}}:</p>
-            <p class="font-weight-bold">{{numberOfTutorComplaints}}</p>
+            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
+            <p class="font-weight-bold">{{ numberOfTutorComplaints }}</p>
         </div>
         <div class="col-4 text-center">
-            <p class="h3">{{"arTeMiSApp.tutorCourseDashboard.totalComplaints" | translate}}:</p>
-            <p class="font-weight-bold">{{numberOfComplaints}}</p>
+            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
+            <p class="font-weight-bold">{{ numberOfComplaints }}</p>
         </div>
     </div>
 
     <div class="table-responsive">
         <div class="form-check col-6 align-baseline">
-            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise"
-                   [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()"/>
+            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
-                {{"arTeMiSApp.tutorCourseDashboard.showFinishedExercises" | translate}}
+                {{ 'arTeMiSApp.tutorCourseDashboard.showFinishedExercises' | translate }}
             </label>
         </div>
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
-            <tr>
-                <th class="col-xs-3">{{"arTeMiSApp.tutorCourseDashboard.exercise" | translate}}</th>
-                <th class="col-xs-4">{{"arTeMiSApp.tutorCourseDashboard.yourStatus" | translate}}</th>
-                <th class="col-xs-2">{{"arTeMiSApp.tutorCourseDashboard.exerciseDueDate" | translate}}</th>
-                <th class="col-xs-2">{{"arTeMiSApp.tutorCourseDashboard.assessmentsDueDate" | translate}}</th>
-                <th class="col-xs-1">{{"arTeMiSApp.tutorCourseDashboard.actions" | translate}}</th>
-            </tr>
+                <tr>
+                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
+                    <th class="col-xs-4">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</th>
+                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</th>
+                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.actions' | translate }}</th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let exercise of exercises">
-                <td>
-                    <span>{{exercise.title}}</span>
-                    <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
-                          ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
-                    {{"arTeMiSApp.tutorCourseDashboard.notReleased" | translate}}</span>
-                    <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
-                </td>
-                <td>
-                    <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]">
+                <tr *ngFor="let exercise of exercises">
+                    <td>
+                        <span>{{ exercise.title }}</span>
+                        <span
+                            class="badge badge-warning"
+                            *ngIf="!exercise.visibleToStudents"
+                            placement="right"
+                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | date: 'MMM d, y H:mm' }}"
+                        >
+                            {{ 'arTeMiSApp.tutorCourseDashboard.notReleased' | translate }}</span
+                        >
+                        <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
+                    </td>
+                    <td>
+                        <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]"> </jhi-tutor-participation-graph>
+                    </td>
+                    <td>
+                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">
+                            {{ exercise.dueDate | amTimeAgo }}
+                        </span>
+                    </td>
+                    <td>
+                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | date: 'MMM d, y H:mm' }}">
+                            {{ exercise.assessmentDueDate | amTimeAgo }}
+                        </span>
+                    </td>
 
-                    </jhi-tutor-participation-graph>
-                </td>
-                <td>
-                    <span placement="right" [hidden]="!exercise.dueDate"
-                          ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.dueDate | amTimeAgo}}
-                    </span>
-                </td>
-                <td>
-                    <span placement="right" [hidden]="!exercise.assessmentDueDate"
-                          ngbTooltip="{{exercise.assessmentDueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.assessmentDueDate | amTimeAgo}}
-                    </span>
-                </td>
-
-                <td class="text-center">
-                    <button routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/tutor-dashboard"
-                            class="btn btn-info btn-sm mr-1">
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                    </button>
-                </td>
-            </tr>
+                    <td class="text-center">
+                        <button routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/tutor-dashboard" class="btn btn-info btn-sm mr-1">
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                        </button>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

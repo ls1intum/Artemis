@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "dragAndDropSubmittedAnswer" : {
+        "dragAndDropSubmittedAnswer": {
             "home": {
                 "title": "Drag And Drop Submitted Answers",
                 "createLabel": "Create a new Drag And Drop Submitted Answer",

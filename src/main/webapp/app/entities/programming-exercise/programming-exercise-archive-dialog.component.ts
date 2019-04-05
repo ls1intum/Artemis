@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-archive-dialog',
-    templateUrl: './programming-exercise-archive-dialog.component.html'
+    templateUrl: './programming-exercise-archive-dialog.component.html',
 })
 export class ProgrammingExerciseArchiveDialogComponent {
     exercise: Exercise;
@@ -29,9 +29,7 @@ export class ProgrammingExerciseArchiveDialogComponent {
         this.archiveInProgress = true;
         this.exerciseService.archive(id).subscribe(
             response => {
-                this.jhiAlertService.success(
-                    'Archive was successful. The archive zip file with all repositories is currently being downloaded'
-                );
+                this.jhiAlertService.success('Archive was successful. The archive zip file with all repositories is currently being downloaded');
                 this.activeModal.dismiss(true);
                 this.archiveInProgress = false;
                 const blob = new Blob([response.body], { type: 'application/zip' });
@@ -45,14 +43,14 @@ export class ProgrammingExerciseArchiveDialogComponent {
             },
             err => {
                 this.archiveInProgress = false;
-            }
+            },
         );
     }
 }
 
 @Component({
     selector: 'jhi-instructor-dashboard-archive-popup',
-    template: ''
+    template: '',
 })
 export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

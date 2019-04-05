@@ -1,44 +1,39 @@
 <jhi-alert></jhi-alert>
 <div *ngIf="exercise !== undefined">
-
     <div class="header-container  bg-primary text-white">
         <h4 class="card-header">
-            <strong>{{"arTeMiSApp.tutorExerciseDashboard.pageHeader" | translate}} {{exercise.title}}</strong>
+            <strong>{{ 'arTeMiSApp.tutorExerciseDashboard.pageHeader' | translate }} {{ exercise.title }}</strong>
         </h4>
     </div>
 
     <div class="row mt-3 justify-content-around">
         <div class="col-2">
-            <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/tutor-dashboard'">&larr; </button>
+            <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/tutor-dashboard'">&larr;</button>
         </div>
 
         <div class="col-4 text-center">
-            <p class="h3">{{"arTeMiSApp.tutorExerciseDashboard.yourStatus" | translate}}:</p>
-            <jhi-tutor-participation-graph
-                [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
+            <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
+            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
         </div>
         <div class="col-4 text-center">
-            <p class="h3"
-               jhiTranslate="arTeMiSApp.tutorExerciseDashboard.youAssessedSoFar"
-               [translateValues]="{numberOfTutorAssessments: numberOfTutorAssessments}">
-            </p>
+            <p class="h3" jhiTranslate="arTeMiSApp.tutorExerciseDashboard.youAssessedSoFar" [translateValues]="{ numberOfTutorAssessments: numberOfTutorAssessments }"></p>
         </div>
     </div>
 
     <div class="col-12 text-center" style="margin-bottom: 15px" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0; else noGradingInstruction">
         <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED" class="alert alert-warning" role="alert">
-            {{"arTeMiSApp.tutorExerciseDashboard.needToReadGradingInstructions" | translate}}
+            {{ 'arTeMiSApp.tutorExerciseDashboard.needToReadGradingInstructions' | translate }}
         </div>
 
         <button class="btn btn-primary" (click)="open(gradingInstructions)">
-            {{"arTeMiSApp.tutorExerciseDashboard.readGradingInstructions" | translate}}
+            {{ 'arTeMiSApp.tutorExerciseDashboard.readGradingInstructions' | translate }}
         </button>
     </div>
 
     <ng-template #noGradingInstruction>
         <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
             <button class="btn btn-primary" (click)="readInstruction()">
-                {{"arTeMiSApp.tutorExerciseDashboard.startYourParticipation" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.startYourParticipation' | translate }}
             </button>
         </div>
     </ng-template>
@@ -46,154 +41,157 @@
     <ng-template #gradingInstructions let-c="close" let-d="dismiss">
         <div class="modal-header">
             <h4 class="modal-title">
-                {{"arTeMiSApp.tutorExerciseDashboard.gradingInstructions" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.gradingInstructions' | translate }}
             </h4>
-            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
-            {{exercise.gradingInstructions}}
+            {{ exercise.gradingInstructions }}
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="c()">
-                {{"arTeMiSApp.tutorExerciseDashboard.close" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.close' | translate }}
             </button>
-            <button type="button" class="btn btn-primary" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED"
-                    (click)="readInstruction(c)">
-                {{"arTeMiSApp.tutorExerciseDashboard.readAndUnderstood" | translate}}
+            <button type="button" class="btn btn-primary" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED" (click)="readInstruction(c)">
+                {{ 'arTeMiSApp.tutorExerciseDashboard.readAndUnderstood' | translate }}
             </button>
         </div>
     </ng-template>
 
     <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS" class="alert alert-warning row" role="alert">
-        <span jhiTranslate="arTeMiSApp.tutorExerciseDashboard.totalExampleSubmissions"
+        <span
+            jhiTranslate="arTeMiSApp.tutorExerciseDashboard.totalExampleSubmissions"
             [translateValues]="{
                 total: stats.toReview.total + stats.toAssess.total,
                 toReview: stats.toReview.total,
                 toAssess: stats.toAssess.total
-            }">
-
+            }"
+        >
         </span>
     </div>
 
     <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
         <div class="col-6" *ngIf="stats.toReview.total > 0">
-            <p class="h3">
-                {{"arTeMiSApp.tutorExerciseDashboard.reviewSubmissions" | translate}} ({{stats.toReview.done}} / {{stats.toReview.total}})
-            </p>
+            <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.reviewSubmissions' | translate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})</p>
 
-            <button *ngIf="stats.toReview.done < stats.toReview.total" class="btn btn-primary"
-                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}"
-                    [queryParams]="{readOnly: true}">
+            <button
+                *ngIf="stats.toReview.done < stats.toReview.total"
+                class="btn btn-primary"
+                routerLink="/text-exercise/{{ exercise.id }}/example-submission/{{ nextExampleSubmissionId }}"
+                [queryParams]="{ readOnly: true }"
+            >
                 <span *ngIf="stats.toReview.done <= 0; else elseBlockSubmissionSForTutorialButton">
-                    {{"arTeMiSApp.tutorExerciseDashboard.start" | translate}}
+                    {{ 'arTeMiSApp.tutorExerciseDashboard.start' | translate }}
                 </span>
                 <ng-template #elseBlockSubmissionSForTutorialButton>
-                    {{"arTeMiSApp.tutorExerciseDashboard.continue" | translate}}
+                    {{ 'arTeMiSApp.tutorExerciseDashboard.continue' | translate }}
                 </ng-template>
-                {{"arTeMiSApp.tutorExerciseDashboard.reviewingExampleSubmissions" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.reviewingExampleSubmissions' | translate }}
             </button>
 
             <ul *ngIf="stats.toReview.done >= stats.toReview.total">
                 <li *ngFor="let exampleSubmission of exampleSubmissionsToReview; let i = index">
-                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}"
-                            [queryParams]="{readOnly: true}"
-                            class="btn btn-link">{{"arTeMiSApp.tutorExerciseDashboard.reviewExampleSubmissions" | translate}} {{i + 1}}</button>
+                    <button routerLink="/text-exercise/{{ exercise.id }}/example-submission/{{ exampleSubmission.id }}" [queryParams]="{ readOnly: true }" class="btn btn-link">
+                        {{ 'arTeMiSApp.tutorExerciseDashboard.reviewExampleSubmissions' | translate }} {{ i + 1 }}
+                    </button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
         </div>
 
         <div class="col-6" *ngIf="stats.toAssess.total > 0 && stats.toReview.done >= stats.toReview.total">
-            <p class="h3">{{"arTeMiSApp.tutorExerciseDashboard.tutorialSubmissions" | translate}} ({{stats.toAssess.done}} / {{stats.toAssess.total}})</p>
+            <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.tutorialSubmissions' | translate }} ({{ stats.toAssess.done }} / {{ stats.toAssess.total }})</p>
 
-            <button *ngIf="stats.toAssess.done < stats.toAssess.total" class="btn btn-primary"
-                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}"
-                    [queryParams]="{toComplete: true}">
+            <button
+                *ngIf="stats.toAssess.done < stats.toAssess.total"
+                class="btn btn-primary"
+                routerLink="/text-exercise/{{ exercise.id }}/example-submission/{{ nextExampleSubmissionId }}"
+                [queryParams]="{ toComplete: true }"
+            >
                 <span *ngIf="stats.toAssess.done <= 0; else elseBlockSubmissionsForReviewButton">
-                    {{"arTeMiSApp.tutorExerciseDashboard.start" | translate}}
+                    {{ 'arTeMiSApp.tutorExerciseDashboard.start' | translate }}
                 </span>
                 <ng-template #elseBlockSubmissionsForReviewButton>
-                    {{"arTeMiSApp.tutorExerciseDashboard.continue" | translate}}
+                    {{ 'arTeMiSApp.tutorExerciseDashboard.continue' | translate }}
                 </ng-template>
-                {{"arTeMiSApp.tutorExerciseDashboard.assessingExampleSubmission" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.assessingExampleSubmission' | translate }}
             </button>
 
             <ul *ngIf="stats.toAssess.done >= stats.toAssess.total">
                 <li *ngFor="let exampleSubmission of exampleSubmissionsToAssess; let i = index">
-                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}"
-                            [queryParams]="{toComplete: true}"
-                            class="btn btn-link">{{"arTeMiSApp.tutorExerciseDashboard.assessExampleSubmission" | translate}} {{i + 1}}</button>
+                    <button routerLink="/text-exercise/{{ exercise.id }}/example-submission/{{ exampleSubmission.id }}" [queryParams]="{ toComplete: true }" class="btn btn-link">
+                        {{ 'arTeMiSApp.tutorExerciseDashboard.assessExampleSubmission' | translate }} {{ i + 1 }}
+                    </button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
         </div>
-
     </div>
     <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-        {{"arTeMiSApp.tutorExerciseDashboard.studentsSubmissions" | translate}}
+        {{ 'arTeMiSApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
     </h2>
     <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
         <table class="table table-striped exercise-table" *ngIf="(unassessedSubmission && unassessedSubmission?.id > 0) || submissions.length > 0; else noSubmissions">
             <thead>
-            <tr>
-                <th>#</th>
-                <th>{{"arTeMiSApp.tutorExerciseDashboard.submissionDate" | translate}}</th>
-                <th>{{"arTeMiSApp.tutorExerciseDashboard.result" | translate}}</th>
-                <th>{{"arTeMiSApp.tutorExerciseDashboard.status" | translate}}</th>
-                <th>{{"arTeMiSApp.tutorExerciseDashboard.score" | translate}}</th>
-                <th>{{"arTeMiSApp.tutorExerciseDashboard.action" | translate}}</th>
-            </tr>
+                <tr>
+                    <th>#</th>
+                    <th>{{ 'arTeMiSApp.tutorExerciseDashboard.submissionDate' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.tutorExerciseDashboard.result' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.tutorExerciseDashboard.status' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.tutorExerciseDashboard.score' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.tutorExerciseDashboard.action' | translate }}</th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let submission of submissions; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
-                <td>
-                    <jhi-result [participation]="submission.participation"></jhi-result>
-                </td>
-                <td>
-                    {{ calculateStatus(submission) }}
-                </td>
-                <td>
-                    <span
-                        *ngIf="submission.result !== null && submission.result.score !== null">{{submission.result.score}}
-                        %</span>
-                </td>
-                <td>
-                    <button *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
-                            routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
-                            class="btn btn-warning btn-sm">
-                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{"arTeMiSApp.tutorExerciseDashboard.continueAssessment" | translate}}
-                    </button>
-                    <ng-template #continueButton>
-                        <button *ngIf="submission !== null && submission.result !== null"
-                                routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
-                                class="btn btn-primary btn-sm">
-                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{"arTeMiSApp.tutorExerciseDashboard.openAssessment" | translate}}
+                <tr *ngFor="let submission of submissions; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>
+                        <jhi-result [participation]="submission.participation"></jhi-result>
+                    </td>
+                    <td>
+                        {{ calculateStatus(submission) }}
+                    </td>
+                    <td>
+                        <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
+                    </td>
+                    <td>
+                        <button
+                            *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
+                            routerLink="/text/{{ exercise.id }}/assessment/{{ submission.id }}"
+                            class="btn btn-warning btn-sm"
+                        >
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'arTeMiSApp.tutorExerciseDashboard.continueAssessment' | translate }}
                         </button>
-                    </ng-template>
-                </td>
-            </tr>
-            <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
-                <td></td>
-                <td>{{ unassessedSubmission?.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
-                <td></td>
-                <td>{{"arTeMiSApp.tutorExerciseDashboard.new" | translate}}</td>
-                <td></td>
-                <td>
-                    <button routerLink="/text/{{exercise.id}}/assessment/new"
-                            class="btn btn-success">
-                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{"arTeMiSApp.tutorExerciseDashboard.startAssessment" | translate}}
-                    </button>
-                </td>
-            </tr>
+                        <ng-template #continueButton>
+                            <button
+                                *ngIf="submission !== null && submission.result !== null"
+                                routerLink="/text/{{ exercise.id }}/assessment/{{ submission.id }}"
+                                class="btn btn-primary btn-sm"
+                            >
+                                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'arTeMiSApp.tutorExerciseDashboard.openAssessment' | translate }}
+                            </button>
+                        </ng-template>
+                    </td>
+                </tr>
+                <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
+                    <td></td>
+                    <td>{{ unassessedSubmission?.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td></td>
+                    <td>{{ 'arTeMiSApp.tutorExerciseDashboard.new' | translate }}</td>
+                    <td></td>
+                    <td>
+                        <button routerLink="/text/{{ exercise.id }}/assessment/new" class="btn btn-success">
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'arTeMiSApp.tutorExerciseDashboard.startAssessment' | translate }}
+                        </button>
+                    </td>
+                </tr>
             </tbody>
         </table>
 
         <ng-template #noSubmissions>
             <div class="alert alert-info">
-                {{"arTeMiSApp.tutorExerciseDashboard.noSubmissions" | translate}}
+                {{ 'arTeMiSApp.tutorExerciseDashboard.noSubmissions' | translate }}
             </div>
         </ng-template>
     </div>

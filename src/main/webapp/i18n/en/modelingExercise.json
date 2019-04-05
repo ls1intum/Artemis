@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "modelingExercise" : {
+        "modelingExercise": {
             "home": {
                 "title": "Modeling Exercises",
                 "createLabel": "Create a new Modeling Exercise",

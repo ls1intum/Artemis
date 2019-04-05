@@ -8,7 +8,7 @@ import { ProfileService } from '../profiles/profile.service';
 
 @Component({
     selector: 'jhi-main',
-    templateUrl: './main.component.html'
+    templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
     constructor(
@@ -16,7 +16,7 @@ export class JhiMainComponent implements OnInit {
         private router: Router,
         private profileService: ProfileService,
         private angulartics: Angulartics2,
-        private angularticsPiwik: Angulartics2Piwik
+        private angularticsPiwik: Angulartics2Piwik,
     ) {
         this.setupAnalytics().then(null);
     }

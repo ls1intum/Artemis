@@ -9,7 +9,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
-    providers: [ApollonDiagramService]
+    providers: [ApollonDiagramService],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
@@ -17,12 +17,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
-    constructor(
-        private apollonDiagramService: ApollonDiagramService,
-        private jhiAlertService: JhiAlertService,
-        private modalService: NgbModal,
-        private route: ActivatedRoute
-    ) {}
+    constructor(private apollonDiagramService: ApollonDiagramService, private jhiAlertService: JhiAlertService, private modalService: NgbModal, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.route.params.subscribe(params => {
@@ -39,7 +34,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 },
                 response => {
                     this.jhiAlertService.error('Error while loading Apollon diagram');
-                }
+                },
             );
         });
     }
@@ -58,7 +53,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
-            type: this.apollonDiagram.diagramType
+            type: this.apollonDiagram.diagramType,
         });
     }
 
@@ -71,14 +66,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const umlModel = this.apollonEditor.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram,
-            jsonRepresentation: JSON.stringify(umlModel)
+            jsonRepresentation: JSON.stringify(umlModel),
         };
 
         this.apollonDiagramService.update(updatedDiagram).subscribe(
             () => {},
             response => {
                 this.jhiAlertService.error('Error while updating Apollon diagram');
-            }
+            },
         );
     }
 

@@ -7,12 +7,12 @@ export const enum Weekday {
     TUESDAY = 'TUESDAY',
     WEDNESDAY = 'WEDNESDAY',
     THURSDAY = 'THURSDAY',
-    FRIDAY = 'FRIDAY'
+    FRIDAY = 'FRIDAY',
 }
 
 export const enum Language {
     ENGLISH = 'ENGLISH',
-    GERMAN = 'GERMAN'
+    GERMAN = 'GERMAN',
 }
 
 export class TutorGroup implements BaseEntity {

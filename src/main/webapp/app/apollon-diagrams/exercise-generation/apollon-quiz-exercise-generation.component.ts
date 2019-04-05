@@ -9,7 +9,7 @@ import { ApollonEditor } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',
     templateUrl: './apollon-quiz-exercise-generation.component.html',
-    providers: []
+    providers: [],
 })
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
@@ -21,7 +21,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         private activeModal: NgbActiveModal,
         private courseService: CourseService,
         private fileUploaderService: FileUploaderService,
-        private quizExerciseService: QuizExerciseService
+        private quizExerciseService: QuizExerciseService,
     ) {}
 
     ngOnInit() {
@@ -30,7 +30,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
                 this.courses = response.body;
                 this.selectedCourse = this.courses[0];
             },
-            () => {}
+            () => {},
         );
     }
 
@@ -41,13 +41,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
 
         const model = this.apollonEditor.model;
 
-        await generateDragAndDropQuizExercise(
-            this.diagramTitle,
-            model,
-            this.selectedCourse,
-            this.fileUploaderService,
-            this.quizExerciseService
-        );
+        await generateDragAndDropQuizExercise(this.diagramTitle, model, this.selectedCourse, this.fileUploaderService, this.quizExerciseService);
 
         this.activeModal.close();
     }

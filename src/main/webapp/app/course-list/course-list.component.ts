@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './course-list.component.html',
-    providers: [JhiAlertService, CourseService]
+    providers: [JhiAlertService, CourseService],
 })
 export class CourseListComponent implements OnInit {
     courses: Course[];
@@ -22,7 +22,7 @@ export class CourseListComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
@@ -55,9 +55,8 @@ export class CourseListComponent implements OnInit {
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
-
             },
-            (response: string) => this.onError(response)
+            (response: string) => this.onError(response),
         );
     }
 

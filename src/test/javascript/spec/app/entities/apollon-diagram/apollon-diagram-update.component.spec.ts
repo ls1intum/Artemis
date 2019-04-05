@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [ApollonDiagramUpdateComponent]
+                declarations: [ApollonDiagramUpdateComponent],
             })
                 .overrideTemplate(ApollonDiagramUpdateComponent, '')
                 .compileComponents();

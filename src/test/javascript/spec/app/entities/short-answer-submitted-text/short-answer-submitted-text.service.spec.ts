@@ -5,10 +5,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
 import { ShortAnswerSubmittedTextService } from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.service';
-import {
-    IShortAnswerSubmittedText,
-    ShortAnswerSubmittedText
-} from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.model';
+import { IShortAnswerSubmittedText, ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.model';
 
 describe('Service Tests', () => {
     describe('ShortAnswerSubmittedText Service', () => {
@@ -18,7 +15,7 @@ describe('Service Tests', () => {
         let elemDefault: IShortAnswerSubmittedText;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ShortAnswerSubmittedTextService);
@@ -42,9 +39,9 @@ describe('Service Tests', () => {
             it('should create a ShortAnswerSubmittedText', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -58,9 +55,9 @@ describe('Service Tests', () => {
             it('should update a ShortAnswerSubmittedText', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        text: 'BBBBBB'
+                        text: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -75,16 +72,16 @@ describe('Service Tests', () => {
             it('should return a list of ShortAnswerSubmittedText', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        text: 'BBBBBB'
+                        text: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

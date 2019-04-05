@@ -4,20 +4,24 @@
 -->
 <span *ngIf="!result || (!result.score && result.score !== 0)">
     <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.result.noResult">No results</span></span>
-    <span class="text-primary" *ngIf="isBuilding"><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="arTeMiSApp.editor.building">&nbsp;Building...</span></span>
+    <span class="text-primary" *ngIf="isBuilding"
+        ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="arTeMiSApp.editor.building">&nbsp;Building...</span></span
+    >
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">
         <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-        <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="arTeMiSApp.result.score">Score:</span> {{result.score}}%, </span>
+        <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="arTeMiSApp.result.score">Score:</span> {{ result.score }}%, </span>
         <span *ngIf="hasFeedback">
-            <span class="result" (click)="showDetails(result)">{{resultString}}</span>
+            <span class="result" (click)="showDetails(result)">{{ resultString }}</span>
         </span>
-        <span *ngIf="!hasFeedback"> {{result.resultString}}</span>
-        <span *ngIf="!short"> ({{result.completionDate | amTimeAgo}})</span>   <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
+        <span *ngIf="!hasFeedback"> {{ result.resultString }}</span>
+        <span *ngIf="!short"> ({{ result.completionDate | amTimeAgo }})</span>
+        <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
     </span>
     <span *ngIf="result.buildArtifact && !short">
-        <a (click)="downloadBuildResult(participation.id)"> &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.downloadBuildResult">Download Build Result</span></a>
+        <a (click)="downloadBuildResult(participation.id)">
+            &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.downloadBuildResult">Download Build Result</span></a
+        >
     </span>
 </ng-container>
-

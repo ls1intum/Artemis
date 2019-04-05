@@ -5,10 +5,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
 import { ShortAnswerQuestionStatisticService } from 'app/entities/short-answer-question-statistic/short-answer-question-statistic.service';
-import {
-    IShortAnswerQuestionStatistic,
-    ShortAnswerQuestionStatistic
-} from 'app/entities/short-answer-question-statistic/short-answer-question-statistic.model';
+import { IShortAnswerQuestionStatistic, ShortAnswerQuestionStatistic } from 'app/entities/short-answer-question-statistic/short-answer-question-statistic.model';
 
 describe('Service Tests', () => {
     describe('ShortAnswerQuestionStatistic Service', () => {
@@ -18,7 +15,7 @@ describe('Service Tests', () => {
         let elemDefault: IShortAnswerQuestionStatistic;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ShortAnswerQuestionStatisticService);
@@ -42,9 +39,9 @@ describe('Service Tests', () => {
             it('should create a ShortAnswerQuestionStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -74,7 +71,7 @@ describe('Service Tests', () => {
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

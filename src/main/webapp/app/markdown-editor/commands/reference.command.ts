@@ -1,7 +1,6 @@
 import { Command } from './command';
 
 export class ReferenceCommand extends Command {
-
     buttonIcon = 'quote-left';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.quote';
 

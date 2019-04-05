@@ -11,12 +11,7 @@ export class JhiLanguageHelper {
     renderer: Renderer2 = null;
     private _language: BehaviorSubject<string>;
 
-    constructor(
-        private translateService: TranslateService,
-        private titleService: Title,
-        private router: Router,
-        rootRenderer: RendererFactory2
-    ) {
+    constructor(private translateService: TranslateService, private titleService: Title, private router: Router, rootRenderer: RendererFactory2) {
         this._language = new BehaviorSubject<string>(this.translateService.currentLang);
         this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
         this.init();

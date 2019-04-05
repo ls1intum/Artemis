@@ -18,13 +18,13 @@ li {
     /*z-index: 1;*/
 }
 
-li::before{
+li::before {
     content: '';
     position: absolute;
-    top: .9em;
+    top: 0.9em;
     left: -4em;
     width: 4em;
-    height: .2em;
+    height: 0.2em;
     background: green;
     z-index: -1;
 }

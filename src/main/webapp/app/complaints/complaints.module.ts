@@ -14,12 +14,8 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
     imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsComponent],
     exports: [ComplaintsComponent],
-    providers: [
-        JhiAlertService,
-        ComplaintService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

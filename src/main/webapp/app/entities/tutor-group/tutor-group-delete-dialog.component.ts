@@ -9,16 +9,12 @@ import { TutorGroup } from 'app/entities/tutor-group';
 
 @Component({
     selector: 'jhi-tutor-group-delete-dialog',
-    templateUrl: './tutor-group-delete-dialog.component.html'
+    templateUrl: './tutor-group-delete-dialog.component.html',
 })
 export class TutorGroupDeleteDialogComponent {
     tutorGroup: TutorGroup;
 
-    constructor(
-        protected tutorGroupService: TutorGroupService,
-        public activeModal: NgbActiveModal,
-        protected eventManager: JhiEventManager
-    ) {}
+    constructor(protected tutorGroupService: TutorGroupService, public activeModal: NgbActiveModal, protected eventManager: JhiEventManager) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -28,7 +24,7 @@ export class TutorGroupDeleteDialogComponent {
         this.tutorGroupService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'tutorGroupListModification',
-                content: 'Deleted an tutorGroup'
+                content: 'Deleted an tutorGroup',
             });
             this.activeModal.dismiss(true);
         });
@@ -37,7 +33,7 @@ export class TutorGroupDeleteDialogComponent {
 
 @Component({
     selector: 'jhi-tutor-group-delete-popup',
-    template: ''
+    template: '',
 })
 export class TutorGroupDeletePopupComponent implements OnInit, OnDestroy {
     protected ngbModalRef: NgbModalRef;
@@ -57,7 +53,7 @@ export class TutorGroupDeletePopupComponent implements OnInit, OnDestroy {
                     reason => {
                         this.router.navigate(['/tutor-group', { outlets: { popup: null } }]);
                         this.ngbModalRef = null;
-                    }
+                    },
                 );
             }, 0);
         });

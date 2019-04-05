@@ -15,7 +15,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService]
+    providers: [JhiAlertService, SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;
@@ -55,8 +55,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
-    ) {
-    }
+    ) {}
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
@@ -80,15 +79,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (
-                this.exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
-                moment(this.exercise.dueDate).isAfter(moment())
-            ) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (
-                this.exercise.participations[0].initializationState === InitializationState.FINISHED &&
-                moment(this.exercise.dueDate).isAfter(moment())
-            ) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(this.exercise.participations[0])) {
@@ -98,10 +91,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             }
         } else if ((this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) && this.hasParticipations(this.exercise)) {
             const participation = this.exercise.participations[0];
-            if (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                participation.initializationState === InitializationState.FINISHED
-            ) {
+            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
                 return this.exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
         }
@@ -170,7 +160,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 error => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
-                }
+                },
             );
     }
 
@@ -187,7 +177,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 () => true,
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
-                }
+                },
             );
     }
 

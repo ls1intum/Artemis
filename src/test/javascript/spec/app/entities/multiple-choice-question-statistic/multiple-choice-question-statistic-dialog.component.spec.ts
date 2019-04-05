@@ -11,7 +11,6 @@ import { MultipleChoiceQuestionStatisticService } from '../../../../../../main/w
 import { MultipleChoiceQuestionStatistic } from '../../../../../../main/webapp/app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.model';
 
 describe('Component Tests', () => {
-
     describe('MultipleChoiceQuestionStatistic Management Dialog Component', () => {
         let comp: MultipleChoiceQuestionStatisticDialogComponent;
         let fixture: ComponentFixture<MultipleChoiceQuestionStatisticDialogComponent>;
@@ -23,12 +22,10 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [MultipleChoiceQuestionStatisticDialogComponent],
-                providers: [
-                    MultipleChoiceQuestionStatisticService
-                ]
+                providers: [MultipleChoiceQuestionStatisticService],
             })
-            .overrideTemplate(MultipleChoiceQuestionStatisticDialogComponent, '')
-            .compileComponents();
+                .overrideTemplate(MultipleChoiceQuestionStatisticDialogComponent, '')
+                .compileComponents();
         }));
 
         beforeEach(() => {
@@ -40,46 +37,43 @@ describe('Component Tests', () => {
         });
 
         describe('save', () => {
-            it('Should call update service on save for existing entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new MultipleChoiceQuestionStatistic(123);
-                        spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.multipleChoiceQuestionStatistic = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call update service on save for existing entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new MultipleChoiceQuestionStatistic(123);
+                    spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.multipleChoiceQuestionStatistic = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.update).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'multipleChoiceQuestionStatisticListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.update).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'multipleChoiceQuestionStatisticListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
 
-            it('Should call create service on save for new entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new MultipleChoiceQuestionStatistic();
-                        spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.multipleChoiceQuestionStatistic = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call create service on save for new entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new MultipleChoiceQuestionStatistic();
+                    spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.multipleChoiceQuestionStatistic = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.create).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'multipleChoiceQuestionStatisticListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.create).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'multipleChoiceQuestionStatisticListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
         });
     });
-
 });

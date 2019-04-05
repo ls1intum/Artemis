@@ -4,7 +4,7 @@ import { PasswordResetInitService } from './password-reset-init.service';
 
 @Component({
     selector: 'jhi-password-reset-init',
-    templateUrl: './password-reset-init.component.html'
+    templateUrl: './password-reset-init.component.html',
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     error: string;
@@ -37,7 +37,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
                 } else {
                     this.error = 'ERROR';
                 }
-            }
+            },
         );
     }
 }

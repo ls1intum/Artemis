@@ -6,18 +6,14 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
-    providers: [ApollonDiagramService]
+    providers: [ApollonDiagramService],
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
     @ViewChild('titleInput') titleInput: ElementRef;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private apollonDiagramService: ApollonDiagramService,
-        private router: Router
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router) {}
 
     ngAfterViewInit() {
         this.titleInput.nativeElement.focus();
@@ -34,7 +30,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
             },
             () => {
                 console.warn('failed');
-            }
+            },
         );
     }
 

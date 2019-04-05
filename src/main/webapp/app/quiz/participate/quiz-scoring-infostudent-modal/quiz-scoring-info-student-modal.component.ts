@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
-    styles: []
+    styles: [],
 })
 export class QuizScoringInfoStudentModalComponent implements OnInit {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -61,10 +61,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     rightGap: string;
     wrongGap: string;
 
-    constructor(
-        private modalService: NgbModal,
-        private translateService: TranslateService) {
-    }
+    constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 
     ngOnInit() {
         this.checkForSingleOrPluralPoints();
@@ -85,7 +82,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      * opens the pop-up for the explanation of the points
      */
     open(content: any) {
-        this.modalService.open(content, {size: 'lg'});
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
@@ -99,7 +96,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.multipleChoiceMapping.filter(option => option.isCorrect).length;
         this.multipleChoiceWrongAnswerChosen = this.multipleChoiceMapping.filter(option => !option.isCorrect).length;
         this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
-        this.inTotalSelectedRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.multipleChoiceAnswerOptions - this.correctMultipleChoiceAnswers - this.multipleChoiceWrongAnswerChosen);
+        this.inTotalSelectedRightOptions =
+            this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.multipleChoiceAnswerOptions - this.correctMultipleChoiceAnswers - this.multipleChoiceWrongAnswerChosen);
         this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
 

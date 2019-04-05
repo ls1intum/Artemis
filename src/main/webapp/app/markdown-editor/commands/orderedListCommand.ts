@@ -1,7 +1,6 @@
 import { Command } from './command';
 
 export class OrderedListCommand extends Command {
-
     buttonIcon = 'list-ol';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.orderedList';
 
@@ -25,8 +24,8 @@ export class OrderedListCommand extends Command {
         const parseArray = selectedText.split('\n');
         let addAmount = parseArray.length - 1;
         for (const element of parseArray) {
-             this.replaceText(element, parseArray.length - addAmount);
-             addAmount--;
+            this.replaceText(element, parseArray.length - addAmount);
+            addAmount--;
         }
     }
 

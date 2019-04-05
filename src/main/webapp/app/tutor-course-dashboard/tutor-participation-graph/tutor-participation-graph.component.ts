@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 @Component({
     selector: 'jhi-tutor-participation-graph',
     templateUrl: './tutor-participation-graph.component.html',
-    styleUrls: ['./tutor-participation-graph.component.scss']
+    styleUrls: ['./tutor-participation-graph.component.scss'],
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
@@ -45,20 +45,20 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     calculateClasses(step: TutorParticipationStatus): string {
-       if (step === this.tutorParticipationStatus) {
-           return 'active';
-       }
+        if (step === this.tutorParticipationStatus) {
+            return 'active';
+        }
 
-       if (step === this.COMPLETED && this.tutorParticipationStatus !== this.TRAINED) {
-           return 'opaque';
-       }
+        if (step === this.COMPLETED && this.tutorParticipationStatus !== this.TRAINED) {
+            return 'opaque';
+        }
 
-       if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.COMPLETED].includes(this.tutorParticipationStatus)) {
-           return 'opaque';
-       }
+        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.COMPLETED].includes(this.tutorParticipationStatus)) {
+            return 'opaque';
+        }
 
-       if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
-           return 'orange';
-       }
+        if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
+            return 'orange';
+        }
     }
 }

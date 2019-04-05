@@ -30,45 +30,45 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
                 left: 0,
                 right: 0,
                 top: 0,
-                bottom: 30
-            }
+                bottom: 30,
+            },
         },
         legend: {
-            display: false
+            display: false,
         },
         title: {
             display: false,
             text: '',
             position: 'top',
             fontSize: 16,
-            padding: 20
+            padding: 20,
         },
         tooltips: {
-            enabled: false
+            enabled: false,
         },
         scales: {
             yAxes: [
                 {
                     scaleLabel: {
                         labelString: '',
-                        display: true
+                        display: true,
                     },
                     ticks: {
-                        beginAtZero: true
-                    }
-                }
+                        beginAtZero: true,
+                    },
+                },
             ],
             xAxes: [
                 {
                     scaleLabel: {
                         labelString: '',
-                        display: true
-                    }
-                }
-            ]
+                        display: true,
+                    },
+                },
+            ],
         },
         hover: { animationDuration: 0 },
-        animation: createAnimation(dataSetProvider)
+        animation: createAnimation(dataSetProvider),
     };
 }
 
@@ -125,7 +125,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
                     }
                 });
             });
-        }
+        },
     };
 }
 
@@ -136,7 +136,7 @@ export interface DataSetProvider {
 
 @Component({
     selector: 'jhi-quiz-statistic',
-    templateUrl: './quiz-statistic.component.html'
+    templateUrl: './quiz-statistic.component.html',
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
@@ -271,12 +271,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter);
             this.unratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter);
-            this.ratedAverage =
-                this.ratedAverage +
-                this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
-            this.unratedAverage =
-                this.unratedAverage +
-                this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
+            this.ratedAverage = this.ratedAverage + this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
+            this.unratedAverage = this.unratedAverage + this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
         }
 
         // set Background for invalid questions = grey
@@ -312,8 +308,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.datasets = [
             {
                 data: this.data,
-                backgroundColor: this.colors
-            }
+                backgroundColor: this.colors,
+            },
         ];
     }
 
@@ -337,8 +333,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.datasets = [
             {
                 data: this.data,
-                backgroundColor: this.colors
-            }
+                backgroundColor: this.colors,
+            },
         ];
     }
 
@@ -351,8 +347,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.router.navigate([
                 '/quiz/:quizExerciseId/quiz-point-statistic',
                 {
-                    quizExerciseId: this.quizExercise.id
-                }
+                    quizExerciseId: this.quizExercise.id,
+                },
             ]);
         } else {
             const nextQuestion = this.quizExercise.quizQuestions[0];
@@ -361,29 +357,28 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                     'quiz/:quizId/multiple-choice-question-statistic/:questionId',
                     {
                         quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id
-                    }
+                        questionId: nextQuestion.id,
+                    },
                 ]);
             } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.router.navigate([
                     'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
                     {
                         quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id
-                    }
+                        questionId: nextQuestion.id,
+                    },
                 ]);
             } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
                 this.router.navigate([
                     'quiz/:quizId/short-answer-question-statistic/:questionId',
                     {
                         quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id
-                    }
+                        questionId: nextQuestion.id,
+                    },
                 ]);
             } else {
                 console.log('Question type not yet supported: ' + nextQuestion);
             }
         }
     }
-
 }

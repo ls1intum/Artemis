@@ -5,6 +5,6 @@ import { ArTEMiSSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, Jh
 @NgModule({
     imports: [ArTEMiSSharedLibsModule],
     declarations: [FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent],
-    exports: [ArTEMiSSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent]
+    exports: [ArTEMiSSharedLibsModule, FindLanguageFromKeyPipe, JhiAlertComponent, JhiAlertErrorComponent],
 })
 export class ArTEMiSSharedCommonModule {}

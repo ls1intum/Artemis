@@ -11,7 +11,7 @@ import { Course, CourseService } from '../course';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
-    templateUrl: './quiz-exercise-export.component.html'
+    templateUrl: './quiz-exercise-export.component.html',
 })
 export class QuizExerciseExportComponent implements OnInit {
     questions: QuizQuestion[] = new Array(0);
@@ -27,7 +27,7 @@ export class QuizExerciseExportComponent implements OnInit {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         router: Router,
-        translateService: TranslateService
+        translateService: TranslateService,
     ) {
         this.router = router;
         this.translateService = translateService;
@@ -63,7 +63,7 @@ export class QuizExerciseExportComponent implements OnInit {
                         });
                     }
                 },
-                (res: HttpErrorResponse) => this.onError(res)
+                (res: HttpErrorResponse) => this.onError(res),
             );
         });
     }

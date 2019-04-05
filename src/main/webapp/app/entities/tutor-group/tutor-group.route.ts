@@ -20,7 +20,7 @@ export class TutorGroupResolve implements Resolve<TutorGroup> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<TutorGroup>) => response.ok),
-                map((tutorGroup: HttpResponse<TutorGroup>) => tutorGroup.body)
+                map((tutorGroup: HttpResponse<TutorGroup>) => tutorGroup.body),
             );
         }
         return of(new TutorGroup());
@@ -33,46 +33,46 @@ export const tutorGroupRoute: Routes = [
         component: TutorGroupComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.tutorGroup.home.title'
+            pageTitle: 'artemisApp.tutorGroup.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':id/view',
         component: TutorGroupDetailComponent,
         resolve: {
-            tutorGroup: TutorGroupResolve
+            tutorGroup: TutorGroupResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.tutorGroup.home.title'
+            pageTitle: 'artemisApp.tutorGroup.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'new',
         component: TutorGroupUpdateComponent,
         resolve: {
-            tutorGroup: TutorGroupResolve
+            tutorGroup: TutorGroupResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.tutorGroup.home.title'
+            pageTitle: 'artemisApp.tutorGroup.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':id/edit',
         component: TutorGroupUpdateComponent,
         resolve: {
-            tutorGroup: TutorGroupResolve
+            tutorGroup: TutorGroupResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.tutorGroup.home.title'
+            pageTitle: 'artemisApp.tutorGroup.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const tutorGroupPopupRoute: Routes = [
@@ -80,13 +80,13 @@ export const tutorGroupPopupRoute: Routes = [
         path: ':id/delete',
         component: TutorGroupDeletePopupComponent,
         resolve: {
-            tutorGroup: TutorGroupResolve
+            tutorGroup: TutorGroupResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.tutorGroup.home.title'
+            pageTitle: 'artemisApp.tutorGroup.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

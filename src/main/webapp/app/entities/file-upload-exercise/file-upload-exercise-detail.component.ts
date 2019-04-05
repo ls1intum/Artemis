@@ -9,18 +9,14 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
-    templateUrl: './file-upload-exercise-detail.component.html'
+    templateUrl: './file-upload-exercise-detail.component.html',
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(
-        private eventManager: JhiEventManager,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private route: ActivatedRoute
-    ) {}
+    constructor(private eventManager: JhiEventManager, private fileUploadExerciseService: FileUploadExerciseService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -44,8 +40,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () =>
-            this.load(this.fileUploadExercise.id)
-        );
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id));
     }
 }

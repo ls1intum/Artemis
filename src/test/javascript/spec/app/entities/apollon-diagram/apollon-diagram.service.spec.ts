@@ -15,7 +15,7 @@ describe('Service Tests', () => {
         let elemDefault: IApollonDiagram;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ApollonDiagramService);
@@ -39,9 +39,9 @@ describe('Service Tests', () => {
             it('should create a ApollonDiagram', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -56,9 +56,9 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         title: 'BBBBBB',
-                        jsonRepresentation: 'BBBBBB'
+                        jsonRepresentation: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -74,16 +74,16 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         title: 'BBBBBB',
-                        jsonRepresentation: 'BBBBBB'
+                        jsonRepresentation: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

@@ -16,17 +16,17 @@ const ENTITY_STATES = [
         component: CourseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [CourseDashboardComponent],
     entryComponents: [HomeComponent, CourseDashboardComponent, JhiMainComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSInstructorCourseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -3,7 +3,6 @@ import { AnswerOption } from '../answer-option';
 import { QuizQuestionType } from '../quiz-question';
 
 export class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
-
     public selectedOptions: AnswerOption[];
 
     constructor() {

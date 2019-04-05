@@ -9,12 +9,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
     imports: [NgbModule.forRoot(), InfiniteScrollModule, CookieModule.forRoot(), FontAwesomeModule],
-    exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, FontAwesomeModule]
+    exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, FontAwesomeModule],
 })
 export class ArTEMiSSharedLibsModule {
     static forRoot() {
         return {
-            ngModule: ArTEMiSSharedLibsModule
+            ngModule: ArTEMiSSharedLibsModule,
         };
     }
 }
