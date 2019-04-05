@@ -3,7 +3,8 @@
         "assessment": "Bewertung",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
-            "nextSubmission": "Nächste Abgabe"
+            "nextSubmission": "Nächste Abgabe",
+            "resolveConflict": "Konflikte behandeln"
         }
     }
 }

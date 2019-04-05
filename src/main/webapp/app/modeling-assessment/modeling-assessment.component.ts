@@ -16,6 +16,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
+    private highlightColor = 'rgba(219, 53, 69,0.6)';
+
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
@@ -153,14 +155,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         const model: UMLModel = this.apollonEditor.model;
         for (const element of model.elements) {
             if (newElementIDs.has(element.id)) {
-                element.highlight = 'red';
+                element.highlight = this.highlightColor;
             } else {
                 element.highlight = undefined;
             }
         }
         for (const relationship of model.relationships) {
             if (newElementIDs.has(relationship.id)) {
-                relationship.highlight = 'red';
+                relationship.highlight = this.highlightColor;
             } else {
                 relationship.highlight = undefined;
             }
