@@ -52,7 +52,7 @@
             <button type="button" class="btn btn-outline" (click)="c()" jhiTranslate="entity.action.close">Close</button>
         </div>
     </ng-template>
-    <div *ngIf="!submission?.submitted"><button class="btn btn-warning" (click)="open(help)">
+    <div><button class="btn btn-warning" (click)="open(help)">
         <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
         <span jhiTranslate="arTeMiSApp.modelingEditor.helpModal.help">Help</span>
     </button></div><br>

@@ -52,11 +52,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
                     restrictSize: {
                         min: { width: 15 },
-                        max: { width: this.resizeOptions.maxWidth | 2500 },
+                        max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500 },
                     },
                     inertia: true,
                 })
-                .on('resizemove', event => {
+                .on('resizemove', (event: any) => {
                     const target = event.target;
                     target.style.width = event.rect.width + 'px';
                 });

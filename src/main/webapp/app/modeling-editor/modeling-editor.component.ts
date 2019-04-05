@@ -38,11 +38,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
                     restrictSize: {
                         min: { width: 15 },
-                        max: { width: this.resizeOptions.maxWidth | 2500 },
+                        max: { width: this.resizeOptions.maxWidth ? this.resizeOptions.maxWidth : 2500 },
                     },
                     inertia: true,
                 })
-                .on('resizemove', event => {
+                .on('resizemove', (event: any) => {
                     const target = event.target;
                     target.style.width = event.rect.width + 'px';
                 });
@@ -74,7 +74,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
     /**
      * This function opens the modal for the help dialog.
      */
-    private open(content: any) {
+    open(content: any) {
         this.modalService.open(content, { size: 'lg' });
     }
 
