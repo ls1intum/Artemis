@@ -1,6 +1,9 @@
 {
     "arTeMiSApp": {
         "modelingEditor": {
+            "title": "Modeling Editor",
+            "problemStatement": "<strong>Problem statement:</strong>",
+            "maxScore": "<strong>Max. Score: {{maxScore}}</strong>",
             "saveSuccessful": "Your diagram was saved successfully!",
             "submitSuccessful": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Please wait for your feedback.",
             "submitSuccessfulWithAssessment": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Your feedback is shown below.",
@@ -8,6 +11,13 @@
             "empty": "Unable to submit an empty diagram.",
             "autoSubmit": "The exercise has ended. Now you can't edit your diagram anymore.",
             "error": "An error occurred. Please try again later.",
+            "assessment": {
+                "title": "Assessment",
+                "noAssessment": "There is no assessment available yet.",
+                "instructions": "Select entities and/or associations in the editor to filter the assessment.",
+                "element": "Element",
+                "score": "Score"
+            },
             "helpModal": {
                 "help": "Help",
                 "title": "How to use the modeling editor",

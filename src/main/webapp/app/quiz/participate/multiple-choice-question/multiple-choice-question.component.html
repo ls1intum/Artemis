@@ -1,7 +1,7 @@
 <div class="mc-question markdown-preview" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
-    <p [innerHTML]="rendered.text "></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
-    <h6>Please choose all correct answer options</h6>
+    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
+    <h6>{{'arTeMiSApp.quizQuestion.allOptions' | translate}}</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
@@ -53,10 +53,10 @@
     </div>
     <table class="answer-options-result" *ngIf="showResult">
         <tr>
-            <th class="content">Answer</th>
-            <th class="solution">Solution</th>
+            <th class="content">{{'arTeMiSApp.multipleChoiceQuestion.answer' | translate}}</th>
+            <th class="solution">{{'arTeMiSApp.multipleChoiceQuestion.solution' | translate}}</th>
             <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
-            <th class="selection" *ngIf="!forceSampleSolution">You</th>
+            <th class="selection" *ngIf="!forceSampleSolution">{{'arTeMiSApp.multipleChoiceQuestion.you' | translate}}</th>
         </tr>
         <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index">
             <td class="content">
@@ -79,10 +79,10 @@
                 </div>
             </td>
             <td class="solution">
-                <span id="answer-option-{{i}}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
-                <span id="answer-option-{{i}}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span id="answer-option-{{i}}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">{{'arTeMiSApp.multipleChoiceQuestion.correct' | translate}}</span>
+                <span id="answer-option-{{i}}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">{{'arTeMiSApp.multipleChoiceQuestion.wrong' | translate}}</span>
                 <span id="answer-option-{{i}}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
-                <fa-icon ngbTooltip="Invalid answers will be assessed as correct."
+                <fa-icon ngbTooltip="{{'arTeMiSApp.multipleChoiceQuestion.invalid' | translate}}"
                            placement="top"
                            style="color:black;"
                            icon="question-circle"

@@ -35,7 +35,7 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.quizExercise.startTime">Start Time</span><fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="duration"><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span><fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span><fa-icon icon="sort"></fa-icon></th>
-                    <th>Quiz Lifecycle</th>
+                    <th>{{'arTeMiSApp.quizExercise.quizLifecycle' | translate}}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -48,7 +48,13 @@
                     <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]">{{quizExercise.id}}</a>
                 </td>
                 <td>{{quizExercise.title}}</td>
-                <td>{{quizExercise.status}}</td>
+                <td>
+                    <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{'arTeMiSApp.quizExercise.quizStatus.closed' | translate}}</span>
+                    <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{'arTeMiSApp.quizExercise.quizStatus.hidden' | translate}}</span>
+                    <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{'arTeMiSApp.quizExercise.quizStatus.visible' | translate}}</span>
+                    <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{'arTeMiSApp.quizExercise.quizStatus.active' | translate}}</span>
+                    <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{'arTeMiSApp.quizExercise.quizStatus.openForPractice' | translate}}</span>
+                </td>
                 <td>{{quizExercise.isPlannedToStart ? (quizExercise.releaseDate | date:'medium') : "-"}}</td>
                 <td>
                     {{fullMinutesForSeconds(quizExercise.duration)}}

@@ -31,10 +31,25 @@
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
-            "solutionResult": "Solution Result"
+            "solutionResult": "Solution Result",
+            "structureTestOracle": "Update Structure Test Oracle"
         },
         "editor": {
-            "title": "Code Editor"
+            "title": "Code Editor for Exercise:",
+            "instructions": "&nbsp; Instructions &nbsp;",
+            "unsavedChanges": "&nbsp; Unsaved changes in {{ unsavedFiles }} files.",
+            "savingFile": "&nbsp; Saving file.",
+            "changesSaved": "&nbsp; All changes saved.",
+            "failedToSave": "&nbsp; Failed to save file.",
+            "changesCommited": "&nbsp; All changes commited.",
+            "uncommittedChanges": "&nbsp; There are uncommited changes.",
+            "commitAndRun": "Commit & Run Tests",
+            "buildOutput": "&nbsp; Build Output",
+            "building": "Building...",
+            "buildFailed": "Build Failed",
+            "noBuildOutput": "No build results available",
+            "selectFile": "Select a file to get started!",
+            "downloadBuildResult": "Download Build Result"
         }
     }
 }

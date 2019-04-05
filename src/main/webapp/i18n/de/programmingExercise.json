@@ -2,21 +2,21 @@
     "arTeMiSApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
-                "createLabel": "neue Programmieraufgabe erstellen",
+                "title": "Programmieraufgaben",
+                "createLabel": "Neue Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
-                "linkLabel": "neue Programmieraufgabe verlinken",
-                "editLinkLabel": "verlinkte Programmieraufgabe bearbeiten",
-                "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
+                "linkLabel": "Neue Programmieraufgabe verlinken",
+                "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
+                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
-            "created": "Programming Exercise erstellt mit Title {{ param }}",
-            "updated": "Programming Exercise aktualisiert mit Title {{ param }}",
-            "deleted": "Programming Exercise gelöscht mit Title {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
-                "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Programmieraufgabe {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Programming Exercise"
+                "title": "Programmieraufgabe"
             },
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
@@ -24,17 +24,32 @@
             "templateBuildPlanId": "Vorlage Build Plan Id",
             "solutionBuildPlanId": "Lösung Build Plan Id (optional)",
             "repositories": "Repositories",
-            "buildplans": "Build Plans",
-            "publishBuildPlanUrl": "Publish Build Plan",
-            "problemStatement": "Problem Statement",
-            "allowOnlineEditor": "Allow Online Editor",
-            "programmingLanguage": "Programming Language",
+            "buildplans": "Build Pläne",
+            "publishBuildPlanUrl": "Build Plan veröffentlichen",
+            "problemStatement": "Problemstellung",
+            "allowOnlineEditor": "Online Editor erlauben",
+            "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
-            "solutionResult": "Ergebnis Lösung"
+            "solutionResult": "Ergebnis Lösung",
+            "structureTestOracle": "Oracle Strukturtest aktualisieren"
         },
         "editor": {
-            "title": "Code Editor"
+            "title": "Code Editor für Übung:",
+            "instructions": "&nbsp; Aufgabenstellung &nbsp;",
+            "unsavedChanges": "&nbsp; Nicht gespeicherte Änderungen in {{ unsavedFiles }} Datei(en).",
+            "savingFile": "&nbsp; Datei wird gespeichert.",
+            "changesSaved": "&nbsp; Alle Änderungen gespeichert.",
+            "failedToSave": "&nbsp; Änderungen konnten nicht gespeichert werden.",
+            "changesCommited": "&nbsp; Alle Änderungen commited.",
+            "uncommittedChanges": "&nbsp; Es gibt Änderungen, die nicht committed wurden",
+            "commitAndRun": "Commit & Tests starten",
+            "buildOutput": "&nbsp; Build Ergebnisse",
+            "building": "Building...",
+            "buildFailed": "Build gescheitert",
+            "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
+            "selectFile": "Wähle eine Datei aus, um zu beginnen!",
+            "downloadBuildResult": "Build Ergebnis herunterladen"
         }
     }
 }
