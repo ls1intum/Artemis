@@ -85,8 +85,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.websocketChannelResults = `/topic/participation/${participation.id}/newResults`;
                 this.jhiWebsocketService.subscribe(this.websocketChannelResults);
                 this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                    //     // convert json string to moment
                     console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                    // convert json string to moment
                     newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                     this.handleNewResult(newResult);
                 });
