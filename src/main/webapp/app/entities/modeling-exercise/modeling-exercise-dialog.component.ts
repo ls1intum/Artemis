@@ -16,7 +16,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
-    templateUrl: './modeling-exercise-dialog.component.html'
+    templateUrl: './modeling-exercise-dialog.component.html',
 })
 export class ModelingExerciseDialogComponent implements OnInit {
     modelingExercise: ModelingExercise;
@@ -33,7 +33,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -42,14 +42,14 @@ export class ModelingExerciseDialogComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
         this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
                 this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -71,10 +71,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError()
-        );
+        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: ModelingExercise) {
@@ -98,7 +95,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-modeling-exercise-popup',
-    template: ''
+    template: '',
 })
 export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
@@ -109,12 +106,10 @@ export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
         this.routeSub = this.route.params.subscribe(params => {
             if (params['id']) {
                 this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
+            } else if (params['courseId']) {
+                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
             } else {
-                if (params['courseId']) {
-                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
-                } else {
-                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
-                }
+                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
             }
         });
     }

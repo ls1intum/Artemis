@@ -34,7 +34,7 @@ public class ModelingExerciseService {
 
 
     /**
-     * Get one quiz exercise by id.
+     * Get one modeling exercise by id.
      *
      * @param id the id of the entity
      * @return the entity

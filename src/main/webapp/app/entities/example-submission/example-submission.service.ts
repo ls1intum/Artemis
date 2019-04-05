@@ -8,14 +8,13 @@ export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-
     constructor(private http: HttpClient) {}
 
     create(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(exampleSubmission);
         return this.http
             .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
@@ -24,15 +23,16 @@ export class ExampleSubmissionService {
         const copy = this.convert(exampleSubmission);
         return this.http
             .put<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    // TODO CZ: directly return Observable<ExampleSubmission> here without calling convertResponse?
     get(exampleSubmissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<ExampleSubmission>(`api/example-submissions/${exampleSubmissionId}`, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: HttpResponse<ExampleSubmission>) => this.convertResponse(res));
     }
