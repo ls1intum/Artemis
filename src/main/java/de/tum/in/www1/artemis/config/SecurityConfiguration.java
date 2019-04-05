@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
+// @formatter:off
 @Configuration
 @Import(SecurityProblemSupport.class)
 @EnableWebSecurity
@@ -117,7 +118,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .permitAll().antMatchers("/api/lti/launch/*").permitAll().antMatchers("/api/**").authenticated().antMatchers("/websocket/tracker")
                 .hasAuthority(AuthoritiesConstants.ADMIN).antMatchers("/websocket/**").permitAll().antMatchers("/management/health").permitAll().antMatchers("/management/info")
                 .permitAll().antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN).and().apply(securityConfigurerAdapter());
-
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
