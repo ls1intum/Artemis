@@ -190,8 +190,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
              * \\] look for the character ']' to determine the end of the command identifier
              * )  close the bracket
              *  g: search in the whole string
+             *  i: case insensitive, neglecting capital letters
              *  m: match the regex over multiple lines*/
-            const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gm');
+            const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
 
             /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText as soon as a domainCommand identifier is found */
             while (remainingMarkdownText.length) {

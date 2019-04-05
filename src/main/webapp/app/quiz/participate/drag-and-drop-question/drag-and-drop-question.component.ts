@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -6,11 +6,12 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+import { SecuredImageComponent } from 'app/components/util/secured-image.component';
 
 // options are optional ;)
 polyfill({
     // use this to make use of the scroll behaviour
-    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
 // Drag-enter listener for mobile devices
@@ -24,9 +25,13 @@ window.addEventListener('touchmove', function() {});
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
+    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class DragAndDropQuestionComponent implements OnChanges {
+    /** needed to trigger a manual reload of the drag and drop background picture */
+    @ViewChild(SecuredImageComponent)
+    secureImageComponent: SecuredImageComponent;
+
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
@@ -70,6 +75,8 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dropAllowed = false;
     correctAnswer: number;
 
+    loadingState = 'loading';
+
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -96,6 +103,14 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     drop() {
         this.dropAllowed = false;
+    }
+
+    /** Sets the view displayed to the user
+     * @param {Output} value -> loading: background picture for drag and drop question is currently loading
+     *                          success: background picture for drag and drop question was loaded
+     *                          error: an error occurred during background download */
+    changeLoading(value: string) {
+        this.loadingState = value;
     }
 
     /**
@@ -166,9 +181,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find(localMapping =>
-                that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
-            );
+            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {
