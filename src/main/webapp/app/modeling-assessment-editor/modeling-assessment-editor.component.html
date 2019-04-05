@@ -1,4 +1,4 @@
-<div *ngIf="true; else conflictResolution" class="assessment-container">
+<div class="assessment-container">
     <h2 class="top-container">
         <!--back button only used in tutor dashboard-->
         <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
@@ -19,12 +19,11 @@
             <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <div *ngIf="conflicts && conflicts.length > 0" class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
-                <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
-            </div>
             <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
+            </button>
+            <button class="btn btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
+                <span jhiTranslate="modelingAssessmentEditor.button.resolveConflict">Resolve Conflict</span>
             </button>
             <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
@@ -45,6 +44,3 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
-<ng-template #conflictResolution>
-    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
-</ng-template>
