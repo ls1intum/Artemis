@@ -21,11 +21,11 @@ export class ModelingAssessmentService {
     }
 
     addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
-        this.localSubmissionConflictMap.set(submissionID, conflicts);
+        return this.localSubmissionConflictMap.set(submissionID, conflicts);
     }
 
     getLocalConflicts(submissionID: number) {
-        this.localSubmissionConflictMap.get(submissionID);
+        return this.localSubmissionConflictMap.get(submissionID);
     }
 
     save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
