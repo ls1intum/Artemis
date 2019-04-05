@@ -30,7 +30,7 @@
 
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
-            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ textExercise.problemStatement }}</p>
+            <p class="mb-3"><span><strong>Problem Statement:</strong></span> <span [innerHTML]="formattedProblemStatement"></span></p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
     </div>
