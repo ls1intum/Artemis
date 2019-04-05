@@ -36,17 +36,6 @@
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.difficulty" | translate}}</h5></div>
                     <div class="col-6"><h5><jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge></h5></div>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <h5>{{"arTeMiSApp.courseOverview.exerciseDetails.exerciseStatus" | translate}}</h5></div>
-                    <div class="col-6"
-                         *ngIf="exercise.participations && exercise.participations.length > 0; else notParticipated">
-                        <h5>{{exercise.participations[0].initializationState}}</h5></div>
-                    <ng-template #notParticipated>
-                        <div class="col-6">
-                            <h5>{{"arTeMiSApp.courseOverview.exerciseDetails.notParticipated" | translate}}</h5></div>
-                    </ng-template>
-                </div>
                 <div class="row" *ngIf="exercise.maxScore">
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.maxPoints" | translate}}</h5>
                     </div>
