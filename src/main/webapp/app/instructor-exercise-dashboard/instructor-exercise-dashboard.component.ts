@@ -10,7 +10,7 @@ import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-lead
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
     templateUrl: './instructor-exercise-dashboard.component.html',
-    providers: [JhiAlertService]
+    providers: [JhiAlertService],
 })
 export class InstructorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
@@ -25,7 +25,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private participationService: ParticipationService,
-        private resultService: ResultService
+        private resultService: ResultService,
     ) {}
 
     ngOnInit(): void {
@@ -38,38 +38,38 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
 
-                this.participationService.findAllParticipationsByExercise(this.exercise.id, {withEagerResults: true}).subscribe((participationRes: HttpResponse<Participation[]>) => {
-                    this.exercise.participations = participationRes.body.filter(participation => participation.initializationState === InitializationState.FINISHED);
-                    this.numberOfAssessments = this.exercise.participations.filter(participation =>
-                        participation.results.filter(result => result.rated).length > 0
-                    ).length;
+                this.participationService
+                    .findAllParticipationsByExercise(this.exercise.id, { withEagerResults: true })
+                    .subscribe((participationRes: HttpResponse<Participation[]>) => {
+                        this.exercise.participations = participationRes.body.filter(participation => participation.initializationState === InitializationState.FINISHED);
+                        this.numberOfAssessments = this.exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
 
-                    this.dataForAssessmentPieChart = [
-                        this.exercise.participations.length - this.numberOfAssessments,
-                        this.numberOfAssessments,
-                    ];
-                });
+                        this.dataForAssessmentPieChart = [this.exercise.participations.length - this.numberOfAssessments, this.numberOfAssessments];
+                    });
             },
-            (response: HttpErrorResponse) => this.onError(response.message)
+            (response: HttpErrorResponse) => this.onError(response.message),
         );
 
-        this.resultService.getResultsForExercise(this.courseId, exerciseId, {withAssessors: true}).subscribe(
-            (res: HttpResponse<Result[]>) => {
-                const results = res.body;
+        this.resultService.getResultsForExercise(this.courseId, exerciseId, { withAssessors: true }).subscribe((res: HttpResponse<Result[]>) => {
+            const results = res.body;
 
-                for (const result of results) {
-                    const tutorId = result.assessor.id;
-                    if (!this.tutorLeaderboardData[tutorId]) {
-                        this.tutorLeaderboardData[tutorId] = {
-                            tutor: result.assessor,
-                            numberOfAssessments: 0
-                        };
-                    }
+            for (const result of results) {
+                const tutorId = result.assessor.id;
+                if (!this.tutorLeaderboardData[tutorId]) {
+                    this.tutorLeaderboardData[tutorId] = {
+                        tutor: result.assessor,
+                        numberOfAssessments: 0,
+                        numberOfComplaints: 0,
+                    };
+                }
 
-                    this.tutorLeaderboardData[tutorId].numberOfAssessments++;
+                this.tutorLeaderboardData[tutorId].numberOfAssessments++;
+
+                if (result.hasComplaint) {
+                    this.tutorLeaderboardData[tutorId].numberOfComplaints++;
                 }
             }
-        );
+        });
     }
 
     private onError(error: string) {

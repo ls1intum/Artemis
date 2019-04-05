@@ -71,6 +71,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfSuccessfulParticipations: number;
     public averagePoints: number;
     public numberOfAssessments: number;
+    public numberOfComplaints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
