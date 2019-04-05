@@ -6,7 +6,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
  * domain commands: ArTEMiS customized commands
  */
 export abstract class Command {
-
     buttonIcon: string;
     buttonTranslationString: string;
     protected aceEditorContainer: AceEditorComponent;
@@ -35,5 +34,5 @@ export abstract class Command {
         this.aceEditorContainer.getEditor().session.replace(range, text);
     }
 
-    abstract execute(): void;
+    abstract execute(input?: string): void;
 }

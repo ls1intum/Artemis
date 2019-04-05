@@ -1,4 +1,4 @@
-<div class="dnd-question"
+<div class="dnd-question markdown-preview"
      [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">

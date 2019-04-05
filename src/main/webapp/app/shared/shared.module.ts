@@ -12,12 +12,12 @@ import { SecuredImageComponent } from 'app/components/util/secured-image.compone
     providers: [FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
     exports: [ArTEMiSSharedCommonModule, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSSharedModule {
     static forRoot() {
         return {
-            ngModule: ArTEMiSSharedModule
+            ngModule: ArTEMiSSharedModule,
         };
     }
 }

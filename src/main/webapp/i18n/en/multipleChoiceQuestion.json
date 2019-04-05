@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "multipleChoiceQuestion" : {
+        "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple Choice Questions",
                 "createLabel": "Create a new Multiple Choice Question",
@@ -36,7 +35,8 @@
                 "link": "Link",
                 "orderedList": "Ordered List",
                 "imageUpload": "Attachment",
-                "code": "Code"
+                "code": "Code",
+                "color": "Color"
             }
         }
     }

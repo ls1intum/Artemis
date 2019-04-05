@@ -38,7 +38,7 @@
 
     <div class="row" *ngIf="modelingExercise">
         <div [ngClass]="{'col-12': submission?.submitted, 'col-9': !submission?.submitted}">
-            <p class="mb-3">
+            <p class="mb-3 markdown-preview">
                 <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <div class="background-editor-color">
                     <span [innerHTML]="problemStatement" ></span>
