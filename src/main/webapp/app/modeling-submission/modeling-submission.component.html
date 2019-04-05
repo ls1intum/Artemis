@@ -40,7 +40,9 @@
         <div [ngClass]="{'col-12': submission?.submitted, 'col-9': !submission?.submitted}">
             <p class="mb-3">
                 <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
-                <span [innerHTML]="problemStatement" ></span>
+                <div class="background-editor-color">
+                    <span [innerHTML]="problemStatement" ></span>
+                </div>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
