@@ -87,8 +87,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
                     //     // convert json string to moment
                     console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                    //     newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                    //     this.handleNewResult(newResult);
+                    newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                    this.handleNewResult(newResult);
                 });
             }
         });
@@ -97,7 +97,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     handleNewResult(result: Result) {
         const participation = this.exercise.participations[0];
         if (participation) {
-            participation.results.push(result);
+            const results = participation.results;
+            if (!results.some(el => el.id === result.id)) {
+                participation.results.push(result);
+            }
         }
     }
 
