@@ -4,6 +4,8 @@
         "conflicts": "Konflikte",
         "assessor": "Bewertet von: {{firstName}} {{lastName}}",
         "noModel": "Kein Modell zum Darstellen gefunden.",
-        "messages": {}
+        "messages": {
+            "noConflicts": "Konflikte konnten nicht geladen werden"
+        }
     }
 }

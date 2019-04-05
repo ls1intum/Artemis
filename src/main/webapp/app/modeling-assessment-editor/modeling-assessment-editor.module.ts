@@ -5,7 +5,6 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { RouterModule } from '@angular/router';
 import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
-import { HomeComponent } from 'app/home';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
 import { JhiMainComponent } from 'app/layouts';
 import { SortByModule } from 'app/components/pipes';

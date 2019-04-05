@@ -5,7 +5,6 @@
         "noModel": "No model found to display"
     },
     "messages": {
-        "noConflicts": "Conflicts could not be loaded",
-        "conflictsResolved": "All conflicts have been processed."
+        "noConflicts": "Conflicts could not be loaded"
     }
 }
