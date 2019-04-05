@@ -46,16 +46,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final CorsFilter corsFilter;
     private final SecurityProblemSupport problemSupport;
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
-    private final JHipsterProperties jHipsterProperties;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, JHipsterProperties jHipsterProperties) {
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
-        this.jHipsterProperties = jHipsterProperties;
     }
 
     @PostConstruct
@@ -64,9 +62,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             authenticationManagerBuilder
                 .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder());
-            if(remoteUserAuthenticationProvider.isPresent()) {
-                authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
-            }
+            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
         } catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
         }
@@ -106,6 +102,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/test/**");
 
         web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
         web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
     }
@@ -125,6 +122,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .headers()
             .frameOptions()
+            .disable()
+        .and()
+            .headers()
+            .httpStrictTransportSecurity()
             .disable()
         .and()
             .sessionManagement()
