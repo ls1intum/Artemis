@@ -150,8 +150,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!newElementIDs) {
             newElementIDs = new Set<string>();
         }
-        console.log('newElementIDs', newElementIDs);
-        // console.log(this.apollonEditor['store'].getState())
         const model: UMLModel = this.apollonEditor.model;
         for (const element of model.elements) {
             if (newElementIDs.has(element.id)) {
@@ -167,7 +165,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 relationship.highlight = undefined;
             }
         }
-        console.log('model', model);
         this.apollonEditor.model = model;
     }
 
