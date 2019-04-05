@@ -5,7 +5,8 @@
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
-            "assessInstruction": "Markiere den zu bewertenden Textausschnitt und klicke \"Assess\".",
+            "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
+            "predefineTextBlocks": "Textblöcke automatisch anlegen",
             "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen."
         }
     }

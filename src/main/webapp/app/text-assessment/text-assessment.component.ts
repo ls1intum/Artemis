@@ -201,6 +201,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
+    public predefineTextBlocks(): void {
+        this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(response => {
+            this.assessments = response.body.feedbacks || [];
+        });
+    }
+
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
