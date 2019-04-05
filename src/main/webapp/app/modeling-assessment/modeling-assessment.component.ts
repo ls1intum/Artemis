@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel, Assessment, UMLElement, UMLRelationship } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -77,7 +77,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.calculateTotalScore();
         }
         if (changes.highlightedElementIds) {
-            this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+            if (this.apollonEditor !== null) {
+                this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+            }
             // this.scrollIntoView(changes.highlightedElementId.currentValue);
         }
     }

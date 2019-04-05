@@ -22,9 +22,10 @@
             [model]="conflictingModel"
             [feedbacks]="conflictingResult.result.feedbacks"
             [assessor]="conflictingResult.result.assessor"
-            [highlightedElementId]="conflictingResult.modelElementId"
-            [readOnly]="true"
+            [highlightedElementIds]="[conflictingResult.modelElementId]"
+            [readOnly]="false"
             [resizeOptions]="{}"
+            [enablePopups]="true"
         ></jhi-modeling-assessment>
         <jhi-modeling-assessment
             *ngIf="currentConflict"
@@ -32,9 +33,10 @@
             [diagramType]="this.modelingExercise.diagramType"
             [model]="model"
             [feedbacks]="currentConflict.result.feedbacks"
-            [highlightedElementId]="currentConflict.modelElementId"
+            [highlightedElementIds]="[currentConflict.modelElementId]"
             [assessor]="user"
-            [readOnly]="true"
+            [readOnly]="false"
+            [enablePopups]="true"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>

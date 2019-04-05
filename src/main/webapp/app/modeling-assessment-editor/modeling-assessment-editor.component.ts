@@ -70,6 +70,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.submission = submission;
                 this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
                 this.result = this.submission.result;
+                this.localFeedbacks = this.result.feedbacks;
                 if (this.result.feedbacks) {
                     this.result = this.modelingAssessmentService.convertResult(this.result);
                 } else {
