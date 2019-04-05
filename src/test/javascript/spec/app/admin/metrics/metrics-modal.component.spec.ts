@@ -15,7 +15,7 @@ describe('Component Tests', () => {
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [JhiMetricsMonitoringModalComponent]
+                declarations: [JhiMetricsMonitoringModalComponent],
             })
                 .overrideTemplate(JhiMetricsMonitoringModalComponent, '')
                 .compileComponents();
@@ -35,7 +35,7 @@ describe('Component Tests', () => {
                     { name: 'test3', threadState: 'TIMED_WAITING' },
                     { name: 'test4', threadState: 'BLOCKED' },
                     { name: 'test5', threadState: 'BLOCKED' },
-                    { name: 'test5', threadState: 'NONE' }
+                    { name: 'test5', threadState: 'NONE' },
                 ];
                 fixture.detectChanges();
 

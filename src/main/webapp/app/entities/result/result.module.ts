@@ -8,29 +8,12 @@ import { MomentModule } from 'angular2-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        MomentModule
-    ],
-    declarations: [
-        ResultComponent,
-        ResultDetailComponent,
-        ResultHistoryComponent
-    ],
-    exports: [
-        ResultComponent,
-        ResultDetailComponent,
-        ResultHistoryComponent
-    ],
-    entryComponents: [
-        ResultComponent,
-        ResultDetailComponent
-    ],
-    providers: [
-        ResultService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    imports: [ArTEMiSSharedModule, MomentModule],
+    declarations: [ResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    exports: [ResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    entryComponents: [ResultComponent, ResultDetailComponent],
+    providers: [ResultService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSResultModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

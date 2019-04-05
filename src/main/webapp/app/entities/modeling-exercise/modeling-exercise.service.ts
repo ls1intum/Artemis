@@ -20,16 +20,12 @@ export class ModelingExerciseService {
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(modelingExercise);
-        return this.http
-            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(modelingExercise);
-        return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {

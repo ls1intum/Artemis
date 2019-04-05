@@ -23,16 +23,14 @@ export class ProfileService {
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
                         if (profileInfo.activeProfiles) {
-                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) =>
-                                profileInfo.activeProfiles.includes(profile)
-                            );
+                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                         }
                         return profileInfo;
-                    })
+                    }),
                 )
                 .toPromise();
         }

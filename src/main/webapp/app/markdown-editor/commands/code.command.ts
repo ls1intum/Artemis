@@ -1,8 +1,7 @@
 import { Command } from './command';
 
 export class CodeCommand extends Command {
-
-    buttonIcon =  'code';
+    buttonIcon = 'code';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.code';
 
     /**
@@ -18,7 +17,7 @@ export class CodeCommand extends Command {
         if (selectedText.includes('```language ') && !selectedText.includes('Source Code')) {
             const textToAdd = selectedText.slice(12, -3);
             this.insertText(textToAdd);
-        } else if (selectedText.includes('```language ') && selectedText.includes('Source Code') ) {
+        } else if (selectedText.includes('```language ') && selectedText.includes('Source Code')) {
             const textToAdd = selectedText.slice(23, -3);
             this.insertText(textToAdd);
         } else {

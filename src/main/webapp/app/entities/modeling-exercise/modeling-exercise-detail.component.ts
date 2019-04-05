@@ -10,10 +10,9 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
-    templateUrl: './modeling-exercise-detail.component.html'
+    templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
-
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -23,9 +22,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdown
-    ) {
-    }
+        private artemisMarkdown: ArtemisMarkdown,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -35,11 +33,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     load(id: number) {
-        this.modelingExerciseService.find(id)
-            .subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-                this.modelingExercise = modelingExerciseResponse.body;
-                this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
-            });
+        this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
+            this.modelingExercise = modelingExerciseResponse.body;
+            this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
+        });
     }
 
     previousState() {
@@ -52,9 +49,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'modelingExerciseListModification',
-            () => this.load(this.modelingExercise.id)
-        );
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id));
     }
 }

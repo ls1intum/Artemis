@@ -3,7 +3,6 @@ import { DragAndDropMapping } from '../drag-and-drop-mapping';
 import { QuizQuestionType } from '../quiz-question';
 
 export class DragAndDropSubmittedAnswer extends SubmittedAnswer {
-
     public mappings: DragAndDropMapping[];
 
     constructor() {

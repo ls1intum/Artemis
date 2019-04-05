@@ -13,24 +13,23 @@ const routes: Routes = [
                 component: PrivacyComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.privacy.title'
-                }
+                    pageTitle: 'legal.privacy.title',
+                },
             },
             {
                 path: ':fragment',
                 component: PrivacyComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.privacy.title'
-                }
-            }
-        ]
+                    pageTitle: 'legal.privacy.title',
+                },
+            },
+        ],
     },
 ];
 
 @NgModule({
     imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule]
+    exports: [RouterModule],
 })
-export class LegalRoutingModule {
-}
+export class LegalRoutingModule {}

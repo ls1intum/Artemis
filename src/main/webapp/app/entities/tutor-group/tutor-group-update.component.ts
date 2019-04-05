@@ -11,7 +11,7 @@ import { TutorGroup } from 'app/entities/tutor-group';
 
 @Component({
     selector: 'jhi-tutor-group-update',
-    templateUrl: './tutor-group-update.component.html'
+    templateUrl: './tutor-group-update.component.html',
 })
 export class TutorGroupUpdateComponent implements OnInit {
     tutorGroup: TutorGroup;
@@ -26,7 +26,7 @@ export class TutorGroupUpdateComponent implements OnInit {
         protected tutorGroupService: TutorGroupService,
         protected userService: UserService,
         protected courseService: CourseService,
-        protected activatedRoute: ActivatedRoute
+        protected activatedRoute: ActivatedRoute,
     ) {}
 
     ngOnInit() {
@@ -38,14 +38,14 @@ export class TutorGroupUpdateComponent implements OnInit {
             .query()
             .pipe(
                 filter((mayBeOk: HttpResponse<User[]>) => mayBeOk.ok),
-                map((response: HttpResponse<User[]>) => response.body)
+                map((response: HttpResponse<User[]>) => response.body),
             )
             .subscribe((res: User[]) => (this.users = res), (res: HttpErrorResponse) => this.onError(res.message));
         this.courseService
             .query()
             .pipe(
                 filter((mayBeOk: HttpResponse<Course[]>) => mayBeOk.ok),
-                map((response: HttpResponse<Course[]>) => response.body)
+                map((response: HttpResponse<Course[]>) => response.body),
             )
             .subscribe((res: Course[]) => (this.courses = res), (res: HttpErrorResponse) => this.onError(res.message));
     }

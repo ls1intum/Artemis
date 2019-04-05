@@ -20,7 +20,7 @@ export class ExerciseDashboardPopupService {
         private modalService: NgbModal,
         private router: Router,
         private exerciseService: ExerciseService,
-        private participationService: ParticipationService
+        private participationService: ParticipationService,
     ) {
         this.ngbModalRef = null;
     }
@@ -61,7 +61,7 @@ export class ExerciseDashboardPopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }
@@ -84,7 +84,7 @@ export class ExerciseDashboardPopupService {
                 // $state.go('instructor-dashboard', $state.params);
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

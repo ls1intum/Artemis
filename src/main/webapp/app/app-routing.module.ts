@@ -12,12 +12,12 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 ...LAYOUT_ROUTES,
                 {
                     path: 'admin',
-                    loadChildren: './admin/admin.module#ArTEMiSAdminModule'
-                }
+                    loadChildren: './admin/admin.module#ArTEMiSAdminModule',
+                },
             ],
-            { useHash: true, enableTracing: false }
-        )
+            { useHash: true, enableTracing: false },
+        ),
     ],
-    exports: [RouterModule]
+    exports: [RouterModule],
 })
 export class ArTEMiSAppRoutingModule {}

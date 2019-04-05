@@ -13,44 +13,44 @@ export const quizStatisticRoute: Routes = [
         component: QuizStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:quizId/quiz-point-statistic',
         component: QuizPointStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:quizId/multiple-choice-question-statistic/:questionId',
         component: MultipleChoiceQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
         component: DragAndDropQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:quizId/short-answer-question-statistic/:questionId',
         component: ShortAnswerQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];

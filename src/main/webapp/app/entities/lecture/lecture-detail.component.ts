@@ -4,7 +4,7 @@ import { Lecture } from 'app/entities/lecture';
 
 @Component({
     selector: 'jhi-lecture-detail',
-    templateUrl: './lecture-detail.component.html'
+    templateUrl: './lecture-detail.component.html',
 })
 export class LectureDetailComponent implements OnInit {
     lecture: Lecture;

@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "fileUploadSubmission" : {
+        "fileUploadSubmission": {
             "home": {
                 "title": "File Upload Submissions",
                 "createLabel": "Create a new File Upload Submission",

@@ -7,7 +7,7 @@ import { Moment } from 'moment';
 
 export const enum AssessmentType {
     AUTOMATIC = 'AUTOMATIC',
-    MANUAL = 'MANUAL'
+    MANUAL = 'MANUAL',
 }
 
 export class Result implements BaseEntity {

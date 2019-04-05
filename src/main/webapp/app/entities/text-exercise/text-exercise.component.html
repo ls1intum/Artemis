@@ -1,78 +1,81 @@
 <div>
     <h4>
-        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="textExercises && showHeading">{{getAmountOfExercisesString(textExercises)}} </span>
+        <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="textExercises && showHeading">{{ getAmountOfExercisesString(textExercises) }} </span>
         <span jhiTranslate="arTeMiSApp.textExercise.home.title">Text Exercises</span>
-        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-text-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'text-exercise-new'] } }]">
+        <button
+            *ngIf="course"
+            class="btn btn-primary float-right jh-create-entity create-text-exercise"
+            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'text-exercise-new'] } }]"
+        >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.textExercise.home.createLabel">
-            Create Text Exercise
+                Create Text Exercise
             </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="row">
-    </div>
-    <br>
+    <div class="row"></div>
+    <br />
     <div class="table-responsive" *ngIf="textExercises && textExercises.length > 0">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="problemStatement"><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-            <th></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="problemStatement"><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let textExercise of textExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['/course', textExercise.course.id,'text-exercise', textExercise.id ]">{{textExercise.id}}</a></td>
-                <td>{{textExercise.title}}</td>
-                <td [innerHTML]="convertMarkdownToHtml(textExercise.problemStatement)"></td>
-                <td>{{textExercise.releaseDate | date:'medium'}}</td>
-                <td>{{textExercise.dueDate | date:'medium'}}</td>
-                <td>{{textExercise.maxScore}}</td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard' ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon icon="eye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/exercise', textExercise.id, 'participation' ]"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/text-exercise', textExercise.id ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon icon="eye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'text-exercise/'+ textExercise.id + '/edit'} }]"
+                <tr *ngFor="let textExercise of (textExercises | sortBy: predicate:reverse); trackBy: trackId">
+                    <td>
+                        <a [routerLink]="['/course', textExercise.course.id, 'text-exercise', textExercise.id]">{{ textExercise.id }}</a>
+                    </td>
+                    <td>{{ textExercise.title }}</td>
+                    <td [innerHTML]="convertMarkdownToHtml(textExercise.problemStatement)"></td>
+                    <td>{{ textExercise.releaseDate | date: 'medium' }}</td>
+                    <td>{{ textExercise.dueDate | date: 'medium' }}</td>
+                    <td>{{ textExercise.maxScore }}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit" [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard']" class="btn btn-info btn-sm mr-1">
+                                <fa-icon icon="eye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                            </button>
+                            <button type="submit" [routerLink]="['/exercise', textExercise.id, 'participation']" class="btn btn-primary btn-sm mr-1">
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                            </button>
+                            <button type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
+                                <fa-icon icon="eye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'text-exercise/' + textExercise.id + '/edit' } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon icon="pencil-alt"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'text-exercise/'+ textExercise.id + '/delete'} }]"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon icon="pencil-alt"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'text-exercise/' + textExercise.id + '/delete' } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <fa-icon icon="times"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                                class="btn btn-danger btn-sm mr-1"
+                            >
+                                <fa-icon icon="times"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

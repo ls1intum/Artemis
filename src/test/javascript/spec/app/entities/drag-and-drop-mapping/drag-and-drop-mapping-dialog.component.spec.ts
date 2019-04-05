@@ -15,7 +15,6 @@ import { DragAndDropSubmittedAnswerService } from '../../../../../../main/webapp
 import { DragAndDropQuestionService } from '../../../../../../main/webapp/app/entities/drag-and-drop-question';
 
 describe('Component Tests', () => {
-
     describe('DragAndDropMapping Management Dialog Component', () => {
         let comp: DragAndDropMappingDialogComponent;
         let fixture: ComponentFixture<DragAndDropMappingDialogComponent>;
@@ -27,16 +26,10 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [DragAndDropMappingDialogComponent],
-                providers: [
-                    DragItemService,
-                    DropLocationService,
-                    DragAndDropSubmittedAnswerService,
-                    DragAndDropQuestionService,
-                    DragAndDropMappingService
-                ]
+                providers: [DragItemService, DropLocationService, DragAndDropSubmittedAnswerService, DragAndDropQuestionService, DragAndDropMappingService],
             })
-            .overrideTemplate(DragAndDropMappingDialogComponent, '')
-            .compileComponents();
+                .overrideTemplate(DragAndDropMappingDialogComponent, '')
+                .compileComponents();
         }));
 
         beforeEach(() => {
@@ -48,46 +41,43 @@ describe('Component Tests', () => {
         });
 
         describe('save', () => {
-            it('Should call update service on save for existing entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new DragAndDropMapping(123);
-                        spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.dragAndDropMapping = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call update service on save for existing entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new DragAndDropMapping(123);
+                    spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.dragAndDropMapping = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.update).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'dragAndDropMappingListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.update).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'dragAndDropMappingListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
 
-            it('Should call create service on save for new entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new DragAndDropMapping();
-                        spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.dragAndDropMapping = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call create service on save for new entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new DragAndDropMapping();
+                    spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.dragAndDropMapping = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.create).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'dragAndDropMappingListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.create).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'dragAndDropMappingListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
         });
     });
-
 });

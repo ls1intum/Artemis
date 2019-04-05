@@ -12,28 +12,28 @@ export const textExerciseRoute: Routes = [
         component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/text-exercise',
         component: TextExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/text-exercise/:id',
         component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const textExercisePopupRoute: Routes = [
@@ -42,29 +42,29 @@ export const textExercisePopupRoute: Routes = [
         component: TextExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'text-exercise/:id/edit',
         component: TextExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'text-exercise/:id/delete',
         component: TextExerciseDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

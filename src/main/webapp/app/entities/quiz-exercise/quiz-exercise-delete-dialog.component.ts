@@ -11,10 +11,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-quiz-exercise-delete-dialog',
-    templateUrl: './quiz-exercise-delete-dialog.component.html'
+    templateUrl: './quiz-exercise-delete-dialog.component.html',
 })
 export class QuizExerciseDeleteDialogComponent {
-
     quizExercise: QuizExercise;
     confirmExerciseName: string;
     deleteInProgress = false;
@@ -23,9 +22,8 @@ export class QuizExerciseDeleteDialogComponent {
         private quizExerciseService: QuizExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager,
-        private jhiAlertService: JhiAlertService
-    ) {
-    }
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -34,24 +32,25 @@ export class QuizExerciseDeleteDialogComponent {
     confirmDelete(id: number) {
         this.deleteInProgress = true;
         this.quizExerciseService.delete(id).subscribe(
-        response => {
-            this.deleteInProgress = false;
-            this.eventManager.broadcast({
-                name: 'quizExerciseListModification',
-                content: 'Deleted an quizExercise'
-            });
-            this.activeModal.dismiss(true);
-        },
-        (error: HttpErrorResponse) => {
-            this.jhiAlertService.error(error.message);
-            this.deleteInProgress = false;
-        });
+            response => {
+                this.deleteInProgress = false;
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Deleted an quizExercise',
+                });
+                this.activeModal.dismiss(true);
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
+                this.deleteInProgress = false;
+            },
+        );
     }
 }
 
 @Component({
     selector: 'jhi-quiz-exercise-delete-popup',
-    template: ''
+    template: '',
 })
 export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
     protected ngbModalRef: NgbModalRef;
@@ -63,7 +62,7 @@ export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
             setTimeout(() => {
                 this.ngbModalRef = this.modalService.open(QuizExerciseDeleteDialogComponent as Component, {
                     size: 'lg',
-                    backdrop: 'static'
+                    backdrop: 'static',
                 });
                 this.ngbModalRef.componentInstance.quizExercise = quizExercise;
                 this.ngbModalRef.result.then(
@@ -74,7 +73,7 @@ export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
                     reason => {
                         this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                         this.ngbModalRef = null;
-                    }
+                    },
                 );
             }, 0);
         });

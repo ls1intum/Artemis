@@ -9,7 +9,7 @@ import { Moment } from 'moment';
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints.component.html',
-    providers: [JhiAlertService]
+    providers: [JhiAlertService],
 })
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
@@ -17,10 +17,7 @@ export class ComplaintsComponent implements OnInit {
     alreadySubmitted: boolean;
     submittedDate: Moment;
 
-    constructor(
-        private complaintService: ComplaintService,
-        private jhiAlertService: JhiAlertService
-    ) { }
+    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
@@ -34,7 +31,7 @@ export class ComplaintsComponent implements OnInit {
                 if (err.status !== 404) {
                     this.onError(err.message);
                 }
-            }
+            },
         );
     }
 
@@ -52,7 +49,7 @@ export class ComplaintsComponent implements OnInit {
             },
             (err: HttpErrorResponse) => {
                 this.onError(err.message);
-            }
+            },
         );
     }
 

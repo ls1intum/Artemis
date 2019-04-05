@@ -8,7 +8,7 @@ import { Exercise } from 'app/entities/exercise';
 @Component({
     selector: 'jhi-course-grade-book',
     templateUrl: './course-grade-book.component.html',
-    styleUrls: ['../course-overview.scss', './course-grade-book.scss']
+    styleUrls: ['../course-overview.scss', './course-grade-book.scss'],
 })
 export class CourseGradeBookComponent implements OnInit {
     private courseId: number;
@@ -20,8 +20,8 @@ export class CourseGradeBookComponent implements OnInit {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
-        private route: ActivatedRoute) {
-    }
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.parent.params.subscribe(params => {

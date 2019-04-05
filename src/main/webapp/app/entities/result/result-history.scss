@@ -1,4 +1,4 @@
-@import "../../../content/scss/_artemis-variables";
+@import '../../../content/scss/_artemis-variables';
 
 $result-element-size: 25px;
 .result-history-wrapper {
@@ -26,14 +26,11 @@ $result-element-size: 25px;
 
                 &.warning {
                     background-color: $warning;
-
                 }
 
                 &.danger {
                     background-color: $danger;
-
                 }
-
             }
 
             .result-score-info {
@@ -65,5 +62,4 @@ $result-element-size: 25px;
             }
         }
     }
-
 }

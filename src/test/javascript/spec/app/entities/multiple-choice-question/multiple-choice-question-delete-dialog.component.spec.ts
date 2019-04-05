@@ -19,7 +19,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [MultipleChoiceQuestionDeleteDialogComponent]
+                declarations: [MultipleChoiceQuestionDeleteDialogComponent],
             })
                 .overrideTemplate(MultipleChoiceQuestionDeleteDialogComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                     expect(service.delete).toHaveBeenCalledWith(123);
                     expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
                     expect(mockEventManager.broadcastSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
     });

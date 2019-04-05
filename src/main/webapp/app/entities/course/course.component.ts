@@ -9,7 +9,7 @@ import { CourseService } from './course.service';
 @Component({
     selector: 'jhi-course',
     templateUrl: './course.component.html',
-    styles: ['.course-table {padding-bottom: 5rem}']
+    styles: ['.course-table {padding-bottom: 5rem}'],
 })
 export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
@@ -22,7 +22,7 @@ export class CourseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
     ngOnInit() {

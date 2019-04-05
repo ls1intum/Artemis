@@ -1,6 +1,6 @@
 <div>
     <ul>
-        <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)" >0</li>
+        <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()">
             <fa-icon icon="book" title="Read grading instructions"></fa-icon>
         </li>
@@ -12,4 +12,3 @@
         </li>
     </ul>
 </div>
-

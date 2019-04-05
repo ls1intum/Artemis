@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "dragAndDropAssignment" : {
+        "dragAndDropAssignment": {
             "home": {
                 "title": "Drag And Drop Assignments",
                 "createLabel": "Create a new Drag And Drop Assignment",

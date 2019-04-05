@@ -10,12 +10,13 @@ import { JhiAlertService } from 'ng-jhipster';
                     <pre [innerHTML]="alert.msg"></pre>
                 </ngb-alert>
             </div>
-        </div>`
+        </div>
+    `,
 })
 export class JhiAlertComponent implements OnInit, OnDestroy {
     alerts: any[];
 
-    constructor(private alertService: JhiAlertService) { }
+    constructor(private alertService: JhiAlertService) {}
 
     ngOnInit() {
         this.alerts = this.alertService.get();
@@ -24,5 +25,4 @@ export class JhiAlertComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.alerts = [];
     }
-
 }

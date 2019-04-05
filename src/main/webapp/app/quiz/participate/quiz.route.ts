@@ -10,9 +10,9 @@ export const quizRoute: Routes = [
         data: {
             authorities: [],
             pageTitle: 'arTeMiSApp.quizExercise.home.title',
-            mode: 'default'
+            mode: 'default',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:id/practice',
@@ -20,9 +20,9 @@ export const quizRoute: Routes = [
         data: {
             authorities: [],
             pageTitle: 'arTeMiSApp.quizExercise.home.title',
-            mode: 'practice'
+            mode: 'practice',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:id/preview',
@@ -30,9 +30,9 @@ export const quizRoute: Routes = [
         data: {
             authorities: [],
             pageTitle: 'arTeMiSApp.quizExercise.home.title',
-            mode: 'preview'
+            mode: 'preview',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz/:id/solution',
@@ -40,8 +40,8 @@ export const quizRoute: Routes = [
         data: {
             authorities: [],
             pageTitle: 'arTeMiSApp.quizExercise.home.title',
-            mode: 'solution'
+            mode: 'solution',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];

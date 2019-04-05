@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-cleanup-dialog',
-    templateUrl: './programming-exercise-cleanup-dialog.component.html'
+    templateUrl: './programming-exercise-cleanup-dialog.component.html',
 })
 export class ProgrammingExerciseCleanupDialogComponent {
     exercise: Exercise;
@@ -32,27 +32,23 @@ export class ProgrammingExerciseCleanupDialogComponent {
             response => {
                 this.deleteInProgress = false;
                 if (this.deleteRepositories) {
-                    this.jhiAlertService.success(
-                        'Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.'
-                    );
+                    this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
                 } else {
-                    this.jhiAlertService.success(
-                        'Cleanup was successful. All build plans have been deleted. Students can resume their participation.'
-                    );
+                    this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
                 this.activeModal.dismiss(true);
             },
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.error(error.message);
                 this.deleteInProgress = false;
-            }
+            },
         );
     }
 }
 
 @Component({
     selector: 'jhi-instructor-dashboard-cleanup-popup',
-    template: ''
+    template: '',
 })
 export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

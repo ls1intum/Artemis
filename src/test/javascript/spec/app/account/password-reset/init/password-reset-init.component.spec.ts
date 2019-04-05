@@ -20,14 +20,14 @@ describe('Component Tests', () => {
                     {
                         provide: Renderer,
                         useValue: {
-                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {}
-                        }
+                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
+                        },
                     },
                     {
                         provide: ElementRef,
-                        useValue: new ElementRef(null)
-                    }
-                ]
+                        useValue: new ElementRef(null),
+                    },
+                ],
             })
                 .overrideTemplate(PasswordResetInitComponent, '')
                 .createComponent(PasswordResetInitComponent);
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
         it('sets focus after the view has been initialized', inject([ElementRef], (elementRef: ElementRef) => {
             const element = fixture.nativeElement;
             const node = {
-                focus() {}
+                focus() {},
             };
 
             elementRef.nativeElement = element;
@@ -70,32 +70,29 @@ describe('Component Tests', () => {
             expect(comp.errorEmailNotExists).toBeNull();
         }));
 
-        it('notifies of unknown email upon email address not registered/400', inject(
-            [PasswordResetInitService],
-            (service: PasswordResetInitService) => {
-                spyOn(service, 'save').and.returnValue(
-                    throwError({
-                        status: 400,
-                        error: { type: EMAIL_NOT_FOUND_TYPE }
-                    })
-                );
-                comp.resetAccount.email = 'user@domain.com';
+        it('notifies of unknown email upon email address not registered/400', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
+            spyOn(service, 'save').and.returnValue(
+                throwError({
+                    status: 400,
+                    error: { type: EMAIL_NOT_FOUND_TYPE },
+                }),
+            );
+            comp.resetAccount.email = 'user@domain.com';
 
-                comp.requestReset();
+            comp.requestReset();
 
-                expect(service.save).toHaveBeenCalledWith('user@domain.com');
-                expect(comp.success).toBeNull();
-                expect(comp.error).toBeNull();
-                expect(comp.errorEmailNotExists).toEqual('ERROR');
-            }
-        ));
+            expect(service.save).toHaveBeenCalledWith('user@domain.com');
+            expect(comp.success).toBeNull();
+            expect(comp.error).toBeNull();
+            expect(comp.errorEmailNotExists).toEqual('ERROR');
+        }));
 
         it('notifies of error upon error response', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
             spyOn(service, 'save').and.returnValue(
                 throwError({
                     status: 503,
-                    data: 'something else'
-                })
+                    data: 'something else',
+                }),
             );
             comp.resetAccount.email = 'user@domain.com';
 

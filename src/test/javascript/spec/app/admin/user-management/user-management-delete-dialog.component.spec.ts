@@ -18,7 +18,7 @@ describe('Component Tests', () => {
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [UserMgmtDeleteDialogComponent]
+                declarations: [UserMgmtDeleteDialogComponent],
             })
                 .overrideTemplate(UserMgmtDeleteDialogComponent, '')
                 .compileComponents();
@@ -47,7 +47,7 @@ describe('Component Tests', () => {
                     expect(service.delete).toHaveBeenCalledWith('user');
                     expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
                     expect(mockEventManager.broadcastSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
     });

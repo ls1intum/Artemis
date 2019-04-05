@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "textSubmission" : {
+        "textSubmission": {
             "home": {
                 "title": "Text Submissions",
                 "createLabel": "Create a new Text Submission",

@@ -5,7 +5,7 @@ import { Feedback } from 'app/entities/feedback';
 @Component({
     selector: 'jhi-text-assessment-detail',
     templateUrl: './text-assessment-detail.component.html',
-    styles: []
+    styles: [],
 })
 export class TextAssessmentDetailComponent {
     @Input() public assessment: Feedback;

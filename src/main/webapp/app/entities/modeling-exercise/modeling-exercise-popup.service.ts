@@ -16,7 +16,7 @@ export class ModelingExercisePopupService {
         private modalService: NgbModal,
         private router: Router,
         private modelingExerciseService: ModelingExerciseService,
-        private courseService: CourseService
+        private courseService: CourseService,
     ) {
         this.ngbModalRef = null;
     }
@@ -65,7 +65,7 @@ export class ModelingExercisePopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

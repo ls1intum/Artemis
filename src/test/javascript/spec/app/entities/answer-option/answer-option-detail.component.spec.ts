@@ -17,7 +17,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [AnswerOptionDetailComponent],
-                providers: [{ provide: ActivatedRoute, useValue: route }]
+                providers: [{ provide: ActivatedRoute, useValue: route }],
             })
                 .overrideTemplate(AnswerOptionDetailComponent, '')
                 .compileComponents();

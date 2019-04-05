@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "answerCounter" : {
+        "answerCounter": {
             "home": {
                 "title": "Answer Counters",
                 "createLabel": "Create a new Answer Counter",

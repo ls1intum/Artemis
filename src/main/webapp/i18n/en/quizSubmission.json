@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "quizSubmission" : {
+        "quizSubmission": {
             "home": {
                 "title": "Quiz Submissions",
                 "createLabel": "Create a new Quiz Submission",

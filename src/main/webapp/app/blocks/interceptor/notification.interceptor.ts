@@ -30,8 +30,8 @@ export class NotificationInterceptor implements HttpInterceptor {
                         }
                     }
                 },
-                (err: any) => {}
-            )
+                (err: any) => {},
+            ),
         );
     }
 }

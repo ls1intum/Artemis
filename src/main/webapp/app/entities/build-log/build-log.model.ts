@@ -30,15 +30,15 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     row: Math.max(parseInt(row, 10) - 1, 0),
                     column: Math.max(parseInt(column, 10) - 1, 0),
                     text: safeUnescape(text),
-                    ts: Date.parse(time)
+                    ts: Date.parse(time),
                 }))
                 // Group annotations by filename
                 .reduce(
                     (buildLogErrors, { fileName, ...rest }) => ({
                         ...buildLogErrors,
-                        [fileName]: new AnnotationArray(...(buildLogErrors[fileName] || []), rest)
+                        [fileName]: new AnnotationArray(...(buildLogErrors[fileName] || []), rest),
                     }),
-                    {}
+                    {},
                 )
         );
     }

@@ -24,22 +24,16 @@ export class ResultService {
     create(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
         // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
-        return this.http
-            .post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
-        return this.http
-            .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
@@ -48,17 +42,12 @@ export class ResultService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findResultsForParticipation(
-        courseId: number,
-        exerciseId: number,
-        participationId: number,
-        req?: any
-    ): Observable<EntityArrayResponseType> {
+    findResultsForParticipation(courseId: number, exerciseId: number, participationId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
@@ -68,7 +57,7 @@ export class ResultService {
         return this.http
             .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
@@ -83,7 +72,7 @@ export class ResultService {
 
     protected convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
-            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null
+            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null,
         });
         return copy;
     }

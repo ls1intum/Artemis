@@ -8,7 +8,7 @@ export const errorRoute: Routes = [
         component: ErrorComponent,
         data: {
             authorities: [],
-            pageTitle: 'error.title'
+            pageTitle: 'error.title',
         },
     },
     {
@@ -17,7 +17,7 @@ export const errorRoute: Routes = [
         data: {
             authorities: [],
             pageTitle: 'error.title',
-            error403: true
+            error403: true,
         },
-    }
+    },
 ];

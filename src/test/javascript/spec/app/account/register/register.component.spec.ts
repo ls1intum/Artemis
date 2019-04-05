@@ -16,7 +16,7 @@ describe('Component Tests', () => {
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [RegisterComponent]
+                declarations: [RegisterComponent],
             })
                 .overrideTemplate(RegisterComponent, '')
                 .compileComponents();
@@ -48,7 +48,7 @@ describe('Component Tests', () => {
 
                 expect(service.save).toHaveBeenCalledWith({
                     password: 'password',
-                    langKey: 'en'
+                    langKey: 'en',
                 });
                 expect(comp.success).toEqual(true);
                 expect(comp.registerAccount.langKey).toEqual('en');
@@ -56,7 +56,7 @@ describe('Component Tests', () => {
                 expect(comp.errorUserExists).toBeNull();
                 expect(comp.errorEmailExists).toBeNull();
                 expect(comp.error).toBeNull();
-            })
+            }),
         ));
 
         it('should notify of user existence upon 400/login already in use', inject(
@@ -65,8 +65,8 @@ describe('Component Tests', () => {
                 spyOn(service, 'save').and.returnValue(
                     throwError({
                         status: 400,
-                        error: { type: LOGIN_ALREADY_USED_TYPE }
-                    })
+                        error: { type: LOGIN_ALREADY_USED_TYPE },
+                    }),
                 );
                 comp.registerAccount.password = comp.confirmPassword = 'password';
 
@@ -76,7 +76,7 @@ describe('Component Tests', () => {
                 expect(comp.errorUserExists).toEqual('ERROR');
                 expect(comp.errorEmailExists).toBeNull();
                 expect(comp.error).toBeNull();
-            })
+            }),
         ));
 
         it('should notify of email existence upon 400/email address already in use', inject(
@@ -85,8 +85,8 @@ describe('Component Tests', () => {
                 spyOn(service, 'save').and.returnValue(
                     throwError({
                         status: 400,
-                        error: { type: EMAIL_ALREADY_USED_TYPE }
-                    })
+                        error: { type: EMAIL_ALREADY_USED_TYPE },
+                    }),
                 );
                 comp.registerAccount.password = comp.confirmPassword = 'password';
 
@@ -96,7 +96,7 @@ describe('Component Tests', () => {
                 expect(comp.errorEmailExists).toEqual('ERROR');
                 expect(comp.errorUserExists).toBeNull();
                 expect(comp.error).toBeNull();
-            })
+            }),
         ));
 
         it('should notify of generic error', inject(
@@ -104,8 +104,8 @@ describe('Component Tests', () => {
             fakeAsync((service: Register) => {
                 spyOn(service, 'save').and.returnValue(
                     throwError({
-                        status: 503
-                    })
+                        status: 503,
+                    }),
                 );
                 comp.registerAccount.password = comp.confirmPassword = 'password';
 
@@ -115,7 +115,7 @@ describe('Component Tests', () => {
                 expect(comp.errorUserExists).toBeNull();
                 expect(comp.errorEmailExists).toBeNull();
                 expect(comp.error).toEqual('ERROR');
-            })
+            }),
         ));
     });
 });

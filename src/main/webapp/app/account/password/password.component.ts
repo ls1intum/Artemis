@@ -5,7 +5,7 @@ import { PasswordService } from './password.service';
 
 @Component({
     selector: 'jhi-password',
-    templateUrl: './password.component.html'
+    templateUrl: './password.component.html',
 })
 export class PasswordComponent implements OnInit {
     doNotMatch: string;
@@ -39,7 +39,7 @@ export class PasswordComponent implements OnInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         }
     }

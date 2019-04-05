@@ -23,12 +23,8 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [
-        CourseService,
-        JhiAlertService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
-    schemas: []
+    providers: [CourseService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [],
 })
 export class ArTEMiSExampleSubmissionModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

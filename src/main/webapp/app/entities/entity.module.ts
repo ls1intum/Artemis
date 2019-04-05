@@ -22,12 +22,12 @@ import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upl
         ArTEMiSModelingExerciseModule,
         ArTEMiSResultModule,
         ArTEMiSTextExerciseModule,
-        ArTEMiSFileUploadExerciseModule
+        ArTEMiSFileUploadExerciseModule,
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],
     declarations: [],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSEntityModule {}

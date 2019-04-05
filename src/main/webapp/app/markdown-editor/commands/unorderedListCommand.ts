@@ -1,7 +1,6 @@
 import { Command } from './command';
 
 export class UnorderedListCommand extends Command {
-
     buttonIcon = 'list-ul';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.unorderedList';
 
@@ -22,7 +21,7 @@ export class UnorderedListCommand extends Command {
      */
     splitText(selectedText: string): void {
         const parseArray = selectedText.split('\n');
-        parseArray.forEach( element => this.replaceText(element));
+        parseArray.forEach(element => this.replaceText(element));
     }
 
     /**

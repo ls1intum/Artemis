@@ -12,37 +12,37 @@ export const fileUploadExerciseRoute: Routes = [
         component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
+            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'file-upload-exercise/:id',
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
+            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/file-upload-exercise',
         component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/file-upload-exercise/:id',
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const fileUploadExercisePopupRoute: Routes = [
@@ -51,29 +51,29 @@ export const fileUploadExercisePopupRoute: Routes = [
         component: FileUploadExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
+            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'file-upload-exercise/:id/edit',
         component: FileUploadExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
+            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'file-upload-exercise/:id/delete',
         component: FileUploadExerciseDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
+            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

@@ -19,6 +19,6 @@ const ENTITY_STATES = instructorCourseDashboardRoute;
     exports: [TutorLeaderboardComponent],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSInstructorCourseStatsDashboardModule {}

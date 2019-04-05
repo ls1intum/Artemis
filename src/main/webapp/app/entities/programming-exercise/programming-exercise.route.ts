@@ -32,46 +32,46 @@ export const programmingExerciseRoute: Routes = [
         component: ProgrammingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/programming-exercise/:id/view',
         component: ProgrammingExerciseDetailComponent,
         resolve: {
-            programmingExercise: ProgrammingExerciseResolve
+            programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/programming-exercise/new',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
-            programmingExercise: ProgrammingExerciseResolve
+            programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/programming-exercise/:id/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
-            programmingExercise: ProgrammingExerciseResolve
+            programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const programmingExercisePopupRoute: Routes = [
@@ -80,32 +80,32 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'course/:courseId/programming-exercise/:id/editlink',
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'course/:courseId/programming-exercise/:id/delete',
         component: ProgrammingExerciseDeletePopupComponent,
         resolve: {
-            programmingExercise: ProgrammingExerciseResolve
+            programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

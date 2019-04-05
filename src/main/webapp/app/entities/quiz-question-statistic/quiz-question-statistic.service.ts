@@ -16,22 +16,16 @@ export class QuizQuestionStatisticService {
 
     create(questionStatistic: QuizQuestionStatistic): Observable<EntityResponseType> {
         const copy = this.convert(questionStatistic);
-        return this.http
-            .post<QuizQuestionStatistic>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.post<QuizQuestionStatistic>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     update(questionStatistic: QuizQuestionStatistic): Observable<EntityResponseType> {
         const copy = this.convert(questionStatistic);
-        return this.http
-            .put<QuizQuestionStatistic>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.put<QuizQuestionStatistic>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizQuestionStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.get<QuizQuestionStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     query(req?: any): Observable<HttpResponse<QuizQuestionStatistic[]>> {

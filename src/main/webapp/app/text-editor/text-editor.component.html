@@ -1,14 +1,15 @@
 <div class="p-4">
     <jhi-alert></jhi-alert>
 
-    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
+    <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
         <div class="col-12 col-lg-8">
             <h2>
-                Text Editor <span *ngIf="textExercise">for Exercise: {{textExercise.title}}</span>
+                Text Editor <span *ngIf="textExercise">for Exercise: {{ textExercise.title }}</span>
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
+            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
+            <br />
             <button class="btn btn-primary mr-2" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
                     <fa-icon icon="save"></fa-icon>
@@ -19,20 +20,23 @@
                     <span>Saving...</span>
                 </ng-container>
             </button>
-            <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!submission"
-                    *ngIf="!submission?.submitted  && isActive">Submit</button>
-            <button class="btn btn-warning" (click)="submit()"
-                    [disabled]="!submission"
-                    *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
+            <button class="btn btn-success" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
         </div>
-    </div><br>
+    </div>
+    <br />
 
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
-            <p class="mb-3"><span><strong>Problem Statement:</strong></span> <span [innerHTML]="formattedProblemStatement"></span></p>
+            <p class="mb-3">
+                <span><strong>Problem Statement:</strong></span> <span [innerHTML]="formattedProblemStatement"></span>
+            </p>
         </div>
-        <div class="col-3 text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
+        <div class="col-3 text-right" *ngIf="!submission?.submitted">
+            <p>
+                <strong>Max. Score: {{ textExercise.maxScore }}</strong>
+            </p>
+        </div>
     </div>
 
     <div class="row">
@@ -54,7 +58,7 @@
     </div>
 
     <div class="row" *ngIf="result">
-            <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{'arTeMiSApp.complaint.moreInfo' | translate}}</button>
+        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>
     </div>
 
     <div class="row" *ngIf="showComplaintForm">

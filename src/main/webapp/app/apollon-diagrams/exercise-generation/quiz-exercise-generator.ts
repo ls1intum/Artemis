@@ -20,13 +20,13 @@ export async function generateDragAndDropQuizExercise(
     model: UMLModel,
     course: Course,
     fileUploaderService: FileUploaderService,
-    quizExerciseService: QuizExerciseService
+    quizExerciseService: QuizExerciseService,
 ) {
     // Render the layouted diagram as SVG
     const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
         margin: 20,
         keepOriginalSize: true,
-        exclude: [...model.interactive.elements, ...model.interactive.relationships]
+        exclude: [...model.interactive.elements, ...model.interactive.relationships],
     });
 
     // Create a PNG diagram background image from the given diagram SVG
@@ -40,29 +40,18 @@ export async function generateDragAndDropQuizExercise(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
-    const elements = [ ...model.elements, ...model.relationships ];
+    const elements = [...model.elements, ...model.relationships];
     // Create Drag Items, Drop Locations and their mappings for each interactive element
     for (const elementId of [...model.interactive.elements, ...model.interactive.relationships]) {
         const element = elements.find(elem => elem.id === elementId);
-        const { dragItem, dropLocation, correctMapping } = await generateDragAndDropItem(
-            element,
-            model,
-            renderedDiagram.clip,
-            fileUploaderService
-        );
+        const { dragItem, dropLocation, correctMapping } = await generateDragAndDropItem(element, model, renderedDiagram.clip, fileUploaderService);
         dragItems.push(dragItem);
         dropLocations.push(dropLocation);
         correctMappings.push(correctMapping);
     }
 
     // Generate a drag-and-drop question object
-    const dragAndDropQuestion: DragAndDropQuestion = generateDragAndDropQuestion(
-        diagramTitle,
-        dragItems,
-        dropLocations,
-        correctMappings,
-        backgroundFilePath
-    );
+    const dragAndDropQuestion: DragAndDropQuestion = generateDragAndDropQuestion(diagramTitle, dragItems, dropLocations, correctMappings, backgroundFilePath);
 
     // Generate a quiz exercise object
     const quizExercise: QuizExercise = generateQuizExercise(course, diagramTitle, dragAndDropQuestion);
@@ -89,12 +78,11 @@ function generateDragAndDropQuestion(
     dragItems: DragItem[],
     dropLocations: DropLocation[],
     correctMappings: DragAndDropMapping[],
-    backgroundFilePath: string
+    backgroundFilePath: string,
 ): DragAndDropQuestion {
     const dragAndDropQuestion = new DragAndDropQuestion();
     dragAndDropQuestion.title = diagramTitle;
-    dragAndDropQuestion.text =
-        'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
+    dragAndDropQuestion.text = 'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
     dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // default value
     dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
@@ -109,7 +97,7 @@ async function generateDragAndDropItem(
     element: Element,
     model: UMLModel,
     clip: { x: number; y: number; width: number; height: number },
-    fileUploaderService: FileUploaderService
+    fileUploaderService: FileUploaderService,
 ): Promise<{ dragItem: DragItem; dropLocation: DropLocation; correctMapping: DragAndDropMapping }> {
     const isRelationship = element.type in UMLRelationshipType;
 
@@ -117,7 +105,7 @@ async function generateDragAndDropItem(
 
     const renderedEntity: SVG = ApollonEditor.exportModelAsSvg(model, {
         margin,
-        include: [element.id]
+        include: [element.id],
     });
     const image = await convertRenderedSVGToPNG(renderedEntity);
 

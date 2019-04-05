@@ -9,7 +9,6 @@ import { UserMgmtDialogComponent } from '../../../../../../main/webapp/app/admin
 import { UserService, User, JhiLanguageHelper } from '../../../../../../main/webapp/app/shared';
 
 describe('Component Tests', () => {
-
     describe('User Management Dialog Component', () => {
         let comp: UserMgmtDialogComponent;
         let fixture: ComponentFixture<UserMgmtDialogComponent>;
@@ -22,12 +21,10 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [UserMgmtDialogComponent],
-                providers: [
-                    UserService
-                ]
+                providers: [UserService],
             })
-            .overrideTemplate(UserMgmtDialogComponent, '')
-            .compileComponents();
+                .overrideTemplate(UserMgmtDialogComponent, '')
+                .compileComponents();
         }));
 
         beforeEach(() => {
@@ -40,67 +37,67 @@ describe('Component Tests', () => {
         });
 
         describe('OnInit', () => {
-            it('Should load authorities and language on init',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        spyOn(service, 'authorities').and.returnValue(Observable.of(['USER']));
+            it('Should load authorities and language on init', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    spyOn(service, 'authorities').and.returnValue(Observable.of(['USER']));
 
-                        // WHEN
-                        comp.ngOnInit();
+                    // WHEN
+                    comp.ngOnInit();
 
-                        // THEN
-                        expect(service.authorities).toHaveBeenCalled();
-                        expect(comp.authorities).toEqual(['USER']);
-                        expect(mockLanguageHelper.getAllSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.authorities).toHaveBeenCalled();
+                    expect(comp.authorities).toEqual(['USER']);
+                    expect(mockLanguageHelper.getAllSpy).toHaveBeenCalled();
+                }),
+            ));
         });
 
         describe('save', () => {
-            it('Should call update service on save for existing user',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new User(123);
-                        spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({
-                            body: entity
-                        })));
-                        comp.user = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call update service on save for existing user', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new User(123);
+                    spyOn(service, 'update').and.returnValue(
+                        Observable.of(
+                            new HttpResponse({
+                                body: entity,
+                            }),
+                        ),
+                    );
+                    comp.user = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.update).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.update).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
 
-            it('Should call create service on save for new user',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new User();
-                        spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.user = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call create service on save for new user', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new User();
+                    spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.user = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.create).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.create).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
         });
     });
-
 });

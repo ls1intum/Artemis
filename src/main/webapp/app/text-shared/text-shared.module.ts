@@ -8,7 +8,7 @@ import { JhiLanguageHelper } from 'app/core';
     declarations: [HighlightedTextAreaComponent],
     imports: [CommonModule],
     exports: [HighlightedTextAreaComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class TextSharedModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -5,36 +5,42 @@
             <div class="tool-bar row pt-1">
                 <div class="col-xs-6" style="margin-left: 14px">
                     <ng-container *ngFor="let command of defaultCommands">
-                        <button type="button"
-                                class="btn btn-outline-secondary mr-1"
-                                (click)="command.execute()"
-                                [ngbTooltip]= "(command.buttonTranslationString | translate)">
-                            <fa-icon [icon]="command.buttonIcon" ></fa-icon>
+                        <button type="button" class="btn btn-outline-secondary mr-1" (click)="command.execute()" [ngbTooltip]="command.buttonTranslationString | translate">
+                            <fa-icon [icon]="command.buttonIcon"></fa-icon>
                         </button>
                     </ng-container>
                 </div>
                 <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
-                    <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>{{'arTeMiSApp.multipleChoiceQuestion.editor.style'|  translate}}</button>
+                    <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>{{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}</button>
                     <div class="dropdown-menu" ngbDropdownMenu>
-                        <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
+                        <ng-container *ngFor="let command of headerCommands"
+                            ><button class="dropdown-item" (click)="command.execute()">{{ command.buttonTranslationString | translate }}</button></ng-container
+                        >
                     </div>
                 </div>
                 <div class="btn-group col-xs-6">
-                    <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{borderColor: selectedColor}" (click)="openColorSelector($event)">Color</div>
+                    <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{ borderColor: selectedColor }" (click)="openColorSelector($event)">
+                        Color
+                    </div>
                     <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
                 </div>
             </div>
-    <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px" >
-        <ng-container *ngFor="let command of domainCommands">
-            <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
-                {{command.buttonTranslationString | translate}}
+            <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px">
+                <ng-container *ngFor="let command of domainCommands">
+                    <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
+                        {{ command.buttonTranslationString | translate }}
                     </div>
                 </ng-container>
             </div>
-            <ace-editor #aceEditor [mode]="aceEditorOptions.mode"
-                        [autoUpdateContent]="aceEditorOptions.autoUpdateContent" [(text)]="markdown"
-                        (textChange)="markdownChange.emit($event)"
-                        style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px" class="form-control"></ace-editor>
+            <ace-editor
+                #aceEditor
+                [mode]="aceEditorOptions.mode"
+                [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
+                [(text)]="markdown"
+                (textChange)="markdownChange.emit($event)"
+                style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px"
+                class="form-control"
+            ></ace-editor>
         </ng-template>
     </ngb-tab>
     <!--End Editor-->

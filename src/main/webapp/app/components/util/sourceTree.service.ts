@@ -22,5 +22,4 @@ export class SourceTreeService {
             this.$window.nativeWindow.open(res.url);
         });
     }
-
 }
