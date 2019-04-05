@@ -1,4 +1,4 @@
-<div class="row footer">
+<div class="row footer fixed d-none d-md-flex">
     <div class="col-sm-6">
         <a [href]="bugReportUrl" jhiTranslate="bug" class="footer-text" target="_blank"></a>
         <a [href]="featureRequestUrl" jhiTranslate="feature" class="footer-text ml-3" target="_blank"></a>
@@ -7,6 +7,14 @@
 
     <div class="col-sm-6 text-md-right">
         <a [href]="releaseNotesUrl" jhiTranslate="releaseNotes" class="footer-text" target="_blank"></a>
+        <a [routerLink]="['/datenschutz']" jhiTranslate="legal.privacy.title" class="footer-text ml-3"></a>
+        <a [href]="imprintUrl"  target="_blank" jhiTranslate="legal.imprint.title" class="footer-text ml-3" target="_blank"></a>
+    </div>
+</div>
+
+<div class="row footer d-md-none">
+    <div class="col-12">
+        <a [href]="email" jhiTranslate="contact" class="footer-text ml-3"></a>
         <a [routerLink]="['/datenschutz']" jhiTranslate="legal.privacy.title" class="footer-text ml-3"></a>
         <a [href]="imprintUrl"  target="_blank" jhiTranslate="legal.imprint.title" class="footer-text ml-3" target="_blank"></a>
     </div>
