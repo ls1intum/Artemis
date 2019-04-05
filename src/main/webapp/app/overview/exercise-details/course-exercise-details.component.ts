@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, isProgrammingExercise } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { AccountService } from 'app/core';
+import { AccountService, JhiWebsocketService } from 'app/core';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -15,7 +15,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExerciseDetailsComponent implements OnInit {
+export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -30,6 +30,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public sortedResults: Result[];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
+    private websocketChannelResults: string;
 
     getIcon = getIcon;
     isProgrammingExercise = isProgrammingExercise;
@@ -38,6 +39,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
         private $location: Location,
         private exerciseService: ExerciseService,
         private courseService: CourseService,
+        private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
@@ -66,7 +68,40 @@ export class CourseExerciseDetailsComponent implements OnInit {
                     this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+                this.subscribeForNewResults(this.exercise);
             });
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.websocketChannelResults) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        }
+    }
+
+    subscribeForNewResults(exercise: Exercise) {
+        this.accountService.identity().then(user => {
+            const participation = this.exercise.participations[0];
+            if (participation) {
+                this.websocketChannelResults = `/topic/participation/${participation.id}/newResults`;
+                this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+                this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
+                    console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                    // convert json string to moment
+                    newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                    this.handleNewResult(newResult);
+                });
+            }
+        });
+    }
+
+    handleNewResult(result: Result) {
+        const participation = this.exercise.participations[0];
+        if (participation) {
+            const results = participation.results;
+            if (!results.some(el => el.id === result.id)) {
+                participation.results.push(result);
+            }
         }
     }
 

@@ -3,7 +3,7 @@
     <h2><span jhiTranslate="arTeMiSApp.modelingExercise.detail.title">Modeling Exercise</span> {{modelingExercise.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details">
+    <dl class="row-md jh-entity-details markdown-preview">
         <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{modelingExercise.title}}</span>
@@ -31,7 +31,7 @@
             </div>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd>
+        <dd class="editor-outline-background">
             <span [innerHTML]="problemStatement"></span>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>

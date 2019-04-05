@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate #editForm="ngForm">
+<form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
 
     <div class="modal-header">
         <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="arTeMiSApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
@@ -60,7 +60,7 @@
         </div>
         <div class="form-group-narrow" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <div class="question-content">
+            <div class="question-content background-editor-color">
             <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
             </div>
         </div>

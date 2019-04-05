@@ -16,9 +16,11 @@ import {
     OrderedListCommand,
     UnorderedListCommand,
     ReferenceCommand,
+    ColorPickerCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -32,11 +34,20 @@ export class MarkdownEditorComponent implements AfterViewInit {
         autoUpdateContent: true,
         mode: 'markdown',
     };
+    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
+
+    /** default colors for the markdown editor*/
+    markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
+    selectedColor = '#000000';
+    /** {array} containing all colorPickerCommands
+     * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
+     * because the class definitions are saved within that method*/
+    colorCommands: Command[] = [new ColorPickerCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
     defaultCommands: Command[] = [
@@ -82,6 +93,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
         return this.previewChild == null;
     }
 
+    /** opens the button for selecting the color */
+    openColorSelector(event: MouseEvent) {
+        this.colorSelector.openColorSelector(event);
+    }
+
+    /** selected text is changed into the chosen color */
+    onSelectedColor(selectedColor: string) {
+        this.selectedColor = selectedColor;
+        this.colorCommands[0].execute(selectedColor);
+    }
+
     /**
      * @function addCommand
      * @param command
@@ -102,11 +124,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-            [...this.defaultCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
             });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
             });
         }
@@ -168,8 +190,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
              * \\] look for the character ']' to determine the end of the command identifier
              * )  close the bracket
              *  g: search in the whole string
+             *  i: case insensitive, neglecting capital letters
              *  m: match the regex over multiple lines*/
-            const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gm');
+            const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
 
             /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText as soon as a domainCommand identifier is found */
             while (remainingMarkdownText.length) {

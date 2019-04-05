@@ -1,7 +1,7 @@
 <div class="row mb-1" *ngIf="nextRelevantExercise">
     <div class="col">
         <h3> {{"arTeMiSApp.studentDashboard.exerciseTitle" | translate:{
-            date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM'),
+            date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:mm'),
             course: nextRelevantCourse.title
         } }}</h3>
     </div>

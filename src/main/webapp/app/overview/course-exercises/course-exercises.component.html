@@ -21,7 +21,7 @@
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
                 <h3 class="text-primary">
                     {{"arTeMiSApp.courseOverview.exerciseList.currentExerciseGroupHeader" | translate:{
-                    date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM')
+                    date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:mm')
                 } }}
                 </h3>
                 <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="course"></jhi-course-exercise-row>

@@ -12,22 +12,20 @@ import { ExerciseTypePipe } from 'app/entities/exercise/';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 
 import {
+    CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
-    CourseOverviewComponent,
     CourseGradeBookComponent,
+    CourseOverviewComponent,
     CourseStatisticsComponent,
+    DifficultyBadgeComponent,
+    ExerciseActionButtonComponent,
+    ExerciseDetailsStudentActionsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
     OverviewCourseCardComponent,
-    ExerciseActionButtonComponent,
-    CourseExerciseDetailsComponent,
-    DifficultyBadgeComponent,
-    ExerciseDetailsStudentActionsComponent,
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
-import { ArTEMiSQuizModule } from 'app/quiz/participate';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
