@@ -7,14 +7,26 @@ import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
+    private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+        this.localSubmissionConflictMap = new Map<number, Conflict[]>();
+    }
+
+    addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
+        this.localSubmissionConflictMap.set(submissionID, conflicts);
+    }
+
+    getLocalConflicts(submissionID: number) {
+        this.localSubmissionConflictMap.get(submissionID);
+    }
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
