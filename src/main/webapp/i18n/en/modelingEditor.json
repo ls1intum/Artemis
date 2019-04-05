@@ -7,7 +7,43 @@
             "submitDeadlineMissed": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Please wait for your feedback. As you missed the deadline the score will not be counted.",
             "empty": "Unable to submit an empty diagram.",
             "autoSubmit": "The exercise has ended. Now you can't edit your diagram anymore.",
-            "error": "An error occured. Please try again later."
+            "error": "An error occurred. Please try again later.",
+            "helpModal": {
+                "help": "Help",
+                "title": "How to use the modeling editor",
+                "addClass": {
+                    "title": "Add Class",
+                    "text": "To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side."
+                },
+                "editClass": {
+                    "title": "Edit Class",
+                    "text": "To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc."
+                },
+                "moveClass": {
+                    "title": "Move Class",
+                    "text": "To move a class, select it with a single click and either use your keyboard arrows or drag and drop it."
+                },
+                "deleteClass": {
+                    "title": "Delete Class",
+                    "text": "To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
+                },
+                "addAssociation": {
+                    "title": "Add Association",
+                    "text": "To add a association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for associations. Click and hold on one of those and drag it to another blue circle to create a association."
+                },
+                "editAssociation": {
+                    "title": "Edit Association",
+                    "text": "To edit an association, double click it and a popup will open up, in which you can edit its properties, e.g. type."
+                },
+                "deleteAssociation": {
+                    "title": "Delete Association",
+                    "text": "To delete an association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
+                },
+                "undo": {
+                    "title": "Undo & Redo",
+                    "text": "With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes."
+                }
+            }
         }
     }
 }

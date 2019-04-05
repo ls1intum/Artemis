@@ -2,35 +2,23 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { UserService } from 'app/core';
-import {
-    SystemNotification,
-    SystemNotificationService,
-    SystemNotificationType
-} from 'app/entities/system-notification';
+import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
 
 @Component({
     selector: 'jhi-notification-mgmt-update',
-    templateUrl: './notification-management-update.component.html'
+    templateUrl: './notification-management-update.component.html',
 })
 export class NotificationMgmtUpdateComponent implements OnInit {
     notification: SystemNotification;
     isSaving: boolean;
 
-    systemNotificationTypes = [
-        {name: 'INFO', value: SystemNotificationType.INFO},
-        {name: 'WARNING', value: SystemNotificationType.WARNING}
-    ];
+    systemNotificationTypes = [{ name: 'INFO', value: SystemNotificationType.INFO }, { name: 'WARNING', value: SystemNotificationType.WARNING }];
 
-    constructor(
-        private userService: UserService,
-        private systemNotificationService: SystemNotificationService,
-        private route: ActivatedRoute,
-    ) {
-    }
+    constructor(private userService: UserService, private systemNotificationService: SystemNotificationService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.isSaving = false;
-        this.route.data.subscribe(({notification}) => {
+        this.route.data.subscribe(({ notification }) => {
             this.notification = notification.body ? notification.body : notification;
         });
     }
