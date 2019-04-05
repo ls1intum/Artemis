@@ -428,8 +428,9 @@ export class ShortAnswerQuestionUtil {
         return questionText.split(/\n/g).map(line => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo);
-            return interleave(texts, spots).map(x => x.trim());
-            filter(x => x.length > 0);
+            return interleave(texts, spots)
+                .map(x => x.trim())
+                .filter(x => x.length > 0);
         });
     }
 
