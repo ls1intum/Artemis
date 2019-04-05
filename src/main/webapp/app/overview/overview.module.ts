@@ -7,6 +7,7 @@ import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ExerciseTypePipe } from 'app/entities/exercise/';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 
@@ -29,7 +30,7 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ChartsModule, ClipboardModule, MomentModule, ArTEMiSResultModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [ArTEMiSSharedModule, ChartsModule, ClipboardModule, MomentModule, ArTEMiSResultModule, ArTEMiSProgrammingExerciseModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         OverviewComponent,
         CourseOverviewComponent,

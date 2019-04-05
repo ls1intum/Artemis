@@ -69,12 +69,17 @@
     </div>
     <!-- EXERCISE ACTIONS END -->
     <!-- PROBLEM STATEMENT START -->
-    <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
-        <div class="col-12 col-md-8">
-            <h3>{{"arTeMiSApp.courseOverview.exerciseDetails.problemStatement" | translate}}</h3>
-            <p>{{exercise.problemStatement}}</p>
-        </div>
+    <div *ngIf="isProgrammingExercise; else exerciseTemplate" class="mb-4">
+        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.participations && exercise.participations[0]"></jhi-programming-exercise-instructions>
     </div>
+    <ng-template #exerciseTemplate>
+        <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
+            <div class="col-12 col-md-8">
+                <h3>{{"arTeMiSApp.courseOverview.exerciseDetails.problemStatement" | translate}}</h3>
+                <p>{{exercise.problemStatement}}</p>
+            </div>
+        </div>
+    </ng-template>
     <!-- PROBLEM STATEMENT END -->
     <!-- RESULTS START -->
     <div class="row mb-2 align-items-baseline" *ngIf="hasResults">
