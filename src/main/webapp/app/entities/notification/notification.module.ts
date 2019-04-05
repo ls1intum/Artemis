@@ -1,7 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
-import { NotificationService, } from './';
+import { NotificationService } from './';
 
 @NgModule({
     imports: [ArTEMiSSharedModule],
@@ -9,7 +9,6 @@ import { NotificationService, } from './';
     entryComponents: [],
     exports: [],
     providers: [NotificationService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-
 export class ArTEMiSNotificationModule {}

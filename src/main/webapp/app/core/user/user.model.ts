@@ -27,7 +27,7 @@ export class User extends Account {
         lastModifiedDate?: Date,
         lastNotificationRead?: Moment,
         password?: string,
-        imageUrl?: string
+        imageUrl?: string,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id ? id : null;

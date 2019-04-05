@@ -19,7 +19,7 @@ import {
     NotificationMgmtComponent,
     NotificationMgmtDetailComponent,
     NotificationMgmtUpdateComponent,
-    NotificationMgmtDeleteDialogComponent
+    NotificationMgmtDeleteDialogComponent,
 } from './';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
@@ -29,7 +29,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(adminState),
-        FormDateTimePickerModule
+        FormDateTimePickerModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
@@ -47,11 +47,11 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
         JhiHealthCheckComponent,
         JhiHealthModalComponent,
         JhiTrackerComponent,
-        JhiMetricsMonitoringComponent
+        JhiMetricsMonitoringComponent,
     ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     entryComponents: [UserMgmtDeleteDialogComponent, NotificationMgmtDeleteDialogComponent, JhiHealthModalComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSAdminModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

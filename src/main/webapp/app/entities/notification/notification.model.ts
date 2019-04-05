@@ -6,7 +6,7 @@ import { ExerciseType } from 'app/entities/exercise';
 export enum NotificationType {
     SYSTEM = 'system',
     GROUP = 'group',
-    SINGLE = 'single'
+    SINGLE = 'single',
 }
 
 export class Notification implements BaseEntity {

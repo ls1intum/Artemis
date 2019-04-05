@@ -15,7 +15,7 @@ import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-notification-mgmt',
-    templateUrl: './notification-management.component.html'
+    templateUrl: './notification-management.component.html',
 })
 export class NotificationMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;
@@ -40,7 +40,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal
+        private modalService: NgbModal,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -76,7 +76,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
             },
             reason => {
                 // Left blank intentionally, nothing to do here
-            }
+            },
         );
     }
 
@@ -85,7 +85,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
             .query({
                 page: this.page - 1,
                 size: this.itemsPerPage,
-                sort: this.sort()
+                sort: this.sort(),
             })
             .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
@@ -117,8 +117,8 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         this.router.navigate(['/admin/notification-management'], {
             queryParams: {
                 page: this.page,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc')
-            }
+                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),
+            },
         });
         this.loadAll();
     }

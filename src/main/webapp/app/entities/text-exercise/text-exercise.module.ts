@@ -15,17 +15,26 @@ import {
     TextExercisePopupService,
     textExerciseRoute,
     TextExerciseService,
-    TextExerciseUpdateComponent
+    TextExerciseUpdateComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule, ArTEMiSDifficultyPickerModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        FormDateTimePickerModule,
+        ArTEMiSCategorySelectorModule,
+        ArTEMiSDifficultyPickerModule,
+        ArTEMiSMarkdownEditorModule,
+    ],
     declarations: [
         TextExerciseComponent,
         TextExerciseDetailComponent,
@@ -33,7 +42,7 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDialogComponent,
         TextExerciseDeleteDialogComponent,
         TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent
+        TextExerciseDeletePopupComponent,
     ],
     entryComponents: [
         TextExerciseComponent,
@@ -41,11 +50,11 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseUpdateComponent,
         TextExercisePopupComponent,
         TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent
+        TextExerciseDeletePopupComponent,
     ],
     providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSTextExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

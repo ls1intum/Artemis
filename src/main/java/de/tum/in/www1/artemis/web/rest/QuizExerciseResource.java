@@ -89,7 +89,6 @@ public class QuizExerciseResource {
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
 
-        groupNotificationService.notifyGroupAboutExerciseCreated(quizExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }

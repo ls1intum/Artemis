@@ -3,7 +3,7 @@ import { Notification, NotificationType } from 'app/entities/notification';
 
 export const enum SystemNotificationType {
     WARNING = 'WARNING',
-    INFO = 'INFO'
+    INFO = 'INFO',
 }
 
 export class SystemNotification extends Notification {

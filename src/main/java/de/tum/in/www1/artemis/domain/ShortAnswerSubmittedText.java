@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.view.QuizView;
+import java.io.Serializable;
+import java.util.Objects;
+
+import javax.persistence.*;
+
 import me.xdrop.fuzzywuzzy.FuzzySearch;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A ShortAnswerSubmittedText.
@@ -106,8 +109,7 @@ public class ShortAnswerSubmittedText implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
-     * This function checks if the submittedText (typos included) matches the solution.
-     * https://github.com/xdrop/fuzzywuzzy
+     * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy
      *
      * @param submittedText
      * @param solution
@@ -139,10 +141,6 @@ public class ShortAnswerSubmittedText implements Serializable {
 
     @Override
     public String toString() {
-        return "ShortAnswerSubmittedText{" +
-            "id=" + getId() +
-            ", text='" + getText() + "'" +
-            ", isCorrect='" + isIsCorrect() + "'" +
-            "}";
+        return "ShortAnswerSubmittedText{" + "id=" + getId() + ", text='" + getText() + "'" + ", isCorrect='" + isIsCorrect() + "'" + "}";
     }
 }

@@ -42,11 +42,11 @@ import {
     NavbarComponent,
     PageRibbonComponent,
     ProfileService,
-    NotificationContainerComponent
+    NotificationContainerComponent,
 } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
-import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
+import { ArTEMiSModelingSubmissionModule } from 'app/modeling-submission';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from 'app/shared';
 import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
@@ -58,10 +58,9 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
-import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
 import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
-
+import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import * as moment from 'moment';
 
 @NgModule({
@@ -79,7 +78,7 @@ import * as moment from 'moment';
             alertAsToast: false,
             alertTimeout: 8000,
             i18nEnabled: true,
-            defaultI18nLang: 'en'
+            defaultI18nLang: 'en',
         }),
         /**
          * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
@@ -98,9 +97,8 @@ import * as moment from 'moment';
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
-        ArTEMiSModelingAssessmentModule,
         ArTEMiSStatisticModule,
-        ArTEMiSModelingEditorModule,
+        ArTEMiSModelingSubmissionModule,
         ArTEMiSMarkdownEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
@@ -113,6 +111,8 @@ import * as moment from 'moment';
         ArTEMiSComplaintsModule,
         ArTEMiSNotificationModule,
         ArTEMiSSystemNotificationModule,
+        ArTEMiSModelingAssessmentEditorModule,
+        ArTEMiSModelingSubmissionModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -124,7 +124,7 @@ import * as moment from 'moment';
         FooterComponent,
         SystemNotificationComponent,
         NotificationContainerComponent,
-        QuizExerciseExportComponent
+        QuizExerciseExportComponent,
     ],
     providers: [
         ProfileService,
@@ -147,30 +147,30 @@ import * as moment from 'moment';
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
-            multi: true
-        }
+            multi: true,
+        },
     ],
-    bootstrap: [JhiMainComponent]
+    bootstrap: [JhiMainComponent],
 })
 export class ArTeMiSAppModule {
     constructor(private dpConfig: NgbDatepickerConfig) {

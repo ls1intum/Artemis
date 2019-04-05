@@ -5,11 +5,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -20,11 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -32,6 +24,7 @@ import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
+import de.tum.in.www1.artemis.service.compass.conflict.ConflictingResult;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
@@ -48,7 +41,9 @@ public class CompassService {
 
     private final ParticipationRepository participationRepository;
 
-    /** Map exerciseId to compass CalculationEngines */
+    /**
+     * Map exerciseId to compass CalculationEngines
+     */
     private static Map<Long, CalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
 
     /**
@@ -56,15 +51,21 @@ public class CompassService {
      */
     private static final int DAYS_TO_KEEP_UNUSED_ENGINE = 1;
 
-    /** Time to check for unused engines */
+    /**
+     * Time to check for unused engines
+     */
     private static final int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
 
-    /** Confidence and coverage parameters to accept an automatic assessment */
+    /**
+     * Confidence and coverage parameters to accept an automatic assessment
+     */
     private static final double CONFIDENCE_THRESHOLD = 0.75;
 
     private static final double COVERAGE_THRESHOLD = 0.8;
 
-    /** Number of optimal models to keep in cache */
+    /**
+     * Number of optimal models to keep in cache
+     */
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
@@ -179,9 +180,20 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
+    public List<Conflict> getConflicts(long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        return engine.getConflicts(submissionId, modelingAssessment);
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(result.getSubmission().getId(), modelingAssessment);
+        List<Conflict> conflicts = new LinkedList<>();
+        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
+            Set<ConflictingResult> elementResultMap = new HashSet<>();
+            feedbacks.forEach(feedback -> elementResultMap.add(new ConflictingResult(feedback.getReferenceElementId(), feedback.getResult())));
+            Conflict conflict = new Conflict();
+            conflict.setModelElementId(elementID);
+            conflict.setResult(result);
+            conflict.setConflictingResults(elementResultMap);
+            conflicts.add(conflict);
+        });
+        return conflicts;
     }
 
     /**

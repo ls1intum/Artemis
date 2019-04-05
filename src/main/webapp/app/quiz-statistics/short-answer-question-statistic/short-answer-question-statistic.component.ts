@@ -25,7 +25,7 @@ interface BackgroundColorConfig {
 @Component({
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown]
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
@@ -67,7 +67,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     textParts: string[][];
     lettersForSolutions: number[] = [];
 
-    sampleSolutions: ShortAnswerSolution[] =  [];
+    sampleSolutions: ShortAnswerSolution[] = [];
 
     constructor(
         private route: ActivatedRoute,
@@ -186,7 +186,6 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -199,13 +198,13 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
                 backgroundColor: '#428bca',
                 borderColor: '#428bca',
                 pointBackgroundColor: '#428bca',
-                pointBorderColor: '#428bca'
+                pointBorderColor: '#428bca',
             });
             this.backgroundSolutionColor.push({
                 backgroundColor: '#5cb85c',
                 borderColor: '#5cb85c',
                 pointBackgroundColor: '#5cb85c',
-                pointBorderColor: '#5cb85c'
+                pointBorderColor: '#5cb85c',
             });
         });
 
@@ -222,13 +221,13 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
             pointBackgroundColor: '#5bc0de',
-            pointBorderColor: '#5bc0de'
+            pointBorderColor: '#5bc0de',
         });
         this.backgroundSolutionColor[this.question.spots.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
             pointBackgroundColor: '#5bc0de',
-            pointBorderColor: '#5bc0de'
+            pointBorderColor: '#5bc0de',
         };
 
         // add Text for last label based on the language
@@ -253,13 +252,13 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
                         backgroundColor: '#838383',
                         borderColor: '#838383',
                         pointBackgroundColor: '#838383',
-                        pointBorderColor: '#838383'
+                        pointBorderColor: '#838383',
                     };
                     this.backgroundSolutionColor[i] = {
                         backgroundColor: '#838383',
                         borderColor: '#838383',
                         pointBackgroundColor: '#838383',
-                        pointBorderColor: '#838383'
+                        pointBorderColor: '#838383',
                     };
                     // add 'invalid' to bar-Label
                     this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
@@ -335,8 +334,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.datasets = [
             {
                 data: this.data,
-                backgroundColor: this.colors
-            }
+                backgroundColor: this.colors,
+            },
         ];
     }
 
@@ -374,9 +373,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no solution has been mapped to this location
      */
     correctSolutionForSpot(spot: ShortAnswerSpot) {
-        const currMapping = this.shortAnswerQuestionUtil
-            .solveShortAnswer(this.question, null)
-            .filter(mapping => mapping.spot.id === spot.id)[0];
+        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question, null).filter(mapping => mapping.spot.id === spot.id)[0];
         if (currMapping) {
             return currMapping.solution;
         } else {
