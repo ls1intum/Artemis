@@ -15,6 +15,7 @@ import { Participation } from 'app/entities/participation';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 import { WindowRef } from 'app/core';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -36,6 +37,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     busy = true;
     showResult = true;
 
+    formattedProblemStatement: string;
+    formattedSampleSolution: string;
+    formattedGradingInstructions: string;
+
     /** Resizable constants **/
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
@@ -56,6 +61,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private assessmentsService: TextAssessmentsService,
         private location: Location,
         private $window: WindowRef,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -72,6 +78,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.result = new Result();
                 this.submission = <TextSubmission>this.participation.submissions[0];
                 this.exercise = <TextExercise>this.participation.exercise;
+
+                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
                 this.assessments = [];
                 this.busy = false;
 
@@ -86,6 +97,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.participation = participation;
                 this.submission = <TextSubmission>this.participation.submissions[0];
                 this.exercise = <TextExercise>this.participation.exercise;
+
+                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
                 this.result = this.participation.results[0];
                 this.assessments = this.result.feedbacks || [];
                 this.busy = false;

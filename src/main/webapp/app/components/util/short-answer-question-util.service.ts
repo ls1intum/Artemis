@@ -412,19 +412,26 @@ export class ShortAnswerQuestionUtil {
      * We create now the structure on how to display the text of the question
      * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
      * 2. Now each line of the question text will be divided into text before spot tag, spot tag and text after spot tag.
-     * (e.g 'Enter [-spot 1] long [-spot 2] if needed will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
+     * (e.g 'Enter [-spot 1] long [-spot 2] if needed' will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
      *
      * @param questionText
      * @returns {string[][]}
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
-        const textForEachLine = questionText.split(/\n/g);
-        const textParts = textForEachLine.map(x => x.split(/\s*(?=\[)/g));
-        // workaround to use flatMap functionality
-        let finalTextParts = textParts.map(textPart => textPart.reduce((a, e) => [...a, ...e.split(/(?<=\])/g)], []));
-        finalTextParts = finalTextParts.map(finalTextPart => finalTextPart.map(element => element.trim()));
+        const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
+        function interleave([x, ...xs]: string[], ys: string[] = []): string[] {
+            return x === undefined
+                ? ys // base: no x
+                : [x, ...interleave(ys, xs)]; // inductive: some x
+        }
 
-        return finalTextParts;
+        return questionText.split(/\n/g).map(line => {
+            const spots = line.match(spotRegExpo) || [];
+            const texts = line.split(spotRegExpo);
+            return interleave(texts, spots)
+                .map(x => x.trim())
+                .filter(x => x.length > 0);
+        });
     }
 
     /**

@@ -8,19 +8,18 @@ import { createRequestOption } from '../../shared';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {
-    }
+    constructor(private http: HttpClient) {}
 
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
             .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
@@ -29,7 +28,7 @@ export class ModelingSubmissionService {
         const copy = this.convert(modelingSubmission);
         return this.http
             .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
@@ -41,7 +40,7 @@ export class ModelingSubmissionService {
         return this.http
             .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
     }
@@ -50,9 +49,14 @@ export class ModelingSubmissionService {
         return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
     }
 
+    // TODO CZ: change name + change URL?
+    getDataForModelingEditor(participationId: number): Observable<ModelingSubmission> {
+        return this.http.get<ModelingSubmission>(`api/modeling-editor/${participationId}`, { responseType: 'json' });
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ModelingSubmission = this.convertItemFromServer(res.body);
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
@@ -61,7 +65,7 @@ export class ModelingSubmissionService {
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));
         }
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     /**

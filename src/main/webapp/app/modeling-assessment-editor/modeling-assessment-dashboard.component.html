@@ -3,7 +3,7 @@
     <div>
         <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
         <div class="button-toolbar float-right" *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM">
-            <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal(0)">
+            <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal()">
                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
             </button>
             <button [disabled]="busy" class="btn btn-primary btn-sm mr-1" (click)="refresh()">

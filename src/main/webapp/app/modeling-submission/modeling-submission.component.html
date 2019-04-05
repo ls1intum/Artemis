@@ -1,0 +1,106 @@
+<div [ngClass]="{ 'submission-container': !submission?.submitted, 'assessment-result-container': submission?.submitted }">
+    <jhi-alert></jhi-alert>
+    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
+        <div class="col-12 col-lg-8">
+            <h2>
+                <span *ngIf="!modelingExercise" jhiTranslate="arTeMiSApp.modelingSubmission.modelingEditor">Modeling Editor</span>
+                <span *ngIf="modelingExercise">{{modelingExercise.title}}</span>
+            </h2>
+        </div>
+        <div class="col-12 col-lg-4 text-right">
+            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
+            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
+                <ng-container *ngIf="!isSaving">
+                    <fa-icon icon="save"></fa-icon>
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </ng-container>
+                <ng-container *ngIf="isSaving">
+                    <fa-icon icon="sync"></fa-icon>
+                    <span jhiTranslate="entity.action.saving">Saving...</span>
+                </ng-container>
+            </button>
+            <button class="btn btn-success" (click)="submit()"
+                    [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
+                    [hidden]="submission?.submitted || !isActive" jhiTranslate="entity.action.submit">
+                Submit
+            </button>
+            <button class="btn btn-warning" (click)="submit()"
+                    [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
+                    [hidden]="submission?.submitted || isActive" jhiTranslate="entity.action.submitDeadlineMissed">
+                Submit (deadline missed)
+            </button>
+            <button class="btn btn-info" (click)="retry()"
+                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">
+                <fa-icon icon="sync"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>
+            </button>
+        </div>
+    </div><br>
+
+    <div class="row" *ngIf="modelingExercise">
+        <div [ngClass]="{'col-12': submission?.submitted, 'col-9': !submission?.submitted}">
+            <p class="mb-3">
+                <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
+                <div class="background-editor-color">
+                    <span [innerHTML]="problemStatement" ></span>
+                </div>
+            </p>
+        </div>
+        <div class="col-3 text-right" *ngIf="!submission?.submitted">
+            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{maxScore: modelingExercise.maxScore}">
+                <strong>Max. Score: {{ modelingExercise.maxScore }}</strong>
+            </p>
+        </div>
+    </div>
+
+    <div class="row editor-container">
+        <div *ngIf="submission?.submitted" class="col-9">
+            <jhi-modeling-assessment
+                [model]="umlModel"
+                [feedbacks]="assessmentResult?.feedbacks"
+                [diagramType]="modelingExercise.diagramType"
+                [maxScore]="modelingExercise.maxScore"
+                [readOnly]="true"
+                [enablePopups]="false"
+                [displayPoints]="false"
+                (selectionChanged)="onSelectionChanged($event)"
+            ></jhi-modeling-assessment>
+        </div>
+        <div *ngIf="submission && !submission.submitted" class="col-12">
+            <jhi-modeling-editor
+                [umlModel]="umlModel"
+                [diagramType]="modelingExercise.diagramType"
+            ></jhi-modeling-editor>
+        </div>
+        <div class="col-3" *ngIf="submission?.submitted">
+            <h4 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.title">Assessment</h4>
+            <p *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
+               jhiTranslate="arTeMiSApp.modelingSubmission.assessment.noAssessment">
+                There is no assessment available yet.
+            </p>
+            <ng-container *ngIf="assessmentResult?.feedbacks.length > 0">
+                <p jhiTranslate="arTeMiSApp.modelingSubmission.assessment.instructions">
+                    Select elements in the editor to filter the assessment.
+                </p>
+                <table class="table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th jhiTranslate="arTeMiSApp.modelingSubmission.assessment.element">Element</th>
+                            <th class="text-center" jhiTranslate="arTeMiSApp.modelingSubmission.assessment.score">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody *ngIf="assessmentsNames">
+                    <!--TODO CZ: replace function call 'isSelected' in html-->
+                        <tr *ngFor="let feedback of assessmentResult.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)">
+                            <td>
+                                <span>{{assessmentsNames[feedback.referenceId]['type']}} </span>
+                                <code class="text-primary">{{assessmentsNames[feedback.referenceId]['name']}}</code><br>
+                                <span *ngIf="feedback.text" [ngClass]="{'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0}"><strong>Feedback:</strong> {{feedback.text}}</span>
+                            </td>
+                            <td class="text-center">{{feedback.credits | number:'1.0-1'}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </ng-container>
+        </div>
+    </div>
+</div>
