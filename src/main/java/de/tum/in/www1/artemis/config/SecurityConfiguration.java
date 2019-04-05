@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.config;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
-import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import io.github.jhipster.config.JHipsterProperties;
+import static de.tum.in.www1.artemis.config.Constants.*;
+
+import java.util.Optional;
+
+import javax.annotation.PostConstruct;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,10 +29,10 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import javax.annotation.PostConstruct;
-import java.util.Optional;
-
-import static de.tum.in.www1.artemis.config.Constants.*;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 @Configuration
 @Import(SecurityProblemSupport.class)
@@ -45,16 +46,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final CorsFilter corsFilter;
     private final SecurityProblemSupport problemSupport;
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
-    private final JHipsterProperties jHipsterProperties;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, JHipsterProperties jHipsterProperties) {
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
-        this.jHipsterProperties = jHipsterProperties;
     }
 
     @PostConstruct
@@ -63,9 +62,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             authenticationManagerBuilder
                 .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder());
-            if(remoteUserAuthenticationProvider.isPresent()) {
-                authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
-            }
+            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
         } catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
         }
@@ -125,6 +122,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .headers()
             .frameOptions()
+            .disable()
+        .and()
+            .headers()
+            .httpStrictTransportSecurity()
             .disable()
         .and()
             .sessionManagement()

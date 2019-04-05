@@ -1,0 +1,25 @@
+{
+    "notificationManagement": {
+        "home": {
+            "title": "Notifications",
+            "createLabel": "Create a new notification",
+            "createOrEditLabel": "Create or edit a notification"
+        },
+        "created": "A new notification is created with identifier {{ param }}",
+        "updated": "An notification is updated with identifier {{ param }}",
+        "deleted": "An notification is deleted with identifier {{ param }}",
+        "delete": {
+            "question": "Are you sure you want to delete notification {{ id }}?"
+        },
+        "detail": {
+            "title": "Notification"
+        },
+        "title": "Title",
+        "text": "Text",
+        "type": "Type",
+        "expireDate": "Expire Date",
+        "notificationDate": "Notification Date",
+        "active": "Active",
+        "notActive": "Not Active"
+    }
+}

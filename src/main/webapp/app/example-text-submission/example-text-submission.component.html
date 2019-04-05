@@ -29,9 +29,9 @@
 
         <div class="col-12">
             <p class="mb-3">
-                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br>
-                <ng-container *ngIf="exercise.sampleSolution">
-                    <strong>Sample Solution:</strong> {{ exercise.sampleSolution }}
+                <strong>Problem Statement:</strong> <span [innerHTML]="formattedProblemStatement"></span><br>
+                <ng-container *ngIf="formattedSampleSolution">
+                    <strong>Sample Solution:</strong> <span [innerHTML]="formattedSampleSolution"></span>
                 </ng-container>
             </p>
         </div>

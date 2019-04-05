@@ -92,7 +92,7 @@
                 </div>
                 <div *ngSwitchCase="'modeling-exercise'">
                     <div *ngIf="exercise.participations && exercise.participations.length > 0" class="btn-group flex-btn-group-container">
-                        <a routerLink="/modeling-editor/{{exercise.participations[0].id}}" routerLinkActive="active"
+                        <a routerLink="/modeling-submission/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open modeling editor</span>
                             <span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>

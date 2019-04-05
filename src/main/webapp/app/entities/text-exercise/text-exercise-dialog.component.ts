@@ -16,7 +16,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
-    templateUrl: './text-exercise-dialog.component.html'
+    templateUrl: './text-exercise-dialog.component.html',
 })
 export class TextExerciseDialogComponent implements OnInit {
     textExercise: TextExercise;
@@ -34,7 +34,6 @@ export class TextExerciseDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager,
-        private router: Router
     ) {}
 
     ngOnInit() {
@@ -43,20 +42,15 @@ export class TextExerciseDialogComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
 
-        this.router.events.subscribe(event => {
-            if (event instanceof NavigationEnd) {
-                this.activeModal.close();
-            }
-        });
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
         this.courseService.findAllCategoriesOfCourse(this.textExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
                 this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -78,14 +72,11 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError(res)
-        );
+        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess(result: TextExercise) {
-        this.eventManager.broadcast({name: 'textExerciseListModification', content: 'OK'});
+        this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
@@ -106,7 +97,7 @@ export class TextExerciseDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-text-exercise-popup',
-    template: ''
+    template: '',
 })
 export class TextExercisePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

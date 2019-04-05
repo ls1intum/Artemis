@@ -87,7 +87,7 @@
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
-                routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+                routerLink="/modeling-submission/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTION END -->
     <!-- INFORMATION START -->
@@ -100,7 +100,7 @@
                     [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                     *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED'"
-                    routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+                    routerLink="/modeling-submission/{{exercise.participations[0].id}}"></button>
         </div>
     </div>
     <!-- INFORMATION END -->

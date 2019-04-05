@@ -79,7 +79,7 @@
                 </button>
             </ng-container>
         </div>
-        <div class="markupEditorArea" [hidden]="showPreview">
+        <div class="markupEditorArea" [hidden]="showVisualMode">
             <div class="toolbar" *ngIf="!reEvaluationInProgress">
                 <div class="btn-group">
                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
@@ -99,7 +99,7 @@
                 </ace-editor>
             </div>
         </div>
-        <div class="edit-sa-question" style="padding:20px" *ngIf="showPreview || reEvaluationInProgress">
+        <div class="edit-sa-question" style="padding:20px" *ngIf="showVisualMode || reEvaluationInProgress">
             <h4 jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
             <span *ngIf="!reEvaluationInProgress"  jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr/>
@@ -107,33 +107,35 @@
             <hr *ngIf="!reEvaluationInProgress" />
             <div style="display: flex">
                 <div id="test" class="sa-question" >
-                    <div *ngFor="let textPart of textParts; let i = index">
-                        <div class="short-answer-question-display" style="white-space: normal;" *ngFor="let element of textPart; let j = index">
-                            <span *ngIf="!isInputField(element) && !reEvaluationInProgress" id="element-{{i}}-{{j}}">{{element}}</span>
-                            <input *ngIf="!isInputField(element) && reEvaluationInProgress" id="element-{{i}}-{{j}}-textInput" class="short-answer-question-input" value="{{element}}" size="{{element.length +1}}" type="text" (change)="setQuestionText('element-' + i + '-' + j + '-textInput')">
-                            <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
-                                <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
-
-
+                    <div class="short-answer-question-display" *ngFor="let textPart of textParts; let i = index">
+                        <div class="short-answer-question-display-element" *ngFor="let element of textPart; let j = index">
+                            <div *ngIf="!shortAnswerQuestionUtil.isInputField(element) && !reEvaluationInProgress" id="element-{{i}}-{{j}}" [innerHTML]="element"></div>
+                            <input class="short-answer-question-input" *ngIf="!shortAnswerQuestionUtil.isInputField(element) && reEvaluationInProgress"
+                                   id="element-{{i}}-{{j}}-textInput" value="{{element}}" size="{{element.length +1}}" type="text"
+                                   (change)="setQuestionText('element-' + i + '-' + j + '-textInput')">
+                            <div *ngIf="shortAnswerQuestionUtil.isInputField(element)" style="position: relative; display: inline-block">
+                                <input class="short-answer-question-input" disabled type="text" dnd-droppable
+                                   (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question), $event)">
                                 <div style="position: absolute;top: -8px;right: -4px;display: inline-flex;" *ngIf="reEvaluationInProgress">
                                     <div class="re-evaluate-button" title="Set invalid"
-                                         *ngIf="!getSpot(getSpotNr(element)).invalid" (click)="getSpot(getSpotNr(element)).invalid = true">
+                                         *ngIf="!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid" (click)="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid = true">
                                         <fa-icon icon="ban" size="lg"></fa-icon>
                                     </div>
-                                    <div class="re-evaluate-button" title="Reset" (click)="resetSpot(getSpot(getSpotNr(element)))">
+                                    <div class="re-evaluate-button" title="Reset" (click)="resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question))">
                                         <fa-icon icon="undo" size="lg"></fa-icon>
                                     </div>
                                     <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
-                                         title="Delete" (click)="deleteSpot(getSpot(getSpotNr(element)))">
+                                         title="Delete" (click)="deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question))">
                                         <fa-icon icon="trash" size="lg"></fa-icon>
                                     </div>
                                 </div>
-                                <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">
-                                    {{getSpotNr(element)}}
+                                <div [ngClass]="'mapping-number mapping-color-' + shortAnswerQuestionUtil.getSpotNr(element) % 8">
+                                    {{shortAnswerQuestionUtil.getSpotNr(element)}}
                                 </div>
                             </div>
-                           <!-- <span>&nbsp;</span>  -->
+                            &nbsp;
                         </div>
+                    <br>
                     </div>
                 </div>
                 <span *ngIf="reEvaluationInProgress" class="input-group-btn" style="vertical-align: top">
@@ -142,7 +144,6 @@
                     </button>
                 </span>
             </div>
-
             <hr/>
             <div *ngIf="!question.solutions || !question.solutions.length" class="instructions">
                 <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemsInstructions"></span>
@@ -187,13 +188,13 @@
             </div>
         </div>
         <hr/>
-        <div *ngIf="!showPreview && !reEvaluationInProgress" class="toolbar">
+        <div *ngIf="!showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
-        <div *ngIf="showPreview && !reEvaluationInProgress" class="toolbar">
+        <div *ngIf="showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual"></div>
