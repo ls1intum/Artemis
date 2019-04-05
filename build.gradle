@@ -29,7 +29,7 @@ plugins {
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.20.0"
+    id "com.diffplug.gradle.spotless" version "3.21.1"
 }
 
 apply plugin: 'java'
@@ -261,7 +261,7 @@ task executeTests (type: Exec) {
 }
 
 wrapper {
-    gradleVersion = '5.3'
+    gradleVersion = '5.3.1'
 }
 
 task stage(dependsOn: 'bootWar') {
