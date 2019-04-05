@@ -22,6 +22,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
+    @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
@@ -39,7 +40,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.initializeApollonEditor();
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
-            // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);
+        }
+        if (this.centeredElementId) {
+            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
         }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -86,7 +89,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             if (this.apollonEditor !== null) {
                 this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
             }
-            // this.scrollIntoView(changes.highlightedElementId.currentValue);
+        }
+        if (changes.centeredElementId) {
+            if (this.centeredElementId) {
+                this.scrollIntoView(this.centeredElementId);
+            }
         }
     }
 

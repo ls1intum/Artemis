@@ -8,6 +8,7 @@ import * as $ from 'jquery';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -16,6 +17,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
+    feedbacks: Feedback[];
     modelHighlightedElementIds: Set<string>;
     user: User;
 
@@ -44,6 +46,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.updateSelectedConflict();
             this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
             this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
+            this.feedbacks = this.currentConflict.result.feedbacks;
         } else {
             this.jhiAlertService.error('modelingAssessment.messages.noConflicts');
         }
@@ -64,6 +67,14 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateSelectedConflict();
     }
 
+    onKeepYours() {}
+
+    onAcceptOther() {
+        const otherFeedback: Feedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
+        const ownFeedbackIndex = this.feedbacks.findIndex((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
+        this.feedbacks[ownFeedbackIndex].credits = otherFeedback.credits;
+    }
+
     setSameWidthOnModelingAssessments() {
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
@@ -81,4 +92,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.modelHighlightedElementIds = new Set<string>([this.currentConflict.modelElementId]);
         this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
+
+    private updateCenteredElement() {}
 }
