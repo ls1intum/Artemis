@@ -66,6 +66,7 @@
             },
             "account": {
                 "main": "Zugang",
+                "profile": "Profil",
                 "settings": "Einstellungen",
                 "password": "Passwort",
                 "sessions": "Sitzungen",
