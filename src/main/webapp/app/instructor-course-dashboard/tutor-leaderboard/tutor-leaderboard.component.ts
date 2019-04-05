@@ -2,12 +2,12 @@ import { User } from 'app/core';
 import { Component, Input } from '@angular/core';
 
 export interface TutorLeaderboardData {
-    [key: string]: { tutor: User, numberOfAssessments: number };
+    [key: string]: { tutor: User; numberOfAssessments: number; numberOfComplaints: number };
 }
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
-    templateUrl: './tutor-leaderboard.component.html'
+    templateUrl: './tutor-leaderboard.component.html',
 })
 export class TutorLeaderboardComponent {
     @Input() public tutorsData: TutorLeaderboardData = {};
