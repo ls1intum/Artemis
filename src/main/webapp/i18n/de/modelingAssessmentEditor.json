@@ -5,7 +5,8 @@
         "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
-            "nextSubmission": "Nächste Abgabe bewerten"
+            "nextSubmission": "Nächste Abgabe bewerten",
+            "resolveConflict": "Konflikte behandeln"
         },
         "messages": {
             "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
