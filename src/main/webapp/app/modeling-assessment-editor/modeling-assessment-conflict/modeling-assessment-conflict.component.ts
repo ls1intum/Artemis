@@ -1,11 +1,13 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { AccountService, User } from 'app/core';
 import * as $ from 'jquery';
+import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
+import { JhiAlertService } from 'ng-jhipster';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -15,23 +17,35 @@ import * as $ from 'jquery';
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
     modelHighlightedElementIds: Set<string>;
-    conflictIndex = 0;
     user: User;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
     conflictingModelHighlightedElementIds: Set<string>;
+    conflicts: Conflict[];
+    conflictIndex = 0;
+    modelingExercise: ModelingExercise;
 
-    @Input() modelingExercise: ModelingExercise;
-    @Input() conflicts: Conflict[] = [];
-
-    constructor(private route: ActivatedRoute, private modelingSubmisionService: ModelingSubmissionService, private accountService: AccountService) {}
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private route: ActivatedRoute,
+        private modelingSubmissionService: ModelingSubmissionService,
+        private modelingAssessmentService: ModelingAssessmentService,
+        private accountService: AccountService,
+    ) {}
 
     ngOnInit() {
+        this.route.params.subscribe(params => {
+            const submissionId = Number(params['submissionId']);
+            this.conflicts = this.modelingAssessmentService.getLocalConflicts(submissionId);
+        });
         if (this.conflicts) {
             this.updateSelectedConflict();
             this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
+            this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
+        } else {
+            this.jhiAlertService.error('modelingAssessment.messages.noConflicts');
         }
         this.accountService.identity().then(value => (this.user = value));
     }
