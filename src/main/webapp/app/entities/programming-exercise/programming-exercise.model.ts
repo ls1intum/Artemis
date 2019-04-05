@@ -4,11 +4,10 @@ import { Participation } from 'app/entities/participation';
 
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
-    PYTHON = 'PYTHON'
+    PYTHON = 'PYTHON',
 }
 
 export class ProgrammingExercise extends Exercise {
-
     public templateParticipation: Participation;
     public solutionParticipation: Participation;
     public testRepositoryUrl: string;
@@ -16,6 +15,7 @@ export class ProgrammingExercise extends Exercise {
     public allowOnlineEditor = false; // default value
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;
+    public problemStatement: string;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);

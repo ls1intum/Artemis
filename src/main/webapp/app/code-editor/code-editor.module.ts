@@ -23,10 +23,9 @@ import { CodeEditorFileBrowserCreateComponent } from './file-browser/code-editor
 import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 
-const ENTITY_STATES = [
-    ...codeEditorRoute
-];
+const ENTITY_STATES = [...codeEditorRoute];
 
 @NgModule({
     imports: [
@@ -34,8 +33,9 @@ const ENTITY_STATES = [
         AceEditorModule,
         ArTEMiSResultModule,
         MomentModule,
+        ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),
-        RouterModule.forChild(ENTITY_STATES)
+        RouterModule.forChild(ENTITY_STATES),
     ],
     declarations: [
         CodeEditorComponent,
@@ -45,11 +45,9 @@ const ENTITY_STATES = [
         CodeEditorFileBrowserDeleteComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
-        EditorInstructionsResultDetailComponent
+        EditorInstructionsResultDetailComponent,
     ],
-    exports: [
-        CodeEditorComponent
-    ],
+    exports: [CodeEditorComponent],
     entryComponents: [
         HomeComponent,
         CodeEditorComponent,
@@ -57,17 +55,10 @@ const ENTITY_STATES = [
         CodeEditorFileBrowserCreateComponent,
         CodeEditorFileBrowserDeleteComponent,
         EditorInstructionsResultDetailComponent,
-        ResultComponent
+        ResultComponent,
     ],
-    providers: [
-        JhiAlertService,
-        RepositoryService,
-        ResultService,
-        ParticipationService,
-        CodeEditorService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
