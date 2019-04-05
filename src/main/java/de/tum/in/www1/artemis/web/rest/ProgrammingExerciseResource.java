@@ -283,6 +283,18 @@ public class ProgrammingExerciseResource {
             return errorResponse;
         }
 
+        // When updating the participations, we need to make sure that the exercise is attached to each of them.
+        // Otherwise we would remove the link between participation and exercise.
+        if (programmingExercise.getTemplateParticipation() != null) {
+            programmingExercise.getTemplateParticipation().setExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() != null) {
+            programmingExercise.getSolutionParticipation().setExercise(programmingExercise);
+        }
+        programmingExercise.getParticipations().forEach(p -> p.setExercise(programmingExercise));
+        // Only save after checking for errors
+        programmingExerciseService.saveParticipations(programmingExercise);
+
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
         groupNotificationService.notifyGroupAboutExerciseChange(result);
