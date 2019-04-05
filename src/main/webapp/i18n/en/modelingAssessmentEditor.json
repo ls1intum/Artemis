@@ -1,0 +1,9 @@
+{
+    "modelingAssessmentEditor": {
+        "assessment": "Assessment",
+        "button": {
+            "overrideAssessment": "Override Assessment",
+            "nextSubmission": "Next Submission"
+        }
+    }
+}

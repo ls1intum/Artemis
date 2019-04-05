@@ -13,10 +13,10 @@ import { ArTEMiSNotificationModule } from 'app/entities/notification/notificatio
         Title,
         {
             provide: LOCALE_ID,
-            useValue: 'en'
+            useValue: 'en',
         },
-        DatePipe
-    ]
+        DatePipe,
+    ],
 })
 export class ArTEMiSCoreModule {
     constructor() {

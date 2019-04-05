@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "modelingSubmission" : {
+        "modelingSubmission": {
             "home": {
                 "title": "Modeling Submissions",
                 "createLabel": "Modeling Submission erstellen",
@@ -17,7 +16,17 @@
                 "title": "Modeling Submission"
             },
             "model": "Model",
-            "explanationText": "Explanation Text"
+            "explanationText": "Explanation Text",
+            "modelingEditor": "Modellierungseditor",
+            "problemStatement": "<strong>Problemstellung:</strong>",
+            "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
+            "assessment": {
+                "title": "Bewertung",
+                "noAssessment": "Es liegt noch keine Bewertung vor.",
+                "instructions": "Wählen Sie im Editor Elemente aus, um die Bewertung zu filtern.",
+                "element": "Element",
+                "score": "Punkte"
+            }
         }
     }
 }

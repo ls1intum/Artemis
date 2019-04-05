@@ -1,2 +1,2 @@
 export * from './modeling-editor.component';
-export * from './modeling-editor.service';
+export * from './modeling-editor.module';

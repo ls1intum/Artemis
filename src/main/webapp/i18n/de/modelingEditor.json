@@ -7,7 +7,43 @@
             "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "empty": "Ein leeres Diagramm kann nicht abgegeben werden.",
             "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten.",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "helpModal": {
+                "help": "Hilfe",
+                "title": "So verwendet man den Modellierungseditor",
+                "addClass": {
+                    "title": "Klasse hinzufügen",
+                    "text": "Um eine Klasse hinzuzufügen, ziehen Sie einfach eines der Elemente auf der rechten Seite per Drag & Drop in den Editorbereich auf der linken Seite."
+                },
+                "editClass": {
+                    "title": "Klasse editieren",
+                    "text": "Um eine Klasse zu bearbeiten, doppelklicken Sie darauf und es öffnet sich ein Popup, in dem Sie die Komponenten der Klasse bearbeiten können, z.B. Name, Attribute, Methoden, etc."
+                },
+                "moveClass": {
+                    "title": "Klasse bewegen",
+                    "text": "Um eine Klasse zu verschieben, wählen Sie sie mit einem Klick aus und verwenden Sie entweder die Pfeile Ihrer Tastatur oder bewegen Sie sie per Drag & Drop."
+                },
+                "deleteClass": {
+                    "title": "Klasse löschen",
+                    "text": "Um eine Klasse zu löschen, wählen Sie sie mit einem Klick aus und drücken Sie entweder <code>Entfernen</code> oder <code>Backspace</code> auf Ihrer Tastatur."
+                },
+                "addAssociation": {
+                    "title": "Assoziation hinzufügen",
+                    "text": "Um eine Assoziation hinzuzufügen, wählen Sie die Ausgangsklasse mit einem Klick aus und Sie sehen vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Assoziationen. Klicken und halten Sie einen dieser Punkte gedrückt und ziehen Sie die Maus auf einen anderen blauen Halbkreis, um eine Assoziation zu erstellen."
+                },
+                "editAssociation": {
+                    "title": "Assoziation editieren",
+                    "text": "Um eine Assoziation zu bearbeiten, doppelklicken Sie darauf und es öffnet sich ein Popup, in dem Sie ihre Eigenschaften, z.B. den Typ, bearbeiten können."
+                },
+                "deleteAssociation": {
+                    "title": "Assoziation löschen",
+                    "text": "Um eine Assoziation zu löschen, wählen Sie sie mit einem Klick aus und drücken Sie entweder <code>Entfernen</code> oder <code>Backspace</code> auf Ihrer Tastatur."
+                },
+                "undo": {
+                    "title": "Rückgängig machen & Wiederherstellen",
+                    "text": "Mit <code>Strg+Z</code> und <code>Strg+Y</code> können Sie Ihre Änderungen rückgängig machen und wiederholen."
+                }
+            }
         }
     }
 }
