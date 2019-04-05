@@ -1,6 +1,11 @@
 .submission-container {
     display: flex;
-    //height: calc(100vh - 140px);
+    flex-flow: column nowrap;
+}
+
+.assessment-result-container {
+    display: flex;
+    height: calc(100vh - 148px);
     flex-flow: column nowrap;
 }
 
@@ -8,8 +13,14 @@
     display: flex;
     justify-content: center;
     width: 100%;
+    height: 100%;
     overflow: auto;
+
     jhi-modeling-editor {
+        width: 100%;
+    }
+
+    jhi-modeling-assessment {
         width: 100%;
     }
 }
