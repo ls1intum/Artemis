@@ -1,7 +1,11 @@
 {
     "modelingAssessment": {
         "points": "Punkte",
+        "conflicts": "Konflikte",
         "assessor": "Bewertet von: {{firstName}} {{lastName}}",
-        "noModel": "Kein Modell zum Darstellen gefunden."
+        "noModel": "Kein Modell zum Darstellen gefunden.",
+        "messages": {
+            "noConflicts": "Konflikte konnten nicht geladen werden"
+        }
     }
 }
