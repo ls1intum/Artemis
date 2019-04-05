@@ -18,6 +18,12 @@
             "answerOptions": "Answer Options",
             "randomizeOrder": "Present Answer Options in Random Order",
             "scoringType": "Type / Scoring",
+            "answer": "Answer",
+            "solution": "Solution",
+            "you": "You",
+            "correct": "Correct",
+            "wrong": "Wrong",
+            "invalid": "Invalid answers will be assessed as correct.",
             "editor": {
                 "addCorrectAnswerOption": "[correct] Correct Option",
                 "addInCorrectAnswerOption": "[wrong] Incorrect Option",
@@ -27,7 +33,6 @@
                 "italic": "Italic",
                 "underline": "Underline",
                 "unorderedList": "Unordered List",
-                "heading": "Heading",
                 "headingOne": "Heading One",
                 "headingTwo": "Heading Two",
                 "headingThree": "Heading Three",
@@ -36,7 +41,8 @@
                 "orderedList": "Ordered List",
                 "imageUpload": "Attachment",
                 "code": "Code",
-                "color": "Color"
+                "color": "Color",
+                "style": "Style"
             }
         }
     }

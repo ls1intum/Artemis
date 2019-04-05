@@ -76,10 +76,10 @@
     <br>
     <div *ngIf="showResult && !forceSampleSolution">
         <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-            Show Sample Solution
+            {{'arTeMiSApp.quizQuestion.showSampleSolution' | translate}}
         </div>
         <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-            Hide Sample Solution
+            {{'arTeMiSApp.quizQuestion.hideSampleSolution' | translate}}
         </div>
     </div>
 </div>

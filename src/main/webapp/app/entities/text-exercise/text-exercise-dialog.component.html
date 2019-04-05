@@ -26,14 +26,14 @@
         </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
-                <jhi-date-time-picker labelName="Release Date" [(ngModel)]="textExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate}}" [(ngModel)]="textExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
             </div>
             <div class="form-group flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="Due Date" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate}}" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
             </div>
         </div>
         <div class="form-group">
-            <jhi-date-time-picker labelName="Assessment Due Date" [entity]="textExercise" field="assessmentDueDate"></jhi-date-time-picker>
+            <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate}}" [(ngModel)]="textExercise.assessmentDueDate" name="assessmentDueDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -59,7 +59,7 @@
             <jhi-markdown-editor [(markdown)]="textExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <span>Example submissions</span>
+            <span jhiTranslate="arTeMiSApp.textExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
@@ -69,9 +69,9 @@
                 </li>
             </ul>
 
-            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new">Create example submission</button>
+            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new" jhiTranslate="arTeMiSApp.textExercise.createExampleSubmissions">Create example submission</button>
 
-            <div class="alert alert-info" *ngIf="!textExercise.id">To create an example submission, you first need to finish creating the text exercise</div>
+            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="arTeMiSApp.textExercise.exampleSubmissionsRequireExercise">To create an example submission, you first need to finish creating the text exercise.</div>
         </div>
     </div>
     <div class="modal-footer">

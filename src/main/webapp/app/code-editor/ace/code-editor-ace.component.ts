@@ -7,29 +7,13 @@ import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 
 import { AceEditorComponent } from 'ng2-ace-editor';
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-  ViewChild,
-  OnDestroy
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, OnDestroy } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
-import {
-  compose,
-  fromPairs,
-  map,
-  toPairs,
-  unionBy
-} from 'lodash/fp';
+import { compose, fromPairs, map, toPairs, unionBy } from 'lodash/fp';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { Participation } from 'app/entities/participation';
@@ -43,7 +27,7 @@ import { JhiWebsocketService } from '../../core';
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
-    providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService]
+    providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor')
@@ -53,7 +37,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     readonly aceModeList = ace.acequire('ace/ext/modelist');
 
     /** Ace Editor Options **/
-    editorFileSessions: {[fileName: string]: {code: string, errors: AnnotationArray, unsavedChanges: boolean}} = {};
+    editorFileSessions: { [fileName: string]: { code: string; errors: AnnotationArray; unsavedChanges: boolean } } = {};
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
 
     annotationChange: Subscription;
@@ -68,7 +52,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     @Input()
     repositoryFiles: string[];
     @Input()
-    buildLogErrors: {[fileName: string]: AnnotationArray[]};
+    buildLogErrors: { [fileName: string]: AnnotationArray[] };
     @Output()
     saveStatusChange = new EventEmitter<SaveStatusChange>();
 
@@ -79,9 +63,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         private localStorageService: LocalStorageService,
-        public modalService: NgbModal
-    ) {
-    }
+        private translate: TranslateService,
+        public modalService: NgbModal,
+    ) {}
 
     /**
      * @function ngOnInit
@@ -100,7 +84,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             enableBasicAutocompletion: true,
-            enableLiveAutocompletion: true
+            enableLiveAutocompletion: true,
         });
     }
 
@@ -126,8 +110,14 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 if (this.annotationChange) {
                     this.annotationChange.unsubscribe();
                 }
-                this.editor.getEditor().getSession().off('change', this.updateAnnotationPositions);
-                this.editor.getEditor().getSession().clearAnnotations();
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .off('change', this.updateAnnotationPositions);
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .clearAnnotations();
             }
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!this.editorFileSessions[this.selectedFile].code) {
@@ -136,37 +126,32 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         }
         // Update editor file session object to include new files and remove old files
         if (changes.repositoryFiles) {
-            const newFiles = _difference(
-                changes.repositoryFiles.currentValue,
-                changes.repositoryFiles.previousValue
-            );
-            const removedFiles = _difference(
-                changes.repositoryFiles.previousValue,
-                changes.repositoryFiles.currentValue
-            );
-            const filteredEntries = _differenceWith(
-                toPairs(this.editorFileSessions),
-                removedFiles,
-                (a, b) => a === b[0]
-            );
-            const newEntries = newFiles.map(fileName => [fileName, {errors: new AnnotationArray(), code: '', unsavedChanges: false}]);
+            const newFiles = _difference(changes.repositoryFiles.currentValue, changes.repositoryFiles.previousValue);
+            const removedFiles = _difference(changes.repositoryFiles.previousValue, changes.repositoryFiles.currentValue);
+            const filteredEntries = _differenceWith(toPairs(this.editorFileSessions), removedFiles, (a, b) => a === b[0]);
+            const newEntries = newFiles.map(fileName => [fileName, { errors: new AnnotationArray(), code: '', unsavedChanges: false }]);
             this.editorFileSessions = compose(
                 fromPairs,
-                unionBy('[0]', newEntries)
+                unionBy('[0]', newEntries),
             )(filteredEntries);
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
         if (changes.buildLogErrors) {
             this.editorFileSessions = compose(
                 fromPairs,
-                map(([fileName, {errors, ...session}]) => [fileName, {
-                    ...session,
-                    errors: changes.buildLogErrors.currentValue[fileName] || new AnnotationArray()
-                }]),
-                toPairs
+                map(([fileName, { errors, ...session }]) => [
+                    fileName,
+                    {
+                        ...session,
+                        errors: changes.buildLogErrors.currentValue[fileName] || new AnnotationArray(),
+                    },
+                ]),
+                toPairs,
             )(this.editorFileSessions);
             if (this.editorFileSessions[this.selectedFile]) {
-                this.editor.getEditor().getSession()
+                this.editor
+                    .getEditor()
+                    .getSession()
                     .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
             }
         }
@@ -175,17 +160,20 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     setUpReceiveFileUpdates() {
         this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
         this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
-        this.jhiWebsocketService.receive(this.receiveFileUpdatesChannel)
+        this.jhiWebsocketService
+            .receive(this.receiveFileUpdatesChannel)
             .debounceTime(this.updateFilesDebounceTime)
             .distinctUntilChanged()
             .subscribe(
                 res => {
-                    const sessionAnnotations = Object.entries(this.editorFileSessions)
-                        .reduce((acc, [file, {errors}]) => ({
+                    const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
+                        (acc, [file, { errors }]) => ({
                             ...acc,
-                            [file]: errors
-                        }), {});
-                    this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, timestamp: Date.now()}}));
+                            [file]: errors,
+                        }),
+                        {},
+                    );
+                    this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
                     this.editorFileSessions[res.fileName].unsavedChanges = false;
                     this.updateSaveStatusLabel();
                 },
@@ -196,13 +184,13 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                             saveStatusIcon: {
                                 spin: false,
                                 icon: 'times-circle',
-                                class: 'text-danger'
+                                class: 'text-danger',
                             },
-                            saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
+                            saveStatusLabel: '<span class="text-danger">${this.translate.instant("arTeMiSApp.editor.failedToSave")}</span>',
                         });
                     }
                     console.log('There was an error while saving file', err.fileName, err.error);
-                }
+                },
             );
     }
 
@@ -212,7 +200,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      */
     updateAnnotationPositions = (change: TextChange) => {
         this.editorFileSessions[this.selectedFile].errors = this.editorFileSessions[this.selectedFile].errors.update(change);
-    }
+    };
 
     onSaveStatusChange(statusChange: SaveStatusChange) {
         this.saveStatusChange.emit(statusChange);
@@ -229,12 +217,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             this.onSaveStatusChange({
                 isSaved: false,
                 saveStatusIcon: {
-                  spin: true,
-                  icon: 'circle-notch',
-                  class: 'text-info'
+                    spin: true,
+                    icon: 'circle-notch',
+                    class: 'text-info',
                 },
-                saveStatusLabel:
-                    `<span class="text-info">Unsaved changes in ${unsavedFiles} files.</span>`
+                saveStatusLabel: `<span class="text-info">${this.translate.instant('arTeMiSApp.editor.unsavedChanges', { unsavedFiles })}</span>`,
             });
         } else {
             this.onSaveStatusChange({
@@ -242,9 +229,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 saveStatusIcon: {
                     spin: false,
                     icon: 'check-circle',
-                    class: 'text-success'
+                    class: 'text-success',
                 },
-                saveStatusLabel: '<span class="text-success"> All changes saved.</span>'
+                saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
             });
         }
     }
@@ -261,13 +248,13 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     this.editorFileSessions[fileName] = {
                         code: fileObj.fileContent,
                         errors: new AnnotationArray(),
-                        unsavedChanges: false
+                        unsavedChanges: false,
                     };
                 } else {
                     this.editorFileSessions[fileName] = {
                         ...this.editorFileSessions[fileName],
                         code: fileObj.fileContent,
-                        unsavedChanges: false
+                        unsavedChanges: false,
                     };
                 }
                 /**
@@ -281,7 +268,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             },
             err => {
                 console.log('There was an error while getting file', this.selectedFile, err);
-            }
+            },
         );
     }
 
@@ -296,12 +283,12 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             saveStatusIcon: {
                 spin: true,
                 icon: 'circle-notch',
-                class: 'text-info'
+                class: 'text-info',
             },
-            saveStatusLabel: '<span class="text-info">Saving file.</span>'
+            saveStatusLabel: '<span class="text-info">${this.translate.instant("arTeMiSApp.editor.unsavedChanges")}<span>',
         });
 
-        this.jhiWebsocketService.send(this.updateFileChannel, {fileName, fileContent: this.editorFileSessions[fileName].code});
+        this.jhiWebsocketService.send(this.updateFileChannel, { fileName, fileContent: this.editorFileSessions[fileName].code });
     }
 
     /**
@@ -316,18 +303,19 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             this.editorFileSessions[this.selectedFile] = {
                 ...this.editorFileSessions[this.selectedFile],
                 code,
-                unsavedChanges: true
+                unsavedChanges: true,
             };
 
             // Trigger file save
             this.saveFile(this.selectedFile);
             this.updateSaveStatusLabel();
-        // On initial change set annotations and subscribe to changes
+            // On initial change set annotations and subscribe to changes
         } else if (this.editorFileSessions[this.selectedFile]) {
-            this.editor.getEditor().getSession()
+            this.editor
+                .getEditor()
+                .getSession()
                 .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
-            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change')
-                .subscribe(([change]) => this.updateAnnotationPositions(change));
+            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
         }
     }
 

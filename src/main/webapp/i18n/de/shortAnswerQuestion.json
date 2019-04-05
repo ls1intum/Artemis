@@ -17,15 +17,15 @@
             },
             "spots": "Spots",
             "solutions": "Lösungen",
-            "correctMappings": "Correct Mappings",
+            "correctMappings": "Korrekte Mappings",
 
             "editor": {
-                "addHint": "[-h] Hint",
-                "addExplanation": "[-e] Explanation",
-                "addSpot": "[-spot #] Add Spot",
-                "addOption": "[-option #] Add Answer Option",
+                "addHint": "[hint] Hinweis",
+                "addExplanation": "[exp] Erklärung",
+                "addSpot": "[-spot #] Spot erzeugen",
+                "addOption": "[-option #] Antwortmöglichkeit hinzufügen",
                 "text": "Text",
-                "visual": "Visual",
+                "visual": "Visuell",
                 "visualModeHeadline": "Visueller Modus",
                 "visualModeExplanation": "Bitte markieren Sie ein Wort und drücken Sie anschließend auf Add Spot um ein neuen Spot mit der zugehörigen Lösung zu generieren"
             }

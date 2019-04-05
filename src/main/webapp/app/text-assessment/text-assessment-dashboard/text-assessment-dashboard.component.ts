@@ -5,10 +5,11 @@ import { ActivatedRoute } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
 import { DifferencePipe } from 'angular2-moment';
 import { HttpResponse } from '@angular/common/http';
+import { AssessmentType, Result } from 'app/entities/result';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
-    styles: []
+    styles: [],
 })
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
@@ -21,7 +22,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
-        private momentDiff: DifferencePipe
+        private momentDiff: DifferencePipe,
     ) {}
 
     async ngOnInit() {
@@ -44,7 +45,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exercise.id, {submittedOnly: true})
+            .getTextSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body.map((submission: TextSubmission) => {
                     if (submission.result) {
@@ -55,7 +56,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
                     }
 
                     return submission;
-                })
+                }),
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
@@ -63,7 +64,14 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
     }
 
-    durationString(completionDate: Date, initializationDate: Date) {
+    public durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
+    }
+
+    public assessmentTypeTranslationKey(result?: Result): string {
+        if (result) {
+            return `arTeMiSApp.AssessmentType.${result.assessmentType}`;
+        }
+        return 'arTeMiSApp.AssessmentType.null';
     }
 }

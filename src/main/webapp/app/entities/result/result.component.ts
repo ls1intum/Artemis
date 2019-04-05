@@ -10,6 +10,7 @@ import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
@@ -48,6 +49,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
         private accountService: AccountService,
+        private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
     ) {}
@@ -163,7 +165,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     buildResultString() {
         if (this.result.resultString === 'No tests found') {
-            return 'Build failed';
+            return this.translate.instant('arTeMiSApp.editor.buildFailed');
         }
         return this.result.resultString;
     }

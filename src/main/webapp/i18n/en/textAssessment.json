@@ -1,13 +1,52 @@
 {
     "arTeMiSApp": {
         "textAssessment": {
+            "loading": "Please wait while ArTEMiS is finding the submission!",
+            "heading": {
+                "assessment": "Assessment Editor for Text Exercise {{exerciseTitle}}",
+                "exampleAssessment": "Example Assessment Editor for Text Exercise {{exerciseTitle}}"
+            },
+            "assessor": "Reviewer",
+            "save": "Save Assessment",
             "saveSuccessful": "Your assessment was saved successfully!",
+            "submit": "Submit Assessment",
             "submitSuccessful": "Your assessment was submitted successfully!",
+            "override": "Override Assessment",
             "resultDismissed": "Your assessment was dismissed because another tutor already rated this submission.",
             "invalidAssessments": "Your assessments are not valid!",
             "assessInstruction": "Please highlight the text block you want to assess and click the \"Assess\" button.",
             "predefineTextBlocks": "Add Text Blocks automatically",
-            "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions."
+            "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions.",
+            "submissionLocked": "submission locked",
+            "studentSubmission": "Student submission",
+            "instructions": "&nbsp; Instructions &nbsp;",
+            "detail": {
+                "scoreFor": "Assessment for",
+                "feedback": "Feedback"
+            },
+            "editor": {
+                "assess": "Assess"
+            },
+            "dashboard": {
+                "heading": "Tutor Assessment dashboard for text exercise \"{{exerciseTitle}}\"",
+                "empty": "No Submissions for this exercise!",
+                "loading": "Loading..",
+                "columns": {
+                    "submissionDate": "Submission date",
+                    "result": "Result",
+                    "submissionCount": "Submission count",
+                    "score": "Score",
+                    "duration": "Duration",
+                    "assessmentType": "Assessment Type",
+                    "assessor": "Reviewer",
+                    "action": "Action"
+                },
+                "minutes": "minutes",
+                "actions": {
+                    "open": "Open assessment",
+                    "assess": "Assess Submission"
+                }
+            }
         }
     }
 }

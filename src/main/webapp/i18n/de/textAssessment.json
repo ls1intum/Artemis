@@ -1,13 +1,52 @@
 {
     "arTeMiSApp": {
         "textAssessment": {
+            "loading": "Bitte warten Sie, bis ArTEMiS die Einreichung findet!",
+            "heading": {
+                "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
+                "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
+            },
+            "assessor": "Prüfer/in",
+            "save": "Bewertung speichern",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+            "submit": "Bewertung einreichen",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+            "override": "Bewertung überschreiben",
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
-            "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen."
+            "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen.",
+            "submissionLocked": "Einreichung gesperrt",
+            "studentSubmission": "Studentische Einreichung",
+            "instructions": "&nbsp; Aufgabenstellung &nbsp;",
+            "detail": {
+                "scoreFor": "Bewertung für",
+                "feedback": "Feedback"
+            },
+            "editor": {
+                "assess": "Bewerten"
+            },
+            "dashboard": {
+                "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\"",
+                "empty": "Keine Einreichungen für diese Aufgabe!",
+                "loading": "Laden..",
+                "columns": {
+                    "submissionDate": "Einreichungsdatum",
+                    "result": "Ergebnis",
+                    "submissionCount": "Anzahl der Einreichungen",
+                    "score": "Punkte",
+                    "duration": "Dauer",
+                    "assessmentType": "Bewertungsart",
+                    "assessor": "Prüfer/in",
+                    "action": "Aktion"
+                },
+                "minutes": "Minuten",
+                "actions": {
+                    "open": "Offene Bewertung",
+                    "assess": "Einreichung bewerten"
+                }
+            }
         }
     }
 }

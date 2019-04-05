@@ -2,12 +2,12 @@
 <div class="p-4" *ngIf="exercise">
     <div class="row">
         <div class="col-lg-2">
-            <button class="btn btn-secondary" (click)="back()">&larr; Back</button>
+            <button class="btn btn-secondary" (click)="back()">&larr;</button>
         </div>
 
         <div class="col-12 col-lg-6">
             <h2>
-                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission For Exercise {{exercise?.title}}
+                <span *ngIf="isNewSubmission">{{"arTeMiSApp.exampleSubmission.createNew" | translate}} </span>{{"arTeMiSApp.exampleSubmission.pageHeader" | translate}} {{exercise?.title}}
             </h2>
         </div>
 
@@ -16,22 +16,22 @@
                 <div class="form-check col-6 align-baseline">
                     <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
                            [(ngModel)]="exampleSubmission.usedForTutorial"/>
-                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
+                    <label class="form-check-label" for="field_usedForTutorial">{{"arTeMiSApp.exampleSubmission.usedForTutorial" | translate}}</label>
                 </div>
 
                 <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
                     <fa-icon icon="save"></fa-icon>
-                    <span *ngIf="isNewSubmission">Create new submission</span>
-                    <span *ngIf="!isNewSubmission">Update text submission</span>
+                    <span *ngIf="isNewSubmission">{{"arTeMiSApp.exampleSubmission.createNewSubmission" | translate}}</span>
+                    <span *ngIf="!isNewSubmission">{{"arTeMiSApp.exampleSubmission.updateTextSubmission" | translate}}</span>
                 </button>
             </div>
         </div>
 
         <div class="col-12">
             <p class="mb-3">
-                <strong>Problem Statement:</strong> <span [innerHTML]="formattedProblemStatement"></span><br>
+                <strong>{{"arTeMiSApp.exampleSubmission.problemStatement" | translate}}:</strong> <span [innerHTML]="formattedProblemStatement"></span><br>
                 <ng-container *ngIf="formattedSampleSolution">
-                    <strong>Sample Solution:</strong> <span [innerHTML]="formattedSampleSolution"></span>
+                    <strong>{{"arTeMiSApp.exampleSubmission.sampleSolution" | translate}}:</strong> <span [innerHTML]="formattedSampleSolution"></span>
                 </ng-container>
             </p>
         </div>
@@ -46,7 +46,7 @@
 
     <div class="row">
         <div class="col-8">
-            <h2>Example Assessment</h2>
+            <h2>{{"arTeMiSApp.exampleSubmission.exampleAssessment" | translate}}</h2>
         </div>
 
         <div class="col-4 text-right">
@@ -54,20 +54,20 @@
                     [disabled]="!assessments || !assessmentsAreValid"
                     *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">
                 <fa-icon icon="save"></fa-icon>
-                <span *ngIf="areNewAssessments">Create new Assessments</span>
-                <span *ngIf="!areNewAssessments">Update Assessments</span>
+                <span *ngIf="areNewAssessments">{{"arTeMiSApp.exampleSubmission.createNewAssessments" | translate}}</span>
+                <span *ngIf="!areNewAssessments">{{"arTeMiSApp.exampleSubmission.updateAssessments" | translate}}</span>
 
             </button>
         </div>
     </div>
 
     <div class="alert alert-info" *ngIf="isNewSubmission">
-        You need to create the example text submission before creating the example assessment
+        {{"arTeMiSApp.exampleSubmission.youNeedToCreate" | translate}}
     </div>
 
     <div class="row" *ngIf="!isNewSubmission">
         <div class="col text-right">
-            <h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5>
+            <h5><strong>{{"arTeMiSApp.exampleSubmission.score" | translate}}:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5>
         </div>
     </div>
 
@@ -93,14 +93,14 @@
     <div class="col-12 text-right" *ngIf="toComplete">
         <button class="btn btn-primary col-3" (click)="checkAssessment()"
                 [disabled]="!assessments || !assessmentsAreValid">
-            Submit Assessment
+            {{"arTeMiSApp.exampleSubmission.submitAssessment" | translate}}
         </button>
     </div>
 
     <div class="col-12 text-rigth" *ngIf="readOnly">
         <button (click)="readAndUnderstood()" class="btn btn-success col-3">
             <fa-icon icon="save"></fa-icon>
-            I have read and understood the example
+            {{"arTeMiSApp.exampleSubmission.readAndUnderstood" | translate}}
         </button>
     </div>
 </div>

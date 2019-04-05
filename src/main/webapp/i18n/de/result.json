@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "result" : {
+        "result": {
             "home": {
                 "title": "Results",
                 "createLabel": "Result erstellen",
@@ -17,14 +16,28 @@
                 "title": "Result"
             },
             "noResult": "Kein Ergebnis",
-            "resultString": "Ergebnis",
-            "completionDate": "Completion Date",
-            "successful": "Successful",
-            "buildArtifact": "Build Artifact",
-            "score": "Score",
-            "submission": "Submission",
-            "feedbacks": "Feedbacks",
-            "participation": "Participation"
+            "resultString": "Ergebnis Text",
+            "completionDate": "Abgabedatum",
+            "successful": "Erfolgreich",
+            "buildArtifact": "Build Artefakt",
+            "score": "Bewertung",
+            "scorePercentage": "Bewertung (in %)",
+            "rated": "Bewertet",
+            "hasFeedback": "Enthält Feedback",
+            "assessmentType": "Bewertungstyp",
+            "assessor": "Reviewer",
+            "feedbacks": "Feedback",
+            "submission": "Einreichung",
+            "participation": "Teilnahme",
+            "createManual": "Erstelle manuelles Ergebnis für",
+            "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl sein.",
+            "resultStringRequired": "Ein Ergebnis Text ist erforderlich.",
+            "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
+            "studentOverride": "Das Abgabedatum dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnise noch mit einer neuen Lösung überschreiben.",
+            "addFeedback": "Feedback hinzufügen",
+            "deleteFeedback": "Feedback löschen",
+            "feedbackTextRequired": "Feedback Text ist erforderlich.",
+            "positive": "Positiv"
         }
     }
 }

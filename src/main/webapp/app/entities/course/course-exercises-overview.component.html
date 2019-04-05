@@ -1,5 +1,5 @@
 <ng-container *ngIf="course; else loading">
-    <h3><span>{{course.title}} - {{quizExercisesCount+programmingExercisesCount+modelingExercisesCount+fileUploadExercisesCount+textExercisesCount}} Exercises </span></h3>
+    <h3><span>{{course.title}} - {{quizExercisesCount+programmingExercisesCount+modelingExercisesCount+fileUploadExercisesCount+textExercisesCount}} {{'arTeMiSApp.course.exercises'| translate}}</span></h3>
 
     <jhi-alert></jhi-alert>
     <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.programmingExercises">

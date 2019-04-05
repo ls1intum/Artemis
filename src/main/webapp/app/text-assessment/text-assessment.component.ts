@@ -259,4 +259,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.interactResizable.resizable({ enabled: false });
         }
     }
+
+    public get headingTranslationKey(): string {
+        const baseKey = 'arTeMiSApp.textAssessment.heading.';
+
+        if (this.submission.exampleSubmission) {
+            return baseKey + 'exampleAssessment';
+        }
+        return baseKey + 'assessment';
+    }
 }

@@ -36,7 +36,8 @@
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.course.onlineCourse">Online Course</span></dt>
                 <dd>
-                    <span>{{course.onlineCourse}}</span>
+                    <span *ngIf="course.onlineCourse">{{'arTeMiSApp.course.onlineCourseTrue' | translate}}</span>
+                    <span *ngIf="!course.onlineCourse">{{'arTeMiSApp.course.onlineCourseFalse' | translate}}</span>
                 </dd>
             </dl>
 
