@@ -14,12 +14,14 @@ import * as $ from 'jquery';
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
+    modelHighlightedElementIds: Set<string>;
     conflictIndex = 0;
     user: User;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
+    conflictingModelHighlightedElementIds: Set<string>;
 
     @Input() modelingExercise: ModelingExercise;
     @Input() conflicts: Conflict[] = [];
@@ -58,5 +60,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.currentConflict = this.conflicts[this.conflictIndex];
         this.conflictingResult = this.currentConflict.conflictingResults[0];
         this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
+        this.updateHighlightedElements();
+    }
+
+    private updateHighlightedElements() {
+        this.modelHighlightedElementIds = new Set<string>([this.currentConflict.modelElementId]);
+        this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 }

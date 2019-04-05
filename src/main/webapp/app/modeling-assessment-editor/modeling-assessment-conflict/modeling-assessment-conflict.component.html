@@ -18,25 +18,23 @@
         <jhi-modeling-assessment
             *ngIf="currentConflict"
             class="conflicting-assessment"
-            [diagramType]="this.modelingExercise.diagramType"
+            [diagramType]="modelingExercise.diagramType"
             [model]="conflictingModel"
             [feedbacks]="conflictingResult.result.feedbacks"
             [assessor]="conflictingResult.result.assessor"
-            [highlightedElementIds]="[conflictingResult.modelElementId]"
-            [readOnly]="false"
+            [highlightedElementIds]="conflictingModelHighlightedElementIds"
+            [readOnly]="true"
             [resizeOptions]="{}"
-            [enablePopups]="true"
         ></jhi-modeling-assessment>
         <jhi-modeling-assessment
             *ngIf="currentConflict"
             class="assessment"
-            [diagramType]="this.modelingExercise.diagramType"
+            [diagramType]="modelingExercise.diagramType"
             [model]="model"
             [feedbacks]="currentConflict.result.feedbacks"
-            [highlightedElementIds]="[currentConflict.modelElementId]"
+            [highlightedElementIds]="modelHighlightedElementIds"
             [assessor]="user"
-            [readOnly]="false"
-            [enablePopups]="true"
+            [readOnly]="true"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>

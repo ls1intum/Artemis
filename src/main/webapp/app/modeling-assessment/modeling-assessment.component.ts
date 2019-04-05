@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -150,24 +150,29 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!newElementIDs) {
             newElementIDs = new Set<string>();
         }
-        this.model.elements.forEach((element: UMLElement) => {
+        console.log('newElementIDs', newElementIDs);
+        // console.log(this.apollonEditor['store'].getState())
+        const model: UMLModel = this.apollonEditor.model;
+        for (const element of model.elements) {
             if (newElementIDs.has(element.id)) {
-                element.highlight = 'rgba(220,53,69,0.7)';
+                element.highlight = 'red';
             } else {
-                element.highlight = 'white';
+                element.highlight = undefined;
             }
-        });
-        this.model.relationships.forEach((relationship: UMLRelationship) => {
+        }
+        for (const relationship of model.relationships) {
             if (newElementIDs.has(relationship.id)) {
-                relationship.highlight = 'rgba(220,53,69,0.7)';
+                relationship.highlight = 'red';
             } else {
-                relationship.highlight = 'white';
+                relationship.highlight = undefined;
             }
-        });
+        }
+        console.log('model', model);
+        this.apollonEditor.model = model;
     }
 
     private scrollIntoView(elementId: string) {
-        const element = this.editorContainer.nativeElement as HTMLDivElement;
+        const element = this.editorContainer.nativeElement as HTMLElement;
         const matchingElement = $(element)
             .find(`#${elementId}`)
             .get(0);

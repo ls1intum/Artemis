@@ -8,7 +8,7 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { retryWhen } from 'rxjs/operators';
 import { Feedback } from 'app/entities/feedback';
@@ -122,13 +122,16 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
-                // this.updateElementFeedbackMapping(result.feedbacks);
                 this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
                 this.conflicts = undefined;
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
                     this.conflicts = error.error as Conflict[];
+                    this.conflicts.forEach((conflict: Conflict) => {
+                        this.modelingAssessmentService.convertResult(conflict.result);
+                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                    });
                     this.highlightConflictingElements();
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
                 } else {
