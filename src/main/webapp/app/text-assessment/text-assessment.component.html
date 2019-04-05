@@ -60,23 +60,23 @@
         </div>
 
         <div class="card-body">
-            <div *ngIf="exercise.problemStatement">
+            <div *ngIf="formattedProblemStatement">
                 <h4>Problem statement</h4>
-                <p>{{exercise.problemStatement}}</p>
+                <p [innerHTML]="formattedProblemStatement"></p>
 
                 <hr>
             </div>
 
-            <div *ngIf="exercise.sampleSolution">
+            <div *ngIf="formattedSampleSolution">
                 <h4>Sample solution</h4>
-                <p>{{exercise.sampleSolution}}</p>
+                <p [innerHTML]="formattedSampleSolution"></p>
 
                 <hr>
             </div>
 
-            <div *ngIf="exercise.gradingInstructions">
+            <div *ngIf="formattedGradingInstructions">
                 <h4>Grading instructions</h4>
-                <p>{{exercise.gradingInstructions}}</p>
+                <p [innerHTML]="formattedGradingInstructions"></p>
             </div>
         </div>
     </div>

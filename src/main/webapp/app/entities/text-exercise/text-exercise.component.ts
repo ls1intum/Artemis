@@ -8,10 +8,11 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-text-exercise',
-    templateUrl: './text-exercise.component.html'
+    templateUrl: './text-exercise.component.html',
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
@@ -23,7 +24,8 @@ export class TextExerciseComponent extends ExerciseComponent {
         translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
-        route: ActivatedRoute
+        route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {
         super(courseService, translateService, route, eventManager);
         this.textExercises = [];
@@ -33,14 +35,19 @@ export class TextExerciseComponent extends ExerciseComponent {
         this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<TextExercise[]>) => {
                 this.textExercises = res.body;
+
                 // reconnect exercise with course
                 this.textExercises.forEach(textExercise => {
                     textExercise.course = this.course;
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
+    }
+
+    convertMarkdownToHtml(text: string): string {
+        return this.artemisMarkdown.htmlForMarkdown(text);
     }
 
     trackId(index: number, item: TextExercise) {
