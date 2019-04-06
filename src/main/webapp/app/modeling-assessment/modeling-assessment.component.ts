@@ -16,12 +16,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
-    private highlightColor = 'rgba(219, 53, 69,0.6)';
-
     @ViewChild('editorContainer') editorContainer: ElementRef;
+
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
+    @Input() highlightColor = 'rgba(219, 53, 69,0.6)';
     @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
@@ -77,9 +77,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.calculateTotalScore();
             this.applyStateConfiguration();
         }
-        if (changes.highlightedElementIds) {
+        if (changes.highlightedElementIds || changes.highlightColor) {
+            if (changes.highlightColor) {
+                this.highlightColor = changes.highlightColor.currentValue;
+            }
             if (this.apollonEditor !== null) {
-                this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+                this.updateHighlightedElements(changes.highlightedElementIds ? changes.highlightedElementIds.currentValue : this.highlightedElementIds);
             }
         }
         if (changes.centeredElementId) {
@@ -114,7 +117,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    applyStateConfiguration() {
+    private applyStateConfiguration() {
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
         }
@@ -164,22 +167,24 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!newElementIDs) {
             newElementIDs = new Set<string>();
         }
-        const model: UMLModel = this.apollonEditor.model;
-        for (const element of model.elements) {
-            if (newElementIDs.has(element.id)) {
-                element.highlight = this.highlightColor;
-            } else {
-                element.highlight = undefined;
+        if (this.apollonEditor !== null) {
+            const model: UMLModel = this.apollonEditor.model;
+            for (const element of model.elements) {
+                if (newElementIDs.has(element.id)) {
+                    element.highlight = this.highlightColor;
+                } else {
+                    element.highlight = undefined;
+                }
             }
-        }
-        for (const relationship of model.relationships) {
-            if (newElementIDs.has(relationship.id)) {
-                relationship.highlight = this.highlightColor;
-            } else {
-                relationship.highlight = undefined;
+            for (const relationship of model.relationships) {
+                if (newElementIDs.has(relationship.id)) {
+                    relationship.highlight = this.highlightColor;
+                } else {
+                    relationship.highlight = undefined;
+                }
             }
+            this.apollonEditor.model = model;
         }
-        this.apollonEditor.model = model;
     }
 
     private scrollIntoView(elementId: string) {

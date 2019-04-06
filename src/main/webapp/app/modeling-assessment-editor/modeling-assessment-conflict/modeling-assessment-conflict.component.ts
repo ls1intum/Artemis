@@ -9,6 +9,7 @@ import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Feedback } from 'app/entities/feedback';
+import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -17,8 +18,9 @@ import { Feedback } from 'app/entities/feedback';
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
-    feedbacks: Feedback[];
+    mergedFeedbacks: Feedback[];
     modelHighlightedElementIds: Set<string>;
+    highlightColor: string;
     user: User;
 
     currentConflict: Conflict;
@@ -26,6 +28,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflictingModel: UMLModel;
     conflictingModelHighlightedElementIds: Set<string>;
     conflicts: Conflict[];
+    conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
     modelingExercise: ModelingExercise;
 
@@ -41,15 +44,17 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.route.params.subscribe(params => {
             const submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(submissionId);
+            if (this.conflicts) {
+                this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
+                this.conflictResolutionStates = new Array<ConflictResolutionState>(this.mergedFeedbacks.length);
+                this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
+                this.updateSelectedConflict();
+                this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
+                this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
+            } else {
+                this.jhiAlertService.error('modelingAssessment.messages.noConflicts');
+            }
         });
-        if (this.conflicts) {
-            this.updateSelectedConflict();
-            this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
-            this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
-            this.feedbacks = this.currentConflict.result.feedbacks;
-        } else {
-            this.jhiAlertService.error('modelingAssessment.messages.noConflicts');
-        }
         this.accountService.identity().then(value => (this.user = value));
     }
 
@@ -67,19 +72,28 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateSelectedConflict();
     }
 
-    onKeepYours() {}
+    onKeepYours() {
+        this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.currentConflict.modelElementId, this.currentConflict.result.feedbacks);
+        this.updateCurrentState(ConflictResolutionState.ESCALATED);
+        this.updateHighlightColor();
+    }
 
     onAcceptOther() {
-        const otherFeedback: Feedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
-        const ownFeedback: Feedback = this.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
+        this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
+        this.updateCurrentState(ConflictResolutionState.RESOLVED);
+        this.updateHighlightColor();
+    }
+
+    updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         let feedbacks: Feedback[] = [];
-        this.feedbacks.forEach(feedback => {
-            if (feedback.referenceId === this.currentConflict.modelElementId) {
-                feedback.credits = otherFeedback.credits;
+        const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
+        this.mergedFeedbacks.forEach(feedback => {
+            if (feedback.referenceId === elementIdToUpdate) {
+                feedback.credits = feedbackToUse.credits;
             }
             feedbacks.push(feedback);
         });
-        this.feedbacks = feedbacks;
+        this.mergedFeedbacks = feedbacks;
     }
 
     setSameWidthOnModelingAssessments() {
@@ -93,11 +107,30 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.conflictingResult = this.currentConflict.conflictingResults[0];
         this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
+        this.updateHighlightColor();
     }
 
     private updateHighlightedElements() {
         this.modelHighlightedElementIds = new Set<string>([this.currentConflict.modelElementId]);
         this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
+    }
+
+    private updateHighlightColor() {
+        switch (this.conflictResolutionStates[this.conflictIndex]) {
+            case ConflictResolutionState.UNHANDLED:
+                this.highlightColor = 'rgba(219, 53, 69, 0.6)';
+                break;
+            case ConflictResolutionState.ESCALATED:
+                this.highlightColor = 'rgba(255, 193, 7, 0.6)';
+                break;
+            case ConflictResolutionState.RESOLVED:
+                this.highlightColor = 'rgba(40, 167, 69, 0.6)';
+                break;
+        }
+    }
+
+    private updateCurrentState(newState: ConflictResolutionState) {
+        this.conflictResolutionStates[this.conflictIndex] = newState;
     }
 
     private updateCenteredElement() {}
