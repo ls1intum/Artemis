@@ -39,6 +39,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.initializeApollonEditor();
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
+        } else {
+            this.jhiAlertService.error('modelingAssessment.noModel');
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
