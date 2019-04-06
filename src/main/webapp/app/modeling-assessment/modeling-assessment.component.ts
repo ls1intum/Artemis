@@ -42,12 +42,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         } else {
             this.jhiAlertService.error('modelingAssessment.noModel');
         }
-        if (this.highlightedElementIds) {
-            this.updateHighlightedElements(this.highlightedElementIds);
-        }
-        if (this.centeredElementId) {
-            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
-        }
+        this.applyStateConfiguration();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -80,6 +75,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.updateElementFeedbackMapping(this.feedbacks, true);
             this.updateApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
+            this.applyStateConfiguration();
         }
         if (changes.highlightedElementIds) {
             if (this.apollonEditor !== null) {
@@ -115,6 +111,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.calculateTotalScore();
                 this.feedbackChanged.emit(this.feedbacks);
             });
+        }
+    }
+
+    applyStateConfiguration() {
+        if (this.highlightedElementIds) {
+            this.updateHighlightedElements(this.highlightedElementIds);
+        }
+        if (this.centeredElementId) {
+            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
         }
     }
 
