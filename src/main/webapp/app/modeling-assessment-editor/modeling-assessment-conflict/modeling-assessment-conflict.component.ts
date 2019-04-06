@@ -71,8 +71,15 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     onAcceptOther() {
         const otherFeedback: Feedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
-        const ownFeedbackIndex = this.feedbacks.findIndex((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
-        this.feedbacks[ownFeedbackIndex].credits = otherFeedback.credits;
+        const ownFeedback: Feedback = this.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
+        let feedbacks: Feedback[] = [];
+        this.feedbacks.forEach(feedback => {
+            if (feedback.referenceId === this.currentConflict.modelElementId) {
+                feedback.credits = otherFeedback.credits;
+            }
+            feedbacks.push(feedback);
+        });
+        this.feedbacks = feedbacks;
     }
 
     setSameWidthOnModelingAssessments() {
