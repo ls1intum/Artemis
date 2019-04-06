@@ -30,6 +30,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflicts: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
+    conflictsAllHandled = false;
     modelingExercise: ModelingExercise;
 
     constructor(
@@ -46,13 +47,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(submissionId);
             if (this.conflicts) {
                 this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
-                this.conflictResolutionStates = new Array<ConflictResolutionState>(this.mergedFeedbacks.length);
+                this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
                 this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
                 this.updateSelectedConflict();
                 this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
                 this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
             } else {
-                this.jhiAlertService.error('modelingAssessment.messages.noConflicts');
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
             }
         });
         this.accountService.identity().then(value => (this.user = value));
@@ -131,6 +132,20 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     private updateCurrentState(newState: ConflictResolutionState) {
         this.conflictResolutionStates[this.conflictIndex] = newState;
+        this.updateOverallResolutioState();
+    }
+
+    private updateOverallResolutioState() {
+        for (const state of this.conflictResolutionStates) {
+            if (state === ConflictResolutionState.UNHANDLED) {
+                this.conflictsAllHandled = false;
+                return;
+            }
+        }
+        if (!this.conflictsAllHandled) {
+            this.jhiAlertService.success('modelingAssessmentEditor.messages.conflictsResolved');
+        }
+        this.conflictsAllHandled = true;
     }
 
     private updateCenteredElement() {}
