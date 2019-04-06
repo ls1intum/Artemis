@@ -16,7 +16,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styles: ['.color-preview { cursor: pointer; }']
+    styles: ['.color-preview { cursor: pointer; }'],
 })
 export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
@@ -34,7 +34,8 @@ export class CourseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService) {}
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
@@ -46,7 +47,7 @@ export class CourseUpdateComponent implements OnInit {
             title: new FormControl(this.course.title, [Validators.required]),
             shortName: new FormControl(this.course.shortName, {
                 validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
-                updateOn: 'blur'
+                updateOn: 'blur',
             }),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
             teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
@@ -57,7 +58,7 @@ export class CourseUpdateComponent implements OnInit {
             onlineCourse: new FormControl(this.course.onlineCourse),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
             color: new FormControl(this.course.color),
-            courseIcon: new FormControl(this.course.courseIcon)
+            courseIcon: new FormControl(this.course.courseIcon),
         });
         this.courseImageFileName = this.course.courseIcon;
     }
@@ -80,7 +81,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     onSelectedColor(selectedColor: string) {
-        this.courseForm.patchValue({'color': selectedColor});
+        this.courseForm.patchValue({ color: selectedColor });
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
@@ -114,7 +115,7 @@ export class CourseUpdateComponent implements OnInit {
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
             result => {
-                this.courseForm.patchValue({'courseIcon': result.path});
+                this.courseForm.patchValue({ courseIcon: result.path });
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;
                 this.courseImageFileName = result.path;
@@ -124,7 +125,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;
                 this.courseImageFileName = this.course.courseIcon;
-            }
+            },
         );
     }
 

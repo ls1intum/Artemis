@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 // Modal -> Create new repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-create',
-    templateUrl: './code-editor-file-browser-create.html'
+    templateUrl: './code-editor-file-browser-create.html',
 })
 export class CodeEditorFileBrowserCreateComponent implements OnInit {
     @Input() participation: Participation;
@@ -21,11 +21,7 @@ export class CodeEditorFileBrowserCreateComponent implements OnInit {
     // Placeholder string for form field 'folder'
     folderPlaceholder: string;
 
-    constructor(
-        public activeModal: NgbActiveModal,
-        private repositoryFileService: RepositoryFileService,
-        private translateService: TranslateService
-    ) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryFileService: RepositoryFileService, private translateService: TranslateService) {}
 
     /**
      * @function ngOnInit
@@ -57,7 +53,7 @@ export class CodeEditorFileBrowserCreateComponent implements OnInit {
                 },
                 err => {
                     console.log('Error while creating file: ' + this.newFileName, err);
-                }
+                },
             );
         }
         this.isLoading = false;

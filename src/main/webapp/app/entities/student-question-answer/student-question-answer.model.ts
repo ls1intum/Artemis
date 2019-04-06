@@ -11,6 +11,5 @@ export class StudentQuestionAnswer implements BaseEntity {
     public author: User;
     public quizQuestion: StudentQuestion;
 
-    constructor() {
-    }
+    constructor() {}
 }

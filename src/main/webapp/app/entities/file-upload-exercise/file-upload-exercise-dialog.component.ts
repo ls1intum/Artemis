@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-file-upload-exercise-dialog',
-    templateUrl: './file-upload-exercise-dialog.component.html'
+    templateUrl: './file-upload-exercise-dialog.component.html',
 })
 export class FileUploadExerciseDialogComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
@@ -29,7 +29,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseService: CourseService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -38,7 +38,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -56,10 +56,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError()
-        );
+        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: FileUploadExercise) {
@@ -83,7 +80,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-file-upload-exercise-popup',
-    template: ''
+    template: '',
 })
 export class FileUploadExercisePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

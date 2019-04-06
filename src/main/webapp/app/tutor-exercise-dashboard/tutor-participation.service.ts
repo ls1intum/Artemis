@@ -17,15 +17,11 @@ export class TutorParticipationService {
 
     create(tutorParticipation: TutorParticipation, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
         return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutorParticipations`, tutorParticipation, {
-            observe: 'response'
+            observe: 'response',
         });
     }
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
-        return this.http.post<TutorParticipation>(
-            `${this.resourceUrl}/${exerciseId}/exampleSubmission`,
-            exampleSubmission,
-            { observe: 'response' }
-        );
+        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/exampleSubmission`, exampleSubmission, { observe: 'response' });
     }
 }

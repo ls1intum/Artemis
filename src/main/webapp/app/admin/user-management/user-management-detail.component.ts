@@ -6,7 +6,7 @@ import { User, UserService } from '../../core';
 
 @Component({
     selector: 'jhi-user-mgmt-detail',
-    templateUrl: './user-management-detail.component.html'
+    templateUrl: './user-management-detail.component.html',
 })
 export class UserMgmtDetailComponent implements OnInit, OnDestroy {
     user: User;

@@ -66,6 +66,7 @@
             },
             "account": {
                 "main": "Zugang",
+                "profile": "Profil",
                 "settings": "Einstellungen",
                 "password": "Passwort",
                 "sessions": "Sitzungen",
@@ -173,10 +174,11 @@
             "import": "Import",
             "export": "Export",
             "tutorCourseDashboard": "Tutor Kurs Dashboard",
-            "exerciseDashboard": "Übungs Dashboard",
+            "exerciseDashboard": "Aufgaben Dashboard",
             "newResult": "Neues Ergebnis",
             "cleanupBuildPlan": "Build Plan aufräumen",
-            "registerForCourse": "Für Kurs anmelden"
+            "registerForCourse": "Für Kurs anmelden",
+            "exercise": "Aufgaben"
         },
         "detail": {
             "field": "Feld",

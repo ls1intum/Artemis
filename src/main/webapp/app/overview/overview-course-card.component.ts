@@ -7,7 +7,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 @Component({
     selector: 'jhi-overview-course-card',
     templateUrl: './overview-course-card.component.html',
-    styleUrls: ['overview-course-card.scss']
+    styleUrls: ['overview-course-card.scss'],
 })
 export class OverviewCourseCardComponent implements OnInit {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -17,12 +17,10 @@ export class OverviewCourseCardComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        private exerciseService: ExerciseService
-    ) {
-    }
+        private exerciseService: ExerciseService,
+    ) {}
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 
     displayTotalRelativeScore(): number {
         if (this.course.exercises.length > 0) {
@@ -37,6 +35,6 @@ export class OverviewCourseCardComponent implements OnInit {
     }
 
     startExercise(exercise: Exercise): void {
-        this.router.navigate([this.course.id, 'exercises', exercise.id], {relativeTo: this.route});
+        this.router.navigate([this.course.id, 'exercises', exercise.id], { relativeTo: this.route });
     }
 }

@@ -85,11 +85,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.model = JSON.parse(this.submission.model);
                 } else {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error(`No model could be found for this submission.`);
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
                 }
                 if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                    this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
                 }
                 this.checkAuthorization();
                 this.validateFeedback();
@@ -100,7 +100,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.result = undefined;
                 this.model = undefined;
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error(`Retrieving requested submission failed.`);
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
             },
         );
     }
@@ -110,13 +110,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.modelingAssessmentService.save(this.localFeedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
-                // this.updateElementFeedbackMapping(result.feedbacks);
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
             () => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.saveFailed');
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
         );
     }
@@ -128,7 +127,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 result.participation.results = [result];
                 this.result = result;
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
                 this.ignoreConflicts = false;
             },
@@ -141,10 +140,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     });
                     this.highlightConflictingElements();
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
                 }
             },
         );

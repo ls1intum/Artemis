@@ -8,13 +8,11 @@
 
         <div class="form-group">
             <label for="folder" class="col-form-label" jhiTranslate="arTeMiSApp.editor.fileBrowser.folder">Folder</label>
-            <input type="text" id="folder" name="folder" class="form-control" [placeholder]="folderPlaceholder"
-                   value="" [(ngModel)]="newFileFolder"  />
+            <input type="text" id="folder" name="folder" class="form-control" [placeholder]="folderPlaceholder" value="" [(ngModel)]="newFileFolder" />
         </div>
         <div class="form-group">
             <label for="filename" class="col-form-label" jhiTranslate="arTeMiSApp.editor.fileBrowser.filename">Filename (including extension)</label>
-            <input type="text" id="filename" name="filename" class="form-control"
-                   value="" [(ngModel)]="newFileName" required  />
+            <input type="text" id="filename" name="filename" class="form-control" value="" [(ngModel)]="newFileName" required />
         </div>
     </div>
     <div class="modal-footer">

@@ -18,6 +18,6 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
     declarations: [InstructorExerciseDashboardComponent],
     entryComponents: [],
     providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSInstructorExerciseStatsDashboardModule {}

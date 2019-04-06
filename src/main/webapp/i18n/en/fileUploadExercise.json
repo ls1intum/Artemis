@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "fileUploadExercise" : {
+        "fileUploadExercise": {
             "home": {
                 "title": "File Upload Exercises",
                 "createLabel": "Create a new File Upload Exercise",

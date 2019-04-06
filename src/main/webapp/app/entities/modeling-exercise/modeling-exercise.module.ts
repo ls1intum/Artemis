@@ -14,7 +14,7 @@ import {
     modelingExercisePopupRoute,
     ModelingExercisePopupService,
     modelingExerciseRoute,
-    ModelingExerciseService
+    ModelingExerciseService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -25,29 +25,33 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSMarkdownEditorModule, ArTEMiSCategorySelectorModule, ArTEMiSDifficultyPickerModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        FormDateTimePickerModule,
+        ArTEMiSMarkdownEditorModule,
+        ArTEMiSCategorySelectorModule,
+        ArTEMiSDifficultyPickerModule,
+    ],
     declarations: [
         ModelingExerciseComponent,
         ModelingExerciseDetailComponent,
         ModelingExerciseDialogComponent,
         ModelingExerciseDeleteDialogComponent,
         ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent
+        ModelingExerciseDeletePopupComponent,
     ],
     entryComponents: [
         ModelingExerciseComponent,
         ModelingExerciseDialogComponent,
         ModelingExercisePopupComponent,
         ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent
+        ModelingExerciseDeletePopupComponent,
     ],
-  providers: [
-        ModelingExerciseService,
-        ModelingExercisePopupService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-  ],
+    providers: [ModelingExerciseService, ModelingExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [ModelingExerciseComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSModelingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -29,13 +29,13 @@ describe('Component Tests', () => {
                                         pagingParams: {
                                             predicate: 'id',
                                             reverse: false,
-                                            page: 0
-                                        }
-                                    })
-                            }
-                        }
-                    }
-                ]
+                                            page: 0,
+                                        },
+                                    }),
+                            },
+                        },
+                    },
+                ],
             })
                 .overrideTemplate(ExerciseComponent, '')
                 .compileComponents();
@@ -52,9 +52,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new Exercise(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN
@@ -72,9 +72,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new Exercise(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN
@@ -92,9 +92,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new Exercise(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

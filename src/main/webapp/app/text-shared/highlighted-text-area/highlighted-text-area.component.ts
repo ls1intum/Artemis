@@ -5,7 +5,7 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 @Component({
     selector: 'jhi-highlighted-text-area',
     templateUrl: './highlighted-text-area.component.html',
-    styles: []
+    styles: [],
 })
 export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     @Input() public submissionText: string;
@@ -44,11 +44,8 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
 
         return this.assessments.reduce(
             (content: string, assessment: Feedback, currentIndex: number) =>
-                content.replace(
-                    assessment.reference,
-                    `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`
-                ),
-            this.submissionTextWithHtmlLinebreaks
+                content.replace(assessment.reference, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`),
+            this.submissionTextWithHtmlLinebreaks,
         );
     }
 }

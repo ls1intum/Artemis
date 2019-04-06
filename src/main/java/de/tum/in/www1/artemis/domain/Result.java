@@ -371,6 +371,10 @@ public class Result implements Serializable {
         return hasComplaint;
     }
 
+    public Boolean getHasComplaint() {
+        return hasComplaint;
+    }
+
     public Result hasComplaint(Boolean hasComplaint) {
         this.hasComplaint = hasComplaint;
         return this;
@@ -440,7 +444,8 @@ public class Result implements Serializable {
     @Override
     public String toString() {
         return "Result{" + "id=" + getId() + ", resultString='" + getResultString() + "'" + ", completionDate='" + getCompletionDate() + "'" + ", successful='" + isSuccessful()
-                + "'" + ", buildArtifact='" + isBuildArtifact() + "'" + ", score=" + getScore() + ", rated='" + isRated() + "'" + ", hasFeedback='" + getHasFeedback() + "'" + "}";
+                + "'" + ", buildArtifact='" + isBuildArtifact() + "'" + ", score=" + getScore() + ", rated='" + isRated() + "'" + ", hasFeedback='" + getHasFeedback() + "'"
+                + ", hasComplaint='" + hasComplaint() + "'" + "}";
     }
 
     /**

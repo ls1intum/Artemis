@@ -12,14 +12,14 @@ describe('Component Tests', () => {
         let comp: MultipleChoiceQuestionStatisticDetailComponent;
         let fixture: ComponentFixture<MultipleChoiceQuestionStatisticDetailComponent>;
         const route = ({
-            data: of({ multipleChoiceQuestionStatistic: new MultipleChoiceQuestionStatistic(123) })
+            data: of({ multipleChoiceQuestionStatistic: new MultipleChoiceQuestionStatistic(123) }),
         } as any) as ActivatedRoute;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [MultipleChoiceQuestionStatisticDetailComponent],
-                providers: [{ provide: ActivatedRoute, useValue: route }]
+                providers: [{ provide: ActivatedRoute, useValue: route }],
             })
                 .overrideTemplate(MultipleChoiceQuestionStatisticDetailComponent, '')
                 .compileComponents();

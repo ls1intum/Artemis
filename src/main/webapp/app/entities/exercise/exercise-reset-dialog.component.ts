@@ -9,20 +9,15 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-exercise-reset-dialog',
-    templateUrl: './exercise-reset-dialog.component.html'
+    templateUrl: './exercise-reset-dialog.component.html',
 })
 export class ExerciseResetDialogComponent implements OnInit {
-
     exercise: Exercise;
     confirmExerciseName: string;
     deleteParticipations: boolean;
     resetInProgress: boolean;
 
-    constructor(
-        public activeModal: NgbActiveModal,
-        public exerciseService: ExerciseService
-    ) {
-    }
+    constructor(public activeModal: NgbActiveModal, public exerciseService: ExerciseService) {}
 
     ngOnInit() {
         this.deleteParticipations = false;
@@ -36,33 +31,30 @@ export class ExerciseResetDialogComponent implements OnInit {
 
     confirmReset(id: number) {
         this.resetInProgress = true;
-        this.exerciseService.reset(id).subscribe(() => {
-            this.activeModal.close(true);
-            this.resetInProgress = false;
-        }, () => {
-            this.resetInProgress = false;
-        });
+        this.exerciseService.reset(id).subscribe(
+            () => {
+                this.activeModal.close(true);
+                this.resetInProgress = false;
+            },
+            () => {
+                this.resetInProgress = false;
+            },
+        );
     }
 }
 
 @Component({
     selector: 'jhi-exercise-reset-popup',
-    template: ''
+    template: '',
 })
 export class ExerciseResetPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private exercisePopupService: ExercisePopupService
-    ) {
-    }
+    constructor(private route: ActivatedRoute, private exercisePopupService: ExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.exercisePopupService
-                .open(ExerciseResetDialogComponent as Component, params['id']);
+            this.exercisePopupService.open(ExerciseResetDialogComponent as Component, params['id']);
         });
     }
 

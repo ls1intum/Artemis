@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-exercise',
-    templateUrl: './modeling-exercise.component.html'
+    templateUrl: './modeling-exercise.component.html',
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
@@ -26,7 +26,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         private accountService: AccountService,
-        route: ActivatedRoute
+        route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
         this.modelingExercises = [];
@@ -42,7 +42,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 

@@ -33,9 +33,9 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         CourseExerciseService,
         ParticipationService,
         CourseScoreCalculationService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
+        { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSTutorExerciseDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

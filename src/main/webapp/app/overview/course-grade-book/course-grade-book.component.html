@@ -5,11 +5,11 @@
                 <div class="row justify-content-between">
                     <div class="col-auto">
                         <fa-icon [icon]="'font'"></fa-icon>
-                        {{exercise.title}}
+                        {{ exercise.title }}
                     </div>
                     <div class="col-4 text-right">
                         <fa-icon [icon]="'calendar-alt'"></fa-icon>
-                        {{exercise.dueDate | date:'dd/MM/yy'}}
+                        {{ exercise.dueDate | date: 'dd/MM/yy' }}
                     </div>
                 </div>
                 <div *ngFor="let participation of exercise.participations">
@@ -20,13 +20,13 @@
                                 <span class="badge badge-info" *ngIf="!result.rated">PRACTICE</span>
                             </div>
                             <div class="col-auto">
-                                <span>{{result.resultString}}</span>
+                                <span>{{ result.resultString }}</span>
                             </div>
                             <div class="col-auto">
-                                <span>{{result.score}}%</span>
+                                <span>{{ result.score }}%</span>
                             </div>
                             <div class="col text-right">
-                                <span>{{result.completionDate | date: 'dd/MM/yy'}}</span>
+                                <span>{{ result.completionDate | date: 'dd/MM/yy' }}</span>
                             </div>
                         </div>
                     </div>
@@ -36,4 +36,3 @@
         </div>
     </div>
 </div>
-

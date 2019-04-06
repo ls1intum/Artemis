@@ -15,7 +15,7 @@ describe('Component Tests', () => {
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [UserMgmtComponent]
+                declarations: [UserMgmtComponent],
             })
                 .overrideTemplate(UserMgmtComponent, '')
                 .compileComponents();
@@ -37,9 +37,9 @@ describe('Component Tests', () => {
                         of(
                             new HttpResponse({
                                 body: [new User(123)],
-                                headers
-                            })
-                        )
+                                headers,
+                            }),
+                        ),
                     );
 
                     // WHEN
@@ -49,7 +49,7 @@ describe('Component Tests', () => {
                     // THEN
                     expect(service.query).toHaveBeenCalled();
                     expect(comp.users[0]).toEqual(jasmine.objectContaining({ id: 123 }));
-                })
+                }),
             ));
         });
 
@@ -64,9 +64,9 @@ describe('Component Tests', () => {
                         of(
                             new HttpResponse({
                                 body: [user],
-                                headers
-                            })
-                        )
+                                headers,
+                            }),
+                        ),
                     );
                     spyOn(service, 'update').and.returnValue(of(new HttpResponse({ status: 200 })));
 
@@ -78,7 +78,7 @@ describe('Component Tests', () => {
                     expect(service.update).toHaveBeenCalledWith(user);
                     expect(service.query).toHaveBeenCalled();
                     expect(comp.users[0]).toEqual(jasmine.objectContaining({ id: 123 }));
-                })
+                }),
             ));
         });
     });

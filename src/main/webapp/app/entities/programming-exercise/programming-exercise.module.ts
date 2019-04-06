@@ -11,12 +11,14 @@ import {
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
     ProgrammingExercisePopupComponent,
+    ProgrammingExerciseInstructionComponent,
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
-    ProgrammingExerciseUpdateComponent
+    ProgrammingExerciseUpdateComponent,
 } from './';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
@@ -26,7 +28,16 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule, ArTEMiSDifficultyPickerModule, ArTEMiSResultModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        FormDateTimePickerModule,
+        ArTEMiSCategorySelectorModule,
+        ArTEMiSDifficultyPickerModule,
+        ArTEMiSResultModule,
+        ArTEMiSMarkdownEditorModule,
+    ],
     declarations: [
         ProgrammingExerciseComponent,
         ProgrammingExerciseDetailComponent,
@@ -34,7 +45,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent
+        ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseInstructionComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -42,11 +54,11 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseUpdateComponent,
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
-        ProgrammingExerciseDeletePopupComponent
+        ProgrammingExerciseDeletePopupComponent,
     ],
-    exports: [ProgrammingExerciseComponent],
-    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],
+    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

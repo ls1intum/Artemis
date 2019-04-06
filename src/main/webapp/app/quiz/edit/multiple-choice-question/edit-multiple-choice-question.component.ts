@@ -4,22 +4,15 @@ import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import {
-    CorrectOptionCommand,
-    ExplanationCommand,
-    IncorrectOptionCommand,
-    DomainCommand,
-    HintCommand,
-} from 'app/markdown-editor/domainCommands';
+import { CorrectOptionCommand, ExplanationCommand, IncorrectOptionCommand, DomainCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
-    providers: [ArtemisMarkdown]
+    providers: [ArtemisMarkdown],
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {
-
     @ViewChild('markdownEditor')
     private markdownEditor: MarkdownEditorComponent;
 
@@ -40,7 +33,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     isQuestionCollapsed: boolean;
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
-    get showPreview(): boolean { return this.markdownEditor.previewMode; }
+    get showPreview(): boolean {
+        return this.markdownEditor.previewMode;
+    }
     showMultipleChoiceQuestionPreview = true;
 
     hintCommand = new HintCommand();
@@ -69,9 +64,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n' +
             this.question.answerOptions
-                .map(
-                    answerOption =>
-                        (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
+                .map(answerOption => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
                 .join('\n');
         return markdownText;
     }
@@ -82,7 +75,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
      * @param content
      */
     open(content: any) {
-        this.modalService.open(content, {size: 'lg'});
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
@@ -124,7 +117,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         this.cleanupQuestion();
         let currentAnswerOption = new AnswerOption();
 
-        for (const [text, command] of domainCommands)  {
+        for (const [text, command] of domainCommands) {
             if (command === null && text.length > 0) {
                 this.question.text = text;
             }

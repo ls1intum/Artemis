@@ -418,7 +418,7 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
-        const spotRegExpo = /\[-spot\s[0-9]+]/g;
+        const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
         function interleave([x, ...xs]: string[], ys: string[] = []): string[] {
             return x === undefined
                 ? ys // base: no x
@@ -426,8 +426,8 @@ export class ShortAnswerQuestionUtil {
         }
 
         return questionText.split(/\n/g).map(line => {
-            const spots = questionText.match(spotRegExpo);
-            const texts = questionText.split(spotRegExpo);
+            const spots = line.match(spotRegExpo) || [];
+            const texts = line.split(spotRegExpo);
             return interleave(texts, spots)
                 .map(x => x.trim())
                 .filter(x => x.length > 0);

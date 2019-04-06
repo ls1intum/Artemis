@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation',
-    templateUrl: './participation.component.html'
+    templateUrl: './participation.component.html',
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -31,7 +31,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private exerciseService: ExerciseService
+        private exerciseService: ExerciseService,
     ) {
         this.reverse = true;
         this.predicate = 'id';

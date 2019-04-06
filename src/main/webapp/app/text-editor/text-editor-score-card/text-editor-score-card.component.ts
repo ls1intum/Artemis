@@ -5,7 +5,7 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 @Component({
     selector: 'jhi-text-editor-score-card',
     templateUrl: './text-editor-score-card.component.html',
-    styleUrls: ['./text-editor-score-card.component.scss']
+    styleUrls: ['./text-editor-score-card.component.scss'],
 })
 export class TextEditorScoreCardComponent implements OnInit {
     @Input() feedback: Feedback;

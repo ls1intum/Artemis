@@ -27,18 +27,28 @@ a {
  TODO: In the future, we should find a better solution to displays buttons with wraps
  */
 .btn {
-    white-space: nowrap
+    white-space: nowrap;
 }
 
 .footer {
+    &.fixed {
+        position: absolute;
+        left: 15px;
+        right: 15px;
+        bottom: 0;
+        background-color: white;
+        padding: 5px 0;
+    }
+
     .footer-text {
         font-weight: normal;
         font-size: small;
 
         &:hover {
-            font-weight: normal
+            font-weight: normal;
         }
     }
+
     // make sure to align with the bootstrap rule here
     @media (max-width: 576px) {
         padding-left: 12px;
@@ -129,8 +139,15 @@ Generic styles
     opacity: 1;
 }
 
-@media (max-width: 576px) {
-    .main-container {
+.page-wrapper {
+    @media (min-width: 768px) {
+        padding-bottom: 46px;
+        min-height: 100vh;
+        position: relative;
+    }
+}
+.main-container {
+    @media (max-width: 576px) {
         padding: 0;
     }
 }
@@ -153,6 +170,7 @@ Custom alerts for notification
 .alerts {
     .alert {
         text-overflow: ellipsis;
+
         pre {
             background: none;
             border: none;
@@ -161,22 +179,28 @@ Custom alerts for notification
             padding: 0;
             margin: 0;
         }
+
         .popover pre {
             font-size: 10px;
         }
     }
+
     .toast {
         position: fixed;
         width: 100%;
+
         &.left {
             left: 5px;
         }
+
         &.right {
             right: 5px;
         }
+
         &.top {
             top: 55px;
         }
+
         &.bottom {
             bottom: 55px;
         }
@@ -206,6 +230,7 @@ entity tables helpers
         }
     }
 }
+
 @include no-padding('left');
 @include no-padding('right');
 @include no-padding('top');
@@ -243,12 +268,18 @@ entity detail page css
         dt {
             margin-bottom: 15px;
         }
+
         dd {
             border-bottom: 1px solid #eee;
             padding-left: 180px;
             margin-left: 0;
         }
     }
+}
+
+.editor-outline-background {
+    background: #f8f9fa;
+    max-width: max-content;
 }
 
 /* ==========================================================================
@@ -284,6 +315,7 @@ ui bootstrap tweaks
     border-top-right-radius: 3px;
     border-top-left-radius: 3px;
 }
+
 .card-header > .dropdown .dropdown-toggle {
     color: inherit;
 }
@@ -294,6 +326,7 @@ ui bootstrap tweaks
     font-size: 16px;
     color: inherit;
 }
+
 .card-title > a,
 .card-title > small,
 .card-title > .small,
@@ -383,12 +416,15 @@ table {
     .col-xs-1 {
         width: 8.33333%;
     }
+
     .col-xs-2 {
         width: 16.66667%;
     }
+
     .col-xs-3 {
         width: 25%;
     }
+
     .col-xs-6 {
         width: 50%;
     }
@@ -457,6 +493,7 @@ code.password:hover {
     left: 15px;
     overflow: hidden;
     pointer-events: none;
+
     &__container {
         position: absolute;
         top: 0;
@@ -465,9 +502,11 @@ code.password:hover {
         height: calc(100% + 15px);
         overflow: scroll;
     }
+
     &__canvas {
         min-width: 3000px;
         min-height: 3000px;
+
         > div {
             position: absolute;
             z-index: 1;
@@ -475,15 +514,19 @@ code.password:hover {
             transform: translateX(-100%);
             min-width: 65px;
             padding: 5px;
+
             i {
                 vertical-align: middle;
+
                 &.half {
                     position: relative;
+
                     &:before {
                         display: block;
                         width: 60%;
                         overflow: hidden;
                     }
+
                     &:after {
                         position: absolute;
                         top: 0;
@@ -492,30 +535,40 @@ code.password:hover {
                     }
                 }
             }
+
             .fa-check {
                 color: $success;
+
                 &.half {
                     &:after {
                         content: '\F00C';
                     }
                 }
+
                 ~ i {
                     margin-left: -0.5em;
                 }
             }
+
             .fa-times {
                 color: $danger;
+
                 &.half {
                     &:after {
                         content: '\f00d';
                     }
                 }
+
                 ~ i {
                     margin-left: -0.2em;
                 }
             }
         }
     }
+}
+
+displaycolor {
+    background: #f8f9fa;
 }
 
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
@@ -532,7 +585,7 @@ Course Info Bar
     margin: -1.25rem -1.25rem 0 -1.25rem;
     min-height: 160px;
     display: flex;
-    color: #FFFFFF;
+    color: #ffffff;
     flex-direction: column;
     justify-content: center;
 }

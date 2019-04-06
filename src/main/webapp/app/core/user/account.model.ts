@@ -8,16 +8,7 @@ export class Account {
     public login: string;
     public imageUrl: string;
 
-    constructor(
-        activated?: boolean,
-        authorities?: string[],
-        email?: string,
-        firstName?: string,
-        langKey?: string,
-        lastName?: string,
-        login?: string,
-        imageUrl?: string
-    ) {
+    constructor(activated?: boolean, authorities?: string[], email?: string, firstName?: string, langKey?: string, lastName?: string, login?: string, imageUrl?: string) {
         this.login = login ? login : null;
         this.firstName = firstName ? firstName : null;
         this.lastName = lastName ? lastName : null;

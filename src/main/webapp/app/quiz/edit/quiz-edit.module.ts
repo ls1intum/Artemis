@@ -20,15 +20,7 @@ import { ArTEMiSQuizModule } from '../participate';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
-
-    imports: [
-        ArTEMiSSharedModule,
-        DndModule.forRoot(),
-        AngularFittextModule,
-        AceEditorModule,
-        ArTEMiSQuizModule,
-        ArTEMiSMarkdownEditorModule
-    ],
+    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule, ArTEMiSMarkdownEditorModule],
     declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent, EditShortAnswerQuestionComponent],
     entryComponents: [
         HomeComponent,
@@ -37,11 +29,11 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
         JhiMainComponent,
         EditMultipleChoiceQuestionComponent,
         EditDragAndDropQuestionComponent,
-        EditShortAnswerQuestionComponent
+        EditShortAnswerQuestionComponent,
     ],
     providers: [RepositoryService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSQuizEditModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

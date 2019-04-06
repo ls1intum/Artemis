@@ -201,6 +201,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
+    public predefineTextBlocks(): void {
+        this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(response => {
+            this.assessments = response.body.feedbacks || [];
+        });
+    }
+
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
@@ -252,5 +258,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             $card.width('55px');
             this.interactResizable.resizable({ enabled: false });
         }
+    }
+
+    public get headingTranslationKey(): string {
+        const baseKey = 'arTeMiSApp.textAssessment.heading.';
+
+        if (this.submission.exampleSubmission) {
+            return baseKey + 'exampleAssessment';
+        }
+        return baseKey + 'assessment';
     }
 }

@@ -9,19 +9,19 @@ export const exercisePopupRoute: Routes = [
         component: ExerciseLtiConfigurationPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'exercise/:id/reset',
         component: ExerciseResetPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

@@ -6,7 +6,7 @@ import { AnswerOption } from '../../../entities/answer-option';
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
-    providers: [ArtemisMarkdown]
+    providers: [ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionComponent implements OnChanges {
     _question: MultipleChoiceQuestion;

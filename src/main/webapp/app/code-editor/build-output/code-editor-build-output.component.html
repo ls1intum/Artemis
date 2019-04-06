@@ -1,18 +1,18 @@
-<div id="cardBuildOutput" class="card border resizable-buildoutput" [ngStyle]="{'height.px':150}">
+<div id="cardBuildOutput" class="card border resizable-buildoutput" [ngStyle]="{ 'height.px': 150 }">
     <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event, true)">
         <span class="float-right "><fa-icon icon="chevron-down"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon icon="terminal"></fa-icon>
-            <span> &nbsp; Build Output</span>
+            <span jhiTranslate="arTeMiSApp.editor.buildOutput"> &nbsp; Build Output</span>
         </h3>
     </div>
     <div class="card-body">
-        <p class="text-center" [hidden]="!isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> Building...</p>
-        <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding">No build results available</p>
+        <p class="text-center" [hidden]="!isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building...</span></p>
+        <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding" jhiTranslate="arTeMiSApp.editor.noBuildOutput">No build results available</p>
 
         <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || isBuilding">
             <ng-container *ngFor="let logEntry of buildLogs">
-                <dt>{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+                <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
                 <dd [innerHtml]="logEntry.log | safeHtml"></dd>
             </ng-container>
         </dl>

@@ -12,18 +12,12 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-modeling-exercise-delete-dialog',
-    templateUrl: './modeling-exercise-delete-dialog.component.html'
+    templateUrl: './modeling-exercise-delete-dialog.component.html',
 })
 export class ModelingExerciseDeleteDialogComponent {
-
     modelingExercise: ModelingExercise;
 
-    constructor(
-        private modelingExerciseService: ModelingExerciseService,
-        public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
-    ) {
-    }
+    constructor(private modelingExerciseService: ModelingExerciseService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -33,7 +27,7 @@ export class ModelingExerciseDeleteDialogComponent {
         this.modelingExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'modelingExerciseListModification',
-                content: 'Deleted an modelingExercise'
+                content: 'Deleted an modelingExercise',
             });
             this.activeModal.dismiss(true);
         });
@@ -42,21 +36,16 @@ export class ModelingExerciseDeleteDialogComponent {
 
 @Component({
     selector: 'jhi-modeling-exercise-delete-popup',
-    template: ''
+    template: '',
 })
 export class ModelingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private modelingExercisePopupService: ModelingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.modelingExercisePopupService
-                .open(ModelingExerciseDeleteDialogComponent as Component, params['id']);
+            this.modelingExercisePopupService.open(ModelingExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

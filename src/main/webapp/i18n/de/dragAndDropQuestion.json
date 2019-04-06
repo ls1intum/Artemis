@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "dragAndDropQuestion" : {
+        "dragAndDropQuestion": {
             "home": {
                 "title": "Drag And Drop Questions",
                 "createLabel": "Drag And Drop Question erstellen",

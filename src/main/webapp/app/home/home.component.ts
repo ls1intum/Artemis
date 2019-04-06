@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
-    styleUrls: ['home.scss']
+    styleUrls: ['home.scss'],
 })
 export class HomeComponent implements OnInit, AfterViewInit {
     authenticationError = false;
@@ -30,7 +30,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private stateStorageService: StateStorageService,
         private elementRef: ElementRef,
         private renderer: Renderer,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -57,7 +57,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
             .login({
                 username: this.username,
                 password: this.password,
-                rememberMe: this.rememberMe
+                rememberMe: this.rememberMe,
             })
             .then(() => {
                 this.authenticationError = false;
@@ -70,7 +70,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
                 this.eventManager.broadcast({
                     name: 'authenticationSuccess',
-                    content: 'Sending Authentication Success'
+                    content: 'Sending Authentication Success',
                 });
 
                 // // previousState was set in the authExpiredInterceptor before being redirected to login modal.
@@ -103,7 +103,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.credentials = {
             username: null,
             password: null,
-            rememberMe: true
+            rememberMe: true,
         };
         this.captchaRequired = false;
         this.authenticationError = false;

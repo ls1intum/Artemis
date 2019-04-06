@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "participation" : {
+        "participation": {
             "home": {
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen",
@@ -19,15 +18,17 @@
             "detail": {
                 "title": "Teilnahme"
             },
-            "repositoryUrl": "Repository Url",
-            "buildPlanId": "Build Plan Id",
-            "initializationState": "Initialization State",
-            "initializationDate": "Initialization Date",
-            "presentationScore": "Presentation Score",
+            "repositoryUrl": "Repository Link",
+            "buildPlanId": "Build Plan Link",
+            "initializationState": "Status",
+            "initializationDate": "Teilnahme Start",
+            "presentationScore": "Präsentationsergebnis",
             "results": "Ergebnisse",
             "submissions": "Einreichungen",
             "student": "Student",
-            "exercise": "Übung"
+            "exercise": "Übung",
+            "deleteRepository": "Repository löschen",
+            "deleteBuildPlan": "Build Plan löschen"
         }
     }
 }

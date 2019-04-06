@@ -11,10 +11,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-programming-exercise-delete-dialog',
-    templateUrl: './programming-exercise-delete-dialog.component.html'
+    templateUrl: './programming-exercise-delete-dialog.component.html',
 })
 export class ProgrammingExerciseDeleteDialogComponent {
-
     programmingExercise: ProgrammingExercise;
     confirmExerciseName: string;
     deleteBaseReposBuildPlans = false;
@@ -25,7 +24,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
         private programmingExerciseService: ProgrammingExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager,
-        private jhiAlertService: JhiAlertService
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     clear() {
@@ -39,7 +38,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
                 this.deleteInProgress = false;
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
-                    content: 'Deleted an programmingExercise'
+                    content: 'Deleted an programmingExercise',
                 });
                 // this.jhiAlertService.success('Delete was successful');
                 this.activeModal.dismiss(true);
@@ -47,14 +46,14 @@ export class ProgrammingExerciseDeleteDialogComponent {
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.error(error.message);
                 this.deleteInProgress = false;
-            }
+            },
         );
     }
 }
 
 @Component({
     selector: 'jhi-programming-exercise-delete-popup',
-    template: ''
+    template: '',
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
     protected ngbModalRef: NgbModalRef;
@@ -66,7 +65,7 @@ export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestro
             setTimeout(() => {
                 this.ngbModalRef = this.modalService.open(ProgrammingExerciseDeleteDialogComponent as Component, {
                     size: 'lg',
-                    backdrop: 'static'
+                    backdrop: 'static',
                 });
                 this.ngbModalRef.componentInstance.programmingExercise = programmingExercise;
                 this.ngbModalRef.result.then(
@@ -77,7 +76,7 @@ export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestro
                     reason => {
                         this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                         this.ngbModalRef = null;
-                    }
+                    },
                 );
             }, 0);
         });

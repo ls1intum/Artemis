@@ -6,7 +6,7 @@ import { PasswordResetFinishService } from './password-reset-finish.service';
 
 @Component({
     selector: 'jhi-password-reset-finish',
-    templateUrl: './password-reset-finish.component.html'
+    templateUrl: './password-reset-finish.component.html',
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
@@ -18,12 +18,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     modalRef: NgbModalRef;
     key: string;
 
-    constructor(
-        private passwordResetFinishService: PasswordResetFinishService,
-        private route: ActivatedRoute,
-        private elementRef: ElementRef,
-        private renderer: Renderer
-    ) {}
+    constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private elementRef: ElementRef, private renderer: Renderer) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
@@ -52,7 +47,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         }
     }

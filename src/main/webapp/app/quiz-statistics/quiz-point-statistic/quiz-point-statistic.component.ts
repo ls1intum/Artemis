@@ -13,7 +13,7 @@ import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
-    templateUrl: './quiz-point-statistic.component.html'
+    templateUrl: './quiz-point-statistic.component.html',
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
@@ -89,7 +89,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                             this.loadQuizSuccess(quiz);
                         }
                     },
-                    error => {}
+                    error => {},
                 );
             }
 
@@ -131,6 +131,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
+        const translationBasePath = 'showStatistic.';
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
@@ -141,7 +142,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
                 this.remainingTimeSeconds = -1;
-                this.remainingTimeText = 'Quiz has ended!';
+                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizhasEnded');
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
@@ -276,8 +277,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.datasets = [
             {
                 data: this.data,
-                backgroundColor: this.colors
-            }
+                backgroundColor: this.colors,
+            },
         ];
     }
 

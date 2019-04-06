@@ -1,24 +1,23 @@
-
 {
     "arTeMiSApp": {
-        "modelingExercise" : {
+        "modelingExercise": {
             "home": {
-                "title": "Modeling Exercises",
-                "createLabel": "Modeling Exercise erstellen",
-                "createOrEditLabel": "Modeling Exercise erstellen oder bearbeiten"
+                "title": "Modellierungsaufgaben",
+                "createLabel": "Modellierungsaufgabe erstellen",
+                "createOrEditLabel": "Modellierungsaufgabe erstellen oder bearbeiten"
             },
-            "created": "Modeling Exercise erstellt mit ID {{ param }}",
-            "updated": "Modeling Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Modeling Exercise gelöscht mit ID {{ param }}",
+            "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
+            "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
+            "deleted": "Modellierungsaufgabe gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Modeling Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Modellierungsaufgabe {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Modeling Exercise"
+                "title": "Modellierungsaufgabe"
             },
-            "diagramType": "Diagram Type",
-            "sampleSolutionModel": "Sample Solution Model",
-            "sampleSolutionExplanation": "Sample Solution Explanation"
+            "diagramType": "Diagrammtyp",
+            "sampleSolutionModel": "Modell Beispiellösung",
+            "sampleSolutionExplanation": "Erklärung Beispiellösung"
         }
     }
 }

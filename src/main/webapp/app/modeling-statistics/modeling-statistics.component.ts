@@ -9,7 +9,7 @@ import { ModelingStatistic } from 'app/entities/modeling-statistic';
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-statistics.component.html',
-    providers: [JhiAlertService, ModelingExerciseService]
+    providers: [JhiAlertService, ModelingExerciseService],
 })
 export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     statistics: ModelingStatistic;
@@ -17,12 +17,7 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     modelIds: string[] = [];
     elementIds: string[] = [];
 
-    constructor(
-        private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
-        private router: Router,
-        private modelingExerciseService: ModelingExerciseService
-    ) {}
+    constructor(private route: ActivatedRoute, private jhiAlertService: JhiAlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {

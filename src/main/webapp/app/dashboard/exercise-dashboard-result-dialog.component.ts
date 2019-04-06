@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
-    templateUrl: './exercise-dashboard-result-dialog.component.html'
+    templateUrl: './exercise-dashboard-result-dialog.component.html',
 })
 export class ExerciseDashboardResultDialogComponent implements OnInit {
     participation: Participation;
@@ -24,18 +24,12 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
     isSaving = false;
     isOpenForSubmission = false;
 
-    constructor(
-        private resultService: ResultService,
-        public activeModal: NgbActiveModal,
-        private datePipe: DatePipe,
-        private eventManager: JhiEventManager
-    ) {}
+    constructor(private resultService: ResultService, public activeModal: NgbActiveModal, private datePipe: DatePipe, private eventManager: JhiEventManager) {}
 
     ngOnInit() {
         if (this.participation) {
             this.result.participation = this.participation;
-            this.isOpenForSubmission =
-                this.result.participation.exercise.dueDate === null || this.result.participation.exercise.dueDate.isAfter(moment());
+            this.isOpenForSubmission = this.result.participation.exercise.dueDate === null || this.result.participation.exercise.dueDate.isAfter(moment());
         } else {
             this.clear();
         }
@@ -86,7 +80,7 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-popup',
-    template: ''
+    template: '',
 })
 export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
@@ -95,11 +89,7 @@ export class InstructorDashboardResultPopupComponent implements OnInit, OnDestro
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(
-                ExerciseDashboardResultDialogComponent as Component,
-                params['participationId'],
-                false
-            );
+            this.instructorDashboardPopupService.open(ExerciseDashboardResultDialogComponent as Component, params['participationId'], false);
         });
     }
 

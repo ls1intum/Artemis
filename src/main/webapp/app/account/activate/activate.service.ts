@@ -9,7 +9,7 @@ export class ActivateService {
 
     get(key: string): Observable<void> {
         return this.http.get<void>(SERVER_API_URL + 'api/activate', {
-            params: new HttpParams().set('key', key)
+            params: new HttpParams().set('key', key),
         });
     }
 }

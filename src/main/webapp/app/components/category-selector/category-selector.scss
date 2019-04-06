@@ -6,7 +6,6 @@
             border: none !important;
             padding: 0 !important;
 
-
             .ng2-tag-input__text-input {
                 height: 33px;
             }
@@ -15,13 +14,13 @@
         tag {
             padding: 0;
             height: 30px;
-            border-radius: .25rem !important;
+            border-radius: 0.25rem !important;
             background: transparent !important;
 
             .custom-tag {
-                padding: 0 .45rem;
+                padding: 0 0.45rem;
                 background: #cccccc;
-                border-radius: .25rem;
+                border-radius: 0.25rem;
             }
         }
     }

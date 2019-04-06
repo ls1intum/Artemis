@@ -14,7 +14,6 @@ export const MAX_SCORE = 'maxScore';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
-
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
@@ -118,7 +117,7 @@ export class CourseScoreCalculationService {
                         return 1;
                     }
                     return 0;
-                }
+                },
             );
 
             if (dueDate === null || dueDate >= resultsArray[0].completionDate) {

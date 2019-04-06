@@ -14,7 +14,7 @@ import {
     QuizExerciseResetDialogComponent,
     QuizExerciseResetPopupComponent,
     quizExerciseRoute,
-    QuizExerciseService
+    QuizExerciseService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { ArTEMiSQuizEditModule } from 'app/quiz/edit';
@@ -26,23 +26,35 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule, ArTEMiSDifficultyPickerModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArTEMiSQuizEditModule,
+        ArTEMiSQuizReEvaluateModule,
+        FormDateTimePickerModule,
+        ArTEMiSCategorySelectorModule,
+        ArTEMiSDifficultyPickerModule,
+    ],
     exports: [QuizExerciseComponent],
-    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
+    declarations: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseResetDialogComponent,
+        QuizExerciseResetPopupComponent,
+        QuizExerciseDetailComponent,
+    ],
     entryComponents: [
         QuizExerciseComponent,
         QuizExerciseDeleteDialogComponent,
         QuizExerciseDeletePopupComponent,
         QuizExerciseResetDialogComponent,
         QuizExerciseResetPopupComponent,
-        QuizExerciseDetailComponent
+        QuizExerciseDetailComponent,
     ],
-    providers: [
-        QuizExerciseService,
-        QuizExercisePopupService,
-        PendingChangesGuard,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSQuizExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

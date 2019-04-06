@@ -20,22 +20,16 @@ export class StudentQuestionService {
 
     create(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
-        return this.http
-            .post<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
-        return this.http
-            .put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentQuestion>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<StudentQuestion>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -51,10 +45,7 @@ export class StudentQuestionService {
 
     protected convertDateFromClient(studentQuestion: StudentQuestion): StudentQuestion {
         const copy: StudentQuestion = Object.assign({}, studentQuestion, {
-            creationDate:
-                studentQuestion.creationDate != null && studentQuestion.creationDate.isValid()
-                    ? studentQuestion.creationDate.toJSON()
-                    : null
+            creationDate: studentQuestion.creationDate != null && studentQuestion.creationDate.isValid() ? studentQuestion.creationDate.toJSON() : null,
         });
         return copy;
     }

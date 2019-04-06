@@ -17,7 +17,7 @@ const ENTITY_STATES = [...textEditorRoute];
     declarations: [TextEditorComponent, TextEditorScoreCardComponent],
     entryComponents: [TextEditorComponent],
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsModule],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSTextModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

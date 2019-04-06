@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss']
+    styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
     private courseId: number;
@@ -18,8 +18,8 @@ export class CourseOverviewComponent implements OnInit {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
-        private route: ActivatedRoute) {
-    }
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -36,5 +36,4 @@ export class CourseOverviewComponent implements OnInit {
             this.course = this.courseCalculationService.getCourse(this.courseId);
         }
     }
-
 }

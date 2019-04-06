@@ -4,7 +4,7 @@ import { Account, AccountService, JhiLanguageHelper } from '../../core';
 
 @Component({
     selector: 'jhi-settings',
-    templateUrl: './settings.component.html'
+    templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
     error: string;
@@ -12,12 +12,7 @@ export class SettingsComponent implements OnInit {
     settingsAccount: Account;
     languages: string[];
 
-    constructor(
-        private account: AccountService,
-        private accountService: AccountService,
-        private languageService: JhiLanguageService,
-        private languageHelper: JhiLanguageHelper
-    ) {}
+    constructor(private account: AccountService, private accountService: AccountService, private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {}
 
     ngOnInit() {
         this.accountService.identity().then(user => {
@@ -45,20 +40,11 @@ export class SettingsComponent implements OnInit {
             () => {
                 this.success = null;
                 this.error = 'ERROR';
-            }
+            },
         );
     }
 
     copyAccount(account: Account) {
-        return new Account(
-            account.activated,
-            account.authorities,
-            account.email,
-            account.firstName,
-            account.langKey,
-            account.lastName,
-            account.login,
-            account.imageUrl
-        );
+        return new Account(account.activated, account.authorities, account.email, account.firstName, account.langKey, account.lastName, account.login, account.imageUrl);
     }
 }

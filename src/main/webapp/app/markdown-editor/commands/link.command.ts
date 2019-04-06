@@ -1,9 +1,8 @@
 import { Command } from './command';
 
 export class LinkCommand extends Command {
-
     buttonIcon = 'link';
-    buttonTranslationString =  'arTeMiSApp.multipleChoiceQuestion.editor.link';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.link';
 
     /**
      * @function execute

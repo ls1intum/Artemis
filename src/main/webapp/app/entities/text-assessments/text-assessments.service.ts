@@ -10,7 +10,7 @@ import * as moment from 'moment';
 type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({
-    providedIn: 'root'
+    providedIn: 'root',
 })
 export class TextAssessmentsService {
     private readonly resourceUrl = SERVER_API_URL + 'api/text-assessments';
@@ -27,6 +27,10 @@ export class TextAssessmentsService {
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, textAssessments, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
+    public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {
+        return this.http.get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<Participation> {

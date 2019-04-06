@@ -18,7 +18,7 @@ describe('Service Tests', () => {
         let currentDate: moment.Moment;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ParticipationService);
@@ -32,9 +32,9 @@ describe('Service Tests', () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        initializationDate: currentDate.format(DATE_TIME_FORMAT)
+                        initializationDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 service
                     .find(123)
@@ -49,15 +49,15 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        initializationDate: currentDate.format(DATE_TIME_FORMAT)
+                        initializationDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
-                        initializationDate: currentDate
+                        initializationDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .create(new Participation(null))
@@ -74,16 +74,16 @@ describe('Service Tests', () => {
                         buildPlanId: 'BBBBBB',
                         initializationState: 'BBBBBB',
                         initializationDate: currentDate.format(DATE_TIME_FORMAT),
-                        presentationScore: 1
+                        presentationScore: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign(
                     {
-                        initializationDate: currentDate
+                        initializationDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .update(expected)
@@ -100,21 +100,21 @@ describe('Service Tests', () => {
                         buildPlanId: 'BBBBBB',
                         initializationState: 'BBBBBB',
                         initializationDate: currentDate.format(DATE_TIME_FORMAT),
-                        presentationScore: 1
+                        presentationScore: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
-                        initializationDate: currentDate
+                        initializationDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

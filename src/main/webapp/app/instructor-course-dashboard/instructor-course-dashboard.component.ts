@@ -11,7 +11,7 @@ import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-lead
 @Component({
     selector: 'jhi-instructor-course-dashboard',
     templateUrl: './instructor-course-dashboard.component.html',
-    providers: [JhiAlertService]
+    providers: [JhiAlertService],
 })
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
@@ -27,12 +27,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
 
-    constructor(
-        private courseService: CourseService,
-        private resultService: ResultService,
-        private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService
-    ) {}
+    constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -47,7 +42,12 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 let numberOfAssessments = 0;
 
                 for (const exercise of this.course.exercises) {
-                    const validParticipations: Participation[] = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
+                    const validParticipations: Participation[] = exercise.participations.filter(
+                        participation => participation.initializationState === InitializationState.FINISHED,
+                    );
+
+                    let numberOfComplaints = 0;
+
                     for (const participation of validParticipations) {
                         for (const result of participation.results) {
                             if (result.rated) {
@@ -55,17 +55,27 @@ export class InstructorCourseDashboardComponent implements OnInit {
                                 if (!this.tutorLeaderboardData[tutorId]) {
                                     this.tutorLeaderboardData[tutorId] = {
                                         tutor: result.assessor,
-                                        numberOfAssessments: 0
+                                        numberOfAssessments: 0,
+                                        numberOfComplaints: 0,
                                     };
                                 }
 
+                                if (result.hasComplaint) {
+                                    this.tutorLeaderboardData[tutorId].numberOfComplaints++;
+                                }
+
                                 this.tutorLeaderboardData[tutorId].numberOfAssessments++;
+                            }
+
+                            if (result.hasComplaint) {
+                                numberOfComplaints++;
                             }
                         }
                     }
 
                     exercise.participations = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
                     exercise.numberOfAssessments = exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
+                    exercise.numberOfComplaints = numberOfComplaints;
 
                     numberOfAssessments += exercise.numberOfAssessments;
                     numberOfSubmissions += exercise.participations.length;
@@ -74,19 +84,16 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 this.stats.numberOfAssessments = numberOfAssessments;
                 this.stats.numberOfSubmissions = numberOfSubmissions;
 
-                this.dataForAssessmentPieChart = [
-                    numberOfSubmissions - numberOfAssessments,
-                    numberOfAssessments
-                ];
+                this.dataForAssessmentPieChart = [numberOfSubmissions - numberOfAssessments, numberOfAssessments];
             },
-            (response: HttpErrorResponse) => this.onError(response.message)
+            (response: HttpErrorResponse) => this.onError(response.message),
         );
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
             },
-            (response: string) => this.onError(response)
+            (response: string) => this.onError(response),
         );
     }
 
@@ -95,7 +102,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
             return 0;
         }
 
-        return Math.round(numerator / denominator * 100);
+        return Math.round((numerator / denominator) * 100);
     }
 
     calculateClass(numberOfAssessments: number, length: number): string {

@@ -5,13 +5,8 @@ import { ColorSelectorComponent } from './color-selector.component';
 
 @NgModule({
     imports: [ArTEMiSSharedModule],
-    declarations: [
-        ColorSelectorComponent
-    ],
-    exports: [
-        ColorSelectorComponent
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [ColorSelectorComponent],
+    exports: [ColorSelectorComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSColorSelectorModule {
-}
+export class ArTEMiSColorSelectorModule {}

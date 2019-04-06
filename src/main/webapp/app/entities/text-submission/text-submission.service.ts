@@ -10,14 +10,13 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-
     constructor(private http: HttpClient) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
         return this.http
             .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
@@ -26,7 +25,7 @@ export class TextSubmissionService {
         const copy = this.convert(textSubmission);
         return this.http
             .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
@@ -34,7 +33,7 @@ export class TextSubmissionService {
     get(textSubmissionId: number): Observable<HttpResponse<TextSubmission>> {
         return this.http
             .get<TextSubmission>(`api/text-submissions/${textSubmissionId}`, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
     }
@@ -44,7 +43,7 @@ export class TextSubmissionService {
         return this.http
             .get<TextSubmission[]>(`api/exercises/${exerciseId}/text-submissions`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
@@ -52,7 +51,7 @@ export class TextSubmissionService {
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<HttpResponse<TextSubmission>> {
         return this.http
             .get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`, {
-                observe: 'response'
+                observe: 'response',
             })
             .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
     }

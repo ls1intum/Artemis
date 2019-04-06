@@ -6,7 +6,7 @@ import { User, UserService } from 'app/core';
 
 @Component({
     selector: 'jhi-user-mgmt-delete-dialog',
-    templateUrl: './user-management-delete-dialog.component.html'
+    templateUrl: './user-management-delete-dialog.component.html',
 })
 export class UserMgmtDeleteDialogComponent {
     user: User;
@@ -21,7 +21,7 @@ export class UserMgmtDeleteDialogComponent {
         this.userService.delete(login).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'userListModification',
-                content: 'Deleted a user'
+                content: 'Deleted a user',
             });
             this.activeModal.dismiss(true);
         });

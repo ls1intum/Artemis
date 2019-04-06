@@ -5,6 +5,17 @@
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe",
             "resolveConflict": "Konflikte behandeln"
+        },
+        "messages": {
+            "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen.",
+            "noModel": "Kein Modell für Abgabe gefunden.",
+            "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
+            "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+            "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
+            "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+            "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
+            "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat."
         }
     }
 }

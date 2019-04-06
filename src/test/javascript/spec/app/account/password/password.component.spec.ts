@@ -21,9 +21,9 @@ describe('Component Tests', () => {
                 providers: [
                     {
                         provide: JhiTrackerService,
-                        useClass: MockTrackerService
-                    }
-                ]
+                        useClass: MockTrackerService,
+                    },
+                ],
             })
                 .overrideTemplate(PasswordComponent, '')
                 .compileComponents();
@@ -51,7 +51,7 @@ describe('Component Tests', () => {
             // GIVEN
             const passwordValues = {
                 currentPassword: 'oldPassword',
-                newPassword: 'myPassword'
+                newPassword: 'myPassword',
             };
 
             spyOn(service, 'save').and.returnValue(of(new HttpResponse({ body: true })));

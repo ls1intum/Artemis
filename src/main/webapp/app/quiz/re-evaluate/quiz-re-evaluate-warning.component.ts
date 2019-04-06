@@ -10,7 +10,7 @@ import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
-    templateUrl: './quiz-re-evaluate-warning.component.html'
+    templateUrl: './quiz-re-evaluate-warning.component.html',
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     isSaving: boolean;
@@ -34,7 +34,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager,
         private quizExerciseService: QuizExerciseService,
-        private quizReEvaluateService: QuizReEvaluateService
+        private quizReEvaluateService: QuizReEvaluateService,
     ) {}
 
     ngOnInit(): void {
@@ -162,10 +162,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkDragAndDropQuestion(question: DragAndDropQuestion, backUpQuestion: DragAndDropQuestion): void {
         // check if a dropLocation or dragItem was deleted
-        if (
-            question.dragItems.length !== backUpQuestion.dragItems.length ||
-            question.dropLocations.length !== backUpQuestion.dropLocations.length
-        ) {
+        if (question.dragItems.length !== backUpQuestion.dragItems.length || question.dropLocations.length !== backUpQuestion.dropLocations.length) {
             this.questionElementDeleted = true;
         }
         // check if the correct Mappings has changed
@@ -208,13 +205,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
         // check if a spot or solution was deleted
-        if (question.solutions.length < backUpQuestion.solutions.length
-            || question.spots.length < backUpQuestion.spots.length) {
+        if (question.solutions.length < backUpQuestion.solutions.length || question.spots.length < backUpQuestion.spots.length) {
             this.questionElementDeleted = true;
         }
         // check if a spot or solution was added
-        if (question.solutions.length > backUpQuestion.solutions.length
-            || question.spots.length > backUpQuestion.spots.length) {
+        if (question.solutions.length > backUpQuestion.solutions.length || question.spots.length > backUpQuestion.spots.length) {
             this.solutionAdded = true;
         }
 
@@ -268,7 +263,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             () => {
                 this.busy = false;
                 this.failed = true;
-            }
+            },
         );
     }
 

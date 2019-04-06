@@ -20,7 +20,7 @@ export class LectureResolve implements Resolve<Lecture> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
-                map((lecture: HttpResponse<Lecture>) => lecture.body)
+                map((lecture: HttpResponse<Lecture>) => lecture.body),
             );
         }
         return of(new Lecture());
@@ -33,46 +33,46 @@ export const lectureRoute: Routes = [
         component: LectureComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title'
+            pageTitle: 'artemisApp.lecture.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':id/view',
         component: LectureDetailComponent,
         resolve: {
-            lecture: LectureResolve
+            lecture: LectureResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title'
+            pageTitle: 'artemisApp.lecture.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'new',
         component: LectureUpdateComponent,
         resolve: {
-            lecture: LectureResolve
+            lecture: LectureResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title'
+            pageTitle: 'artemisApp.lecture.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':id/edit',
         component: LectureUpdateComponent,
         resolve: {
-            lecture: LectureResolve
+            lecture: LectureResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title'
+            pageTitle: 'artemisApp.lecture.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const lecturePopupRoute: Routes = [
@@ -80,13 +80,13 @@ export const lecturePopupRoute: Routes = [
         path: ':id/delete',
         component: LectureDeletePopupComponent,
         resolve: {
-            lecture: LectureResolve
+            lecture: LectureResolve,
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title'
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

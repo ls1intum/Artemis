@@ -8,7 +8,7 @@ import { BuildLogEntryArray } from '../../entities/build-log';
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
-    templateUrl: './result-detail.component.html'
+    templateUrl: './result-detail.component.html',
 })
 export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
@@ -16,9 +16,7 @@ export class ResultDetailComponent implements OnInit {
     feedbackList: Feedback[];
     buildLogs: BuildLogEntryArray;
 
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService,
-                private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

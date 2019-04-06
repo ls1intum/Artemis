@@ -13,7 +13,6 @@ import { QuizQuestionStatisticService } from '../../../../../../main/webapp/app/
 import { QuizExerciseService } from '../../../../../../main/webapp/app/entities/quiz-exercise';
 
 describe('Component Tests', () => {
-
     describe('Question Management Dialog Component', () => {
         let comp: QuestionDialogComponent;
         let fixture: ComponentFixture<QuestionDialogComponent>;
@@ -25,14 +24,10 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [QuestionDialogComponent],
-                providers: [
-                    QuizQuestionStatisticService,
-                    QuizExerciseService,
-                    QuestionService
-                ]
+                providers: [QuizQuestionStatisticService, QuizExerciseService, QuestionService],
             })
-            .overrideTemplate(QuestionDialogComponent, '')
-            .compileComponents();
+                .overrideTemplate(QuestionDialogComponent, '')
+                .compileComponents();
         }));
 
         beforeEach(() => {
@@ -44,46 +39,43 @@ describe('Component Tests', () => {
         });
 
         describe('save', () => {
-            it('Should call update service on save for existing entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new QuizQuestion(123);
-                        spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.question = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call update service on save for existing entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new QuizQuestion(123);
+                    spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.question = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.update).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'questionListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.update).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'questionListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
 
-            it('Should call create service on save for new entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new QuizQuestion();
-                        spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.question = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call create service on save for new entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new QuizQuestion();
+                    spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.question = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.create).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'questionListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.create).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'questionListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
         });
     });
-
 });
