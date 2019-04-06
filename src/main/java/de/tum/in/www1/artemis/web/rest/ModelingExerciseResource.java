@@ -1,25 +1,18 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ModelingExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -34,18 +27,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
-/**
- * REST controller for managing ModelingExercise.
- */
+/** REST controller for managing ModelingExercise. */
 @RestController
 @RequestMapping("/api")
 public class ModelingExerciseResource {
@@ -55,22 +51,26 @@ public class ModelingExerciseResource {
     private static final String ENTITY_NAME = "modelingExercise";
 
     private final ModelingExerciseRepository modelingExerciseRepository;
+
     private final UserService userService;
+
     private final CourseService courseService;
+
     private final AuthorizationCheckService authCheckService;
+
     private final ParticipationService participationService;
+
     private final ResultRepository resultRepository;
+
     private final ModelingExerciseService modelingExerciseService;
+
+    private final GroupNotificationService groupNotificationService;
+
     private final CompassService compassService;
 
-    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository,
-                                    UserService userService,
-                                    AuthorizationCheckService authCheckService,
-                                    CourseService courseService,
-                                    ParticipationService participationService,
-                                    ResultRepository resultRepository,
-                                    ModelingExerciseService modelingExerciseService,
-                                    CompassService compassService) {
+    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
+            CourseService courseService, ParticipationService participationService, ResultRepository resultRepository, ModelingExerciseService modelingExerciseService,
+            GroupNotificationService groupNotificationService, CompassService compassService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
@@ -79,12 +79,13 @@ public class ModelingExerciseResource {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
+        this.groupNotificationService = groupNotificationService;
     }
 
-    //TODO: most of these calls should be done in the context of a course
+    // TODO: most of these calls should be done in the context of a course
 
     /**
-     * POST  /modeling-exercises : Create a new modelingExercise.
+     * POST /modeling-exercises : Create a new modelingExercise.
      *
      * @param modelingExercise the modelingExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new modelingExercise, or with status 400 (Bad Request) if the modelingExercise has already an ID
@@ -98,12 +99,13 @@ public class ModelingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new modelingExercise cannot already have an ID")).body(null);
         }
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null)
+            return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        groupNotificationService.notifyGroupAboutExerciseCreated(modelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     @Nullable
@@ -111,7 +113,8 @@ public class ModelingExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
@@ -120,12 +123,11 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * PUT  /modeling-exercises : Updates an existing modelingExercise.
+     * PUT /modeling-exercises : Updates an existing modelingExercise.
      *
      * @param modelingExercise the modelingExercise to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise,
-     * or with status 400 (Bad Request) if the modelingExercise is not valid,
-     * or with status 500 (Internal Server Error) if the modelingExercise couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
+     *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/modeling-exercises")
@@ -137,16 +139,16 @@ public class ModelingExerciseResource {
         }
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null)
+            return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, modelingExercise.getId().toString()))
-            .body(result);
+        groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, modelingExercise.getId().toString())).body(result);
     }
 
     /**
-     * GET  /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
@@ -162,7 +164,7 @@ public class ModelingExerciseResource {
         }
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
-            //not required in the returned json body
+            // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
         }
@@ -170,7 +172,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET  /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
+     * GET /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
      *
      * @param exerciseId the id of the modelingExercise for which the statistics should be retrieved
      * @return the json encoded modelingExercise statistics
@@ -194,9 +196,8 @@ public class ModelingExerciseResource {
         }
     }
 
-
     /**
-     * GET  /modeling-exercises/:id : get the "id" modelingExercise.
+     * GET /modeling-exercises/:id : get the "id" modelingExercise.
      *
      * @param id the id of the modelingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
@@ -215,7 +216,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * DELETE  /modeling-exercises/:id : delete the "id" modelingExercise.
+     * DELETE /modeling-exercises/:id : delete the "id" modelingExercise.
      *
      * @param exerciseId the id of the modelingExercise to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -233,43 +234,51 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * Returns the data needed for the modeling editor, which includes the participation, modelingSubmission with model if existing
-     * and the assessments if the submission was already submitted.
+     * Returns the data needed for the modeling editor, which includes the participation, modelingSubmission with model if existing and the assessments if the submission was
+     * already submitted.
      *
      * @param participationId the participationId for which to find the data for the modeling editor
      * @return the ResponseEntity with json as body
      */
+    // TODO CZ: move to ModelingSubmissionResource?
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<ModelingSubmission> getDataForModelingEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissions(participationId);
         if (participation == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID."))
+                    .body(null);
         }
         ModelingExercise modelingExercise;
         if (participation.getExercise() instanceof ModelingExercise) {
             modelingExercise = (ModelingExercise) participation.getExercise();
             if (modelingExercise == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
             }
 
-            //make sure the solution is not sent to the client
+            // make sure the solution is not sent to the client
             modelingExercise.setSampleSolutionExplanation(null);
             modelingExercise.setSampleSolutionModel(null);
 
-        } else {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
+        else {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        // users can only see their own models (to prevent cheating), TAs, instructors and admins can see all models
+        // users can only see their own models (to prevent cheating), TAs, instructors and admins can
+        // see all models
         if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
-            //continue
-        } else {
+            // continue
+        }
+        else {
             return forbidden();
         }
 
-        // if no results, check if there are really no results or the relation to results was not updated yet
+        // if no results, check if there are really no results or the relation to results was not
+        // updated yet
         if (participation.getResults().size() == 0) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
@@ -278,15 +287,15 @@ public class ModelingExerciseResource {
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
         if (!optionalModelingSubmission.isPresent()) {
-            modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
+            modelingSubmission = new ModelingSubmission(); // NOTE: this object is not yet persisted
             modelingSubmission.setParticipation(participation);
         }
         else {
-            //only try to get and set the model if the modelingSubmission existed before
+            // only try to get and set the model if the modelingSubmission existed before
             modelingSubmission = optionalModelingSubmission.get();
         }
 
-        //make sure only the latest submission and latest result is sent to the client
+        // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
         participation.setResults(null);
 

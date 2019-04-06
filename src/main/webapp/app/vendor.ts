@@ -11,6 +11,7 @@ import {
     faAngleRight,
     faArchive,
     faArrowLeft,
+    faArrowRight,
     faArrowsAltV,
     faAsterisk,
     faBan,
@@ -99,6 +100,7 @@ import {
     faListOl,
     faListUl,
     faImage,
+    faGripLinesVertical,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -112,7 +114,7 @@ import {
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
     faSquare as farSquare,
-    faTimesCircle as farTimeCircle
+    faTimesCircle as farTimeCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 // Imports all fontawesome core and solid icons
@@ -127,6 +129,7 @@ library.add(faEye);
 library.add(faBan);
 library.add(faTimes);
 library.add(faArrowLeft);
+library.add(faArrowRight);
 library.add(faSave);
 library.add(faPlus);
 library.add(faPencilAlt);
@@ -210,7 +213,6 @@ library.add(faCopy);
 library.add(faListUl);
 library.add(faListOl);
 library.add(faImage);
-
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
 library.add(farTimeCircle);
@@ -222,5 +224,5 @@ library.add(farFileAlt);
 library.add(farPlayCircle);
 library.add(farFileCode);
 library.add(farCircle);
-
+library.add(faGripLinesVertical);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

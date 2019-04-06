@@ -1,9 +1,8 @@
 import { Command } from './command';
 
 export class ItalicCommand extends Command {
-
     buttonIcon = 'italic';
-    buttonTranslationString =  'arTeMiSApp.multipleChoiceQuestion.editor.italic';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.italic';
 
     /**
      * @function execute

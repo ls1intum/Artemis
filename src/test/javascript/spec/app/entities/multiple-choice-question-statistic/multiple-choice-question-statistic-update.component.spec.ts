@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [MultipleChoiceQuestionStatisticUpdateComponent]
+                declarations: [MultipleChoiceQuestionStatisticUpdateComponent],
             })
                 .overrideTemplate(MultipleChoiceQuestionStatisticUpdateComponent, '')
                 .compileComponents();

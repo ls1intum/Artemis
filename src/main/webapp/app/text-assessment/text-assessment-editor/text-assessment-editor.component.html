@@ -1,4 +1,4 @@
-<div (jhiTextSelect)="didSelectSolutionText( $event )">
+<div (jhiTextSelect)="didSelectSolutionText($event)">
     <jhi-highlighted-text-area [submissionText]="submissionText" [assessments]="assessments"></jhi-highlighted-text-area>
 
     <div
@@ -7,7 +7,8 @@
         [style.left.px]="hostRectangle.left"
         [style.top.px]="hostRectangle.top"
         [style.width.px]="hostRectangle.width"
-        [style.height.px]="0">
+        [style.height.px]="0"
+    >
         <div class="indicator__cta">
             <!--
                 NOTE: Because we DON'T WANT the selected text to get deselected
@@ -20,9 +21,9 @@
             <a
                 (mousedown)="$event.preventDefault()"
                 (mouseup)="$event.stopPropagation(); assessSelection()"
-                class="indicator__cta-link">
-                Assess
-            </a>
+                class="indicator__cta-link"
+                jhiTranslate="arTeMiSApp.textAssessment.editor.assess"
+            ></a>
         </div>
     </div>
 </div>

@@ -1,0 +1,7 @@
+{
+    "modelingAssessment": {
+        "points": "Points",
+        "assessor": "Assessor: {{firstName}} {{lastName}}",
+        "noModel": "No model found to display"
+    }
+}

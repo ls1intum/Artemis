@@ -12,7 +12,8 @@ import { Subscription } from 'rxjs/Subscription';
                     <pre [innerHTML]="alert.msg"></pre>
                 </ngb-alert>
             </div>
-        </div>`
+        </div>
+    `,
 })
 export class JhiAlertErrorComponent implements OnDestroy {
     alerts: any[];
@@ -58,11 +59,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.message) {
-                        this.addErrorAlert(
-                            httpErrorResponse.error.message,
-                            httpErrorResponse.error.message,
-                            httpErrorResponse.error.params
-                        );
+                        this.addErrorAlert(httpErrorResponse.error.message, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     } else {
                         this.addErrorAlert(httpErrorResponse.error);
                     }
@@ -85,7 +82,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
     setClasses(alert: any) {
         return {
             toast: !!alert.toast,
-            [alert.position]: true
+            [alert.position]: true,
         };
     }
 
@@ -106,10 +103,10 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     params: data,
                     timeout: 5000,
                     toast: this.alertService.isToast(),
-                    scoped: true
+                    scoped: true,
                 },
-                this.alerts
-            )
+                this.alerts,
+            ),
         );
     }
 }

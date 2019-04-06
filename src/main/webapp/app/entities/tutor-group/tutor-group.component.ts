@@ -10,7 +10,7 @@ import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
 
 @Component({
     selector: 'jhi-tutor-group',
-    templateUrl: './tutor-group.component.html'
+    templateUrl: './tutor-group.component.html',
 })
 export class TutorGroupComponent implements OnInit, OnDestroy {
     tutorGroups: TutorGroup[];
@@ -21,7 +21,7 @@ export class TutorGroupComponent implements OnInit, OnDestroy {
         protected tutorGroupService: TutorGroupService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
-        protected accountService: AccountService
+        protected accountService: AccountService,
     ) {}
 
     loadAll() {
@@ -29,13 +29,13 @@ export class TutorGroupComponent implements OnInit, OnDestroy {
             .query()
             .pipe(
                 filter((res: HttpResponse<TutorGroup[]>) => res.ok),
-                map((res: HttpResponse<TutorGroup[]>) => res.body)
+                map((res: HttpResponse<TutorGroup[]>) => res.body),
             )
             .subscribe(
                 (res: TutorGroup[]) => {
                     this.tutorGroups = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res.message)
+                (res: HttpErrorResponse) => this.onError(res.message),
             );
     }
 

@@ -14,7 +14,7 @@ describe('Component Tests', () => {
         let service: UserService;
         let mockLanguageHelper: any;
         const route = ({
-            data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) })
+            data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
         } as any) as ActivatedRoute;
 
         beforeEach(async(() => {
@@ -24,9 +24,9 @@ describe('Component Tests', () => {
                 providers: [
                     {
                         provide: ActivatedRoute,
-                        useValue: route
-                    }
-                ]
+                        useValue: route,
+                    },
+                ],
             })
                 .overrideTemplate(UserMgmtUpdateComponent, '')
                 .compileComponents();
@@ -53,7 +53,7 @@ describe('Component Tests', () => {
                     expect(service.authorities).toHaveBeenCalled();
                     expect(comp.authorities).toEqual(['USER']);
                     expect(mockLanguageHelper.getAllSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
 
@@ -66,9 +66,9 @@ describe('Component Tests', () => {
                     spyOn(service, 'update').and.returnValue(
                         of(
                             new HttpResponse({
-                                body: entity
-                            })
-                        )
+                                body: entity,
+                            }),
+                        ),
                     );
                     comp.user = entity;
                     // WHEN
@@ -78,7 +78,7 @@ describe('Component Tests', () => {
                     // THEN
                     expect(service.update).toHaveBeenCalledWith(entity);
                     expect(comp.isSaving).toEqual(false);
-                })
+                }),
             ));
 
             it('Should call create service on save for new user', inject(
@@ -95,7 +95,7 @@ describe('Component Tests', () => {
                     // THEN
                     expect(service.create).toHaveBeenCalledWith(entity);
                     expect(comp.isSaving).toEqual(false);
-                })
+                }),
             ));
         });
     });

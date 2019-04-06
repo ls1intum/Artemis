@@ -12,6 +12,7 @@
         "hideSolution": "Verberge Lösung",
         "quizPointStatisticTitle": "Punkteverteilung",
         "quizStatisticTitle": "Quiz-Statistik",
+        "recalculateStatistics": "Statistiken neu berechnen",
         "quizPointStatistic": {
             "maxScore": "Maximalpunkte: ",
             "titleRated": "Punkteverteilung (bewertet)",
@@ -40,6 +41,8 @@
             "showSampleSolution": "Zeige Beispiellösung",
             "hideSampleSolution": "Verberge Beispiellösung"
         },
-        "invalid": "(ungültig)"
+        "invalid": "(ungültig)",
+        "quizhasEnded": "Quiz ist zu Ende!",
+        "now": "Läuft"
     }
 }

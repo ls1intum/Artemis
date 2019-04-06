@@ -1,20 +1,26 @@
 <nav class="navbar navbar-dark navbar-expand-md jh-navbar">
     <div class="jh-logo-container float-left">
-        <a class="jh-navbar-toggler d-lg-none float-right" href="javascript:void(0);" data-toggle="collapse"
-            data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"
-            (click)="toggleNavbar()">
+        <a
+            class="jh-navbar-toggler d-lg-none float-right"
+            href="javascript:void(0);"
+            data-toggle="collapse"
+            data-target="#navbarResponsive"
+            aria-controls="navbarResponsive"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+            (click)="toggleNavbar()"
+        >
             <fa-icon icon="bars"></fa-icon>
         </a>
         <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
             <span class="logo-img"></span>
-            <span>&nbsp;</span>
-            <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;<span class="navbar-version">{{version}}</span>
+            <span>&nbsp;&nbsp;&nbsp;</span>
+            <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ml-auto">
-            <!-- TODO: activate in a future release
-            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="nav-link" routerLink="overview" (click)="collapseNavbar()">
                     <span>
                         <fa-icon [icon]="'th-large'"></fa-icon>
@@ -22,8 +28,7 @@
                     </span>
                 </a>
             </li>
-            -->
-            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="nav-link" routerLink="courses" (click)="collapseNavbar()" id="courses-menu">
                     <span>
                         <fa-icon [icon]="'home'"></fa-icon>
@@ -31,8 +36,13 @@
                     </span>
                 </a>
             </li>
-            <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" ngbDropdown class="nav-item dropdown pointer"
-                routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <li
+                *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"
+                ngbDropdown
+                class="nav-item dropdown pointer"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+            >
                 <a class="nav-link" routerLink="course" (click)="collapseNavbar()" id="course-admin-menu">
                     <span>
                         <fa-icon [icon]="'th-list'"></fa-icon>
@@ -40,8 +50,7 @@
                     </span>
                 </a>
             </li>
-            <li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active"
-                [routerLinkActiveOptions]="{exact: true}">
+            <li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
                     <span>
                         <fa-icon [icon]="'user-plus'"></fa-icon>
@@ -53,6 +62,12 @@
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="admin/notification-management" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.notificationManagement">Notification management</span>
                         </a>
                     </li>
                     <li>
@@ -95,7 +110,7 @@
                 </ul>
             </li>
 
-            <li ngbDropdown class="nav-item dropdown pointer" *ngIf="languages && languages.length > 1">
+            <li ngbDropdown class="nav-item dropdown pointer" *ngIf="!currAccount && languages && languages.length > 1">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown">
                     <span>
                         <fa-icon [icon]="'flag'"></fa-icon>
@@ -104,23 +119,42 @@
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
                     <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language);collapseNavbar();">{{language | findLanguageFromKey}}</a>
+                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
+                            language | findLanguageFromKey
+                        }}</a>
                     </li>
                 </ul>
             </li>
-            <li *ngSwitchCase="true" ngbDropdown class="nav-item dropdown pointer" placement="bottom-right" routerLinkActive="active"
-                [routerLinkActiveOptions]="{exact: true}">
+            <jhi-notification-container [ngClass]="'nav-item'" *ngIf="currAccount"></jhi-notification-container>
+            <li
+                *ngSwitchCase="true"
+                ngbDropdown
+                class="nav-item dropdown pointer"
+                placement="bottom-right"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                [autoClose]="true"
+            >
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
                     <span *ngIf="!getImageUrl()">
                         <fa-icon [icon]="'user'"></fa-icon>
                         <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount">Account</span>
-                        <span *ngIf="currAccount">{{currAccount.login}}</span>
+                        <span *ngIf="currAccount">{{ currAccount.login }}</span>
                     </span>
                     <span *ngIf="getImageUrl()">
-                        <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar">
+                        <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar" />
                     </span>
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
+                    <li>
+                        <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
+                    </li>
+                    <li *ngFor="let language of languages">
+                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
+                            language | findLanguageFromKey
+                        }}</a>
+                    </li>
+                    <div class="dropdown-divider"></div>
                     <li>
                         <a class="dropdown-item" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>

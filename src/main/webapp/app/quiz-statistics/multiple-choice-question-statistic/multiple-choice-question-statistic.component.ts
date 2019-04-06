@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ArtemisMarkdown]
+    providers: [QuizStatisticUtil, ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
@@ -64,7 +64,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
-        private artemisMarkdown: ArtemisMarkdown
+        private artemisMarkdown: ArtemisMarkdown,
     ) {
         this.options = createOptions(this);
     }
@@ -245,9 +245,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
 
         // set data based on the answerCounters for each AnswerOption
         this.question.answerOptions.forEach(answerOption => {
-            const answerOptionCounter = this.questionStatistic.answerCounters.filter(
-                answerCounter => answerOption.id === answerCounter.answer.id
-            )[0];
+            const answerOptionCounter = this.questionStatistic.answerCounters.filter(answerCounter => answerOption.id === answerCounter.answer.id)[0];
             this.ratedData.push(answerOptionCounter.ratedCounter);
             this.unratedData.push(answerOptionCounter.unRatedCounter);
         });
@@ -311,8 +309,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.datasets = [
             {
                 data: this.data,
-                backgroundColor: this.colors
-            }
+                backgroundColor: this.colors,
+            },
         ];
     }
 

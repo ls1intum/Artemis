@@ -11,8 +11,14 @@ import { JhiMainComponent } from '../layouts';
 import { ExerciseDashboardComponent } from './exercise-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
-import { InstructorDashboardArchivePopupComponent, ProgrammingExerciseArchiveDialogComponent } from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
-import { InstructorDashboardCleanupPopupComponent, ProgrammingExerciseCleanupDialogComponent } from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
+import {
+    InstructorDashboardArchivePopupComponent,
+    ProgrammingExerciseArchiveDialogComponent,
+} from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
+import {
+    InstructorDashboardCleanupPopupComponent,
+    ProgrammingExerciseCleanupDialogComponent,
+} from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './exercise-dashboard-repo-export-dialog.component';
 import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import { ExerciseDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-dashboard-result-dialog.component';
@@ -25,62 +31,54 @@ const ENTITY_STATES = [
         component: ExerciseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'participation/:participationId/result/new',
         component: InstructorDashboardResultPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'exercise/:id/archive',
         component: InstructorDashboardArchivePopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'exercise/:id/cleanup',
         component: InstructorDashboardCleanupPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'exercise/:id/exportRepos',
         component: InstructorDashboardExportReposPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title'
+            pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        MomentModule,
-        RouterModule.forChild(ENTITY_STATES),
-        NgbModule,
-        ArTEMiSResultModule,
-        SortByModule,
-        FormDateTimePickerModule
-    ],
+    imports: [ArTEMiSSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), NgbModule, ArTEMiSResultModule, SortByModule, FormDateTimePickerModule],
     declarations: [
         ExerciseDashboardComponent,
         ProgrammingExerciseArchiveDialogComponent,
@@ -90,7 +88,7 @@ const ENTITY_STATES = [
         ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
         InstructorDashboardExportReposComponent,
-        InstructorDashboardExportReposPopupComponent
+        InstructorDashboardExportReposPopupComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -105,9 +103,9 @@ const ENTITY_STATES = [
         ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
         InstructorDashboardExportReposComponent,
-        InstructorDashboardExportReposPopupComponent
+        InstructorDashboardExportReposPopupComponent,
     ],
-    providers: [ExerciseDashboardPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }]
+    providers: [ExerciseDashboardPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSInstructorDashboardModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

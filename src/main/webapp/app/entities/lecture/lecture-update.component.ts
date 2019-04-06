@@ -12,7 +12,7 @@ import { Lecture } from 'app/entities/lecture/lecture.model';
 
 @Component({
     selector: 'jhi-lecture-update',
-    templateUrl: './lecture-update.component.html'
+    templateUrl: './lecture-update.component.html',
 })
 export class LectureUpdateComponent implements OnInit {
     lecture: Lecture;
@@ -26,7 +26,7 @@ export class LectureUpdateComponent implements OnInit {
         protected jhiAlertService: JhiAlertService,
         protected lectureService: LectureService,
         protected courseService: CourseService,
-        protected activatedRoute: ActivatedRoute
+        protected activatedRoute: ActivatedRoute,
     ) {}
 
     ngOnInit() {
@@ -40,7 +40,7 @@ export class LectureUpdateComponent implements OnInit {
             .query()
             .pipe(
                 filter((mayBeOk: HttpResponse<Course[]>) => mayBeOk.ok),
-                map((response: HttpResponse<Course[]>) => response.body)
+                map((response: HttpResponse<Course[]>) => response.body),
             )
             .subscribe((res: Course[]) => (this.courses = res), (res: HttpErrorResponse) => this.onError(res.message));
     }

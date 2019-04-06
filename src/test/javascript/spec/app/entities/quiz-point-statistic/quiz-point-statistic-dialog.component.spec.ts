@@ -12,7 +12,6 @@ import { QuizPointStatistic } from '../../../../../../main/webapp/app/entities/q
 import { QuizExerciseService } from '../../../../../../main/webapp/app/entities/quiz-exercise';
 
 describe('Component Tests', () => {
-
     describe('QuizPointStatistic Management Dialog Component', () => {
         let comp: QuizPointStatisticDialogComponent;
         let fixture: ComponentFixture<QuizPointStatisticDialogComponent>;
@@ -24,13 +23,10 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [QuizPointStatisticDialogComponent],
-                providers: [
-                    QuizExerciseService,
-                    QuizPointStatisticService
-                ]
+                providers: [QuizExerciseService, QuizPointStatisticService],
             })
-            .overrideTemplate(QuizPointStatisticDialogComponent, '')
-            .compileComponents();
+                .overrideTemplate(QuizPointStatisticDialogComponent, '')
+                .compileComponents();
         }));
 
         beforeEach(() => {
@@ -42,46 +38,43 @@ describe('Component Tests', () => {
         });
 
         describe('save', () => {
-            it('Should call update service on save for existing entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new QuizPointStatistic(123);
-                        spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.quizPointStatistic = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call update service on save for existing entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new QuizPointStatistic(123);
+                    spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.quizPointStatistic = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.update).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'quizPointStatisticListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.update).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'quizPointStatisticListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
 
-            it('Should call create service on save for new entity',
-                inject([],
-                    fakeAsync(() => {
-                        // GIVEN
-                        const entity = new QuizPointStatistic();
-                        spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
-                        comp.quizPointStatistic = entity;
-                        // WHEN
-                        comp.save();
-                        tick(); // simulate async
+            it('Should call create service on save for new entity', inject(
+                [],
+                fakeAsync(() => {
+                    // GIVEN
+                    const entity = new QuizPointStatistic();
+                    spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
+                    comp.quizPointStatistic = entity;
+                    // WHEN
+                    comp.save();
+                    tick(); // simulate async
 
-                        // THEN
-                        expect(service.create).toHaveBeenCalledWith(entity);
-                        expect(comp.isSaving).toEqual(false);
-                        expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'quizPointStatisticListModification', content: 'OK'});
-                        expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
-                    })
-                )
-            );
+                    // THEN
+                    expect(service.create).toHaveBeenCalledWith(entity);
+                    expect(comp.isSaving).toEqual(false);
+                    expect(mockEventManager.broadcastSpy).toHaveBeenCalledWith({ name: 'quizPointStatisticListModification', content: 'OK' });
+                    expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
+                }),
+            ));
         });
     });
-
 });

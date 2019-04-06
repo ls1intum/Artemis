@@ -14,7 +14,7 @@ import { BuildLogEntryArray } from '../../entities/build-log';
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService]
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges {
     buildLogs = new BuildLogEntryArray();
@@ -36,7 +36,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
         private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryService: RepositoryService,
-        private resultService: ResultService
+        private resultService: ResultService,
     ) {}
 
     /**
@@ -54,9 +54,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
                 // Set min and max height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight }
+                    max: { height: this.resizableMaxHeight },
                 },
-                inertia: true
+                inertia: true,
             })
             .on('resizemove', function(event: any) {
                 const target = event.target;
@@ -78,18 +78,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
      *
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (
-            (changes.participation && this.participation) ||
-            (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)
-        ) {
+        if ((changes.participation && this.participation) || (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
             if (!this.participation.results) {
                 this.resultService
-                    .findResultsForParticipation(
-                        this.participation.exercise.course.id,
-                        this.participation.exercise.id,
-                        this.participation.id,
-                        { showAllResults: false, ratedOnly: this.participation.exercise.type === 'quiz' }
-                    )
+                    .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
+                        showAllResults: false,
+                        ratedOnly: this.participation.exercise.type === 'quiz',
+                    })
                     .subscribe(results => {
                         this.toggleBuildLogs(results.body);
                     });
@@ -120,7 +115,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
                 } else {
                     this.buildLogs = new BuildLogEntryArray();
                     // If there are no compile errors, send recent timestamp
-                    this.buildLogChange.emit(new BuildLogEntryArray({time: new Date(Date.now()), log: ''}));
+                    this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
                 }
             });
         }

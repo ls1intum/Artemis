@@ -1,20 +1,27 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import java.util.List;
+import java.util.Optional;
+
 import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing TextAssessment.
@@ -28,25 +35,28 @@ public class TextAssessmentResource extends AssessmentResource {
     private static final String ENTITY_NAME = "textAssessment";
 
     private final ParticipationService participationService;
+
     private final ResultService resultService;
+
     private final TextAssessmentService textAssessmentService;
+
+    private final TextBlockService textBlockService;
+
     private final TextExerciseService textExerciseService;
+
     private final TextSubmissionRepository textSubmissionRepository;
+
     private final ResultRepository resultRepository;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService,
-                                  ParticipationService participationService,
-                                  ResultService resultService,
-                                  TextAssessmentService textAssessmentService,
-                                  TextExerciseService textExerciseService,
-                                  TextSubmissionRepository textSubmissionRepository,
-                                  ResultRepository resultRepository,
-                                  UserService userService) {
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
+            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
+            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
+        this.textBlockService = textBlockService;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -54,11 +64,10 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    //TODO: we should send a result object here that includes the feedback
+    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
-        if (responseFailure != null) return responseFailure;
+        checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments);
         return ResponseEntity.ok(result);
@@ -66,26 +75,33 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    //TODO: we should send a result object here that includes the feedback
+    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
-        if (responseFailure != null) return responseFailure;
+        checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         return ResponseEntity.ok(result);
     }
 
+    @Transactional
+    @GetMapping("/result/{resultId}/with-textblocks")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
+        final Result result = resultService.findOneWithSubmission(resultId);
+        final Exercise exercise = result.getParticipation().getExercise();
+        checkAuthorization(exercise);
+
+        textBlockService.prepopulateFeedbackBlocks(result);
+        return ResponseEntity.ok(result);
+    }
+
     /**
-     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor
-     * to assess the submission.
+     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
+     * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
+     * returns an error
      *
-     * If the tutor has already started assessing the submission, then we also return all the results the tutor has
-     * already inserted.
-     *
-     * If another tutor has already started working on this submission, the system returns an error
-     *
-     * @param exerciseId the id of the exercise we want the submission
+     * @param exerciseId   the id of the exercise we want the submission
      * @param submissionId the id of the submission we want
      * @return a Participation of the tutor in the submission
      */
@@ -94,12 +110,12 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get data for tutors text assessment: {}", exerciseId, submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<Participation> responseFailure = checkTextExerciseForRequest(textExercise);
-        if (responseFailure != null) return responseFailure;
+        checkTextExerciseForRequest(textExercise);
 
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
         if (!textSubmission.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
+                    .body(null);
         }
 
         Participation participation = textSubmission.get().getParticipation();
@@ -107,7 +123,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
-            //TODO: check that the latest submission is not null
+            // TODO: check that the latest submission is not null
             User assessor = participation.findLatestSubmission().get().getResult().getAssessor();
             // Another tutor started assessing this submission.
             if (!assessor.getLogin().equals(user.getLogin())) {
@@ -132,10 +148,9 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for
-     * tutorial purposes.
+     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
-     * @param exerciseId the id of the exercise
+     * @param exerciseId   the id of the exercise
      * @param submissionId the id of the submission
      * @return the result linked to the submission
      */
@@ -146,14 +161,15 @@ public class TextAssessmentResource extends AssessmentResource {
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         if (!textSubmission.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
+                    .body(null);
         }
 
         // If the user is not an instructor, and this is not an example submission used for tutorial,
         // do not provide the results
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
         if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "notAuthorized", "You cannot see results")).body(null);
+            return forbidden();
         }
 
         Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
@@ -177,11 +193,13 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     @Nullable
-    private <X> ResponseEntity<X> checkTextExerciseForRequest(TextExercise textExercise) {
+    private void checkTextExerciseForRequest(TextExercise textExercise) {
         if (textExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+            throw new BadRequestAlertException("No exercise was found for the given ID.", "textExercise", "exerciseNotFound");
         }
-        return checkExercise(textExercise);
+
+        validateExercise(textExercise);
+        checkAuthorization(textExercise);
     }
 
 }

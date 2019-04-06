@@ -8,7 +8,7 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
 @Component({
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
-    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil]
+    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;
@@ -51,18 +51,13 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
     @Output()
     submittedTextsChange = new EventEmitter();
+
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
-    questionText: string;
-    textWithoutSpots: string[];
-    textBeforeSpots: string[];
-    textAfterSpots: string[];
-    sampleSolutions: ShortAnswerSolution[] =  [];
+    sampleSolutions: ShortAnswerSolution[] = [];
+    textParts: string[][];
 
-    constructor(
-        private artemisMarkdown: ArtemisMarkdown,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil
-    ) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
     ngOnInit() {}
 
@@ -73,15 +68,9 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
-        // is either '' or the question in the first line
-        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
-
-        // separates the text into parts that come before the spot tag
-        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-
-        // the last part that comes after the last spot tag
-        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+        // new way
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
@@ -94,11 +83,19 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     setSubmittedText() {
         this.submittedTexts = [];
-        for (const id of Object.keys(this.textBeforeSpots)) {
-            const submittedText = new ShortAnswerSubmittedText();
-            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id + '-' + this._question.id)).value;
-            submittedText.spot = this.question.spots[id];
-            this.submittedTexts.push(submittedText);
+        let i = 0;
+        for (const textpart of this.textParts) {
+            let j = 0;
+            for (const element of textpart) {
+                if (this.shortAnswerQuestionUtil.isInputField(element)) {
+                    const submittedText = new ShortAnswerSubmittedText();
+                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question);
+                    this.submittedTexts.push(submittedText);
+                }
+                j++;
+            }
+            i++;
         }
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
@@ -121,5 +118,34 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     hideSampleSolution() {
         this.showingSampleSolution = false;
+    }
+
+    getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
+        return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+    }
+
+    getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
+        const index = this.question.spots.findIndex(spot => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        return this.sampleSolutions[index];
+    }
+
+    getBackgroundColourForInputField(spotTag: string): string {
+        if (this.getSubmittedTextForSpot(spotTag) === undefined) {
+            return 'red';
+        }
+        return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+    }
+
+    isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
+        let isTextCorrect = false;
+        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(
+            this.question.correctMappings,
+            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
+        );
+
+        if (solutionsForSpot.filter(solution => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
+            isTextCorrect = true;
+        }
+        return isTextCorrect;
     }
 }

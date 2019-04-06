@@ -34,12 +34,12 @@ export class StateStorageService {
         const destinationInfo = {
             destination: {
                 name: destinationState.name,
-                data: destinationState.data
+                data: destinationState.data,
             },
             params: destinationStateParams,
             from: {
-                name: fromState.name
-            }
+                name: fromState.name,
+            },
         };
         this.$sessionStorage.store('destinationState', destinationInfo);
     }

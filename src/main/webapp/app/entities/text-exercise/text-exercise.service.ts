@@ -18,22 +18,16 @@ export class TextExerciseService {
 
     create(textExercise: TextExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(textExercise);
-        return this.http
-            .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.post<TextExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(textExercise: TextExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(textExercise);
-        return this.http
-            .put<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.put<TextExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

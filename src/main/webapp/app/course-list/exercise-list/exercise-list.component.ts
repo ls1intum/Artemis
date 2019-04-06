@@ -18,17 +18,14 @@ import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
     transform(allExercises: Exercise[], showInactiveExercises: boolean) {
-        return allExercises.filter(
-            exercise =>
-                showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
-        );
+        return allExercises.filter(exercise => showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment());
     }
 }
 
 @Component({
     selector: 'jhi-exercise-list',
     templateUrl: './exercise-list.component.html',
-    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal, SourceTreeService]
+    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal, SourceTreeService],
 })
 export class ExerciseListComponent implements OnInit, OnDestroy {
     // Make constants available to html for comparison
@@ -77,7 +74,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         private courseExerciseService: CourseExerciseService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
-        private participationDataProvider: ParticipationDataProvider
+        private participationDataProvider: ParticipationDataProvider,
     ) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
@@ -104,14 +101,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                     // Search through all exercises and the participations within each of them to obtain the target participation
                     const filteredExercise = this.course.exercises.find(
                         exercise =>
-                            exercise.participations != null &&
-                            exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !==
-                                undefined
+                            exercise.participations != null && exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !== undefined,
                     );
                     if (filteredExercise) {
-                        const participation: Participation = filteredExercise.participations.find(
-                            currentParticipation => currentParticipation.id === participationId
-                        );
+                        const participation: Participation = filteredExercise.participations.find(currentParticipation => currentParticipation.id === participationId);
                         // Just make sure we have indeed found the desired participation
                         if (participation && participation.id === participationId) {
                             this.participationDataProvider.participationStorage = participation;
@@ -143,8 +136,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 const quizExercise = exercise as QuizExercise;
                 quizExercise.isActiveQuiz = this.isActiveQuiz(exercise);
 
-                quizExercise.isPracticeModeAvailable =
-                    quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(exercise.dueDate).isBefore(moment());
+                quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(exercise.dueDate).isBefore(moment());
             }
 
             exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
@@ -172,9 +164,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     showExercise(exercise: Exercise) {
-        return (
-            this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
-        );
+        return this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment();
     }
 
     getRepositoryPassword() {
@@ -210,7 +200,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 error => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
-                }
+                },
             );
     }
 
@@ -232,7 +222,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 error => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
-                }
+                },
             );
     }
 
@@ -268,23 +258,13 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (
-                !this.hasParticipations(exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
-                quizExercise.visibleToStudents
-            ) {
+            } else if (!this.hasParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (
-                exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
-                moment(exercise.dueDate).isAfter(moment())
-            ) {
+            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (
-                exercise.participations[0].initializationState === InitializationState.FINISHED &&
-                moment(exercise.dueDate).isAfter(moment())
-            ) {
+            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
@@ -294,10 +274,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
-            if (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                participation.initializationState === InitializationState.FINISHED
-            ) {
+            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
                 return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
         }

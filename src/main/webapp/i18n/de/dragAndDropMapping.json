@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "dragAndDropMapping" : {
+        "dragAndDropMapping": {
             "home": {
                 "title": "Drag And Drop Mappings",
                 "createLabel": "Drag And Drop Mapping erstellen",

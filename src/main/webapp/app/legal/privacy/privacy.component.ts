@@ -4,19 +4,16 @@ import { ActivatedRoute } from '@angular/router';
 @Component({
     selector: 'jhi-privacy',
     templateUrl: './privacy.component.html',
-    styles: []
+    styles: [],
 })
 export class PrivacyComponent implements AfterViewInit {
-
-    constructor(private route: ActivatedRoute) { }
+    constructor(private route: ActivatedRoute) {}
 
     ngAfterViewInit(): void {
         this.route.params.subscribe(params => {
             try {
                 document.querySelector('#' + params['fragment']).scrollIntoView();
-            } catch (e) { }
+            } catch (e) {}
         });
-
     }
-
 }

@@ -12,16 +12,12 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-file-upload-exercise-delete-dialog',
-    templateUrl: './file-upload-exercise-delete-dialog.component.html'
+    templateUrl: './file-upload-exercise-delete-dialog.component.html',
 })
 export class FileUploadExerciseDeleteDialogComponent {
     fileUploadExercise: FileUploadExercise;
 
-    constructor(
-        private fileUploadExerciseService: FileUploadExerciseService,
-        public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
-    ) {}
+    constructor(private fileUploadExerciseService: FileUploadExerciseService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -31,7 +27,7 @@ export class FileUploadExerciseDeleteDialogComponent {
         this.fileUploadExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'fileUploadExerciseListModification',
-                content: 'Deleted an fileUploadExercise'
+                content: 'Deleted an fileUploadExercise',
             });
             this.activeModal.dismiss(true);
         });
@@ -40,7 +36,7 @@ export class FileUploadExerciseDeleteDialogComponent {
 
 @Component({
     selector: 'jhi-file-upload-exercise-delete-popup',
-    template: ''
+    template: '',
 })
 export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

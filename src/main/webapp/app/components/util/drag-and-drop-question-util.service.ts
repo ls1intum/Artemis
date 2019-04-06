@@ -65,12 +65,7 @@ export class DragAndDropQuestionUtil {
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveRec(
-        correctMappings: DragAndDropMapping[],
-        remainingDropLocations: DropLocation[],
-        availableDragItems: DragItem[],
-        sampleMappings: DragAndDropMapping[]
-    ) {
+    solveRec(correctMappings: DragAndDropMapping[], remainingDropLocations: DropLocation[], availableDragItems: DragItem[], sampleMappings: DragAndDropMapping[]) {
         if (remainingDropLocations.length === 0) {
             return true;
         }

@@ -18,9 +18,9 @@ describe('Component Tests', () => {
                 providers: [
                     {
                         provide: ActivatedRoute,
-                        useValue: new MockActivatedRoute({ key: 'ABC123' })
-                    }
-                ]
+                        useValue: new MockActivatedRoute({ key: 'ABC123' }),
+                    },
+                ],
             })
                 .overrideTemplate(ActivateComponent, '')
                 .compileComponents();
@@ -40,7 +40,7 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(service.get).toHaveBeenCalledWith('ABC123');
-            })
+            }),
         ));
 
         it('should set set success to OK upon successful activation', inject(
@@ -53,7 +53,7 @@ describe('Component Tests', () => {
 
                 expect(comp.error).toBe(null);
                 expect(comp.success).toEqual('OK');
-            })
+            }),
         ));
 
         it('should set set error to ERROR upon activation failure', inject(
@@ -66,7 +66,7 @@ describe('Component Tests', () => {
 
                 expect(comp.error).toBe('ERROR');
                 expect(comp.success).toEqual(null);
-            })
+            }),
         ));
     });
 });

@@ -66,6 +66,7 @@
             },
             "account": {
                 "main": "Zugang",
+                "profile": "Profil",
                 "settings": "Einstellungen",
                 "password": "Passwort",
                 "sessions": "Sitzungen",
@@ -76,6 +77,7 @@
             "admin": {
                 "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
+                "notificationManagement": "Mitteilungsverwaltung",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
                 "health": "Status",
@@ -86,7 +88,8 @@
                 "database": "Datenbank",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
-            "language": "Sprache"
+            "language": "Sprache",
+            "noNotifications": "Keine Mitteilungen verfügbar"
         },
         "form": {
             "username": "Benutzername",
@@ -154,24 +157,28 @@
             "delete": "Löschen",
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
-            "editLink": "Link Bearbeiten",
+            "editLink": "Link bearbeiten",
             "open": "Öffnen",
             "save": "Speichern",
+            "saving": "Speichern...",
             "view": "Details",
             "reset": "Zurücksetzen",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
             "submit": "Absenden",
+            "submitDeadlineMissed": "Absenden (Deadline verpasst)",
+            "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
             "import": "Import",
             "export": "Export",
             "tutorCourseDashboard": "Tutor Kurs Dashboard",
-            "exerciseDashboard": "Übungs Dashboard",
+            "exerciseDashboard": "Aufgaben Dashboard",
             "newResult": "Neues Ergebnis",
             "cleanupBuildPlan": "Build Plan aufräumen",
-            "registerForCourse": "Für Kurs anmelden"
+            "registerForCourse": "Für Kurs anmelden",
+            "exercise": "Aufgaben"
         },
         "detail": {
             "field": "Feld",

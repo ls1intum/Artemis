@@ -23,7 +23,7 @@ export class JhiConfigurationService {
                 return properties.sort((propertyA, propertyB) => {
                     return propertyA.prefix === propertyB.prefix ? 0 : propertyA.prefix < propertyB.prefix ? -1 : 1;
                 });
-            })
+            }),
         );
     }
 
@@ -61,7 +61,7 @@ export class JhiConfigurationService {
                     properties[name] = vals;
                 }
                 return properties;
-            })
+            }),
         );
     }
 }

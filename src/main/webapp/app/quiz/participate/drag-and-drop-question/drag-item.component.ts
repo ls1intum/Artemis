@@ -6,7 +6,6 @@ import { DragItem } from '../../../entities/drag-item';
     templateUrl: './drag-item.component.html',
 })
 export class DragItemComponent {
-
     @Input() minWidth: string;
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;

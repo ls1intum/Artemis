@@ -34,35 +34,35 @@ export const userMgmtRoute: Routes = [
         path: 'user-management',
         component: UserMgmtComponent,
         resolve: {
-            pagingParams: JhiResolvePagingParams
+            pagingParams: JhiResolvePagingParams,
         },
         data: {
             pageTitle: 'userManagement.home.title',
-            defaultSort: 'id,asc'
-        }
+            defaultSort: 'id,asc',
+        },
     },
     {
         path: 'user-management/:login/view',
         component: UserMgmtDetailComponent,
         resolve: {
-            user: UserMgmtResolve
+            user: UserMgmtResolve,
         },
         data: {
-            pageTitle: 'userManagement.home.title'
-        }
+            pageTitle: 'userManagement.home.title',
+        },
     },
     {
         path: 'user-management/new',
         component: UserMgmtUpdateComponent,
         resolve: {
-            user: UserMgmtResolve
-        }
+            user: UserMgmtResolve,
+        },
     },
     {
         path: 'user-management/:login/edit',
         component: UserMgmtUpdateComponent,
         resolve: {
-            user: UserMgmtResolve
-        }
-    }
+            user: UserMgmtResolve,
+        },
+    },
 ];

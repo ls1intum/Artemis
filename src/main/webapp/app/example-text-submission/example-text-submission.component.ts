@@ -15,11 +15,12 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    providers: [JhiAlertService]
+    providers: [JhiAlertService],
 })
 export class ExampleTextSubmissionComponent implements OnInit {
     isNewSubmission: boolean;
@@ -37,6 +38,10 @@ export class ExampleTextSubmissionComponent implements OnInit {
     readOnly: boolean;
     toComplete: boolean;
 
+    formattedProblemStatement: string;
+    formattedSampleSolution: string;
+    formattedGradingInstructions: string;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     private exampleSubmissionId: number;
@@ -50,9 +55,9 @@ export class ExampleTextSubmissionComponent implements OnInit {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
-        private location: Location
-    ) {
-    }
+        private location: Location,
+        private artemisMarkdown: ArtemisMarkdown,
+    ) {}
 
     ngOnInit(): void {
         // (+) converts string 'id' to a number
@@ -74,6 +79,10 @@ export class ExampleTextSubmissionComponent implements OnInit {
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body;
+            this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
@@ -234,7 +243,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
             await this.router.navigate([`/course/${courseId}/text-exercise/`]);
-            this.router.navigate(['/', {outlets: {popup: 'text-exercise/' + this.exerciseId + '/edit'}}]);
+            this.router.navigate(['/', { outlets: { popup: 'text-exercise/' + this.exerciseId + '/edit' } }]);
         }
     }
 
@@ -263,16 +272,14 @@ export class ExampleTextSubmissionComponent implements OnInit {
                 } else {
                     this.onError(error.message);
                 }
-            }
+            },
         );
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
-            }
-        );
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+            this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+        });
     }
 
     private onError(error: string) {

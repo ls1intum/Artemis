@@ -13,12 +13,7 @@ export interface Credentials {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider {
-    constructor(
-        private http: HttpClient,
-        private $localStorage: LocalStorageService,
-        private $sessionStorage: SessionStorageService,
-        private jhiAlertService: JhiAlertService
-    ) {}
+    constructor(private http: HttpClient, private $localStorage: LocalStorageService, private $sessionStorage: SessionStorageService, private jhiAlertService: JhiAlertService) {}
 
     getToken() {
         return this.$localStorage.retrieve('authenticationToken') || this.$sessionStorage.retrieve('authenticationToken');
@@ -28,7 +23,7 @@ export class AuthServerProvider {
         const data = {
             username: credentials.username,
             password: credentials.password,
-            rememberMe: credentials.rememberMe
+            rememberMe: credentials.rememberMe,
         };
         return this.http.post(SERVER_API_URL + 'api/authenticate', data, { observe: 'response' }).map(authenticateSuccess.bind(this));
 

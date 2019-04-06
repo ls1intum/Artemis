@@ -1,17 +1,45 @@
-.conflicting-scores-label{
-    font-size: 14px;
-    font-weight: 200;
-    label{
-        margin: 0;
+$draggable-width: 15px;
+
+.modeling-assessment {
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    height: 100%;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        //position: absolute;
+        width: 100%;
+        //top: 0;
+        //left: 0;
+        z-index: 2;
+        font-size: 1rem;
+        font-weight: 500;
     }
 }
 
-.row-container {
+.resizable {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    .draggable-right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+    .card-header {
+        width: calc(100% - 15px);
+    }
 }
 
-.conflict {
-    background-color: rgb(248, 214, 217);
+.apollon-container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.apollon-row {
+    display: flex;
+    height: 100%;
 }

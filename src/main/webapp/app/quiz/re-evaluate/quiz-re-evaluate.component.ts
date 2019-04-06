@@ -12,7 +12,7 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    providers: []
+    providers: [],
 })
 export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     // Make constants available to html for comparison
@@ -28,7 +28,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     router: Router;
 
     datePickerOpenStatus = {
-        releaseDate: false
+        releaseDate: false,
     };
     isSaving: boolean;
     duration: Duration;
@@ -46,7 +46,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         private routerC: Router,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
-        private location: Location
+        private location: Location,
     ) {}
 
     ngOnInit(): void {

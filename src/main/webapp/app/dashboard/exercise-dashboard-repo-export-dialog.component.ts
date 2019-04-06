@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'jhi-instructor-dashboard-repo-export-dialog',
     templateUrl: './exercise-dashboard-repo-export-dialog.component.html',
-    styles: ['textarea { width: 100%; }']
+    styles: ['textarea { width: 100%; }'],
 })
 export class InstructorDashboardExportReposComponent {
     exercise: Exercise;
@@ -31,9 +31,7 @@ export class InstructorDashboardExportReposComponent {
         const studentIdList = this.studentIdList.split(',').map(e => e.trim());
         this.exerciseService.exportRepos(exerciseId, studentIdList).subscribe(
             response => {
-                this.jhiAlertService.success(
-                    'Export of repos was successful. The exported zip file with all repositories is currently being downloaded'
-                );
+                this.jhiAlertService.success('Export of repos was successful. The exported zip file with all repositories is currently being downloaded');
                 this.activeModal.dismiss(true);
                 this.exportInProgress = false;
                 if (response.body) {
@@ -49,14 +47,14 @@ export class InstructorDashboardExportReposComponent {
             },
             err => {
                 this.exportInProgress = false;
-            }
+            },
         );
     }
 }
 
 @Component({
     selector: 'jhi-instructor-dashboard-export-repos-popup',
-    template: ''
+    template: '',
 })
 export class InstructorDashboardExportReposPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;

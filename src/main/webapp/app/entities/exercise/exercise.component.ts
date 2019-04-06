@@ -16,8 +16,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
 
-    protected constructor(private courseService: CourseService, private translateService: TranslateService,
-                          private route: ActivatedRoute, private eventManager: JhiEventManager) {
+    protected constructor(private courseService: CourseService, private translateService: TranslateService, private route: ActivatedRoute, private eventManager: JhiEventManager) {
         this.predicate = 'id';
         this.reverse = true;
     }
@@ -25,7 +24,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.showAlertHeading = !this.embedded;
         this.showHeading = this.embedded;
-            this.load();
+        this.load();
         this.registerChangeInExercises();
     }
 
@@ -69,5 +68,4 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private registerChangeInExercises() {
         this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => this.load());
     }
-
 }

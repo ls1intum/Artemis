@@ -35,67 +35,67 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'quiz-exercise/:id',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard]
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'course/:courseId/quiz-exercise',
         component: QuizExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/quiz-exercise/re-evaluate/:id',
         component: QuizReEvaluateComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/quiz-exercise/edit/:id',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard]
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'course/:courseId/quiz-exercise/new',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard]
+        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'course/:courseId/quiz-exercise/export',
         component: QuizExerciseExportComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const quizExercisePopupRoute: Routes = [
@@ -103,26 +103,26 @@ export const quizExercisePopupRoute: Routes = [
         path: 'quiz-exercise/:id/delete',
         component: QuizExerciseDeletePopupComponent,
         resolve: {
-            quizExercise: QuizExerciseResolve
+            quizExercise: QuizExerciseResolve,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'quiz-exercise/:id/reset',
         component: QuizExerciseResetPopupComponent,
         resolve: {
-            quizExercise: QuizExerciseResolve
+            quizExercise: QuizExerciseResolve,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+            pageTitle: 'arTeMiSApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

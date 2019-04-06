@@ -11,9 +11,8 @@ const DEFAULT_COLORS = [ARTEMIS_DEFAULT_COLOR, '#9dca53', '#94a11c', '#691b0b', 
 @Component({
     selector: 'jhi-color-selector',
     templateUrl: './color-selector.component.html',
-    styleUrls: ['./color-selector.scss']
+    styleUrls: ['./color-selector.scss'],
 })
-
 export class ColorSelectorComponent implements OnInit {
     colorSelectorPosition: Coordinates;
     showColorSelector = false;
@@ -21,7 +20,7 @@ export class ColorSelectorComponent implements OnInit {
     @Output() selectedColor = new EventEmitter<string>();
 
     ngOnInit(): void {
-        this.colorSelectorPosition = {left: 0, top: 0};
+        this.colorSelectorPosition = { left: 0, top: 0 };
     }
 
     openColorSelector(event: MouseEvent) {

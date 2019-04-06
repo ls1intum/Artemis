@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [StatisticCounterUpdateComponent]
+                declarations: [StatisticCounterUpdateComponent],
             })
                 .overrideTemplate(StatisticCounterUpdateComponent, '')
                 .compileComponents();

@@ -8,7 +8,7 @@ import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
 
 @Component({
     selector: 'jhi-text-exercise-update',
-    templateUrl: './text-exercise-update.component.html'
+    templateUrl: './text-exercise-update.component.html',
 })
 export class TextExerciseUpdateComponent implements OnInit {
     textExercise: TextExercise;

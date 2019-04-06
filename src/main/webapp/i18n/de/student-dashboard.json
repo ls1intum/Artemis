@@ -32,6 +32,7 @@
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
+                "noDueDate": "Kein Fälligkeitsdatum",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "quizNotStarted": "Das Quiz hat noch nicht begonnen.",
                 "userNotStartedQuiz": "Du hast mit dem Quiz noch nicht begonnen.",
@@ -64,7 +65,7 @@
                 "dueDate": "Abgabedatum:",
                 "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
-                "level": "Schwierigkeit:",
+                "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",
                 "maxPoints": "Max. Punkte:",
                 "problemStatement": "Problemstellung:",
@@ -78,12 +79,12 @@
                 "notParticipated": "Nicht teilgenommen",
                 "yourResult": "Deine Ergebnisse:",
                 "recentResults": "Aktuelle Ergebnisse:",
-                "noRatedResult": "Du hast noch kein gewertetes Ergebnis.",
-                "otherResults": "Andere Ergebnisse:",
+                "noGradedResult": "Du hast noch kein gewertetes Ergebnis.",
+                "allResults": "Alle Ergebnisse:",
                 "hideResults": "Ergebnisse verbergen",
                 "showResults": "Alle Ergebnisse anzeigen",
-                "rated": "Bewertet",
-                "practice": "Übung"
+                "graded": "Bewertet",
+                "notGraded": "Nicht bewertet"
             }
         }
     }

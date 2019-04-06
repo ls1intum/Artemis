@@ -12,7 +12,7 @@ export const enum InitializationState {
     BUILD_PLAN_COPIED = 'BUILD_PLAN_COPIED',
     BUILD_PLAN_CONFIGURED = 'BUILD_PLAN_CONFIGURED',
     INITIALIZED = 'INITIALIZED',
-    FINISHED = 'FINISHED'
+    FINISHED = 'FINISHED',
 }
 
 export class Participation implements BaseEntity {

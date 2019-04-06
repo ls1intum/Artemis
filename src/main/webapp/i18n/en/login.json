@@ -13,7 +13,7 @@
                 "authentication": "<strong>Failed to sign in!</strong> Please check your credentials and try again."
             }
         },
-        "password" : {
+        "password": {
             "forgot": "Did you forget your password?"
         }
     }

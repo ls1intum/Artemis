@@ -12,7 +12,7 @@ import { Interactable } from 'interactjs';
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
-    providers: [NgbModal, RepositoryFileService, WindowRef]
+    providers: [NgbModal, RepositoryFileService, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     @Input()
@@ -39,7 +39,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         hasAllCheckBox: false,
         hasFilter: false,
         hasCollapseExpand: false,
-        decoupleChildFromParent: false
+        decoupleChildFromParent: false,
     });
 
     /** Resizable constants **/
@@ -52,7 +52,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
-        public modalService: NgbModal
+        public modalService: NgbModal,
     ) {}
 
     /**
@@ -70,9 +70,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 // Set min and max width
                 restrictSize: {
                     min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth }
+                    max: { width: this.resizableMaxWidth },
                 },
-                inertia: true
+                inertia: true,
             })
             .on('resizemove', function(event) {
                 const target = event.target;
@@ -135,7 +135,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
             // Inform parent editor component about the file selection change
             this.selectedFile.emit({
-                fileName: item.value
+                fileName: item.value,
             });
         }
         /** Reset folder and search our parent with the TreeviewHelper and set the folder value accordingly **/
@@ -168,7 +168,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 },
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                }
+                },
             );
         } else {
             this.setupTreeview(this.repositoryFiles);
@@ -227,7 +227,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             // Path part doesn't exist => add it to tree
             if (node == null) {
                 node = {
-                    text: fileSplit[0]
+                    text: fileSplit[0],
                 };
                 tree.push(node);
             }

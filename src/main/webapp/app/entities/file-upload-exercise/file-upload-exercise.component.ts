@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
-    templateUrl: './file-upload-exercise.component.html'
+    templateUrl: './file-upload-exercise.component.html',
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[];
@@ -23,7 +23,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
-        route: ActivatedRoute
+        route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
         this.fileUploadExercises = [];
@@ -39,7 +39,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.fileUploadExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 

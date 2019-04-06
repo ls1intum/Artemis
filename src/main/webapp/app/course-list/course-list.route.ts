@@ -10,26 +10,26 @@ export const courseListRoute: Routes = [
         component: CourseListComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'courses/:courseId/exercise/:exerciseId',
         component: CourseListComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/score-calculation',
         component: CourseScoreCalculationComponent,
         data: {
             authorities: ['ROLE_USER', 'ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];

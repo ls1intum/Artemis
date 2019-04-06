@@ -18,7 +18,7 @@ describe('Service Tests', () => {
         let currentDate: moment.Moment;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(CourseService);
@@ -33,9 +33,9 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         startDate: currentDate.format(DATE_TIME_FORMAT),
-                        endDate: currentDate.format(DATE_TIME_FORMAT)
+                        endDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 service
                     .find(123)
@@ -51,16 +51,16 @@ describe('Service Tests', () => {
                     {
                         id: 0,
                         startDate: currentDate.format(DATE_TIME_FORMAT),
-                        endDate: currentDate.format(DATE_TIME_FORMAT)
+                        endDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
                         startDate: currentDate,
-                        endDate: currentDate
+                        endDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .create(new Course(null))
@@ -79,17 +79,17 @@ describe('Service Tests', () => {
                         instructorGroupName: 'BBBBBB',
                         startDate: currentDate.format(DATE_TIME_FORMAT),
                         endDate: currentDate.format(DATE_TIME_FORMAT),
-                        onlineCourse: true
+                        onlineCourse: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign(
                     {
                         startDate: currentDate,
-                        endDate: currentDate
+                        endDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .update(expected)
@@ -108,22 +108,22 @@ describe('Service Tests', () => {
                         instructorGroupName: 'BBBBBB',
                         startDate: currentDate.format(DATE_TIME_FORMAT),
                         endDate: currentDate.format(DATE_TIME_FORMAT),
-                        onlineCourse: true
+                        onlineCourse: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
                         startDate: currentDate,
-                        endDate: currentDate
+                        endDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

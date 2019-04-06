@@ -9,14 +9,8 @@ import { LegalRoutingModule } from 'app/legal/legal-routing.module';
 import { PrivacyComponent } from 'app/legal/privacy/privacy.component';
 
 @NgModule({
-    declarations: [
-        PrivacyComponent
-    ],
-    imports: [
-        CommonModule,
-        ArTEMiSSharedModule,
-        LegalRoutingModule
-    ]
+    declarations: [PrivacyComponent],
+    imports: [CommonModule, ArTEMiSSharedModule, LegalRoutingModule],
 })
 export class ArTEMiSLegalModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -21,9 +21,9 @@ describe('Component Tests', () => {
                 providers: [
                     {
                         provide: JhiTrackerService,
-                        useClass: MockTrackerService
-                    }
-                ]
+                        useClass: MockTrackerService,
+                    },
+                ],
             })
                 .overrideTemplate(SettingsComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                 activated: true,
                 email: 'john.doe@mail.com',
                 langKey: 'en',
-                login: 'john'
+                login: 'john',
             };
             mockPrincipal.setResponse(accountValues);
 
@@ -63,7 +63,7 @@ describe('Component Tests', () => {
             // GIVEN
             const accountValues = {
                 firstName: 'John',
-                lastName: 'Doe'
+                lastName: 'Doe',
             };
             mockPrincipal.setResponse(accountValues);
 

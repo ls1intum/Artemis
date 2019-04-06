@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "ParticipationState" : {
+        "ParticipationState": {
             "null": "",
             "UNINITIALIZED": "UNINITIALIZED",
             "REPO_COPIED": "REPO_COPIED",

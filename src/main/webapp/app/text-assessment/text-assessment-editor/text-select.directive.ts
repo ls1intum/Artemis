@@ -21,11 +21,11 @@ export interface SelectionRectangle {
 enum EventType {
     SelectionChange = 'selectionchange',
     MouseUp = 'mouseup',
-    MouseDown = 'mousedown'
+    MouseDown = 'mousedown',
 }
 
 @Directive({
-    selector: '[jhiTextSelect]'
+    selector: '[jhiTextSelect]',
 })
 export class TextSelectDirective implements OnInit, OnDestroy {
     @Output()
@@ -112,7 +112,7 @@ export class TextSelectDirective implements OnInit, OnDestroy {
                 this.jhiTextSelect.emit({
                     text: '',
                     viewportRectangle: null,
-                    hostRectangle: null
+                    hostRectangle: null,
                 });
             });
         }
@@ -144,14 +144,14 @@ export class TextSelectDirective implements OnInit, OnDestroy {
                         left: viewportRectangle.left,
                         top: viewportRectangle.top,
                         width: viewportRectangle.width,
-                        height: viewportRectangle.height
+                        height: viewportRectangle.height,
                     },
                     hostRectangle: {
                         left: localRectangle.left,
                         top: localRectangle.top,
                         width: localRectangle.width,
-                        height: localRectangle.height
-                    }
+                        height: localRectangle.height,
+                    },
                 });
             });
         }
@@ -185,7 +185,7 @@ export class TextSelectDirective implements OnInit, OnDestroy {
             left: localLeft,
             top: localTop,
             width: viewportRectangle.width,
-            height: viewportRectangle.height
+            height: viewportRectangle.height,
         };
     }
 }

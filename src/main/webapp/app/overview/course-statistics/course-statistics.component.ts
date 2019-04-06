@@ -4,14 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 
-import {
-    ABSOLUTE_SCORE,
-    MAX_SCORE,
-    RELATIVE_SCORE,
-    Course,
-    CourseService,
-    CourseScoreCalculationService
-} from 'app/entities/course';
+import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
@@ -30,9 +23,8 @@ export interface CourseStatisticsDataSet {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview.scss']
+    styleUrls: ['../course-overview.scss'],
 })
-
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
@@ -57,32 +49,34 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
     public exerciseTitles: object = {
-        'quiz': {
-            'name': this.translateService.instant('arTeMiSApp.course.quizExercises'),
-            'color': QUIZ_EXERCISE_COLOR,
+        quiz: {
+            name: this.translateService.instant('arTeMiSApp.course.quizExercises'),
+            color: QUIZ_EXERCISE_COLOR,
         },
-        'modeling': {
-            'name': this.translateService.instant('arTeMiSApp.course.modelingExercises'),
-            'color': MODELING_EXERCISE_COLOR,
+        modeling: {
+            name: this.translateService.instant('arTeMiSApp.course.modelingExercises'),
+            color: MODELING_EXERCISE_COLOR,
         },
-        'programming': {
-            'name': this.translateService.instant('arTeMiSApp.course.programmingExercises'),
-            'color': PROGRAMMING_EXERCISE_COLOR,
+        programming: {
+            name: this.translateService.instant('arTeMiSApp.course.programmingExercises'),
+            color: PROGRAMMING_EXERCISE_COLOR,
         },
-        'text': {
-            'name': this.translateService.instant('arTeMiSApp.course.textExercises'),
-            'color': TEXT_EXERCISE_COLOR,
+        text: {
+            name: this.translateService.instant('arTeMiSApp.course.textExercises'),
+            color: TEXT_EXERCISE_COLOR,
         },
         'file-upload': {
-            'name': this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
-            'color': FILE_UPLOAD_EXERCISE_COLOR,
-        }
+            name: this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
+            color: FILE_UPLOAD_EXERCISE_COLOR,
+        },
     };
 
-    public doughnutChartData: CourseStatisticsDataSet[] = [{
-        data: [0, 0, 0, 0, 0, 0],
-        backgroundColor: this.doughnutChartColors
-    }];
+    public doughnutChartData: CourseStatisticsDataSet[] = [
+        {
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: this.doughnutChartColors,
+        },
+    ];
 
     chartColors = [
         {
@@ -93,8 +87,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             pointBackgroundColor: 'rgba(40, 167, 69, 1)',
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(40, 167, 69, 1)'
-        }, {
+            pointHoverBorderColor: 'rgba(40, 167, 69, 1)',
+        },
+        {
             // red
             backgroundColor: 'rgba(220, 53, 69, 0.8)',
             hoverBackgroundColor: 'rgba(220, 53, 69, 1)',
@@ -102,7 +97,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             pointBackgroundColor: 'rgba(220, 53, 69, 1)',
             pointBorderColor: '#fff',
             pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(220, 53, 69, 1)'
+            pointHoverBorderColor: 'rgba(220, 53, 69, 1)',
         },
     ];
     public barChartOptions: any = {
@@ -110,29 +105,33 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         responsive: true,
         scales: {
-            xAxes: [{
-                stacked: true,
-                ticks: {
-                    autoSkip: false,
-                    maxRotation: 0,
-                    minRotation: 0
+            xAxes: [
+                {
+                    stacked: true,
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 0,
+                        minRotation: 0,
+                    },
+                    gridLines: {
+                        display: false,
+                    },
                 },
-                gridLines: {
-                    display: false
-                }
-            }],
-            yAxes: [{
-                stacked: true
-            }]
+            ],
+            yAxes: [
+                {
+                    stacked: true,
+                },
+            ],
         },
         tooltips: {
             backgroundColor: 'rgba(0, 0, 0, 1)',
             callbacks: {
                 label: (tooltipItem: any, data: any) => {
                     return data.datasets[tooltipItem.datasetIndex].tooltips[tooltipItem.index];
-                }
-            }
-        }
+                },
+            },
+        },
     };
     public barChartType = 'horizontalBar';
 
@@ -143,7 +142,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         responsive: false,
         tooltips: {
             backgroundColor: 'rgba(0, 0, 0, 1)',
-        }
+        },
     };
 
     constructor(
@@ -151,9 +150,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private translateService: TranslateService,
-        private route: ActivatedRoute
-    ) {
-    }
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.paramSubscription = this.route.parent.params.subscribe(params => {
@@ -182,26 +180,26 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         this.translationSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.exerciseTitles = {
-                'quiz': {
-                    'name': this.translateService.instant('arTeMiSApp.course.quizExercises'),
-                    'color': QUIZ_EXERCISE_COLOR,
+                quiz: {
+                    name: this.translateService.instant('arTeMiSApp.course.quizExercises'),
+                    color: QUIZ_EXERCISE_COLOR,
                 },
-                'modeling': {
-                    'name': this.translateService.instant('arTeMiSApp.course.modelingExercises'),
-                    'color': MODELING_EXERCISE_COLOR,
+                modeling: {
+                    name: this.translateService.instant('arTeMiSApp.course.modelingExercises'),
+                    color: MODELING_EXERCISE_COLOR,
                 },
-                'programming': {
-                    'name': this.translateService.instant('arTeMiSApp.course.programmingExercises'),
-                    'color': PROGRAMMING_EXERCISE_COLOR,
+                programming: {
+                    name: this.translateService.instant('arTeMiSApp.course.programmingExercises'),
+                    color: PROGRAMMING_EXERCISE_COLOR,
                 },
-                'text': {
-                    'name': this.translateService.instant('arTeMiSApp.course.textExercises'),
-                    'color': TEXT_EXERCISE_COLOR,
+                text: {
+                    name: this.translateService.instant('arTeMiSApp.course.textExercises'),
+                    color: TEXT_EXERCISE_COLOR,
                 },
                 'file-upload': {
-                    'name': this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
-                    'color': FILE_UPLOAD_EXERCISE_COLOR,
-                }
+                    name: this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
+                    color: FILE_UPLOAD_EXERCISE_COLOR,
+                },
             };
         });
     }
@@ -228,8 +226,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     totalMaxScore: 0,
                     absoluteScore: 0,
                     names: [],
-                    scores: {data: [], label: 'Score', tooltips: []},
-                    missedScores: {data: [], label: 'Missed score', tooltips: []}
+                    scores: { data: [], label: 'Score', tooltips: [] },
+                    missedScores: { data: [], label: 'Missed score', tooltips: [] },
                 };
             }
             exercise.participations.forEach(participation => {
@@ -278,7 +276,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.absoluteScores = absoluteScores;
-        this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
+        this.doughnutChartData[0].data = [
+            quizzesTotalScore,
+            programmingExerciseTotalScore,
+            modelingExerciseTotalScore,
+            textExerciseTotalScore,
+            fileUploadExerciseTotalScore,
+            totalMissedPoints,
+        ];
     }
 
     calculateMaxScores() {

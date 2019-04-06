@@ -21,9 +21,9 @@ describe('Component Tests', () => {
                     JhiEventManager,
                     {
                         provide: JhiAlertService,
-                        useClass: MockAlertService
-                    }
-                ]
+                        useClass: MockAlertService,
+                    },
+                ],
             })
                 .overrideTemplate(JhiAlertErrorComponent, '')
                 .compileComponents();
@@ -71,8 +71,8 @@ describe('Component Tests', () => {
                         title: 'Bad Request',
                         status: 400,
                         path: '/api/foos',
-                        message: 'error.validation'
-                    }
+                        message: 'error.validation',
+                    },
                 });
                 eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
                 // THEN
@@ -85,7 +85,7 @@ describe('Component Tests', () => {
                     url: 'http://localhost:8080/api/foos',
                     headers: new HttpHeaders(),
                     status: 400,
-                    error: 'Bad Request'
+                    error: 'Bad Request',
                 });
                 eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
                 // THEN
@@ -105,8 +105,8 @@ describe('Component Tests', () => {
                         status: 400,
                         path: '/api/foos',
                         message: 'error.validation',
-                        fieldErrors: [{ objectName: 'foo', field: 'minField', message: 'Min' }]
-                    }
+                        fieldErrors: [{ objectName: 'foo', field: 'minField', message: 'Min' }],
+                    },
                 });
                 eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
                 // THEN
@@ -122,8 +122,8 @@ describe('Component Tests', () => {
                     statusText: 'Bad Request',
                     error: {
                         status: 400,
-                        message: 'error.validation'
-                    }
+                        message: 'error.validation',
+                    },
                 });
                 eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
                 // THEN

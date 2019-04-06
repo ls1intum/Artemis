@@ -6,7 +6,6 @@ import { User } from 'app/core';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer';
 
 export class StudentQuestion implements BaseEntity {
-
     public id: number;
     public questionText: string;
     public creationDate: Moment;

@@ -25,10 +25,15 @@ public class ProgrammingSubmissionService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final ParticipationService participationService;
+
     private final ParticipationRepository participationRepository;
+
     private final Optional<VersionControlService> versionControlService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
@@ -65,7 +70,8 @@ public class ProgrammingSubmissionService {
             String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
             programmingSubmission.setCommitHash(lastCommitHash);
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
         }
 

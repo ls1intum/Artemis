@@ -5,7 +5,7 @@ import { Moment } from 'moment';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
-    TIMEOUT = 'TIMEOUT'
+    TIMEOUT = 'TIMEOUT',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
@@ -14,7 +14,7 @@ export const enum SubmissionExerciseType {
     MODELING = 'modeling',
     QUIZ = 'quiz',
     TEXT = 'text',
-    FILE_UPLOAD = 'file-upload'
+    FILE_UPLOAD = 'file-upload',
 }
 
 export abstract class Submission implements BaseEntity {

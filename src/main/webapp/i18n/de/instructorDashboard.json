@@ -1,13 +1,19 @@
 {
     "instructorDashboard": {
+        "exerciseResultSummery": "{{ exercisesLength }} veröffentlichte Übungen, {{ studentsLength }} Studenten mit Ergebnissen",
+        "name": "Name",
+        "username": "Benutzername",
         "title": "Kursübersicht",
         "participated": "Teilgenommen an Übungen",
-        "completed": "Erfolgreich abgeschlossen",
-        "completedExercises": "Erfolgreich abgeschlossene Übungen",
-        "totalScoreQuizzes": "Gesamtwert Quizaufgaben",
-        "totalScoreProgramming": "Gesamtwert Programmieraufgaben",
-        "totalScoreModeling": "Gesamtwert Modellierungsaufgaben",
-        "overallScore": "Gesamtwert",
+        "successful": "Erfolgreich abgeschlossen",
+        "quizPoints": "Quiz Points (%)",
+        "programmingPoints": "Programmier Punkte (%)",
+        "modelingPoints": "Modelierungs Punkte (%)",
+        "textPoints": "Text Punkte (%)",
+        "file-uploadPoints": "Datei Upload Punkte (%)",
+        "overallScore": "Gesamtpunkte",
+        "max": "Max",
+        "average": "Durchschnitt",
         "students": "Studenten",
         "cleanup": {
             "title": "Aufräumen",
@@ -21,6 +27,8 @@
             "warning": "Export zustimmen",
             "title": "Abgaben herunterladen",
             "question": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen getrennt durch ein Komma (z.B. ga87fix,ga63dut)"
-        }
+        },
+        "exportCSV": "Als CSV exportieren",
+        "loadingStudents": "Lade die Ergebnisse aller Studenten..."
     }
 }

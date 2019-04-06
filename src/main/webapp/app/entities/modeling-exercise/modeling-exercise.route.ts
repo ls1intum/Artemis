@@ -12,37 +12,37 @@ export const modelingExerciseRoute: Routes = [
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'modeling-exercise/:id',
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/modeling-exercise',
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId/modeling-exercise/:id',
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const modelingExercisePopupRoute: Routes = [
@@ -51,29 +51,29 @@ export const modelingExercisePopupRoute: Routes = [
         component: ModelingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'modeling-exercise/:id/edit',
         component: ModelingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'modeling-exercise/:id/delete',
         component: ModelingExerciseDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title'
+            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

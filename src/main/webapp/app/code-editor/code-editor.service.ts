@@ -28,13 +28,13 @@ export class CodeEditorService {
         /** Cacheable configuration **/
         maxCacheCount: 3,
         maxAge: 3000,
-        slidingExpiration: true
+        slidingExpiration: true,
     })
     getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
                 params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
-                responseType: 'arraybuffer'
+                responseType: 'arraybuffer',
             })
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }

@@ -21,7 +21,7 @@ export class CourseResolve implements Resolve<Course> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
-                map((course: HttpResponse<Course>) => course.body)
+                map((course: HttpResponse<Course>) => course.body),
             );
         }
         return of(new Course());
@@ -34,58 +34,58 @@ export const courseRoute: Routes = [
         component: CourseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/new',
         component: CourseUpdateComponent,
         resolve: {
-            course: CourseResolve
+            course: CourseResolve,
         },
         data: {
             authorities: ['ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:id/view',
         component: CourseDetailComponent,
         resolve: {
-            course: CourseResolve
+            course: CourseResolve,
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:courseId',
         component: CourseExercisesOverviewComponent,
         resolve: {
-            course: CourseResolve
+            course: CourseResolve,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'course/:id/edit',
         component: CourseUpdateComponent,
         resolve: {
-            course: CourseResolve
+            course: CourseResolve,
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const coursePopupRoute: Routes = [
@@ -93,13 +93,13 @@ export const coursePopupRoute: Routes = [
         path: 'course/:id/delete',
         component: CourseDeletePopupComponent,
         resolve: {
-            course: CourseResolve
+            course: CourseResolve,
         },
         data: {
             authorities: ['ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

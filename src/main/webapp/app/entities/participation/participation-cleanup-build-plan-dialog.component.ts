@@ -11,21 +11,15 @@ import { JhiEventManager } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-participation-cleanup-build-plan-dialog',
-    templateUrl: './participation-cleanup-build-plan-dialog.component.html'
+    templateUrl: './participation-cleanup-build-plan-dialog.component.html',
 })
 export class ParticipationCleanupBuildPlanDialogComponent implements OnInit {
-
     // make constants available to html for comparison
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     participation: Participation;
 
-    constructor(
-        private participationService: ParticipationService,
-        public activeModal: NgbActiveModal,
-        private eventManager: JhiEventManager
-    ) {
-    }
+    constructor(private participationService: ParticipationService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -35,34 +29,27 @@ export class ParticipationCleanupBuildPlanDialogComponent implements OnInit {
         this.participationService.cleanupBuildPlan(this.participation).subscribe(() => {
             this.eventManager.broadcast({
                 name: 'participationListModification',
-                content: 'Cleanup the build plan of an participation'
+                content: 'Cleanup the build plan of an participation',
             });
             this.activeModal.dismiss(true);
         });
     }
 
-    ngOnInit(): void {
-
-    }
+    ngOnInit(): void {}
 }
 
 @Component({
     selector: 'jhi-participation-delete-popup',
-    template: ''
+    template: '',
 })
 export class ParticipationCleanupBuildPlanPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private participationPopupService: ParticipationPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private participationPopupService: ParticipationPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.participationPopupService
-                .open(ParticipationCleanupBuildPlanDialogComponent as Component, params['id']);
+            this.participationPopupService.open(ParticipationCleanupBuildPlanDialogComponent as Component, params['id']);
         });
     }
 
