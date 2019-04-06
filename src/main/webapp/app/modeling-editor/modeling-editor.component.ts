@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -9,7 +9,7 @@ import * as interact from 'interactjs';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
 })
-export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
+export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
     @ViewChild('resizeContainer')
@@ -52,7 +52,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
     /**
      * This function initializes the Apollon editor in Modeling mode.
      */
-    private initializeApollonEditor() {
+    private initializeApollonEditor(): void {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -74,8 +74,14 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
     /**
      * This function opens the modal for the help dialog.
      */
-    open(content: any) {
+    open(content: any): void {
         this.modalService.open(content, { size: 'lg' });
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
+            this.apollonEditor.model = changes.umlModel.currentValue;
+        }
     }
 
     ngOnDestroy(): void {

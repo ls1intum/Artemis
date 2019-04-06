@@ -15,7 +15,7 @@
             <div class="row">
                 <div class="form-check col-6 align-baseline">
                     <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
-                           [(ngModel)]="exampleSubmission.usedForTutorial"/>
+                           [(ngModel)]="usedForTutorial"/>
                     <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
                 </div>
 
@@ -29,6 +29,7 @@
             <div class="row mt-3">
                 <div class="form-check col-6 align-baseline"></div>
 
+                <!--TODO CZ: adapt path to new component structure-->
                 <button *ngIf="exampleSubmission && !isNewSubmission" class="btn btn-primary col-6"
                         (click)="createExampleAssessment()"
                         routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{exampleSubmission.id}}/tutor"
@@ -49,11 +50,15 @@
         <!--</div>-->
 
         <div class="col-12">
-            <jhi-modeling-editor #modelingEditor [isExampleSubmission]="true"></jhi-modeling-editor>
+            <jhi-modeling-editor
+                [umlModel]="umlModel"
+                [diagramType]="exercise.diagramType"
+            ></jhi-modeling-editor>
         </div>
 
     </div>
 
+    <!--TODO CZ: cleanup-->
     <!--<div class="row">-->
         <!--<div class="col-8">-->
             <!--<h2>Example Assessment</h2>-->

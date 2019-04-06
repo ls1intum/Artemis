@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChildren, QueryList, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,28 +10,28 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { Result } from 'app/entities/result';
-// import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
-import { ModelingAssessmentService } from 'app/modeling-assessment';
+import { UMLModel } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     providers: [JhiAlertService],
 })
-export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit {
-    @ViewChildren('modelingEditor')
-    editorList: QueryList<ModelingEditorComponent>;
-    private modelingEditor: ModelingEditorComponent;
+export class ExampleModelingSubmissionComponent implements OnInit {
+    @ViewChild(ModelingEditorComponent)
+    modelingEditor: ModelingEditorComponent;
 
     isNewSubmission: boolean;
+    usedForTutorial = false;
     areNewAssessments = true;
     exerciseId: number;
-    exampleSubmission = new ExampleSubmission();
+    exampleSubmission: ExampleSubmission;
     modelingSubmission: ModelingSubmission;
+    umlModel: UMLModel;
     assessments: Feedback[] = [];
     assessmentsAreValid = false;
     result: Result;
@@ -48,7 +48,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         private exerciseService: ExerciseService,
         private modelingSubmissionService: ModelingSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
-        private assessmentsService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
@@ -71,8 +70,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
             this.exampleSubmissionId = +exampleSubmissionId;
         }
 
-        this.exampleSubmission.usedForTutorial = false;
-
         this.loadAll();
     }
 
@@ -80,21 +77,22 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course); // TODO CZ: do we need this?
-            if (this.modelingEditor) {
-                this.modelingEditor.modelingExercise = this.exercise;
-            }
         });
 
         if (this.isNewSubmission) {
+            this.exampleSubmission = new ExampleSubmission();
             return; // We don't need to load anything else
         }
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body;
-            this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-            if (this.modelingEditor) {
-                this.modelingEditor.submission = this.modelingSubmission;
+            if (this.exampleSubmission.submission) {
+                this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                if (this.modelingSubmission.model) {
+                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+                }
             }
+            this.usedForTutorial = this.exampleSubmission.usedForTutorial;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
@@ -111,33 +109,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         });
     }
 
-    /**
-     * Load exercise and submission from server and pass it on to the modeling editor.
-     * We cannot do this in ngOnInit() as the modelingEditor is undefined before the view is initialized.
-     */
-    ngAfterViewInit(): void {
-        this.editorList.changes.subscribe((editors: QueryList<ModelingEditorComponent>) => {
-            // This timeout is necessary to postpone setting data in the modeling editor until the view is built up.
-            // Otherwise, we get the Angular error 'Expression has changed after it was checked' for an ngIf statement
-            // in the modeling editor.
-            setTimeout(() => {
-                this.modelingEditor = editors.first;
-                this.passDataToEditor();
-            });
-        });
-    }
-
-    private passDataToEditor(): void {
-        if (this.modelingEditor) {
-            if (this.exercise) {
-                this.modelingEditor.modelingExercise = this.exercise;
-            }
-            if (this.modelingSubmission) {
-                this.modelingEditor.submission = this.modelingSubmission;
-            }
-        }
-    }
-
     upsertExampleModelingSubmission() {
         if (this.isNewSubmission) {
             this.createNewExampleModelingSubmission();
@@ -147,15 +118,28 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
     }
 
     private createNewExampleModelingSubmission(): void {
-        const newExampleSubmission = this.exampleSubmission;
-        newExampleSubmission.submission = this.modelingEditor.getCurrentState();
-        newExampleSubmission.submission.exampleSubmission = true;
+        const modelingSubmission: ModelingSubmission = new ModelingSubmission();
+        modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
+        modelingSubmission.exampleSubmission = true;
+
+        const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
+        newExampleSubmission.submission = modelingSubmission;
+        newExampleSubmission.usedForTutorial = this.usedForTutorial;
         newExampleSubmission.exercise = this.exercise;
+        newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body;
             this.exampleSubmissionId = this.exampleSubmission.id;
+            if (this.exampleSubmission.submission) {
+                this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                if (this.modelingSubmission.model) {
+                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+                }
+            }
             this.isNewSubmission = false;
+
+            this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
 
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
@@ -164,15 +148,29 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
     }
 
     private updateExampleModelingSubmission() {
+        if (!this.modelingSubmission) {
+            this.modelingSubmission = new ModelingSubmission();
+        }
+        this.modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
+        this.modelingSubmission.exampleSubmission = true;
+
         const exampleSubmission = this.exampleSubmission;
-        exampleSubmission.submission = this.modelingEditor.getCurrentState();
-        exampleSubmission.submission.exampleSubmission = true;
+        exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
+        exampleSubmission.usedForTutorial = this.usedForTutorial;
 
         this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body;
             this.exampleSubmissionId = this.exampleSubmission.id;
+            if (this.exampleSubmission.submission) {
+                this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                if (this.modelingSubmission.model) {
+                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+                }
+            }
             this.isNewSubmission = false;
+
+            this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
         }, this.onError);
     }
 
@@ -238,8 +236,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
-            // TODO CZ: this loads the modeling exercise overview for the course which is not accessible otherwise -> change to load the overview of all exercises for the course
-            await this.router.navigate([`/course/${courseId}/modeling-exercise/`]);
+            await this.router.navigate([`/course/${courseId}/`]);
             this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
         }
     }
