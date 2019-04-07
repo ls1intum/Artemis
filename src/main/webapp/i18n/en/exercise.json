@@ -27,6 +27,7 @@
             "shortName": "Short Name",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "assessmentDueDate": "Assessment Due Date",
             "maxScore": "Max Score",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
