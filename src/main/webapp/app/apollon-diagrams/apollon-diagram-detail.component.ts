@@ -1,15 +1,16 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ApollonEditor, ApollonMode, UMLModel, DiagramType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
+import { JhiLanguageHelper } from 'app/core';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
+import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
-    providers: [ApollonDiagramService],
+    providers: [ApollonDiagramService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
@@ -17,7 +18,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
-    constructor(private apollonDiagramService: ApollonDiagramService, private jhiAlertService: JhiAlertService, private modalService: NgbModal, private route: ActivatedRoute) {}
+    constructor(
+        private apollonDiagramService: ApollonDiagramService,
+        private jhiAlertService: JhiAlertService,
+        private languageService: JhiLanguageService,
+        private languageHelper: JhiLanguageHelper,
+        private modalService: NgbModal,
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.route.params.subscribe(params => {
@@ -33,9 +41,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.initializeApollonEditor(model);
                 },
                 response => {
-                    this.jhiAlertService.error('Error while loading Apollon diagram');
+                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.detail.error.loading');
                 },
             );
+        });
+
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (this.apollonEditor !== null) {
+                this.apollonEditor.locale = languageKey as Locale;
+            }
         });
     }
 
@@ -54,6 +68,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             mode: ApollonMode.Exporting,
             model: initialModel,
             type: this.apollonDiagram.diagramType,
+            locale: this.languageService.currentLang as Locale,
         });
     }
 
@@ -72,7 +87,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonDiagramService.update(updatedDiagram).subscribe(
             () => {},
             response => {
-                this.jhiAlertService.error('Error while updating Apollon diagram');
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.update.error');
             },
         );
     }
