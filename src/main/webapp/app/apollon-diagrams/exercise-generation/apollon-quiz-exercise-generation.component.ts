@@ -41,7 +41,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
 
         const model = this.apollonEditor.model;
 
-        await generateDragAndDropQuizExercise(this.diagramTitle, model, this.selectedCourse, this.fileUploaderService, this.quizExerciseService);
+        await generateDragAndDropQuizExercise(this.selectedCourse, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
 
         this.activeModal.close();
     }
