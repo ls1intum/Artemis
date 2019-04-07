@@ -1,0 +1,60 @@
+<jhi-side-panel [panelHeader]="('arTeMiSApp.courseOverview.exerciseDetails.faq.header' | translate)">
+    <div *ngIf="isEditMode">
+        <div class="row mb-1">
+            <div class="col-12">
+                <div class="form-group">
+                    <label
+                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.newQuestionLabel" | translate}}</label>
+                    <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
+                </div>
+            </div>
+            <div class="col-12 d-flex justify-content-between">
+                <button class="btn btn-outline-primary" (click)="toggleEditMode()">Cancel</button>
+                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">Add Question</button>
+                <button class="btn btn-primary" *ngIf="selectedStudentQuestion" (click)="saveQuestion()">Save Question</button>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="isAddMode">
+        <div class="row mb-1">
+            <div class="col-12">
+                <div class="form-group">
+                    <label
+                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.questionLabel" | translate}}</label>
+                    <textarea [(ngModel)]="selectedStudentQuestion.questionText" class="form-control"
+                              name="answer"></textarea>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-group">
+                    <label
+                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel" | translate}}</label>
+                    <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
+                </div>
+            </div>
+            <div class="col-12 d-flex justify-content-between">
+                <button class="btn btn-outline-primary" (click)="toggleAnswerMode()">Cancel</button>
+                <button class="btn btn-primary" (click)="addAnswer()">Add Question</button>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="!isEditMode && !isAddMode">
+        <jhi-student-question-row [studentQuestion]="studentQuestion"
+                                  [user]="currentUser"
+                                  [selectedStudentQuestion]="selectedStudentQuestion"
+                                  (answerQuestion)="toggleAnswerMode($event)"
+                                  (deleteQuestion)="deleteQuestion($event)"
+                                  (editQuestion)="editQuestion($event)"
+                                  *ngFor="let studentQuestion of studentQuestions"></jhi-student-question-row>
+        <div class="row mb-1" *ngIf="!studentQuestions">
+            <div class="col-12">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noQuestions" | translate}}</div>
+        </div>
+        <div class="row mb-1">
+            <div class="col-12">
+                <a class="add-action"
+                   (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</a>
+            </div>
+        </div>
+    </div>
+</jhi-side-panel>

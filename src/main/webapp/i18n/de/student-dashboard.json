@@ -84,7 +84,17 @@
                 "hideResults": "Ergebnisse verbergen",
                 "showResults": "Alle Ergebnisse anzeigen",
                 "graded": "Bewertet",
-                "notGraded": "Nicht bewertet"
+                "notGraded": "Nicht bewertet",
+                "rated": "Bewertet",
+                "practice": "Übung",
+                "faq": {
+                    "header": "FAQ",
+                    "noQuestions": "Es wurden noch keine Fragen gestellt.",
+                    "addQuestion": "+ Eine neue Frage stellen",
+                    "newQuestionLabel": "Neue Frage",
+                    "answerLabel": "Antwort",
+                    "questionLabel": "Frage"
+                }
             }
         }
     }

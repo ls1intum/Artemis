@@ -84,7 +84,17 @@
                 "hideResults": "Hide results",
                 "showResults": "Show all results",
                 "graded": "Graded",
-                "notGraded": "Not graded"
+                "notGraded": "Not graded",
+                "rated": "Rated",
+                "practice": "Practice",
+                "faq": {
+                    "header": "FAQ",
+                    "noQuestions": "No questions have been asked yet.",
+                    "addQuestion": "+ Add a new question",
+                    "newQuestionLabel": "New question",
+                    "answerLabel": "Antwort",
+                    "questionLabel": "Frage"
+                }
             }
         }
     }
