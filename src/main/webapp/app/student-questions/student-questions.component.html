@@ -9,9 +9,9 @@
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary" (click)="toggleEditMode()">Cancel</button>
-                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">Add Question</button>
-                <button class="btn btn-primary" *ngIf="selectedStudentQuestion" (click)="saveQuestion()">Save Question</button>
+                <button class="btn btn-outline-primary" (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</button>
+                <button class="btn btn-primary" *ngIf="selectedStudentQuestion" (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
             </div>
         </div>
     </div>
@@ -33,8 +33,8 @@
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary" (click)="toggleAnswerMode()">Cancel</button>
-                <button class="btn btn-primary" (click)="addAnswer()">Add Question</button>
+                <button class="btn btn-outline-primary" (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                <button class="btn btn-primary" (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@
         <div class="row mb-1">
             <div class="col-12">
                 <a class="add-action"
-                   (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</a>
+                   (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addNewQuestion" | translate}}</a>
             </div>
         </div>
     </div>

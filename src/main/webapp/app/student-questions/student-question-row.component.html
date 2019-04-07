@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="row">
             <div class="col">
-                <h5>Q: {{shortQuestionText}} <span class="badge badge-light" *ngIf="isQuestionAuthor">Your Question</span> </h5>
+                <h5>Q: {{shortQuestionText}} <span class="badge badge-light" *ngIf="isQuestionAuthor">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.yourQuestion" | translate}}</span></h5>
             </div>
             <div class="col-auto">
                 <fa-icon class="mr-1" [icon]="'pencil-alt'" *ngIf="isQuestionAuthor" (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
@@ -12,7 +12,7 @@
         </div>
         <div class="row">
             <div class="col">
-                <p>Answers: {{studentQuestion.answers.length}}</p>
+                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerCount" | translate: { count: studentQuestion.answers.length } }}</p>
             </div>
         </div>
     </div>
@@ -29,14 +29,19 @@
                 <fa-icon [icon]="'angle-up'"></fa-icon>
             </div>
         </div>
-        <div class="row">
+        <div class="row" *ngFor="let questionAnswer of studentQuestion.answers">
             <div class="col">
-                <p>This question was not yet answered.</p>
+                <p>A: {{questionAnswer.answerText}}</p>
+            </div>
+        </div>
+        <div class="row" *ngIf="!studentQuestion.answers">
+            <div class="col">
+                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noAnswers" | translate}}</p>
             </div>
         </div>
         <div class="row">
             <div class="col">
-                <button class="btn btn-primary" (click)="initAnswer()">Answer now</button>
+                <button class="btn btn-primary" (click)="initAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
             </div>
         </div>
     </div>

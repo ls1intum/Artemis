@@ -90,10 +90,18 @@
                 "faq": {
                     "header": "FAQ",
                     "noQuestions": "Es wurden noch keine Fragen gestellt.",
-                    "addQuestion": "+ Eine neue Frage stellen",
+                    "addNewQuestion": "+ Eine neue Frage stellen",
                     "newQuestionLabel": "Neue Frage",
                     "answerLabel": "Antwort",
-                    "questionLabel": "Frage"
+                    "questionLabel": "Frage",
+                    "answerNow": "Jetzt beantworten",
+                    "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
+                    "answerCount": "Antworten: {{count}}",
+                    "yourQuestion": "Deine Frage",
+                    "cancel": "Abbrechen",
+                    "addQuestion": "Frage hinzufügen",
+                    "saveQuestion": "Frage speichern",
+                    "addAnswer": "Anwort hinzufügen"
                 }
             }
         }

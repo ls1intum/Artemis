@@ -4,6 +4,7 @@ import { StudentQuestion, StudentQuestionService } from 'app/entities/student-qu
 import { AccountService, User } from 'app/core';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
+import { StudentQuestionAnswer, StudentQuestionAnswerService } from 'app/entities/student-question-answer';
 
 @Component({
     selector: 'jhi-student-questions',
@@ -20,7 +21,11 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     selectedStudentQuestion: StudentQuestion;
     currentUser: User;
 
-    constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService) {}
+    constructor(
+        private accountService: AccountService,
+        private studentQuestionService: StudentQuestionService,
+        private studentQuestionAnswerService: StudentQuestionAnswerService,
+    ) {}
 
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
@@ -57,7 +62,19 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         this.isEditMode = true;
     }
 
-    addAnswer(): void {}
+    addAnswer(): void {
+        const studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.answerText = this.questionAnswerText;
+        studentQuestionAnswer.author = this.currentUser;
+        studentQuestionAnswer.verified = true;
+        studentQuestionAnswer.question = this.selectedStudentQuestion;
+        studentQuestionAnswer.answerDate = moment();
+        this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
+            this.selectedStudentQuestion.answers.push(studentQuestionResponse.body);
+            this.studentQuestionText = undefined;
+            this.isAddMode = false;
+        });
+    }
 
     saveQuestion() {
         debugger;
