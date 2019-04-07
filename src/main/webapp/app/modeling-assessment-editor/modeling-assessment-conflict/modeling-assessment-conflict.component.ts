@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { AccountService, User } from 'app/core';
@@ -32,10 +32,12 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflictIndex = 0;
     conflictsAllHandled = false;
     modelingExercise: ModelingExercise;
+    submissionId: number;
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
+        private router: Router,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
@@ -43,8 +45,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     ngOnInit() {
         this.route.params.subscribe(params => {
-            const submissionId = Number(params['submissionId']);
-            this.conflicts = this.modelingAssessmentService.getLocalConflicts(submissionId);
+            this.submissionId = Number(params['submissionId']);
+            this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts) {
                 this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
                 this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
@@ -85,6 +87,16 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateHighlightColor();
     }
 
+    onApplyChanges() {
+        this.modelingAssessmentService.save(this.mergedFeedbacks, this.submissionId).subscribe(
+            result => {
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
+            },
+            error1 => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+        );
+    }
+
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         let feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
@@ -119,7 +131,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     private updateHighlightColor() {
         switch (this.conflictResolutionStates[this.conflictIndex]) {
             case ConflictResolutionState.UNHANDLED:
-                this.highlightColor = 'rgba(219, 53, 69, 0.6)';
+                // this.highlightColor = 'rgba(219, 53, 69, 0.6)';
+                this.highlightColor = 'rgba(0, 123, 255, 0.6)';
                 break;
             case ConflictResolutionState.ESCALATED:
                 this.highlightColor = 'rgba(255, 193, 7, 0.6)';
