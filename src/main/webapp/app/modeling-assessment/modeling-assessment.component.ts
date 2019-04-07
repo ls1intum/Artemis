@@ -26,7 +26,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
-    @Input() assessor: User;
+    @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Input() enablePopups = true;

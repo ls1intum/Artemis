@@ -1,5 +1,5 @@
 <div class="assessment-container">
-    <h2 class="top-container">
+    <h3 class="top-container">
         <!--back button only used in tutor dashboard-->
         <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
         <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
@@ -30,7 +30,7 @@
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
         </div>
-    </h2>
+    </h3>
     <div class="editor-container">
         <jhi-modeling-assessment
             *ngIf="submission"
