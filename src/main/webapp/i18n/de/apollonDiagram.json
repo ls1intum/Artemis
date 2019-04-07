@@ -4,16 +4,32 @@
             "home": {
                 "title": "Apollon-Diagramme",
                 "createLabel": "Apollon-Diagramm erstellen",
-                "createOrEditLabel": "Apollon-Diagramm erstellen oder bearbeiten"
+                "createOrEditLabel": "Apollon-Diagramm erstellen oder bearbeiten",
+                "error": {
+                    "loading": "Es ist ein Fehler beim Laden der Diagramme aufgetreten"
+                }
             },
             "created": "Apollon Diagram erstellt mit ID {{ param }}",
             "updated": "Apollon Diagram aktualisiert mit ID {{ param }}",
             "deleted": "Apollon Diagram gelöscht mit ID {{ param }}",
+            "create": {
+                "error": "Fehler beim Erstellen des Apollon Diagramms"
+            },
+            "update": {
+                "error": "Fehler beim Aktualisieren des Apollon Diagramms"
+            },
             "delete": {
-                "question": "Soll Apollon Diagram {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Apollon Diagram {{ id }} wirklich dauerhaft gelöscht werden?",
+                "success": "Apollon Diagram mit Titel {{ title }} wurde erfolgreich gelöscht",
+                "error": "Fehler beim Löschen des Apollon Diagramms mit Titel {{ title }} aufgetreten"
             },
             "detail": {
-                "title": "Apollon-Diagramm"
+                "title": "Apollon-Diagramm",
+                "createLabel": "Erstelle eine Quizaufgabe",
+                "generate": "Erstellen",
+                "error": {
+                    "loading": "Es ist ein Fehler beim Laden des Diagrams aufgetreten"
+                }
             },
             "title": "Titel",
             "jsonRepresentation": "JSON-Repräsentation"

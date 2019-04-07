@@ -1,10 +1,10 @@
 <form name="form" role="form" (ngSubmit)="save()" novalidate>
     <div class="modal-header">
-        <h4 class="modal-title">Generate a Quiz Exercise</h4>
+        <h4 class="modal-title" jhiTranslate="arTeMiSApp.apollonDiagram.detail.createLabel">Generate a Quiz Exercise</h4>
     </div>
 
     <div class="modal-body">
-        <label for="GenerateQuizExercise_Course" class="form-control-label">Course</label>
+        <label for="GenerateQuizExercise_Course" class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course">Course</label>
         <select id="GenerateQuizExercise_Course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
             <option *ngFor="let course of courses" [ngValue]="course">{{ course.title }}</option>
         </select>
@@ -13,11 +13,11 @@
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="dismiss()">
             <fa-icon icon="ban"></fa-icon>
-            <span>Cancel</span>
+            <span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-success">
             <fa-icon icon="save"></fa-icon>
-            <span>Generate</span>
+            <span jhiTranslate="arTeMiSApp.apollonDiagram.detail.generate">Generate</span>
         </button>
     </div>
 </form>
