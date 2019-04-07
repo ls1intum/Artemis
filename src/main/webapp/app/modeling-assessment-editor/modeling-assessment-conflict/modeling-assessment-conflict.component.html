@@ -1,8 +1,7 @@
 <div class="conflict-container">
-    <h2 class="navigation-container">
-        Conflicts
-        <jhi-alert></jhi-alert>
+    <h3 class="navigation-container">
         <div class="control-container row-container">
+            <span jhiTranslate="modelingAssessmentEditor.conflicts">Conflicts</span>
             <button class="btn btn-primary" (click)="onPrevConflict()">
                 <fa-icon icon="arrow-left"></fa-icon>
             </button>
@@ -11,7 +10,11 @@
                 <fa-icon icon="arrow-right"></fa-icon>
             </button>
         </div>
-    </h2>
+        <jhi-alert></jhi-alert>
+        <button class="btn btn-success" [disabled]="!conflictsAllHandled" (click)="onApplyChanges()" jhiTranslate="modelingAssessmentEditor.button.applyChanges">
+            Apply Changes
+        </button>
+    </h3>
 
     <div id="conflictEditor" class="conflict-editor">
         <div class="conflicting-assessment">
@@ -20,14 +23,14 @@
                 [diagramType]="modelingExercise.diagramType"
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
-                [assessor]="conflictingResult.result.assessor"
+                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.conflictingResults.length } }}"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"
                 [readOnly]="true"
                 [resizeOptions]="{}"
             ></jhi-modeling-assessment>
-            <button class="btn btn-success" (click)="onAcceptOther()">accept theirs</button>
+            <button class="btn btn-success" (click)="onAcceptOther()" jhiTranslate="modelingAssessmentEditor.button.acceptTheirs">accept theirs</button>
         </div>
         <div class="assessment">
             <jhi-modeling-assessment
@@ -37,11 +40,11 @@
                 [feedbacks]="mergedFeedbacks"
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
-                [assessor]="user"
+                title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
                 [centeredElementId]="currentConflict.modelElementId"
                 [readOnly]="true"
             ></jhi-modeling-assessment>
-            <button class="btn btn-success" (click)="onKeepYours()">keep yours</button>
+            <button class="btn btn-success" (click)="onKeepYours()" jhiTranslate="modelingAssessmentEditor.button.keepYours">keep yours</button>
         </div>
         <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>

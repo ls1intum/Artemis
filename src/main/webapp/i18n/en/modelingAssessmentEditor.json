@@ -3,10 +3,16 @@
         "assessment": "Assessment",
         "assessmentLocked": "Assessment locked by: {{otherUser}}",
         "assessmentLockedCurrentUser": "You have the lock for this assessment",
+        "conflicts": "Conflict",
+        "ownAssessmentTitle": "Your current assessment",
+        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments",
         "button": {
             "overrideAssessment": "Override Assessment",
             "nextSubmission": "Assess Next Submission",
-            "resolveConflict": "Resolve Conflicts"
+            "resolveConflict": "Resolve Conflicts",
+            "applyChanges": "Apply Changes",
+            "keepYours": "Keep Yours",
+            "acceptTheirs": "Take Over"
         },
         "messages": {
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
