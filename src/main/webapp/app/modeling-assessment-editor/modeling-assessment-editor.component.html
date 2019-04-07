@@ -1,5 +1,5 @@
 <div class="assessment-container">
-    <h2 class="top-container">
+    <h3 class="top-container">
         <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
@@ -24,7 +24,7 @@
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
         </div>
-    </h2>
+    </h3>
     <div class="editor-container">
         <jhi-modeling-assessment
             *ngIf="submission"

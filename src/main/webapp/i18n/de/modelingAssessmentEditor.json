@@ -1,10 +1,16 @@
 {
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
+        "conflicts": "Konflikt",
+        "ownAssessmentTitle": "Deine aktuelle Bewertung",
+        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe",
-            "resolveConflict": "Konflikte behandeln"
+            "resolveConflict": "Konflikte behandeln",
+            "applyChanges": "Änderungen übernehmen",
+            "keepYours": "Beibehalten",
+            "acceptTheirs": "Übernehmen"
         },
         "messages": {
             "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen.",
