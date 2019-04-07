@@ -10,7 +10,7 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { Result } from 'app/entities/result';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { ModelingExercise, ModelingExercisePopupService } from 'app/entities/modeling-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
@@ -51,6 +51,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        private modelingExercisePopupService: ModelingExercisePopupService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
@@ -69,6 +70,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             // (+) converts string 'id' to a number
             this.exampleSubmissionId = +exampleSubmissionId;
         }
+
+        // Make sure the modeling exercise popup gets closed
+        this.modelingExercisePopupService.close();
 
         this.loadAll();
     }
