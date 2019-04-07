@@ -67,4 +67,10 @@ export class TextExercisePopupService {
         );
         return modalRef;
     }
+
+    close() {
+        if (this.ngbModalRef) {
+            this.ngbModalRef.close();
+        }
+    }
 }
