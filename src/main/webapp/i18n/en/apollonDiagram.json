@@ -4,16 +4,32 @@
             "home": {
                 "title": "Apollon Diagrams",
                 "createLabel": "Create a new Apollon Diagram",
-                "createOrEditLabel": "Create or edit an Apollon Diagram"
+                "createOrEditLabel": "Create or edit an Apollon Diagram",
+                "error": {
+                    "loading": "Error while loading Apollon diagrams"
+                }
             },
             "created": "Apollon Diagram created with ID {{ param }}",
             "updated": "Apollon Diagram updated with ID {{ param }}",
             "deleted": "Apollon Diagram deleted with ID {{ param }}",
+            "create": {
+                "error": "Error while creating Apollon diagram"
+            },
+            "update": {
+                "error": "Error while updating Apollon diagram"
+            },
             "delete": {
-                "question": "Are you sure you want to delete Apollon Diagram {{ id }}?"
+                "question": "Are you sure you want to delete Apollon Diagram {{ id }}?",
+                "success": "Apollon diagram with title {{ title }} was deleted successfully'",
+                "error": "Error while deleting the apollon diagrams with title {{ title }}"
             },
             "detail": {
-                "title": "Apollon Diagram"
+                "title": "Apollon Diagram",
+                "createLabel": "Generate a Quiz Exercise",
+                "generate": "Generate",
+                "error": {
+                    "loading": "Error while loading Apollon diagram"
+                }
             },
             "title": "Title",
             "jsonRepresentation": "JSON Representation"
