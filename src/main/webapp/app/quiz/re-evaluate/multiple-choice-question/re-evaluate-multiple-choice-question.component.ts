@@ -7,7 +7,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
-    providers: [ArtemisMarkdown]
+    providers: [ArtemisMarkdown],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('questionEditor')
@@ -77,7 +77,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                 this.parseQuestionMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
-            this
+            this,
         );
     }
 
@@ -89,9 +89,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         /** Array with all answer option Ace Editors
          *  Note: we filter out the question Editor (identified by his width)
          **/
-        const answerEditors: AceEditorComponent[] = this.aceEditorComponents
-            .toArray()
-            .filter(editor => editor.style.indexOf('width:90%') === -1);
+        const answerEditors: AceEditorComponent[] = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
 
         this.question.answerOptions.forEach((answer, index) => {
             requestAnimationFrame(
@@ -103,7 +101,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                     answerEditors[index].getEditor().setHighlightActiveLine(false);
                     answerEditors[index].getEditor().setShowPrintMargin(false);
                     answerEditors[index].getEditor().setOptions({
-                        autoScrollEditorIntoView: true
+                        autoScrollEditorIntoView: true,
                     });
                     answerEditors[index].getEditor().setValue(this.generateAnswerMarkdown(answer));
                     answerEditors[index].getEditor().clearSelection();
@@ -114,9 +112,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                             this.parseAnswerMarkdown(answerEditors[index].getEditor().getValue(), answer);
                             this.questionUpdated.emit();
                         },
-                        this
+                        this,
                     );
-                }.bind(this)
+                }.bind(this),
             );
         });
     }

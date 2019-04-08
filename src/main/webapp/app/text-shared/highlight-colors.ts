@@ -15,7 +15,7 @@ export namespace HighlightColors {
         purple = 'purple',
         black = 'black',
         gray = 'gray',
-        silver = 'silver'
+        silver = 'silver',
     }
 
     export function forIndex(index: number): Color {

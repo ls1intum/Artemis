@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "programmingSubmission" : {
+        "programmingSubmission": {
             "home": {
                 "title": "Programming Submissions",
                 "createLabel": "Create a new Programming Submission",

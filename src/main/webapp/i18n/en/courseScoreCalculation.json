@@ -1,0 +1,18 @@
+{
+    "arTeMiSApp": {
+        "courseScoreCalculation": {
+            "scoreAggregation": "Score Aggregation",
+            "myScore": "My Score",
+            "myRelativeScore": "My Relative Score (%)",
+            "maxScore": "Max Score",
+            "forQuizzes": "Score for quizzes",
+            "forProgramming": "Score for programming exercises",
+            "forModeling": "Score for modeling exercises",
+            "total": "Total score for this course",
+            "eist": {
+                "forHomework": "Score for homework",
+                "forInClass": "Score for in-class exercises"
+            }
+        }
+    }
+}

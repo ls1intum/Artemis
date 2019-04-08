@@ -8,37 +8,52 @@
             <table class="table">
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addClass.title">Add Class</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addClass.text">To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.</td>
-                    <td><img width="470" src="../../content/images/help-add-class.jpg"></td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addClass.text">
+                        To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.
+                    </td>
+                    <td><img width="470" src="../../content/images/help-add-class.jpg" /></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editClass.title">Edit Class</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editClass.text">To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.</td>
-                    <td><img width="470" src="../../content/images/help-edit-class.jpg"></td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editClass.text">
+                        To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.
+                    </td>
+                    <td><img width="470" src="../../content/images/help-edit-class.jpg" /></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.moveClass.title">Move Class</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.moveClass.text">To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.</td>
-                    <td><img src="../../content/images/help-move-class.jpg"></td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.moveClass.text">
+                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
+                    </td>
+                    <td><img src="../../content/images/help-move-class.jpg" /></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteClass.title">Delete Class</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteClass.text">To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteClass.text">
+                        To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.
+                    </td>
                     <td></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addAssociation.title">Add Association</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addAssociation.text">To add an association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for associations. Click and hold on one of those and drag it to another blue circle to create an association.</td>
-                    <td><img width="470" src="../../content/images/help-add-association.jpg"></td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.addAssociation.text">
+                        To add an association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for
+                        associations. Click and hold on one of those and drag it to another blue circle to create an association.
+                    </td>
+                    <td><img width="470" src="../../content/images/help-add-association.jpg" /></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editAssociation.title">Edit Association</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editAssociation.text">To edit an association, double click it and a popup will open up, in which you can edit its properties, e.g. type.</td>
-                    <td><img width="470" src="../../content/images/help-edit-association.jpg"></td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.editAssociation.text">
+                        To edit an association, double click it and a popup will open up, in which you can edit its properties, e.g. type.
+                    </td>
+                    <td><img width="470" src="../../content/images/help-edit-association.jpg" /></td>
                 </tr>
                 <tr>
                     <th jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteAssociation.title">Delete Association</th>
-                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteAssociation.text">To delete an association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
+                    <td jhiTranslate="arTeMiSApp.modelingEditor.helpModal.deleteAssociation.text">
+                        To delete an association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.
+                    </td>
                     <td></td>
                 </tr>
                 <tr>
@@ -52,10 +67,13 @@
             <button type="button" class="btn btn-outline" (click)="c()" jhiTranslate="entity.action.close">Close</button>
         </div>
     </ng-template>
-    <div><button class="btn btn-warning" (click)="open(help)">
-        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
-        <span jhiTranslate="arTeMiSApp.modelingEditor.helpModal.help">Help</span>
-    </button></div><br>
+    <div>
+        <button class="btn btn-warning" (click)="open(help)">
+            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
+            <span jhiTranslate="arTeMiSApp.modelingEditor.helpModal.help">Help</span>
+        </button>
+    </div>
+    <br />
 
     <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions">
         <div #editorContainer class="apollon-container"></div>

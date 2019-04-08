@@ -10,14 +10,7 @@ import { Moment, isMoment } from 'moment';
             {{ labelName }}
         </label>
         <div class="d-flex">
-            <input
-                class="form-control position-relative pl-5"
-                [ngModel]="value"
-                [disabled]="disabled"
-                (ngModelChange)="updateField($event)"
-                [owlDateTime]="dt"
-                name="datePicker"
-            />
+            <input class="form-control position-relative pl-5" [ngModel]="value" [disabled]="disabled" (ngModelChange)="updateField($event)" [owlDateTime]="dt" name="datePicker" />
             <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
                 <fa-icon [icon]="'calendar-alt'"></fa-icon>
             </button>
@@ -28,9 +21,9 @@ import { Moment, isMoment } from 'moment';
         {
             provide: NG_VALUE_ACCESSOR,
             multi: true,
-            useExisting: forwardRef(() => FormDateTimePickerComponent)
-        }
-    ]
+            useExisting: forwardRef(() => FormDateTimePickerComponent),
+        },
+    ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input()

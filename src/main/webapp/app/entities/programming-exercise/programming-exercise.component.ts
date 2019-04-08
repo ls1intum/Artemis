@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-programming-exercise',
-    templateUrl: './programming-exercise.component.html'
+    templateUrl: './programming-exercise.component.html',
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
@@ -23,7 +23,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
-        route: ActivatedRoute
+        route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
@@ -39,7 +39,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -56,5 +56,4 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     callback() {}
-
 }

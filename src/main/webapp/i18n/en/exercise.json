@@ -4,8 +4,9 @@
             "home": {
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise",
-                "createOrEditLabel": "Create or edit a Exercise"
+                "createOrEditLabel": "Create or edit an Exercise"
             },
+            "resultCount": "{{resultsLength}} results",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
@@ -26,6 +27,7 @@
             "shortName": "Short Name",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "assessmentDueDate": "Assessment Due Date",
             "maxScore": "Max Score",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
@@ -43,7 +45,17 @@
             "dndType": "Drag and Drop Question",
             "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
-            "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
+            "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>",
+            "studentName": "Student Name",
+            "completionDate": "Completion Date",
+            "result": "Result",
+            "submissionCount": "Submission Count",
+            "score": "Score",
+            "duration": "Duration",
+            "showUnsuccessful": "Show Unsuccessful",
+            "showSuccessful": "Show Successful",
+            "showAll": "Show All",
+            "tagPlaceholder": "Enter a new tag"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

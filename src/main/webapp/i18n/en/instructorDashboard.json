@@ -1,5 +1,6 @@
 {
     "instructorDashboard": {
+        "exerciseResultSummery": "{{ exercisesLength }} released exercises, {{ studentsLength }} students with results",
         "name": "Name",
         "username": "Username",
         "title": "Course Dashboard",
@@ -10,7 +11,7 @@
         "modelingPoints": "Modeling Points (%)",
         "textPoints": "Text Points (%)",
         "file-uploadPoints": "File Upload Points (%)",
-        "overallPoints": "Overall Points (%)",
+        "overallScore": "Overall Points (%)",
         "max": "Max",
         "average": "Average",
         "students": "Students",
@@ -26,6 +27,8 @@
             "warning": "Confirm Export",
             "title": "Download Repos",
             "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut)  of students you want to download the repository from"
-        }
+        },
+        "exportCSV": "Export as CSV",
+        "loadingStudents": "Loading the results of all students..."
     }
 }

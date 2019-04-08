@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "dropLocationCounter" : {
+        "dropLocationCounter": {
             "home": {
                 "title": "Drop Location Counters",
                 "createLabel": "Create a new Drop Location Counter",

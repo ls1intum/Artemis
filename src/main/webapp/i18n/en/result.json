@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "result" : {
+        "result": {
             "home": {
                 "title": "Results",
                 "createLabel": "Create a new result",
@@ -16,15 +15,29 @@
             "detail": {
                 "title": "Result"
             },
-            "noResult": "No results",
-            "resultString": "Result String",
+            "noResult": "No result",
+            "resultString": "Result Text",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
             "score": "Score",
-            "submission": "Submission",
+            "scorePercentage": "Score (in %)",
+            "rated": "Rated",
+            "hasFeedback": "Has Feedback",
+            "assessmentType": "Assessment Type",
+            "assessor": "Reviewer",
             "feedbacks": "Feedbacks",
-            "participation": "Participation"
+            "submission": "Submission",
+            "participation": "Participation",
+            "createManual": "Create manual result for",
+            "invalidScore": "Score is required and should be a number.",
+            "resultStringRequired": "Result text is required.",
+            "exerciseStillOpen": "Exercise is still open for submissions!",
+            "studentOverride": "The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.",
+            "addFeedback": "Add Feedback",
+            "deleteFeedback": "Delete Feedback",
+            "feedbackTextRequired": "Feedback text is required.",
+            "positive": "Positive"
         }
     }
 }

@@ -14,7 +14,7 @@ export class ExercisePopupService {
         private modalService: NgbModal,
         private router: Router,
         private exerciseService: ExerciseService,
-        private exerciseLtiConfigurationService: ExerciseLtiConfigurationService
+        private exerciseLtiConfigurationService: ExerciseLtiConfigurationService,
     ) {
         this.ngbModalRef = null;
     }
@@ -57,7 +57,7 @@ export class ExercisePopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

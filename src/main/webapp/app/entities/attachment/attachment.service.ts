@@ -20,22 +20,16 @@ export class AttachmentService {
 
     create(attachment: Attachment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(attachment);
-        return this.http
-            .post<Attachment>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(attachment: Attachment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(attachment);
-        return this.http
-            .put<Attachment>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Attachment>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<Attachment>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -51,7 +45,7 @@ export class AttachmentService {
 
     protected convertDateFromClient(attachment: Attachment): Attachment {
         const copy: Attachment = Object.assign({}, attachment, {
-            releaseDate: attachment.releaseDate != null && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : null
+            releaseDate: attachment.releaseDate != null && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : null,
         });
         return copy;
     }

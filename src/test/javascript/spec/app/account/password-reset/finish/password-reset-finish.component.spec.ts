@@ -20,19 +20,19 @@ describe('Component Tests', () => {
                 providers: [
                     {
                         provide: ActivatedRoute,
-                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' })
+                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
                     },
                     {
                         provide: Renderer,
                         useValue: {
-                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {}
-                        }
+                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
+                        },
                     },
                     {
                         provide: ElementRef,
-                        useValue: new ElementRef(null)
-                    }
-                ]
+                        useValue: new ElementRef(null),
+                    },
+                ],
             })
                 .overrideTemplate(PasswordResetFinishComponent, '')
                 .createComponent(PasswordResetFinishComponent);
@@ -55,7 +55,7 @@ describe('Component Tests', () => {
         it('sets focus after the view has been initialized', inject([ElementRef], (elementRef: ElementRef) => {
             const element = fixture.nativeElement;
             const node = {
-                focus() {}
+                focus() {},
             };
 
             elementRef.nativeElement = element;
@@ -90,10 +90,10 @@ describe('Component Tests', () => {
 
                 expect(service.save).toHaveBeenCalledWith({
                     key: 'XYZPDQ',
-                    newPassword: 'password'
+                    newPassword: 'password',
                 });
                 expect(comp.success).toEqual('OK');
-            })
+            }),
         ));
 
         it('should notify of generic error', inject(
@@ -109,11 +109,11 @@ describe('Component Tests', () => {
 
                 expect(service.save).toHaveBeenCalledWith({
                     key: 'XYZPDQ',
-                    newPassword: 'password'
+                    newPassword: 'password',
                 });
                 expect(comp.success).toBeNull();
                 expect(comp.error).toEqual('ERROR');
-            })
+            }),
         ));
     });
 });

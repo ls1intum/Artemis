@@ -20,7 +20,7 @@ export class AccountService {
         private languageService: JhiLanguageService,
         private sessionStorage: SessionStorageService,
         private http: HttpClient,
-        private websocketService: JhiWebsocketService
+        private websocketService: JhiWebsocketService,
     ) {}
 
     fetch(): Observable<HttpResponse<User>> {
@@ -70,7 +70,7 @@ export class AccountService {
             },
             () => {
                 return Promise.resolve(false);
-            }
+            },
         );
     }
 
@@ -126,18 +126,11 @@ export class AccountService {
     }
 
     isAtLeastTutorInCourse(course: Course): boolean {
-        return (
-            this.hasGroup(course.instructorGroupName) ||
-            this.hasGroup(course.teachingAssistantGroupName) ||
-            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
-        );
+        return this.hasGroup(course.instructorGroupName) || this.hasGroup(course.teachingAssistantGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
     isAtLeastInstructorInCourse(course: Course) {
-        return (
-            this.hasGroup(course.instructorGroupName) ||
-            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
-        );
+        return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
     isAuthenticated(): boolean {

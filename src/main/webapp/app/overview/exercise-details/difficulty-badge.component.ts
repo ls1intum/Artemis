@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-difficulty-badge',
-    templateUrl: './difficulty-badge.component.html'
+    templateUrl: './difficulty-badge.component.html',
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
@@ -14,9 +14,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     public badgeClass: string;
     private translateSubscription: Subscription;
 
-    constructor(private translateService: TranslateService) {
-
-    }
+    constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {

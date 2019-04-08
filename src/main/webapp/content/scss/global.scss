@@ -277,6 +277,11 @@ entity detail page css
     }
 }
 
+.editor-outline-background {
+    background: #f8f9fa;
+    max-width: max-content;
+}
+
 /* ==========================================================================
 ui bootstrap tweaks
 ========================================================================== */
@@ -560,6 +565,10 @@ code.password:hover {
             }
         }
     }
+}
+
+displaycolor {
+    background: #f8f9fa;
 }
 
 // This puts the owl-datetime-picker on top of the ngbootstrap modal

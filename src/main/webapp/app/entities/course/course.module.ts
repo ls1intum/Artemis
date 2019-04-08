@@ -20,7 +20,7 @@ import {
     courseRoute,
     CourseService,
     CourseExercisesOverviewComponent,
-    CourseUpdateComponent
+    CourseUpdateComponent,
 } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from '../../shared/date-time-picker/date-time-picker.module';
@@ -39,7 +39,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         RouterModule.forChild(ENTITY_STATES),
         FormDateTimePickerModule,
         ReactiveFormsModule,
-        ArTEMiSColorSelectorModule
+        ArTEMiSColorSelectorModule,
     ],
     declarations: [
         CourseComponent,
@@ -48,18 +48,11 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseUpdateComponent,
         CourseDeletePopupComponent,
         CourseExerciseCardComponent,
-        CourseExercisesOverviewComponent
+        CourseExercisesOverviewComponent,
     ],
-    entryComponents: [
-        CourseComponent,
-        CourseUpdateComponent,
-        CourseDeleteDialogComponent,
-        CourseDeletePopupComponent,
-        CourseExerciseCardComponent,
-        CourseDeletePopupComponent
-    ],
+    entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent, CourseExerciseCardComponent, CourseDeletePopupComponent],
     providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSCourseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

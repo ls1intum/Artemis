@@ -298,6 +298,14 @@
     }
 }
 
+.background-editor-color {
+    background: #f8f9fa;
+}
+
+.background-editor-high {
+    min-height: 150px;
+}
+
 .mc-question,
 .dnd-question,
 .sa-question {
@@ -338,7 +346,7 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        max-width: 20%;
+        max-width: 30%;
 
         &.result {
             font-weight: bold;
@@ -1014,7 +1022,7 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ':';
-    display: inline-block;
+    display: inline-flex;
 }
 
 .show-explanation {
@@ -1382,4 +1390,31 @@ ngb-tooltip-window > div {
 }
 .changed-question {
     background-color: #527cd7 !important;
+}
+
+.markdown-preview {
+    .red {
+        color: #ca2024;
+    }
+    .green {
+        color: #3ea119;
+    }
+    .white {
+        color: #ffffff;
+    }
+    .black {
+        color: #000000;
+    }
+    .yellow {
+        color: #fffa5c;
+    }
+    .blue {
+        color: #0d3cc2;
+    }
+    .lila {
+        color: #b05db8;
+    }
+    .orange {
+        color: #d86b1f;
+    }
 }

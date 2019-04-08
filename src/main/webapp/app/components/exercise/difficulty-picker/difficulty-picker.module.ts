@@ -5,13 +5,8 @@ import { DifficultyPickerComponent } from 'app/components/exercise/difficulty-pi
 
 @NgModule({
     imports: [ArTEMiSSharedModule],
-    declarations: [
-        DifficultyPickerComponent
-    ],
-    exports: [
-        DifficultyPickerComponent
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [DifficultyPickerComponent],
+    exports: [DifficultyPickerComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class ArTEMiSDifficultyPickerModule {
-}
+export class ArTEMiSDifficultyPickerModule {}

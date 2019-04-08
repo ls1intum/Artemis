@@ -1,8 +1,7 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title" id="myTextExerciseLabel" jhiTranslate="arTeMiSApp.textExercise.home.createOrEditLabel">Create or edit a Text Exercise</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
-                (click)="clear()">&times;</button>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -16,7 +15,11 @@
         </div>
         <div class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
-            <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
+            <jhi-category-selector
+                [exerciseCategories]="exerciseCategories"
+                [existingCategories]="existingCategories"
+                (selectedCategories)="updateCategories($event)"
+            ></jhi-category-selector>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
@@ -26,25 +29,44 @@
         </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
-                <jhi-date-time-picker labelName="Release Date" [(ngModel)]="textExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker
+                    labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate }}"
+                    [(ngModel)]="textExercise.releaseDate"
+                    name="releaseDate"
+                ></jhi-date-time-picker>
             </div>
             <div class="form-group flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="Due Date" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
             </div>
         </div>
         <div class="form-group">
-            <!--TODO CZ: does the line below even fill the assessmentDueDate field of the textExercise object? -->
-            <jhi-date-time-picker labelName="Assessment Due Date" [entity]="textExercise" field="assessmentDueDate"></jhi-date-time-picker>
+            <jhi-date-time-picker
+                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
+                [(ngModel)]="textExercise.assessmentDueDate"
+                name="assessmentDueDate"
+            ></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input required type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
+            <input
+                required
+                type="number"
+                class="form-control"
+                [pattern]="maxScorePattern"
+                min="0"
+                max="9999"
+                name="maxScore"
+                id="field_maxScore"
+                [(ngModel)]="textExercise.maxScore"
+            />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
-            <select class="form-control" id="field_course" name="course" [(ngModel)]="textExercise.course" >
+            <select class="form-control" id="field_course" name="course" [(ngModel)]="textExercise.course">
                 <option [ngValue]="null"></option>
-                <option [ngValue]="course.id === textExercise.course?.id ? textExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{course.title}}</option>
+                <option [ngValue]="course.id === textExercise.course?.id ? textExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{
+                    course.title
+                }}</option>
             </select>
         </div>
         <div class="form-group" id="field_problemStatement">
@@ -60,19 +82,30 @@
             <jhi-markdown-editor [(markdown)]="textExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <span>Example submissions</span>
+            <span jhiTranslate="arTeMiSApp.textExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button routerLink="text-exercise/{{textExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link">Example submission {{i + 1}}</button>
+                    <button routerLink="text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
+                        Example submission {{ i + 1 }}
+                    </button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                 </li>
             </ul>
 
-            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new">Create example submission</button>
+            <button
+                *ngIf="textExercise.id"
+                class="btn btn-primary"
+                routerLink="text-exercise/{{ textExercise.id }}/example-submission/new"
+                jhiTranslate="arTeMiSApp.textExercise.createExampleSubmissions"
+            >
+                Create example submission
+            </button>
 
-            <div class="alert alert-info" *ngIf="!textExercise.id">To create an example submission, you first need to finish creating the text exercise</div>
+            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="arTeMiSApp.textExercise.exampleSubmissionsRequireExercise">
+                To create an example submission, you first need to finish creating the text exercise.
+            </div>
         </div>
     </div>
     <div class="modal-footer">

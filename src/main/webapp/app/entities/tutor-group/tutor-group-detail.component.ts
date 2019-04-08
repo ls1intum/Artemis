@@ -4,7 +4,7 @@ import { TutorGroup } from 'app/entities/tutor-group';
 
 @Component({
     selector: 'jhi-tutor-group-detail',
-    templateUrl: './tutor-group-detail.component.html'
+    templateUrl: './tutor-group-detail.component.html',
 })
 export class TutorGroupDetailComponent implements OnInit {
     tutorGroup: TutorGroup;

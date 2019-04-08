@@ -7,9 +7,8 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 @Component({
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',
-    styleUrls: ['./category-selector.scss']
+    styleUrls: ['./category-selector.scss'],
 })
-
 export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
     categoryColors = DEFAULT_COLORS;
@@ -47,7 +46,7 @@ export class CategorySelectorComponent implements OnChanges {
             return;
         }
         this.onItemAdded({
-            category: categoryName
+            category: categoryName,
         } as ExerciseCategory);
     }
 

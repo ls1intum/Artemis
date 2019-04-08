@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
-                declarations: [CourseUpdateComponent]
+                declarations: [CourseUpdateComponent],
             })
                 .overrideTemplate(CourseUpdateComponent, '')
                 .compileComponents();
@@ -34,7 +34,7 @@ describe('Component Tests', () => {
                 entity.id = 123;
                 spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
                 comp.course = entity;
-                comp.courseForm = {value: entity}; // mocking reactive form
+                comp.courseForm = { value: entity }; // mocking reactive form
                 // WHEN
                 comp.save();
                 tick(); // simulate async
@@ -49,7 +49,7 @@ describe('Component Tests', () => {
                 const entity = new Course();
                 spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
                 comp.course = entity;
-                comp.courseForm = {value: entity}; // mocking reactive form
+                comp.courseForm = { value: entity }; // mocking reactive form
                 // WHEN
                 comp.save();
                 tick(); // simulate async

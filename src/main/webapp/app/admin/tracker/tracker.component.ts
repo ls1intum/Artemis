@@ -4,7 +4,7 @@ import { JhiWebsocketService } from 'app/core';
 
 @Component({
     selector: 'jhi-tracker',
-    templateUrl: './tracker.component.html'
+    templateUrl: './tracker.component.html',
 })
 export class JhiTrackerComponent implements OnInit, OnDestroy {
     activities: any[] = [];

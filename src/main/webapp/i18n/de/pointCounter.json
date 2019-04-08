@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "pointCounter" : {
+        "pointCounter": {
             "home": {
                 "title": "Point Counters",
                 "createLabel": "Point Counter erstellen",

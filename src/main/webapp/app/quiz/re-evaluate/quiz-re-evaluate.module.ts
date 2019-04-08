@@ -28,7 +28,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         ReEvaluateMultipleChoiceQuestionComponent,
         ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,
-        QuizReEvaluateWarningComponent
+        QuizReEvaluateWarningComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
     providers: [RepositoryService, JhiAlertService, QuizReEvaluateService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
@@ -37,9 +37,9 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         ReEvaluateMultipleChoiceQuestionComponent,
         ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,
-        QuizReEvaluateWarningComponent
+        QuizReEvaluateWarningComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSQuizReEvaluateModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -167,7 +167,7 @@
             "cleanup": "Cleanup",
             "archive": "Archive",
             "submit": "Submit",
-            "submitDeadlineMissed": "Submit (Missed Deadline)",
+            "submitDeadlineMissed": "Submit (deadline missed)",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
@@ -178,7 +178,8 @@
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
             "cleanupBuildPlan": "Cleanup Build Plan",
-            "registerForCourse": "Register For Course"
+            "registerForCourse": "Register For Course",
+            "exercise": "Exercise"
         },
         "detail": {
             "field": "Field",

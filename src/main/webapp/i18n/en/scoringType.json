@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "ScoringType" : {
+        "ScoringType": {
             "null": "",
             "ALL_OR_NOTHING": "ALL_OR_NOTHING",
             "PROPORTIONAL_CORRECT_OPTIONS": "PROPORTIONAL_CORRECT_OPTIONS",

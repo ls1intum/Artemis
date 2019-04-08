@@ -9,8 +9,8 @@ export const textEditorRoute: Routes = [
         component: TextEditorComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
+            pageTitle: 'arTeMiSApp.textExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];

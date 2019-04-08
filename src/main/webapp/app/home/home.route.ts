@@ -8,7 +8,7 @@ export const HOME_ROUTES: Routes = [
         component: HomeComponent,
         data: {
             authorities: [],
-            pageTitle: 'home.title'
-        }
-    }
+            pageTitle: 'home.title',
+        },
+    },
 ];

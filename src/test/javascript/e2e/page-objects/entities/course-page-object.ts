@@ -5,14 +5,16 @@ const expect = chai.expect;
 export class CoursePage {
     createNewCourse = element(by.className('create-course'));
 
-
     async clickOnCreateNewCourse() {
         await this.createNewCourse.click();
     }
 
     async navigateIntoLastCourseQuizzes() {
         const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
-        const courseId = await rows.last().element(by.css('td:nth-child(1) > a')).getText();
+        const courseId = await rows
+            .last()
+            .element(by.css('td:nth-child(1) > a'))
+            .getText();
 
         await browser.sleep(1000);
 
@@ -56,7 +58,7 @@ export class NewCoursePage {
     }
 
     async setTutorGroupName(tutorGroupName: string) {
-        await this.tutorGroupName .sendKeys(tutorGroupName);
+        await this.tutorGroupName.sendKeys(tutorGroupName);
     }
 
     async clickSave() {

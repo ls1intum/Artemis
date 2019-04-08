@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture';
 
 @Component({
     selector: 'jhi-lecture',
-    templateUrl: './lecture.component.html'
+    templateUrl: './lecture.component.html',
 })
 export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];
@@ -21,7 +21,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         protected lectureService: LectureService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
-        protected accountService: AccountService
+        protected accountService: AccountService,
     ) {}
 
     loadAll() {
@@ -29,13 +29,13 @@ export class LectureComponent implements OnInit, OnDestroy {
             .query()
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
-                map((res: HttpResponse<Lecture[]>) => res.body)
+                map((res: HttpResponse<Lecture[]>) => res.body),
             )
             .subscribe(
                 (res: Lecture[]) => {
                     this.lectures = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res.message)
+                (res: HttpErrorResponse) => this.onError(res.message),
             );
     }
 

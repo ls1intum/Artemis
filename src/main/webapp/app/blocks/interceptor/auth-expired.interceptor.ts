@@ -18,8 +18,8 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                             this.loginService.logout();
                         }
                     }
-                }
-            )
+                },
+            ),
         );
     }
 }

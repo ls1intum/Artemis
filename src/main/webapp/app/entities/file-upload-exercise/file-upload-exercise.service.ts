@@ -25,9 +25,7 @@ export class FileUploadExerciseService {
 
     update(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        return this.http
-            .put<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.put<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {

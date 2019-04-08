@@ -10,7 +10,7 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview.scss']
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_ASC = 1;
@@ -32,8 +32,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private courseServer: CourseService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
-        private route: ActivatedRoute) {
-    }
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
@@ -52,9 +52,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.groupExercises(this.DUE_DATE_DESC);
-
         });
-
     }
 
     ngOnDestroy(): void {
@@ -78,22 +76,30 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 notAssociatedExercises.push(exercise);
                 return;
             }
-            const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
+            const dateIndex = dateValue
+                ? moment(dateValue)
+                      .startOf('week')
+                      .format('YYYY-MM-DD')
+                : 'NoDate';
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
                 if (dateValue) {
                     groupedExercises[dateIndex] = {
-                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
+                        label: `<b>${moment(dateValue)
+                            .startOf('week')
+                            .format('DD/MM/YYYY')}</b> - <b>${moment(dateValue)
+                            .endOf('week')
+                            .format('DD/MM/YYYY')}</b>`,
                         isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
-                        exercises: []
+                        exercises: [],
                     };
                 } else {
                     groupedExercises[dateIndex] = {
                         label: `No date associated`,
                         isCollapsed: false,
                         isCurrentWeek: false,
-                        exercises: []
+                        exercises: [],
                     };
                 }
             }
@@ -105,12 +111,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.updateUpcomingExercises(upcomingExercises);
         this.weeklyExercisesGrouped = {
             ...groupedExercises,
-            'noDate': {
+            noDate: {
                 label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
                 isCollapsed: false,
                 isCurrentWeek: false,
-                exercises: notAssociatedExercises
-            }
+                exercises: notAssociatedExercises,
+            },
         };
         this.weeklyIndexKeys = [...indexKeys, 'noDate'];
     }
@@ -146,5 +152,4 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     get nextRelevantExercise(): Exercise {
         return this.exerciseService.getNextExerciseForHours(this.course.exercises);
     }
-
 }

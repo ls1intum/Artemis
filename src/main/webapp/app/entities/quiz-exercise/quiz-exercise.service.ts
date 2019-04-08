@@ -19,7 +19,7 @@ export class QuizExerciseService {
         VISIBLE: 'Visible',
         ACTIVE: 'Active',
         CLOSED: 'Closed',
-        OPEN_FOR_PRACTICE: 'Open for Practice'
+        OPEN_FOR_PRACTICE: 'Open for Practice',
     };
 
     quizExercises: QuizExercise[];
@@ -28,22 +28,16 @@ export class QuizExerciseService {
 
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        return this.http
-            .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(quizExercise: QuizExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        return this.http
-            .put<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.put<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http.get<QuizExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     recalculate(id: number): Observable<EntityResponseType> {
@@ -83,9 +77,7 @@ export class QuizExerciseService {
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
+        return this.http.get<QuizExercise[]>(this.resourceUrl, { observe: 'response' }).map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
@@ -159,5 +151,4 @@ export class QuizExerciseService {
         // the quiz hasn't started yet
         return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
     }
-
 }

@@ -30,7 +30,7 @@ export class JhiWebsocketService implements OnDestroy {
         private authServerProvider: AuthServerProvider,
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
-        private csrfService: CSRFService
+        private csrfService: CSRFService,
     ) {}
 
     stompFailureCallback() {
@@ -115,7 +115,7 @@ export class JhiWebsocketService implements OnDestroy {
                 }
                 this.sendActivity();
             },
-            this.stompFailureCallback.bind(this)
+            this.stompFailureCallback.bind(this),
         );
     }
 
@@ -145,7 +145,7 @@ export class JhiWebsocketService implements OnDestroy {
             this.stompClient.send(
                 '/topic/activity', // destination
                 JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
-                {} // header
+                {}, // header
             );
         }
     }
@@ -183,12 +183,7 @@ export class JhiWebsocketService implements OnDestroy {
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
         }
-        if (
-            this &&
-            channel != null &&
-            this.myListeners != null &&
-            (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))
-        ) {
+        if (this && channel != null && this.myListeners != null && (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))) {
             this.myListeners[channel] = this.createListener(channel);
         }
     }

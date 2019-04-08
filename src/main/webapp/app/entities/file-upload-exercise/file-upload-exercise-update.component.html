@@ -6,18 +6,15 @@
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!fileUploadExercise.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id"
-                        [(ngModel)]="fileUploadExercise.id" readonly />
+                    <input type="text" class="form-control" id="id" name="id" [(ngModel)]="fileUploadExercise.id" readonly />
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern</label>
-                    <input type="text" class="form-control" name="filePattern" id="field_filePattern"
-                        [(ngModel)]="fileUploadExercise.filePattern" />
+                    <input type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
                 </div>
-
             </div>
             <div>
-                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">

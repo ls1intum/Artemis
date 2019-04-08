@@ -9,7 +9,7 @@ import { CourseService } from './course.service';
 
 @Component({
     selector: 'jhi-course-delete-dialog',
-    templateUrl: './course-delete-dialog.component.html'
+    templateUrl: './course-delete-dialog.component.html',
 })
 export class CourseDeleteDialogComponent {
     course: Course;
@@ -24,7 +24,7 @@ export class CourseDeleteDialogComponent {
         this.courseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'courseListModification',
-                content: 'Deleted an course'
+                content: 'Deleted an course',
             });
             this.activeModal.dismiss(true);
         });
@@ -33,7 +33,7 @@ export class CourseDeleteDialogComponent {
 
 @Component({
     selector: 'jhi-course-delete-popup',
-    template: ''
+    template: '',
 })
 export class CourseDeletePopupComponent implements OnInit, OnDestroy {
     private ngbModalRef: NgbModalRef;
@@ -53,7 +53,7 @@ export class CourseDeletePopupComponent implements OnInit, OnDestroy {
                     reason => {
                         this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                         this.ngbModalRef = null;
-                    }
+                    },
                 );
             }, 0);
         });

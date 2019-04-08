@@ -13,7 +13,7 @@ import { AccountService } from 'app/core';
  * ```
  */
 @Directive({
-    selector: '[jhiHasAnyAuthority]'
+    selector: '[jhiHasAnyAuthority]',
 })
 export class HasAnyAuthorityDirective {
     private authorities: string[];

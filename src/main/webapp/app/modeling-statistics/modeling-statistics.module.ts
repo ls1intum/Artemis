@@ -16,17 +16,17 @@ const ENTITY_STATES = [
         component: ModelingStatisticsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'assessmentDashboard.title'
+            pageTitle: 'assessmentDashboard.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule],
     declarations: [ModelingStatisticsComponent],
     entryComponents: [HomeComponent, ModelingStatisticsComponent, JhiMainComponent],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSModelingStatisticsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
