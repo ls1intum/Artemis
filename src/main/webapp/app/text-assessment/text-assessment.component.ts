@@ -263,7 +263,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public get headingTranslationKey(): string {
         const baseKey = 'arTeMiSApp.textAssessment.heading.';
 
-        if (this.submission.exampleSubmission) {
+        if (this.submission && this.submission.exampleSubmission) {
             return baseKey + 'exampleAssessment';
         }
         return baseKey + 'assessment';
