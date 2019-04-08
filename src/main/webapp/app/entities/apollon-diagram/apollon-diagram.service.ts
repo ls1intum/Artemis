@@ -16,22 +16,16 @@ export class ApollonDiagramService {
 
     create(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
-        return this.http
-            .post<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.post<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     update(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
-        return this.http
-            .put<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.put<ApollonDiagram>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ApollonDiagram>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.get<ApollonDiagram>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     query(req?: any): Observable<HttpResponse<ApollonDiagram[]>> {

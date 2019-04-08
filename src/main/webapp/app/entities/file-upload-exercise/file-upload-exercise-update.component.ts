@@ -8,7 +8,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-uploa
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
-    templateUrl: './file-upload-exercise-update.component.html'
+    templateUrl: './file-upload-exercise-update.component.html',
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;

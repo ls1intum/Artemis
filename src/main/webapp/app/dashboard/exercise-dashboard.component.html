@@ -1,9 +1,12 @@
 <div *ngIf="exercise">
-    <h2>{{exercise.course.title}} - {{exercise.title}} <small>{{results.length}} results</small></h2>
+    <h2>
+        {{ exercise.course.title }} - {{ exercise.title }}
+        <small jhiTranslate="arTeMiSApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
+    </h2>
     <jhi-alert></jhi-alert>
     <div>
         <div class="button-toolbar float-right">
-            <button type="submit" routerLink="/exercise/{{exercise.id}}/participation" class="btn btn-primary btn-sm mr-1">
+            <button type="submit" routerLink="/exercise/{{ exercise.id }}/participation" class="btn btn-primary btn-sm mr-1">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
             </button>
@@ -15,7 +18,13 @@
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.exportResults">Export Results</span>
             </button>
-            <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-info btn-sm mr-1" [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/exportRepos'} }]" replaceUrl="true" queryParamsHandling="merge">
+            <button
+                *ngIf="exercise.type === PROGRAMMING"
+                class="btn btn-info btn-sm mr-1"
+                [routerLink]="['/', { outlets: { popup: 'exercise/' + exercise.id + '/exportRepos' } }]"
+                replaceUrl="true"
+                queryParamsHandling="merge"
+            >
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
             </button>
@@ -26,72 +35,83 @@
         </div>
 
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'">
-            Show unsuccessful
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'" />
+            {{ 'arTeMiSApp.exercise.showUnsuccessful' | translate }}
         </label>
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'">
-            Show successful
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'" />
+            {{ 'arTeMiSApp.exercise.showSuccessful' | translate }}
         </label>
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'">
-            Show all
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
+            {{ 'arTeMiSApp.exercise.showAll' | translate }}
         </label>
     </div>
     <div class="table-responsive" *ngIf="results">
         <table class="table table-striped exercise-table">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th></th>
-                <th jhiSortBy="participation.student.firstName">
-                    <a class="th-link">Student name</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="completionDate">
-                    <a class="th-link">Completion date</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="successful">
-                    <a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="submissionCount">
-                    <a class="th-link">Submission count</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="score">
-                    <a class="th-link">Score</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th jhiSortBy="duration">
-                    <a class="th-link">Duration</a> <fa-icon icon="sort"></fa-icon>
-                </th>
-                <th *ngIf="exercise.type !== QUIZ"></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                    <th></th>
+                    <th jhiSortBy="participation.student.firstName">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="completionDate">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="successful">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="submissionCount">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="score">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="duration">
+                        <a class="th-link">{{ 'arTeMiSApp.exercise.duration' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th *ngIf="exercise.type !== QUIZ"></th>
+                </tr>
             </thead>
             <tbody>
-            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}" *ngFor="let result of results | sortBy: predicate: reverse; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
-                <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-                <td>
-                    <jhi-result [participation]="result.participation"></jhi-result>
-                </td>
-                <td>{{ result.submissionCount }}</td>
-                <td>
-                    <span *ngIf="result.score != null">{{result.score}}%</span>
-                </td>
-                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate))}} minutes</td>
-                <td *ngIf="exercise.type !== QUIZ">
-                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
-                        <fa-icon icon="code-branch" class="mr"></fa-icon>Repository
-                    </button>
-                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
-                        <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
-                    </button>
-                    <button routerLink="/editor/{{result.participation.id}}" class="btn btn-info btn-sm mr-1" *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor">
-                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
-                    </button>
-                    <button *ngIf="exercise.type === PROGRAMMING" [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]" class="btn btn-warning btn-sm mr-1">
-                        <fa-icon icon="asterisk"></fa-icon>New result
-                    </button>
-                </td>
-            </tr>
+                <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of (results | sortBy: predicate:reverse); let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
+                    <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>
+                        <jhi-result [participation]="result.participation"></jhi-result>
+                    </td>
+                    <td>{{ result.submissionCount }}</td>
+                    <td>
+                        <span *ngIf="result.score != null">{{ result.score }}%</span>
+                    </td>
+                    <td>
+                        {{ durationString(result.completionDate, result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate) }}
+                        minutes
+                    </td>
+                    <td *ngIf="exercise.type !== QUIZ">
+                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
+                            <fa-icon icon="code-branch" class="mr"></fa-icon>Repository
+                        </button>
+                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
+                            <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
+                        </button>
+                        <button
+                            routerLink="/editor/{{ result.participation.id }}"
+                            class="btn btn-info btn-sm mr-1"
+                            *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor"
+                        >
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
+                        </button>
+                        <button
+                            *ngIf="exercise.type === PROGRAMMING"
+                            [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new' } }]"
+                            class="btn btn-warning btn-sm mr-1"
+                        >
+                            <fa-icon icon="asterisk"></fa-icon>New result
+                        </button>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

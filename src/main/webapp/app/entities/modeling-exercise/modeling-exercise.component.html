@@ -1,18 +1,22 @@
 <div>
     <h4>
-        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="modelingExercises && showHeading">{{getAmountOfExercisesString(modelingExercises)}} </span>
+        <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="modelingExercises && showHeading">{{ getAmountOfExercisesString(modelingExercises) }} </span>
         <span jhiTranslate="arTeMiSApp.modelingExercise.home.title">Modeling Exercises</span>
-        <button id="modeling-exercise-create-button" *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
+        <button
+            id="modeling-exercise-create-button"
+            *ngIf="course"
+            class="btn btn-primary float-right jh-create-entity create-modeling-exercise"
+            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]"
+        >
             <fa-icon icon="plus"></fa-icon>
-            <span  jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
-            Create Modeling Exercise
+            <span jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
+                Create Modeling Exercise
             </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="row">
-    </div>
-    <br>
+    <div class="row"></div>
+    <br />
     <div class="table-responsive" *ngIf="modelingExercises && modelingExercises.length > 0">
         <table class="table table-striped">
             <thead>
@@ -27,52 +31,56 @@
                 </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['/course', modelingExercise.course.id,'modeling-exercise', modelingExercise.id ]">{{modelingExercise.id}}</a></td>
-                <td>{{modelingExercise.title}}</td>
-                <td>{{modelingExercise.releaseDate | date:'medium'}}</td>
-                <td>{{modelingExercise.dueDate | date:'medium'}}</td>
-                <td>{{modelingExercise.maxScore}}</td>
-                <td jhiTranslate="{{'arTeMiSApp.DiagramType.' + modelingExercise.diagramType}}">{{modelingExercise.diagramType}}</td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                [routerLink]="['/course', modelingExercise.course.id, 'exercise', modelingExercise.id, 'dashboard' ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon icon="eye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/exercise', modelingExercise.id, 'participation' ]"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/modeling-exercise', modelingExercise.id ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon icon="eye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/'+ modelingExercise.id + '/edit'} }]"
+                <tr *ngFor="let modelingExercise of (modelingExercises | sortBy: predicate:reverse); trackBy: trackId">
+                    <td>
+                        <a [routerLink]="['/course', modelingExercise.course.id, 'modeling-exercise', modelingExercise.id]">{{ modelingExercise.id }}</a>
+                    </td>
+                    <td>{{ modelingExercise.title }}</td>
+                    <td>{{ modelingExercise.releaseDate | date: 'medium' }}</td>
+                    <td>{{ modelingExercise.dueDate | date: 'medium' }}</td>
+                    <td>{{ modelingExercise.maxScore }}</td>
+                    <td jhiTranslate="{{ 'arTeMiSApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button
+                                type="submit"
+                                [routerLink]="['/course', modelingExercise.course.id, 'exercise', modelingExercise.id, 'dashboard']"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon icon="eye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                            </button>
+                            <button type="submit" [routerLink]="['/exercise', modelingExercise.id, 'participation']" class="btn btn-primary btn-sm mr-1">
+                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                            </button>
+                            <button type="submit" [routerLink]="['/modeling-exercise', modelingExercise.id]" class="btn btn-info btn-sm mr-1">
+                                <fa-icon icon="eye"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/' + modelingExercise.id + '/edit' } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon icon="pencil-alt"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/'+ modelingExercise.id + '/delete'} }]"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon icon="pencil-alt"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/' + modelingExercise.id + '/delete' } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <fa-icon icon="times"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                                class="btn btn-danger btn-sm mr-1"
+                            >
+                                <fa-icon icon="times"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

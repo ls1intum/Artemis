@@ -12,31 +12,17 @@ import {
     ExercisePopupService,
     ExerciseResetDialogComponent,
     ExerciseResetPopupComponent,
-    ExerciseService
+    ExerciseService,
 } from './';
 
 const ENTITY_STATES = [...exercisePopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
-    declarations: [
-        ExerciseLtiConfigurationDialogComponent,
-        ExerciseLtiConfigurationPopupComponent,
-        ExerciseResetDialogComponent,
-        ExerciseResetPopupComponent
-    ],
-    entryComponents: [
-        ExerciseLtiConfigurationDialogComponent,
-        ExerciseLtiConfigurationPopupComponent,
-        ExerciseResetDialogComponent,
-        ExerciseResetPopupComponent
-    ],
-    providers: [
-        ExercisePopupService,
-        ExerciseService,
-        ExerciseLtiConfigurationService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
+    entryComponents: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
+    providers: [ExercisePopupService, ExerciseService, ExerciseLtiConfigurationService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -12,10 +12,9 @@ import { DecimalPipe } from '@angular/common';
 @Component({
     selector: 'jhi-instructor-course-dashboard',
     templateUrl: './course-dashboard.component.html',
-    providers: [JhiAlertService]
+    providers: [JhiAlertService],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
-
     // supported exercise type
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT];
 
@@ -153,10 +152,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         exercise.numberOfSuccessfulParticipations += 1;
                     }
 
-                    student.pointsStringPerExerciseType.set(
-                        exercise.type,
-                        student.pointsStringPerExerciseType.get(exercise.type) + roundedPoints + ','
-                    );
+                    student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type) + roundedPoints + ',');
                 } else {
                     student.pointsPerExercise.set(exercise.id, 0);
                     student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type) + '0,');
@@ -164,13 +160,19 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             }
             for (const exerciseType of this.exerciseTypes) {
                 if (this.maxNumberOfPointsPerExerciseType.get(exerciseType) > 0) {
-                    student.scoresPerExerciseType.set(exerciseType, student.pointsPerExerciseType.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType) * 100);
+                    student.scoresPerExerciseType.set(
+                        exerciseType,
+                        (student.pointsPerExerciseType.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100,
+                    );
                 }
             }
         });
 
         for (const exerciseType of this.exerciseTypes) {
-            this.averageNumberOfPointsPerExerciseTypes.set(exerciseType, this.students.reduce((total, student) => total + student.pointsPerExerciseType.get(exerciseType), 0) / this.students.length);
+            this.averageNumberOfPointsPerExerciseTypes.set(
+                exerciseType,
+                this.students.reduce((total, student) => total + student.pointsPerExerciseType.get(exerciseType), 0) / this.students.length,
+            );
         }
 
         this.averageNumberOfOverallPoints = this.students.reduce((total, student) => total + student.overallPoints, 0) / this.students.length;
@@ -227,7 +229,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = this.round(student.pointsPerExerciseType.get(exerciseType));
                         let exerciseScoresPerType = '';
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType) > 0) {
-                            exerciseScoresPerType = this.round(student.pointsPerExerciseType.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType) * 100) + '%';
+                            exerciseScoresPerType =
+                                this.round((student.pointsPerExerciseType.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100) + '%';
                         }
                         rowString += student.pointsStringPerExerciseType.get(exerciseType) + '' + exercisePointsPerType + ',' + exerciseScoresPerType + ',';
                     }
@@ -258,7 +261,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 // only add it if there are actually exercises in this type
                 if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
                     const averagePoints = this.round(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType));
-                    const averageScore = this.round(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType) * 100) + '%';
+                    const averageScore =
+                        this.round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100) + '%';
                     rowStringAverage += this.exerciseAveragePointsPerType.get(exerciseType) + '' + averagePoints + ',' + averageScore + ',';
                 }
             }

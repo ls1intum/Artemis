@@ -3,7 +3,6 @@ import { DragAndDropQuestionStatistic } from '../drag-and-drop-question-statisti
 import { QuizStatisticCounter } from '../quiz-statistic-counter';
 
 export class DropLocationCounter extends QuizStatisticCounter {
-
     public dropLocation: DropLocation;
     public dragAndDropQuestionStatistic: DragAndDropQuestionStatistic;
 

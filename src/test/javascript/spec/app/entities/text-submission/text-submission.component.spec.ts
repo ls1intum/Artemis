@@ -18,7 +18,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [TextSubmissionComponent],
-                providers: []
+                providers: [],
             })
                 .overrideTemplate(TextSubmissionComponent, '')
                 .compileComponents();
@@ -35,9 +35,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new TextSubmission(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

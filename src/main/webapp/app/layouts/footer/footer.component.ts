@@ -3,7 +3,7 @@ import { VERSION } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-footer',
-    templateUrl: './footer.component.html'
+    templateUrl: './footer.component.html',
 })
 export class FooterComponent {
     readonly email = 'mailto:artemis.ase@in.tum.de';

@@ -12,6 +12,7 @@
         "hideSolution": "Hide Solution",
         "quizPointStatisticTitle": "Score-Distribution",
         "quizStatisticTitle": "Quiz-Statistic",
+        "recalculateStatistics": "Recalculate Statistics",
         "quizPointStatistic": {
             "maxScore": "Maximum Score: ",
             "titleRated": "Score-Distribution (rated)",
@@ -40,6 +41,8 @@
             "showSampleSolution": "Show Sample Solution",
             "hideSampleSolution": "Hide Sample Solution"
         },
-        "invalid": "(invalid)"
+        "invalid": "(invalid)",
+        "quizhasEnded": "Quiz has ended!",
+        "now": "Now"
     }
 }

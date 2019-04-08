@@ -6,7 +6,7 @@ import { ActivateService } from './activate.service';
 
 @Component({
     selector: 'jhi-activate',
-    templateUrl: './activate.component.html'
+    templateUrl: './activate.component.html',
 })
 export class ActivateComponent implements OnInit {
     error: string;
@@ -25,7 +25,7 @@ export class ActivateComponent implements OnInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         });
     }

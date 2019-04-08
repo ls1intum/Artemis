@@ -28,17 +28,12 @@ const ENTITY_STATES = [...quizRoute];
         DragAndDropQuestionComponent,
         QuizScoringInfoStudentModalComponent,
         ShortAnswerQuestionComponent,
-        DragItemComponent
+        DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    exports: [
-        MultipleChoiceQuestionComponent,
-        DragAndDropQuestionComponent,
-        ShortAnswerQuestionComponent,
-        DragItemComponent,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSQuizModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

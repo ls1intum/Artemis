@@ -3,15 +3,19 @@ import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',
-    template: `<jhi-edit-drag-and-drop-question [question]="question"
-                                                [questionIndex]="questionIndex"
-                                                [reEvaluationInProgress]="true"
-                                                (questionUpdated)="questionUpdated.emit()"
-                                                (questionDeleted)="questionDeleted.emit()"
-                                                (questionMoveUp)="questionMoveUp.emit()"
-                                                (questionMoveDown)="questionMoveDown.emit()">
-               </jhi-edit-drag-and-drop-question>`,
-    providers: []
+    template: `
+        <jhi-edit-drag-and-drop-question
+            [question]="question"
+            [questionIndex]="questionIndex"
+            [reEvaluationInProgress]="true"
+            (questionUpdated)="questionUpdated.emit()"
+            (questionDeleted)="questionDeleted.emit()"
+            (questionMoveUp)="questionMoveUp.emit()"
+            (questionMoveDown)="questionMoveDown.emit()"
+        >
+        </jhi-edit-drag-and-drop-question>
+    `,
+    providers: [],
 })
 export class ReEvaluateDragAndDropQuestionComponent {
     /**

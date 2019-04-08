@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "feedback" : {
+        "feedback": {
             "home": {
                 "title": "Feedbacks",
                 "createLabel": "Feedback erstellen",

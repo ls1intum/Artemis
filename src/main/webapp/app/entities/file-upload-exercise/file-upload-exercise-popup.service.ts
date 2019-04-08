@@ -16,7 +16,7 @@ export class FileUploadExercisePopupService {
         private modalService: NgbModal,
         private router: Router,
         private fileUploadExerciseService: FileUploadExerciseService,
-        private courseService: CourseService
+        private courseService: CourseService,
     ) {
         this.ngbModalRef = null;
     }
@@ -63,7 +63,7 @@ export class FileUploadExercisePopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

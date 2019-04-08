@@ -512,6 +512,8 @@ relationship ManyToOne {
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,
+    Complaint{student} to User,
+    ComplaintResponse{reviewer} to User,
     ModelAssessmentConflict{result} to ExerciseResult,
 }
 

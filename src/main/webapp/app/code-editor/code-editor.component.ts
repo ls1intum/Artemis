@@ -6,12 +6,7 @@ import { Interactable } from 'interactjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
-import {
-    compose,
-    fromPairs,
-    map,
-    toPairs,
-} from 'lodash/fp';
+import { compose, fromPairs, map, toPairs } from 'lodash/fp';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -26,7 +21,7 @@ import { WindowRef } from '../core/websocket/window.service';
 @Component({
     selector: 'jhi-editor',
     templateUrl: './code-editor.component.html',
-    providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService]
+    providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
 export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
@@ -62,7 +57,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
-        private localStorageService: LocalStorageService
+        private localStorageService: LocalStorageService,
     ) {}
 
     /**
@@ -77,21 +72,16 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
         this.paramSub = this.route.params.subscribe(params => {
             // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            if (
-                this.participationDataProvider.participationStorage &&
-                this.participationDataProvider.participationStorage.id === Number(params['participationId'])
-            ) {
+            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
                 // We found a matching participation in the data provider, so we can avoid doing a REST call
                 this.participation = this.participationDataProvider.participationStorage;
                 this.obtainLatestResult();
             } else {
                 /** Query the participationService for the participationId given by the params */
-                this.participationService
-                    .findWithLatestResult(params['participationId'])
-                    .subscribe((response: HttpResponse<Participation>) => {
-                        this.participation = response.body;
-                        this.obtainLatestResult();
-                    });
+                this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
+                    this.participation = response.body;
+                    this.obtainLatestResult();
+                });
             }
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(
@@ -103,7 +93,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                }
+                },
             );
         });
 
@@ -158,6 +148,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     updateLatestResult($event: any) {
         this.isBuilding = false;
         this.latestResult = $event.newResult;
+        this.participation = { ...this.participation, results: [this.latestResult, ...this.participation.results] };
     }
 
     /**
@@ -199,7 +190,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-            }
+            },
         );
     }
 
@@ -217,9 +208,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     errors: compose(
                         fromPairs,
                         map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
-                        toPairs
+                        toPairs,
                     )(this.session.errors),
-                    timestamp: this.session.timestamp
+                    timestamp: this.session.timestamp,
                 };
             }
         }
@@ -273,7 +264,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             },
             err => {
                 console.log('Error during commit ocurred!', err);
-            }
+            },
         );
     }
 

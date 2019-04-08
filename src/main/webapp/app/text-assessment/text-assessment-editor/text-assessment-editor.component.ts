@@ -5,7 +5,7 @@ import { Feedback } from 'app/entities/feedback';
 @Component({
     selector: 'jhi-text-assessment-editor',
     templateUrl: './text-assessment-editor.component.html',
-    styleUrls: ['./text-assessment-editor.component.scss']
+    styleUrls: ['./text-assessment-editor.component.scss'],
 })
 export class TextAssessmentEditorComponent {
     public hostRectangle: SelectionRectangle;

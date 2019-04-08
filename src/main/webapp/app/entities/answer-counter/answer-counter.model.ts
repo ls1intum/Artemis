@@ -3,7 +3,6 @@ import { MultipleChoiceQuestionStatistic } from '../multiple-choice-question-sta
 import { QuizStatisticCounter } from '../quiz-statistic-counter';
 
 export class AnswerCounter extends QuizStatisticCounter {
-
     public answer: AnswerOption;
     public multipleChoiceQuestionStatistic: MultipleChoiceQuestionStatistic;
 

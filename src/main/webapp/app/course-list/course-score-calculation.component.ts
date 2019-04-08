@@ -8,7 +8,7 @@ import { Exercise, ExerciseType } from '../entities/exercise';
 
 @Component({
     selector: 'jhi-course-score',
-    templateUrl: './course-score-calculation.component.html'
+    templateUrl: './course-score-calculation.component.html',
 })
 export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     private courseId: number;
@@ -40,11 +40,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     eistHomeworkMaxScore = 0;
     eistInClassMaxScore = 0;
 
-    constructor(
-        private courseService: CourseService,
-        private courseCalculationService: CourseScoreCalculationService,
-        private route: ActivatedRoute
-    ) {}
+    constructor(private courseService: CourseService, private courseCalculationService: CourseScoreCalculationService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {

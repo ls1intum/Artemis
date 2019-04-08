@@ -1,23 +1,20 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
-    providers: [ApollonDiagramService]
+    providers: [ApollonDiagramService],
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
     @ViewChild('titleInput') titleInput: ElementRef;
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private apollonDiagramService: ApollonDiagramService,
-        private router: Router
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private jhiAlertService: JhiAlertService) {}
 
     ngAfterViewInit() {
         this.titleInput.nativeElement.focus();
@@ -32,9 +29,9 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
                 this.dismiss();
                 this.router.navigate(['apollon-diagrams', newDiagram.id]);
             },
-            () => {
-                console.warn('failed');
-            }
+            response => {
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+            },
         );
     }
 

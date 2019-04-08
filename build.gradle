@@ -29,7 +29,7 @@ plugins {
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.20.0"
+    id "com.diffplug.gradle.spotless" version "3.21.1"
 }
 
 apply plugin: 'java'
@@ -55,6 +55,10 @@ idea {
 
 spotless {
     java {
+        target project.fileTree(project.rootDir) {
+            include '**/*.java'
+            exclude 'src/main/java/de/tum/in/www1/artemis/security/SecurityConfiguration.java'
+        }
         importOrderFile 'artemis-spotless.importorder'
         removeUnusedImports()
         eclipse().configFile 'artemis-spotless-style.xml'
@@ -71,7 +75,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.6.0'
+version = '2.7.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -129,6 +133,7 @@ task testReport(type: TestReport) {
 apply from: 'gradle/docker.gradle'
 apply from: 'gradle/sonar.gradle'
 apply from: 'gradle/liquibase.gradle'
+//this enables us to invoke ./gradlew liquibaseDiffChangelog
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty('prod')) {
@@ -257,7 +262,7 @@ task executeTests (type: Exec) {
 }
 
 wrapper {
-    gradleVersion = '5.3'
+    gradleVersion = '5.3.1'
 }
 
 task stage(dependsOn: 'bootWar') {

@@ -6,11 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
-    constructor(
-        private accountService: AccountService,
-        private websocketService: JhiWebsocketService,
-        private authServerProvider: AuthServerProvider
-    ) {}
+    constructor(private accountService: AccountService, private websocketService: JhiWebsocketService, private authServerProvider: AuthServerProvider) {}
 
     login(credentials: Credentials, callback?: any) {
         const cb = callback || function() {};
@@ -28,7 +24,7 @@ export class LoginService {
                     this.logout();
                     reject(err);
                     return cb(err);
-                }
+                },
             );
         });
     }

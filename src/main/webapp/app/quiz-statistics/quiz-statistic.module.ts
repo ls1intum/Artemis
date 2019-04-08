@@ -16,23 +16,16 @@ import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
 
-const ENTITY_STATES = [
-    ...quizStatisticRoute
-];
+const ENTITY_STATES = [...quizStatisticRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        ChartsModule,
-        ArTEMiSQuizModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArTEMiSQuizModule],
     declarations: [
         QuizStatisticComponent,
         QuizPointStatisticComponent,
         MultipleChoiceQuestionStatisticComponent,
         DragAndDropQuestionStatisticComponent,
-        ShortAnswerQuestionStatisticComponent
+        ShortAnswerQuestionStatisticComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -41,12 +34,9 @@ const ENTITY_STATES = [
         QuizPointStatisticComponent,
         MultipleChoiceQuestionStatisticComponent,
         DragAndDropQuestionStatisticComponent,
-        ShortAnswerQuestionStatisticComponent
+        ShortAnswerQuestionStatisticComponent,
     ],
-    providers: [
-        QuizStatisticUtil,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ]
+    providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSStatisticModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

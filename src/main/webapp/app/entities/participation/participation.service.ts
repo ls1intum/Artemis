@@ -22,22 +22,16 @@ export class ParticipationService {
 
     create(participation: Participation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
-        return this.http
-            .post<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.post<Participation>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(participation: Participation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
-        return this.http
-            .put<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.put<Participation>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findWithLatestResult(id: number): Observable<EntityResponseType> {
@@ -74,7 +68,8 @@ export class ParticipationService {
 
     cleanupBuildPlan(participation: Participation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
-        return this.http.put<Participation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
+        return this.http
+            .put<Participation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -98,10 +93,7 @@ export class ParticipationService {
 
     protected convertDateFromClient(participation: Participation): Participation {
         const copy: Participation = Object.assign({}, participation, {
-            initializationDate:
-                participation.initializationDate != null && moment(participation.initializationDate).isValid()
-                    ? participation.initializationDate.toJSON()
-                    : null
+            initializationDate: participation.initializationDate != null && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
         });
         return copy;
     }

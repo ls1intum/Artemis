@@ -15,7 +15,7 @@ import {
     FileUploadExercisePopupService,
     fileUploadExerciseRoute,
     FileUploadExerciseService,
-    FileUploadExerciseUpdateComponent
+    FileUploadExerciseUpdateComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 
@@ -30,7 +30,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         FileUploadExerciseDialogComponent,
         FileUploadExerciseDeleteDialogComponent,
         FileUploadExercisePopupComponent,
-        FileUploadExerciseDeletePopupComponent
+        FileUploadExerciseDeletePopupComponent,
     ],
     entryComponents: [
         FileUploadExerciseComponent,
@@ -38,11 +38,11 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         FileUploadExerciseDialogComponent,
         FileUploadExercisePopupComponent,
         FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent
+        FileUploadExerciseDeletePopupComponent,
     ],
     exports: [FileUploadExerciseComponent],
     providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSFileUploadExerciseModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

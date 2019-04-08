@@ -2,10 +2,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise/exercise.model';
 
 @Pipe({
-    name: 'exerciseTypeLabel'
+    name: 'exerciseTypeLabel',
 })
 export class ExerciseTypePipe implements PipeTransform {
-
     transform(type: ExerciseType): string {
         switch (type) {
             case ExerciseType.PROGRAMMING:
@@ -22,5 +21,4 @@ export class ExerciseTypePipe implements PipeTransform {
                 return 'Exercise';
         }
     }
-
 }

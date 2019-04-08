@@ -7,7 +7,7 @@ import { CodeEditorFileBrowserComponent } from 'app/code-editor';
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
-    templateUrl: './code-editor-file-browser-delete.html'
+    templateUrl: './code-editor-file-browser-delete.html',
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() participation: Participation;
@@ -42,7 +42,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
                 },
                 err => {
                     console.log('Error deleting file: ' + this.fileNameToDelete, err);
-                }
+                },
             );
         }
         this.isLoading = false;

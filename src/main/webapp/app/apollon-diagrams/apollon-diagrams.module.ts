@@ -15,26 +15,11 @@ import { SortByModule } from 'app/components/pipes';
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArTEMiSResultModule
-    ],
-    declarations: [
-        ApollonDiagramCreateFormComponent,
-        ApollonDiagramDetailComponent,
-        ApollonDiagramListComponent,
-        ApollonQuizExerciseGenerationComponent,
-    ],
-    entryComponents: [
-        ApollonDiagramCreateFormComponent,
-        ApollonDiagramListComponent,
-        ApollonQuizExerciseGenerationComponent,
-        ResultComponent
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSResultModule],
+    declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent],
+    entryComponents: [ApollonDiagramCreateFormComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent, ResultComponent],
     providers: [JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSApollonDiagramsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -5,10 +5,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
 import { ShortAnswerSubmittedAnswerService } from 'app/entities/short-answer-submitted-answer/short-answer-submitted-answer.service';
-import {
-    IShortAnswerSubmittedAnswer,
-    ShortAnswerSubmittedAnswer
-} from 'app/entities/short-answer-submitted-answer/short-answer-submitted-answer.model';
+import { IShortAnswerSubmittedAnswer, ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer/short-answer-submitted-answer.model';
 
 describe('Service Tests', () => {
     describe('ShortAnswerSubmittedAnswer Service', () => {
@@ -18,7 +15,7 @@ describe('Service Tests', () => {
         let elemDefault: IShortAnswerSubmittedAnswer;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ShortAnswerSubmittedAnswerService);
@@ -42,9 +39,9 @@ describe('Service Tests', () => {
             it('should create a ShortAnswerSubmittedAnswer', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -74,7 +71,7 @@ describe('Service Tests', () => {
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

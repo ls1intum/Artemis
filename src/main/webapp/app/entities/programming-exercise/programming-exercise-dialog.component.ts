@@ -13,10 +13,11 @@ import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-programming-exercise-dialog',
-    templateUrl: './programming-exercise-dialog.component.html'
+    templateUrl: './programming-exercise-dialog.component.html',
 })
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
@@ -26,14 +27,16 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     courses: Course[];
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    problemStatementLoaded = false;
 
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
+        private fileService: FileService,
         private exerciseService: ExerciseService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -42,15 +45,31 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
         this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
                 this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
+        // If an exercise is created, load our readme template so the problemStatement is not empty
+        if (this.programmingExercise.id === undefined) {
+            this.fileService.getTemplateFile('readme').subscribe(
+                file => {
+                    this.programmingExercise.problemStatement = file;
+                    this.problemStatementLoaded = true;
+                },
+                err => {
+                    this.programmingExercise.problemStatement = '';
+                    this.problemStatementLoaded = true;
+                    console.log('Error while getting template instruction file!', err);
+                },
+            );
+        } else {
+            this.problemStatementLoaded = true;
+        }
     }
 
     clear() {
@@ -59,6 +78,14 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
+    }
+
+    /**
+     * Update the problemStatement of the exercise with the data emitted by the markdown editor.
+     * @param problemStatement
+     */
+    updateProblemStatement(problemStatement: string) {
+        this.programmingExercise = { ...this.programmingExercise, problemStatement };
     }
 
     save() {
@@ -71,10 +98,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError(res)
-        );
+        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess(result: ProgrammingExercise) {
@@ -99,7 +123,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-programming-exercise-popup',
-    template: ''
+    template: '',
 })
 export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
@@ -112,11 +136,7 @@ export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
                 this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component, params['id']);
             } else {
                 if (params['courseId']) {
-                    this.programmingExercisePopupService.open(
-                        ProgrammingExerciseDialogComponent as Component,
-                        undefined,
-                        params['courseId']
-                    );
+                    this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
                     this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component);
                 }

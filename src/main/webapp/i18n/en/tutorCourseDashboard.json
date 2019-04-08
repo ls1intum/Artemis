@@ -3,7 +3,19 @@
         "tutorCourseDashboard": {
             "home": {
                 "title": "Tutor Course Dashboard"
-            }
+            },
+            "pageHeader": "Tutor Course Dashboard for course",
+            "yourAssessments": "Your assessments",
+            "totalAssessments": "Total assessments",
+            "complaintsAboutYourAssessments": "Complaints about your assessments",
+            "totalComplaints": "Total complaints",
+            "showFinishedExercises": "Show finished exercises",
+            "exercise": "Exercise",
+            "yourStatus": "Your status",
+            "exerciseDueDate": "Exercise due date",
+            "assessmentsDueDate": "Assessments due date",
+            "actions": "Actions",
+            "notReleased": "Not released"
         }
     }
 }

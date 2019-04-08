@@ -17,27 +17,20 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService) {
-    }
+    constructor(private http: HttpClient, private participationService: ParticipationService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
-        return this.http
-            .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
-        return this.http
-            .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http.get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
@@ -60,7 +53,7 @@ export class ExerciseService {
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, {
             observe: 'response',
-            responseType: 'blob'
+            responseType: 'blob',
         });
     }
 
@@ -70,13 +63,23 @@ export class ExerciseService {
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
         return exercises.find(exercise => {
-            return moment().isBefore(exercise.dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(exercise.dueDate);
+            return (
+                moment().isBefore(exercise.dueDate) &&
+                moment()
+                    .add(delayInDays, 'day')
+                    .isSameOrAfter(exercise.dueDate)
+            );
         });
     }
 
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
         return exercises.find(exercise => {
-            return moment().isBefore(exercise.dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(exercise.dueDate);
+            return (
+                moment().isBefore(exercise.dueDate) &&
+                moment()
+                    .add(delayInHours, 'hours')
+                    .isSameOrAfter(exercise.dueDate)
+            );
         });
     }
 
@@ -102,7 +105,7 @@ export class ExerciseService {
         return Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
             dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null,
-            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null
+            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null,
         });
     }
 
@@ -147,8 +150,7 @@ export class ExerciseService {
 export class ExerciseLtiConfigurationService {
     private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
 
-    constructor(private http: HttpClient) {
-    }
+    constructor(private http: HttpClient) {}
 
     find(id: number): Observable<HttpResponse<LtiConfiguration>> {
         return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${id}`, { observe: 'response' });

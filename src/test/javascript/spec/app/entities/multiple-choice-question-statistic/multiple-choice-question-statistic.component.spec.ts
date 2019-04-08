@@ -18,7 +18,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [MultipleChoiceQuestionStatisticComponent],
-                providers: []
+                providers: [],
             })
                 .overrideTemplate(MultipleChoiceQuestionStatisticComponent, '')
                 .compileComponents();
@@ -35,9 +35,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new MultipleChoiceQuestionStatistic(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

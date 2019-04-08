@@ -12,7 +12,7 @@ import { UserMgmtDeleteDialogComponent } from 'app/admin';
 
 @Component({
     selector: 'jhi-user-mgmt',
-    templateUrl: './user-management.component.html'
+    templateUrl: './user-management.component.html',
 })
 export class UserMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;
@@ -36,7 +36,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal
+        private modalService: NgbModal,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -83,7 +83,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
             .query({
                 page: this.page - 1,
                 size: this.itemsPerPage,
-                sort: this.sort()
+                sort: this.sort(),
             })
             .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
@@ -111,8 +111,8 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         this.router.navigate(['/admin/user-management'], {
             queryParams: {
                 page: this.page,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc')
-            }
+                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),
+            },
         });
         this.loadAll();
     }
@@ -126,7 +126,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
             },
             reason => {
                 // Left blank intentionally, nothing to do here
-            }
+            },
         );
     }
 

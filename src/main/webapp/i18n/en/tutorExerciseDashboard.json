@@ -6,7 +6,36 @@
             },
             "participation": {
                 "instructionsReviewed": "You reviewed the instructions, you can now read the example submissions"
-            }
+            },
+            "pageHeader": "Tutor Exercise Dashboard for exercise",
+            "yourStatus": "Your status",
+            "youAssessedSoFar": "You assessed {{numberOfTutorAssessments}} submissions so far",
+            "needToReadGradingInstructions": "You need to read the grading instructions before starting assessing",
+            "readGradingInstructions": "Read grading instructions",
+            "startYourParticipation": "Start your participation to the exercise",
+            "gradingInstructions": "Grading instructions",
+            "close": "Close",
+            "readAndUnderstood": "I read and understood the instructions",
+            "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
+            "reviewSubmissions": "Review submissions",
+            "start": "Start",
+            "continue": "Continue",
+            "reviewingExampleSubmissions": "reviewing example submissions",
+            "reviewExampleSubmission": "Review example submissions",
+            "tutorialSubmissions": "Tutorial submission",
+            "assessingExampleSubmission": "assessing example submission",
+            "assessExampleSubmission": "Assess example submission",
+            "studentsSubmissions": "Student's submissions",
+            "submissionDate": "Submission date",
+            "result": "Result",
+            "status": "Status",
+            "score": "Score",
+            "action": "Action",
+            "continueAssessment": "Continue assessment",
+            "openAssessment": "Open assessment",
+            "startAssessment": "Start new assessment",
+            "new": "NEW",
+            "noSubmissions": "There are no submissions by students at the moment"
         }
     }
 }

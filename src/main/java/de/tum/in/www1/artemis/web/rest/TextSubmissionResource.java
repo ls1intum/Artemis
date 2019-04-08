@@ -118,7 +118,7 @@ public class TextSubmissionResource {
         if (responseFailure != null)
             return responseFailure;
 
-        if (textSubmission.isExampleSubmission()) {
+        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
             textSubmission = textSubmissionService.save(textSubmission);
         }
         else {

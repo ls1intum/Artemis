@@ -49,12 +49,19 @@ public class ProgrammingExerciseService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final FileService fileService;
+
     private final GitService gitService;
+
     private final Optional<VersionControlService> versionControlService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
+
     private final SubmissionRepository submissionRepository;
+
     private final ParticipationRepository participationRepository;
 
     private final ResourceLoader resourceLoader;
@@ -78,11 +85,9 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Notifies all particpations of the given programmingExercise about changes of
-     * the test cases.
+     * Notifies all particpations of the given programmingExercise about changes of the test cases.
      *
-     * @param programmingExercise The programmingExercise where the test cases got
-     *                            changed
+     * @param programmingExercise The programmingExercise where the test cases got changed
      */
     public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
         for (Participation participation : programmingExercise.getParticipations()) {
@@ -96,7 +101,8 @@ public class ProgrammingExerciseService {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
                 log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
                 submission.setCommitHash(lastCommitHash);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
             }
 
@@ -176,7 +182,8 @@ public class ProgrammingExerciseService {
             setupTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise);
 
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can
             // be used by the build plans
@@ -249,32 +256,27 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Find the ProgrammingExercise where the given Participation is the template
-     * Participation
+     * Find the ProgrammingExercise where the given Participation is the template Participation
      *
      * @param participation The template participation
-     * @return The ProgrammingExercise where the given Participation is the template
-     *         Participation
+     * @return The ProgrammingExercise where the given Participation is the template Participation
      */
     public ProgrammingExercise getExerciseForTemplateParticipation(Participation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
 
     /**
-     * Find the ProgrammingExercise where the given Participation is the solution
-     * Participation
+     * Find the ProgrammingExercise where the given Participation is the solution Participation
      *
      * @param participation The solution participation
-     * @return The ProgrammingExercise where the given Participation is the solution
-     *         Participation
+     * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
     public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
 
     /**
-     * This methods sets the values (initialization date and initialization state)
-     * of the template and solution participation
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation
      *
      * @param programmingExercise The programming exercise
      */
@@ -303,19 +305,14 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method calls the StructureOracleGenerator, generates the string out of
-     * the JSON representation of the structure oracle of the programming exercise
-     * and returns true if the file was updated or generated, false otherwise. This
-     * can happen if the contents of the file have not changed.
+     * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
+     * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
      * @param solutionRepoURL The URL of the solution repository.
      * @param exerciseRepoURL The URL of the exercise repository.
      * @param testRepoURL     The URL of the tests repository.
-     * @param testsPath       The path to the tests folder, e.g. the path inside the
-     *                        repository where the structure oracle file will be
-     *                        saved in.
-     * @return True, if the structure oracle was successfully generated or updated,
-     *         false if no changes to the file were made.
+     * @param testsPath       The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
+     * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException
      * @throws InterruptedException
      */
@@ -346,24 +343,28 @@ public class ProgrammingExerciseService {
                 gitService.stageAllChanges(testRepository);
                 gitService.commitAndPush(testRepository, "Generate the structure oracle file.");
                 return true;
-            } catch (GitAPIException e) {
+            }
+            catch (GitAPIException e) {
                 log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
                 return false;
             }
-        } else {
+        }
+        else {
             Byte[] existingContents = ArrayUtils.toObject(Files.readAllBytes(structureOraclePath));
             Byte[] newContents = ArrayUtils.toObject(structureOracleJSON.getBytes());
 
             if (Arrays.deepEquals(existingContents, newContents)) {
                 log.info("No changes to the oracle detected.");
                 return false;
-            } else {
+            }
+            else {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
                     gitService.commitAndPush(testRepository, "Update the structure oracle file.");
                     return true;
-                } catch (GitAPIException e) {
+                }
+                catch (GitAPIException e) {
                     log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
                     return false;
                 }

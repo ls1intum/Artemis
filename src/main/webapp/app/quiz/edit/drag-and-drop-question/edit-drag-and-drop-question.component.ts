@@ -1,15 +1,4 @@
-import {
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    ChangeDetectorRef
-} from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
@@ -29,7 +18,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
+    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer')
@@ -103,7 +92,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private modalService: NgbModal,
         private fileUploaderService: FileUploaderService,
-        private changeDetector: ChangeDetectorRef
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -194,7 +183,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
                 this.backgroundFileName = '';
-            }
+            },
         );
     }
 
@@ -237,16 +226,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 case DragState.MOVE:
                     // update current drop location's position
                     this.currentDropLocation.posX = Math.round(
-                        Math.min(
-                            Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth),
-                            200 - this.currentDropLocation.width
-                        )
+                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentDropLocation.width),
                     );
                     this.currentDropLocation.posY = Math.round(
-                        Math.min(
-                            Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
-                            200 - this.currentDropLocation.height
-                        )
+                        Math.min(Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight), 200 - this.currentDropLocation.height),
                     );
                     break;
                 case DragState.RESIZE_X:
@@ -274,10 +257,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
                     const backgroundWidth = jQueryBackgroundElement.width();
                     const backgroundHeight = jQueryBackgroundElement.height();
-                    if (
-                        (this.currentDropLocation.width / 200) * backgroundWidth < 14 &&
-                        (this.currentDropLocation.height / 200) * backgroundHeight < 14
-                    ) {
+                    if ((this.currentDropLocation.width / 200) * backgroundWidth < 14 && (this.currentDropLocation.height / 200) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation);
                     } else {
@@ -370,10 +350,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     duplicateDropLocation(dropLocation: DropLocation): void {
         const duplicatedDropLocation = new DropLocation();
         duplicatedDropLocation.tempID = TempID.generate();
-        duplicatedDropLocation.posX =
-            dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
-        duplicatedDropLocation.posY =
-            dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
+        duplicatedDropLocation.posX = dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
+        duplicatedDropLocation.posY = dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
         duplicatedDropLocation.width = dropLocation.width;
         duplicatedDropLocation.height = dropLocation.height;
         this.question.dropLocations.push(duplicatedDropLocation);
@@ -483,7 +461,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
                 this.dragItemFileName = '';
-            }
+            },
         );
     }
 
@@ -506,7 +484,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 console.error('Error during file upload in uploadPictureForDragItemChange()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
-            }
+            },
         );
     }
 
@@ -529,9 +507,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(originalDragItem =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
-        );
+        dragItem = this.question.dragItems.find(originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -547,7 +523,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             !this.question.correctMappings.some(
                 existingMapping =>
                     this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation) &&
-                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem)
+                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem),
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
@@ -599,9 +575,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping =>
-            this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
-        );
+        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -631,9 +605,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
-        );
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -645,9 +617,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem)
-        );
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem));
     }
 
     /**
@@ -719,7 +689,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 console.error('Error during file upload in changeToPictureDragItem()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
-            }
+            },
         );
     }
 
@@ -828,7 +798,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        for (const  [text, command]  of domainCommands)  {
+        for (const [text, command] of domainCommands) {
             if (command === null && text.length > 0) {
                 this.question.text = text;
             }

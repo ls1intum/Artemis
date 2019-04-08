@@ -5,10 +5,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
 import { MultipleChoiceQuestionStatisticService } from 'app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.service';
-import {
-    IMultipleChoiceQuestionStatistic,
-    MultipleChoiceQuestionStatistic
-} from 'app/shared/model/multiple-choice-question-statistic.model';
+import { IMultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatistic } from 'app/shared/model/multiple-choice-question-statistic.model';
 
 describe('Service Tests', () => {
     describe('MultipleChoiceQuestionStatistic Service', () => {
@@ -18,7 +15,7 @@ describe('Service Tests', () => {
         let elemDefault: IMultipleChoiceQuestionStatistic;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(MultipleChoiceQuestionStatisticService);
@@ -42,9 +39,9 @@ describe('Service Tests', () => {
             it('should create a MultipleChoiceQuestionStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -74,7 +71,7 @@ describe('Service Tests', () => {
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

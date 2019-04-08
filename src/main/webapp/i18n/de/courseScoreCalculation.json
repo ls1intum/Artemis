@@ -1,0 +1,18 @@
+{
+    "arTeMiSApp": {
+        "courseScoreCalculation": {
+            "scoreAggregation": "Score-Aggregation",
+            "myScore": "Meine Punkte",
+            "myRelativeScore": "Meine relativen Punkte (%)",
+            "maxScore": "Maximale Punkte",
+            "forQuizzes": "Punkte für Quizfragen",
+            "forProgramming": "Punkte für Programmieraufgaben",
+            "forModeling": "Punkte für Modellierungsaufgaben",
+            "total": "Gesamtpunktzahl für diesen Kurs",
+            "eist": {
+                "forHomework": "Punkte für Hausaufgaben",
+                "forInClass": "Punkte für die Präsenz-Aufgaben"
+            }
+        }
+    }
+}

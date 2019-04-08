@@ -18,8 +18,8 @@ export class ErrorHandlerInterceptor implements HttpInterceptor {
                             this.eventManager.broadcast({ name: 'artemisApp.httpError', content: err });
                         }
                     }
-                }
-            )
+                },
+            ),
         );
     }
 }

@@ -1,24 +1,34 @@
 <div>
     <h4>
-        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="programmingExercises && showHeading">{{getAmountOfExercisesString(programmingExercises)}} </span>
+        <span *ngIf="course && !showHeading">{{ course.title }} - </span
+        ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
-        <button *ngIf="course" id="jh-link-entity" class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
+        <button
+            *ngIf="course"
+            id="jh-link-entity"
+            class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1"
+            [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]"
+        >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.linkLabel">
-            Link new Programming Exercise
+                Link new Programming Exercise
             </span>
         </button>
-        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['/course', courseId, 'programming-exercise','new']">
+        <button
+            *ngIf="course"
+            id="jh-create-entity"
+            class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            [routerLink]="['/course', courseId, 'programming-exercise', 'new']"
+        >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
-            Create new Programming Exercise
+                Create new Programming Exercise
             </span>
         </button>
     </h4>
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
-    <div class="row">
-    </div>
-    <br>
+    <div class="row"></div>
+    <br />
     <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
         <table class="table table-striped">
             <thead>
@@ -29,79 +39,149 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="templateRepositoryUrl"><span jhiTranslate="arTeMiSApp.programmingExercise.repositories">Repositories</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="templateRepositoryUrl">
+                        <span jhiTranslate="arTeMiSApp.programmingExercise.repositories">Repositories</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th jhiSortBy="templateBuildPlanId"><span jhiTranslate="arTeMiSApp.programmingExercise.buildplans">Build Plans</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="publishBuildPlanUrl"><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="allowOnlineEditor"><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="publishBuildPlanUrl">
+                        <span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="allowOnlineEditor">
+                        <span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
+                </tr>
             </thead>
+
             <tbody>
-            <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.id}}</a></td>
-                <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.title}}</a></td>
-                <td>{{programmingExercise.shortName}}</td>
-                <td>{{programmingExercise.releaseDate | date:'medium'}}</td>
-                <td>{{programmingExercise.dueDate | date:'medium'}}</td>
-                <td>{{programmingExercise.maxScore}}</td>
-                <td>
-                    <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"><a href="{{programmingExercise.templateParticipation.repositoryUrl}}" target="_blank">Template</a></span><br>
-                    <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"><a href="{{programmingExercise.solutionParticipation.repositoryUrl}}" target="_blank">Solution</a></span><br>
-                    <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br>
-                </td>
-                <td><!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                    <span *ngIf="programmingExercise.templateParticipation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.templateParticipation.buildPlanId}}" target="_blank">Template</a></span><br>
-                    <span *ngIf="programmingExercise.solutionParticipation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionParticipation.buildPlanId}}" target="_blank">Solution</a></span><br>
-                <td>{{programmingExercise.publishBuildPlanUrl}}</td>
-                <td>{{programmingExercise.allowOnlineEditor}}</td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <div class="btn-group-vertical mr-1 mb-1">
-                            <button type="submit" [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard' ]" class="btn btn-info btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'eye'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
-                            </button>
-                            <button type="submit" [routerLink]="['/exercise', programmingExercise.id, 'participation' ]" class="btn btn-primary btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'list-alt'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
-                            </button>
+                <tr *ngFor="let programmingExercise of (programmingExercises | sortBy: predicate:reverse); trackBy: trackId">
+                    <td>
+                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.id }}</a>
+                    </td>
+                    <td>
+                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.title }}</a>
+                    </td>
+                    <td>{{ programmingExercise.shortName }}</td>
+                    <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
+                    <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
+                    <td>{{ programmingExercise.maxScore }}</td>
+                    <td>
+                        <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"
+                            ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
+                        ><br />
+                        <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"
+                            ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
+                        ><br />
+                        <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span
+                        ><br />
+                    </td>
+                    <td>
+                        <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
+                        <span *ngIf="programmingExercise.templateParticipation.buildPlanId != null"
+                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">Template</a></span
+                        ><br />
+                        <span *ngIf="programmingExercise.solutionParticipation.buildPlanId != null"
+                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.solutionParticipation.buildPlanId }}" target="_blank">Solution</a></span
+                        ><br />
+                    </td>
+
+                    <td>{{ programmingExercise.publishBuildPlanUrl }}</td>
+                    <td>{{ programmingExercise.allowOnlineEditor }}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <div class="btn-group-vertical mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                                </button>
+                                <button type="submit" [routerLink]="['/exercise', programmingExercise.id, 'participation']" class="btn btn-primary btn-sm mr-1 mb-1">
+                                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                                </button>
+                            </div>
+                            <div class="btn-group-vertical mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                                </button>
+                                <button
+                                    type="submit"
+                                    *ngIf="programmingExercise.shortName != null"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                </button>
+                                <button
+                                    type="submit"
+                                    *ngIf="programmingExercise.shortName == null"
+                                    [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
+                                </button>
+                            </div>
+                            <div class="btn-group-vertical mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'archive'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
+                                </button>
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'eraser'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
+                                </button>
+                            </div>
+                            <div class="btn-group-vertical mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/reset' } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
+                                </button>
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                >
+                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="btn-group-vertical mr-1 mb-1">
-                            <button type="submit" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view' ]" class="btn btn-info btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'eye'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                            </button>
-                            <button type="submit" *ngIf="programmingExercise.shortName != null" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                            </button>
-                            <button type="submit" *ngIf="programmingExercise.shortName == null" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]" class="btn btn-primary btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
-                            </button>
-                        </div>
-                        <div class="btn-group-vertical mr-1 mb-1">
-                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/archive'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'archive'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
-                            </button>
-                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/cleanup'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'eraser'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
-                            </button>
-                        </div>
-                        <div class="btn-group-vertical mr-1 mb-1">
-                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'times'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
-                            </button>
-                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1 mb-1">
-                                <fa-icon [icon]="'times'"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                            </button>
-                        </div>
-                    </div>
-                </td>
-            </tr>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

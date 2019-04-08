@@ -17,7 +17,7 @@ export class AnnotationArray extends Array<Annotation> {
         const {
             start: { row: rowStart, column: columnStart },
             end: { row: rowEnd, column: columnEnd },
-            action
+            action,
         } = change;
         if (action === 'remove' || action === 'insert') {
             const sign = action === 'remove' ? -1 : 1;
@@ -27,7 +27,7 @@ export class AnnotationArray extends Array<Annotation> {
                 return {
                     ...rest,
                     row: row > rowStart ? row + updateRowDiff : row,
-                    column: column > columnStart && row === rowStart && row === rowEnd ? column + updateColDiff : column
+                    column: column > columnStart && row === rowStart && row === rowEnd ? column + updateColDiff : column,
                 };
             });
             return new AnnotationArray(...updatedAnnotations);

@@ -10,12 +10,7 @@ import { ParticipationService } from './participation.service';
 export class ParticipationPopupService {
     private ngbModalRef: NgbModalRef;
 
-    constructor(
-        private datePipe: DatePipe,
-        private modalService: NgbModal,
-        private router: Router,
-        private participationService: ParticipationService
-    ) {
+    constructor(private datePipe: DatePipe, private modalService: NgbModal, private router: Router, private participationService: ParticipationService) {
         this.ngbModalRef = null;
     }
 
@@ -53,7 +48,7 @@ export class ParticipationPopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

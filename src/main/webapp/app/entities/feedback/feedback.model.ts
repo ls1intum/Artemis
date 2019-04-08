@@ -4,7 +4,7 @@ import { ElementType } from '@ls1intum/apollon';
 
 export const enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
-    MANUAL = 'MANUAL'
+    MANUAL = 'MANUAL',
 }
 
 export class Feedback implements BaseEntity {

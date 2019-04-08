@@ -26,7 +26,8 @@
             "instructorGroupName": "Instructor Gruppe",
             "description": "Kurs Beschreibung",
             "startDate": "Start",
-            "endDate": "End",
+            "endDate": "Ende",
+            "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
             "registrationEnabled": "Registrierung aktiviert",
             "exercises": "Aufgaben",
@@ -36,7 +37,13 @@
             "textExercises": "Textaufgabe (Beta)",
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
-            "fileUploadExercises": "Datei Upload Aufgabe (Beta)"
+            "fileUploadExercises": "Datei Upload Aufgabe (Beta)",
+            "shortName": "Abkürzung",
+            "students": "Studenten",
+            "tutors": "Tutoren",
+            "instructors": "Instructoren",
+            "onlineCourseFalse": "Nein",
+            "onlineCourseTrue": "Ja"
         }
     }
 }

@@ -10,7 +10,7 @@ import { DiagramType } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
-    providers: [ApollonDiagramService, JhiAlertService]
+    providers: [ApollonDiagramService, JhiAlertService],
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
@@ -22,7 +22,7 @@ export class ApollonDiagramListComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private route: ActivatedRoute,
-        private router: Router
+        private router: Router,
     ) {
         this.predicate = 'id';
         this.reverse = true;
@@ -34,33 +34,28 @@ export class ApollonDiagramListComponent implements OnInit {
                 this.apollonDiagrams = response.body;
             },
             response => {
-                this.jhiAlertService.error('Error while loading Apollon diagrams');
-            }
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.home.error.loading');
+            },
         );
     }
 
     goToDetailsPage(id: number) {
         this.router.navigate([id], {
-            relativeTo: this.route
+            relativeTo: this.route,
         });
     }
 
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
             response => {
-                const successMessage = 'Apollon diagram with title ' + apollonDiagram.title + ' was deleted successfully';
-                const jhiAlert = this.jhiAlertService.success(successMessage);
-                jhiAlert.msg = successMessage;
+                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter(diagram => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
             response => {
-                const errorMessage = 'Error while deleting the apollon diagrams with title ' + apollonDiagram.title;
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
-            }
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
+            },
         );
     }
 
