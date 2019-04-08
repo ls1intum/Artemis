@@ -120,7 +120,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     .clearAnnotations();
             }
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.editorFileSessions[this.selectedFile].code) {
+            if (this.editorFileSessions[this.selectedFile] && !this.editorFileSessions[this.selectedFile].code) {
                 this.loadFile(this.selectedFile);
             }
         }
