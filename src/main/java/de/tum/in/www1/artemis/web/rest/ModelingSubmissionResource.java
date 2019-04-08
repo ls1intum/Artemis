@@ -75,18 +75,13 @@ public class ModelingSubmissionResource {
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
-        if (modelingSubmission.isExampleSubmission()) {
-            modelingSubmission = modelingSubmissionService.save(modelingSubmission);
-        } else {
-            ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-            Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!participation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            checkAuthorization(modelingExercise);
-            modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
         }
+        checkAuthorization(modelingExercise);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -115,16 +110,13 @@ public class ModelingSubmissionResource {
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
-        if (modelingSubmission.isExampleSubmission()) {
-            modelingSubmission = modelingSubmissionService.save(modelingSubmission);
-        } else {
-            ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-            Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!participation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
         }
+        checkAuthorization(modelingExercise);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }

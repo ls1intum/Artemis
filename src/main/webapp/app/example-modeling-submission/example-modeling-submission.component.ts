@@ -104,8 +104,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             }
             this.usedForTutorial = this.exampleSubmission.usedForTutorial;
 
-            console.log(this.exampleSubmission);
-
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
             if (this.toComplete) {
@@ -113,7 +111,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             }
 
             this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
-                console.log(result);
                 if (result) {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
@@ -136,75 +133,39 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
         modelingSubmission.exampleSubmission = true;
 
-        this.modelingSubmissionService.create(modelingSubmission, this.exerciseId).subscribe((modelingSubmissionResponse: HttpResponse<ModelingSubmission>) => {
-            this.modelingSubmission = modelingSubmissionResponse.body;
-            if (this.modelingSubmission.model) {
-                this.umlModel = JSON.parse(this.modelingSubmission.model);
-            }
+        const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
+        newExampleSubmission.submission = modelingSubmission;
+        newExampleSubmission.exercise = this.exercise;
+        newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
-            const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
-            newExampleSubmission.submission = modelingSubmission;
-            newExampleSubmission.exercise = this.exercise;
-            newExampleSubmission.usedForTutorial = this.usedForTutorial;
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                    if (this.modelingSubmission.model) {
+                        this.umlModel = JSON.parse(this.modelingSubmission.model);
+                    }
+                }
+                this.isNewSubmission = false;
 
-            this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
-                (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                    this.exampleSubmission = exampleSubmissionResponse.body;
-                    this.exampleSubmissionId = this.exampleSubmission.id;
-                    // if (this.exampleSubmission.submission) {
-                    //     this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-                    //     if (this.modelingSubmission.model) {
-                    //         this.umlModel = JSON.parse(this.modelingSubmission.model);
-                    //     }
-                    // }
-                    this.isNewSubmission = false;
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
 
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-
-                    // Update the url with the new id, without reloading the page, to make the history consistent
-                    const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-                    this.location.go(newUrl);
-                },
-                (error: HttpErrorResponse) => {
-                    console.error(error);
-                    this.jhiAlertService.error(error.message);
-                },
-            );
-        });
-
-        // const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
-        // newExampleSubmission.submission = modelingSubmission;
-        // newExampleSubmission.exercise = this.exercise;
-        // newExampleSubmission.usedForTutorial = this.usedForTutorial;
-
-        // this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
-        //     (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-        //         this.exampleSubmission = exampleSubmissionResponse.body;
-        //         this.exampleSubmissionId = this.exampleSubmission.id;
-        //         if (this.exampleSubmission.submission) {
-        //             this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-        //             if (this.modelingSubmission.model) {
-        //                 this.umlModel = JSON.parse(this.modelingSubmission.model);
-        //             }
-        //         }
-        //         this.isNewSubmission = false;
-        //
-        //         this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-        //
-        //         // Update the url with the new id, without reloading the page, to make the history consistent
-        //         const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-        //         this.location.go(newUrl);
-        //     },
-        //     (error: HttpErrorResponse) => {
-        //         console.error(error);
-        //         this.jhiAlertService.error(error.message);
-        //     },
-        // );
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
+                this.location.go(newUrl);
+            },
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     private updateExampleModelingSubmission() {
         if (!this.modelingSubmission) {
-            this.modelingSubmission = new ModelingSubmission();
+            this.createNewExampleModelingSubmission();
         }
         this.modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
         this.modelingSubmission.exampleSubmission = true;
@@ -213,68 +174,30 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.modelingSubmission.result = this.result;
         }
 
-        this.modelingSubmissionService.update(this.modelingSubmission, this.exerciseId).subscribe(
-            (modelingSubmissionResponse: HttpResponse<ModelingSubmission>) => {
-                this.modelingSubmission = modelingSubmissionResponse.body;
-                if (this.modelingSubmission.model) {
-                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+        const exampleSubmission = this.exampleSubmission;
+        exampleSubmission.submission = this.modelingSubmission;
+        exampleSubmission.exercise = this.exercise;
+        exampleSubmission.usedForTutorial = this.usedForTutorial;
+
+        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                    if (this.modelingSubmission.model) {
+                        this.umlModel = JSON.parse(this.modelingSubmission.model);
+                    }
                 }
+                this.isNewSubmission = false;
 
-                const exampleSubmission = this.exampleSubmission;
-                exampleSubmission.submission = this.modelingSubmission;
-                exampleSubmission.exercise = this.exercise;
-                exampleSubmission.usedForTutorial = this.usedForTutorial;
-
-                this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
-                    (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                        this.exampleSubmission = exampleSubmissionResponse.body;
-                        this.exampleSubmissionId = this.exampleSubmission.id;
-
-                        this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
-                    },
-                    (error: HttpErrorResponse) => {
-                        console.error(error);
-                        this.jhiAlertService.error(error.message);
-                    },
-                );
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
                 console.error(error);
                 this.jhiAlertService.error(error.message);
             },
         );
-
-        // const exampleSubmission = this.exampleSubmission;
-        // exampleSubmission.submission = this.modelingSubmission;
-        // exampleSubmission.exercise = this.exercise;
-        // exampleSubmission.usedForTutorial = this.usedForTutorial;
-        // // TODO CZ: workaround to prevent 'org.hibernate.AssertionFailure: non-transient entity has a null id: de.tum.in.www1.artemis.domain.Result' -> investigate why/if this is necessary
-        // if (exampleSubmission.submission.result) {
-        //     exampleSubmission.submission.result = null;
-        //     console.log('removed result');
-        // }
-        //
-        // console.log(exampleSubmission);
-        //
-        // this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
-        //     (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-        //         this.exampleSubmission = exampleSubmissionResponse.body;
-        //         this.exampleSubmissionId = this.exampleSubmission.id;
-        //         if (this.exampleSubmission.submission) {
-        //             this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-        //             if (this.modelingSubmission.model) {
-        //                 this.umlModel = JSON.parse(this.modelingSubmission.model);
-        //             }
-        //         }
-        //         this.isNewSubmission = false;
-        //
-        //         this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-        //     },
-        //     (error: HttpErrorResponse) => {
-        //         console.error(error);
-        //         this.jhiAlertService.error(error.message);
-        //     },
-        // );
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
@@ -304,11 +227,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     public saveExampleAssessment(): void {
         if (this.feedbacks) {
-            let resultId = -1;
-            if (this.result) {
-                resultId = this.result.id;
-            }
-            this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exerciseId, resultId).subscribe(
+            this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
                 (result: Result) => {
                     this.result = result;
                     if (this.result) {
@@ -317,6 +236,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
                 },
                 (error: HttpErrorResponse) => {
+                    console.error(error);
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );

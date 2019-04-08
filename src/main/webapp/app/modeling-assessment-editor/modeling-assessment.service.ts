@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../entities/result';
-import { UMLModel, ElementType, UMLElementType, UMLRelationshipType, UMLClassifier } from '@ls1intum/apollon';
+import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
@@ -27,8 +27,8 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
-    saveExampleAssessment(feedbacks: Feedback[], exerciseId: number, resultId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/exampleAssessment`;
+    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
