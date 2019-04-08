@@ -75,7 +75,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
-            this.updateElementFeedbackMapping(this.feedbacks, true);
+            this.updateElementFeedbackMapping(this.feedbacks);
             this.updateApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
         }
@@ -91,6 +91,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
+
+        this.updateElementFeedbackMapping(this.feedbacks);
+        this.updateApollonAssessments(this.feedbacks);
+        this.calculateTotalScore();
+
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
@@ -137,8 +142,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * @param feedbacks new Feedback elements to insert
      * @param initialize initialize a new map, if this flag is true
      */
-    private updateElementFeedbackMapping(feedbacks: Feedback[], initialize?: boolean) {
-        if (initialize) {
+    private updateElementFeedbackMapping(feedbacks: Feedback[]) {
+        if (!this.elementFeedback) {
             this.elementFeedback = new Map();
         }
         if (!feedbacks) {
@@ -182,6 +187,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private updateApollonAssessments(feedbacks: Feedback[]) {
+        if (!feedbacks) {
+            return;
+        }
         this.model.assessments = feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
@@ -204,6 +212,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     private calculateTotalScore() {
         if (!this.feedbacks || this.feedbacks.length === 0) {
             this.totalScore = 0;
+            return;
         }
         let totalScore = 0;
         for (const feedback of this.feedbacks) {
