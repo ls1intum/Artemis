@@ -37,7 +37,8 @@ export class ModelingAssessmentService {
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/modelingExampleAssessment`);
+        const url = `${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/modelingExampleAssessment`;
+        return this.http.get<Result>(url).map(res => this.convertResult(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {

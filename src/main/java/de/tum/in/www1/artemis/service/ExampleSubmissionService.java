@@ -43,7 +43,11 @@ public class ExampleSubmissionService {
         Submission submission = exampleSubmission.getSubmission();
         if (submission != null)
         {
-            submission.setExampleSubmission(true); // don't trust the client
+            submission.setExampleSubmission(true);
+            // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+            if (submission.getResult() != null && submission.getResult().getSubmission() == null) {
+                submission.getResult().setSubmission(submission);
+            }
             submissionRepository.save(submission);
         }
         return exampleSubmissionRepository.save(exampleSubmission);
