@@ -31,7 +31,6 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     entryComponents: [
-        HomeComponent,
         ResultComponent,
         ResultDetailComponent,
         ModelingAssessmentDashboardComponent,
