@@ -37,6 +37,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     modelingSubmission: ModelingSubmission;
     umlModel: UMLModel;
     feedbacks: Feedback[] = [];
+    feedbackChanged = false;
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
@@ -110,9 +111,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             }
 
             this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
-                this.result = result;
-                this.feedbacks = this.result.feedbacks || [];
-                this.checkScoreBoundaries();
+                if (result) {
+                    this.result = result;
+                    this.feedbacks = this.result.feedbacks || [];
+                    this.checkScoreBoundaries();
+                }
             });
         });
     }
@@ -132,7 +135,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
         newExampleSubmission.submission = modelingSubmission;
-        newExampleSubmission.usedForTutorial = this.usedForTutorial;
         newExampleSubmission.exercise = this.exercise;
         newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
@@ -167,14 +169,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
         this.modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
         this.modelingSubmission.exampleSubmission = true;
-        if (this.feedbacks) {
-            if (!this.result) {
-                this.result = new Result();
-            }
-            this.result.feedbacks = this.feedbacks;
-            this.result.exampleResult = true;
-            this.modelingSubmission.result = this.result;
-        }
 
         const exampleSubmission = this.exampleSubmission;
         exampleSubmission.submission = this.modelingSubmission;
@@ -204,11 +198,44 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.feedbacks = feedbacks;
+        this.feedbackChanged = true;
         // this.checkScoreBoundaries(); TODO CZ: necessary?
     }
 
+    showAssessment() {
+        if (this.modelChanged()) {
+            this.updateExampleModelingSubmission();
+        }
+        this.assessmentMode = true;
+    }
+
+    private modelChanged(): boolean {
+        return this.modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(this.modelingEditor.getCurrentModel());
+    }
+
+    showSubmission() {
+        if (this.feedbackChanged) {
+            this.saveExampleAssessment();
+            this.feedbackChanged = false;
+        }
+        this.assessmentMode = false;
+    }
+
     public saveExampleAssessment(): void {
-        this.updateExampleModelingSubmission();
+        if (this.feedbacks) {
+            this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
+                (result: Result) => {
+                    this.result = result;
+                    if (this.result) {
+                        this.feedbacks = this.result.feedbacks;
+                    }
+                    this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                },
+                (error: HttpErrorResponse) => {
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
+                },
+            );
+        }
     }
 
     public addAssessment(assessmentText: string): void {

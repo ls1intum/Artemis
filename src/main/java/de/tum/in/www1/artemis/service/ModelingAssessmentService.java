@@ -72,6 +72,11 @@ public class ModelingAssessmentService extends AssessmentService {
             result = new Result();
         }
 
+        result.setExampleResult(false);
+        if (modelingSubmission.isExampleSubmission()) {
+            result.setExampleResult(true);
+        }
+
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);

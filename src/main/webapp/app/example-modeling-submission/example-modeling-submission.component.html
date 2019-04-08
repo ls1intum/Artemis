@@ -11,32 +11,6 @@
             </h2>
         </div>
 
-        <div class="col-12">
-            <jhi-modeling-editor
-                *ngIf="!assessmentMode"
-                [umlModel]="umlModel"
-                [diagramType]="exercise.diagramType"
-            ></jhi-modeling-editor>
-            <div class="assessment-container" *ngIf="assessmentMode">
-                <jhi-modeling-assessment
-                    [model]="umlModel"
-                    [feedbacks]="feedbacks"
-                    [diagramType]="exercise.diagramType"
-                    [maxScore]="exercise.maxScore"
-                    (feedbackChanged)="onFeedbackChanged"
-                ></jhi-modeling-assessment>
-            </div>
-        </div>
-
-        <!--<div class="col-12">-->
-            <!--<p class="mb-3">-->
-                <!--<strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>-->
-                <!--&lt;!&ndash;<ng-container *ngIf="exercise.sampleSolution">&ndash;&gt;-->
-                    <!--&lt;!&ndash;<strong>Sample Solution:</strong> {{ exercise.sampleSolution }}&ndash;&gt;-->
-                <!--&lt;!&ndash;</ng-container>&ndash;&gt;-->
-            <!--</p>-->
-        <!--</div>-->
-
         <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
             <div class="row" *ngIf="!assessmentMode">
                 <div class="form-check col-6 align-baseline">
@@ -62,15 +36,41 @@
             <div class="row mt-3" *ngIf="exampleSubmission && !isNewSubmission">
                 <div class="form-check col-6 align-baseline"></div>
 
-                <button class="btn btn-secondary col-6" *ngIf="!assessmentMode" (click)="assessmentMode = true">
+                <button class="btn btn-secondary col-6" *ngIf="!assessmentMode" (click)="showAssessment()">
                     <fa-icon icon="chalkboard-teacher"></fa-icon>
                     <span>Show assessment</span>
                 </button>
 
-                <button class="btn btn-secondary col-6 mb-3" *ngIf="assessmentMode" (click)="assessmentMode = false">
+                <button class="btn btn-secondary col-6 mb-3" *ngIf="assessmentMode" (click)="showSubmission()">
                     <fa-icon icon="code-branch"></fa-icon>
                     <span>Show submission</span>
                 </button>
+            </div>
+        </div>
+
+        <!--<div class="col-12">-->
+            <!--<p class="mb-3">-->
+                <!--<strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>-->
+                <!--&lt;!&ndash;<ng-container *ngIf="exercise.sampleSolution">&ndash;&gt;-->
+                    <!--&lt;!&ndash;<strong>Sample Solution:</strong> {{ exercise.sampleSolution }}&ndash;&gt;-->
+                <!--&lt;!&ndash;</ng-container>&ndash;&gt;-->
+            <!--</p>-->
+        <!--</div>-->
+
+        <div class="col-12">
+            <jhi-modeling-editor
+                *ngIf="!assessmentMode"
+                [umlModel]="umlModel"
+                [diagramType]="exercise.diagramType"
+            ></jhi-modeling-editor>
+            <div class="assessment-container" *ngIf="assessmentMode">
+                <jhi-modeling-assessment
+                    [model]="umlModel"
+                    [feedbacks]="feedbacks"
+                    [diagramType]="exercise.diagramType"
+                    [maxScore]="exercise.maxScore"
+                    (feedbackChanged)="onFeedbackChanged($event)"
+                ></jhi-modeling-assessment>
             </div>
         </div>
 

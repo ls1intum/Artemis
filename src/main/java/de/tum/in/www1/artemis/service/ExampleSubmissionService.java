@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,5 +73,10 @@ public class ExampleSubmissionService {
 
         // TODO: create different return for different type of exercises, this is for text exercises
         return result.getFeedbacks();
+    }
+
+    public ExampleSubmission findOneWithEagerResult (Long exampleSubmissionId) {
+        return exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId)
+            .orElseThrow(() -> new EntityNotFoundException("Example submission with id \"" + exampleSubmissionId + "\" does not exist"));
     }
 }

@@ -56,17 +56,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final ResultRepository resultRepository;
+    private final ExampleSubmissionService exampleSubmissionService;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
                                       ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-                                      ResultService resultService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository) {
+                                      ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
+                                      ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionService exampleSubmissionService, ResultRepository resultRepository) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
-        this.resultRepository = resultRepository;
+        this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -186,16 +187,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
 
-        if (modelingSubmission.getResult() == null) {
-            Result newResult = new Result();
-            newResult.setSubmission(modelingSubmission);
-            newResult.setExampleResult(true);
-//            newResult = resultRepository.save(newResult);
-            modelingSubmission.setResult(newResult);
-            modelingSubmissionRepository.save(modelingSubmission);
-        }
-
-
         // TODO CZ: cleanup
 //        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
 //        Result result = databaseResult.orElseGet(() -> {
@@ -243,6 +234,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 }
             }
         }
+        return ResponseEntity.ok(result);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
+        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+        @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
+    @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
+        ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
+        checkAuthorization(modelingExercise);
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
     }
 
