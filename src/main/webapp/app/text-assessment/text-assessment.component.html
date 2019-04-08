@@ -59,44 +59,46 @@
     <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.textAssessment.loading"></span></span>
 </h2>
 
-<div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'height.px': 500 }">
-    <div class="card flex-grow-1 resizable-submission mr-4">
-        <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.textAssessment.studentSubmission">Student submission</div>
-        <div class="card-body">
-            <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments" (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
-        </div>
-    </div>
-
-    <div class="resizable-submission card" id="instructions" [ngStyle]="{ 'width.px': 400 }">
-        <!-- Required for resizing; don't remove empty span -->
-        <div class="resizing-bar"><span></span></div>
-
-        <div class="card-header text-white bg-primary" (click)="toggleCollapse($event)">
-            <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
-            <h3 class="card-title">
-                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
-            </h3>
+<div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
+    <div class="row flex-nowrap">
+        <div class="card flex-grow-1 resizable-submission mr-4">
+            <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.textAssessment.studentSubmission">Student submission</div>
+            <div class="card-body">
+                <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments" (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
+            </div>
         </div>
 
-        <div class="card-body">
-            <div *ngIf="formattedProblemStatement">
-                <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
-                <p [innerHTML]="formattedProblemStatement"></p>
+        <div class="resizable-submission card" id="instructions" [ngStyle]="{ 'min-width.px': 400 }">
+            <!-- Required for resizing; don't remove empty span -->
+            <div class="resizing-bar"><span></span></div>
 
-                <hr />
+            <div class="card-header text-white bg-primary" (click)="toggleCollapse($event)">
+                <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
+                <h3 class="card-title">
+                    <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
+                </h3>
             </div>
 
-            <div *ngIf="formattedSampleSolution">
-                <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
-                <p [innerHTML]="formattedSampleSolution"></p>
+            <div class="card-body">
+                <div *ngIf="formattedProblemStatement">
+                    <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
+                    <p [innerHTML]="formattedProblemStatement"></p>
 
-                <hr />
-            </div>
+                    <hr />
+                </div>
 
-            <div *ngIf="formattedGradingInstructions">
-                <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
-                <p [innerHTML]="formattedGradingInstructions"></p>
+                <div *ngIf="formattedSampleSolution">
+                    <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
+                    <p [innerHTML]="formattedSampleSolution"></p>
+
+                    <hr />
+                </div>
+
+                <div *ngIf="formattedGradingInstructions">
+                    <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
+                    <p [innerHTML]="formattedGradingInstructions"></p>
+                </div>
             </div>
         </div>
     </div>
