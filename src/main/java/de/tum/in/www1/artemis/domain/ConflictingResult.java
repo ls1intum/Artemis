@@ -10,6 +10,9 @@ import javax.validation.constraints.Size;
 @Table(name = "conflicting-result")
 public class ConflictingResult {
 
+    /**
+     * id of model element in result that is in conflict
+     */
     @Size(max = 50)
     @Column(name = "modelElementId")
     private String modelElementId;
@@ -17,6 +20,9 @@ public class ConflictingResult {
     @ManyToOne
     private Result result;
 
+    /**
+     * feedback of modelElementId updated by the assessor during conflict resolution
+     */
     private Feedback updatedFeedback;
 
     public String getModelElementId() {
