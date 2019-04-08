@@ -10,6 +10,7 @@
         "noImplicitAny": false,
         "skipLibCheck": true,
         "suppressImplicitAnyIndexErrors": true,
+        "resolveJsonModule": true,
         "outDir": "build/www/app",
         "lib": ["es7", "dom"],
         "typeRoots": [
