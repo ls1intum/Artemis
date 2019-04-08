@@ -3,7 +3,7 @@
         "assessment": "Assessment",
         "conflicts": "Conflict",
         "ownAssessmentTitle": "Your current assessment",
-        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments",
+        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments. Assessed by",
         "button": {
             "overrideAssessment": "Override Assessment",
             "nextSubmission": "Next Submission",
