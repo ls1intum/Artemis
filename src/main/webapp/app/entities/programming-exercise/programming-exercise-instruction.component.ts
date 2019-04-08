@@ -151,7 +151,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 this.repositoryFileService.get(participationId, 'README.md').subscribe(
                     fileObj => {
                         // Old readme files contain unescaped unicode, convert it to make it persistable by the database
-                        this.exercise.problemStatement = fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[exercisePart]');
+                        this.exercise.problemStatement = fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]');
                         resolve();
                     },
                     err => {
@@ -233,7 +233,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param silent
      */
     private remarkableTestsStatusParser(state: any, silent: boolean) {
-        const regex = /^\[exercisePart\]\[([^\]]*)\]\s*\(([^)]+)\)/;
+        const regex = /^\[task\]\[([^\]]*)\]\s*\(([^)]+)\)/;
 
         // It is surely not our rule, so we can stop early
         if (state.src[state.pos] !== '[') {
