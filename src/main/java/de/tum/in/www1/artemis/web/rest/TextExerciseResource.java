@@ -143,7 +143,7 @@ public class TextExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        TextExercise result = textExerciseRepository.save(textExercise); // TODO CZ: this gives me an SQL exception
+        TextExercise result = textExerciseRepository.save(textExercise);
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {

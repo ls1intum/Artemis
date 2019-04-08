@@ -93,10 +93,7 @@
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
                     <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link" type="button">Example submission {{i + 1}}</button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
-                    <fa-icon
-                        *ngIf="exampleSubmission.submission?.result?.exampleResult && exampleSubmission.submission?.result?.feedbacks?.length > 0"
-                             icon="check-circle" style="margin-left: 10px" title="An assessment is available">
-                    </fa-icon>
+                    <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                 </li>
             </ul>
 

@@ -159,7 +159,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/modelingExampleAssessment") // TODO CZ: change url
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/modelingExampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -173,18 +173,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 "You cannot see results"
             )).body(null);
         }
-
-        // TODO CZ: move logic from here to ModelingAssessmentService
-        Optional<ModelingSubmission> optionalModelingSubmission =
-            modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
-        if (!optionalModelingSubmission.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(
-                "modelingSubmission",
-                "modelingSubmissionNotFound",
-                "No Modeling Example Submission was found for the given ID."
-            )).body(null);
-        }
-        return ResponseEntity.ok(optionalModelingSubmission.get().getResult());
+        return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
     }
 
     @ResponseStatus(HttpStatus.OK)

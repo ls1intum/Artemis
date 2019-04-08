@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 /**
  * REST controller for managing ExampleSubmission.
  */
@@ -25,9 +28,11 @@ public class ExampleSubmissionResource {
     private static final String ENTITY_NAME = "exampleSubmission";
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
     private final ExampleSubmissionService exampleSubmissionService;
+    private final AuthorizationCheckService authCheckService;
 
-    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService) {
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, AuthorizationCheckService authCheckService) {
         this.exampleSubmissionService = exampleSubmissionService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -40,7 +45,6 @@ public class ExampleSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    // TODO CZ: merge with updateExampleSubmission
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -73,8 +77,9 @@ public class ExampleSubmissionResource {
 
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        // TODO CZ: remove this method, as the check if the exerciseIds match is unnecessary when the paths of the endpoints change to /example-submissions/... and the exercise is part of the example submission anyway
-        // TODO CZ: check if user is at least instructor?
+        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.getExercise())) {
+            return forbidden();
+        }
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException(
                 "The exercise id in the path does not match the exercise id of the submission",

@@ -6,7 +6,7 @@ import { AccountService } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { ModelingSubmission } from 'app/entities/modeling-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { Result } from 'app/entities/result';
@@ -51,7 +51,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     constructor(
         private exerciseService: ExerciseService,
-        private modelingSubmissionService: ModelingSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
@@ -114,7 +113,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 if (result) {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
-                    this.checkScoreBoundaries();
                 }
             });
         });
@@ -203,7 +201,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.feedbacks = feedbacks;
         this.feedbackChanged = true;
-        // this.checkScoreBoundaries(); TODO CZ: necessary?
     }
 
     showAssessment() {
@@ -226,6 +223,12 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     }
 
     public saveExampleAssessment(): void {
+        this.checkScoreBoundaries();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.modelingAssessment.invalidAssessments');
+            return;
+        }
+
         if (this.feedbacks) {
             this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
                 (result: Result) => {
@@ -243,19 +246,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
     }
 
-    public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback();
-        assessment.reference = assessmentText;
-        assessment.credits = 0;
-        this.feedbacks.push(assessment);
-        this.checkScoreBoundaries();
-    }
-
-    public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.feedbacks = this.feedbacks.filter(elem => elem !== assessmentToDelete);
-        this.checkScoreBoundaries();
-    }
-
     /**
      * Calculates the total score of the current assessment.
      * Returns an error if the total score cannot be calculated
@@ -268,7 +258,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        const credits = this.feedbacks.map(assessment => assessment.credits);
+        const credits = this.feedbacks.map(feedback => feedback.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
@@ -279,20 +269,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
-    }
-
-    public saveAssessments(): void {
-        this.checkScoreBoundaries();
-        if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.modelingAssessment.invalidAssessments');
-            return;
-        }
-
-        // this.assessmentsService.save(this.feedbacks, this.exercise.id, this.result.id).subscribe(response => {
-        //     this.result = response.body;
-        //     this.areNewAssessments = false;
-        //     this.jhiAlertService.success('arTeMiSApp.modelingAssessment.saveSuccessful');
-        // });
     }
 
     async back() {
@@ -336,11 +312,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         );
     }
 
-    // readAndUnderstood() {
-    //     this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(
-    //         (res: HttpResponse<TutorParticipation>) => {
-    //             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
-    //         }
-    //     );
-    // }
+    readAndUnderstood() {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+            this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+        });
+    }
 }

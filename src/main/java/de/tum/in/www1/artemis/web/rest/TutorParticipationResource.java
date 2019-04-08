@@ -80,7 +80,6 @@ public class TutorParticipationResource {
     /**
      * POST /exercises/:exerciseId/exampleSubmission: add an example submission to the tutor participation
      *
-     * TODO CZ: I thought "used for tutorial" includes the assessment by the tutor and not the other way round?
      * The tutor has read (if it is a tutorial) or assessed an example submission.
      * If it is a tutorial, the method just records that the tutor has read it.
      * If it is not, the method checks if the assessment given by the tutor is close enough to the instructor one.

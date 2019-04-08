@@ -58,7 +58,7 @@ export class ModelingAssessmentService {
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
     convertResult(result: Result): Result {
-        if (!result.feedbacks) {
+        if (!result || !result.feedbacks) {
             return result;
         }
         for (const feedback of result.feedbacks) {

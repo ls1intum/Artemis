@@ -39,7 +39,6 @@ public class ExampleSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
-        // TODO CZ: throw BadRequestException when submission or exercise is null? does it still work for text exercises then?
         Submission submission = exampleSubmission.getSubmission();
         if (submission != null)
         {
