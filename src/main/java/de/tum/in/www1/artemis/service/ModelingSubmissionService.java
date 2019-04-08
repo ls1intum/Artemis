@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 @Service
 @Transactional
@@ -24,14 +23,16 @@ public class ModelingSubmissionService {
     private final CompassService compassService;
     private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
+    private final UserService userService;
 
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository, UserService userService) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
         this.participationRepository = participationRepository;
+        this.userService = userService;
     }
 
 
@@ -103,6 +104,24 @@ public class ModelingSubmissionService {
 
         log.debug("return model: " + modelingSubmission.getModel());
         return modelingSubmission;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ModelingSubmission save(ModelingSubmission modelingSubmission) {
+        modelingSubmission.setSubmissionDate(ZonedDateTime.now());
+        modelingSubmission.setType(SubmissionType.MANUAL);
+
+        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+        if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getSubmission() == null) {
+            modelingSubmission.getResult().setSubmission(modelingSubmission);
+        }
+
+//        if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getAssessor() == null) {
+//            User user = userService.getUser();
+//            modelingSubmission.getResult().setAssessor(user);
+//        }
+
+        return modelingSubmissionRepository.save(modelingSubmission);
     }
 
 

@@ -1,13 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
@@ -18,6 +10,15 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -98,6 +99,45 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
+        // Note: This also saves the feedback objects in the database because of the 'cascade =
+        // CascadeType.ALL' option.
+        return resultRepository.save(result);
+    }
+
+    @Transactional
+    public Result saveExampleAssessment(Long resultId, List<Feedback> modelingAssessment) {
+        Optional<Result> desiredResult = resultRepository.findById(resultId);
+        Result result = desiredResult
+            .orElseThrow(() -> new EntityNotFoundException("Result with id \"" + resultId + "\" could not be found"));
+
+        result.setExampleResult(true);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+
+        if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
+            modelingSubmission.setResult(result);
+            modelingSubmissionRepository.save(modelingSubmission);
+        }
+
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
+        // will also be
+        // deleted in the database because of the 'orphanRemoval = true' flag.
+        result.getFeedbacks().clear();
+        for (Feedback feedback : modelingAssessment) {
+            feedback.setPositive(feedback.getCredits() >= 0);
+            feedback.setType(FeedbackType.MANUAL);
+            result.addFeedback(feedback);
+        }
+        // Note: this boolean flag is only used for programming exercises
+        result.setHasFeedback(false);
+
+//        if (result.getSubmission() == null) {
+//            result.setSubmission(modelingSubmission);
+//            modelingSubmission.setResult(result);
+//            modelingSubmissionRepository.save(modelingSubmission);
+//        }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
