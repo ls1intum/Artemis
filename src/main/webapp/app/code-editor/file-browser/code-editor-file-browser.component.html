@@ -33,7 +33,7 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
-    <li *ngIf="item.children" (click)="onCollapseExpand()" class="list-group-item" [class.node-selected]="item.checked">
+    <li *ngIf="item.children" (click)="onCollapseExpand()" class="list-group-item">
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span>{{ item.text }}</span>
     </li>
