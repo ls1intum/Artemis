@@ -14,14 +14,7 @@ $titlebar-height: 65px;
     align-items: center;
 }
 
-.assessment-title {
-    jhi-result {
-        padding-left: 25px;
-        font-size: 1rem;
-    }
-}
-
-.control-container {
+.control-button-container {
     button {
         margin-left: 15px;
     }
@@ -43,14 +36,4 @@ $titlebar-height: 65px;
         min-width: 0;
         width: 100%;
     }
-}
-.custom-control {
-    display: flex;
-    label {
-        font-size: 1rem;
-    }
-}
-
-.conflict {
-    background-color: rgb(248, 214, 217);
 }

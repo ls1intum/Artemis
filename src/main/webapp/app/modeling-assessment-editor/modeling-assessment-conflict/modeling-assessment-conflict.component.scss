@@ -5,18 +5,11 @@
     flex-flow: column nowrap;
 
     .navigation-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        jhi-alert {
-            font-size: initial;
-        }
-    }
-    .control-container {
         button {
             margin: 0 15px;
         }
     }
+
     .conflict-editor {
         display: flex;
         justify-content: center;
@@ -44,9 +37,4 @@
             }
         }
     }
-}
-
-.row-container {
-    display: flex;
-    align-items: center;
 }
