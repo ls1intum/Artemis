@@ -17,11 +17,17 @@ public class ConflictingResult {
     @ManyToOne
     private Result result;
 
+    private Feedback updatedFeedback;
+
     public String getModelElementId() {
         return modelElementId;
     }
 
     public Result getResult() {
         return result;
+    }
+
+    public Feedback getUpdatedFeedback() {
+        return updatedFeedback;
     }
 }

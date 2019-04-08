@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.persistence.*;
-import javax.validation.constraints.Size;
 
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 
@@ -16,12 +15,8 @@ public class ModelAssessmentConflict {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Result result;
-
-    @Size(max = 50)
-    @Column(name = "modelElementId")
-    private String modelElementId;
+    @OneToOne
+    private ConflictingResult causingResult;
 
     @Column(name = "state")
     private EscalationState state;
@@ -34,18 +29,14 @@ public class ModelAssessmentConflict {
 
     @OneToMany
     @Column(name = "conflictingResults")
-    private Set<ConflictingResult> conflictingResults;
+    private Set<ConflictingResult> resultsInConflict;
 
     public Long getId() {
         return id;
     }
 
-    public Result getResult() {
-        return result;
-    }
-
-    public String getModelElementId() {
-        return modelElementId;
+    public ConflictingResult getCausingResult() {
+        return causingResult;
     }
 
     public EscalationState getState() {
@@ -60,7 +51,7 @@ public class ModelAssessmentConflict {
         return resolutionDate;
     }
 
-    public Set<ConflictingResult> getConflictingResults() {
-        return conflictingResults;
+    public Set<ConflictingResult> getResultsInConflict() {
+        return resultsInConflict;
     }
 }
