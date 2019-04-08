@@ -133,6 +133,7 @@ task testReport(type: TestReport) {
 apply from: 'gradle/docker.gradle'
 apply from: 'gradle/sonar.gradle'
 apply from: 'gradle/liquibase.gradle'
+//this enables us to invoke ./gradlew liquibaseDiffChangelog
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty('prod')) {

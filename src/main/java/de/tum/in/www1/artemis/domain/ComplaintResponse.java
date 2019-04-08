@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import javax.persistence.*;
+import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ComplaintResponse.
@@ -36,8 +38,7 @@ public class ComplaintResponse implements Serializable {
     @JoinColumn(unique = true)
     private Complaint complaint;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @ManyToOne
     private User reviewer;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -124,10 +125,6 @@ public class ComplaintResponse implements Serializable {
 
     @Override
     public String toString() {
-        return "ComplaintResponse{" +
-            "id=" + getId() +
-            ", responseText='" + getResponseText() + "'" +
-            ", submittedTime='" + getSubmittedTime() + "'" +
-            "}";
+        return "ComplaintResponse{" + "id=" + getId() + ", responseText='" + getResponseText() + "'" + ", submittedTime='" + getSubmittedTime() + "'" + "}";
     }
 }
