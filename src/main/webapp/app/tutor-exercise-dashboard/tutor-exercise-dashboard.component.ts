@@ -15,7 +15,7 @@ import { TextExercise } from 'app/entities/text-exercise';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
-    providers: [JhiAlertService, CourseService]
+    providers: [JhiAlertService, CourseService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
@@ -34,12 +34,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
     stats = {
         toReview: {
             done: 0,
-            total: 0
+            total: 0,
         },
         toAssess: {
             done: 0,
-            total: 0
-        }
+            total: 0,
+        },
     };
 
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -56,7 +56,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -78,7 +78,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                     this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                     this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                 }
-                this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
+                this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
 
                 this.stats.toReview.total = this.exampleSubmissionsToReview.length;
                 this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
@@ -90,9 +90,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
                 }
-
             },
-            (response: string) => this.onError(response)
+            (response: string) => this.onError(response),
         );
 
         this.getSubmissions();
@@ -101,7 +100,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exerciseId, {assessedByTutor: true})
+            .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body.map((submission: TextSubmission) => {
                     if (submission.result) {
@@ -112,7 +111,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                     }
 
                     return submission;
-                })
+                }),
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
@@ -121,17 +120,18 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private getSubmissionWithoutAssessment(): void {
-        this.textSubmissionService
-            .getTextSubmissionForExerciseWithoutAssessment(this.exerciseId)
-            .subscribe((response: HttpResponse<TextSubmission>) => {
+        this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
+            (response: HttpResponse<TextSubmission>) => {
                 this.unassessedSubmission = response.body;
-            }, (error: HttpErrorResponse) => {
+            },
+            (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there aren't unassessed submission, nothing we have to worry about
                 } else {
                     this.onError(error.message);
                 }
-            });
+            },
+        );
     }
 
     open(content: any) {
@@ -150,7 +150,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 if (onComplete) {
                     onComplete();
                 }
-            }
+            },
         );
     }
 

@@ -1,0 +1,3 @@
+<div class="alert mt-4" *ngIf="notification" [ngClass]="alertClass">
+    <fa-icon class="mr-2" [icon]="alertIcon"></fa-icon><b>{{notification.title}}:</b> {{notification.text}}
+</div>

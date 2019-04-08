@@ -3,7 +3,7 @@ import { ShortAnswerSolution } from '../../entities/short-answer-solution';
 import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
-
+import { ArtemisMarkdown } from '../../components/util/markdown.service';
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
     constructor() {}
@@ -24,7 +24,7 @@ export class ShortAnswerQuestionUtil {
         let availableSolutions = question.solutions;
 
         // filter out spots that do not need to be mapped
-        let remainingSpots: ShortAnswerSpot [] = question.spots.filter(function(spot) {
+        let remainingSpots: ShortAnswerSpot[] = question.spots.filter(function(spot) {
             return question.correctMappings.some(function(mapping) {
                 return this.isSameSpot(mapping.spot, spot);
             }, this);
@@ -69,12 +69,7 @@ export class ShortAnswerQuestionUtil {
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveShortAnswerRec(
-        correctMappings: ShortAnswerMapping[],
-        remainingSpots: ShortAnswerSpot[],
-        availableSolutions: ShortAnswerSolution[],
-        sampleMappings: ShortAnswerMapping[]
-    ) {
+    solveShortAnswerRec(correctMappings: ShortAnswerMapping[], remainingSpots: ShortAnswerSpot[], availableSolutions: ShortAnswerSolution[], sampleMappings: ShortAnswerMapping[]) {
         if (remainingSpots.length === 0) {
             return true;
         }
@@ -131,8 +126,7 @@ export class ShortAnswerQuestionUtil {
                     const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
                     const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
                     // there have to be a least as many solutions that share all spots as the amount of existing spots
-                    if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2)
-                    && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
+                    if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2) && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
                         // condition is violated for this pair of solutions
                         return false;
                     }
@@ -290,7 +284,7 @@ export class ShortAnswerQuestionUtil {
     firstLineOfQuestion(text: string): string {
         // first line is the question if there is no [-spot #] tag in the string
         if (text.split(/\n/g)[0].search(/\[-spot/g) === -1) {
-        return text.split(/\n/g)[0];
+            return text.split(/\n/g)[0];
         } else {
             return '';
         }
@@ -318,9 +312,7 @@ export class ShortAnswerQuestionUtil {
                 .slice(1)
                 .join('\n');
         } else {
-            questionTextSplitAtNewLine = text
-                .split(/\n+/g)
-                .join('\n');
+            questionTextSplitAtNewLine = text.split(/\n+/g).join('\n');
         }
 
         // checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
@@ -337,8 +329,7 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[]}
      */
     getTextWithoutSpots(text: string): string[] {
-        return this.separateFirstLineOfQuestionFromRestOfText(text)
-            .split(/\[-spot\s\d\]/g);
+        return this.separateFirstLineOfQuestionFromRestOfText(text).split(/\[-spot\s\d\]/g);
     }
 
     /**
@@ -353,14 +344,13 @@ export class ShortAnswerQuestionUtil {
         }
         let duplicateValues = 0;
         for (let i = 0; i < mappings.length - 1; i++) {
-            for (let j = i + 1; j <  mappings.length; j++) {
-                if (mappings[i].spot.spotNr === mappings[j].spot.spotNr
-                    && mappings[i].solution.text.toLowerCase() === mappings[j].solution.text.toLowerCase()) {
+            for (let j = i + 1; j < mappings.length; j++) {
+                if (mappings[i].spot.spotNr === mappings[j].spot.spotNr && mappings[i].solution.text.toLowerCase() === mappings[j].solution.text.toLowerCase()) {
                     duplicateValues++;
                 }
             }
         }
-        return  duplicateValues > 0;
+        return duplicateValues > 0;
     }
 
     /**
@@ -374,12 +364,12 @@ export class ShortAnswerQuestionUtil {
         for (const spot of question.spots) {
             const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);
             for (const mapping of question.correctMappings) {
-                if (mapping.spot.id  === spot.id
-                    &&
-                    !(sampleSolutions.some(sampleSolution =>
-                        sampleSolution.text  === mapping.solution.text
-                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions)))) {
-
+                if (
+                    mapping.spot.id === spot.id &&
+                    !sampleSolutions.some(
+                        sampleSolution => sampleSolution.text === mapping.solution.text && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions),
+                    )
+                ) {
                     sampleSolutions.push(mapping.solution);
                     break;
                 }
@@ -416,5 +406,73 @@ export class ShortAnswerQuestionUtil {
      */
     atLeastAsManySolutionsAsSpots(question: ShortAnswerQuestion): boolean {
         return question.spots.length <= question.solutions.length;
+    }
+
+    /**
+     * We create now the structure on how to display the text of the question
+     * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
+     * 2. Now each line of the question text will be divided into text before spot tag, spot tag and text after spot tag.
+     * (e.g 'Enter [-spot 1] long [-spot 2] if needed' will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
+     *
+     * @param questionText
+     * @returns {string[][]}
+     */
+    divideQuestionTextIntoTextParts(questionText: string): string[][] {
+        const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
+        function interleave([x, ...xs]: string[], ys: string[] = []): string[] {
+            return x === undefined
+                ? ys // base: no x
+                : [x, ...interleave(ys, xs)]; // inductive: some x
+        }
+
+        return questionText.split(/\n/g).map(line => {
+            const spots = line.match(spotRegExpo) || [];
+            const texts = line.split(spotRegExpo);
+            return interleave(texts, spots)
+                .map(x => x.trim())
+                .filter(x => x.length > 0);
+        });
+    }
+
+    /**
+     * checks if text is an input field (check for spot tag)
+     * @param text
+     */
+    isInputField(text: string): boolean {
+        return !(text.search(/\[-spot/g) === -1);
+    }
+
+    /**
+     * gets just the spot number
+     * @param text
+     */
+    getSpotNr(text: string): number {
+        return +text
+            .split(/\[-spot/g)
+            .slice(1)
+            .join()
+            .trim()[0];
+    }
+
+    /**
+     * gets the spot for a specific spotNr
+     * @param spotNr, question
+     */
+    getSpot(spotNr: number, question: ShortAnswerQuestion): ShortAnswerSpot {
+        return question.spots.filter(spot => spot.spotNr === spotNr)[0];
+    }
+
+    /**
+     * We transform now the different text parts of the question text to HTML.
+     * 1. We iterate through every line of the question text.
+     * 2. We iterate through every element of each line of the question text and set each element with the new HTML.
+     * @param textParts
+     * @param artemisMarkdown
+     * @returns {string[][]}
+     */
+    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): string[][] {
+        const textPartsInHTML = textParts.map(textPart => textPart.map(element => (element = artemisMarkdown.htmlForMarkdown(element))));
+
+        return textPartsInHTML;
     }
 }
