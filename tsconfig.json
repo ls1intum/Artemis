@@ -10,6 +10,7 @@
         "removeComments": false,
         "noImplicitAny": true,
         "suppressImplicitAnyIndexErrors": true,
+        "resolveJsonModule": true,
         "skipLibCheck": true,
         "outDir": "build/www/app",
         "lib": ["es2018", "dom"],
