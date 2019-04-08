@@ -15,24 +15,28 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
+import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
+import { ModelingAssessmentComponent } from 'app/modeling-assessment';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
-    providers: [JhiAlertService],
+    styleUrls: ['./example-modeling-submission.component.scss'],
 })
 export class ExampleModelingSubmissionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent)
     modelingEditor: ModelingEditorComponent;
+    @ViewChild(ModelingAssessmentComponent)
+    assessmentEditor: ModelingAssessmentComponent;
 
     isNewSubmission: boolean;
     usedForTutorial = false;
-    areNewAssessments = true;
+    assessmentMode = false;
     exerciseId: number;
     exampleSubmission: ExampleSubmission;
     modelingSubmission: ModelingSubmission;
     umlModel: UMLModel;
-    assessments: Feedback[] = [];
+    feedbacks: Feedback[] = [];
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
@@ -48,6 +52,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private exerciseService: ExerciseService,
         private modelingSubmissionService: ModelingSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
+        private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
@@ -80,7 +85,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course); // TODO CZ: do we need this?
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
         if (this.isNewSubmission) {
@@ -100,16 +105,15 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
-            if (this.toComplete || !this.isAtLeastInstructor) {
+            if (this.toComplete) {
                 return;
             }
 
-            // this.assessmentsService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
-            //     this.result = result;
-            //     this.assessments = this.result.feedbacks || [];
-            //     this.areNewAssessments = this.assessments.length <= 0;
-            //     this.checkScoreBoundaries();
-            // });
+            this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
+                this.result = result;
+                this.feedbacks = this.result.feedbacks || [];
+                this.checkScoreBoundaries();
+            });
         });
     }
 
@@ -132,23 +136,29 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         newExampleSubmission.exercise = this.exercise;
         newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
-            this.exampleSubmissionId = this.exampleSubmission.id;
-            if (this.exampleSubmission.submission) {
-                this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-                if (this.modelingSubmission.model) {
-                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                    if (this.modelingSubmission.model) {
+                        this.umlModel = JSON.parse(this.modelingSubmission.model);
+                    }
                 }
-            }
-            this.isNewSubmission = false;
+                this.isNewSubmission = false;
 
-            this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
 
-            // Update the url with the new id, without reloading the page, to make the history consistent
-            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-            this.location.go(newUrl);
-        }, this.onError);
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
+                this.location.go(newUrl);
+            },
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     private updateExampleModelingSubmission() {
@@ -157,41 +167,60 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
         this.modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
         this.modelingSubmission.exampleSubmission = true;
+        if (this.feedbacks) {
+            if (!this.result) {
+                this.result = new Result();
+            }
+            this.result.feedbacks = this.feedbacks;
+            this.result.exampleResult = true;
+            this.modelingSubmission.result = this.result;
+        }
 
         const exampleSubmission = this.exampleSubmission;
         exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
         exampleSubmission.usedForTutorial = this.usedForTutorial;
 
-        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
-            this.exampleSubmissionId = this.exampleSubmission.id;
-            if (this.exampleSubmission.submission) {
-                this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
-                if (this.modelingSubmission.model) {
-                    this.umlModel = JSON.parse(this.modelingSubmission.model);
+        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
+                    if (this.modelingSubmission.model) {
+                        this.umlModel = JSON.parse(this.modelingSubmission.model);
+                    }
                 }
-            }
-            this.isNewSubmission = false;
+                this.isNewSubmission = false;
 
-            this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-        }, this.onError);
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
-    public createExampleAssessment(): void {
-        // TODO CZ; implement
+    onFeedbackChanged(feedbacks: Feedback[]) {
+        this.feedbacks = feedbacks;
+        // this.checkScoreBoundaries(); TODO CZ: necessary?
+    }
+
+    public saveExampleAssessment(): void {
+        this.updateExampleModelingSubmission();
     }
 
     public addAssessment(assessmentText: string): void {
         const assessment = new Feedback();
         assessment.reference = assessmentText;
         assessment.credits = 0;
-        this.assessments.push(assessment);
+        this.feedbacks.push(assessment);
         this.checkScoreBoundaries();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.assessments = this.assessments.filter(elem => elem !== assessmentToDelete);
+        this.feedbacks = this.feedbacks.filter(elem => elem !== assessmentToDelete);
         this.checkScoreBoundaries();
     }
 
@@ -201,13 +230,13 @@ export class ExampleModelingSubmissionComponent implements OnInit {
      * because a score is not a number/empty.
      */
     public checkScoreBoundaries() {
-        if (!this.assessments || this.assessments.length === 0) {
+        if (!this.feedbacks || this.feedbacks.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = true;
             return;
         }
 
-        const credits = this.assessments.map(assessment => assessment.credits);
+        const credits = this.feedbacks.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
@@ -227,7 +256,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        // this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
+        // this.assessmentsService.save(this.feedbacks, this.exercise.id, this.result.id).subscribe(response => {
         //     this.result = response.body;
         //     this.areNewAssessments = false;
         //     this.jhiAlertService.success('arTeMiSApp.modelingAssessment.saveSuccessful');
@@ -254,7 +283,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
         exampleSubmission.submission.result = new Result();
-        exampleSubmission.submission.result.feedbacks = this.assessments;
+        exampleSubmission.submission.result.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             (res: HttpResponse<TutorParticipation>) => {
@@ -268,7 +297,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 } else if (errorType === 'error.tooHigh') {
                     this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooHigh');
                 } else {
-                    this.onError(error.message);
+                    console.error(error);
+                    this.jhiAlertService.error(error.message);
                 }
             },
         );
@@ -281,9 +311,4 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     //         }
     //     );
     // }
-
-    private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, null);
-    }
 }

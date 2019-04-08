@@ -11,32 +11,20 @@
             </h2>
         </div>
 
-        <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
-            <div class="row">
-                <div class="form-check col-6 align-baseline">
-                    <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
-                           [(ngModel)]="usedForTutorial"/>
-                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
-                </div>
-
-                <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6">
-                    <fa-icon icon="save"></fa-icon>
-                    <span *ngIf="isNewSubmission">Create new modeling submission</span>
-                    <span *ngIf="!isNewSubmission">Update modeling submission</span>
-                </button>
-            </div>
-
-            <div class="row mt-3">
-                <div class="form-check col-6 align-baseline"></div>
-
-                <!--TODO CZ: adapt path to new component structure-->
-                <button *ngIf="exampleSubmission && !isNewSubmission" class="btn btn-primary col-6"
-                        (click)="createExampleAssessment()"
-                        routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{exampleSubmission.id}}/tutor"
-                        [queryParams]="{exampleSubmission: true}">
-                    <fa-icon icon="chalkboard-teacher"></fa-icon>
-                    <span>Create example assessment</span>
-                </button>
+        <div class="col-12">
+            <jhi-modeling-editor
+                *ngIf="!assessmentMode"
+                [umlModel]="umlModel"
+                [diagramType]="exercise.diagramType"
+            ></jhi-modeling-editor>
+            <div class="assessment-container" *ngIf="assessmentMode">
+                <jhi-modeling-assessment
+                    [model]="umlModel"
+                    [feedbacks]="feedbacks"
+                    [diagramType]="exercise.diagramType"
+                    [maxScore]="exercise.maxScore"
+                    (feedbackChanged)="onFeedbackChanged"
+                ></jhi-modeling-assessment>
             </div>
         </div>
 
@@ -49,11 +37,41 @@
             <!--</p>-->
         <!--</div>-->
 
-        <div class="col-12">
-            <jhi-modeling-editor
-                [umlModel]="umlModel"
-                [diagramType]="exercise.diagramType"
-            ></jhi-modeling-editor>
+        <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
+            <div class="row" *ngIf="!assessmentMode">
+                <div class="form-check col-6 align-baseline">
+                    <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
+                           [(ngModel)]="usedForTutorial"/>
+                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
+                </div>
+
+                <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6">
+                    <fa-icon icon="save"></fa-icon>
+                    <span *ngIf="isNewSubmission">Create new modeling submission</span>
+                    <span *ngIf="!isNewSubmission">Update modeling submission</span>
+                </button>
+            </div>
+            <div class="row" *ngIf="assessmentMode">
+                <div class="form-check col-6 align-baseline"></div>
+                <button (click)="saveExampleAssessment()" class="btn btn-primary col-6">
+                    <fa-icon icon="save"></fa-icon>
+                    Save example assessment
+                </button>
+            </div>
+
+            <div class="row mt-3" *ngIf="exampleSubmission && !isNewSubmission">
+                <div class="form-check col-6 align-baseline"></div>
+
+                <button class="btn btn-secondary col-6" *ngIf="!assessmentMode" (click)="assessmentMode = true">
+                    <fa-icon icon="chalkboard-teacher"></fa-icon>
+                    <span>Show assessment</span>
+                </button>
+
+                <button class="btn btn-secondary col-6 mb-3" *ngIf="assessmentMode" (click)="assessmentMode = false">
+                    <fa-icon icon="code-branch"></fa-icon>
+                    <span>Show submission</span>
+                </button>
+            </div>
         </div>
 
     </div>
@@ -66,7 +84,7 @@
 
         <!--<div class="col-4 text-right">-->
             <!--<button class="btn btn-primary col-6" (click)="saveAssessments()"-->
-                    <!--[disabled]="!assessments || !assessmentsAreValid"-->
+                    <!--[disabled]="!feedbacks || !assessmentsAreValid"-->
                     <!--*ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">-->
                 <!--<fa-icon icon="save"></fa-icon>-->
                 <!--<span *ngIf="areNewAssessments">Create new Assessments</span>-->
@@ -88,16 +106,16 @@
 
     <!--<div class="row" *ngIf="!isNewSubmission">-->
         <!--<div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">-->
-            <!--&lt;!&ndash;<jhi-text-assessment-editor [submissionText]="modelingSubmission?.text" [assessments]="assessments"&ndash;&gt;-->
+            <!--&lt;!&ndash;<jhi-text-assessment-editor [submissionText]="modelingSubmission?.text" [feedbacks]="feedbacks"&ndash;&gt;-->
                                         <!--&lt;!&ndash;(assessedText)="addAssessment($event)"&ndash;&gt;-->
                                         <!--&lt;!&ndash;[disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"></jhi-text-assessment-editor>&ndash;&gt;-->
         <!--</div>-->
         <!--<div class="col-sm-12 col-md-5 col-xl-4">-->
             <!--<div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>-->
-            <!--<div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert"-->
+            <!--<div *ngIf="!feedbacks || feedbacks.length == 0" class="alert alert-secondary" role="alert"-->
                  <!--jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>-->
-            <!--<ng-container *ngFor="let assessment of assessments; let i = index">-->
-                <!--&lt;!&ndash;<jhi-modeling-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"&ndash;&gt;-->
+            <!--<ng-container *ngFor="let assessment of feedbacks; let i = index">-->
+                <!--&lt;!&ndash;<jhi-modeling-assessment-detail [(assessment)]="feedbacks[i]" (assessmentChange)="checkScoreBoundaries()"&ndash;&gt;-->
                                             <!--&lt;!&ndash;[highlightColor]="getColorForIndex(i)"&ndash;&gt;-->
                                             <!--&lt;!&ndash;[disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"&ndash;&gt;-->
                                             <!--&lt;!&ndash;(deleteAssessment)="deleteAssessment($event)"></jhi-modeling-assessment-detail>&ndash;&gt;-->
@@ -107,7 +125,7 @@
 
     <div class="col-12 text-right" *ngIf="toComplete">
         <button class="btn btn-primary col-3" (click)="checkAssessment()"
-                [disabled]="!assessments || !assessmentsAreValid">
+                [disabled]="!feedbacks || !assessmentsAreValid">
             Submit Assessment
         </button>
     </div>

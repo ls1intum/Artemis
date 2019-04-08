@@ -5,8 +5,12 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -50,16 +54,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final ResultRepository resultRepository;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService) {
+                                      ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
+                                      ResultService resultService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
+        this.resultRepository = resultRepository;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
@@ -138,6 +148,68 @@ public class ModelingAssessmentResource extends AssessmentResource {
         else {
             return notFound();
         }
+    }
+
+    /**
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission
+     * is not used for tutorial purposes.
+     *
+     * @param exerciseId the id of the exercise
+     * @param submissionId the id of the example submission
+     * @return the result linked to the example submission
+     */
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/modelingExampleAssessment") // TODO CZ: change url
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        // If the user is not an instructor, and this is not an example submission used for tutorial,
+        // do not provide the results
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(
+                "modelingSubmission",
+                "notAuthorized",
+                "You cannot see results"
+            )).body(null);
+        }
+
+        // TODO CZ: move logic from here to ModelingAssessmentService
+        Optional<ModelingSubmission> optionalModelingSubmission =
+            modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        if (!optionalModelingSubmission.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(
+                "modelingSubmission",
+                "modelingSubmissionNotFound",
+                "No Modeling Example Submission was found for the given ID."
+            )).body(null);
+        }
+        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
+
+        if (modelingSubmission.getResult() == null) {
+            Result newResult = new Result();
+            newResult.setSubmission(modelingSubmission);
+            newResult.setExampleResult(true);
+//            newResult = resultRepository.save(newResult);
+            modelingSubmission.setResult(newResult);
+            modelingSubmissionRepository.save(modelingSubmission);
+        }
+
+
+        // TODO CZ: cleanup
+//        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
+//        Result result = databaseResult.orElseGet(() -> {
+//            Result newResult = new Result();
+//            newResult.setSubmission(textSubmission.get());
+//            newResult.setExampleResult(true);
+//            resultService.createNewResult(newResult, false);
+//            return newResult;
+//        });
+
+//        List<Feedback> feedbacks = textAssessmentService.getAssessmentsForResult(result);
+//        result.setFeedbacks(feedbacks);
+
+        return ResponseEntity.ok(modelingSubmission.getResult());
     }
 
     @ResponseStatus(HttpStatus.OK)
