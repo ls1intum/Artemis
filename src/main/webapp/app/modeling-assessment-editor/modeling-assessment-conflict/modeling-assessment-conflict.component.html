@@ -1,6 +1,6 @@
 <div class="conflict-container">
-    <h3 class="navigation-container">
-        <div class="control-container row-container">
+    <h3 class="top-container">
+        <div class="navigation-container row-container">
             <span jhiTranslate="modelingAssessmentEditor.conflicts">Conflicts</span>
             <button class="btn btn-primary" (click)="onPrevConflict()">
                 <fa-icon icon="arrow-left"></fa-icon>
@@ -11,9 +11,15 @@
             </button>
         </div>
         <jhi-alert></jhi-alert>
-        <button class="btn btn-success" [disabled]="!conflictsAllHandled" (click)="onApplyChanges()" jhiTranslate="modelingAssessmentEditor.button.applyChanges">
-            Apply Changes
-        </button>
+        <div class="control-button-container">
+            <button class="btn btn-primary" (click)="onSave()">
+                <fa-icon icon="save"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
+            </button>
+            <button class="btn btn-success" [disabled]="!conflictsAllHandled" (click)="onSubmit()" jhiTranslate="entity.action.submit">
+                <span jhiTranslate="entity.action.submit">Submit</span>
+            </button>
+        </div>
     </h3>
 
     <div id="conflictEditor" class="conflict-editor">
@@ -23,7 +29,9 @@
                 [diagramType]="modelingExercise.diagramType"
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
-                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.conflictingResults.length } }}"
+                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.conflictingResults.length } }} {{
+                    currentConflict.result.assessor.firstName
+                }} {{ currentConflict.result.assessor.lastName }}"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"

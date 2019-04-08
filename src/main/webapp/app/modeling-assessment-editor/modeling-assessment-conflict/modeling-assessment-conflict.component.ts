@@ -14,7 +14,7 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
     templateUrl: './modeling-assessment-conflict.component.html',
-    styleUrls: ['./modeling-assessment-conflict.component.scss'],
+    styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
@@ -87,13 +87,22 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateHighlightColor();
     }
 
-    onApplyChanges() {
+    onSave() {
         this.modelingAssessmentService.save(this.mergedFeedbacks, this.submissionId).subscribe(
             result => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+            },
+            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+        );
+    }
+
+    onSubmit() {
+        this.modelingAssessmentService.save(this.mergedFeedbacks, this.submissionId, true).subscribe(
+            result => {
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
             },
-            error1 => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
         );
     }
 
