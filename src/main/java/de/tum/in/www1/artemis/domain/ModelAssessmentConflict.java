@@ -16,7 +16,7 @@ public class ModelAssessmentConflict {
     private Long id;
 
     @OneToOne
-    private ConflictingResult causingResult;
+    private ConflictingResult causingConflictingResult;
 
     @Column(name = "state")
     private EscalationState state;
