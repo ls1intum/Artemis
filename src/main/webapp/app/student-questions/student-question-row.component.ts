@@ -1,6 +1,24 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
 import { User } from 'app/core';
+import { StudentQuestionAnswer } from 'app/entities/student-question-answer';
+
+export interface StudentQuestionAction {
+    name: QuestionActionName;
+    studentQuestion: StudentQuestion;
+}
+
+export interface StudentAnswerAction {
+    name: QuestionActionName;
+    studentAnswer: StudentQuestionAnswer;
+    studentQuestion: StudentQuestion;
+}
+
+export enum QuestionActionName {
+    ANSWER,
+    DELETE,
+    EDIT,
+}
 
 @Component({
     selector: 'jhi-student-question-row',
@@ -12,9 +30,8 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     @Input() studentQuestion: StudentQuestion;
     @Input() selectedStudentQuestion: StudentQuestion;
     @Input() user: User;
-    @Output() answerQuestion = new EventEmitter<StudentQuestion>();
-    @Output() deleteQuestion = new EventEmitter<StudentQuestion>();
-    @Output() editQuestion = new EventEmitter<StudentQuestion>();
+    @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
+    @Output() interactAnswer = new EventEmitter<StudentAnswerAction>();
     isExpanded: boolean;
     isQuestionAuthor: boolean;
     shortQuestionText: string;
@@ -37,16 +54,39 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {}
 
     initAnswer(): void {
-        this.answerQuestion.emit(this.studentQuestion);
+        this.interactQuestion.emit({
+            name: QuestionActionName.ANSWER,
+            studentQuestion: this.studentQuestion,
+        });
     }
 
     initDelete() {
-        this.deleteQuestion.emit(this.studentQuestion);
+        this.interactQuestion.emit({
+            name: QuestionActionName.DELETE,
+            studentQuestion: this.studentQuestion,
+        });
     }
 
     initEdit() {
-        this.editQuestion.emit(this.studentQuestion);
+        this.interactQuestion.emit({
+            name: QuestionActionName.EDIT,
+            studentQuestion: this.studentQuestion,
+        });
     }
 
-    addAnswer(): void {}
+    initDeleteAnswer(studentAnswer: StudentQuestionAnswer) {
+        this.interactAnswer.emit({
+            name: QuestionActionName.DELETE,
+            studentAnswer: studentAnswer,
+            studentQuestion: null,
+        });
+    }
+
+    initEditAnswer(studentAnswer: StudentQuestionAnswer) {
+        this.interactAnswer.emit({
+            name: QuestionActionName.EDIT,
+            studentAnswer: studentAnswer,
+            studentQuestion: this.studentQuestion,
+        });
+    }
 }

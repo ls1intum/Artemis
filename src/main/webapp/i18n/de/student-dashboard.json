@@ -102,9 +102,13 @@
                     "addQuestion": "Frage hinzufügen",
                     "saveQuestion": "Frage speichern",
                     "addAnswer": "Anwort hinzufügen",
+                    "saveAnswer": "Anwort speichern",
                     "deleteQuestion": "Möchtest du deine Frage löschen?",
                     "confirmDeleteQuestion": "Bitte bestätige, dass du deine Frage löschen möchtest!",
-                    "editQuestion": "Frage bearbeiten"
+                    "editQuestion": "Frage bearbeiten",
+                    "deleteAnswer": "Möchtest du deine Antwort löschen?",
+                    "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
+                    "editAnswer": "Answort bearbeiten"
                 }
             }
         }

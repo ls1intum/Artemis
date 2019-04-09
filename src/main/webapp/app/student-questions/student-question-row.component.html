@@ -16,7 +16,8 @@
                                   (confirmEvent)="initDelete($event)"
                                   [ngClass]="'mr-1'"
                                   [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
-                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"></jhi-confirm-icon>
+                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"
+                ></jhi-confirm-icon>
                 <fa-icon [icon]="'angle-down'"></fa-icon>
             </div>
         </div>
@@ -40,16 +41,40 @@
                 <h5>Q: {{studentQuestion.questionText}}</h5>
             </div>
             <div class="col-auto">
-                <fa-icon class="mr-1" [icon]="'pencil-alt'" *ngIf="isQuestionAuthor"
+                <fa-icon class="mr-1"
+                         *ngIf="isQuestionAuthor"
+                         [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate)"
+                         container="body"
+                         [icon]="'pencil-alt'"
                          (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
-                <fa-icon class="mr-1" [icon]="'trash'" *ngIf="isQuestionAuthor"
-                         (click)="$event.stopPropagation();initDelete($event)"></fa-icon>
+                <jhi-confirm-icon *ngIf="isQuestionAuthor"
+                                  (click)="$event.stopPropagation();"
+                                  (confirmEvent)="initDelete($event)"
+                                  [ngClass]="'mr-1'"
+                                  [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
+                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"
+                ></jhi-confirm-icon>
                 <fa-icon [icon]="'angle-up'"></fa-icon>
             </div>
         </div>
         <div class="row" *ngFor="let questionAnswer of studentQuestion.answers">
             <div class="col">
                 <p>A: {{questionAnswer.answerText}}</p>
+            </div>
+            <div class="col-auto" *ngIf="questionAnswer.author.id === user.id">
+                <fa-icon class="mr-1 clickable"
+                         *ngIf="isQuestionAuthor"
+                         [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editAnswer' | translate)"
+                         container="body"
+                         [icon]="'pencil-alt'"
+                         (click)="$event.stopPropagation();initEditAnswer(questionAnswer)"></fa-icon>
+                <jhi-confirm-icon *ngIf="isQuestionAuthor"
+                                  (click)="$event.stopPropagation();"
+                                  (confirmEvent)="initDeleteAnswer(questionAnswer)"
+                                  [ngClass]="'mr-1 clickable'"
+                                  [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate)"
+                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate)"
+                ></jhi-confirm-icon>
             </div>
         </div>
         <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">

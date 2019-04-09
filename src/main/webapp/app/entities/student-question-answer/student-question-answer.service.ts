@@ -44,7 +44,7 @@ export class StudentQuestionAnswerService {
 
     protected convertDateFromClient(studentQuestionAnswer: StudentQuestionAnswer): StudentQuestionAnswer {
         const copy: StudentQuestionAnswer = Object.assign({}, studentQuestionAnswer, {
-            answerDate: studentQuestionAnswer.answerDate != null && studentQuestionAnswer.answerDate.isValid() ? studentQuestionAnswer.answerDate.toJSON() : null,
+            answerDate: studentQuestionAnswer.answerDate != null && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : null,
         });
         return copy;
     }

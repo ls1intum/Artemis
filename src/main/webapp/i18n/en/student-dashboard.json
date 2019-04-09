@@ -102,9 +102,13 @@
                     "addQuestion": "Add question",
                     "saveQuestion": "Save question",
                     "addAnswer": "Add answer",
+                    "saveAnswer": "Save answer",
                     "deleteQuestion": "Do you want to delete your question?",
                     "confirmDeleteQuestion": "Please confirm that you want to delete your question!",
-                    "editQuestion": "Frage bearbeiten"
+                    "editQuestion": "Edit question",
+                    "deleteAnswer": "Do you want to delete your answer?",
+                    "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
+                    "editAnswer": "Edit answer"
                 }
             }
         }

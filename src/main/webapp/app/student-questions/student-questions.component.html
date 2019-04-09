@@ -18,7 +18,7 @@
             </div>
         </div>
     </div>
-    <div *ngIf="isAddMode">
+    <div *ngIf="isAnswerMode">
         <div class="row mb-1">
             <div class="col-12">
                 <h5>Q: {{selectedStudentQuestion.questionText}}</h5>
@@ -33,19 +33,20 @@
             <div class="col-12 d-flex justify-content-between">
                 <button class="btn btn-outline-primary"
                         (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary"
+                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
                         (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
+                <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
+                        (click)="saveAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer" | translate}}</button>
             </div>
         </div>
     </div>
 
-    <div *ngIf="!isEditMode && !isAddMode">
+    <div *ngIf="!isEditMode && !isAnswerMode">
         <jhi-student-question-row [studentQuestion]="studentQuestion"
                                   [user]="currentUser"
                                   [selectedStudentQuestion]="selectedStudentQuestion"
-                                  (answerQuestion)="toggleAnswerMode($event)"
-                                  (deleteQuestion)="deleteQuestion($event)"
-                                  (editQuestion)="editQuestion($event)"
+                                  (interactQuestion)="interactQuestion($event)"
+                                  (interactAnswer)="interactAnswer($event)"
                                   *ngFor="let studentQuestion of studentQuestions"></jhi-student-question-row>
         <div class="row mb-1" *ngIf="!studentQuestions">
             <div class="col-12">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noQuestions" | translate}}</div>
