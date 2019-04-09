@@ -5,9 +5,9 @@ import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
     templateUrl: './confirm-icon.component.html',
 })
 export class ConfirmIconComponent implements OnInit {
-    @Input() initialIcon: string;
+    @Input() initialIcon = 'trash';
     @Input() initialTooltip: string;
-    @Input() confirmIcon: string;
+    @Input() confirmIcon = 'check';
     @Input() confirmTooltip: string;
     @Output() confirmEvent = new EventEmitter();
     showConfirm = false;
