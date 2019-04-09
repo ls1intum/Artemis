@@ -40,6 +40,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         hasFilter: false,
         hasCollapseExpand: false,
         decoupleChildFromParent: false,
+        // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
+        maxHeight: 5000,
     });
 
     /** Resizable constants **/

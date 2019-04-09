@@ -467,8 +467,6 @@ relationship OneToOne {
     ExerciseResult{assessor} to User,
     Complaint{result} to ExerciseResult,
     ComplaintResponse{complaint} to Complaint,
-    Complaint{student} to User,
-    ComplaintResponse{reviewer} to User,
     ExampleSubmission{submission} to Submission,
     ProgrammingExercise{templateParticipation} to Participation,
     ProgrammingExercise{solutionParticipation} to Participation,
@@ -490,6 +488,8 @@ relationship ManyToOne {
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,
+    Complaint{student} to User,
+    ComplaintResponse{reviewer} to User,
 }
 
 relationship ManyToMany {

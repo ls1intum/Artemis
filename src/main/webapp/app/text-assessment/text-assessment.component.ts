@@ -87,7 +87,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.busy = false;
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.participation.id}`);
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
                 this.location.go(newUrl);
             });
         } else {
@@ -134,7 +134,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element width
-                target.style.width = event.rect.width + 'px';
+                target.style.minWidth = event.rect.width + 'px';
             });
 
         this.interactResizableTop = interact('.resizable-horizontal')
@@ -151,7 +151,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element height
-                target.style.height = event.rect.height + 'px';
+                target.style.minHeight = event.rect.height + 'px';
                 $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
             });
     }
@@ -252,10 +252,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         if ($card.hasClass('collapsed')) {
             $card.removeClass('collapsed');
             this.interactResizable.resizable({ enabled: true });
-            $card.width(this.resizableMinWidth + 'px');
+            $card.css({ 'min-width': this.resizableMinWidth + 'px' });
         } else {
             $card.addClass('collapsed');
-            $card.width('55px');
+            $card.css({ 'min-width': '55px' });
             this.interactResizable.resizable({ enabled: false });
         }
     }
@@ -263,7 +263,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public get headingTranslationKey(): string {
         const baseKey = 'arTeMiSApp.textAssessment.heading.';
 
-        if (this.submission.exampleSubmission) {
+        if (this.submission && this.submission.exampleSubmission) {
             return baseKey + 'exampleAssessment';
         }
         return baseKey + 'assessment';

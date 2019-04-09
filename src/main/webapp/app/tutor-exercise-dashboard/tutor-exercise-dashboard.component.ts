@@ -10,7 +10,7 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
-import { TextExercise } from 'app/entities/text-exercise';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -30,6 +30,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
+
+    formattedGradingInstructions: string;
 
     stats = {
         toReview: {
@@ -57,6 +59,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private modalService: NgbModal,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit(): void {
@@ -72,6 +75,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
+                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {

@@ -16,7 +16,7 @@
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                 <th jhiSortBy="diagramType"><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th>Actions</th>
+                <th jhiTranslate="arTeMiSApp.exercise.actions">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -27,8 +27,15 @@
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'arTeMiSApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                 <td>
-                    <button class="btn btn-primary mr-1" (click)="goToDetailsPage(apollonDiagram.id)">Open</button>
-                    <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-danger mr-1" (click)="delete(apollonDiagram)">Delete</button>
+                    <button class="btn btn-primary mr-1" (click)="goToDetailsPage(apollonDiagram.id)" jhiTranslate="entity.action.open">Open</button>
+                    <button
+                        *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                        class="btn btn-danger mr-1"
+                        (click)="delete(apollonDiagram)"
+                        jhiTranslate="entity.action.delete"
+                    >
+                        Delete
+                    </button>
                 </td>
             </tr>
         </tbody>
