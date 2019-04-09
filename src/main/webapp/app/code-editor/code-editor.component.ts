@@ -18,6 +18,8 @@ import { Result } from '../entities/result';
 import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
+import { textFileExtensions } from './text-files.json';
+
 @Component({
     selector: 'jhi-editor',
     templateUrl: './code-editor.component.html',
@@ -87,7 +89,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
                     // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files.filter(value => value !== 'README.md');
+                    this.repositoryFiles = files
+                        // Filter Readme file that was historically in the student's assignment repo
+                        .filter(value => value !== 'README.md')
+                        // Remove binary files as they can't be displayed in an editor
+                        .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
                     this.checkIfRepositoryIsClean();
                     this.loadSession();
                 },
@@ -181,10 +187,13 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(
             files => {
-                // do not display the README.md, because students should not edit it
-                this.repositoryFiles = files.filter(value => value !== 'README.md');
+                this.repositoryFiles = files
+                    // Filter Readme file that was historically in the student's assignment repo
+                    .filter(value => value !== 'README.md')
+                    // Remove binary files as they can't be displayed in an editor
+                    .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
                 // Select newly created file
-                if ($event.mode === 'create') {
+                if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
                     this.selectedFile = $event.file;
                 }
             },
