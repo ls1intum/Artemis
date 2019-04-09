@@ -101,7 +101,10 @@
                     "cancel": "Abbrechen",
                     "addQuestion": "Frage hinzufügen",
                     "saveQuestion": "Frage speichern",
-                    "addAnswer": "Anwort hinzufügen"
+                    "addAnswer": "Anwort hinzufügen",
+                    "deleteQuestion": "Möchtest du deine Frage löschen?",
+                    "confirmDeleteQuestion": "Bitte bestätige, dass du deine Frage löschen möchtest!",
+                    "editQuestion": "Frage bearbeiten"
                 }
             }
         }

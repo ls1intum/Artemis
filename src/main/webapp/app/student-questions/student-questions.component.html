@@ -9,21 +9,19 @@
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary" (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="selectedStudentQuestion" (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
+                <button class="btn btn-outline-primary"
+                        (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
+                        (click)="addQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</button>
+                <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
+                        (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
             </div>
         </div>
     </div>
     <div *ngIf="isAddMode">
         <div class="row mb-1">
             <div class="col-12">
-                <div class="form-group">
-                    <label
-                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.questionLabel" | translate}}</label>
-                    <textarea [(ngModel)]="selectedStudentQuestion.questionText" class="form-control"
-                              name="answer"></textarea>
-                </div>
+                <h5>Q: {{selectedStudentQuestion.questionText}}</h5>
             </div>
             <div class="col-12">
                 <div class="form-group">
@@ -33,8 +31,10 @@
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary" (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary" (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
+                <button class="btn btn-outline-primary"
+                        (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                <button class="btn btn-primary"
+                        (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
             </div>
         </div>
     </div>

@@ -1,31 +1,49 @@
-<div class="row mb-2" *ngIf="!isExpanded" (click)="isExpanded = !isExpanded">
+<div class="row mb-2 clickable" *ngIf="!isExpanded" (click)="isExpanded = !isExpanded">
     <div class="col-12">
         <div class="row">
-            <div class="col">
-                <h5>Q: {{shortQuestionText}} <span class="badge badge-light" *ngIf="isQuestionAuthor">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.yourQuestion" | translate}}</span></h5>
+            <div class="col overflow-parent">
+                <h5 class="overflow-ellipsis">Q: {{studentQuestion.questionText}}</h5>
             </div>
             <div class="col-auto">
-                <fa-icon class="mr-1" [icon]="'pencil-alt'" *ngIf="isQuestionAuthor" (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
-                <fa-icon class="mr-1" [icon]="'trash'" *ngIf="isQuestionAuthor" (click)="$event.stopPropagation();initDelete($event)"></fa-icon>
+                <fa-icon class="mr-1"
+                         *ngIf="isQuestionAuthor"
+                         [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate)"
+                         container="body"
+                         [icon]="'pencil-alt'"
+                         (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
+                <jhi-confirm-icon *ngIf="isQuestionAuthor"
+                                  (click)="$event.stopPropagation();"
+                                  (confirmEvent)="initDelete($event)"
+                                  [ngClass]="'mr-1'"
+                                  [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
+                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"></jhi-confirm-icon>
                 <fa-icon [icon]="'angle-down'"></fa-icon>
             </div>
         </div>
         <div class="row">
-            <div class="col">
-                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerCount" | translate: { count: studentQuestion.answers.length } }}</p>
+            <div class="col-auto">
+                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerCount" | translate: {count: studentQuestion.answers.length} }}</p>
+            </div>
+            <div class="col-auto">
+                <h5>
+                    <span class="badge badge-light"
+                          *ngIf="isQuestionAuthor">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.yourQuestion" | translate}}</span>
+                </h5>
             </div>
         </div>
     </div>
 </div>
 <div class="row mb-2" *ngIf="isExpanded">
     <div class="col-12">
-        <div class="row" (click)="isExpanded = !isExpanded">
+        <div class="row clickable" (click)="isExpanded = !isExpanded">
             <div class="col">
                 <h5>Q: {{studentQuestion.questionText}}</h5>
             </div>
             <div class="col-auto">
-                <fa-icon class="mr-1" [icon]="'pencil-alt'" *ngIf="isQuestionAuthor" (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
-                <fa-icon class="mr-1" [icon]="'trash'" *ngIf="isQuestionAuthor" (click)="$event.stopPropagation();initDelete($event)"></fa-icon>
+                <fa-icon class="mr-1" [icon]="'pencil-alt'" *ngIf="isQuestionAuthor"
+                         (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
+                <fa-icon class="mr-1" [icon]="'trash'" *ngIf="isQuestionAuthor"
+                         (click)="$event.stopPropagation();initDelete($event)"></fa-icon>
                 <fa-icon [icon]="'angle-up'"></fa-icon>
             </div>
         </div>
@@ -34,14 +52,15 @@
                 <p>A: {{questionAnswer.answerText}}</p>
             </div>
         </div>
-        <div class="row" *ngIf="!studentQuestion.answers">
+        <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
             <div class="col">
                 <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noAnswers" | translate}}</p>
             </div>
         </div>
         <div class="row">
             <div class="col">
-                <button class="btn btn-primary" (click)="initAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
+                <button class="btn btn-primary"
+                        (click)="initAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
             </div>
         </div>
     </div>
