@@ -45,12 +45,13 @@
                 *ngIf="currentConflict"
                 [diagramType]="modelingExercise.diagramType"
                 [model]="model"
-                [feedbacks]="mergedFeedbacks"
+                [feedbacks]="currentFeedbacksCopy"
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
                 [centeredElementId]="currentConflict.modelElementId"
-                [readOnly]="true"
+                (feedbackChanged)="onFeedbackChanged($event)"
+                [readOnly]="false"
             ></jhi-modeling-assessment>
             <button class="btn btn-success" (click)="onKeepYours()" jhiTranslate="modelingAssessmentEditor.button.keepYours">keep yours</button>
         </div>
