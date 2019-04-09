@@ -88,7 +88,7 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "faq": {
-                    "header": "FAQ",
+                    "header": "Questions and Answers",
                     "noQuestions": "No questions have been asked yet.",
                     "addNewQuestion": "+ Add a new question",
                     "newQuestionLabel": "New question",

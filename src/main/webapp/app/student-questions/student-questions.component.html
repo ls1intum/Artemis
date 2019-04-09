@@ -1,57 +1,34 @@
 <jhi-side-panel [panelHeader]="('arTeMiSApp.courseOverview.exerciseDetails.faq.header' | translate)">
-    <div *ngIf="isEditMode">
-        <div class="row mb-1">
-            <div class="col-12">
-                <div class="form-group">
-                    <label
-                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.newQuestionLabel" | translate}}</label>
-                    <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
-                </div>
-            </div>
-            <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary"
-                        (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
-                        (click)="addQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
-                        (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="isAnswerMode">
-        <div class="row mb-1">
-            <div class="col-12">
-                <h5>Q: {{selectedStudentQuestion.questionText}}</h5>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label
-                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel" | translate}}</label>
-                    <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
-                </div>
-            </div>
-            <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary"
-                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="!selectedStudentAnswer"
-                        (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="selectedStudentAnswer"
-                        (click)="saveAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer" | translate}}</button>
-            </div>
-        </div>
-    </div>
-
-    <div *ngIf="!isEditMode && !isAnswerMode">
+    <div>
         <jhi-student-question-row [studentQuestion]="studentQuestion"
                                   [user]="currentUser"
+                                  [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                                   [selectedStudentQuestion]="selectedStudentQuestion"
                                   (interactQuestion)="interactQuestion($event)"
-                                  (interactAnswer)="interactAnswer($event)"
                                   *ngFor="let studentQuestion of studentQuestions"></jhi-student-question-row>
+        <div *ngIf="isEditMode">
+            <div class="row mb-1 mt-2">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label
+                            class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.newQuestionLabel" | translate}}</label>
+                        <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
+                    </div>
+                </div>
+                <div class="col-12 d-flex justify-content-between">
+                    <button class="btn btn-outline-primary"
+                            (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                    <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
+                            (click)="addQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addQuestion" | translate}}</button>
+                    <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
+                            (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
+                </div>
+            </div>
+        </div>
         <div class="row mb-1" *ngIf="!studentQuestions || studentQuestions.length === 0">
             <div class="col-12">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noQuestions" | translate}}</div>
         </div>
-        <div class="row mb-1">
+        <div class="row mb-1" *ngIf="!isEditMode">
             <div class="col-12">
                 <a class="add-action"
                    (click)="toggleEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addNewQuestion" | translate}}</a>

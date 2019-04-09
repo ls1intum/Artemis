@@ -67,7 +67,7 @@ public class StudentQuestionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-questions")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
@@ -112,7 +112,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/student-questions/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long id) {
         log.debug("REST request to delete StudentQuestion : {}", id);
         studentQuestionRepository.deleteById(id);
