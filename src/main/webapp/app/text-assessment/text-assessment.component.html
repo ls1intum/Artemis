@@ -114,7 +114,7 @@
         <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
     </div>
     <div class="row">
-        <div *ngFor="let assessment of assessments; let i = index" class="col-4">
+        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
             <jhi-text-assessment-detail
                 [(assessment)]="assessments[i]"
                 (assessmentChange)="checkScoreBoundaries()"

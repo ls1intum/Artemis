@@ -122,7 +122,7 @@
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
     <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
     <div class="row">
-        <div *ngFor="let assessment of assessments; let i = index" class="col-4">
+        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
             <jhi-text-assessment-detail
                 [(assessment)]="assessments[i]"
                 (assessmentChange)="checkScoreBoundaries()"
