@@ -22,7 +22,7 @@ public class ModelAssessmentConflict {
      * new model element assessment that caused a conflict with existing assessments
      */
     @OneToOne
-    private ConflictingResult causingResult;
+    private ConflictingResult causingConflictingResult;
 
     /**
      * The escalation state, in which this conflict currently is
