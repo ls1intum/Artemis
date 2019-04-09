@@ -81,8 +81,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             if (changes.highlightColor) {
                 this.highlightColor = changes.highlightColor.currentValue;
             }
+            if (changes.highlightedElementIds) {
+                this.highlightedElementIds = changes.highlightedElementIds.currentValue;
+            }
             if (this.apollonEditor !== null) {
-                this.updateHighlightedElements(changes.highlightedElementIds ? changes.highlightedElementIds.currentValue : this.highlightedElementIds);
+                this.applyStateConfiguration();
             }
         }
         if (changes.centeredElementId) {
