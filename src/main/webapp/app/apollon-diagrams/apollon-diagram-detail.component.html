@@ -3,11 +3,13 @@
 
     <div class="row">
         <div class="col">
-            <a href="#/apollon-diagrams">&larr; Back</a>
+            <a href="#/apollon-diagrams">&larr; {{ 'entity.action.back' | translate }}</a>
         </div>
         <div class="col text-right">
-            <button class="btn btn-info mr-1" (click)="generateExercise()" [hidden]="!apollonDiagram">Generate a Quiz Exercise &hellip;</button>
-            <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram">Save</button>
+            <button class="btn btn-info mr-1" (click)="generateExercise()" [hidden]="!apollonDiagram">
+                {{ 'arTeMiSApp.apollonDiagram.detail.createLabel' | translate }} &hellip;
+            </button>
+            <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram" jhiTranslate="entity.action.save">Save</button>
         </div>
     </div>
 

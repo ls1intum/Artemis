@@ -87,6 +87,11 @@ public class TextSubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
 
+        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+        if (textSubmission.getResult() != null && textSubmission.getResult().getSubmission() == null) {
+            textSubmission.getResult().setSubmission(textSubmission);
+        }
+
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         return textSubmission;

@@ -46,7 +46,7 @@
             <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
-            {{ exercise.gradingInstructions }}
+            <span [innerHTML]="formattedGradingInstructions"></span>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="c()">
@@ -92,7 +92,7 @@
             <ul *ngIf="stats.toReview.done >= stats.toReview.total">
                 <li *ngFor="let exampleSubmission of exampleSubmissionsToReview; let i = index">
                     <button routerLink="/text-exercise/{{ exercise.id }}/example-submission/{{ exampleSubmission.id }}" [queryParams]="{ readOnly: true }" class="btn btn-link">
-                        {{ 'arTeMiSApp.tutorExerciseDashboard.reviewExampleSubmissions' | translate }} {{ i + 1 }}
+                        {{ 'arTeMiSApp.tutorExerciseDashboard.reviewExampleSubmission' | translate }} {{ i + 1 }}
                     </button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
