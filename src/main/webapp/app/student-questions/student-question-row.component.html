@@ -10,10 +10,10 @@
                          [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate)"
                          container="body"
                          [icon]="'pencil-alt'"
-                         (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
+                         (click)="$event.stopPropagation();initEdit()"></fa-icon>
                 <jhi-confirm-icon *ngIf="isQuestionAuthor"
                                   (click)="$event.stopPropagation();"
-                                  (confirmEvent)="initDelete($event)"
+                                  (confirmEvent)="initDelete()"
                                   [ngClass]="'mr-1'"
                                   [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
                                   [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"
@@ -46,10 +46,10 @@
                          [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate)"
                          container="body"
                          [icon]="'pencil-alt'"
-                         (click)="$event.stopPropagation();initEdit($event)"></fa-icon>
+                         (click)="$event.stopPropagation();initEdit()"></fa-icon>
                 <jhi-confirm-icon *ngIf="isQuestionAuthor"
                                   (click)="$event.stopPropagation();"
-                                  (confirmEvent)="initDelete($event)"
+                                  (confirmEvent)="initDelete()"
                                   [ngClass]="'mr-1'"
                                   [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
                                   [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"

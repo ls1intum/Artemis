@@ -32,7 +32,7 @@
             </div>
             <div class="col-12 d-flex justify-content-between">
                 <button class="btn btn-outline-primary"
-                        (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
                 <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
                         (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
                 <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
