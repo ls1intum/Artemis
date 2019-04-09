@@ -126,6 +126,7 @@ public class ExerciseResource {
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
+        // TODO CZ: load results of submissions eagerly to prevent additional database calls
         List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);

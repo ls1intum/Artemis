@@ -4,13 +4,15 @@ import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { Submission } from 'app/entities/submission';
+import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
 @Component({
     selector: 'jhi-courses',
@@ -23,8 +25,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exerciseId: number;
     numberOfTutorAssessments = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: TextSubmission[] = [];
-    unassessedSubmission: TextSubmission;
+    submissions: Submission[] = [];
+    unassessedSubmission: Submission;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -58,6 +60,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
+        private modelingSubmissionService: ModelingSubmissionService,
         private modalService: NgbModal,
         private artemisMarkdown: ArtemisMarkdown,
     ) {}
@@ -80,6 +83,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
+                    // TODO CZ: not the other way round?
                     this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                     this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                 }
@@ -95,48 +99,86 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
                 }
+
+                this.getSubmissions();
+                this.getSubmissionWithoutAssessment();
             },
             (response: string) => this.onError(response),
         );
-
-        this.getSubmissions();
-        this.getSubmissionWithoutAssessment();
     }
 
     private getSubmissions(): void {
-        this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-            .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body.map((submission: TextSubmission) => {
-                    if (submission.result) {
-                        // reconnect some associations
-                        submission.result.submission = submission;
-                        submission.result.participation = submission.participation;
-                        submission.participation.results = [submission.result];
-                    }
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService
+                .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
+                .map((response: HttpResponse<TextSubmission[]>) =>
+                    response.body.map((submission: TextSubmission) => {
+                        if (submission.result) {
+                            // reconnect some associations
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                        }
 
-                    return submission;
-                }),
-            )
-            .subscribe((submissions: TextSubmission[]) => {
-                this.submissions = submissions;
-                this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
-            });
+                        return submission;
+                    }),
+                )
+                .subscribe((submissions: TextSubmission[]) => {
+                    this.submissions = submissions;
+                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
+                });
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.modelingSubmissionService
+                .getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
+                .map((response: HttpResponse<ModelingSubmission[]>) =>
+                    response.body.map((submission: ModelingSubmission) => {
+                        if (submission.result) {
+                            // reconnect some associations
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                        }
+
+                        return submission;
+                    }),
+                )
+                .subscribe((submissions: ModelingSubmission[]) => {
+                    this.submissions = submissions;
+                    console.log(this.submissions);
+                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
+                });
+        }
     }
 
     private getSubmissionWithoutAssessment(): void {
-        this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-            (response: HttpResponse<TextSubmission>) => {
-                this.unassessedSubmission = response.body;
-            },
-            (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there aren't unassessed submission, nothing we have to worry about
-                } else {
-                    this.onError(error.message);
-                }
-            },
-        );
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
+                (response: HttpResponse<TextSubmission>) => {
+                    this.unassessedSubmission = response.body;
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
+                (response: HttpResponse<ModelingSubmission>) => {
+                    this.unassessedSubmission = response.body;
+                    console.log(this.unassessedSubmission);
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        }
     }
 
     open(content: any) {
@@ -167,7 +209,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.jhiAlertService.error(error, null, null);
     }
 
-    calculateStatus(submission: TextSubmission) {
+    calculateStatus(submission: Submission) {
         if (submission.result.completionDate) {
             return 'DONE';
         }
