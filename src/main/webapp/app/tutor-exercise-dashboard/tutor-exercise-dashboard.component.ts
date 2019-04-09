@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -58,6 +58,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -159,5 +160,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         return 'DRAFT';
+    }
+
+    back() {
+        this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
     }
 }
