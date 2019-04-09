@@ -37,7 +37,7 @@
 
         <jhi-resizable-instructions
             class="resizable-submission card" id="instructions"
-            [ngStyle]="{ 'min-width.px': 400 }"
+            [ngStyle]="{ 'width.px': 400 }"
             [formattedProblemStatement]="formattedProblemStatement"
             [formattedGradingInstructions]="formattedGradingInstructions"
             [formattedSampleSolution]="formattedSampleSolution"
@@ -96,7 +96,7 @@
 
             <jhi-resizable-instructions
                 class="resizable-assessment card mr-4" id="assessment-instructions"
-                [ngStyle]="{ 'min-width.px': 400 }"
+                [ngStyle]="{ 'width.px': 400 }"
                 *ngIf="!isAtLeastInstructor||readOnly||toComplete"
                 [formattedProblemStatement]="formattedProblemStatement"
                 [formattedGradingInstructions]="formattedGradingInstructions"
