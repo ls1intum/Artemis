@@ -382,6 +382,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.back();
         });
     }
 
