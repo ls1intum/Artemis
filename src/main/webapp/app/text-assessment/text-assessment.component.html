@@ -60,7 +60,7 @@
 </h2>
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
-    <div class="row flex-nowrap">
+    <div class="row flex-nowrap col-12">
         <div class="card flex-grow-1 resizable-submission mr-4">
             <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.textAssessment.studentSubmission">Student submission</div>
             <div class="card-body">
@@ -114,7 +114,7 @@
         <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
     </div>
     <div class="row">
-        <div *ngFor="let assessment of assessments; let i = index" class="col-4">
+        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
             <jhi-text-assessment-detail
                 [(assessment)]="assessments[i]"
                 (assessmentChange)="checkScoreBoundaries()"

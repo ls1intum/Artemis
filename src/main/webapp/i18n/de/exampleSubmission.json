@@ -25,7 +25,8 @@
             "youNeedToCreate": "Sie müssen die Beispiel-Einreichungen erstellen, bevor Sie die Beispiel-Bewertung erstellen können.",
             "score": "Punktzahl",
             "submitAssessment": "Bewertung einreichen",
-            "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden."
+            "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
+            "exampleSubmission": "Beispiel-Einreichung"
         }
     }
 }

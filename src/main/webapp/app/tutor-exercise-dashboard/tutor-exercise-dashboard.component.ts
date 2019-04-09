@@ -7,7 +7,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -58,7 +57,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal,
         private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
@@ -139,24 +137,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
-    readInstruction(onComplete?: () => void) {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body;
-                this.tutorParticipationStatus = this.tutorParticipation.status;
-                this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
-            },
-            this.onError,
-            () => {
-                if (onComplete) {
-                    onComplete();
-                }
-            },
-        );
+    readInstruction() {
+        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+            this.tutorParticipation = res.body;
+            this.tutorParticipationStatus = this.tutorParticipation.status;
+            this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
+        }, this.onError);
     }
 
     hasBeenCompletedByTutor(id: number) {
@@ -168,7 +154,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     calculateStatus(submission: TextSubmission) {
-        if (submission.result.completionDate) {
+        if (submission.result && submission.result.completionDate) {
             return 'DONE';
         }
 

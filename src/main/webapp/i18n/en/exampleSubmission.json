@@ -25,7 +25,8 @@
             "youNeedToCreate": "You need to create the example text submission before creating the example assessment",
             "score": "Score",
             "submitAssessment": "Submit Assessment",
-            "readAndUnderstood": "I have read and understood the example"
+            "readAndUnderstood": "I have read and understood the example",
+            "exampleSubmission": "Example Submission"
         }
     }
 }

@@ -20,43 +20,23 @@
         </div>
     </div>
 
-    <div class="col-12 text-center" style="margin-bottom: 15px" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0; else noGradingInstruction">
-        <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED" class="alert alert-warning" role="alert">
-            {{ 'arTeMiSApp.tutorExerciseDashboard.needToReadGradingInstructions' | translate }}
-        </div>
+    <div class="col-12 text-center" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
+        <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.gradingInstructions' | translate }}</h4>
 
-        <button class="btn btn-primary" (click)="open(gradingInstructions)">
-            {{ 'arTeMiSApp.tutorExerciseDashboard.readGradingInstructions' | translate }}
-        </button>
+        <p [innerHTML]="formattedGradingInstructions"></p>
     </div>
 
-    <ng-template #noGradingInstruction>
-        <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
-            <button class="btn btn-primary" (click)="readInstruction()">
-                {{ 'arTeMiSApp.tutorExerciseDashboard.startYourParticipation' | translate }}
-            </button>
-        </div>
-    </ng-template>
-
-    <ng-template #gradingInstructions let-c="close" let-d="dismiss">
-        <div class="modal-header">
-            <h4 class="modal-title">
-                {{ 'arTeMiSApp.tutorExerciseDashboard.gradingInstructions' | translate }}
-            </h4>
-            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
-        </div>
-        <div class="modal-body">
-            <span [innerHTML]="formattedGradingInstructions"></span>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="c()">
-                {{ 'arTeMiSApp.tutorExerciseDashboard.close' | translate }}
-            </button>
-            <button type="button" class="btn btn-primary" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED" (click)="readInstruction(c)">
+    <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
+        <button class="btn btn-primary" (click)="readInstruction()">
+            <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'arTeMiSApp.tutorExerciseDashboard.readAndUnderstood' | translate }}
-            </button>
-        </div>
-    </ng-template>
+            </span>
+
+            <span *ngIf="!exercise.gradingInstructions || exercise.gradingInstructions.length == 0">
+                {{ 'arTeMiSApp.tutorExerciseDashboard.startYourParticipation' | translate }}
+            </span>
+        </button>
+    </div>
 
     <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS" class="alert alert-warning row" role="alert">
         <span

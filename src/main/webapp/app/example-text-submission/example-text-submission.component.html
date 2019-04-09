@@ -1,116 +1,147 @@
-<jhi-alert></jhi-alert>
-<div class="p-4" *ngIf="exercise">
-    <div class="row">
-        <div class="col-lg-2">
-            <button class="btn btn-secondary" (click)="back()">&larr;</button>
-        </div>
-
-        <div class="col-12 col-lg-6">
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
             <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'arTeMiSApp.exampleSubmission.createNew' | translate }} </span>{{ 'arTeMiSApp.exampleSubmission.pageHeader' | translate }}
                 {{ exercise?.title }}
             </h2>
         </div>
 
-        <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
-            <div class="row">
-                <div class="form-check col-6 align-baseline">
-                    <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="exampleSubmission.usedForTutorial" />
-                    <label class="form-check-label" for="field_usedForTutorial">{{ 'arTeMiSApp.exampleSubmission.usedForTutorial' | translate }}</label>
-                </div>
-
-                <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
-                    <fa-icon icon="save"></fa-icon>
-                    <span *ngIf="isNewSubmission">{{ 'arTeMiSApp.exampleSubmission.createNewSubmission' | translate }}</span>
-                    <span *ngIf="!isNewSubmission">{{ 'arTeMiSApp.exampleSubmission.updateTextSubmission' | translate }}</span>
-                </button>
+        <div class="col-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete && exercise">
+            <div class="form-check col-12 align-baseline">
+                <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="exampleSubmission.usedForTutorial" />
+                <label class="form-check-label" for="field_usedForTutorial">{{ 'arTeMiSApp.exampleSubmission.usedForTutorial' | translate }}</label>
             </div>
-        </div>
 
-        <div class="col-12">
-            <p class="mb-3">
-                <strong>{{ 'arTeMiSApp.exampleSubmission.problemStatement' | translate }}:</strong> <span [innerHTML]="formattedProblemStatement"></span><br />
-                <ng-container *ngIf="formattedSampleSolution">
-                    <strong>{{ 'arTeMiSApp.exampleSubmission.sampleSolution' | translate }}:</strong> <span [innerHTML]="formattedSampleSolution"></span>
-                </ng-container>
-            </p>
-        </div>
-
-        <div class="col-12" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
-            <textarea
-                [readOnly]="toComplete || readOnly || !isAtLeastInstructor"
-                [disabled]="toComplete || readOnly || !isAtLeastInstructor"
-                [(ngModel)]="textSubmission.text"
-                style="width: 100%; height: 50vh;"
-            ></textarea>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-8">
-            <h2>{{ 'arTeMiSApp.exampleSubmission.exampleAssessment' | translate }}</h2>
-        </div>
-
-        <div class="col-4 text-right">
-            <button
-                class="btn btn-primary col-6"
-                (click)="saveAssessments()"
-                [disabled]="!assessments || !assessmentsAreValid"
-                *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete"
-            >
+            <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
                 <fa-icon icon="save"></fa-icon>
-                <span *ngIf="areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.createNewAssessments' | translate }}</span>
-                <span *ngIf="!areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.updateAssessments' | translate }}</span>
+                <span *ngIf="isNewSubmission">{{ 'arTeMiSApp.exampleSubmission.createNewSubmission' | translate }}</span>
+                <span *ngIf="!isNewSubmission">{{ 'arTeMiSApp.exampleSubmission.updateTextSubmission' | translate }}</span>
             </button>
         </div>
     </div>
+</div>
 
-    <div class="alert alert-info" *ngIf="isNewSubmission">
-        {{ 'arTeMiSApp.exampleSubmission.youNeedToCreate' | translate }}
+<jhi-alert></jhi-alert>
+
+<!-- This div is shown only to instructors when they can create / update an example submission -->
+<div class="row mt-4" *ngIf="exercise && isAtLeastInstructor && !readOnly && !toComplete">
+    <div class="row col-12 flex-nowrap">
+        <div class="card flex-grow-1 resizable-submission mr-4">
+            <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.exampleSubmission.exampleSubmission">Example submission</div>
+            <div class="card-body">
+                <textarea [(ngModel)]="textSubmission.text" style="width: 100%; height: 50vh;"></textarea>
+            </div>
+        </div>
+
+        <jhi-resizable-instructions
+            class="resizable-submission card" id="instructions"
+            [ngStyle]="{ 'min-width.px': 400 }"
+            [formattedProblemStatement]="formattedProblemStatement"
+            [formattedGradingInstructions]="formattedGradingInstructions"
+            [formattedSampleSolution]="formattedSampleSolution"
+            [toggleCollapse]="toggleCollapse.bind(this)"
+            toggleCollapseId="submission"
+        >
+            <div resizingbar class="resizing-bar"><span></span></div>
+        </jhi-resizable-instructions>
     </div>
+</div>
 
-    <div class="row" *ngIf="!isNewSubmission">
-        <div class="col text-right">
-            <h5>
-                <strong>{{ 'arTeMiSApp.exampleSubmission.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }} / {{ exercise.maxScore }}
-            </h5>
+<!--
+    This div contains the example assessment, and it is always shown, with different configurations based on the role
+    of the user.
+
+    If it is an instructor that is creating the example assessment, problem statement is not shown since it is already
+    visible in the previous div
+-->
+<div class="row mt-4 resizable-horizontal" *ngIf="exercise && !isNewSubmission" [ngStyle]="{ 'min-height.px': 500 }">
+    <div class="col-12 mr-4 mb-3">
+        <div class="row justify-content-end">
+            <div class="col-8 align-text-bottom text-right">
+                <h5>
+                    <strong>{{ 'arTeMiSApp.exampleSubmission.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }} / {{ exercise.maxScore }}
+                </h5>
+            </div>
+
+            <div class="col-2" *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete"
+            >
+                <button
+                    class="btn btn-primary col-12"
+                    (click)="saveAssessments()"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                >
+                    <fa-icon icon="save"></fa-icon>
+                    <span *ngIf="areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.createNewAssessments' | translate }}</span>
+                    <span *ngIf="!areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.updateAssessments' | translate }}</span>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div class="row" *ngIf="!isNewSubmission">
-        <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
-            <jhi-text-assessment-editor
-                [submissionText]="textSubmission?.text"
-                [assessments]="assessments"
-                (assessedText)="addAssessment($event)"
-                [disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"
-            ></jhi-text-assessment-editor>
-        </div>
-        <div class="col-sm-12 col-md-5 col-xl-4">
-            <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
-            <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
-            <ng-container *ngFor="let assessment of assessments; let i = index">
-                <jhi-text-assessment-detail
-                    [(assessment)]="assessments[i]"
-                    (assessmentChange)="checkScoreBoundaries()"
-                    [highlightColor]="getColorForIndex(i)"
-                    [disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"
-                    (deleteAssessment)="deleteAssessment($event)"
-                ></jhi-text-assessment-detail>
-            </ng-container>
+    <div class="col-12">
+        <div class="row flex-nowrap ml-2">
+            <div class="card flex-grow-1 resizable-assessment mr-4">
+                <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.exampleSubmission.exampleAssessment">Example assessment</div>
+                <div class="card-body">
+                    <jhi-text-assessment-editor
+                        [submissionText]="textSubmission?.text"
+                        [assessments]="assessments"
+                        (assessedText)="addAssessment($event)"
+                        [disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"
+                    ></jhi-text-assessment-editor>
+                </div>
+            </div>
+
+            <jhi-resizable-instructions
+                class="resizable-assessment card mr-4" id="assessment-instructions"
+                [ngStyle]="{ 'min-width.px': 400 }"
+                *ngIf="!isAtLeastInstructor||readOnly||toComplete"
+                [formattedProblemStatement]="formattedProblemStatement"
+                [formattedGradingInstructions]="formattedGradingInstructions"
+                [formattedSampleSolution]="formattedSampleSolution"
+                [toggleCollapse]="toggleCollapse.bind(this)"
+                toggleCollapseId="assessment"
+            >
+                <div resizingbar class="resizing-bar-assessment"><span></span></div>
+
+            </jhi-resizable-instructions>
         </div>
     </div>
 
-    <div class="col-12 text-right" *ngIf="toComplete">
-        <button class="btn btn-primary col-3" (click)="checkAssessment()" [disabled]="!assessments || !assessmentsAreValid">
-            {{ 'arTeMiSApp.exampleSubmission.submitAssessment' | translate }}
-        </button>
-    </div>
+    <!-- Required for resizing; don't remove empty span -->
+    <div class="col-12 resizing-bar-bottom"><span></span></div>
+</div>
 
-    <div class="col-12 text-rigth" *ngIf="readOnly">
-        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
-            <fa-icon icon="save"></fa-icon>
-            {{ 'arTeMiSApp.exampleSubmission.readAndUnderstood' | translate }}
-        </button>
+<div class="alert alert-info mt-3" *ngIf="isNewSubmission">
+    {{ 'arTeMiSApp.exampleSubmission.youNeedToCreate' | translate }}
+</div>
+
+<div class="col-12 mt-3" *ngIf="exercise && !isNewSubmission">
+    <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
+    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
+    <div class="row">
+        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
+            <jhi-text-assessment-detail
+                [(assessment)]="assessments[i]"
+                (assessmentChange)="checkScoreBoundaries()"
+                [highlightColor]="getColorForIndex(i)"
+                (deleteAssessment)="deleteAssessment($event)"
+            ></jhi-text-assessment-detail>
+        </div>
     </div>
+</div>
+
+<div class="col-12 text-right" *ngIf="toComplete">
+    <button class="btn btn-primary col-3" (click)="checkAssessment()" [disabled]="!assessments || !assessmentsAreValid">
+        {{ 'arTeMiSApp.exampleSubmission.submitAssessment' | translate }}
+    </button>
+</div>
+
+<div class="col-12 text-right" *ngIf="readOnly">
+    <button (click)="readAndUnderstood()" class="btn btn-success col-3">
+        <fa-icon icon="save"></fa-icon>
+        {{ 'arTeMiSApp.exampleSubmission.readAndUnderstood' | translate }}
+    </button>
 </div>
