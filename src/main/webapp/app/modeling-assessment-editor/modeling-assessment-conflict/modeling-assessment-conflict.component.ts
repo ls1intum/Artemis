@@ -19,6 +19,7 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
     mergedFeedbacks: Feedback[];
+    currentFeedbacksCopy: Feedback[];
     modelHighlightedElementIds: Set<string>;
     highlightColor: string;
     user: User;
@@ -49,6 +50,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts) {
                 this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
+                this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
                 this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
                 this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
                 this.updateSelectedConflict();
@@ -77,14 +79,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     onKeepYours() {
         this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.currentConflict.modelElementId, this.currentConflict.result.feedbacks);
-        this.updateCurrentState(ConflictResolutionState.ESCALATED);
-        this.updateHighlightColor();
+        this.updateCurrentState();
     }
 
     onAcceptOther() {
         this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
-        this.updateCurrentState(ConflictResolutionState.RESOLVED);
-        this.updateHighlightColor();
+        this.updateCurrentState();
+    }
+
+    onFeedbackChanged(feedbacks: Feedback[]) {
+        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.currentConflict.modelElementId);
+        const originalElementAssessment = this.currentConflict.result.feedbacks.find(feedback => feedback.referenceId === this.currentConflict.modelElementId);
+        if (elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
+            this.updateCurrentState();
+        }
+        this.mergedFeedbacks = feedbacks;
     }
 
     onSave() {
@@ -107,7 +116,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
-        let feedbacks: Feedback[] = [];
+        const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
         this.mergedFeedbacks.forEach(feedback => {
             if (feedback.referenceId === elementIdToUpdate) {
@@ -137,6 +146,18 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 
+    private updateCurrentState() {
+        const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
+        const conflictingFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
+        if (mergedFeedback.credits !== conflictingFeedback.credits) {
+            this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.ESCALATED;
+        } else {
+            this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
+        }
+        this.updateHighlightColor();
+        this.updateOverallResolutioState();
+    }
+
     private updateHighlightColor() {
         switch (this.conflictResolutionStates[this.conflictIndex]) {
             case ConflictResolutionState.UNHANDLED:
@@ -150,11 +171,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 this.highlightColor = 'rgba(40, 167, 69, 0.6)';
                 break;
         }
-    }
-
-    private updateCurrentState(newState: ConflictResolutionState) {
-        this.conflictResolutionStates[this.conflictIndex] = newState;
-        this.updateOverallResolutioState();
     }
 
     private updateOverallResolutioState() {
