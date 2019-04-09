@@ -17,7 +17,7 @@
             <button
                 class="btn btn-primary ml-3"
                 (click)="save()"
-                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.save"
             >
@@ -26,7 +26,7 @@
             <button
                 class="btn btn-success ml-3"
                 (click)="submit()"
-                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized) || !result.id"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.submit"
             >

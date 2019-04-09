@@ -73,17 +73,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         if (submissionValue === 'new') {
             this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(participation => {
-                this.participation = participation;
-                this.result = new Result();
-                this.submission = <TextSubmission>this.participation.submissions[0];
-                this.exercise = <TextExercise>this.participation.exercise;
-
-                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
-                this.assessments = [];
-                this.busy = false;
+                this.receiveParticipation(participation);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
@@ -91,21 +81,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             });
         } else {
             const submissionId = Number(submissionValue);
-
-            this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(participation => {
-                this.participation = participation;
-                this.submission = <TextSubmission>this.participation.submissions[0];
-                this.exercise = <TextExercise>this.participation.exercise;
-
-                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-                this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
-                this.result = this.participation.results[0];
-                this.assessments = this.result.feedbacks || [];
-                this.busy = false;
-                this.checkScoreBoundaries();
-            });
+            this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(participation => this.receiveParticipation(participation));
         }
     }
 
@@ -186,6 +162,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     public submit(): void {
+        if (!this.result.id) {
+            return; // We need to have saved the result before
+        }
+
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
@@ -211,6 +191,21 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.participation.results[0] = this.result;
         this.showResult = true;
         this.changeDetectorRef.detectChanges();
+    }
+
+    private receiveParticipation(participation: Participation): void {
+        this.participation = participation;
+        this.submission = <TextSubmission>this.participation.submissions[0];
+        this.exercise = <TextExercise>this.participation.exercise;
+
+        this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
+
+        this.result = this.participation.results[0];
+        this.assessments = this.result.feedbacks || [];
+        this.busy = false;
+        this.checkScoreBoundaries();
     }
 
     public previous(): void {
