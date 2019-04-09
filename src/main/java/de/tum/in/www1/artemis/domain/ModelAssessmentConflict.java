@@ -58,11 +58,11 @@ public class ModelAssessmentConflict {
     }
 
     public ConflictingResult getCausingResult() {
-        return causingResult;
+        return causingConflictingResult;
     }
 
     public void setCausingResult(ConflictingResult causingResult) {
-        this.causingResult = causingResult;
+        this.causingConflictingResult = causingResult;
     }
 
     public EscalationState getState() {
