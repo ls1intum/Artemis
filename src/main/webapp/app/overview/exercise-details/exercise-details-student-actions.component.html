@@ -128,7 +128,18 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED'"
+                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+                routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
+            ></button>
+            <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
+            <button
+                jhi-exercise-action-button
+                buttonIcon="folder-open"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
+                outlined="true"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
         </div>
@@ -231,11 +242,22 @@
         ></button>
         <button
             jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatus() === INACTIVE"
+            (click)="resumeExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openTextEditor' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
+            [hideLabelMobile]="false"
+            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
     </div>
@@ -250,7 +272,18 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
+            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+            routerLink="/text/{{ exercise.participations[0].id }}"
+        ></button>
+        <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
+        <button
+            jhi-exercise-action-button
+            buttonIcon="folder-open"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
+            outlined="true"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
     </div>

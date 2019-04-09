@@ -1,18 +1,22 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
+
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.time.ZonedDateTime;
-import java.util.*;
 
 /**
  * A Exercise.
@@ -20,22 +24,15 @@ import java.util.*;
 @Entity
 @Table(name = "exercise")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name = "discriminator",
-    discriminatorType = DiscriminatorType.STRING
-)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
-    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
-    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
-    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
-})
+@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
+        @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise implements Serializable {
 
@@ -92,7 +89,7 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
-    
+
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
@@ -112,7 +109,6 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
-
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -226,7 +222,6 @@ public abstract class Exercise implements Serializable {
     public void setGradingInstructions(String gradingInstructions) {
         this.gradingInstructions = gradingInstructions;
     }
-
 
     public DifficultyLevel getDifficulty() {
         return difficulty;
@@ -378,7 +373,7 @@ public abstract class Exercise implements Serializable {
      */
     @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
-        if (releaseDate == null) {  //no release date means the exercise is visible to students
+        if (releaseDate == null) {  // no release date means the exercise is visible to students
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
@@ -392,8 +387,7 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * find a relevant participation for this exercise
-     * (relevancy depends on InitializationState)
+     * find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
@@ -406,11 +400,13 @@ public abstract class Exercise implements Serializable {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
                     return participation;
-                } else if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                }
+                else if (participation.getInitializationState() == InitializationState.INACTIVE) {
                     // InitializationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
-                } else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                }
+                else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                     return participation;
                 }
             }
@@ -419,8 +415,8 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation (rated == true or rated == null)
-     * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     * Get the latest relevant result from the given participation (rated == true or rated == null) (relevancy depends on Exercise type => this should be overridden by subclasses
+     * if necessary)
      *
      * @param participation the participation whose results we are considering
      * @return the latest relevant result in the given participation, or null, if none exist
@@ -429,14 +425,14 @@ public abstract class Exercise implements Serializable {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            //NOTE: for the dashboard we only use rated results with completion date
-            //TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
+            // NOTE: for the dashboard we only use rated results with completion date
+            // TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
             if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE)) {
-                //take the first found result that fulfills the above requirements
+                // take the first found result that fulfills the above requirements
                 if (latestResult == null) {
                     latestResult = result;
                 }
-                //take newer results and thus disregard older ones
+                // take newer results and thus disregard older ones
                 else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
                     latestResult = result;
                 }
@@ -446,21 +442,19 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Returns all results of an exercise for give participation.
-     * If the exercise is restricted like {@link QuizExercise} please override this function with the respective filter.
-     * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
+     * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
      * @param participation the participation whose results we are considering
      * @return all results of given participation, or null, if none exist
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults();
+        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 
     /**
-     * Find the participation in participations that belongs to the given exercise
-     * that includes the exercise data, plus the found participation with its most recent relevant result.
-     * Filter everything else that is not relevant
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
+     * result. Filter everything else that is not relevant
      *
      * @param participations the set of participations, wherein to search for the relevant participation
      * @param username
@@ -523,22 +517,12 @@ public abstract class Exercise implements Serializable {
         return Objects.hashCode(getId());
     }
 
-
     @Override
     public String toString() {
-        return "Exercise{" +
-            "id=" + getId() +
-            ", problemStatement='" + getProblemStatement() + "'" +
-            ", gradingInstructions='" + getGradingInstructions() + "'" +
-            ", title='" + getTitle() + "'" +
-            ", shortName='" + getShortName() + "'" +
-            ", releaseDate='" + getReleaseDate() + "'" +
-            ", dueDate='" + getDueDate() + "'" +
-            ", assessmentDueDate='" + getAssessmentDueDate() + "'" +
-            ", maxScore=" + getMaxScore() +
-            ", difficulty='" + getDifficulty() + "'" +
-            ", categories='" + getCategories() + "'" +
-            "}";
+        return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
+                + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
+                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", categories='"
+                + getCategories() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {

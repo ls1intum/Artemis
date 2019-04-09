@@ -84,13 +84,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
             if (optimalModelSubmissions.isEmpty()) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.ok(new Long[] {}); // empty
             }
             return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
         }
         else {
-            // TODO: proper error message Not supported
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(new Long[] {}); // empty
         }
     }
 
