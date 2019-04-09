@@ -45,6 +45,7 @@
     </div>
     <!-- ACTIONS END -->
     <!-- INFORMATION START -->
+    <!-- TODO using startExercise() in these buttons is misleading, we should rather insert the route here -->
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
             jhi-exercise-action-button
@@ -52,6 +53,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewSubmissions' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
+            *ngIf="participationStatus() === QUIZ_SUBMITTED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -61,6 +63,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
+            *ngIf="participationStatus() === QUIZ_FINISHED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
