@@ -77,7 +77,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     initDeleteAnswer(studentAnswer: StudentQuestionAnswer) {
         this.interactAnswer.emit({
             name: QuestionActionName.DELETE,
-            studentAnswer: studentAnswer,
+            studentAnswer,
             studentQuestion: null,
         });
     }
@@ -85,7 +85,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     initEditAnswer(studentAnswer: StudentQuestionAnswer) {
         this.interactAnswer.emit({
             name: QuestionActionName.EDIT,
-            studentAnswer: studentAnswer,
+            studentAnswer,
             studentQuestion: this.studentQuestion,
         });
     }
