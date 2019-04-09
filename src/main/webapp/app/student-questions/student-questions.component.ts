@@ -72,9 +72,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
 
     toggleAnswerMode(studentQuestion: StudentQuestion): void {
         this.isAnswerMode = !this.isAnswerMode;
-        if (studentQuestion) {
-            this.selectedStudentQuestion = studentQuestion;
-        }
+        this.selectedStudentQuestion = studentQuestion;
     }
 
     deleteQuestion(studentQuestion: StudentQuestion) {

@@ -33,9 +33,9 @@
             <div class="col-12 d-flex justify-content-between">
                 <button class="btn btn-outline-primary"
                         (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="!selectedStudentQuestion"
+                <button class="btn btn-primary" *ngIf="!selectedStudentAnswer"
                         (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
-                <button class="btn btn-primary" *ngIf="selectedStudentQuestion"
+                <button class="btn btn-primary" *ngIf="selectedStudentAnswer"
                         (click)="saveAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer" | translate}}</button>
             </div>
         </div>
@@ -48,7 +48,7 @@
                                   (interactQuestion)="interactQuestion($event)"
                                   (interactAnswer)="interactAnswer($event)"
                                   *ngFor="let studentQuestion of studentQuestions"></jhi-student-question-row>
-        <div class="row mb-1" *ngIf="!studentQuestions">
+        <div class="row mb-1" *ngIf="!studentQuestions || studentQuestions.length === 0">
             <div class="col-12">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noQuestions" | translate}}</div>
         </div>
         <div class="row mb-1">
