@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import * as $ from 'jquery';
+
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService } from '../core';
+import { AccountService, WindowRef } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -16,13 +18,16 @@ import { TextExercise, TextExercisePopupService } from 'app/entities/text-exerci
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { Interactable } from 'interactjs';
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     providers: [JhiAlertService],
+    styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent implements OnInit {
+export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     isNewSubmission: boolean;
     areNewAssessments = true;
     exerciseId: number;
@@ -42,6 +47,14 @@ export class ExampleTextSubmissionComponent implements OnInit {
     formattedSampleSolution: string;
     formattedGradingInstructions: string;
 
+    resizableMinWidth = 100;
+    resizableMaxWidth = 1200;
+    resizableMinHeight = 200;
+    resizableMaxHeight = 1500;
+    interactResizableSubmission: Interactable;
+    interactResizableAssessment: Interactable;
+    interactResizableTop: Interactable;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     private exampleSubmissionId: number;
@@ -57,6 +70,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
         private router: Router,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdown,
+        private $window: WindowRef,
         private textExercisePopupService: TextExercisePopupService,
     ) {}
 
@@ -78,6 +92,63 @@ export class ExampleTextSubmissionComponent implements OnInit {
         this.textExercisePopupService.close();
 
         this.loadAll();
+    }
+
+    ngAfterViewInit(): void {
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+
+        this.interactResizableSubmission = interact('.resizable-submission')
+            .resizable({
+                // Enable resize from left edge; triggered by class .resizing-bar
+                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.minWidth = event.rect.width + 'px';
+            });
+
+        this.interactResizableAssessment = interact('.resizable-assessment')
+            .resizable({
+                // Enable resize from left edge; triggered by class .resizing-bar-assessment
+                edges: { left: '.resizing-bar-assessment', right: false, bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.minWidth = event.rect.width + 'px';
+            });
+
+        this.interactResizableTop = interact('.resizable-horizontal')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
+                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element height
+                target.style.minHeight = event.rect.height + 'px';
+                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
+            });
     }
 
     loadAll() {
@@ -118,6 +189,36 @@ export class ExampleTextSubmissionComponent implements OnInit {
             this.createNewExampleTextSubmission();
         } else {
             this.updateExampleTextSubmission();
+        }
+    }
+
+    toggleCollapse($event: any, resizable: string) {
+        const target = $event.toElement || $event.relatedTarget || $event.target;
+        target.blur();
+        let $card;
+
+        if (resizable === 'submission') {
+            $card = $(target).closest('#instructions');
+        } else if (resizable === 'assessment') {
+            $card = $(target).closest('#assessment-instructions');
+        }
+
+        if ($card.hasClass('collapsed')) {
+            $card.removeClass('collapsed');
+            if (resizable === 'submission') {
+                this.interactResizableSubmission.resizable({ enabled: true });
+            } else if (resizable === 'assessment') {
+                this.interactResizableAssessment.resizable({ enabled: true });
+            }
+            $card.css({ 'min-width': this.resizableMinWidth + 'px' });
+        } else {
+            $card.addClass('collapsed');
+            if (resizable === 'submission') {
+                this.interactResizableSubmission.resizable({ enabled: false });
+            } else if (resizable === 'assessment') {
+                this.interactResizableAssessment.resizable({ enabled: false });
+            }
+            $card.css({ 'min-width': '55px' });
         }
     }
 
