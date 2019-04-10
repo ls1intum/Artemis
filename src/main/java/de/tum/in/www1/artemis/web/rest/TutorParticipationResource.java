@@ -78,7 +78,7 @@ public class TutorParticipationResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/tutorParticipations/:participationId/exampleSubmission: add an example submission to the tutor participation
+     * POST /exercises/:exerciseId/exampleSubmission: add an example submission to the tutor participation
      *
      * The tutor has read (if it is a tutorial) or assessed an example submission.
      * If it is a tutorial, the method just records that the tutor has read it.
