@@ -30,8 +30,8 @@
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
                 title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{
-                    currentConflict.causingResult.result.assessor.firstName
-                }} {{ currentConflict.causingResult.result.assessor.lastName }}"
+                    currentConflict.causingConflictingResult.result.assessor.firstName
+                }} {{ currentConflict.causingConflictingResult.result.assessor.lastName }}"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"
@@ -49,7 +49,7 @@
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
-                [centeredElementId]="currentConflict.causingResult.modelElementId"
+                [centeredElementId]="currentConflict.causingConflictingResult.modelElementId"
                 (feedbackChanged)="onFeedbackChanged($event)"
                 [readOnly]="false"
             ></jhi-modeling-assessment>
