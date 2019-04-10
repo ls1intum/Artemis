@@ -19,7 +19,7 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
     mergedFeedbacks: Feedback[];
-    currentFeedbacksCopy: Feedback[];
+    // currentFeedbacksCopy: Feedback[];
     modelHighlightedElementIds: Set<string>;
     highlightColor: string;
     user: User;
@@ -49,13 +49,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts) {
-                this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
-                this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].result.feedbacks));
+                this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingResult.result.feedbacks));
+                // this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
                 this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
                 this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
                 this.updateSelectedConflict();
-                this.model = JSON.parse((this.currentConflict.result.submission as ModelingSubmission).model);
-                this.modelingExercise = this.currentConflict.result.participation.exercise as ModelingExercise;
+                this.model = JSON.parse((this.currentConflict.causingResult.result.submission as ModelingSubmission).model);
+                this.modelingExercise = this.currentConflict.causingResult.result.participation.exercise as ModelingExercise;
             } else {
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
             }
@@ -78,18 +78,24 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onKeepYours() {
-        this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.currentConflict.modelElementId, this.currentConflict.result.feedbacks);
+        this.updateFeedbackInMergedFeedback(
+            this.currentConflict.causingResult.modelElementId,
+            this.currentConflict.causingResult.modelElementId,
+            this.currentConflict.causingResult.result.feedbacks,
+        );
         this.updateCurrentState();
     }
 
     onAcceptOther() {
-        this.updateFeedbackInMergedFeedback(this.currentConflict.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
+        this.updateFeedbackInMergedFeedback(this.currentConflict.causingResult.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
         this.updateCurrentState();
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
-        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.currentConflict.modelElementId);
-        const originalElementAssessment = this.currentConflict.result.feedbacks.find(feedback => feedback.referenceId === this.currentConflict.modelElementId);
+        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.currentConflict.causingResult.modelElementId);
+        const originalElementAssessment = this.currentConflict.causingResult.result.feedbacks.find(
+            feedback => feedback.referenceId === this.currentConflict.causingResult.modelElementId,
+        );
         if (elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
             this.updateCurrentState();
         }
@@ -135,19 +141,19 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     private updateSelectedConflict() {
         this.currentConflict = this.conflicts[this.conflictIndex];
-        this.conflictingResult = this.currentConflict.conflictingResults[0];
+        this.conflictingResult = this.currentConflict.resultsInConflict[0];
         this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
         this.updateHighlightColor();
     }
 
     private updateHighlightedElements() {
-        this.modelHighlightedElementIds = new Set<string>([this.currentConflict.modelElementId]);
+        this.modelHighlightedElementIds = new Set<string>([this.currentConflict.causingResult.modelElementId]);
         this.conflictingModelHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 
     private updateCurrentState() {
-        const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.modelElementId);
+        const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.causingResult.modelElementId);
         const conflictingFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
         if (mergedFeedback.credits !== conflictingFeedback.credits) {
             this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.ESCALATED;

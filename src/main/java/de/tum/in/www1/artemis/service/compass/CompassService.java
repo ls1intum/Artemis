@@ -15,14 +15,11 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.modeling.*;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
-import de.tum.in.www1.artemis.service.compass.conflict.ConflictingResult;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
@@ -193,17 +190,24 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
+    public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
-        List<Conflict> conflicts = new LinkedList<>();
+        List<ModelAssessmentConflict> conflicts = new LinkedList<>();
         elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
             Set<ConflictingResult> elementResultMap = new HashSet<>();
-            feedbacks.forEach(feedback -> elementResultMap.add(new ConflictingResult(feedback.getReferenceElementId(), feedback.getResult())));
-            Conflict conflict = new Conflict();
-            conflict.setModelElementId(elementID);
-            conflict.setResult(result);
-            conflict.setConflictingResults(elementResultMap);
+            feedbacks.forEach(feedback -> {
+                ConflictingResult conflictingResult = new ConflictingResult();
+                conflictingResult.setModelElementId(feedback.getReferenceElementId());
+                conflictingResult.setResult(feedback.getResult());
+                elementResultMap.add(conflictingResult);
+            });
+            ConflictingResult causingResult = new ConflictingResult();
+            causingResult.setModelElementId(elementID);
+            causingResult.setResult(result);
+            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
+            conflict.setCausingResult(causingResult);
+            conflict.setResultsInConflict(elementResultMap);
             conflicts.add(conflict);
         });
         return conflicts;
