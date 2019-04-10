@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -58,6 +58,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -78,15 +79,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
-                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
-                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 }
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
 
                 this.stats.toReview.total = this.exampleSubmissionsToReview.length;
-                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
+                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
                 this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
-                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
+                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
@@ -159,5 +160,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         return 'DRAFT';
+    }
+
+    back() {
+        this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
     }
 }

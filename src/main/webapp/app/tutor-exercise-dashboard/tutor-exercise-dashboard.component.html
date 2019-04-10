@@ -1,16 +1,19 @@
-<jhi-alert></jhi-alert>
-<div *ngIf="exercise !== undefined">
-    <div class="header-container  bg-primary text-white">
-        <h4 class="card-header">
-            <strong>{{ 'arTeMiSApp.tutorExerciseDashboard.pageHeader' | translate }} {{ exercise.title }}</strong>
-        </h4>
-    </div>
-
-    <div class="row mt-3 justify-content-around">
-        <div class="col-2">
-            <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/tutor-dashboard'">&larr;</button>
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                {{ 'arTeMiSApp.tutorExerciseDashboard.pageHeader' | translate }}
+                {{ exercise?.title }}
+            </h2>
         </div>
+    </div>
+</div>
 
+<jhi-alert></jhi-alert>
+
+<div *ngIf="exercise !== undefined">
+    <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
@@ -161,7 +164,7 @@
                     <td>{{ 'arTeMiSApp.tutorExerciseDashboard.new' | translate }}</td>
                     <td></td>
                     <td>
-                        <button routerLink="/text/{{ exercise.id }}/assessment/new" class="btn btn-success">
+                        <button routerLink="/text/{{ exercise.id }}/assessment/new" class="btn btn-success btn-sm">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'arTeMiSApp.tutorExerciseDashboard.startAssessment' | translate }}
                         </button>
                     </td>

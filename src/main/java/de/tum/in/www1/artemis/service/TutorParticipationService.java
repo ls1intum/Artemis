@@ -176,8 +176,8 @@ public class TutorParticipationService {
         // Check if it is a tutorial or not
         boolean isTutorial = originalExampleSubmission.isUsedForTutorial() == Boolean.TRUE;
 
-        // If it is not a tutorial we check the assessment
-        if (!isTutorial) {
+        // If it is a tutorial we check the assessment
+        if (isTutorial) {
             // Retrieve the example feedback created by the instructor
             List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbackForExampleSubmission(exampleSubmission.getId());
 
