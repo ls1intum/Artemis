@@ -15,13 +15,12 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { exampleTextSubmissionRoute } from 'app/example-text-submission/example-text-submission.route';
 import { ExampleTextSubmissionComponent } from 'app/example-text-submission/example-text-submission.component';
 import { ArTEMiSTextAssessmentModule } from 'app/text-assessment';
-import { ResizableInstructionsComponent } from 'app/example-text-submission/resizable-instructions/resizable-instructions.component';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSTextAssessmentModule],
-    declarations: [ExampleTextSubmissionComponent, ResizableInstructionsComponent],
+    declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
     providers: [CourseService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],

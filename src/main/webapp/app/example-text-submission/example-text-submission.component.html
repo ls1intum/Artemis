@@ -37,7 +37,7 @@
 
         <jhi-resizable-instructions
             class="resizable-submission card" id="instructions"
-            [ngStyle]="{ 'min-width.px': 400 }"
+            [ngStyle]="{ 'width.px': 400 }"
             [formattedProblemStatement]="formattedProblemStatement"
             [formattedGradingInstructions]="formattedGradingInstructions"
             [formattedSampleSolution]="formattedSampleSolution"
@@ -73,8 +73,8 @@
                     [disabled]="!assessments || !assessmentsAreValid"
                 >
                     <fa-icon icon="save"></fa-icon>
-                    <span *ngIf="areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.createNewAssessments' | translate }}</span>
-                    <span *ngIf="!areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.updateAssessments' | translate }}</span>
+                    <span *ngIf="areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.createNewAssessment' | translate }}</span>
+                    <span *ngIf="!areNewAssessments">{{ 'arTeMiSApp.exampleSubmission.updateAssessment' | translate }}</span>
                 </button>
             </div>
         </div>
@@ -96,7 +96,7 @@
 
             <jhi-resizable-instructions
                 class="resizable-assessment card mr-4" id="assessment-instructions"
-                [ngStyle]="{ 'min-width.px': 400 }"
+                [ngStyle]="{ 'width.px': 400 }"
                 *ngIf="!isAtLeastInstructor||readOnly||toComplete"
                 [formattedProblemStatement]="formattedProblemStatement"
                 [formattedGradingInstructions]="formattedGradingInstructions"

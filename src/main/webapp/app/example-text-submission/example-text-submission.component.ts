@@ -50,7 +50,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
     resizableMinHeight = 200;
-    resizableMaxHeight = 1500;
     interactResizableSubmission: Interactable;
     interactResizableAssessment: Interactable;
     interactResizableTop: Interactable;
@@ -112,7 +111,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element width
-                target.style.minWidth = event.rect.width + 'px';
+                target.style.width = event.rect.width + 'px';
             });
 
         this.interactResizableAssessment = interact('.resizable-assessment')
@@ -129,17 +128,16 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element width
-                target.style.minWidth = event.rect.width + 'px';
+                target.style.width = event.rect.width + 'px';
             });
 
         this.interactResizableTop = interact('.resizable-horizontal')
             .resizable({
                 // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
                 edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
-                // Set min and max height
+                // Set min height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
                 },
                 inertia: true,
             })
@@ -210,7 +208,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             } else if (resizable === 'assessment') {
                 this.interactResizableAssessment.resizable({ enabled: true });
             }
-            $card.css({ 'min-width': this.resizableMinWidth + 'px' });
+            $card.css({ width: this.resizableMinWidth + 'px' });
         } else {
             $card.addClass('collapsed');
             if (resizable === 'submission') {
@@ -218,7 +216,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             } else if (resizable === 'assessment') {
                 this.interactResizableAssessment.resizable({ enabled: false });
             }
-            $card.css({ 'min-width': '55px' });
+            $card.css({ width: '55px' });
         }
     }
 
@@ -384,6 +382,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.back();
         });
     }
 

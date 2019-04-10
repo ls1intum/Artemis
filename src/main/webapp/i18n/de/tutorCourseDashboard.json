@@ -15,7 +15,10 @@
             "exerciseDueDate": "Fälligkeitsdatum der Übunge",
             "assessmentsDueDate": "Fälligkeitsdatum der Bewertungen",
             "actions": "Aktionen",
-            "notReleased": "Nicht freigegeben"
+            "notReleased": "Nicht freigegeben",
+            "readGradingInstructions": "Bewertungsanweisungen lesen",
+            "trainOnExampleSubmissions": "Übung zu Beispiel-Einreichungen",
+            "assessStudentsSubmissions": "Bewerten Sie die Einreichungen der Studenten."
         }
     }
 }

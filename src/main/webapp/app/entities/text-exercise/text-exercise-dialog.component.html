@@ -89,7 +89,7 @@
                     <button routerLink="text-exercise/{{ textExercise.id }}/example-submission/{{ exampleSubmission.id }}" class="btn btn-link">
                         Example submission {{ i + 1 }}
                     </button>
-                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
+                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" [title]="'arTeMiSApp.exampleSubmission.usedForTutorial' | translate"></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                 </li>
             </ul>
