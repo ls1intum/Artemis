@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.time.ZonedDateTime;
-import java.util.Objects;
 
 /**
  * A Attachment.
@@ -22,7 +23,7 @@ import java.util.Objects;
 public class Attachment implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,6 +33,12 @@ public class Attachment implements Serializable {
 
     @Column(name = "jhi_link")
     private String link;
+
+    @Column(name = "version")
+    private Integer version;
+
+    @Column(name = "upload_date")
+    private ZonedDateTime uploadDate;
 
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
@@ -81,6 +88,32 @@ public class Attachment implements Serializable {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public Attachment version(Integer version) {
+        this.version = version;
+        return this;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public ZonedDateTime getUploadDate() {
+        return uploadDate;
+    }
+
+    public Attachment uploadDate(ZonedDateTime uploadDate) {
+        this.uploadDate = uploadDate;
+        return this;
+    }
+
+    public void setUploadDate(ZonedDateTime uploadDate) {
+        this.uploadDate = uploadDate;
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -158,12 +191,7 @@ public class Attachment implements Serializable {
 
     @Override
     public String toString() {
-        return "Attachment{" +
-            "id=" + getId() +
-            ", name='" + getName() + "'" +
-            ", link='" + getLink() + "'" +
-            ", releaseDate='" + getReleaseDate() + "'" +
-            ", attachmentType='" + getAttachmentType() + "'" +
-            "}";
+        return "Attachment{" + "id=" + getId() + ", name='" + getName() + "'" + ", link='" + getLink() + "'" + ", version='" + getVersion() + "'" + ", uploadDate='"
+                + getUploadDate() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", attachmentType='" + getAttachmentType() + "'" + "}";
     }
 }
