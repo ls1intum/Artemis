@@ -154,6 +154,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * @param feedbacks the list of feedback to filter
      */
     private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
+        if (!feedbacks) {
+            return feedbacks;
+        }
         let availableIds: string[] = this.model.elements.map(element => element.id);
         availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
         return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
