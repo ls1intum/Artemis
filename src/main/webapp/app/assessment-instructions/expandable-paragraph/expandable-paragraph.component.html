@@ -2,4 +2,4 @@
     {{ header }}
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
-<p [ngbCollapse]="isCollapsed">{{ paragraph }}</p>
+<p [ngbCollapse]="isCollapsed" [innerHTML]="text"></p>

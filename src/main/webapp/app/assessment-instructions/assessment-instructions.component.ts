@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import * as interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -11,9 +12,15 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
 
-    constructor() {}
+    formattedProblemStatement: string;
+    formattedGradingCriteria: string;
 
-    ngOnInit() {}
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+
+    ngOnInit() {
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedGradingCriteria = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+    }
 
     ngAfterViewInit(): void {
         interact('.expanded-instructions')

@@ -413,6 +413,8 @@ entity Lecture {
 entity Attachment {
     name String,
     link String,
+    version Integer,
+    uploadDate ZonedDateTime,
     releaseDate ZonedDateTime,
     attachmentType AttachmentType
 }
@@ -421,6 +423,26 @@ enum AttachmentType {
     FILE,
     URL
 }
+
+entity ModelAssessmentConflict {
+    state EscalationState,
+    creationDate ZonedDateTime,
+    resolutionDate ZonedDateTime
+}
+
+entity ConflictingResult {
+    modelElementId String
+}
+
+enum EscalationState {
+    UNHANDLED,
+    ESCALATED_TO_TUTORS_IN_CONFLICT,
+    ESCALATED_TO_INSTRUCTOR,
+    RESOLVED_BY_CAUSER,
+    RESOLVED_BY_OTHER_TUTORS,
+    RESOLVED_BY_INSTRUCTOR
+}
+
 
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
@@ -453,6 +475,7 @@ relationship OneToMany {
     Exercise{attachments} to Attachment{exercise},
     Exercise{studentQuestions} to StudentQuestion{exercise},
     Lecture{studentQuestions} to StudentQuestion{lecture},
+    ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
 }
 
 relationship OneToOne {
@@ -470,6 +493,8 @@ relationship OneToOne {
     ExampleSubmission{submission} to Submission,
     ProgrammingExercise{templateParticipation} to Participation,
     ProgrammingExercise{solutionParticipation} to Participation,
+    ModelAssessmentConflict{causingConflictingResult} to ConflictingResult,
+    ModelAssessmentConflict{updatedFeedback} to Feedback,
 }
 
 relationship ManyToOne {
@@ -490,6 +515,7 @@ relationship ManyToOne {
     GroupNotification{course} to Course,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
+    ModelAssessmentConflict{result} to ExerciseResult,
 }
 
 relationship ManyToMany {
