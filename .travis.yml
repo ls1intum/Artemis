@@ -3,7 +3,7 @@ jobs:
       - stage: test
         language: java
         jdk: openjdk8
-        env: NODE_VERSION=10.15.0
+        env: NODE_VERSION=11.13.0
         cache:
           yarn: true
           directories:
@@ -16,7 +16,7 @@ jobs:
       - stage: test
         language: node_js
         node_js:
-            - 10
+            - 11
         cache:
             yarn: true
         before_install: cd src/main/webapp
