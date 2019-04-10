@@ -61,7 +61,7 @@ public class ModelAssessmentConflict {
         return causingConflictingResult;
     }
 
-    public void setCausingResult(ConflictingResult causingResult) {
+    public void setCausingConflictingResult(ConflictingResult causingResult) {
         this.causingConflictingResult = causingResult;
     }
 
