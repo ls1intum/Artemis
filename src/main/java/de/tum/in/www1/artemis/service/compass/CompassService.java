@@ -70,8 +70,6 @@ public class CompassService {
      */
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
-    private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
-
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             ParticipationRepository participationRepository) {
         this.resultRepository = resultRepository;
@@ -120,12 +118,11 @@ public class CompassService {
         }
 
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        Thread optimalModelThread = optimalModelThreads.get(exerciseId);
-        if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS && (optimalModelThread == null || !optimalModelThread.isAlive())) {
-            // Spawn a new thread for populating optimalModels
-            optimalModelThread = new Thread(() -> this.getNextOptimalModel(exerciseId));
-            optimalModelThreads.put(exerciseId, optimalModelThread);
-            optimalModelThread.start();
+        if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS) {
+            Map.Entry<Long, Grade> optimalModel = this.getNextOptimalModel(exerciseId);
+            if (optimalModel != null) {
+                optimalModels.put(optimalModel.getKey(), optimalModel.getValue());
+            }
         }
         return optimalModels.keySet();
     }
@@ -159,7 +156,7 @@ public class CompassService {
         }
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
         long modelId = submission.getId();
-        return engine.convertToFeedback(engine.getResultForModel(modelId), modelId, submission.getResult());
+        return engine.convertToFeedback(engine.getGradeForModel(modelId), modelId, submission.getResult());
     }
 
     /**
@@ -182,9 +179,9 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(long exerciseId, Result result, List<Feedback> modelingAssessment) {
+    public List<Conflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(result.getSubmission().getId(), modelingAssessment);
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
         List<Conflict> conflicts = new LinkedList<>();
         elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
             Set<ConflictingResult> elementResultMap = new HashSet<>();
@@ -216,7 +213,7 @@ public class CompassService {
                 .orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // only automatically assess when there is not yet an assessment.
         if (result.getAssessmentType() == null) {
-            Grade grade = engine.getResultForModel(modelId);
+            Grade grade = engine.getGradeForModel(modelId);
             // automatic assessment holds confidence and coverage threshold
             if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
                 ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();

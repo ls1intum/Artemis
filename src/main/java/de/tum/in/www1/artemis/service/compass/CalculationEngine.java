@@ -1,27 +1,27 @@
 package de.tum.in.www1.artemis.service.compass;
 
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
-
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gson.JsonObject;
+
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
 public interface CalculationEngine {
 
     Map.Entry<Long, Grade> getNextOptimalModel();
 
     /**
-     * Get the assessment result for a model. If no assessment is saved for the given model, it tries
-     * to create a new one automatically with the existing information of the engine.
+     * Get the assessment result for a model. If no assessment is saved for the given model, it tries to create a new one automatically with the existing information of the engine.
      *
      * @param modelId the id of the model
      * @return the assessment result for the model
      */
-    Grade getResultForModel(long modelId);
+    Grade getGradeForModel(long modelId);
 
     Collection<Long> getModelIds();
 
