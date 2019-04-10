@@ -72,12 +72,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor.model = changes.model.currentValue;
+            this.handleFeedback();
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
-            this.updateElementFeedbackMapping(this.feedbacks);
-            this.updateApollonAssessments(this.feedbacks);
-            this.calculateTotalScore();
+            this.handleFeedback();
         }
         if (changes.highlightedElementIds) {
             if (this.apollonEditor !== null) {
@@ -87,14 +86,16 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    /**
+     * Initializes the Apollon editor after updating the Feedback accordingly. It also subscribes to change
+     * events of Apollon an passes them on to parent components.
+     */
     private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
-        this.updateElementFeedbackMapping(this.feedbacks);
-        this.updateApollonAssessments(this.feedbacks);
-        this.calculateTotalScore();
+        this.handleFeedback();
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
@@ -133,6 +134,29 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             }
         }
         return [...this.elementFeedback.values()];
+    }
+
+    /**
+     * Handles (new) feedback by removing invalid feedback, updating the element-feedback mapping and updating
+     * the assessments for Apollon accordingly. It also calculates the (new) total score of the assessment
+     * which is then shown in the score display component.
+     * This method is called before initializing Apollon and when the feedback or model is updated.
+     */
+    private handleFeedback(): void {
+        this.feedbacks = this.removeInvalidFeedback(this.feedbacks);
+        this.updateElementFeedbackMapping(this.feedbacks);
+        this.updateApollonAssessments(this.feedbacks);
+        this.calculateTotalScore();
+    }
+
+    /**
+     * Removes feedback elements for which the corresponding model element does not exist in the model anymore.
+     * @param feedbacks the list of feedback to filter
+     */
+    private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
+        let availableIds: string[] = this.model.elements.map(element => element.id);
+        availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
     }
 
     /**
@@ -186,6 +210,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    /**
+     * Converts a given feedback list to Apollon assessments and updates the model of Apollon with the new assessments.
+     * @param feedbacks the feedback list to convert and pass on to Apollon
+     */
     private updateApollonAssessments(feedbacks: Feedback[]) {
         if (!feedbacks) {
             return;
