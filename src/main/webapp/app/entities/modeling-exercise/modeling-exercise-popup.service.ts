@@ -69,4 +69,10 @@ export class ModelingExercisePopupService {
         );
         return modalRef;
     }
+
+    close() {
+        if (this.ngbModalRef) {
+            this.ngbModalRef.close();
+        }
+    }
 }

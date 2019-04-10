@@ -115,6 +115,7 @@ public class ModelingSubmissionResource {
         if (!participation.isPresent()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
         }
+        checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
