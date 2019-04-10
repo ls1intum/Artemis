@@ -34,11 +34,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
     ngAfterViewInit(): void {
-        if (this.model) {
-            this.initializeApollonEditor();
-        } else {
-            this.jhiAlertService.error('modelingAssessment.noModel');
-        }
+        this.initializeApollonEditor();
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
             // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);

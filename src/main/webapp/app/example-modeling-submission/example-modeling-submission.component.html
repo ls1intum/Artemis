@@ -49,6 +49,20 @@
             </div>
         </div>
 
+        <div class="col-12 text-right" *ngIf="readOnly">
+            <button (click)="readAndUnderstood()" class="btn btn-success col-3">
+                <fa-icon icon="save"></fa-icon>
+                I have viewed and understood the example
+            </button>
+        </div>
+
+        <div class="col-12 text-right" *ngIf="toComplete">
+            <button class="btn btn-primary col-3" (click)="checkAssessment()"
+                    [disabled]="!feedbacks || !assessmentsAreValid">
+                Submit Assessment
+            </button>
+        </div>
+
         <div class="col-12">
             <p class="mb-3">
                 <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
@@ -60,6 +74,7 @@
                 *ngIf="!assessmentMode"
                 [umlModel]="umlModel"
                 [diagramType]="exercise.diagramType"
+                [readOnly]="readOnly"
             ></jhi-modeling-editor>
             <div class="assessment-container" *ngIf="assessmentMode">
                 <jhi-modeling-assessment
@@ -67,23 +82,10 @@
                     [feedbacks]="result?.feedbacks"
                     [diagramType]="exercise.diagramType"
                     [maxScore]="exercise.maxScore"
+                    [readOnly]="readOnly"
                     (feedbackChanged)="onFeedbackChanged($event)"
                 ></jhi-modeling-assessment>
             </div>
         </div>
-    </div>
-
-    <div class="col-12 text-right" *ngIf="toComplete">
-        <button class="btn btn-primary col-3" (click)="checkAssessment()"
-                [disabled]="!feedbacks || !assessmentsAreValid">
-            Submit Assessment
-        </button>
-    </div>
-
-    <div class="col-12 text-rigth" *ngIf="readOnly">
-        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
-            <fa-icon icon="save"></fa-icon>
-            I have read and understood the example
-        </button>
     </div>
 </div>

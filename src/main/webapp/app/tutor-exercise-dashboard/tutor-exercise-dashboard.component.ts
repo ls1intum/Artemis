@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -13,6 +13,11 @@ import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+
+export interface exampleSubmissionQueryParams {
+    readOnly?: boolean;
+    toComplete?: boolean;
+}
 
 @Component({
     selector: 'jhi-courses',
@@ -58,6 +63,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
+        private router: Router,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
@@ -215,5 +221,22 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         return 'DRAFT';
+    }
+
+    openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
+        if (!this.exercise || !this.exercise.type) {
+            return;
+        }
+        const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
+        // TODO CZ: add both flags and check for value in example submission components
+        let queryParams: exampleSubmissionQueryParams = {};
+        if (readOnly) {
+            queryParams.readOnly = readOnly;
+        }
+        if (toComplete) {
+            queryParams.toComplete = toComplete;
+        }
+
+        this.router.navigate([route], { queryParams: queryParams });
     }
 }
