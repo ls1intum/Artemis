@@ -13,15 +13,11 @@ import org.springframework.stereotype.Service;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
+import de.tum.in.www1.artemis.service.compass.grade.*;
 
 @Service
 public class CompassService {
@@ -35,6 +31,8 @@ public class CompassService {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     private final ParticipationRepository participationRepository;
+
+    private final ModelAssessmentConflictService modelAssessmentConflictService;
 
     /**
      * Map exerciseId to compass CalculationEngines
@@ -64,11 +62,12 @@ public class CompassService {
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ModelAssessmentConflictService modelAssessmentConflictService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.participationRepository = participationRepository;
+        this.modelAssessmentConflictService = modelAssessmentConflictService;
     }
 
     public boolean isSupported(DiagramType diagramType) {
@@ -178,24 +177,9 @@ public class CompassService {
 
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
-        List<ModelAssessmentConflict> conflicts = new LinkedList<>();
-        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
-            Set<ConflictingResult> elementResultMap = new HashSet<>();
-            feedbacks.forEach(feedback -> {
-                ConflictingResult conflictingResult = new ConflictingResult();
-                conflictingResult.setModelElementId(feedback.getReferenceElementId());
-                conflictingResult.setResult(feedback.getResult());
-                elementResultMap.add(conflictingResult);
-            });
-            ConflictingResult causingResult = new ConflictingResult();
-            causingResult.setModelElementId(elementID);
-            causingResult.setResult(result);
-            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
-            conflict.setCausingResult(causingResult);
-            conflict.setResultsInConflict(elementResultMap);
-            conflicts.add(conflict);
-        });
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(result.getSubmission().getId(), modelingAssessment);
+        List<ModelAssessmentConflict> conflicts = modelAssessmentConflictService.createConflicts(elementConflictingFeedbackMapping, result);
+        modelAssessmentConflictService.saveConflicts(conflicts);
         return conflicts;
     }
 
