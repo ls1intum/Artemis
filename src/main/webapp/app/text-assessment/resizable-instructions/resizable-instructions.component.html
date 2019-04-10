@@ -1,0 +1,33 @@
+<div>
+    <!-- Inject resizing bar -->
+    <ng-content select="[resizingbar]"></ng-content>
+
+    <div class="card-header text-white bg-primary" (click)="toggleCollapse($event, toggleCollapseId)">
+        <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
+        <h3 class="card-title">
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div *ngIf="formattedProblemStatement">
+            <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
+            <p [innerHTML]="formattedProblemStatement"></p>
+
+            <hr />
+        </div>
+
+        <div *ngIf="formattedSampleSolution">
+            <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
+            <p [innerHTML]="formattedSampleSolution"></p>
+
+            <hr />
+        </div>
+
+        <div *ngIf="formattedGradingInstructions">
+            <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
+            <p [innerHTML]="formattedGradingInstructions"></p>
+        </div>
+    </div>
+</div>

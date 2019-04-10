@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
@@ -84,13 +86,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
             if (optimalModelSubmissions.isEmpty()) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.ok(new Long[] {}); // empty
             }
             return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
         }
         else {
-            // TODO: proper error message Not supported
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(new Long[] {}); // empty
         }
     }
 

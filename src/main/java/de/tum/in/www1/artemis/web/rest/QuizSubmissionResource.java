@@ -1,22 +1,25 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import java.security.Principal;
+import java.time.ZonedDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.time.ZonedDateTime;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -30,19 +33,19 @@ public class QuizSubmissionResource {
     private static final String ENTITY_NAME = "quizSubmission";
 
     private final QuizExerciseService quizExerciseService;
+
     private final QuizSubmissionService quizSubmissionService;
+
     private final ParticipationService participationService;
 
-    public QuizSubmissionResource(QuizExerciseService quizExerciseService,
-                                  QuizSubmissionService quizSubmissionService,
-                                  ParticipationService participationService) {
+    public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
     }
 
     /**
-     * POST  /courses/:courseId/exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
+     * POST /courses/:courseId/exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
@@ -76,14 +79,15 @@ public class QuizSubmissionResource {
         Participation participation = participationService.startExercise(quizExercise, principal.getName());
         participation.setExercise(quizExercise);
         if (!quizExercise.isEnded() || !quizExercise.isIsOpenForPractice()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet.")).body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert("submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet.")).body(null);
         }
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
-        for (SubmittedAnswer answer: quizSubmission.getSubmittedAnswers()) {
+        for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
             answer.getQuizQuestion().setQuizQuestionStatistic(null);
         }
 
@@ -95,8 +99,7 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * POST  /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode.
-     * Note that in this case, nothing will be saved in database.
+     * POST /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode. Note that in this case, nothing will be saved in database.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation

@@ -81,6 +81,7 @@ description = 'Automated Assessment Management System for Interactive Learning'
 bootWar {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
 }
+// Command for production build: './gradlew -Pprod bootWar'
 
 war {
     webAppDirName = 'build/www/'

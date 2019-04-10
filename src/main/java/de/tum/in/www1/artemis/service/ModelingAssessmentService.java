@@ -9,12 +9,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;

@@ -1,22 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.exception.GitException;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +15,25 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+
 /**
  * Service Implementation for managing Exercise.
  */
@@ -42,24 +44,26 @@ public class ExerciseService {
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final ExerciseRepository exerciseRepository;
+
     private final UserService userService;
+
     private final ParticipationService participationService;
+
     private final AuthorizationCheckService authCheckService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private final Optional<VersionControlService> versionControlService;
+
     private final Optional<GitService> gitService;
+
     private final QuizStatisticService quizStatisticService;
+
     private final QuizScheduleService quizScheduleService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository,
-                           UserService userService,
-                           ParticipationService participationService,
-                           AuthorizationCheckService authCheckService,
-                           Optional<ContinuousIntegrationService> continuousIntegrationService,
-                           Optional<VersionControlService> versionControlService,
-                           Optional<GitService> gitService,
-                           QuizStatisticService quizStatisticService,
-                           QuizScheduleService quizScheduleService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
+            QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -93,8 +97,7 @@ public class ExerciseService {
         log.debug("Request to get all Exercises");
         List<Exercise> result = exerciseRepository.findAll();
         User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<Exercise> userExercises = result.stream().filter(
-            exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
+        Stream<Exercise> userExercises = result.stream().filter(exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
         return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
     }
@@ -102,32 +105,30 @@ public class ExerciseService {
     /**
      * Get all exercises by courseID
      *
-     * @param course  for return of exercises in course
+     * @param course for return of exercises in course
      * @return the list of entities
      */
     @Transactional(readOnly = true)
     public List<Exercise> findAllExercisesByCourseId(Course course, User user) {
         List<Exercise> exercises = null;
-        if (authCheckService.isAdmin() ||
-            authCheckService.isInstructorInCourse(course, user) ||
-            authCheckService.isTeachingAssistantInCourse(course, user)) {
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findAllByCourseId(course.getId());
-        }   return exercises;
+        }
+        return exercises;
     }
 
     @Transactional(readOnly = true)
     public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
         List<Exercise> exercises = null;
-        if (authCheckService.isAdmin() ||
-            authCheckService.isInstructorInCourse(course, user) ||
-            authCheckService.isTeachingAssistantInCourse(course, user)) {
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
             // user is student for this course and might not have the right to see it so we have to filter
-            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
+            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal)
+                    : exerciseRepository.findByCourseId(course.getId());
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
@@ -157,15 +158,15 @@ public class ExerciseService {
         }
         if (exercise.get() instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise.get();
-            //eagerly load questions and statistic
+            // eagerly load questions and statistic
             quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
         }
         else if (exercise.get() instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise.get();
-            //eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((Participation)Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((Participation)Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+            // eagerly load templateParticipation and solutionParticipation
+            programmingExercise.setTemplateParticipation((Participation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((Participation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
         }
         return exercise.get();
     }
@@ -180,7 +181,7 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long id) {
         log.debug("Request to find Exercise with participations loaded: {}", id);
         Exercise exercise = findOne(id);
-        if(Optional.ofNullable(exercise).isPresent()) {
+        if (Optional.ofNullable(exercise).isPresent()) {
             exercise.getParticipations().size();
         }
         return exercise;
@@ -191,7 +192,7 @@ public class ExerciseService {
      *
      * @param exercise
      */
-    @Transactional(noRollbackFor={Throwable.class})
+    @Transactional(noRollbackFor = { Throwable.class })
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -205,18 +206,18 @@ public class ExerciseService {
             // refetch exercise to make sure we have an updated version
             exercise = findOneLoadParticipations(exercise.getId());
 
-            //for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+            // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
             quizExercise.setReleaseDate(null);
 
-
-            //TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz exercise resource
+            // TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz
+            // exercise resource
             // which delegates some functionality to the exercise service
 
-            //in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+            // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
             quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
             quizScheduleService.clearQuizData(quizExercise.getId());
 
@@ -228,9 +229,9 @@ public class ExerciseService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exercise the exercise to be deleted
+     * @param exercise                     the exercise to be deleted
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted
-     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted
+     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted
      */
     @Transactional
     public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
@@ -269,7 +270,7 @@ public class ExerciseService {
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
-    @Transactional(noRollbackFor={Throwable.class})
+    @Transactional(noRollbackFor = { Throwable.class })
     public void cleanup(Long id, boolean deleteRepositories) {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
@@ -278,12 +279,13 @@ public class ExerciseService {
             exercise.getParticipations().forEach(participationService::cleanupBuildPlan);
 
             if (!deleteRepositories) {
-                return;    //in this case, we are done
+                return;    // in this case, we are done
             }
 
             exercise.getParticipations().forEach(participationService::cleanupRepository);
 
-        } else {
+        }
+        else {
             log.warn("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
         }
     }
@@ -311,17 +313,18 @@ public class ExerciseService {
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                        if(!allowInlineEditor){ //if onlineeditor is not allowed we are free to delete
-                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                        if (!allowInlineEditor) { // if onlineeditor is not allowed we are free to delete
+                            log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                             gitService.get().deleteLocalRepository(participation);
                         }
-                        if (allowInlineEditor && !repoAlreadyExists){ //if onlineEditor is allowed only delete if the repo didn't exist beforehand
-                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                        if (allowInlineEditor && !repoAlreadyExists) { // if onlineEditor is allowed only delete if the repo didn't exist beforehand
+                            log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                             gitService.get().deleteLocalRepository(participation);
                         }
 
                     }
-                } catch (IOException | GitException | InterruptedException ex) {
+                }
+                catch (IOException | GitException | InterruptedException ex) {
                     log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
                 }
             });
@@ -329,16 +332,18 @@ public class ExerciseService {
                 try {
                     // create a large zip file with all zipped repos and provide it for download
                     log.debug("Create zip file for all repositories");
-                    zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() +studentIds.hashCode()+ ".zip");
+                    zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
+                            exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
                     createZipFile(zipFilePath, zippedRepoFiles);
                     scheduleForDeletion(zipFilePath, 10);
 
                     log.debug("Delete all temporary zip repo files");
-                    //delete the temporary zipped repo files
+                    // delete the temporary zipped repo files
                     for (Path zippedRepoFile : zippedRepoFiles) {
                         Files.delete(zippedRepoFile);
                     }
-                } catch (IOException ex) {
+                }
+                catch (IOException ex) {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
             }
@@ -354,7 +359,7 @@ public class ExerciseService {
         return new java.io.File(zipFilePath.toString());
     }
 
-    //does not delete anything
+    // does not delete anything
     @Transactional(readOnly = true)
     public java.io.File archive(Long id) {
         Exercise exercise = findOneLoadParticipations(id);
@@ -364,36 +369,38 @@ public class ExerciseService {
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 try {
-                    if (participation.getRepositoryUrl() != null) {     //ignore participations without repository URL
-                        //1. clone the repository
+                    if (participation.getRepositoryUrl() != null) {     // ignore participations without repository URL
+                        // 1. clone the repository
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
-                        //2. zip repository and collect the zip file
+                        // 2. zip repository and collect the zip file
                         log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
-                        //3. delete the locally cloned repo again
+                        // 3. delete the locally cloned repo again
                         gitService.get().deleteLocalRepository(participation);
                     }
-                } catch (IOException | GitException | InterruptedException ex) {
+                }
+                catch (IOException | GitException | InterruptedException ex) {
                     log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
-
 
             if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
                 try {
                     // create a large zip file with all zipped repos and provide it for download
                     log.info("Create zip file for all repositories");
-                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
+                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
+                            exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
                     createZipFile(finalZipFilePath, zippedRepoFiles);
                     scheduleForDeletion(finalZipFilePath, 300);
 
                     log.info("Delete all temporary zip repo files");
-                    //delete the temporary zipped repo files
+                    // delete the temporary zipped repo files
                     for (Path zippedRepoFile : zippedRepoFiles) {
                         Files.delete(zippedRepoFile);
                     }
-                } catch (IOException ex) {
+                }
+                catch (IOException ex) {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
             }
@@ -409,21 +416,19 @@ public class ExerciseService {
         return new java.io.File(finalZipFilePath.toString());
     }
 
-
     private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream()
-                .filter(path -> !Files.isDirectory(path))
-                .forEach(path -> {
-                    ZipEntry zipEntry = new ZipEntry(path.toString());
-                    try {
-                        zipOutputStream.putNextEntry(zipEntry);
-                        Files.copy(path, zipOutputStream);
-                        zipOutputStream.closeEntry();
-                    } catch (Exception e) {
-                        log.error("Create zip file error", e);
-                    }
-                });
+            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(path.toString());
+                try {
+                    zipOutputStream.putNextEntry(zipEntry);
+                    Files.copy(path, zipOutputStream);
+                    zipOutputStream.closeEntry();
+                }
+                catch (Exception e) {
+                    log.error("Create zip file error", e);
+                }
+            });
         }
     }
 
@@ -439,7 +444,8 @@ public class ExerciseService {
                 log.info("Delete file " + path);
                 Files.delete(path);
                 futures.remove(path);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("Deleting the file " + path + " did not work", e);
             }
         }, delay, UNITS);

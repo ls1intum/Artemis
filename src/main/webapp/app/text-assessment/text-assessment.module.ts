@@ -14,12 +14,20 @@ import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/te
 import { SortByModule } from 'app/components/pipes';
 import { TextSharedModule } from 'app/text-shared/text-shared.module';
 import { RouterModule } from '@angular/router';
+import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
     imports: [CommonModule, SortByModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule],
-    declarations: [TextAssessmentComponent, TextSelectDirective, TextAssessmentEditorComponent, TextAssessmentDetailComponent, TextAssessmentDashboardComponent],
-    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent],
+    declarations: [
+        TextAssessmentComponent,
+        TextSelectDirective,
+        TextAssessmentEditorComponent,
+        TextAssessmentDetailComponent,
+        TextAssessmentDashboardComponent,
+        ResizableInstructionsComponent,
+    ],
+    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent, ResizableInstructionsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
