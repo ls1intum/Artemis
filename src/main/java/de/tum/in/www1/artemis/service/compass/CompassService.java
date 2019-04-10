@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -208,23 +207,8 @@ public class CompassService {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
         Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
-        List<ModelAssessmentConflict> conflicts = new LinkedList<>();
-        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
-            Set<ConflictingResult> elementResultMap = new HashSet<>();
-            feedbacks.forEach(feedback -> {
-                ConflictingResult conflictingResult = new ConflictingResult();
-                conflictingResult.setModelElementId(feedback.getReferenceElementId());
-                conflictingResult.setResult(feedback.getResult());
-                elementResultMap.add(conflictingResult);
-            });
-            ConflictingResult causingResult = new ConflictingResult();
-            causingResult.setModelElementId(elementID);
-            causingResult.setResult(result);
-            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
-            conflict.setCausingResult(causingResult);
-            conflict.setResultsInConflict(elementResultMap);
-            conflicts.add(conflict);
-        });
+        List<ModelAssessmentConflict> conflicts = conflictService.createConflicts(elementConflictingFeedbackMapping, result);
+        conflictService.saveConflicts(conflicts);
         return conflicts;
     }
 
