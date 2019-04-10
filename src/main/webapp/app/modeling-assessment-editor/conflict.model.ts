@@ -3,7 +3,7 @@ import { Moment } from 'moment';
 
 export class Conflict {
     id: number;
-    causingResult: ConflictingResult;
+    causingConflictingResult: ConflictingResult;
     state: EscalationState;
     creationDate: Moment;
     resolutionDate: Moment;
