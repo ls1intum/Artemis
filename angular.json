@@ -3,14 +3,49 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ar-te-mi-s": {
+    "artemis": {
       "root": "",
       "sourceRoot": "src/main/webapp",
       "projectType": "application",
-      "architect": {}
+      "architect": {
+          "build": {
+              "builder": "@angular-devkit/build-angular:browser",
+              "options": {
+                  "outputPath": "dist/artemis",
+                  "index": "src/main/webapp/index.html",
+                  "main": "src/main/webapp/app/app.main.ts",
+                  "polyfills": "src/main/webapp/app/polyfills.ts",
+                  "tsConfig": "tsconfig.json",
+                  "assets": [
+                      "./src/main/webapp/favicon.ico",
+                      "./src/main/webapp/images/**.*",
+                  ],
+                  "styles": [
+                      "src/main/webapp/content/scss/global.scss"
+                  ],
+                  "scripts": [
+                  ]
+              },
+              "configurations": {
+                  "production": {
+                      "fileReplacements": [
+                      ],
+                      "optimization": true,
+                      "outputHashing": "all",
+                      "sourceMap": false,
+                      "extractCss": true,
+                      "namedChunks": false,
+                      "aot": true,
+                      "extractLicenses": true,
+                      "vendorChunk": false,
+                      "buildOptimizer": true
+                  }
+              }
+          }
+      }
     }
   },
-  "defaultProject": "ar-te-mi-s",
+  "defaultProject": "artemis",
   "cli": {
     "packageManager": "yarn"
   },
