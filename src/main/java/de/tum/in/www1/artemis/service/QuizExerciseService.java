@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.repository.*;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -13,10 +13,13 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.repository.*;
 
 @Service
 @Transactional
@@ -25,26 +28,29 @@ public class QuizExerciseService {
     private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
     private final QuizExerciseRepository quizExerciseRepository;
+
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
+
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
+
     private final ParticipationService participationService;
+
     private final AuthorizationCheckService authCheckService;
+
     private final ResultRepository resultRepository;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
+
     private final UserService userService;
+
     private final ObjectMapper objectMapper;
 
-    public QuizExerciseService(UserService userService,
-                               QuizExerciseRepository quizExerciseRepository,
-                               DragAndDropMappingRepository dragAndDropMappingRepository,
-                               ShortAnswerMappingRepository shortAnswerMappingRepository,
-                               ParticipationService participationService,
-                               AuthorizationCheckService authCheckService,
-                               ResultRepository resultRepository,
-                               QuizSubmissionRepository quizSubmissionRepository,
-                               SimpMessageSendingOperations messagingTemplate,
-                               MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+    public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
@@ -58,9 +64,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Save the given quizExercise to the database
-     * and make sure that objects with references to one another
-     * are saved in the correct order to avoid PersistencyExceptions
+     * Save the given quizExercise to the database and make sure that objects with references to one another are saved in the correct order to avoid PersistencyExceptions
      *
      * @param quizExercise the quiz exercise to save
      * @return the saved quiz exercise
@@ -69,13 +73,14 @@ public class QuizExerciseService {
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
-        // fix references in all drag and drop and short answer questions  (step 1/2)
+        // fix references in all drag and drop and short answer questions (step 1/2)
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dragAndDropQuestion);
-            } else if (quizQuestion instanceof ShortAnswerQuestion){
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion) {
                 ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
@@ -84,7 +89,7 @@ public class QuizExerciseService {
 
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
-        //       and delete the now orphaned entries from the database
+        // and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
@@ -93,7 +98,8 @@ public class QuizExerciseService {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
                 // restore references from index after save
                 restoreCorrectMappingsFromIndices(dragAndDropQuestion);
-            } else if (quizQuestion instanceof ShortAnswerQuestion) {
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion) {
                 ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
                 // restore references from index after save
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
@@ -103,8 +109,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Save the given quizExercise to the database
-     * Note: Use this method if you are sure that there are no new entities
+     * Save the given quizExercise to the database Note: Use this method if you are sure that there are no new entities
      *
      * @param quizExercise the quiz exercise to save
      * @return the saved quiz exercise
@@ -124,14 +129,10 @@ public class QuizExerciseService {
         log.debug("REST request to get all QuizExercises");
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
         User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
+        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(exercise -> {
+            Course course = exercise.getCourse();
+            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        });
         return authorizedExercises.collect(Collectors.toList());
     }
 
@@ -206,9 +207,7 @@ public class QuizExerciseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourse();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return new LinkedList<>();
             }
         }
@@ -244,14 +243,13 @@ public class QuizExerciseService {
     }
 
     /**
-     * adjust existing results if an answer or and question was deleted
-     * and recalculate the scores
+     * adjust existing results if an answer or and question was deleted and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
      */
     @Transactional
     public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
-        //change existing results if an answer or and question was deleted
+        // change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
@@ -266,9 +264,9 @@ public class QuizExerciseService {
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
 
-            //recalculate existing score
+            // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise);
-            //update Successful-Flag in Result
+            // update Successful-Flag in Result
             result.getParticipation().setExercise(quizExercise);
             result.setSubmission(quizSubmission);
             result.evaluateSubmission();
@@ -280,13 +278,14 @@ public class QuizExerciseService {
 
     @Transactional(readOnly = true)
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
-        try{
+        try {
             long start = System.currentTimeMillis();
             Class view = viewForStudentsInQuizExercise(quizExercise);
             byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
             log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
-        } catch (JsonProcessingException e) {
+        }
+        catch (JsonProcessingException e) {
             log.error("Exception occurred while serializing quiz exercise: {}", e);
         }
     }
@@ -300,13 +299,12 @@ public class QuizExerciseService {
     public boolean userHasTAPermissions(QuizExercise quizExercise) {
         Course course = quizExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isTeachingAssistantInCourse(course, user) ||
-            authCheckService.isInstructorInCourse(course, user) ||
-            authCheckService.isAdmin();
+        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
     }
 
     /**
      * Check if the current user is allowed to see the given exercise
+     * 
      * @param quizExercise the exercise to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
@@ -316,15 +314,18 @@ public class QuizExerciseService {
 
     /**
      * get the view for students in the given quiz
+     * 
      * @param quizExercise the quiz to get the view for
      * @return the view depending on the current state of the quiz
      */
     public Class viewForStudentsInQuizExercise(QuizExercise quizExercise) {
         if (!quizExercise.isStarted()) {
             return QuizView.Before.class;
-        } else if (quizExercise.isSubmissionAllowed()) {
+        }
+        else if (quizExercise.isSubmissionAllowed()) {
             return QuizView.During.class;
-        } else {
+        }
+        else {
             return QuizView.After.class;
         }
     }
