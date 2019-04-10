@@ -160,7 +160,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (submit) {
             List<Conflict> conflicts = new ArrayList<>();
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                conflicts = compassService.getConflicts(exerciseId, result, result.getFeedbacks());
+                try {
+                    conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
+                }
+                catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
+                    log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
+                }
             }
             if (!conflicts.isEmpty() && !ignoreConflict) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);

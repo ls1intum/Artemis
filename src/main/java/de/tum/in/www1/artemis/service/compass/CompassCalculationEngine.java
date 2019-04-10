@@ -51,7 +51,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         for (ModelingSubmission submission : submissions) {
             String model = submission.getModel();
             if (model != null) {
-                buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
+                buildModel(submission);
                 buildAssessment(submission);
                 modelSelector.addAlreadyAssessedModel(submission.getId());
             }
@@ -61,13 +61,16 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     * @param submissionId       ID of submission the modelingAssessment belongs to
+     * @param modelingSubmission modelingSubmission the modelingAssessment belongs to
      * @param modelingAssessment assessment to check for conflicts
      * @return a list of conflicts modelingAssessment causes with the current manual assessment data
      */
-    public Map<String, List<Feedback>> getConflictingFeedbacks(long submissionId, List<Feedback> modelingAssessment) {
+    public Map<String, List<Feedback>> getConflictingFeedbacks(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
         HashMap<String, List<Feedback>> elementConflictingFeedbackMapping = new HashMap<>();
-        UMLClassModel model = modelIndex.getModel(submissionId);
+        UMLClassModel model = getModel(modelingSubmission);
+        if (model == null) {
+            return elementConflictingFeedbackMapping;
+        }
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
             assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
@@ -82,9 +85,26 @@ public class CompassCalculationEngine implements CalculationEngine {
         return elementConflictingFeedbackMapping;
     }
 
-    private void buildModel(long id, JsonObject jsonModel) {
+    private UMLClassModel getModel(ModelingSubmission modelingSubmission) {
+        UMLClassModel model = modelIndex.getModel(modelingSubmission.getId());
+        // TODO properly handle this case and make sure after server restart the modelIndex is reloaded properly
+        if (model == null) {
+            // handle the case that model is null (e.g. after server restart)
+            buildModel(modelingSubmission);
+            model = modelIndex.getModel(modelingSubmission.getId());
+        }
+        return model;
+    }
+
+    private void buildModel(ModelingSubmission modelingSubmission) {
+        if (modelingSubmission.getModel() != null) {
+            buildModel(modelingSubmission.getId(), new JsonParser().parse(modelingSubmission.getModel()).getAsJsonObject());
+        }
+    }
+
+    private void buildModel(long modelSubmissionId, JsonObject jsonModel) {
         try {
-            UMLClassModel model = JSONParser.buildModelFromJSON(jsonModel, id);
+            UMLClassModel model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         }
@@ -138,7 +158,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (optimalModelId == null) {
             return null;
         }
-        Grade grade = getResultForModel(optimalModelId);
+        Grade grade = getGradeForModel(optimalModelId);
         // Should never happen
         if (grade == null) {
             grade = new CompassGrade();
@@ -147,7 +167,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     @Override
-    public Grade getResultForModel(long modelId) {
+    public Grade getGradeForModel(long modelId) {
         lastUsed = LocalDateTime.now();
         if (!modelIndex.getModelMap().containsKey(modelId)) {
             return null;
@@ -200,7 +220,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     public Map<Long, Grade> getModelsWaitingForAssessment() {
         Map<Long, Grade> optimalModels = new HashMap<>();
         for (long modelId : modelSelector.getModelsWaitingForAssessment()) {
-            optimalModels.put(modelId, getResultForModel(modelId));
+            optimalModels.put(modelId, getGradeForModel(modelId));
         }
         return optimalModels;
     }
