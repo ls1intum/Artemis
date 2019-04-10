@@ -56,6 +56,8 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
+        // Apollon doesn't need assessments in Modeling mode
+        this.removeAssessments(this.umlModel);
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             model: this.umlModel,
             mode: ApollonMode.Modelling,
@@ -65,10 +67,25 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     }
 
     /**
-     * Returns the current model of the Apollon editor.
+     * Removes the Assessments from a given UMLModel. In modeling mode the assessments are not needed.
+     * Also they should not be sent to the server and persisted as part of the model JSON.
+     *
+     * @param umlModel the model for which the assessments should be removed
+     */
+    private removeAssessments(umlModel: UMLModel): void {
+        if (umlModel) {
+            umlModel.assessments = [];
+        }
+    }
+
+    /**
+     * Returns the current model of the Apollon editor. It removes the assessment first, as it should not be part
+     * of the model outside of Apollon.
      */
     getCurrentModel(): UMLModel {
-        return this.apollonEditor.model;
+        const currentModel: UMLModel = this.apollonEditor.model;
+        this.removeAssessments(currentModel);
+        return currentModel;
     }
 
     /**
@@ -80,7 +97,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
-            this.apollonEditor.model = changes.umlModel.currentValue;
+            this.umlModel = changes.umlModel.currentValue;
+            // Apollon doesn't need assessments in Modeling mode
+            this.removeAssessments(this.umlModel);
+            this.apollonEditor.model = this.umlModel;
         }
     }
 

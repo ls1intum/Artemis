@@ -7,8 +7,11 @@ import java.util.stream.Collectors;
 import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
@@ -17,23 +20,27 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 @Transactional
 public class ModelingSubmissionService {
+
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     private final ResultRepository resultRepository;
+
     private final CompassService compassService;
+
     private final ParticipationService participationService;
+
     private final ParticipationRepository participationRepository;
 
-
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository, CompassService compassService,
+            ParticipationService participationService, ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
         this.participationRepository = participationRepository;
     }
-
 
     /**
      * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
@@ -50,12 +57,12 @@ public class ModelingSubmissionService {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
             if (submission.isPresent()) {
                 if (submittedOnly && !submission.get().isSubmitted()) {
-                    //filter out non submitted submissions if the flag is set to true
+                    // filter out non submitted submissions if the flag is set to true
                     continue;
                 }
                 submissions.add(submission.get());
             }
-            //avoid infinite recursion
+            // avoid infinite recursion
             participation.getExercise().setParticipations(null);
         }
         // TODO CZ: test if it works + cleanup
@@ -67,7 +74,6 @@ public class ModelingSubmissionService {
 //        });
         return submissions;
     }
-
 
     /**
      * Given an exercise id, find a random modeling submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
@@ -88,7 +94,6 @@ public class ModelingSubmissionService {
             })
             .findAny();
     }
-
 
     /**
      * Given an exercise id and a tutor id, it returns all the modeling submissions where the tutor has a result associated
@@ -116,13 +121,10 @@ public class ModelingSubmissionService {
         }).collect(Collectors.toList());
     }
 
-
     /**
-     * Saves the given submission and the corresponding model and creates the result if necessary.
-     * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
-     * Is used for creating and updating modeling submissions.
-     * If it is used for a submit action, Compass is notified about the new model.
-     * Rolls back if inserting fails - occurs for concurrent createModelingSubmission() calls.
+     * Saves the given submission and the corresponding model and creates the result if necessary. Furthermore, the submission is added to the AutomaticSubmissionService if not
+     * submitted yet. Is used for creating and updating modeling submissions. If it is used for a submit action, Compass is notified about the new model. Rolls back if inserting
+     * fails - occurs for concurrent createModelingSubmission() calls.
      *
      * @param modelingSubmission the submission to notifyCompass
      * @param modelingExercise   the exercise to notifyCompass in
@@ -144,7 +146,8 @@ public class ModelingSubmissionService {
             notifyCompass(modelingSubmission, modelingExercise);
             checkAutomaticResult(modelingSubmission);
             participation.setInitializationState(InitializationState.FINISHED);
-        } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
+        }
+        else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
             User user = participation.getStudent();
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
@@ -161,12 +164,12 @@ public class ModelingSubmissionService {
         return modelingSubmission;
     }
 
-
     /**
      * Creates and sets new Result object in given submission and stores changes to the database.
+     *
      * @param submission
      */
-    public void setNewResult(ModelingSubmission submission){
+    public void setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
@@ -174,7 +177,6 @@ public class ModelingSubmissionService {
         resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
     }
-
 
     /**
      * Adds a model to compass service to include it in the automatic grading process.
@@ -188,36 +190,31 @@ public class ModelingSubmissionService {
         }
     }
 
-
     public ModelingSubmission findOneWithEagerResult(Long id) {
-        return modelingSubmissionRepository.findByIdWithEagerResult(id)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+        return modelingSubmissionRepository.findByIdWithEagerResult(id).orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     public ModelingSubmission findOneWithEagerResultAndFeedback(Long id) {
         return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(id)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
-
     /**
-     * Check if Compass could create an automatic assessment (i.e. Result). If an automatic assessment could be found,
-     * the corresponding Result and ModelingSubmission entities are updated accordingly.
-     * This method is called after Compass is notified about a new model which triggers the automatic assessment
-     * attempt.
+     * Check if Compass could create an automatic assessment (i.e. Result). If an automatic assessment could be found, the corresponding Result and ModelingSubmission entities are
+     * updated accordingly. This method is called after Compass is notified about a new model which triggers the automatic assessment attempt.
      *
      * @param modelingSubmission the modeling submission that should be updated with the automatic assessment
      */
     public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
         Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
-        boolean automaticAssessmentAvailable = optionalAutomaticResult.isPresent() &&
-            optionalAutomaticResult.get().getAssessmentType().equals(AssessmentType.AUTOMATIC);
+        boolean automaticAssessmentAvailable = optionalAutomaticResult.isPresent() && optionalAutomaticResult.get().getAssessmentType().equals(AssessmentType.AUTOMATIC);
 
         if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
-            //use the automatic result if available
+            // use the automatic result if available
             Result result = optionalAutomaticResult.get();
-            result.submission(modelingSubmission).participation(participation); // TODO CZ: do we really need to update the result? this is already done in CompassService#assessAutomatically
+            result.submission(modelingSubmission).participation(participation); // TODO CZ: do we really need to update the result? this is already done in
+                                                                                // CompassService#assessAutomatically
             modelingSubmission.setResult(result);
             participation.addResult(modelingSubmission.getResult()); // TODO CZ: does this even do anything?
             resultRepository.save(result); // TODO CZ: is this necessary? isn't the result saved together with the modeling submission in the next line anyway?

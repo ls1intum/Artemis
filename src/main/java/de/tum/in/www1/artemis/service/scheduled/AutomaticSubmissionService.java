@@ -1,27 +1,29 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
-import de.tum.in.www1.artemis.service.ParticipationService;
+import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.time.ZonedDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 
 /*
- * This service handles automatic submission after exercises ended. Currently it is only used for modeling exercises.
- * It manages a hash map with submissions, which stores not submitted submissions. It checks periodically, whether
- * the exercise (the submission belongs to) has ended yet and submits it automatically if that's the case.
+ * This service handles automatic submission after exercises ended. Currently it is only used for modeling exercises. It manages a hash map with submissions, which stores not
+ * submitted submissions. It checks periodically, whether the exercise (the submission belongs to) has ended yet and submits it automatically if that's the case.
  */
 @Service
 public class AutomaticSubmissionService {
@@ -43,16 +45,17 @@ public class AutomaticSubmissionService {
     private ScheduledFuture scheduledFuture;
 
     private final ExerciseService exerciseService;
+
     private final ParticipationService participationService;
+
     private final ModelingSubmissionService modelingSubmissionService;
+
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public AutomaticSubmissionService(ExerciseService exerciseService,
-                                      ParticipationService participationService,
-                                      ModelingSubmissionService modelingSubmissionService,
-                                      ModelingSubmissionRepository modelingSubmissionRepository,
-                                      SimpMessageSendingOperations messagingTemplate) {
+    public AutomaticSubmissionService(ExerciseService exerciseService, ParticipationService participationService, ModelingSubmissionService modelingSubmissionService,
+            ModelingSubmissionRepository modelingSubmissionRepository, SimpMessageSendingOperations messagingTemplate) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.modelingSubmissionService = modelingSubmissionService;
@@ -80,9 +83,9 @@ public class AutomaticSubmissionService {
     /**
      * add a submission to the submissionHashMap
      *
-     * @param exerciseId     the exerciseId of the exercise the submission belongs to (first Key)
-     * @param username       the username of the user, who submitted the submission (second Key)
-     * @param submission     the submission, which should be added (Value)
+     * @param exerciseId the exerciseId of the exercise the submission belongs to (first Key)
+     * @param username   the username of the user, who submitted the submission (second Key)
+     * @param submission the submission, which should be added (Value)
      */
     public static void updateSubmission(Long exerciseId, String username, Submission submission) {
 
@@ -116,7 +119,8 @@ public class AutomaticSubmissionService {
                 if (exercise.isEnded()) {
                     log.debug("exercise {} ended", exercise.getId());
                     submissions = submissionHashMap.remove(exerciseId);
-                } else {
+                }
+                else {
                     submissions = submissionHashMap.get(exerciseId);
                 }
 
@@ -126,15 +130,15 @@ public class AutomaticSubmissionService {
                     log.info("Processed {} submissions after {} ms in exercise {}", num, System.currentTimeMillis() - start, exercise.getTitle());
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Exception in AutomaticSubmissionService:\n{}", e.getMessage());
         }
     }
 
     /**
-     * check if the user submitted the submission or if the exercise has ended:
-     * if true: -> Update Participation and save to Database (DB Write)
-     * Remove processed Submissions from SubmissionHashMap
+     * check if the user submitted the submission or if the exercise has ended: if true: -> Update Participation and save to Database (DB Write) Remove processed Submissions from
+     * SubmissionHashMap
      *
      * @param exercise          the exercise which should be checked
      * @param userSubmissionMap a Map with all submissions for the given exercise mapped by the username
@@ -159,8 +163,9 @@ public class AutomaticSubmissionService {
                     if (submission != null) {
                         counter++;
                     }
-                // second case: the exercise has ended
-                } else if (exercise.isEnded()) {
+                    // second case: the exercise has ended
+                }
+                else if (exercise.isEnded()) {
                     Submission submission = userSubmissionMap.remove(username);
                     log.debug("exercise ended for submission {}", submission.getId());
                     Participation participation = submission.getParticipation();
@@ -184,7 +189,8 @@ public class AutomaticSubmissionService {
                         counter++;
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("Exception in handleSubmissions() for {} in exercise {}:\n{}", username, exercise.getId(), e.getMessage());
             }
         }
@@ -193,11 +199,9 @@ public class AutomaticSubmissionService {
     }
 
     /**
-     * Updates the participation for a given submission.
-     * The participation is set to FINISHED.
-     * Currently only handles modeling submissions.
+     * Updates the participation for a given submission. The participation is set to FINISHED. Currently only handles modeling submissions.
      *
-     * @param submission    the submission for which the participation should be updated for
+     * @param submission the submission for which the participation should be updated for
      * @return submission if updating participation successful, otherwise null
      */
     private Submission updateParticipation(Submission submission) {
@@ -225,16 +229,15 @@ public class AutomaticSubmissionService {
                     participationService.save(participation);
                     // return modeling submission with model and optional result
                     return modelingSubmission;
-                } else {
+                }
+                else {
                     log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
                     return null;
                 }
             }
 
-            /* TODO: add support for other submission types, e.g.
-             * if (submission instanceof TextSubmission) {
-             *
-             * }
+            /*
+             * TODO: add support for other submission types, e.g. if (submission instanceof TextSubmission) { }
              */
         }
         log.error("Updating the participation for submission {} failed.", submission.getId());

@@ -4,8 +4,8 @@ import { DiagramType } from '@ls1intum/apollon';
 
 export class ModelingExercise extends Exercise {
     public diagramType: DiagramType;
-    public sampleSolutionModel: String;
-    public sampleSolutionExplanation: String;
+    public sampleSolutionModel: string;
+    public sampleSolutionExplanation: string;
 
     constructor(diagramType: DiagramType, course?: Course) {
         super(ExerciseType.MODELING);

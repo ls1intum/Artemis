@@ -16,7 +16,7 @@ export class ModelingAssessmentService {
 
     constructor(private http: HttpClient) {}
 
-    save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
         if (submit) {
             url += '?submit=true';
