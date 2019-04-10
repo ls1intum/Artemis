@@ -29,9 +29,9 @@
                 [diagramType]="modelingExercise.diagramType"
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
-                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.conflictingResults.length } }} {{
-                    currentConflict.result.assessor.firstName
-                }} {{ currentConflict.result.assessor.lastName }}"
+                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{
+                    currentConflict.causingResult.result.assessor.firstName
+                }} {{ currentConflict.causingResult.result.assessor.lastName }}"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"
@@ -45,11 +45,11 @@
                 *ngIf="currentConflict"
                 [diagramType]="modelingExercise.diagramType"
                 [model]="model"
-                [feedbacks]="currentFeedbacksCopy"
+                [feedbacks]="mergedFeedbacks"
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
-                [centeredElementId]="currentConflict.modelElementId"
+                [centeredElementId]="currentConflict.causingResult.modelElementId"
                 (feedbackChanged)="onFeedbackChanged($event)"
                 [readOnly]="false"
             ></jhi-modeling-assessment>
