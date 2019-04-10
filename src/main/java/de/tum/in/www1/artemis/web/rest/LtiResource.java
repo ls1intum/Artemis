@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,12 +19,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -33,10 +35,13 @@ import java.util.concurrent.TimeUnit;
  * REST controller for receiving LTI messages.
  */
 @RestController
-@RequestMapping({"/api", "/api_basic"})
+@RequestMapping({ "/api", "/api_basic" })
 public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     @Value("${artemis.lti.id}")
     private String LTI_ID;
@@ -48,8 +53,11 @@ public class LtiResource {
     private String LTI_OAUTH_SECRET;
 
     private final LtiService ltiService;
+
     private final UserService userService;
+
     private final ExerciseRepository exerciseRepository;
+
     private final TokenProvider tokenProvider;
 
     public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider) {
@@ -60,7 +68,7 @@ public class LtiResource {
     }
 
     /**
-     * POST  /lti/launch/:exerciseId : Launch the exercise app using request by a LTI consumer. Redirects the user to the exercise on success.
+     * POST /lti/launch/:exerciseId : Launch the exercise app using request by a LTI consumer. Redirects the user to the exercise on success.
      *
      * @param launchRequest the LTI launch request (ExerciseLtiConfigurationDTO)
      * @param exerciseId    the id of the exercise the user wants to open
@@ -68,7 +76,8 @@ public class LtiResource {
      * @param response      HTTP response
      */
     @PostMapping(value = "/lti/launch/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
 
         log.debug("Launch request : {}", launchRequest);
 
@@ -89,34 +98,33 @@ public class LtiResource {
         // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             log.error("Error during LIT launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: " + ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }
 
-        //If the current user was created within the last 15 seconds, we just created the user
-        //Display a welcome message to the user
-        Boolean isNewUser = SecurityUtils.isAuthenticated() && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
+        // If the current user was created within the last 15 seconds, we just created the user
+        // Display a welcome message to the user
+        Boolean isNewUser = SecurityUtils.isAuthenticated()
+                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
 
         String redirectUrl = request.getScheme() + // "http"
-            "://" +                                // "://"
-            request.getServerName() +              // "myhost"
-            (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
-            "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId() +
-            (isNewUser ? "?welcome" : "") +
-            (!SecurityUtils.isAuthenticated() ? "?login" : "") +
-            (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
+                "://" +                                // "://"
+                request.getServerName() +              // "myhost"
+                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/courses/" + exercise.getCourse().getId() + "/exercise/"
+                + exercise.getId() + (isNewUser ? "?welcome" : "") + (!SecurityUtils.isAuthenticated() ? "?login" : "") + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "")
+                + "jwt=" + jwt;
 
         response.sendRedirect(redirectUrl);
     }
 
-
     /**
-     * GET  /lti/configuration/:exerciseId : Generates LTI configuration parameters for an exercise.
+     * GET /lti/configuration/:exerciseId : Generates LTI configuration parameters for an exercise.
      *
      * @param exerciseId the id of the exercise for the wanted LTI configuration
      * @param request    HTTP request
@@ -127,20 +135,16 @@ public class LtiResource {
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
 
-        return exercise
-            .map(result -> {
-                String launchUrl = request.getScheme() + // "http"
-                    "://" +                                // "://"
-                    request.getServerName() +              // "myhost"                     // ":"
-                    (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
-                    "/api/lti/launch/" + exercise.get().getId();
+        return exercise.map(result -> {
+            String launchUrl = request.getScheme() + // "http"
+            "://" +                                // "://"
+            request.getServerName() +              // "myhost" // ":"
+            (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.get().getId();
 
-                String ltiId = LTI_ID;
-                String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;
-                return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
-            })
-            .orElse(ResponseUtil.notFound());
+            String ltiId = LTI_ID;
+            String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;
+            return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
+        }).orElse(ResponseUtil.notFound());
     }
-
 
 }

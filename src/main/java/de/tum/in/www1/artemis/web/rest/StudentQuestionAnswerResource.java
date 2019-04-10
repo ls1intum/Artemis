@@ -1,20 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for managing StudentQuestionAnswer.
@@ -27,6 +28,9 @@ public class StudentQuestionAnswerResource {
 
     private static final String ENTITY_NAME = "questionAnswer";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository) {
@@ -34,10 +38,11 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * POST  /question-answers : Create a new studentQuestionAnswer.
+     * POST /question-answers : Create a new studentQuestionAnswer.
      *
      * @param studentQuestionAnswer the studentQuestionAnswer to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already
+     *         an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/student-question-answers")
@@ -49,17 +54,15 @@ public class StudentQuestionAnswerResource {
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         return ResponseEntity.created(new URI("/api/question-answers/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT  /question-answers : Updates an existing studentQuestionAnswer.
+     * PUT /question-answers : Updates an existing studentQuestionAnswer.
      *
      * @param studentQuestionAnswer the studentQuestionAnswer to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestionAnswer,
-     * or with status 400 (Bad Request) if the studentQuestionAnswer is not valid,
-     * or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer is not valid,
+     *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-question-answers")
@@ -70,13 +73,11 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, studentQuestionAnswer.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
     /**
-     * GET  /question-answers/:id : get the "id" questionAnswer.
+     * GET /question-answers/:id : get the "id" questionAnswer.
      *
      * @param id the id of the questionAnswer to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
@@ -90,7 +91,7 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * DELETE  /question-answers/:id : delete the "id" questionAnswer.
+     * DELETE /question-answers/:id : delete the "id" questionAnswer.
      *
      * @param id the id of the questionAnswer to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -100,6 +101,6 @@ public class StudentQuestionAnswerResource {
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
         log.debug("REST request to delete StudentQuestionAnswer : {}", id);
         studentQuestionAnswerRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +35,9 @@ public class SystemNotificationResource {
 
     private static final String ENTITY_NAME = "systemNotification";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final SystemNotificationRepository systemNotificationRepository;
 
     private final SystemNotificationService systemNotificationService;
@@ -59,8 +63,8 @@ public class SystemNotificationResource {
         }
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.sendNotification(systemNotification);
-        return ResponseEntity.created(new URI("/api/notifications/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -80,7 +84,7 @@ public class SystemNotificationResource {
         }
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.sendNotification(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, systemNotification.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, systemNotification.getId().toString())).body(result);
     }
 
     /**
@@ -123,7 +127,7 @@ public class SystemNotificationResource {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);
         systemNotificationService.sendNotification(null);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**

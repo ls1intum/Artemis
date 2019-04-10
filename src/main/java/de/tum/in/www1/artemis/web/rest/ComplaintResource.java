@@ -1,5 +1,18 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -9,17 +22,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.Optional;
 
 /**
  * REST controller for managing complaints.
@@ -27,12 +29,18 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 public class ComplaintResource {
+
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "complaint";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private ComplaintRepository complaintRepository;
+
     private ResultRepository resultRepository;
+
     private UserRepository userRepository;
 
     public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository) {
@@ -87,12 +95,11 @@ public class ComplaintResource {
 
         Complaint savedComplaint = complaintRepository.save(complaint);
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedComplaint.getId().toString()))
-            .body(savedComplaint);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
     /**
-     * GET  /complaints/:id : get the "id" complaint.
+     * GET /complaints/:id : get the "id" complaint.
      *
      * @param id the id of the complaint to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the complaint, or with status 404 (Not Found)

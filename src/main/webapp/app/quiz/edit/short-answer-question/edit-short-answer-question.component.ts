@@ -374,7 +374,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
         const wrapperDiv = document.getElementById('test');
-        const child = window.getSelection().baseNode;
+        const child = window.getSelection().anchorNode;
 
         if (!wrapperDiv.contains(child)) {
             return;

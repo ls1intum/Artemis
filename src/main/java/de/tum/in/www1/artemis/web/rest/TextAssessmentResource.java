@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class TextAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(TextAssessmentResource.class);
 
     private static final String ENTITY_NAME = "textAssessment";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final ParticipationService participationService;
 
@@ -114,7 +118,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
         if (!textSubmission.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
                     .body(null);
         }
 
@@ -161,7 +166,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         if (!textSubmission.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
                     .body(null);
         }
 

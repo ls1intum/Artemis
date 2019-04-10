@@ -1,20 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for managing Attachment.
@@ -27,6 +28,9 @@ public class AttachmentResource {
 
     private static final String ENTITY_NAME = "attachment";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final AttachmentRepository attachmentRepository;
 
     public AttachmentResource(AttachmentRepository attachmentRepository) {
@@ -34,7 +38,7 @@ public class AttachmentResource {
     }
 
     /**
-     * POST  /attachments : Create a new attachment.
+     * POST /attachments : Create a new attachment.
      *
      * @param attachment the attachment to create
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment, or with status 400 (Bad Request) if the attachment has already an ID
@@ -49,17 +53,15 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT  /attachments : Updates an existing attachment.
+     * PUT /attachments : Updates an existing attachment.
      *
      * @param attachment the attachment to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated attachment,
-     * or with status 400 (Bad Request) if the attachment is not valid,
-     * or with status 500 (Internal Server Error) if the attachment couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
+     *         (Internal Server Error) if the attachment couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/attachments")
@@ -70,13 +72,11 @@ public class AttachmentResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, attachment.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
     }
 
     /**
-     * GET  /attachments/:id : get the "id" attachment.
+     * GET /attachments/:id : get the "id" attachment.
      *
      * @param id the id of the attachment to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
@@ -90,7 +90,7 @@ public class AttachmentResource {
     }
 
     /**
-     * DELETE  /attachments/:id : delete the "id" attachment.
+     * DELETE /attachments/:id : delete the "id" attachment.
      *
      * @param id the id of the attachment to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -100,6 +100,6 @@ public class AttachmentResource {
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         log.debug("REST request to delete Attachment : {}", id);
         attachmentRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

@@ -4,13 +4,11 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
-
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,11 +33,10 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 // @formatter:off
-@Configuration
 @Import(SecurityProblemSupport.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter implements InitializingBean {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -63,8 +60,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
-    @PostConstruct
-    public void init() {
+    @Override
+    public void afterPropertiesSet() throws Exception {
         try {
             authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
@@ -117,7 +114,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/authenticate").permitAll().antMatchers("/api/account/reset-password/init").permitAll().antMatchers("/api/account/reset-password/finish")
                 .permitAll().antMatchers("/api/lti/launch/*").permitAll().antMatchers("/api/**").authenticated().antMatchers("/websocket/tracker")
                 .hasAuthority(AuthoritiesConstants.ADMIN).antMatchers("/websocket/**").permitAll().antMatchers("/management/health").permitAll().antMatchers("/management/info")
-                .permitAll().antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN).and().apply(securityConfigurerAdapter());
+                .permitAll().antMatchers("/management/prometheus").permitAll().antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN).and()
+                .apply(securityConfigurerAdapter());
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

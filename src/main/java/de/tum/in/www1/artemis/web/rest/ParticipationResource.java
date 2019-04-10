@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -65,6 +66,11 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
+    private static final String ENTITY_NAME = "participation";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final ParticipationService participationService;
 
     private final QuizExerciseService quizExerciseService;
@@ -78,8 +84,6 @@ public class ParticipationResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private static final String ENTITY_NAME = "participation";
 
     private final TextSubmissionService textSubmissionService;
 
@@ -115,8 +119,8 @@ public class ParticipationResource {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Participation result = participationService.save(participation);
-        return ResponseEntity.created(new URI("/api/participations/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -138,9 +142,8 @@ public class ParticipationResource {
         }
         if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
             // participation already exists
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
-                    .body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
+                    "There is already a participation for the given exercise and user.")).body(null);
         }
         Participation participation = participationService.startExercise(exercise, principal.getName());
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
@@ -165,7 +168,8 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
             addLatestResultToParticipation(participation);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                    .body(participation);
         }
         log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         return ResponseEntity.ok().body(participation);
@@ -205,7 +209,7 @@ public class ParticipationResource {
             return createParticipation(participation);
         }
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }
 
     /**
@@ -483,7 +487,7 @@ public class ParticipationResource {
         Participation participation = participationService.findOne(id);
         String username = participation.getStudent().getFirstName();
         participationService.delete(id, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
 
     /**

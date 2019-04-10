@@ -1,19 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for managing LtiOutcomeUrl.
@@ -26,6 +28,9 @@ public class LtiOutcomeUrlResource {
 
     private static final String ENTITY_NAME = "ltiOutcomeUrl";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     public LtiOutcomeUrlResource(LtiOutcomeUrlRepository ltiOutcomeUrlRepository) {
@@ -33,7 +38,7 @@ public class LtiOutcomeUrlResource {
     }
 
     /**
-     * POST  /lti-outcome-urls : Create a new ltiOutcomeUrl.
+     * POST /lti-outcome-urls : Create a new ltiOutcomeUrl.
      *
      * @param ltiOutcomeUrl the ltiOutcomeUrl to create
      * @return the ResponseEntity with status 201 (Created) and with body the new ltiOutcomeUrl, or with status 400 (Bad Request) if the ltiOutcomeUrl has already an ID
@@ -47,17 +52,15 @@ public class LtiOutcomeUrlResource {
         }
         LtiOutcomeUrl result = ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
         return ResponseEntity.created(new URI("/api/lti-outcome-urls/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT  /lti-outcome-urls : Updates an existing ltiOutcomeUrl.
+     * PUT /lti-outcome-urls : Updates an existing ltiOutcomeUrl.
      *
      * @param ltiOutcomeUrl the ltiOutcomeUrl to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated ltiOutcomeUrl,
-     * or with status 400 (Bad Request) if the ltiOutcomeUrl is not valid,
-     * or with status 500 (Internal Server Error) if the ltiOutcomeUrl couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ltiOutcomeUrl, or with status 400 (Bad Request) if the ltiOutcomeUrl is not valid, or with status
+     *         500 (Internal Server Error) if the ltiOutcomeUrl couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lti-outcome-urls")
@@ -67,13 +70,11 @@ public class LtiOutcomeUrlResource {
             return createLtiOutcomeUrl(ltiOutcomeUrl);
         }
         LtiOutcomeUrl result = ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, ltiOutcomeUrl.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, ltiOutcomeUrl.getId().toString())).body(result);
     }
 
     /**
-     * GET  /lti-outcome-urls : get all the ltiOutcomeUrls.
+     * GET /lti-outcome-urls : get all the ltiOutcomeUrls.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of ltiOutcomeUrls in body
      */
@@ -81,10 +82,10 @@ public class LtiOutcomeUrlResource {
     public List<LtiOutcomeUrl> getAllLtiOutcomeUrls() {
         log.debug("REST request to get all LtiOutcomeUrls");
         return ltiOutcomeUrlRepository.findAll();
-        }
+    }
 
     /**
-     * GET  /lti-outcome-urls/:id : get the "id" ltiOutcomeUrl.
+     * GET /lti-outcome-urls/:id : get the "id" ltiOutcomeUrl.
      *
      * @param id the id of the ltiOutcomeUrl to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the ltiOutcomeUrl, or with status 404 (Not Found)
@@ -97,7 +98,7 @@ public class LtiOutcomeUrlResource {
     }
 
     /**
-     * DELETE  /lti-outcome-urls/:id : delete the "id" ltiOutcomeUrl.
+     * DELETE /lti-outcome-urls/:id : delete the "id" ltiOutcomeUrl.
      *
      * @param id the id of the ltiOutcomeUrl to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -106,6 +107,6 @@ public class LtiOutcomeUrlResource {
     public ResponseEntity<Void> deleteLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to delete LtiOutcomeUrl : {}", id);
         ltiOutcomeUrlRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

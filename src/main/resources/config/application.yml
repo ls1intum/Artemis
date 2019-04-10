@@ -14,6 +14,32 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
+eureka:
+    client:
+        enabled: true
+        healthcheck:
+            enabled: true
+        fetch-registry: true
+        register-with-eureka: true
+        instance-info-replication-interval-seconds: 10
+        registry-fetch-interval-seconds: 10
+    instance:
+        appname: artemis
+        instanceId: artemis:${spring.application.instance-id:${random.value}}
+        lease-renewal-interval-in-seconds: 5
+        lease-expiration-duration-in-seconds: 10
+        status-page-url-path: ${management.endpoints.web.base-path}/info
+        health-check-url-path: ${management.endpoints.web.base-path}/health
+        metadata-map:
+            zone: primary # This is needed for the load balancer
+            profile: ${spring.profiles.active}
+            version: #project.version#
+            git-version: ${git.commit.id.describe:}
+            git-commit: ${git.commit.id.abbrev:}
+            git-branch: ${git.branch:}
+ribbon:
+    eureka:
+        enabled: true
 management:
     endpoints:
         web:
@@ -32,37 +58,37 @@ management:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
     metrics:
-        enabled: false # http://micrometer.io/ is disabled by default, as we use http://metrics.dropwizard.io/ instead
         export:
             # Prometheus is the default metrics backend
             prometheus:
                 enabled: true
                 step: 60
-        binders:
-            jvm:
-                enabled: true
-            processor:
-                enabled: true
-            uptime:
-                enabled: true
-            logback:
-                enabled: true
-            files:
-                enabled: true
-            integration:
-                enabled: true
+        enable:
+            http: true
+            jvm: true
+            logback: true
+            process: true
+            system: true
         distribution:
             percentiles-histogram:
                 all: true
             percentiles:
                 all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
+        tags:
+            application: ${spring.application.name}
         web:
             server:
                 auto-time-requests: true
 
 spring:
     application:
-        name: ArTEMiS
+        name: Artemis
+    jmx:
+        enabled: false
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: deferred
     jpa:
         open-in-view: false
         properties:
@@ -74,9 +100,22 @@ spring:
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     messages:
         basename: i18n/messages
+    main:
+        allow-bean-definition-overriding: true
     mvc:
         favicon:
             enabled: false
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                core-size: 2
+                max-size: 50
+                queue-capacity: 10000
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                size: 2
     thymeleaf:
         mode: HTML
     servlet:
@@ -102,10 +141,8 @@ info:
 # ===================================================================
 
 jhipster:
-    async:
-        core-pool-size: 2
-        max-pool-size: 50
-        queue-capacity: 10000
+    clientApp:
+        name: 'artemisApp'
     # By default CORS is disabled. Uncomment to enable.
     #cors:
         #allowed-origins: "*"
@@ -115,4 +152,4 @@ jhipster:
         #allow-credentials: true
         #max-age: 1800
     mail:
-        from: ArTEMiS@localhost
+        from: artemis@localhost
