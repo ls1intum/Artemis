@@ -3,22 +3,11 @@ import { Moment } from 'moment';
 
 export class Conflict {
     id: number;
-    result: Result;
-    modelElementId: string;
+    causingResult: ConflictingResult;
     state: EscalationState;
     creationDate: Moment;
     resolutionDate: Moment;
-    conflictingResults: ConflictingResult[];
-
-    constructor(id: number, result: Result, modelElementId: string, state: EscalationState, creationDate: Moment, resolutionDate: Moment, conflictingResults: ConflictingResult[]) {
-        this.id = id;
-        this.result = result;
-        this.modelElementId = modelElementId;
-        this.state = state;
-        this.creationDate = creationDate;
-        this.resolutionDate = resolutionDate;
-        this.conflictingResults = conflictingResults;
-    }
+    resultsInConflict: ConflictingResult[];
 }
 
 export class ConflictingResult {
@@ -32,8 +21,10 @@ export class ConflictingResult {
 }
 
 export enum EscalationState {
-    ON_REVIEW_BY_CAUSER,
-    ON_REVIEW_BY_AFFECTED_TUTOR,
-    ON_REVIEW_BY_INSTRUCTOR,
-    RESOLVED,
+    UNHANDLED,
+    ESCALATED_TO_TUTORS_IN_CONFLICT,
+    ESCALATED_TO_INSTRUCTOR,
+    RESOLVED_BY_CAUSER,
+    RESOLVED_BY_OTHER_TUTORS,
+    RESOLVED_BY_INSTRUCTOR,
 }

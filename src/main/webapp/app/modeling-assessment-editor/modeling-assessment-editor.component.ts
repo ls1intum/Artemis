@@ -181,8 +181,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if (error.status === 409) {
                     this.conflicts = error.error as Conflict[];
                     this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.result);
-                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                        this.modelingAssessmentService.convertResult(conflict.causingResult.result);
+                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
                     });
                     this.highlightConflictingElements();
                     this.jhiAlertService.clear();
@@ -234,7 +234,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     private highlightConflictingElements() {
         this.highlightedElementIds = new Set<string>();
         this.conflicts.forEach((conflict: Conflict) => {
-            this.highlightedElementIds.add(conflict.modelElementId);
+            this.highlightedElementIds.add(conflict.causingResult.modelElementId);
         });
     }
 

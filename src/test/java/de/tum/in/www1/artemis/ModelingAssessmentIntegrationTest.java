@@ -18,11 +18,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.modeling.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.util.*;
 
 @RunWith(SpringRunner.class)
@@ -222,8 +220,8 @@ public class ModelingAssessmentIntegrationTest {
         List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
         List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
         request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true", feedbacks1, HttpStatus.OK);
-        List<Conflict> conflicts = request.putWithResponseBodyList("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true", feedbacks2, Conflict.class,
-                HttpStatus.CONFLICT);
+        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true", feedbacks2,
+                ModelAssessmentConflict.class, HttpStatus.CONFLICT);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission2.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks2, storedResult.getFeedbacks());
