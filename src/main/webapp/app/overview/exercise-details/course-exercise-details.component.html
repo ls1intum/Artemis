@@ -106,7 +106,7 @@
                     </h4>
                 </div>
                 <div class="col text-left">
-                    <jhi-result [participation]="exercise.participations[0]" [result]="currentResult" showUngradedResults="true" short="true"></jhi-result>
+                    <jhi-result [participation]="exercise.participations[0]" [result]="currentResult" showUngradedResults="false" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
                     <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate | amTimeAgo }})</h6>
