@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
+import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -207,17 +207,25 @@ public class CompassService {
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
-        Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
-        List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getUnresolvedConflictsForResult(result);
-        conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
-        conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
-        conflictService.saveConflicts(existingUnresolvedConflicts);
-        if (conflictingFeedbacks.isEmpty()) {
-            return Collections.EMPTY_LIST;
-        }
-        else {
-            return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED)).collect(Collectors.toList());
-        }
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
+        List<ModelAssessmentConflict> conflicts = new LinkedList<>();
+        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
+            Set<ConflictingResult> elementResultMap = new HashSet<>();
+            feedbacks.forEach(feedback -> {
+                ConflictingResult conflictingResult = new ConflictingResult();
+                conflictingResult.setModelElementId(feedback.getReferenceElementId());
+                conflictingResult.setResult(feedback.getResult());
+                elementResultMap.add(conflictingResult);
+            });
+            ConflictingResult causingResult = new ConflictingResult();
+            causingResult.setModelElementId(elementID);
+            causingResult.setResult(result);
+            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
+            conflict.setCausingResult(causingResult);
+            conflict.setResultsInConflict(elementResultMap);
+            conflicts.add(conflict);
+        });
+        return conflicts;
     }
 
     /**
