@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
+import java.util.Set;
+
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.*;
 
 /**
  * Created by Moritz Issig on 22.11.17.
@@ -14,18 +18,20 @@ import java.util.Set;
 public class QuizStatisticService {
 
     private final SimpMessageSendingOperations messagingTemplate;
+
     private final ParticipationRepository participationRepository;
+
     private final ResultRepository resultRepository;
+
     private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final QuizPointStatisticRepository quizPointStatisticRepository;
+
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate,
-                                ParticipationRepository participationRepository,
-                                ResultRepository resultRepository,
-                                QuizSubmissionRepository quizSubmissionRepository,
-                                QuizPointStatisticRepository quizPointStatisticRepository,
-                                QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
+    public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, ParticipationRepository participationRepository, ResultRepository resultRepository,
+            QuizSubmissionRepository quizSubmissionRepository, QuizPointStatisticRepository quizPointStatisticRepository,
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
@@ -35,14 +41,13 @@ public class QuizStatisticService {
     }
 
     /**
-     * 1. Go through all Results in the Participation and recalculate the score
-     * 2. recalculate the statistics of the given quizExercise
+     * 1. Go through all Results in the Participation and recalculate the score 2. recalculate the statistics of the given quizExercise
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
     public void recalculateStatistics(QuizExercise quizExercise) {
 
-        //reset all statistics
+        // reset all statistics
         quizExercise.getQuizPointStatistic().resetStatistic();
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
@@ -73,7 +78,7 @@ public class QuizStatisticService {
             this.addResultToAllStatistics(quizExercise, latestUnratedResult);
 
         }
-        //save changed Statistics
+        // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
@@ -83,13 +88,11 @@ public class QuizStatisticService {
     }
 
     /**
-     * 1. check for each result if it's rated
-     *      -> true: check if there is an old Result
-     *          -> true: remove the old Result from the statistics
-     * 2. add new Result to the quiz-point-statistic and all question-statistics
+     * 1. check for each result if it's rated -> true: check if there is an old Result -> true: remove the old Result from the statistics 2. add new Result to the
+     * quiz-point-statistic and all question-statistics
      *
      * @param results the results, which will be added to the statistics
-     * @param quiz the quizExercise with Questions where the results should contain to
+     * @param quiz    the quizExercise with Questions where the results should contain to
      */
     public void updateStatistics(Set<Result> results, QuizExercise quiz) {
 
@@ -103,15 +106,15 @@ public class QuizStatisticService {
                 }
                 addResultToAllStatistics(quiz, result);
             }
-            //save statistics
+            // save statistics
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
             for (QuizQuestion quizQuestion : quiz.getQuizQuestions()) {
                 if (quizQuestion.getQuizQuestionStatistic() != null) {
                     quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
                 }
             }
-            //notify users via websocket about new results for the statistics.
-            //filters out solution-Informations
+            // notify users via websocket about new results for the statistics.
+            // filters out solution-Informations
             quiz.filterForStatisticWebsocket();
             messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), quiz);
         }
@@ -128,11 +131,9 @@ public class QuizStatisticService {
         Result oldResult = null;
 
         for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            //find the latest Result, which is presented in the Statistics
-            if (result.isRated() == newResult.isRated()
-                && result.getCompletionDate().isBefore(newResult.getCompletionDate())
-                && !result.equals(newResult)
-                && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
+            // find the latest Result, which is presented in the Statistics
+            if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)
+                    && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }
         }
@@ -143,7 +144,7 @@ public class QuizStatisticService {
      * add Result to all Statistics of the given QuizExercise
      *
      * @param quizExercise contains the object of the quiz, where the Results will be added
-     * @param result the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result       the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
      */
     private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
 
@@ -151,9 +152,10 @@ public class QuizStatisticService {
         if (result != null) {
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
             QuizSubmission quizSubmission;
-            if(result.getSubmission() instanceof QuizSubmission){
+            if (result.getSubmission() instanceof QuizSubmission) {
                 quizSubmission = (QuizSubmission) result.getSubmission();
-            } else {
+            }
+            else {
                 quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
             }
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
@@ -170,16 +172,17 @@ public class QuizStatisticService {
      * remove Result from all Statistics of the given QuizExercise
      *
      * @param quizExercise contains the object of the quiz, where the Results will be removed
-     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
      */
     private void removeResultFromAllStatistics(QuizExercise quizExercise, Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
             QuizSubmission quizSubmission;
-            if(result.getSubmission() instanceof QuizSubmission){
+            if (result.getSubmission() instanceof QuizSubmission) {
                 quizSubmission = (QuizSubmission) result.getSubmission();
-            } else {
+            }
+            else {
                 quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
             }
             quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());

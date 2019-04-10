@@ -2,17 +2,16 @@ package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 
 public class ModelFactory {
 
-    public static ModelingExercise generateModelingExercise(
-        ZonedDateTime releaseDate,
-        ZonedDateTime dueDate,
-        ZonedDateTime assessmentDueDate,
-        DiagramType diagramType,
-        Course course) {
+    public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
+            Course course) {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -30,9 +29,7 @@ public class ModelFactory {
         return exercise;
     }
 
-
-    public static LinkedList<User> generateActivatedUsers(
-        String loginPrefix, String[] groups, int amount) {
+    public static LinkedList<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
         LinkedList<User> generatedUsers = new LinkedList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
@@ -41,7 +38,6 @@ public class ModelFactory {
         }
         return generatedUsers;
     }
-
 
     public static User generateActivatedUser(String login) {
         User user = new User();
@@ -58,19 +54,9 @@ public class ModelFactory {
         return user;
     }
 
-
-    public static Course generateCourse(
-        Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(
-            id,
-            startDate,
-            endDate,
-            exercises,
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString());
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        return generateCourse(id, startDate, endDate, exercises, UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
-
 
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
@@ -82,15 +68,8 @@ public class ModelFactory {
         return submission;
     }
 
-
-    public static Course generateCourse(
-        Long id,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<Exercise> exercises,
-        String studentGroupName,
-        String teachingAssistantGroupName,
-        String instructorGroupName) {
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String instructorGroupName) {
         Course course = new Course();
         course.setId(id);
         course.setTitle(UUID.randomUUID().toString());

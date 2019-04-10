@@ -1,29 +1,30 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.QuizExercise;
-import de.tum.in.www1.artemis.domain.QuizSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-import java.util.List;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @Service
 @Transactional
 public class QuizSubmissionService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final ResultRepository resultRepository;
 
-    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository,
-                                 ResultRepository resultRepository) {
+    public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
     }
@@ -47,8 +48,8 @@ public class QuizSubmissionService {
      * Submit the given submission for practice
      *
      * @param quizSubmission the submission to submit
-     * @param quizExercise the exercise to submit in
-     * @param participation the participation where the result should be saved
+     * @param quizExercise   the exercise to submit in
+     * @param participation  the participation where the result should be saved
      * @return the result entity
      */
     @Transactional

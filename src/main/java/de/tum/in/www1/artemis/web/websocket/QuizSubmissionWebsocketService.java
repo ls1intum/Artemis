@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.web.websocket;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import java.security.Principal;
+import java.time.ZonedDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -13,23 +11,30 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
-import java.security.Principal;
-import java.time.ZonedDateTime;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @SuppressWarnings("unused")
 @Controller
 public class QuizSubmissionWebsocketService {
+
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionWebsocketService.class);
 
     private final QuizExerciseService quizExerciseService;
+
     private final ParticipationService participationService;
+
     private final SimpMessageSendingOperations messagingTemplate;
+
     private final AuthorizationCheckService authCheckService;
 
-    public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService,
-                                          ParticipationService participationService,
-                                          SimpMessageSendingOperations messagingTemplate,
-                                          AuthorizationCheckService authCheckService) {
+    public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
+            AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
