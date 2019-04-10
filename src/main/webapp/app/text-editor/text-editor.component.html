@@ -1,12 +1,12 @@
-<div class="p-4">
-    <jhi-alert></jhi-alert>
-
-    <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
+<div class="course-info-bar">
+    <div class="row justify-content-between">
         <div class="col-12 col-lg-8">
             <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
                 Text Editor <span *ngIf="textExercise">for Exercise: {{ textExercise.title }}</span>
             </h2>
         </div>
+
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
             <br />
@@ -24,8 +24,11 @@
             <button class="btn btn-warning" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
         </div>
     </div>
-    <br />
+</div>
 
+<jhi-alert></jhi-alert>
+
+<div class="p-4">
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
             <p class="mb-3">
