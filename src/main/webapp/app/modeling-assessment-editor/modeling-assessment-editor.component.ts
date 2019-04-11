@@ -107,7 +107,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onSaveAssessment() {
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.localFeedbacks, this.submission.id).subscribe(
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
@@ -122,7 +125,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onSubmitAssessment() {
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
+        // in case he says no, we should potentially highlight the elements that are not yet assessed
+        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -156,21 +164,24 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     assessNextOptimal() {
         this.busy = true;
-        this.modelingAssessmentService
-            .getOptimalSubmissions(this.modelingExercise.id)
-            .pipe(retryWhen(genericRetryStrategy({ maxRetryAttempts: 5, scalingDuration: 1000 })))
-            .subscribe(
-                (optimal: number[]) => {
-                    this.busy = false;
-                    this.jhiAlertService.clear();
-                    this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`);
-                },
-                () => {
-                    this.busy = false;
+        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+            (optimal: number[]) => {
+                this.busy = false;
+                if (optimal.length === 0) {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                },
-            );
+                } else {
+                    this.jhiAlertService.clear();
+                    this.router.onSameUrlNavigation = 'reload';
+                    this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`);
+                }
+            },
+            () => {
+                this.busy = false;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+            },
+        );
     }
 
     private highlightConflictingElements() {

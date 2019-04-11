@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-expandable-sample-solution',
@@ -9,7 +10,12 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 export class ExpandableSampleSolutionComponent implements OnInit {
     @Input() exercise: ModelingExercise;
     @Input() isCollapsed = false;
-    constructor() {}
 
-    ngOnInit() {}
+    formattedSampleSolutionExplanation: string;
+
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+
+    ngOnInit() {
+        this.formattedSampleSolutionExplanation = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolutionExplanation);
+    }
 }

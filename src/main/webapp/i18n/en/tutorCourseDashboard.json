@@ -15,7 +15,10 @@
             "exerciseDueDate": "Exercise due date",
             "assessmentsDueDate": "Assessments due date",
             "actions": "Actions",
-            "notReleased": "Not released"
+            "notReleased": "Not released",
+            "readGradingInstructions": "Read grading instructions",
+            "trainOnExampleSubmissions": "Train on example submissions",
+            "assessStudentsSubmissions": "Assess students' submissions"
         }
     }
 }

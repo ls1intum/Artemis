@@ -1,23 +1,22 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static java.time.ZonedDateTime.now;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import io.github.jhipster.config.JHipsterConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Collectors;
-
-import static java.time.ZonedDateTime.now;
 
 @Service
 public class AutomaticBuildPlanCleanupService {
@@ -25,18 +24,18 @@ public class AutomaticBuildPlanCleanupService {
     private static final Logger log = LoggerFactory.getLogger(AutomaticBuildPlanCleanupService.class);
 
     private final Environment env;
+
     private final ParticipationRepository participationRepository;
+
     private final ParticipationService participationService;
 
-    public AutomaticBuildPlanCleanupService(Environment env,
-                                            ParticipationRepository participationRepository,
-                                            ParticipationService participationService) {
+    public AutomaticBuildPlanCleanupService(Environment env, ParticipationRepository participationRepository, ParticipationService participationService) {
         this.env = env;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
     }
 
-    @Scheduled(cron="0 0 3 * * *") //execute this every night at 3:00:00 am
+    @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     @Transactional
     public void cleanupBuildPlans() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
@@ -99,10 +98,9 @@ public class AutomaticBuildPlanCleanupService {
         List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(Participation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
-        //For testing purposes, we only take the first 100 build plans for now
-        //TODO: in the future: increase this number to 1000
+        // TODO: in the future we could increase the limit even further to e.g. 1000 per day
 
-        for (Participation participation : participationsWithBuildPlanToDelete.stream().limit(100).collect(Collectors.toList())) {
+        for (Participation participation : participationsWithBuildPlanToDelete.stream().limit(300).collect(Collectors.toList())) {
             try {
                 participationService.cleanupBuildPlan(participation);
             }
