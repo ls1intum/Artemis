@@ -190,20 +190,23 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     assessNextOptimal() {
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
-            this.modelingAssessmentService
-                .getOptimalSubmissions(this.modelingExercise.id)
-                .pipe(retryWhen(genericRetryStrategy({ maxRetryAttempts: 4, scalingDuration: 1000 })))
-                .subscribe(
-                    (optimal: number[]) => {
-                        this.busy = false;
+            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+                (optimal: number[]) => {
+                    this.busy = false;
+                    if (optimal.length === 0) {
+                        this.jhiAlertService.clear();
+                        this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                    } else {
                         this.nextOptimalSubmissionIds = optimal;
                         this.navigateToNextRandomOptimalSubmission();
-                    },
-                    () => {
-                        this.busy = false;
-                        this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                    },
-                );
+                    }
+                },
+                () => {
+                    this.busy = false;
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                },
+            );
         } else {
             this.navigateToNextRandomOptimalSubmission();
         }
@@ -211,6 +214,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     private navigateToNextRandomOptimalSubmission() {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
+        this.router.onSameUrlNavigation = 'reload';
         this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
     }
 

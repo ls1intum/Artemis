@@ -26,7 +26,7 @@ public abstract class AssessmentResource {
         validateExercise(exercise);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            throw new AccessForbiddenException("Unsufficient permission for course: " + exercise.getCourse().getTitle());
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }
 

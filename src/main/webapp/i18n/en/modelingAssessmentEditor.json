@@ -3,7 +3,7 @@
         "assessment": "Assessment",
         "button": {
             "overrideAssessment": "Override Assessment",
-            "nextSubmission": "Next Submission"
+            "nextSubmission": "Assess Next Submission"
         },
         "messages": {
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",

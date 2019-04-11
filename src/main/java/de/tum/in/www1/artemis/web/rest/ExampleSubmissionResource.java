@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 /**
  * REST controller for managing ExampleSubmission.
  */
@@ -25,15 +28,17 @@ public class ExampleSubmissionResource {
     private static final String ENTITY_NAME = "exampleSubmission";
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
     private final ExampleSubmissionService exampleSubmissionService;
+    private final AuthorizationCheckService authCheckService;
 
-    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService) {
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, AuthorizationCheckService authCheckService) {
         this.exampleSubmissionService = exampleSubmissionService;
+        this.authCheckService = authCheckService;
     }
 
     /**
      * POST  /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param exerciseId     the id of the corresponding exercise
      * @param exampleSubmission the exampleSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
@@ -51,10 +56,8 @@ public class ExampleSubmissionResource {
 
     /**
      * PUT  /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission.
-     * This function is called by the text editor for saving and submitting text submissions.
-     * The submit specific handling occurs in the ExampleSubmissionService.save() function.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param exerciseId     the id of the corresponding exercise
      * @param exampleSubmission the exampleSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exampleSubmission,
      * or with status 400 (Bad Request) if the exampleSubmission is not valid,
@@ -73,8 +76,17 @@ public class ExampleSubmissionResource {
     }
 
     @NotNull
-    private ResponseEntity<ExampleSubmission> handleExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        // update and save submission
+    private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.getExercise())) {
+            return forbidden();
+        }
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException(
+                "The exercise id in the path does not match the exercise id of the submission",
+                ENTITY_NAME,
+                "idsNotMatching"
+            );
+        }
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
         return ResponseEntity.ok(exampleSubmission);
     }

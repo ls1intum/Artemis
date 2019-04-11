@@ -1,10 +1,21 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.CaseFormat;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
@@ -13,26 +24,16 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRela
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class JSONParser {
 
     private final static Logger log = LoggerFactory.getLogger(JSONParser.class);
 
     /**
-     * Process a json object retrieved from a json formatted file to retrieve an UML model
-     * TODO adapt the parser to support different UML diagrams
+     * Process a json object retrieved from a json formatted file to retrieve an UML model TODO adapt the parser to support different UML diagrams
      *
-     * @param root the json object of an UML diagram
-     * @param modelId the Id of the model
+     * @param root    the json object of an UML diagram
+     * @param modelId the Id of the model (actually the modeling submission id)
      * @return the model as java object
      * @throws IOException on unexpected json formats
      */
@@ -68,23 +69,20 @@ public class JSONParser {
             JsonObject element = elem.getAsJsonObject();
 
             String elementType = element.get(JSONMapping.elementType).getAsString();
-            if (UMLClassType.getTypesAsList().contains(elementType))
-            {
+            if (UMLClassType.getTypesAsList().contains(elementType)) {
                 String className = element.get(JSONMapping.elementName).getAsString();
 
                 List<UMLAttribute> umlAttributesList = new ArrayList<>();
                 for (JsonElement attributeId : element.getAsJsonArray(JSONMapping.elementAttributes)) {
                     JsonObject attribute = jsonElementMap.get(attributeId.getAsString());
 
-                    String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString()
-                        .replaceAll(" ", "").split(":");
+                    String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
                     String attributeName = attributeNameArray[0];
                     String attributeType = "";
                     if (attributeNameArray.length == 2) {
                         attributeType = attributeNameArray[1];
                     }
-                    UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType,
-                        attribute.get(JSONMapping.elementID).getAsString());
+                    UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType, attribute.get(JSONMapping.elementID).getAsString());
                     umlAttributesList.add(newAttr);
                 }
 
@@ -107,13 +105,13 @@ public class JSONParser {
                     if (methodEntryArray.length == 2) {
                         methodReturnType = methodEntryArray[1];
                     }
-                    UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
+                    UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams),
+                            method.get(JSONMapping.elementID).getAsString());
                     umlMethodList.add(newMethod);
                 }
 
-                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList,
-                    element.get(JSONMapping.elementID).getAsString(),
-                    CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType));
+                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, element.get(JSONMapping.elementID).getAsString(),
+                        CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType));
 
                 if (element.has(JSONMapping.elementOwner) && !element.get(JSONMapping.elementOwner).isJsonNull()) {
                     String packageId = element.get(JSONMapping.elementOwner).getAsString();
@@ -124,12 +122,12 @@ public class JSONParser {
                     }
                 }
 
-                //set parent class in attributes and methods
+                // set parent class in attributes and methods
                 for (UMLAttribute attribute : umlAttributesList) {
                     attribute.setParentClass(newClass);
                 }
 
-                for (UMLMethod method: umlMethodList) {
+                for (UMLMethod method : umlMethodList) {
                     method.setParentClass(newClass);
                 }
 
@@ -152,27 +150,25 @@ public class JSONParser {
             UMLClass source = umlClassMap.get(sourceJSONID);
             UMLClass target = umlClassMap.get(targetJSONID);
 
-            JsonElement relationshipSourceRole = relationshipSource.has(JSONMapping.relationshipRole) ?
-                relationshipSource.get(JSONMapping.relationshipRole) : JsonNull.INSTANCE;
-            JsonElement relationshipTargetRole = relationshipTarget.has(JSONMapping.relationshipRole) ?
-                relationshipTarget.get(JSONMapping.relationshipRole) : JsonNull.INSTANCE;
-            JsonElement relationshipSourceMultiplicity = relationshipSource.has(JSONMapping.relationshipMultiplicity) ?
-                relationshipSource.get(JSONMapping.relationshipMultiplicity) : JsonNull.INSTANCE;
-            JsonElement relationshipTargetMultiplicity = relationshipTarget.has(JSONMapping.relationshipMultiplicity) ?
-                relationshipTarget.get(JSONMapping.relationshipMultiplicity) : JsonNull.INSTANCE;
+            JsonElement relationshipSourceRole = relationshipSource.has(JSONMapping.relationshipRole) ? relationshipSource.get(JSONMapping.relationshipRole) : JsonNull.INSTANCE;
+            JsonElement relationshipTargetRole = relationshipTarget.has(JSONMapping.relationshipRole) ? relationshipTarget.get(JSONMapping.relationshipRole) : JsonNull.INSTANCE;
+            JsonElement relationshipSourceMultiplicity = relationshipSource.has(JSONMapping.relationshipMultiplicity) ? relationshipSource.get(JSONMapping.relationshipMultiplicity)
+                    : JsonNull.INSTANCE;
+            JsonElement relationshipTargetMultiplicity = relationshipTarget.has(JSONMapping.relationshipMultiplicity) ? relationshipTarget.get(JSONMapping.relationshipMultiplicity)
+                    : JsonNull.INSTANCE;
 
             String relationshipType = relationship.get(JSONMapping.relationshipType).getAsString();
             relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
             if (source != null && target != null) {
-                UMLClassRelationship newRelation = new UMLClassRelationship(source, target, relationshipType,
-                    relationship.get(JSONMapping.elementID).getAsString(),
-                    relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
-                    relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
-                    relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
-                    relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
+                UMLClassRelationship newRelation = new UMLClassRelationship(source, target, relationshipType, relationship.get(JSONMapping.elementID).getAsString(),
+                        relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
+                        relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
+                        relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
+                        relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
                 umlAssociationList.add(newRelation);
-            } else {
+            }
+            else {
                 throw new IOException("Relationship source or target not part of model!");
             }
         }
@@ -183,10 +179,7 @@ public class JSONParser {
 
     private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
         Map<String, JsonObject> jsonElementMap = new HashMap<>();
-        elements.forEach(
-            element -> jsonElementMap.put(element.getAsJsonObject().get("id").getAsString(), element.getAsJsonObject())
-        );
+        elements.forEach(element -> jsonElementMap.put(element.getAsJsonObject().get("id").getAsString(), element.getAsJsonObject()));
         return jsonElementMap;
     }
 }
-
