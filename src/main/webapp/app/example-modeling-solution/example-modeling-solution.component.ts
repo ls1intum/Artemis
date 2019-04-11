@@ -10,6 +10,7 @@ import { UMLModel } from '@ls1intum/apollon';
 @Component({
     selector: 'jhi-example-modeling-solution',
     templateUrl: './example-modeling-solution.component.html',
+    styleUrls: ['./example-modeling-solution.component.scss'],
 })
 export class ExampleModelingSolutionComponent implements OnInit {
     @ViewChild(ModelingEditorComponent)

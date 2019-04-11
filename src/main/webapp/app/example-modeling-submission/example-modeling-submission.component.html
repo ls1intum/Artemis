@@ -64,28 +64,27 @@
         </div>
 
         <div class="col-12">
-            <p class="mb-3">
+            <p class="my-3">
                 <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
             </p>
         </div>
 
-        <div class="col-12">
+        <div class="col-12 editor-container">
             <jhi-modeling-editor
                 *ngIf="!assessmentMode"
                 [umlModel]="umlModel"
                 [diagramType]="exercise.diagramType"
                 [readOnly]="readOnly"
             ></jhi-modeling-editor>
-            <div class="assessment-container" *ngIf="assessmentMode">
-                <jhi-modeling-assessment
-                    [model]="umlModel"
-                    [feedbacks]="result?.feedbacks"
-                    [diagramType]="exercise.diagramType"
-                    [maxScore]="exercise.maxScore"
-                    [readOnly]="readOnly"
-                    (feedbackChanged)="onFeedbackChanged($event)"
-                ></jhi-modeling-assessment>
-            </div>
+            <jhi-modeling-assessment
+                *ngIf="assessmentMode"
+                [model]="umlModel"
+                [feedbacks]="result?.feedbacks"
+                [diagramType]="exercise.diagramType"
+                [maxScore]="exercise.maxScore"
+                [readOnly]="readOnly"
+                (feedbackChanged)="onFeedbackChanged($event)"
+            ></jhi-modeling-assessment>
         </div>
     </div>
 </div>

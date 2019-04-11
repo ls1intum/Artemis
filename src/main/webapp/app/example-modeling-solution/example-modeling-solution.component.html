@@ -19,12 +19,12 @@
         </div>
 
         <div class="col-12">
-            <p class="mb-3">
+            <p class="my-3">
                 <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
             </p>
         </div>
 
-        <div class="col-12">
+        <div class="col-12 editor-container">
             <jhi-modeling-editor
                 [umlModel]="exampleSolution"
                 [diagramType]="exercise.diagramType"
