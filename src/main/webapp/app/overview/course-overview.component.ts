@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 
+const DESCRIPTION_READ = 'isDescriptionRead';
+
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
@@ -13,6 +15,9 @@ export class CourseOverviewComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
     public course: Course;
+    public courseDescription: string;
+    public enableShowMore: boolean;
+    public longTextShown: boolean;
 
     constructor(
         private courseService: CourseService,
@@ -31,9 +36,34 @@ export class CourseOverviewComponent implements OnInit {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.adjustCourseDescription();
             });
         } else {
             this.course = this.courseCalculationService.getCourse(this.courseId);
         }
+        this.adjustCourseDescription();
+    }
+
+    adjustCourseDescription() {
+        debugger;
+        if (this.course) {
+            this.enableShowMore = this.course.description.length > 50;
+            if (localStorage.getItem(DESCRIPTION_READ + this.course.shortName) && !this.courseDescription && this.enableShowMore) {
+                this.showShortDescription();
+            } else {
+                this.showLongDescription();
+                localStorage.setItem(DESCRIPTION_READ + this.course.shortName, 'true');
+            }
+        }
+    }
+
+    showLongDescription() {
+        this.courseDescription = this.course.description;
+        this.longTextShown = true;
+    }
+
+    showShortDescription() {
+        this.courseDescription = this.course.description.substr(0, 50) + '...';
+        this.longTextShown = false;
     }
 }
