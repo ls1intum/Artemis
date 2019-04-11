@@ -3,9 +3,9 @@ jobs:
       - stage: test
         language: java
         jdk: openjdk8
-        env: NODE_VERSION=10.15.0
+        env: NODE_VERSION=11.13.0
         cache:
-          yarn: true
+          yarn: false
           directories:
             - $HOME/.m2
             - $HOME/.gradle
@@ -16,9 +16,9 @@ jobs:
       - stage: test
         language: node_js
         node_js:
-            - 10
+            - 11
         cache:
-            yarn: true
+            yarn: false
         before_install: cd src/main/webapp
         install: yarn
         script: yarn run lint

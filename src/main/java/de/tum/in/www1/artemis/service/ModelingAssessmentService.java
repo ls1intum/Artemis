@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -72,6 +75,7 @@ public class ModelingAssessmentService extends AssessmentService {
             result = new Result();
         }
 
+        result.setExampleResult(modelingSubmission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
@@ -96,5 +100,19 @@ public class ModelingAssessmentService extends AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
+    }
+
+    /**
+     * Gets a example modeling submission with the given submissionId. Returns the result of the submission.
+     *
+     * @param submissionId the id of the example modeling submission
+     * @return the result of the submission
+     * @throws EntityNotFoundException when no submission can be found for the given id
+     */
+    @Transactional(readOnly = true)
+    public Result getExampleAssessment(long submissionId) {
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        return optionalModelingSubmission.map(Submission::getResult)
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 }

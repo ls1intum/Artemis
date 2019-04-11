@@ -6,7 +6,7 @@
         "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewerted von",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
-            "nextSubmission": "Nächste Abgabe",
+            "nextSubmission": "Nächste Abgabe bewerten",
             "resolveConflict": "Konflikte behandeln",
             "applyChanges": "Änderungen übernehmen",
             "keepYours": "Beibehalten",

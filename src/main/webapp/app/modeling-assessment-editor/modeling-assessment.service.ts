@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../entities/result';
-import { UMLModel, ElementType, UMLElementType, UMLRelationshipType, UMLClassifier } from '@ls1intum/apollon';
+import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
@@ -28,7 +28,7 @@ export class ModelingAssessmentService {
         return this.localSubmissionConflictMap.get(submissionID);
     }
 
-    save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
         if (submit) {
             url += '?submit=true';
@@ -39,8 +39,18 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
+    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
+        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
+    }
+
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
+    }
+
+    getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/modelingExampleAssessment`;
+        return this.http.get<Result>(url).map(res => this.convertResult(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {
@@ -60,7 +70,7 @@ export class ModelingAssessmentService {
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
     convertResult(result: Result): Result {
-        if (!result.feedbacks) {
+        if (!result || !result.feedbacks) {
             return result;
         }
         for (const feedback of result.feedbacks) {
