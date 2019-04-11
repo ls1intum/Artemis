@@ -1,0 +1,34 @@
+<jhi-alert></jhi-alert>
+<div class="p-4" *ngIf="exercise">
+    <div class="row">
+        <div class="col-lg-2">
+            <button class="btn btn-secondary" (click)="back()">&larr;</button>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <h2>
+                Example Solution for Modeling Exercise {{exercise?.title}}
+            </h2>
+        </div>
+
+        <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
+            <button (click)="saveExampleSolution()" class="btn btn-primary col-6">
+                <fa-icon icon="save"></fa-icon>
+                <span>Save example solution</span>
+            </button>
+        </div>
+
+        <div class="col-12">
+            <p class="mb-3">
+                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
+            </p>
+        </div>
+
+        <div class="col-12">
+            <jhi-modeling-editor
+                [umlModel]="exampleSolution"
+                [diagramType]="exercise.diagramType"
+            ></jhi-modeling-editor>
+        </div>
+    </div>
+</div>

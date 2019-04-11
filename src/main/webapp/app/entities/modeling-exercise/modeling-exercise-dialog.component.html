@@ -67,7 +67,7 @@
                 <option value="CommunicationDiagram">{{'arTeMiSApp.DiagramType.CommunicationDiagram' | translate}}</option>-->
             </select>
         </div>
-        <div class="form-group-narrow">
+        <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="modelingExercise.course">
                 <option [ngValue]="null"></option>
@@ -76,17 +76,38 @@
                 }}</option>
             </select>
         </div>
-        <div class="form-group-narrow" name="problemStatement" id="field_problemStatement">
+        <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <div class="question-content background-editor-color">
                 <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
             </div>
         </div>
-        <div class="form-group-narrow" name="gradingInstructions" id="field_gradingInstructions">
+        <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
             <jhi-markdown-editor [(markdown)]="modelingExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
+            <span>Example solution</span>
+
+            <ul>
+                <li *ngIf="modelingExercise.id && modelingExercise.sampleSolutionModel">
+                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution"
+                            class="btn btn-link" type="button">
+                        Example solution
+                    </button>
+                </li>
+            </ul>
+
+            <button *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
+                    class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution">
+                Create example solution
+            </button>
+
+            <div class="alert alert-info" *ngIf="!modelingExercise.id">
+                To create an example solution, you first need to finish creating the modeling exercise
+            </div>
+        </div>
+        <div class="form-group-narrow">
             <span>Example submissions</span>
 
             <ul *ngIf="modelingExercise.id">
