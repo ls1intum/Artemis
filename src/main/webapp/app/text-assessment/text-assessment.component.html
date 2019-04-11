@@ -17,7 +17,7 @@
             <button
                 class="btn btn-primary ml-3"
                 (click)="save()"
-                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.save"
             >
@@ -26,7 +26,7 @@
             <button
                 class="btn btn-success ml-3"
                 (click)="submit()"
-                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized) || !result.id"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.submit"
             >
@@ -60,7 +60,7 @@
 </h2>
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
-    <div class="row flex-nowrap">
+    <div class="row flex-nowrap col-12">
         <div class="card flex-grow-1 resizable-submission mr-4">
             <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.textAssessment.studentSubmission">Student submission</div>
             <div class="card-body">
@@ -68,39 +68,16 @@
             </div>
         </div>
 
-        <div class="resizable-submission card" id="instructions" [ngStyle]="{ 'min-width.px': 400 }">
-            <!-- Required for resizing; don't remove empty span -->
-            <div class="resizing-bar"><span></span></div>
-
-            <div class="card-header text-white bg-primary" (click)="toggleCollapse($event)">
-                <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
-                <h3 class="card-title">
-                    <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                    <span jhiTranslate="arTeMiSApp.textAssessment.instructions"> &nbsp; Instructions &nbsp; </span>
-                </h3>
-            </div>
-
-            <div class="card-body">
-                <div *ngIf="formattedProblemStatement">
-                    <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
-                    <p [innerHTML]="formattedProblemStatement"></p>
-
-                    <hr />
-                </div>
-
-                <div *ngIf="formattedSampleSolution">
-                    <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
-                    <p [innerHTML]="formattedSampleSolution"></p>
-
-                    <hr />
-                </div>
-
-                <div *ngIf="formattedGradingInstructions">
-                    <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
-                    <p [innerHTML]="formattedGradingInstructions"></p>
-                </div>
-            </div>
-        </div>
+        <jhi-resizable-instructions
+            class="resizable-submission card" id="instructions"
+            [ngStyle]="{ 'width.px': 400 }"
+            [formattedProblemStatement]="formattedProblemStatement"
+            [formattedGradingInstructions]="formattedGradingInstructions"
+            [formattedSampleSolution]="formattedSampleSolution"
+            [toggleCollapse]="toggleCollapse.bind(this)"
+        >
+            <div resizingbar class="resizing-bar"><span></span></div>
+        </jhi-resizable-instructions>
     </div>
 
     <!-- Required for resizing; don't remove empty span -->
@@ -114,7 +91,7 @@
         <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
     </div>
     <div class="row">
-        <div *ngFor="let assessment of assessments; let i = index" class="col-4">
+        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
             <jhi-text-assessment-detail
                 [(assessment)]="assessments[i]"
                 (assessmentChange)="checkScoreBoundaries()"

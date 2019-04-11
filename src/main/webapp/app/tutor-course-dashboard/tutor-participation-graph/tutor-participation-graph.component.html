@@ -1,14 +1,14 @@
 <div>
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
-        <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()">
-            <fa-icon icon="book" title="Read grading instructions"></fa-icon>
+        <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.readGradingInstructions' | translate">
+            <fa-icon icon="book"></fa-icon>
         </li>
-        <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()">
-            <fa-icon icon="chalkboard-teacher" title="Train on example submissions"></fa-icon>
+        <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
+            <fa-icon icon="chalkboard-teacher"></fa-icon>
         </li>
-        <li [ngClass]="calculateClasses(COMPLETED)" (click)="navigate()">
-            <fa-icon icon="check-circle" title="Assess students' submissions"></fa-icon>
+        <li [ngClass]="calculateClasses(COMPLETED)" (click)="navigate()"  [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
+            <fa-icon icon="check-circle"></fa-icon>
         </li>
     </ul>
 </div>

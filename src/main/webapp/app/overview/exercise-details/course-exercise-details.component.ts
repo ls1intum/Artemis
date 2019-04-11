@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, isProgrammingExercise } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -32,8 +33,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exerciseCategories: ExerciseCategory[];
     private websocketChannelResults: string;
 
+    formattedProblemStatement: string;
+
     getIcon = getIcon;
-    isProgrammingExercise = isProgrammingExercise;
 
     constructor(
         private $location: Location,
@@ -44,6 +46,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
@@ -79,6 +82,26 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
             this.subscribeForNewResults(this.exercise);
         });
+        this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
+            this.exercise = exercise;
+            this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+            this.setExerciseStatusBadge();
+            if (this.exercise.problemStatement) {
+                this.formattedProblemStatement = this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+            }
+            if (this.hasResults) {
+                this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
+                    const aValue = moment(a.completionDate).valueOf();
+                    const bValue = moment(b.completionDate).valueOf();
+                    return aValue - bValue;
+                });
+                const sortedResultLength = this.sortedResults.length;
+                const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
+                this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
+            }
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+            this.subscribeForNewResults(this.exercise);
+        });
     }
 
     ngOnDestroy() {
@@ -89,16 +112,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     subscribeForNewResults(exercise: Exercise) {
         this.accountService.identity().then(user => {
-            const participation = this.exercise.participations[0];
-            if (participation) {
-                this.websocketChannelResults = `/topic/participation/${participation.id}/newResults`;
-                this.jhiWebsocketService.subscribe(this.websocketChannelResults);
-                this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                    console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                    // convert json string to moment
-                    newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                    this.handleNewResult(newResult);
-                });
+            if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
+                const participation = this.exercise.participations[0];
+                if (participation) {
+                    this.websocketChannelResults = `/topic/participation/${participation.id}/newResults`;
+                    this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+                    this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
+                        console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                        // convert json string to moment
+                        newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                        this.handleNewResult(newResult);
+                    });
+                }
             }
         });
     }

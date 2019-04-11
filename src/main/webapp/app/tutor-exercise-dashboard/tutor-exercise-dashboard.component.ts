@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -7,7 +7,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -58,8 +57,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal,
         private artemisMarkdown: ArtemisMarkdown,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -80,15 +79,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
-                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
-                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 }
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
 
                 this.stats.toReview.total = this.exampleSubmissionsToReview.length;
-                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
+                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
                 this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
-                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
+                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
@@ -139,24 +138,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
-    readInstruction(onComplete?: () => void) {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body;
-                this.tutorParticipationStatus = this.tutorParticipation.status;
-                this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
-            },
-            this.onError,
-            () => {
-                if (onComplete) {
-                    onComplete();
-                }
-            },
-        );
+    readInstruction() {
+        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+            this.tutorParticipation = res.body;
+            this.tutorParticipationStatus = this.tutorParticipation.status;
+            this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
+        }, this.onError);
     }
 
     hasBeenCompletedByTutor(id: number) {
@@ -168,10 +155,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     calculateStatus(submission: TextSubmission) {
-        if (submission.result.completionDate) {
+        if (submission.result && submission.result.completionDate) {
             return 'DONE';
         }
 
         return 'DRAFT';
+    }
+
+    back() {
+        this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
     }
 }

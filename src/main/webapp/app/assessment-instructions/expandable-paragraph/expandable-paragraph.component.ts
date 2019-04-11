@@ -7,7 +7,7 @@ import { Component, OnInit, Input } from '@angular/core';
 })
 export class ExpandableParagraphComponent implements OnInit {
     @Input() header = 'Toggle paragraph';
-    @Input() paragraph: string;
+    @Input() text: string;
     @Input() isCollapsed = false;
     constructor() {}
 
