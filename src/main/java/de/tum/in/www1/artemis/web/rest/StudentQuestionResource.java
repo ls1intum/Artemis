@@ -105,7 +105,7 @@ public class StudentQuestionResource {
      */
     @GetMapping("/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentQuestion>> getAllUsers(@RequestParam("exercise") Long exerciseId) {
+    public ResponseEntity<List<StudentQuestion>> getAllQuestions(@RequestParam("exercise") Long exerciseId) {
         List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
