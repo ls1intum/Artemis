@@ -86,7 +86,7 @@ export class NotificationService {
                     if (!this.notificationObserver) {
                         this.notificationObserver = new BehaviorSubject<Notification>(null);
                     }
-                    const userTopic = `topic/user/${user.id}`;
+                    const userTopic = `/topic/user/${user.id}/notifications`;
                     if (!this.subscribedTopics.includes(userTopic)) {
                         console.log('subscribing to', userTopic);
                         this.subscribedTopics.push(userTopic);

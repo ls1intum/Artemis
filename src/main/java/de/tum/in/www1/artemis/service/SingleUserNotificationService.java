@@ -46,7 +46,7 @@ public class SingleUserNotificationService {
 
     private void saveAndSendSingleUserNotification(SingleUserNotification userNotification) {
         singleUserNotificationRepository.save(userNotification);
-        String userTopic = "topic/user/" + userNotification.getRecipient().getId();
+        String userTopic = "/topic/user/" + userNotification.getRecipient().getId() + "/notifications";
         messagingTemplate.convertAndSend(userTopic, userNotification);
     }
 

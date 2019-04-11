@@ -29,18 +29,6 @@ public class NotificationService {
         this.groupNotificationService = groupNotificationService;
     }
 
-    public void sendNotification(User user, Course course, String notificationType, String targetGroup, Boolean isUserNotification, Boolean isGroupNotification) {
-
-        // TODO convert targetObject
-
-        if (isUserNotification) {
-            messagingTemplate.convertAndSend("/topic/user/" + user.getId() + "/singleUser", targetGroup);
-        }
-        else if (isGroupNotification) {
-            messagingTemplate.convertAndSend("/topic/course/" + course.getId() + "/" + targetGroup + "/newResults", targetGroup);
-        }
-    }
-
     @Transactional(readOnly = true)
     public List<Notification> findAllExceptSystem(User currentUser) {
         List<Notification> groupNotifications = groupNotificationService.findAllNewNotificationsForCurrentUser(currentUser);
