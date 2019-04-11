@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.StudentQuestionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -34,9 +35,13 @@ public class StudentQuestionResource {
 
     private final StudentQuestionService studentQuestionService;
 
-    public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, StudentQuestionService studentQuestionService) {
+    GroupNotificationService groupNotificationService;
+
+    public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService,
+            StudentQuestionService studentQuestionService) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -54,6 +59,7 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+        groupNotificationService.notifyGroupAboutNewQuestion(result);
         return ResponseEntity.created(new URI("/api/student-questions/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }

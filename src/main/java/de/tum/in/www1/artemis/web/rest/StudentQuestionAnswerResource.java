@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -29,8 +31,15 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
-    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository) {
+    GroupNotificationService groupNotificationService;
+
+    SingleUserNotificationService singleUserNotificationService;
+
+    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
+            SingleUserNotificationService singleUserNotificationService) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.groupNotificationService = groupNotificationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -49,6 +58,8 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        groupNotificationService.notifyGroupAboutNewAnswer(result);
+        singleUserNotificationService.notifyUserAboutNewAnswer(result);
         return ResponseEntity.created(new URI("/api/question-answers/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }

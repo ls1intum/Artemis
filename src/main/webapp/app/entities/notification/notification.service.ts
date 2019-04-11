@@ -137,6 +137,7 @@ export class NotificationService {
 
     interpretNotification(notification: GroupNotification): void {
         const target = JSON.parse(notification.target);
-        this.router.navigate([target.mainPage, notification.course.id, target.entity, target.id]);
+        const courseId = target.course || notification.course.id;
+        this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
     }
 }

@@ -37,9 +37,7 @@ export class NotificationContainerComponent implements OnInit {
     }
 
     startNotification(notification: Notification) {
-        if (notification.notificationType === NotificationType.GROUP) {
-            this.notificationService.interpretNotification(notification as GroupNotification);
-        }
+        this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
     updateNotificationCount() {
