@@ -41,10 +41,10 @@ public class SingleUserNotificationService {
         target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
         target.addProperty("mainPage", "overview");
         userNotification.setTarget(target.toString());
-        saveAndSendGroupNotification(userNotification);
+        saveAndSendSingleUserNotification(userNotification);
     }
 
-    private void saveAndSendGroupNotification(SingleUserNotification userNotification) {
+    private void saveAndSendSingleUserNotification(SingleUserNotification userNotification) {
         singleUserNotificationRepository.save(userNotification);
         String userTopic = "topic/user/" + userNotification.getRecipient().getId();
         messagingTemplate.convertAndSend(userTopic, userNotification);

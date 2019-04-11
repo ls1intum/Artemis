@@ -81,16 +81,16 @@ public class GroupNotificationService {
 
     public void notifyGroupAboutNewQuestion(StudentQuestion studentQuestion) {
         String title = "New Question";
-        String notificationText = "Exercise \"" + studentQuestion.getExercise().getTitle() + "\" got a new Question.";
+        String notificationText = "Exercise \"" + studentQuestion.getExercise().getTitle() + "\" got a new question.";
         notifyGroupAboutExercise(studentQuestion.getExercise(), title, notificationText, "newQuestion", GroupNotificationType.TA);
         notifyGroupAboutExercise(studentQuestion.getExercise(), title, notificationText, "newQuestion", GroupNotificationType.INSTRUCTOR);
     }
 
     public void notifyGroupAboutNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
-        String title = "New Question";
-        String notificationText = "Exercise \"" + studentQuestionAnswer.getQuestion().getExercise().getTitle() + "\" got a new Question.";
-        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newQuestion", GroupNotificationType.TA);
-        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newQuestion", GroupNotificationType.INSTRUCTOR);
+        String title = "New Answer";
+        String notificationText = "Exercise \"" + studentQuestionAnswer.getQuestion().getExercise().getTitle() + "\" got a new answer.";
+        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newAnswer", GroupNotificationType.TA);
+        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newAnswer", GroupNotificationType.INSTRUCTOR);
     }
 
     private void saveAndSendGroupNotification(String topic, GroupNotification groupNotification) {
