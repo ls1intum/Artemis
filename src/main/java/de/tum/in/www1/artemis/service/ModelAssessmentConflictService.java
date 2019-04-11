@@ -8,12 +8,19 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 @Service
 public class ModelAssessmentConflictService {
 
     private ModelAssessmentConflictRepository modelAssessmentConflictRepository;
+
+    private ConflictingResultRepository conflictingResultRepository;
+
+    public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultRepository conflictingResultRepository) {
+        this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
+        this.conflictingResultRepository = conflictingResultRepository;
+    }
 
     public List<ModelAssessmentConflict> createConflicts(Map<String, List<Feedback>> elementConflictingFeedbackMapping, Result causingResult) {
         List<ModelAssessmentConflict> conflicts = new ArrayList<>(elementConflictingFeedbackMapping.size());
@@ -39,7 +46,13 @@ public class ModelAssessmentConflictService {
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
-        modelAssessmentConflictRepository.saveAll(conflicts);
+        conflicts.forEach(modelAssessmentConflict -> {
+            conflictingResultRepository.save(modelAssessmentConflict.getCausingResult());
+            conflictingResultRepository.saveAll(modelAssessmentConflict.getResultsInConflict());
+            modelAssessmentConflictRepository.save(modelAssessmentConflict);
+        });
+        // conflicts.forEach(modelAssessmentConflictRepository::save);
+        // modelAssessmentConflictRepository.saveAll(conflicts);
     }
 
 }
