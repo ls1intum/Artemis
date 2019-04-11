@@ -207,9 +207,14 @@ public class CompassService {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
         Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
-        List<ModelAssessmentConflict> conflicts = conflictService.createConflicts(elementConflictingFeedbackMapping, result);
-        conflictService.saveConflicts(conflicts);
-        return conflicts;
+        if (elementConflictingFeedbackMapping.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        else {
+            List<ModelAssessmentConflict> conflicts = conflictService.createConflicts(elementConflictingFeedbackMapping, result);
+            conflictService.saveConflicts(conflicts);
+            return conflicts;
+        }
     }
 
     /**
