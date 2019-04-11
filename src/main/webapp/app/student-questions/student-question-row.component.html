@@ -80,7 +80,7 @@
                     </div>
                     <div class="col-12 d-flex justify-content-between mb-2">
                         <button class="btn btn-outline-primary"
-                                (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                                (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
                         <button class="btn btn-primary"
                                 (click)="saveAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer" | translate}}</button>
                     </div>
@@ -117,7 +117,7 @@
         <div class="row mb-3" *ngIf="!isAnswerMode">
             <div class="col">
                 <button class="btn btn-primary"
-                        (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
+                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
             </div>
         </div>
         <div *ngIf="isAnswerMode && !selectedQuestionAnswer">
@@ -130,7 +130,7 @@
             </div>
             <div class="col-12 d-flex justify-content-between">
                 <button class="btn btn-outline-primary"
-                        (click)="toggleAnswerMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
+                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
                 <button class="btn btn-primary"
                         (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
             </div>
