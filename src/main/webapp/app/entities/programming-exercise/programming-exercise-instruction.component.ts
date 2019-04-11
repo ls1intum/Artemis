@@ -1,7 +1,22 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
+import {
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    OnDestroy,
+    Renderer2,
+    SimpleChanges,
+    Injector,
+    ComponentFactoryResolver,
+    ApplicationRef,
+    EmbeddedViewRef,
+} from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
+import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
@@ -10,6 +25,7 @@ import { Result, ResultService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { Participation } from '../participation';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 type Step = {
     title: string;
@@ -51,6 +67,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
+        private componentFactoryResolver: ComponentFactoryResolver,
+        private appRef: ApplicationRef,
+        private injector: Injector,
     ) {
         this.markdown = new Remarkable();
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
@@ -95,7 +114,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps = [];
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
-        setTimeout(() => this.setUpClickListeners(), 100);
+        setTimeout(() => {
+            this.setUpClickListeners();
+            this.setUpTaskIcons();
+        }, 100);
         this.isLoading = false;
     }
 
@@ -190,6 +212,25 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 this.showDetailsForTests(this.latestResult, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
+        });
+    }
+
+    /**
+     * Add task icons (success or failed) to tasks in introduction file.
+     * Existing icons will be removed.
+     */
+    private setUpTaskIcons() {
+        this.steps.forEach(({ done }, i) => {
+            const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
+            componentRef.instance.size = 'lg';
+            componentRef.instance.iconProp = done ? faCheckCircle : faTimesCircle;
+            componentRef.instance.classes = [done ? 'text-success' : 'text-danger'];
+            componentRef.instance.ngOnChanges({});
+            this.appRef.attachView(componentRef.hostView);
+            const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+            const iconContainer = document.getElementById(`step-icon-${i}`);
+            iconContainer.innerHTML = '';
+            iconContainer.append(domElem);
         });
     }
 
@@ -346,11 +387,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const tests = tokens[0].tests;
         const [done, label] = this.statusForTests(tests);
 
-        let text = '<span class="bold">';
+        let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
-        text += done
-            ? `<fa-icon size="lg" [icon]="['far', 'check-circle']" class="text-success" style="font-size: 1.7em;"></fa-icon>`
-            : `<fa-icon size="lg" [icon]="['far', 'times-circle']" class="text-danger" style="font-size: 1.7em;"></fa-icon>`;
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog

@@ -24,6 +24,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArTEMiSResultModule } from 'app/entities/result';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -55,6 +56,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
+        FaIconComponent,
     ],
     exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],
     providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
