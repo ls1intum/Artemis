@@ -33,7 +33,8 @@ public class ExampleSubmission implements Serializable {
     private Submission submission;
 
     @ManyToOne
-    @JsonIgnoreProperties("trainedExampleSubmissions")
+    // TODO CZ: is it fine to ignore "assessedExercise"? if yes, remove circular dependency break in exercise resource. if not, break circular dependencies in ModelingSubmissionResource
+    @JsonIgnoreProperties({"trainedExampleSubmissions", "assessedExercise"})
     // TODO CZ: when an exercise is loaded with example submissions that contain a tutor participation
     //  there will be an infinite dependency loop: exercise -> exampleSubmission -> tutorParticipation -> assessedExercise -> exampleSubmission -> ...
     private TutorParticipation tutorParticipation;
