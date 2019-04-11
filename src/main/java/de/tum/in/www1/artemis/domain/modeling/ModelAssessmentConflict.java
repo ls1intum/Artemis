@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
  * Representing a conflict between a newly assessed model element (causingResult) and already persisted assessed model elements (resultsInConflict) within the same similarity set.
  */
 @Entity
-@Table(name = "model-assessment-conflict")
+@Table(name = "model_assessment_conflict")
 public class ModelAssessmentConflict {
 
     @Id
