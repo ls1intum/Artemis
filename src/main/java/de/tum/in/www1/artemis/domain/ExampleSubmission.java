@@ -34,6 +34,8 @@ public class ExampleSubmission implements Serializable {
 
     @ManyToOne
     @JsonIgnoreProperties("trainedExampleSubmissions")
+    // TODO CZ: when an exercise is loaded with example submissions that contain a tutor participation
+    //  there will be an infinite dependency loop: exercise -> exampleSubmission -> tutorParticipation -> assessedExercise -> exampleSubmission -> ...
     private TutorParticipation tutorParticipation;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

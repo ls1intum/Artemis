@@ -102,7 +102,7 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
     /**
-     * Gets a example modeling submission with the given submissionId. Returns the result of the submission.
+     * Gets an example modeling submission with the given submissionId and returns the result of the submission.
      *
      * @param submissionId the id of the example modeling submission
      * @return the result of the submission
@@ -112,7 +112,8 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result getExampleAssessment(long submissionId) {
         Optional<ModelingSubmission> optionalModelingSubmission =
             modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
-        return optionalModelingSubmission.map(Submission::getResult)
+        ModelingSubmission modelingSubmission = optionalModelingSubmission
             .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+        return modelingSubmission.getResult();
     }
 }

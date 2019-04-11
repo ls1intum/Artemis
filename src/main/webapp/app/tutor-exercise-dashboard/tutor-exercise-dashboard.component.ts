@@ -214,7 +214,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
         const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
-        let queryParams: exampleSubmissionQueryParams = {};
+        const queryParams: exampleSubmissionQueryParams = {};
         if (readOnly) {
             queryParams.readOnly = readOnly;
         }
