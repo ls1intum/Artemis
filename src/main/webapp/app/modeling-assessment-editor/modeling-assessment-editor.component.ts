@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DiagramType, UMLModel } from '@ls1intum/apollon';
@@ -9,8 +10,7 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
-import { retryWhen } from 'rxjs/operators';
+import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
 
 @Component({
@@ -33,6 +33,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAuthorized = false;
     isAtLeastInstructor = false;
+    forTutorDashboard: boolean; // TODO CZ: remove
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -44,6 +45,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
+        private location: Location,
     ) {}
 
     ngOnInit() {
@@ -56,6 +58,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             const submissionId = Number(params['submissionId']);
             this.loadSubmission(submissionId);
         });
+        // TODO CZ: remove
+        this.forTutorDashboard = !!this.route.snapshot.queryParamMap.get('forTutorDashboard');
     }
 
     checkAuthorization() {
@@ -212,5 +216,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             }
         }
         this.assessmentsAreValid = true;
+    }
+
+    // TODO CZ: remove/adjust?
+    previous() {
+        this.location.back();
     }
 }

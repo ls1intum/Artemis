@@ -1,5 +1,7 @@
 <div *ngIf="true; else conflictResolution" class="assessment-container">
     <h2 class="top-container">
+        <!--TODO CZ: remove/adjust back button?-->
+        <fa-icon *ngIf="forTutorDashboard" [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
         <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>

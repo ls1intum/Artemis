@@ -13,7 +13,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
-export interface exampleSubmissionQueryParams {
+export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
     toComplete?: boolean;
 }
@@ -147,7 +147,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 )
                 .subscribe((submissions: ModelingSubmission[]) => {
                     this.submissions = submissions;
-                    console.log(this.submissions);
                     this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
                 });
         }
@@ -171,7 +170,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
                 (response: HttpResponse<ModelingSubmission>) => {
                     this.unassessedSubmission = response.body;
-                    console.log(this.unassessedSubmission);
                 },
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
@@ -209,12 +207,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
-        if (!this.exercise || !this.exercise.type) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
         const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
-        const queryParams: exampleSubmissionQueryParams = {};
+        const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
             queryParams.readOnly = readOnly;
         }
@@ -222,7 +220,29 @@ export class TutorExerciseDashboardComponent implements OnInit {
             queryParams.toComplete = toComplete;
         }
 
-        this.router.navigate([route], { queryParams: queryParams });
+        this.router.navigate([route], { queryParams });
+    }
+
+    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
+            return;
+        }
+        let route: string;
+        const queryParams: any = {}; // TODO CZ: remove query parameters
+
+        if (this.exercise.type === ExerciseType.TEXT) {
+            route = `/text/${this.exercise.id}/assessment/`;
+            if (isNewAssessment) {
+                route = route.concat('new');
+            } else {
+                route = route.concat(submissionId.toString());
+            }
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionId}/assessment`;
+            // TODO CZ: remove query parameter
+            queryParams.forTutorDashboard = true;
+        }
+        this.router.navigate([route], { queryParams });
     }
 
     back() {

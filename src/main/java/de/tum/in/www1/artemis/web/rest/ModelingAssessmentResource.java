@@ -167,7 +167,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         // If the user is not an instructor do not provide the results
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+//        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        // TODO CZ: if we check for instructor, no assessment is loaded for review example submissions
+        //  -> check for "used for tutorial" flag of corresponding example submission instead?
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(
                 "modelingSubmission",
                 "notAuthorized",
