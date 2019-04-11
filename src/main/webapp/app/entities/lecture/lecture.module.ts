@@ -4,14 +4,23 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
-import { LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureDeletePopupComponent, LectureDeleteDialogComponent, lectureRoute, lecturePopupRoute } from './';
+import {
+    LectureComponent,
+    LectureDetailComponent,
+    LectureUpdateComponent,
+    LectureDeletePopupComponent,
+    LectureDeleteDialogComponent,
+    lectureRoute,
+    lecturePopupRoute,
+    LectureAttachmentsComponent,
+} from './';
 
 const ENTITY_STATES = [...lectureRoute, ...lecturePopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
-    declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureDeletePopupComponent],
-    entryComponents: [LectureComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureDeletePopupComponent],
+    declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureAttachmentsComponent, LectureDeletePopupComponent],
+    entryComponents: [LectureComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureDeletePopupComponent, LectureAttachmentsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

@@ -35,14 +35,10 @@ export class LectureUpdateComponent implements OnInit {
             this.lecture = lecture;
             this.startDate = this.lecture.startDate != null ? this.lecture.startDate.format(DATE_TIME_FORMAT) : null;
             this.endDate = this.lecture.endDate != null ? this.lecture.endDate.format(DATE_TIME_FORMAT) : null;
+            this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
+                this.lecture.course = response.body;
+            });
         });
-        this.courseService
-            .query()
-            .pipe(
-                filter((mayBeOk: HttpResponse<Course[]>) => mayBeOk.ok),
-                map((response: HttpResponse<Course[]>) => response.body),
-            )
-            .subscribe((res: Course[]) => (this.courses = res), (res: HttpErrorResponse) => this.onError(res.message));
     }
 
     previousState() {

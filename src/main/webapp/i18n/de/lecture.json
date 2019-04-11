@@ -1,0 +1,21 @@
+{
+    "arTeMiSApp": {
+        "lecture": {
+            "home": {
+                "title": "Vorlesungen",
+                "createLabel": "Vorlesung erstellen"
+            },
+            "created": "Vorlesung erstellt mit ID {{ param }}",
+            "updated": "Vorlesung aktualisiert mit ID {{ param }}",
+            "deleted": "Vorlesung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll die Vorlesung {{ title }} wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            },
+            "title": "Title",
+            "description": "Beschreibung",
+            "startDate": "Start",
+            "endDate": "Ende",
+            "course": "Kurs"
+        }
+    }
+}

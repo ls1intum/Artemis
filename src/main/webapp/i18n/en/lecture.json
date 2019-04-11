@@ -1,0 +1,21 @@
+{
+    "arTeMiSApp": {
+        "lecture": {
+            "home": {
+                "title": "Lecture",
+                "createLabel": "Create Lecture"
+            },
+            "created": "A new lecture is created with identifier {{ param }}",
+            "updated": "A lecture is updated with identifier {{ param }}",
+            "deleted": "A lecture is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the lecture {{ title }}? This action can NOT be undone!"
+            },
+            "title": "Title",
+            "description": "Description",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "course": "Course"
+        }
+    }
+}
