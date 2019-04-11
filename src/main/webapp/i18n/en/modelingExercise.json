@@ -16,8 +16,9 @@
                 "title": "Modeling Exercise"
             },
             "diagramType": "Diagram Type",
-            "sampleSolutionModel": "Sample Solution Model",
-            "sampleSolutionExplanation": "Sample Solution Explanation"
+            "exampleSolution": "Example Solution",
+            "exampleSolutionExplanation": "Example Solution Explanation",
+            "createExampleSolution": "Create Example Solution"
         }
     }
 }

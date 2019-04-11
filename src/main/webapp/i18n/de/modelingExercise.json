@@ -16,8 +16,9 @@
                 "title": "Modellierungsaufgabe"
             },
             "diagramType": "Diagrammtyp",
-            "sampleSolutionModel": "Modell Beispiellösung",
-            "sampleSolutionExplanation": "Erklärung Beispiellösung"
+            "exampleSolution": "Beispiellösung",
+            "exampleSolutionExplanation": "Erklärung Beispiellösung",
+            "createExampleSolution": "Beispiellösung erstellen"
         }
     }
 }

@@ -83,28 +83,35 @@
             </div>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
             <jhi-markdown-editor [(markdown)]="modelingExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <span>Example solution</span>
-
+            <span jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution">Example Solution</span>
             <ul>
                 <li *ngIf="modelingExercise.id && modelingExercise.sampleSolutionModel">
                     <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution"
-                            class="btn btn-link" type="button">
-                        Example solution
+                            class="btn btn-link" type="button" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution">
+                        Example Solution
                     </button>
                 </li>
             </ul>
-
             <button *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
-                    class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution">
+                    class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution"
+                    jhiTranslate="arTeMiSApp.modelingExercise.createExampleSolution">
                 Create example solution
             </button>
-
             <div class="alert alert-info" *ngIf="!modelingExercise.id">
                 To create an example solution, you first need to finish creating the modeling exercise
+            </div>
+        </div>
+        <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionExplanation"
+                   for="field_exampleSolutionExplanation">
+                Example Solution Explanation
+            </label>
+            <div class="question-content background-editor-color">
+                <jhi-markdown-editor [(markdown)]="modelingExercise.sampleSolutionExplanation"></jhi-markdown-editor>
             </div>
         </div>
         <div class="form-group-narrow">
