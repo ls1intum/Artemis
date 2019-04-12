@@ -101,11 +101,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 (this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) ||
                 (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))
             ) {
-                // unsubscribe old results if a subscription exists
                 // subscribe for new results (e.g. when a programming exercise was automatically tested)
-                if (this.websocketChannelResults) {
-                    this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
-                }
                 this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
                 this.jhiWebsocketService.subscribe(this.websocketChannelResults);
                 this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
@@ -115,11 +111,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     this.handleNewResult(newResult);
                 });
 
-                // unsubscribe old submissions if a subscription exists
                 // subscribe for new submissions (e.g. when code was pushed and is currently built)
-                if (this.websocketChannelSubmissions) {
-                    this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
-                }
                 this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
                 this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
                 this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {

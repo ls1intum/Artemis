@@ -1,11 +1,13 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, EventEmitter, Component, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { maxBy as _maxBy } from 'lodash';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
-import { JhiWebsocketService } from '../../core';
+import { JhiWebsocketService, AccountService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
+import * as moment from 'moment';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
@@ -16,7 +18,7 @@ import { BuildLogEntryArray } from '../../entities/build-log';
     templateUrl: './code-editor-build-output.component.html',
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
 })
-export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges {
+export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
     buildLogs = new BuildLogEntryArray();
 
     /** Resizable constants **/
@@ -30,6 +32,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
     isBuilding: boolean;
     @Output()
     buildLogChange = new EventEmitter<BuildLogEntryArray>();
+    @Input()
+    isInitial = true;
+
+    private websocketChannelResults: string;
 
     constructor(
         private parent: CodeEditorComponent,
@@ -37,6 +43,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryService: RepositoryService,
         private resultService: ResultService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -84,7 +91,15 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
      *
      */
     ngOnChanges(changes: SimpleChanges): void {
+        // If the participation changes, set component to initial as everything needs to be reloaded now
+        if (this.participation && changes.participation && changes.participation.currentValue && this.participation.id !== changes.participation.currentValue.id) {
+            this.isInitial = true;
+        }
         if ((changes.participation && this.participation) || (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
+            if (this.isInitial) {
+                this.setupResultWebsocket();
+                this.isInitial = false;
+            }
             if (!this.participation.results) {
                 this.resultService
                     .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
@@ -92,12 +107,34 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
                         ratedOnly: this.participation.exercise.type === 'quiz',
                     })
                     .subscribe(results => {
-                        this.toggleBuildLogs(results.body);
+                        this.toggleBuildLogs(_maxBy(results.body, 'id'));
                     });
-            } else {
-                this.toggleBuildLogs(this.participation.results);
+            } else if (this.participation.results && this.participation.results.length) {
+                const latestResultPrev =
+                    changes.participation && changes.participation.previousValue ? _maxBy((changes.participation.previousValue as Participation).results, 'id') : undefined;
+                const latestResultNew = _maxBy(this.participation.results, 'id');
+                if ((!latestResultPrev && latestResultNew) || (latestResultPrev && latestResultNew && latestResultNew.id !== latestResultPrev.id)) {
+                    this.toggleBuildLogs(latestResultNew);
+                }
             }
         }
+    }
+
+    /**
+     * Setup result websocket so that the instructions can use the latest result.
+     * When a new result is received, the result details will be loaded and then the instructions will be rerendered.
+     */
+    setupResultWebsocket() {
+        this.accountService.identity().then(() => {
+            this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
+            this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+            this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
+                // convert json string to moment
+                console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                this.toggleBuildLogs(newResult);
+            });
+        });
     }
 
     /**
@@ -112,19 +149,17 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
         });
     }
 
-    toggleBuildLogs(results: Result[]) {
+    toggleBuildLogs(result: Result) {
         // TODO: can we use the result in code-editor-instructions.component.ts?
-        if (results && results[0]) {
-            this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
-                if (details.body.length === 0) {
-                    this.getBuildLogs();
-                } else {
-                    this.buildLogs = new BuildLogEntryArray();
-                    // If there are no compile errors, send recent timestamp
-                    this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
-                }
-            });
-        }
+        this.resultService.getFeedbackDetailsForResult(result.id).subscribe(details => {
+            if (details.body.length === 0) {
+                this.getBuildLogs();
+            } else {
+                this.buildLogs = new BuildLogEntryArray();
+                // If there are no compile errors, send recent timestamp
+                this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
+            }
+        });
     }
 
     /**
@@ -135,5 +170,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal, this.interactResizable, undefined, this.resizableMinHeight);
+    }
+
+    ngOnDestroy() {
+        if (this.websocketChannelResults) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        }
     }
 }

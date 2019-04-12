@@ -18,6 +18,7 @@ import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-edit
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
+import { Interactable } from 'interactjs';
 
 @Component({
     selector: 'jhi-editor',
