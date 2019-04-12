@@ -88,9 +88,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 })
                 .then(() => {
                     if (this.participation.results) {
-                        this.latestResult = this.participation.results[0];
-                        // Only load results if the exercise already is in our database, otherwise their can be no build result anyway
+                        // Get the result with the highest id (most recent result)
+                        this.latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
                     } else if (this.exercise.id) {
+                        // Only load results if the exercise already is in our database, otherwise their can be no build result anyway
                         return this.loadLatestResult();
                     }
                 })
