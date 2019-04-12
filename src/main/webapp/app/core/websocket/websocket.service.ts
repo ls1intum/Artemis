@@ -15,8 +15,7 @@ export class JhiWebsocketService implements OnDestroy {
     subscribers: { [key: string]: Stomp.Subscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
-    myListeners: { [key: string]: Observable<any> } = {};
-    listenerObservers: { [key: string]: Subject<any> } = {};
+    myListeners: { [key: string]: Subject<any> } = {};
     alreadyConnectedOnce = false;
     private subscription: Subscription;
     shouldReconnect = false;
@@ -94,15 +93,12 @@ export class JhiWebsocketService implements OnDestroy {
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
-                    if (Object.keys(this.myListeners).length !== 0) {
-                        for (const channel in this.myListeners) {
-                            if (this.myListeners.hasOwnProperty(channel)) {
-                                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
-                                    this.listenerObservers[channel].next(JSON.parse(data.body));
-                                });
-                            }
-                        }
-                    }
+                    Object.entries(this.myListeners).forEach(
+                        ([channel, observer]) =>
+                            (this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                                this.myListeners[channel].next(JSON.parse(data.body));
+                            })),
+                    );
                 } else {
                     this.alreadyConnectedOnce = true;
                 }
@@ -121,7 +117,7 @@ export class JhiWebsocketService implements OnDestroy {
 
     disconnect() {
         this.connection = this.createConnection();
-        Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
+        Object.keys(this.subscribers).forEach(listener => this.unsubscribe(listener), this);
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
@@ -171,11 +167,11 @@ export class JhiWebsocketService implements OnDestroy {
                 this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
                     const res = JSON.parse(data.body);
                     if (!res.error) {
-                        this.listenerObservers[channel].next(JSON.parse(data.body));
+                        this.myListeners[channel].next(JSON.parse(data.body));
                     } else {
                         // Response objects with error properties will be counted as a reason to fail
                         // The response objects needs to be prepared accordingly on the server
-                        this.listenerObservers[channel].error(res);
+                        this.myListeners[channel].error(res);
                     }
                 });
             }
@@ -183,18 +179,19 @@ export class JhiWebsocketService implements OnDestroy {
     }
 
     unsubscribe(channel?: string) {
+        // TODO: Atm the subscription is cancelled for all receivers if one subscriber unsubscribes
+        // It should be possible for single subscribers to unsubscribe
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
-        }
-        if (this && channel != null && this.myListeners != null && (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))) {
-            this.myListeners[channel] = this.createListener(channel);
+            delete this.subscribers[channel];
+            this.myListeners[channel].unsubscribe();
+            delete this.myListeners[channel];
         }
     }
 
-    private createListener<T>(channel: string): Observable<T> {
+    private createListener<T>(channel: string): Subject<T> {
         // Use subject to allow multicast
-        this.listenerObservers[channel] = new Subject();
-        return this.listenerObservers[channel];
+        return new Subject();
     }
 
     private createConnection(): Promise<void> {
