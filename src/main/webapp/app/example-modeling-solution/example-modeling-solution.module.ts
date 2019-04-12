@@ -11,7 +11,6 @@ import { exampleModelingSolutionRoute } from 'app/example-modeling-solution/exam
 const ENTITY_STATES = [...exampleModelingSolutionRoute];
 
 @NgModule({
-    // TODO CZ: do we need all the inputs? do we need the course service?
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSModelingEditorModule],
     declarations: [ExampleModelingSolutionComponent],
     providers: [JhiAlertService],
