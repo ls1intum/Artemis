@@ -45,7 +45,6 @@ export class CourseOverviewComponent implements OnInit {
     }
 
     adjustCourseDescription() {
-        debugger;
         if (this.course) {
             this.enableShowMore = this.course.description.length > 50;
             if (localStorage.getItem(DESCRIPTION_READ + this.course.shortName) && !this.courseDescription && this.enableShowMore) {
