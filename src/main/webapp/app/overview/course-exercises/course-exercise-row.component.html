@@ -12,36 +12,24 @@
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <div class="col-sm-auto col-12 d-none d-sm-inline" [ngSwitch]="exercise.participationStatus">
-                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
-                <span *ngSwitchCase="'initialized'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
-                </span>
-                <span *ngSwitchCase="'inactive'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
-                </span>
-                <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
-                </span>
-                <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
-                </span>
-                <span *ngSwitchCase="'text-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
-                </span>
-            </div>
-            <div class="col-auto d-sm-none" [ngSwitch]="exercise.participationStatus">
-                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
+            <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+                <div class="d-none d-sm-inline">
+                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
+                </div>
+                <div class="d-sm-none">
+                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
+
+                </div>
                 <span *ngSwitchCase="'initialized'">
                     <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
                 </span>
