@@ -45,7 +45,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         });
     }
 
-    private saveExampleSolution(): void {
+    saveExampleSolution(): void {
         if (!this.exercise || !this.modelingEditor.getCurrentModel()) {
             return;
         }
