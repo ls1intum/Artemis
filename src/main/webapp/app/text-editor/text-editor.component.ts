@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -39,6 +40,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         private textService: TextEditorService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
+        private location: Location,
         translateService: TranslateService,
     ) {
         this.isSaving = false;
@@ -139,5 +141,9 @@ export class TextEditorComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
+    }
+
+    previous() {
+        this.location.back();
     }
 }
