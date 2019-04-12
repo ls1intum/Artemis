@@ -107,9 +107,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     setupResultWebsocket() {
         this.accountService.identity().then(() => {
-            if (this.websocketChannelResults) {
-                this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
-            }
             this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
             this.jhiWebsocketService.subscribe(this.websocketChannelResults);
             this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {

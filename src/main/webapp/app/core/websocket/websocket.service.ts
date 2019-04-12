@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Observable, Observer, Subscription } from 'rxjs/Rx';
+import { Observable, Observer, Subscription, Subject } from 'rxjs/Rx';
 
 import { CSRFService } from 'app/core/auth/csrf.service';
 import { WindowRef } from './window.service';
@@ -16,7 +16,7 @@ export class JhiWebsocketService implements OnDestroy {
     connection: Promise<void>;
     connectedPromise: Function;
     myListeners: { [key: string]: Observable<any> } = {};
-    listenerObservers: { [key: string]: Observer<any> } = {};
+    listenerObservers: { [key: string]: Subject<any> } = {};
     alreadyConnectedOnce = false;
     private subscription: Subscription;
     shouldReconnect = false;
@@ -166,16 +166,19 @@ export class JhiWebsocketService implements OnDestroy {
             if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
                 this.myListeners[channel] = this.createListener(channel);
             }
-            this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
-                const res = JSON.parse(data.body);
-                if (!res.error) {
-                    this.listenerObservers[channel].next(JSON.parse(data.body));
-                } else {
-                    // Response objects with error properties will be counted as a reason to fail
-                    // The response objects needs to be prepared accordingly on the server
-                    this.listenerObservers[channel].error(res);
-                }
-            });
+            // Don't add more subscribers for a subscription that already exists
+            if (!this.subscribers[channel]) {
+                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                    const res = JSON.parse(data.body);
+                    if (!res.error) {
+                        this.listenerObservers[channel].next(JSON.parse(data.body));
+                    } else {
+                        // Response objects with error properties will be counted as a reason to fail
+                        // The response objects needs to be prepared accordingly on the server
+                        this.listenerObservers[channel].error(res);
+                    }
+                });
+            }
         });
     }
 
@@ -189,9 +192,9 @@ export class JhiWebsocketService implements OnDestroy {
     }
 
     private createListener<T>(channel: string): Observable<T> {
-        return Observable.create((observer: Observer<T>) => {
-            this.listenerObservers[channel] = observer;
-        });
+        // Use subject to allow multicast
+        this.listenerObservers[channel] = new Subject();
+        return this.listenerObservers[channel];
     }
 
     private createConnection(): Promise<void> {
