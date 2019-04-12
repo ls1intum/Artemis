@@ -6,7 +6,7 @@
         </div>
 
         <div class="col-12 col-lg-6">
-            <h2>
+            <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
                 Example Solution for Modeling Exercise {{exercise?.title}}
             </h2>
         </div>
@@ -14,13 +14,13 @@
         <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
             <button (click)="saveExampleSolution()" class="btn btn-primary col-6">
                 <fa-icon icon="save"></fa-icon>
-                <span>Save example solution</span>
+                <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleSolution">Save example solution</span>
             </button>
         </div>
 
         <div class="col-12">
-            <p class="my-3">
-                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
+            <p class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement" [translateValues]="{ problemStatement: exercise?.problemStatement }">
+                <strong>Problem Statement:</strong> {{ exercise?.problemStatement }}<br/>
             </p>
         </div>
 

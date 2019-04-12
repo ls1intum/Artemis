@@ -6,8 +6,8 @@
         </div>
 
         <div class="col-12 col-lg-6">
-            <h2>
-                <span *ngIf="isNewSubmission">Create New </span>Example Modeling Submission for Exercise {{exercise?.title}}
+            <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
+                Example Modeling Submission for Exercise {{exercise?.title}}
             </h2>
         </div>
 
@@ -16,13 +16,14 @@
                 <div class="form-check col-6 align-baseline">
                     <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
                            [(ngModel)]="usedForTutorial"/>
-                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
+                    <label class="form-check-label" for="field_usedForTutorial"
+                           jhiTranslate="arTeMiSApp.modelingExercise.usedForTutorial">Used for tutorial</label>
                 </div>
 
                 <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6">
                     <fa-icon icon="save"></fa-icon>
-                    <span *ngIf="isNewSubmission">Create new modeling submission</span>
-                    <span *ngIf="!isNewSubmission">Update modeling submission</span>
+                    <span *ngIf="isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
+                    <span *ngIf="!isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
                 </button>
             </div>
 
@@ -30,7 +31,7 @@
                 <div class="form-check col-6 align-baseline"></div>
                 <button (click)="saveExampleAssessment()" class="btn btn-primary col-6">
                     <fa-icon icon="save"></fa-icon>
-                    Save example assessment
+                    <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
                 </button>
             </div>
 
@@ -39,12 +40,12 @@
 
                 <button class="btn btn-secondary col-6" *ngIf="!assessmentMode" (click)="showAssessment()">
                     <fa-icon icon="chalkboard-teacher"></fa-icon>
-                    <span>Show assessment</span>
+                    <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleAssessment">Show assessment</span>
                 </button>
 
                 <button class="btn btn-secondary col-6 mb-3" *ngIf="assessmentMode" (click)="showSubmission()">
                     <fa-icon icon="code-branch"></fa-icon>
-                    <span>Show submission</span>
+                    <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleSubmission">Show submission</span>
                 </button>
             </div>
         </div>
@@ -52,20 +53,20 @@
         <div class="col-12 text-right" *ngIf="readOnly">
             <button (click)="readAndUnderstood()" class="btn btn-success col-3">
                 <fa-icon icon="save"></fa-icon>
-                I have viewed and understood the example
+                <span jhiTranslate="arTeMiSApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
             </button>
         </div>
 
         <div class="col-12 text-right" *ngIf="toComplete">
             <button class="btn btn-primary col-3" (click)="checkAssessment()"
-                    [disabled]="!feedbacks || !assessmentsAreValid">
+                    [disabled]="!feedbacks || !assessmentsAreValid" jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment">
                 Submit Assessment
             </button>
         </div>
 
         <div class="col-12">
-            <p class="my-3">
-                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
+            <p class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement" [translateValues]="{ problemStatement: exercise?.problemStatement }">
+                <strong>Problem Statement:</strong> {{ exercise?.problemStatement }}<br/>
             </p>
         </div>
 

@@ -5,28 +5,28 @@
                 "title": "Dashboard für Lehrerübungen"
             },
             "participation": {
-                "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispiel-Einreichungen lesen."
+                "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
             },
             "pageHeader": "Tutor Übungs-Dashboard für die Übung",
             "yourStatus": "Dein Status",
-            "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Einreichungen bewertet.",
+            "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
             "needToReadGradingInstructions": "Sie müssen die Bewertungsanweisungen lesen, bevor Sie mit der Bewertung beginnen.",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "startYourParticipation": "Beginnen Sie Ihre Teilnahme an der Übung.",
             "gradingInstructions": "Bewertungsanweisungen",
             "close": "Schließen",
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
-            "totalExampleSubmissions": "Es gibt {{total}} Beispiel-Einreichungen: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
-            "reviewSubmissions": "Überprüfen Sie die Einreichungen",
-            "start": "Start",
-            "continue": "Weitermachen",
-            "reviewingExampleSubmissions": "uberprüfung von Beispiel-Einreichungen",
-            "reviewExampleSubmission": "Überprüfung von Beispiel-Einreichungen",
-            "tutorialSubmissions": "Einreichung des Tutorials",
-            "assessingExampleSubmission": "bewertung der Einreichung von Beispielen",
-            "assessExampleSubmission": "Bewertung der Einreichung von Beispielen",
-            "studentsSubmissions": "Einreichungen der Studenten",
-            "submissionDate": "Einreichungsdatum",
+            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
+            "reviewSubmissions": "Überprüfung von Beispielabgaben",
+            "start": "",
+            "continue": "",
+            "reviewingExampleSubmissions": "Beispielabgaben ansehen",
+            "reviewExampleSubmission": "Geprüfte Beispielabgabe",
+            "tutorialSubmissions": "Bewertung von Beispielabgaben",
+            "assessingExampleSubmission": "Beispielabgabe bewerten",
+            "assessExampleSubmission": "Bewertete Beispielabgabe",
+            "studentsSubmissions": "Abgaben der Studenten",
+            "submissionDate": "Abgabedatum",
             "result": "Ergebnis",
             "status": "Status",
             "score": "Ergebnis",
@@ -35,7 +35,7 @@
             "openAssessment": "Bewertung öffnen",
             "startAssessment": "Neue Bewertung starten",
             "new": "NEU",
-            "noSubmissions": "Zur Zeit gibt es keine Einreichungen von Studenten."
+            "noSubmissions": "Zur Zeit gibt es keine Abgaben von Studenten."
         }
     }
 }

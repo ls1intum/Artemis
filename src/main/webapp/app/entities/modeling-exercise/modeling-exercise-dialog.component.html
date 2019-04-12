@@ -101,7 +101,8 @@
                     jhiTranslate="arTeMiSApp.modelingExercise.createExampleSolution">
                 Create example solution
             </button>
-            <div class="alert alert-info" *ngIf="!modelingExercise.id">
+            <div class="alert alert-info" *ngIf="!modelingExercise.id"
+                 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionRequiresExercise">
                 To create an example solution, you first need to finish creating the modeling exercise
             </div>
         </div>
@@ -114,20 +115,27 @@
                 <jhi-markdown-editor [(markdown)]="modelingExercise.sampleSolutionExplanation"></jhi-markdown-editor>
             </div>
         </div>
-        <div class="form-group-narrow">
-            <span>Example submissions</span>
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
-                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link" type="button">Example submission {{i + 1}}</button>
+                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link" type="button"
+                            jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmission" [translateValues]="{ number: i + 1 }">Example submission {{i + 1}}</button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                 </li>
             </ul>
 
-            <button *ngIf="modelingExercise.id" class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/new">Create example submission</button>
+            <button *ngIf="modelingExercise.id" class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/new"
+                    jhiTranslate="arTeMiSApp.modelingExercise.createExampleSubmission">
+                Create example submission
+            </button>
 
-            <div class="alert alert-info" *ngIf="!modelingExercise.id">To create an example submission, you first need to finish creating the modeling exercise</div>
+            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id"
+                 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionsRequireExercise">
+                To create an example submission, you first need to finish creating the modeling exercise
+            </div>
         </div>
     </div>
     <div class="modal-footer">
