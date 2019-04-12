@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -13,11 +14,15 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -38,10 +43,14 @@ public class ComplaintResponseResource {
 
     private UserService userService;
 
-    public ComplaintResponseResource(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService) {
+    private AuthorizationCheckService authorizationCheckService;
+
+    public ComplaintResponseResource(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService,
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userService = userService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -53,7 +62,7 @@ public class ComplaintResponseResource {
      */
     @PostMapping("/complaint-responses")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> createComplaint(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
+    public ResponseEntity<ComplaintResponse> createComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         if (complaintResponse.getId() != null) {
             throw new BadRequestAlertException("A new complaint response cannot already have an id", ENTITY_NAME, "idexists");
@@ -74,6 +83,13 @@ public class ComplaintResponseResource {
         }
 
         Complaint originalComplaint = originalComplaintOptional.get();
+
+        // Only tutors who are not part the original assessors can reply to a complaint
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(originalComplaint.getResult().getParticipation().getExercise())
+                || originalComplaint.getResult().getAssessor().equals(reviewer)) {
+            throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
+        }
+
         originalComplaint.setAccepted(true);
 
         complaintResponse.setSubmittedTime(ZonedDateTime.now());
@@ -94,9 +110,17 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable Long id) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable Long id, Principal principal) {
         log.debug("REST request to get ComplaintResponse : {}", id);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findById(id);
+
+        if (!complaintResponse.isPresent()) {
+            throw new EntityNotFoundException("ComplaintResponse with " + id + " was not found!");
+        }
+
+        // All tutors and higher can see this, and also the students who first open the complaint
+        canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
+
         return ResponseUtil.wrapOrNotFound(complaintResponse);
     }
 
@@ -108,9 +132,25 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/complaint/{complaintId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponseByResultId(@PathVariable Long complaintId) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable Long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
+
+        if (!complaintResponse.isPresent()) {
+            throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
+        }
+
+        canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
+
         return ResponseUtil.wrapOrNotFound(complaintResponse);
+    }
+
+    private void canUserReadComplaintResponse(ComplaintResponse complaintResponse, String username) {
+        // All tutors and higher can see this, and also the students who first open the complaint
+        User originalAuthor = complaintResponse.getComplaint().getStudent();
+        Exercise exercise = complaintResponse.getComplaint().getResult().getParticipation().getExercise();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !originalAuthor.getLogin().equals(username)) {
+            throw new AccessForbiddenException("Insufficient permission for this complaint response");
+        }
     }
 }
