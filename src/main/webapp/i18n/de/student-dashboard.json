@@ -18,6 +18,8 @@
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
             "noCourseIcon": "Kein Kurs Icon verfügbar",
+            "showMore": "Mehr anzeigen",
+            "showLess": "Weniger anzeigen",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken"
@@ -39,6 +41,12 @@
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
+                "userNotStartedExerciseShort": "Noch nicht angefangen.",
+                "quizNotStartedShort": "Noch nicht begonnen.",
+                "userNotStartedQuizShort": "Noch nicht begonnen.",
+                "userNotParticipatedShort": "Nicht teilgenommen.",
+                "userParticipatingShort": "Aktuelle Teilnahme",
+                "userSubmittedShort": "Bereits abgegeben.",
                 "details": {
                     "courseInformation": "Kurs Informationen:",
                     "totalExercises": "Aufgaben insgesamt:",

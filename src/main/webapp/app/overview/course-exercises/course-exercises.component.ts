@@ -109,16 +109,21 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             }
         });
         this.updateUpcomingExercises(upcomingExercises);
-        this.weeklyExercisesGrouped = {
-            ...groupedExercises,
-            noDate: {
-                label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
-                isCollapsed: false,
-                isCurrentWeek: false,
-                exercises: notAssociatedExercises,
-            },
-        };
-        this.weeklyIndexKeys = [...indexKeys, 'noDate'];
+        if (notAssociatedExercises.length > 0) {
+            this.weeklyExercisesGrouped = {
+                ...groupedExercises,
+                noDate: {
+                    label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
+                    isCollapsed: false,
+                    isCurrentWeek: false,
+                    exercises: notAssociatedExercises,
+                },
+            };
+            this.weeklyIndexKeys = [...indexKeys, 'noDate'];
+        } else {
+            this.weeklyExercisesGrouped = groupedExercises;
+            this.weeklyIndexKeys = indexKeys;
+        }
     }
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
