@@ -170,7 +170,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         // If the user is not an instructor do not provide the results
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingSubmission", "notAuthorized", "You cannot see results")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingSubmission", "notAuthorized", "You cannot see results"))
+                    .body(null);
         }
         return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
     }
