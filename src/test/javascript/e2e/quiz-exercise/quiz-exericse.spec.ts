@@ -231,6 +231,12 @@ describe('quiz-exercise', () => {
         //TODO: check that the button name is "Back"
         await backButton.click();
 
+        await browser
+            .switchTo()
+            .alert()
+            .then((alert: any) => alert.accept())
+            .catch((reason: any) => expect.fail('Did not show Alert on unsaed changes!'));
+
         //TODO: check that we leave the page and there is a new entry
     });
 
