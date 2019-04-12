@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -33,8 +35,15 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
-    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository) {
+    GroupNotificationService groupNotificationService;
+
+    SingleUserNotificationService singleUserNotificationService;
+
+    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
+            SingleUserNotificationService singleUserNotificationService) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.groupNotificationService = groupNotificationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -46,13 +55,15 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/student-question-answers")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        groupNotificationService.notifyGroupAboutNewAnswer(result);
+        singleUserNotificationService.notifyUserAboutNewAnswer(result);
         return ResponseEntity.created(new URI("/api/question-answers/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -66,7 +77,7 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-question-answers")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
@@ -97,7 +108,7 @@ public class StudentQuestionAnswerResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/student-question-answers/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
         log.debug("REST request to delete StudentQuestionAnswer : {}", id);
         studentQuestionAnswerRepository.deleteById(id);

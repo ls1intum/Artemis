@@ -3,12 +3,10 @@ const webpackMerge = require('webpack-merge');
 const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
-const Visualizer = require('webpack-visualizer-plugin');
 const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
-const path = require('path');
 
 const utils = require('./utils.js');
 const commonConfig = require('./webpack.common.js');
@@ -144,10 +142,6 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
                 'de'
                 // jhipster-needle-i18n-language-moment-webpack - JHipster will add/remove languages in this array
             ]
-        }),
-        new Visualizer({
-            // Webpack statistics in target folder
-            filename: '../stats.html'
         }),
         new AngularCompilerPlugin({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),

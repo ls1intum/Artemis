@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -56,16 +59,23 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final ExampleSubmissionService exampleSubmissionService;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService) {
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository,
+            ExampleSubmissionService exampleSubmissionService, ResultRepository resultRepository) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
+        this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
@@ -145,6 +155,26 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
     }
 
+    /**
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param submissionId the id of the example submission
+     * @return the result linked to the example submission
+     */
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/modelingExampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        // If the user is not an instructor do not provide the results
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingSubmission", "notAuthorized", "You cannot see results")).body(null);
+        }
+        return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
+    }
+
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
@@ -164,7 +194,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (submit) {
             List<Conflict> conflicts = new ArrayList<>();
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                conflicts = compassService.getConflicts(exerciseId, result, result.getFeedbacks());
+                try {
+                    conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
+                }
+                catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
+                    log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);
+                }
             }
             if (!conflicts.isEmpty() && !ignoreConflict) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
@@ -176,6 +211,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 }
             }
         }
+        return ResponseEntity.ok(result);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
+            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
+    @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
+        ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
+        checkAuthorization(modelingExercise);
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
     }
 

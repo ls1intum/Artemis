@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.time.ZonedDateTime.now;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,12 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.google.common.collect.Sets;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -145,6 +143,15 @@ public class ParticipationResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
                     "There is already a participation for the given exercise and user.")).body(null);
         }
+
+        // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now())) {
+
+            if (authCheckService.isOnlyStudentInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+
         Participation participation = participationService.startExercise(exercise, principal.getName());
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
     }

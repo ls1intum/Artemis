@@ -32,6 +32,7 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
+import { ArTEMiSStudentQuestionsModule } from './student-questions/';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import {
     ActiveMenuDirective,
@@ -54,9 +55,9 @@ import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-ex
 import { ParticipationDataProvider } from 'app/course-list';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
-import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
-
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ArTEMiSExampleTextSubmissionModule } from 'app/example-text-submission';
+import { ArTEMiSExampleModelingSubmissionModule } from 'app/example-modeling-submission';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
 import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
@@ -107,12 +108,13 @@ import * as moment from 'moment';
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
-        ArTEMiSExampleSubmissionModule,
         ArTEMiSComplaintsModule,
         ArTEMiSNotificationModule,
         ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
         ArTEMiSModelingSubmissionModule,
+        ArTEMiSExampleTextSubmissionModule,
+        ArTEMiSExampleModelingSubmissionModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

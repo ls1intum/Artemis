@@ -1,22 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.exception.GitException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -30,6 +13,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.exception.GitException;
 
 @Service
 public class GitService {
@@ -52,19 +52,19 @@ public class GitService {
     private String GIT_EMAIL;
 
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
+
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     public GitService() {
-        log.info("Default Charset=" + Charset.defaultCharset());
-        log.info("file.encoding=" + System.getProperty("file.encoding"));
-        log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
-        log.info("Default Charset=" + Charset.defaultCharset());
-        log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        log.debug("Default Charset=" + Charset.defaultCharset());
+        log.debug("file.encoding=" + System.getProperty("file.encoding"));
+        log.debug("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
+        log.debug("Default Charset=" + Charset.defaultCharset());
+        log.debug("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
     }
 
     /**
-     * Get the local repository for a given participation.
-     * If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
      *
      * @param participation Participation the remote repository belongs to.
      * @return
@@ -78,12 +78,8 @@ public class GitService {
         return repository;
     }
 
-
-
-
     /**
-     * Get the local repository for a given remote repository URL.
-     * If the local repo does not exist yet, it will be checked out.
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
      * @param repoUrl The remote repository.
      * @return
@@ -109,8 +105,9 @@ public class GitService {
             Thread.sleep(1000);
             if (numberOfAttempts == 0) {
                 throw new GitException("Cannot clone the same repository multiple times");
-            } else {
-              numberOfAttempts--;
+            }
+            else {
+                numberOfAttempts--;
             }
         }
         boolean shouldPullChanges = false;
@@ -122,21 +119,18 @@ public class GitService {
             try {
                 log.info("Cloning from " + repoUrl + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
-                Git result = Git.cloneRepository()
-                    .setURI(repoUrl.toString())
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
-                    .setDirectory(localPath.toFile())
-                    .call();
+                Git result = Git.cloneRepository().setURI(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+                        .setDirectory(localPath.toFile()).call();
                 result.close();
             }
             catch (GitAPIException | RuntimeException e) {
                 log.error("Exception during clone " + e);
-                //cleanup the folder to avoid problems in the future
+                // cleanup the folder to avoid problems in the future
                 localPath.toFile().delete();
                 throw new GitException(e);
             }
             finally {
-                //make sure that cloneInProgress is released
+                // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
         }
@@ -148,11 +142,8 @@ public class GitService {
 
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        builder.setGitDir(new java.io.File(localPath + "/.git"))
-            .readEnvironment() // scan environment GIT_* variables
-            .findGitDir()
-            .setup();
-
+        builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
+                .findGitDir().setup();
 
         // Create the JGit repository object
         Repository repository = new Repository(builder);
@@ -172,7 +163,7 @@ public class GitService {
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
-     * @param repo Local Repository Object.
+     * @param repo    Local Repository Object.
      * @param message Commit Message
      * @throws GitAPIException
      */
@@ -191,7 +182,7 @@ public class GitService {
      */
     public void stageAllChanges(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
-        // stage deleted files:  http://stackoverflow.com/a/35601677/4013020
+        // stage deleted files: http://stackoverflow.com/a/35601677/4013020
         git.add().setUpdate(true).addFilepattern(".").call();
         // stage new files
         git.add().addFilepattern(".").call();
@@ -214,7 +205,7 @@ public class GitService {
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
-            //TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
+            // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
         return null;
     }
@@ -227,11 +218,11 @@ public class GitService {
      */
     public Collection<File> listFiles(Repository repo) {
         // Check if list of files is already cached
-        if(repo.getFiles() == null) {
+        if (repo.getFiles() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
             Collection<File> files = new LinkedList<>();
 
-            while(itr.hasNext()) {
+            while (itr.hasNext()) {
                 files.add(new File(itr.next(), repo));
             }
 
@@ -242,11 +233,10 @@ public class GitService {
         return repo.getFiles();
     }
 
-
     /**
      * Get a specific file by name. Makes sure the file is actually part of the repository.
      *
-     * @param repo Local Repository Object.
+     * @param repo     Local Repository Object.
      * @param filename String of zje filename (including path)
      * @return The File object
      */
@@ -263,11 +253,10 @@ public class GitService {
         return Optional.empty();
     }
 
-
     /**
      * Checks if no differences exist between the working-tree, the index, and the current HEAD.
      *
-     * @param repo  Local Repository Object.
+     * @param repo Local Repository Object.
      * @return True if the status is clean
      * @throws GitAPIException
      */
@@ -276,7 +265,6 @@ public class GitService {
         Status status = git.status().call();
         return status.isClean();
     }
-
 
     /**
      * Deletes a local repository folder.
@@ -292,7 +280,6 @@ public class GitService {
         repo.setFiles(null);
         log.debug("Deleted Repository at " + repoPath);
     }
-
 
     /**
      * Deletes a local repository folder for a Participation.
@@ -316,30 +303,31 @@ public class GitService {
             try {
                 FileUtils.deleteDirectory(repoPath.toFile());
                 log.info("Deleted Repository at " + repoPath);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("Could not delete repository at " + repoPath, e);
             }
         }
     }
 
     public Path zipRepository(Repository repo) throws IOException {
-        String zipRepoName = repo.getParticipation().getExercise().getCourse().getTitle() + "-" + repo.getParticipation().getExercise().getTitle() + "-" + repo.getParticipation().getStudent().getLogin() + ".zip";
+        String zipRepoName = repo.getParticipation().getExercise().getCourse().getTitle() + "-" + repo.getParticipation().getExercise().getTitle() + "-"
+                + repo.getParticipation().getStudent().getLogin() + ".zip";
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(REPO_CLONE_PATH, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(REPO_CLONE_PATH, "zippedRepos"));
         try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(repoPath)
-                .filter(path -> !Files.isDirectory(path))
-                .forEach(path -> {
-                    ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());
-                    try {
-                        zs.putNextEntry(zipEntry);
-                        Files.copy(path, zs);
-                        zs.closeEntry();
-                    } catch (Exception e) {
-                        log.error("Create zip file error", e);
-                    }
-                });
+            Files.walk(repoPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());
+                try {
+                    zs.putNextEntry(zipEntry);
+                    Files.copy(path, zs);
+                    zs.closeEntry();
+                }
+                catch (Exception e) {
+                    log.error("Create zip file error", e);
+                }
+            });
         }
         return zipFilePath;
     }
@@ -358,7 +346,6 @@ public class GitService {
         path = path.replaceAll("^scm/", "");
         return path;
     }
-
 
     /**
      * Checks if repo was already checked out and is present on disk

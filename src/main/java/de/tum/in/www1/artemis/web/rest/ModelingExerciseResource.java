@@ -148,6 +148,12 @@ public class ModelingExerciseResource {
         if (responseFailure != null)
             return responseFailure;
 
+        // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
+        // example submissions. Otherwise the connection between exercise and example submissions would be lost.
+        if (modelingExercise.getExampleSubmissions() != null) {
+            modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
+        }
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString())).body(result);
@@ -212,11 +218,9 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
-        if (modelingExercise.isPresent()) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-                return forbidden();
-            }
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(id);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
