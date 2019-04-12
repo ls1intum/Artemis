@@ -35,7 +35,11 @@
             "openAssessment": "Offene Bewertung",
             "startAssessment": "Neue Bewertung starten",
             "new": "NEU",
-            "noSubmissions": "Zur Zeit gibt es keine Einreichungen von Studenten."
+            "noSubmissions": "Zur Zeit gibt es keine Einreichungen von Studenten.",
+            "complaints": "Reklamationen",
+            "noComplaints": "Es gibt keine Reklamation.",
+            "evaluateComplaint": "Auswertung der Reklamation.",
+            "showComplaint": "Zeigen Sie die Reklamation an."
         }
     }
 }

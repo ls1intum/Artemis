@@ -10,6 +10,8 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Complaint } from 'app/entities/complaint';
 
 @Component({
     selector: 'jhi-courses',
@@ -29,6 +31,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
+    complaints: Complaint[];
 
     formattedGradingInstructions: string;
 
@@ -59,6 +62,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private textSubmissionService: TextSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
+        private complaintService: ComplaintService,
     ) {}
 
     ngOnInit(): void {
@@ -98,6 +102,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
+        this.complaintService
+            .getForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
         this.getSubmissions();
         this.getSubmissionWithoutAssessment();
     }
@@ -164,5 +171,13 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
+    }
+
+    calculateComplaintStatus(accepted?: boolean) {
+        if (accepted) {
+            return 'The complaint has already been evaluated';
+        }
+
+        return 'The complaint still needs to be evaluated';
     }
 }

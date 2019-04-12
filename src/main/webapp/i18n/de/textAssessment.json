@@ -46,7 +46,11 @@
                     "open": "Offene Bewertung",
                     "assess": "Einreichung bewerten"
                 }
-            }
+            },
+            "complaint": "Reklamation",
+            "complaintAlreadyAccepted": "Die Reklamation wurde bereits geprüft und beantwortet von",
+            "complaintResponse": "Antwort der Reklamation",
+            "submitComplaintResponse": "Die Antwort der Reklamation einreichen"
         }
     }
 }
