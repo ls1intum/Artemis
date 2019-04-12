@@ -13,6 +13,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -61,8 +62,9 @@ public class FileResource {
 
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg");
+        if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")
+                && !fileExtension.equalsIgnoreCase("pdf")) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf");
         }
 
         try {
@@ -118,7 +120,7 @@ public class FileResource {
 
     /**
      * GET /files/templates/:filename : Get the template file with the given filename
-     * 
+     *
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
@@ -141,7 +143,7 @@ public class FileResource {
 
     /**
      * GET /files/drag-and-drop/backgrounds/:questionId/:filename : Get the background file with the given name for the given drag and drop question
-     * 
+     *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
@@ -179,6 +181,33 @@ public class FileResource {
     public ResponseEntity<byte[]> getCoursIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
+    }
+
+    /**
+     * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
+     *
+     * @param lectureId ID of the lecture, the attachment belongs to
+     * @param filename  the filename of the file
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        try {
+            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + filename);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            ByteArrayResource resource = new ByteArrayResource(file);
+
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/pdf")).body(resource);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+
     }
 
     /**

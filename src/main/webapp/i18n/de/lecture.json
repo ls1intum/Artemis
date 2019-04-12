@@ -15,7 +15,13 @@
             "description": "Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
-            "course": "Kurs"
+            "course": "Kurs",
+            "detail": {
+                "title": "Vorlesung"
+            },
+            "attachments": {
+                "title": "Anhänge der Vorlesung"
+            }
         }
     }
 }

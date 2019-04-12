@@ -15,7 +15,13 @@
             "description": "Description",
             "startDate": "Start Date",
             "endDate": "End Date",
-            "course": "Course"
+            "course": "Course",
+            "detail": {
+                "title": "Lecture"
+            },
+            "attachments": {
+                "title": "Attachment of lecture"
+            }
         }
     }
 }

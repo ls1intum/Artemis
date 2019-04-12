@@ -14,11 +14,12 @@ import {
     lecturePopupRoute,
     LectureAttachmentsComponent,
 } from './';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [...lectureRoute, ...lecturePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
     declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureAttachmentsComponent, LectureDeletePopupComponent],
     entryComponents: [LectureComponent, LectureUpdateComponent, LectureDeleteDialogComponent, LectureDeletePopupComponent, LectureAttachmentsComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

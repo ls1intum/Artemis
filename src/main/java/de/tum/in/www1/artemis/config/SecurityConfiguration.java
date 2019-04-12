@@ -115,9 +115,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(problemSupport).and().headers().frameOptions().disable().and().headers().httpStrictTransportSecurity().disable().and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().authorizeRequests().antMatchers("/api/register").permitAll().antMatchers("/api/activate").permitAll()
                 .antMatchers("/api/authenticate").permitAll().antMatchers("/api/account/reset-password/init").permitAll().antMatchers("/api/account/reset-password/finish")
-                .permitAll().antMatchers("/api/lti/launch/*").permitAll().antMatchers("/api/**").authenticated().antMatchers("/websocket/tracker")
-                .hasAuthority(AuthoritiesConstants.ADMIN).antMatchers("/websocket/**").permitAll().antMatchers("/management/health").permitAll().antMatchers("/management/info")
-                .permitAll().antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN).and().apply(securityConfigurerAdapter());
+                .permitAll().antMatchers("/api/lti/launch/*").permitAll().antMatchers("/api/files/attachments/**").permitAll().antMatchers("/api/**").authenticated()
+                .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN).antMatchers("/websocket/**").permitAll().antMatchers("/management/health").permitAll()
+                .antMatchers("/management/info").permitAll().antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN).and().apply(securityConfigurerAdapter());
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

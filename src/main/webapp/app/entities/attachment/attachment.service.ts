@@ -39,6 +39,12 @@ export class AttachmentService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Attachment[]>(`api/lectures/${lectureId}/attachments`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }

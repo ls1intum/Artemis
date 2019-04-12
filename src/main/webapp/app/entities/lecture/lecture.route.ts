@@ -89,7 +89,7 @@ export const lectureRoute: Routes = [
 
 export const lecturePopupRoute: Routes = [
     {
-        path: 'course/:courseId/lecture/:id/delete',
+        path: 'lecture/:id/delete',
         component: LectureDeletePopupComponent,
         resolve: {
             lecture: LectureResolve,
