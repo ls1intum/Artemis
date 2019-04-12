@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 import { Course, CourseService, StatsForTutorDashboard } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -27,7 +28,13 @@ export class TutorCourseDashboardComponent implements OnInit {
     showFinishedExercises = false;
     private tutor: User;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private accountService: AccountService, private route: ActivatedRoute) {}
+    constructor(
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
+        private route: ActivatedRoute,
+        private location: Location,
+    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -39,6 +46,7 @@ export class TutorCourseDashboardComponent implements OnInit {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = res.body;
+                this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     this.unfinishedExercises = this.course.exercises
@@ -94,5 +102,9 @@ export class TutorCourseDashboardComponent implements OnInit {
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
+    }
+
+    back() {
+        this.location.back();
     }
 }
