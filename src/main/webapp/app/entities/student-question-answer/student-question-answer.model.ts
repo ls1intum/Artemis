@@ -9,7 +9,7 @@ export class StudentQuestionAnswer implements BaseEntity {
     public answerDate: Moment;
     public verified = false; // default value
     public author: User;
-    public quizQuestion: StudentQuestion;
+    public question: StudentQuestion;
 
     constructor() {}
 }
