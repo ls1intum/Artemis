@@ -155,18 +155,13 @@ describe('quiz-exercise', () => {
 
         //wait until the quiz has finished
         await browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000).then(async (result: any) => {
-            //first possibility to check this
-            element(by.id('quiz-score-result'))
+            await element(by.id('quiz-score-result'))
                 .getText()
                 .then(text => {
                     expect(text).equals('1/1 (100 %)');
                 });
 
-            //second possibility to check this
-            const text = await element(by.id('quiz-score-result')).getText();
-            expect(text).equals('1/1 (100 %)');
-
-            element(by.id('answer-option-0-correct'))
+            await element(by.id('answer-option-0-correct'))
                 .getText()
                 .then(text => {
                     expect(text).equals('Correct');
@@ -175,7 +170,7 @@ describe('quiz-exercise', () => {
                     expect.fail('first answer option not found as correct');
                 });
 
-            element(by.id('answer-option-1-correct'))
+            await element(by.id('answer-option-1-correct'))
                 .getText()
                 .then(text => {
                     expect(text).equals('Correct');
@@ -195,7 +190,9 @@ describe('quiz-exercise', () => {
         await navBarPage.clickOnCourseAdminMenu();
         browser.waitForAngularEnabled(true);
         courseId = await coursePage.navigateIntoLastCourseExercises();
-        //TODO delete quiz
+        await element(by.id(`delete-quiz-${quizId}`)).click();
+        await element(by.css('input[name="confirmExerciseName"]')).sendKeys('test-quiz');
+        await element(by.id('delete-quiz-confirmation-button')).click();
     });
 
     it('create SA quiz', async () => {
