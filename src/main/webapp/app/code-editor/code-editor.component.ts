@@ -2,7 +2,6 @@ import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Interactable } from 'interactjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
@@ -77,12 +76,10 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
                 // We found a matching participation in the data provider, so we can avoid doing a REST call
                 this.participation = this.participationDataProvider.participationStorage;
-                this.obtainLatestResult();
             } else {
                 /** Query the participationService for the participationId given by the params */
                 this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                     this.participation = response.body;
-                    this.obtainLatestResult();
                 });
             }
             /** Query the repositoryFileService for files in the repository */
@@ -105,12 +102,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
         /** Assign repository */
         this.repository = this.repositoryService;
-    }
-
-    obtainLatestResult() {
-        if (this.participation.results && this.participation.results.length > 0) {
-            this.latestResult = this.participation.results[0];
-        }
     }
 
     /**
@@ -153,8 +144,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     updateLatestResult($event: any) {
         this.isBuilding = false;
-        this.latestResult = $event.newResult;
-        this.participation = { ...this.participation, results: [this.latestResult, ...this.participation.results] };
     }
 
     /**

@@ -27,8 +27,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
 
     @Input()
     participation: Participation;
-    @Input()
-    latestResult: Result;
 
     constructor(private parent: CodeEditorComponent, private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
 
