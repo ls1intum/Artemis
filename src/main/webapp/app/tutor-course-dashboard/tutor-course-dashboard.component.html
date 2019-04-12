@@ -1,16 +1,21 @@
-<div *ngIf="course">
-    <jhi-alert></jhi-alert>
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                {{ 'arTeMiSApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}
 
-    <div class="header-container  bg-primary text-white">
-        <h4 class="card-header">
-            <strong>{{ 'arTeMiSApp.tutorCourseDashboard.pageHeader' | translate }} {{ course.title }}</strong>
-            &nbsp;
-            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{ course.id }}/dashboard" routerLinkActive="active">
-                <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
-            </a>
-        </h4>
+                <a class="text-primary card-link" *ngIf="course?.isAtLeastTutor" routerLink="/course/{{ course?.id }}/dashboard" routerLinkActive="active">
+                    <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
+                </a>
+            </h2>
+        </div>
     </div>
+</div>
 
+<jhi-alert></jhi-alert>
+
+<div *ngIf="course">
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>

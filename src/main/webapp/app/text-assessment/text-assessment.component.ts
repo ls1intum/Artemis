@@ -110,6 +110,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
+                target.style.minWidth = event.rect.width + 'px';
             });
 
         this.interactResizableTop = interact('.resizable-horizontal')
@@ -245,10 +246,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         if ($card.hasClass('collapsed')) {
             $card.removeClass('collapsed');
             this.interactResizable.resizable({ enabled: true });
-            $card.css({ width: this.resizableMinWidth + 'px' });
+            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
         } else {
             $card.addClass('collapsed');
-            $card.css({ width: '55px' });
+            $card.css({ width: '55px', minWidth: '55px' });
             this.interactResizable.resizable({ enabled: false });
         }
     }
