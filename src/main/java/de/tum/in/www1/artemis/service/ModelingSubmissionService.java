@@ -65,13 +65,6 @@ public class ModelingSubmissionService {
             // avoid infinite recursion
             participation.getExercise().setParticipations(null);
         }
-        // TODO CZ: test if it works + cleanup
-//        submissions.forEach(submission -> {
-//            Hibernate.initialize(submission.getResult()); // eagerly load the association
-//            if (submission.getResult() != null) {
-//                Hibernate.initialize(submission.getResult().getAssessor());
-//            }
-//        });
         return submissions;
     }
 

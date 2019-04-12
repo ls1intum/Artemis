@@ -134,7 +134,6 @@
                         <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
                     </td>
                     <td>
-                        <!--TODO CZ: distinguish between exercise types-->
                         <button
                             *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
                             (click)="openAssessmentEditor(submission.id)"
@@ -143,7 +142,6 @@
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'arTeMiSApp.tutorExerciseDashboard.continueAssessment' | translate }}
                         </button>
                         <ng-template #continueButton>
-                            <!--TODO CZ: distinguish between exercise types-->
                             <button
                                 *ngIf="submission !== null && submission.result !== null"
                                 (click)="openAssessmentEditor(submission.id)"
@@ -161,7 +159,6 @@
                     <td>{{ 'arTeMiSApp.tutorExerciseDashboard.new' | translate }}</td>
                     <td></td>
                     <td>
-                        <!--TODO CZ: distinguish between exercise types-->
                         <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'arTeMiSApp.tutorExerciseDashboard.startAssessment' | translate }}
                         </button>
