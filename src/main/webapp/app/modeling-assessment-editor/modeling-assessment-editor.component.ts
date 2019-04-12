@@ -33,7 +33,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAuthorized = false;
     isAtLeastInstructor = false;
-    forTutorDashboard: boolean; // TODO CZ: remove
+    forTutorDashboard: boolean; // flag indicating if we are in tutor dashboard -> back button visible only in tutor dashboard
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -58,7 +58,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             const submissionId = Number(params['submissionId']);
             this.loadSubmission(submissionId);
         });
-        // TODO CZ: remove
         this.forTutorDashboard = !!this.route.snapshot.queryParamMap.get('forTutorDashboard');
     }
 
@@ -218,8 +217,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
     }
 
-    // TODO CZ: remove/adjust?
-    previous() {
+    back() {
         this.location.back();
     }
 }

@@ -228,7 +228,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
         let route: string;
-        const queryParams: any = {}; // TODO CZ: remove query parameters
+        const queryParams: any = {}; // TODO CZ: remove query parameters?
 
         if (this.exercise.type === ExerciseType.TEXT) {
             route = `/text/${this.exercise.id}/assessment/`;
@@ -239,7 +239,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             }
         } else if (this.exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionId}/assessment`;
-            // TODO CZ: remove query parameter
             queryParams.forTutorDashboard = true;
         }
         this.router.navigate([route], { queryParams });
