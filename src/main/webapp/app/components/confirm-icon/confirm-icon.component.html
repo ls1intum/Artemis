@@ -1,0 +1,16 @@
+<fa-icon
+    *ngIf="!showConfirm"
+    [icon]="initialIcon"
+    [ngbTooltip]="initialTooltip"
+    container="body"
+    (click)="this.showConfirm = !this.showConfirm"
+></fa-icon>
+<fa-icon
+    *ngIf="showConfirm"
+    [ngClass]="'text-danger'"
+    [icon]="confirmIcon"
+    [ngbTooltip]="confirmTooltip"
+    container="body"
+    (mouseleave)="this.showConfirm = !this.showConfirm"
+    (click)="confirmAction()"
+></fa-icon>

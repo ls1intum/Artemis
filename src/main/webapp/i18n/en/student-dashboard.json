@@ -92,7 +92,32 @@
                 "hideResults": "Hide results",
                 "showResults": "Show all results",
                 "graded": "Graded",
-                "notGraded": "Not graded"
+                "notGraded": "Not graded",
+                "rated": "Rated",
+                "practice": "Practice",
+                "faq": {
+                    "header": "Questions and Answers",
+                    "noQuestions": "No questions have been asked yet.",
+                    "addNewQuestion": "+ Add a new question",
+                    "newQuestionLabel": "New question",
+                    "answerLabel": "Answer",
+                    "questionLabel": "Question",
+                    "answerNow": "Answer now",
+                    "noAnswers": "This question was not yet answered.",
+                    "answerCount": "Answers: {{count}}",
+                    "yourQuestion": "Your Question",
+                    "cancel": "Cancel",
+                    "addQuestion": "Add question",
+                    "saveQuestion": "Save question",
+                    "addAnswer": "Add answer",
+                    "saveAnswer": "Save answer",
+                    "deleteQuestion": "Do you want to delete your question?",
+                    "confirmDeleteQuestion": "Please confirm that you want to delete your question!",
+                    "editQuestion": "Edit question",
+                    "deleteAnswer": "Do you want to delete your answer?",
+                    "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
+                    "editAnswer": "Edit answer"
+                }
             }
         }
     }
