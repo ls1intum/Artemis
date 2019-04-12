@@ -60,7 +60,7 @@
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button type="submit" [routerLink]="['/course', course.id]" class="btn btn-primary btn-sm mr-1">
+                            <button type="submit" [routerLink]="['/course', course.id]" class="btn btn-primary btn-sm mr-1" id="exercises-button-{{course.id}}">
                                 <fa-icon [icon]="'list-alt'"></fa-icon>
                                 <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
                             </button>

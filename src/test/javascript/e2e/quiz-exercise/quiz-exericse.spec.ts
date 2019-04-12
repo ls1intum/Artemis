@@ -36,7 +36,7 @@ describe('quiz-exercise', () => {
         await newCoursePage.setInstructorGroupName('ls1instructor');
         await newCoursePage.clickSave();
 
-        browser.wait(ec.urlContains('/course'), 1000).then(result => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/course'), 1000).then((result: any) => expect(result).to.be.true);
 
         // Sign in with instructor account
         await navBarPage.autoSignOut();
@@ -48,7 +48,7 @@ describe('quiz-exercise', () => {
 
     it('navigate into quiz-exercise', async () => {
         await navBarPage.clickOnCourseAdminMenu();
-        courseId = await coursePage.navigateIntoLastCourseQuizzes();
+        courseId = await coursePage.navigateIntoLastCourseExercises();
 
         //TODO: this does not seem to work properly
         browser.wait(ec.urlContains(`${courseId}/quiz-exercise`), 5000).then((result: any) => expect(result).to.be.true);
@@ -194,7 +194,7 @@ describe('quiz-exercise', () => {
         browser.waitForAngularEnabled(false);
         await navBarPage.clickOnCourseAdminMenu();
         browser.waitForAngularEnabled(true);
-        courseId = await coursePage.navigateIntoLastCourseQuizzes();
+        courseId = await coursePage.navigateIntoLastCourseExercises();
         //TODO delete quiz
     });
 
