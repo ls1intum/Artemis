@@ -26,16 +26,18 @@ public class ModelAssessmentConflictService {
         List<ModelAssessmentConflict> conflicts = new ArrayList<>(elementConflictingFeedbackMapping.size());
         elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
             Set<ConflictingResult> resultsInConflict = new HashSet<>();
+            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
             feedbacks.forEach(feedback -> {
                 ConflictingResult conflictingResult = new ConflictingResult();
                 conflictingResult.setModelElementId(feedback.getReferenceElementId());
                 conflictingResult.setResult(feedback.getResult());
+                conflictingResult.setConflict(conflict);
                 resultsInConflict.add(conflictingResult);
             });
             ConflictingResult causingConflictingResult = new ConflictingResult();
             causingConflictingResult.setModelElementId(elementID);
             causingConflictingResult.setResult(causingResult);
-            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
+            causingConflictingResult.setConflict(conflict);
             conflict.setCausingConflictingResult(causingConflictingResult);
             conflict.setResultsInConflict(resultsInConflict);
             conflict.setCreationDate(ZonedDateTime.now());
