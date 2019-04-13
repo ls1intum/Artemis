@@ -22,11 +22,9 @@ export class NotificationContainerComponent implements OnInit {
             this.notifications = res.body;
             this.updateNotificationCount();
         });
-        this.accountService.getAuthenticationState().subscribe((res: User) => {
-            this.currentUser = res;
-            this.notificationService.handleUserNotifications(this.currentUser);
-            this.updateNotificationCount();
-        });
+        setTimeout(() => {
+            this.notificationService.subscribeUserNotifications();
+        }, 500);
         this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
             if (notification) {
                 notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
@@ -37,9 +35,7 @@ export class NotificationContainerComponent implements OnInit {
     }
 
     startNotification(notification: Notification) {
-        if (notification.notificationType === NotificationType.GROUP) {
-            this.notificationService.interpretNotification(notification as GroupNotification);
-        }
+        this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
     updateNotificationCount() {

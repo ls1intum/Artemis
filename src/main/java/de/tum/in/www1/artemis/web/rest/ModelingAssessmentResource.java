@@ -5,12 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,10 +18,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -61,9 +60,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final ExampleSubmissionService exampleSubmissionService;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
-                                      ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-                                      ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
-                                      ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionService exampleSubmissionService, ResultRepository resultRepository) {
+            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository,
+            ExampleSubmissionService exampleSubmissionService, ResultRepository resultRepository) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -153,10 +152,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission
-     * is not used for tutorial purposes.
+     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
      *
-     * @param exerciseId the id of the exercise
+     * @param exerciseId   the id of the exercise
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
@@ -220,8 +218,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
-        @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
+            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
