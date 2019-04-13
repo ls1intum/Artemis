@@ -15,7 +15,7 @@
             "startYourParticipation": "Beginnen Sie Ihre Teilnahme an der Übung.",
             "gradingInstructions": "Bewertungsanweisungen",
             "problemStatement": "Aufgabenstellung",
-            "sampleSolution": "Musterlösung",
+            "sampleSolution": "Beispiel Lösung",
             "close": "Schließen",
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "totalExampleSubmissions": "Es gibt {{total}} Beispiel-Einreichungen: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
