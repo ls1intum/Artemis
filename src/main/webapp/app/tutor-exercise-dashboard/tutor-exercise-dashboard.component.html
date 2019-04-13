@@ -1,13 +1,9 @@
-<div class="course-info-bar">
-    <div class="row justify-content-between">
-        <div class="col-8">
-            <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
-                {{ 'arTeMiSApp.tutorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}
-            </h2>
-        </div>
-    </div>
-</div>
+<jhi-header-exercise-page-with-details
+    [exercise]="exercise"
+    [onBackClick]="back.bind(this)"
+>
+    <span pagetitle>{{ 'arTeMiSApp.tutorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
+</jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
 
@@ -22,7 +18,19 @@
         </div>
     </div>
 
-    <div class="col-12 text-center" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
+    <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
+        <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
+
+        <p [innerHTML]="formattedProblemStatement"></p>
+    </div>
+
+    <div class="col-12" *ngIf="formattedSampleSolution && formattedSampleSolution.length > 0">
+        <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.sampleSolution' | translate }}</h4>
+
+        <p [innerHTML]="formattedSampleSolution"></p>
+    </div>
+
+    <div class="col-12" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
         <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.gradingInstructions' | translate }}</h4>
 
         <p [innerHTML]="formattedGradingInstructions"></p>

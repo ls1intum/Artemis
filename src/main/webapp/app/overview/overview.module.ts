@@ -26,6 +26,7 @@ import {
     OverviewCourseCardComponent,
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
+import { HeaderExercisePageWithDetailsComponent } from 'app/overview/exercise-details/header-exercise-page-with-details.component';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -45,10 +46,12 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         DifficultyBadgeComponent,
         ExerciseTypePipe,
         SidePanelComponent,
+        HeaderExercisePageWithDetailsComponent,
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    exports: [HeaderExercisePageWithDetailsComponent],
 })
 export class ArTEMiSOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

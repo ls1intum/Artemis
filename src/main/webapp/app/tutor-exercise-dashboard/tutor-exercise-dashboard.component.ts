@@ -4,12 +4,13 @@ import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { TextExercise } from 'app/entities/text-exercise';
 
 @Component({
     selector: 'jhi-courses',
@@ -31,6 +32,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
 
     formattedGradingInstructions: string;
+    formattedProblemStatement: string;
+    formattedSampleSolution: string;
+
+    readonly ExerciseType_TEXT = ExerciseType.TEXT;
 
     stats = {
         toReview: {
@@ -75,6 +80,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+
+                if (this.exercise.type === this.ExerciseType_TEXT) {
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                }
 
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
