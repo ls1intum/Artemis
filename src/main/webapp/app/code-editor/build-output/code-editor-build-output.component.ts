@@ -6,7 +6,7 @@ import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
 import { JhiWebsocketService, AccountService } from '../../core';
-import { Result, ResultService } from '../../entities/result';
+import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
 import * as moment from 'moment';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
@@ -35,15 +35,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     @Input()
     isInitial = true;
 
-    private websocketChannelResults: string;
+    private unsubscribeResults: () => void;
 
     constructor(
         private parent: CodeEditorComponent,
         private $window: WindowRef,
-        private jhiWebsocketService: JhiWebsocketService,
         private repositoryService: RepositoryService,
         private resultService: ResultService,
-        private accountService: AccountService,
+        private resultWebsocketService: ResultWebsocketService,
     ) {}
 
     /**
@@ -120,21 +119,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
     }
 
-    /**
-     * Setup result websocket so that the instructions can use the latest result.
-     * When a new result is received, the result details will be loaded and then the instructions will be rerendered.
-     */
-    setupResultWebsocket() {
-        this.accountService.identity().then(() => {
-            this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
-            this.jhiWebsocketService.subscribe(this.websocketChannelResults);
-            this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                // convert json string to moment
-                console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                this.toggleBuildLogs(newResult);
-            });
-        });
+    async setupResultWebsocket() {
+        return this.resultWebsocketService
+            .subscribeResultForParticipation(this.participation.id, this.toggleBuildLogs.bind(this))
+            .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
     }
 
     /**
@@ -173,8 +161,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     ngOnDestroy() {
-        if (this.websocketChannelResults) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        if (this.unsubscribeResults) {
+            this.unsubscribeResults();
         }
     }
 }

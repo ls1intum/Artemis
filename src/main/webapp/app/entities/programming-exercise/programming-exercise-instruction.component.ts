@@ -17,17 +17,19 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { filter, map } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
-import { Result, ResultService } from '../result';
+import { Result, ResultService, ResultWebsocketService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { Participation } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JhiWebsocketService, AccountService } from 'app/core';
+import { Observable } from 'rxjs';
 
 type Step = {
     title: string;
@@ -53,7 +55,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onInstructionLoad = new EventEmitter();
 
-    private websocketChannelResults: string;
+    private unsubscribeResults: () => void;
 
     public isInitial = true;
     public isLoading = true;
@@ -69,8 +71,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private accountService: AccountService,
+        private resultWebsocketService: ResultWebsocketService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -96,44 +97,39 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 .catch(() => {
                     this.exercise.problemStatement = '';
                 })
-                .then(() => this.setupResultWebsocket())
-                .then(() => this.isInitial && this.loadInitialResult());
+                .then(() => this.subscribeResultsForParticipation())
+                .then(() => this.isInitial && this.loadInitialResult())
+                .finally(() => {
+                    this.isInitial = false;
+                });
         }
     }
 
-    /**
-     * Setup result websocket so that the instructions can use the latest result.
-     * When a new result is received, the result details will be loaded and then the instructions will be rerendered.
-     */
-    setupResultWebsocket() {
-        this.accountService.identity().then(() => {
-            this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
-            this.jhiWebsocketService.subscribe(this.websocketChannelResults);
-            this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                // convert json string to moment
-                console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                this.handleNewResult(newResult);
-            });
-        });
+    private async subscribeResultsForParticipation() {
+        return this.resultWebsocketService
+            .subscribeResultForParticipation(this.participation.id, this.handleNewResult.bind(this))
+            .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
     }
 
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     async loadInitialResult() {
-        return new Promise(resolve => {
-            if (this.participation && this.participation.results) {
+        return new Promise((resolve, reject) => {
+            if (this.participation && this.participation.results && this.participation.results.length) {
                 // Get the result with the highest id (most recent result)
                 resolve(this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc)));
             } else if (this.exercise && this.exercise.id) {
                 // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
-                return this.loadLatestResult();
+                return this.loadLatestResult().subscribe(result => (result ? resolve(result) : reject()));
+            } else {
+                reject();
             }
-        }).then((result: Result) => {
-            this.isInitial = false;
-            this.handleNewResult(result);
-        });
+        })
+            .catch(() => this.updateMarkdown())
+            .then((result: Result) => {
+                return this.handleNewResult(result);
+            });
     }
 
     /**
@@ -141,12 +137,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * It only reacts if this is the first result received or the result is new.
      * @param latestResult
      */
-    handleNewResult(newResult: Result) {
+    async handleNewResult(newResult: Result) {
         // If the same result comes again, don't handle it
         if (!this.latestResult || newResult.id !== this.latestResult.id) {
             this.latestResult = newResult;
-            this.loadResultsDetails().then(() => this.updateMarkdown());
+            return this.loadResultsDetails().finally(() => this.updateMarkdown());
         }
+        this.updateMarkdown();
+        Promise.resolve();
     }
 
     /**
@@ -155,33 +153,22 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+        this.isLoading = false;
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
             this.setUpClickListeners();
             this.setUpTaskIcons();
-        }, 500);
-        this.isLoading = false;
+        }, 100);
     }
 
     /**
      * Retrieve latest result for the participation/exercise/course combination.
+     * If there is no result, return null
      */
-    loadLatestResult(): Promise<Result> {
-        return new Promise((resolve, reject) => {
-            this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).subscribe(
-                (latestResult: any) => {
-                    if (latestResult.body.length) {
-                        resolve(latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc)));
-                    } else {
-                        reject();
-                    }
-                },
-                err => {
-                    console.log('Error while loading latest results!', err);
-                    reject();
-                },
-            );
-        });
+    loadLatestResult(): Observable<Result> {
+        return this.resultService
+            .findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id)
+            .pipe(map((latestResult: any) => (latestResult.body.length ? latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc)) : null)));
     }
 
     /**
@@ -545,6 +532,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.listenerRemoveFunctions.forEach(f => f());
         this.listenerRemoveFunctions = [];
         this.steps = [];
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        if (this.unsubscribeResults) {
+            this.unsubscribeResults();
+        }
     }
 }
