@@ -120,6 +120,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     async setupResultWebsocket() {
+        if (this.unsubscribeResults) {
+            this.unsubscribeResults();
+        }
         return this.resultWebsocketService
             .subscribeResultForParticipation(this.participation.id, this.toggleBuildLogs.bind(this))
             .then(unsubscribe => (this.unsubscribeResults = unsubscribe));

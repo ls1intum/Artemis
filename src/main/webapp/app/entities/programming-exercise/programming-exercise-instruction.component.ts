@@ -106,6 +106,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     private async subscribeResultsForParticipation() {
+        if (this.unsubscribeResults) {
+            this.unsubscribeResults();
+        }
         return this.resultWebsocketService
             .subscribeResultForParticipation(this.participation.id, this.handleNewResult.bind(this))
             .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
