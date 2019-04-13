@@ -1,11 +1,11 @@
 <jhi-alert></jhi-alert>
-<div class="p-4" *ngIf="exercise">
+<div *ngIf="exercise">
     <div class="row">
-        <div class="col-lg-2">
+        <div class="col-lg-1">
             <button class="btn btn-secondary" (click)="back()">&larr;</button>
         </div>
 
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-7">
             <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
                 Example Modeling Submission for Exercise {{exercise?.title}}
             </h2>
@@ -20,7 +20,7 @@
                            jhiTranslate="arTeMiSApp.modelingExercise.usedForTutorial">Used for tutorial</label>
                 </div>
 
-                <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6">
+                <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6 button-resize">
                     <fa-icon icon="save"></fa-icon>
                     <span *ngIf="isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
                     <span *ngIf="!isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
@@ -29,7 +29,7 @@
 
             <div class="row" *ngIf="assessmentMode">
                 <div class="form-check col-6 align-baseline"></div>
-                <button (click)="saveExampleAssessment()" class="btn btn-primary col-6">
+                <button (click)="saveExampleAssessment()" class="btn btn-primary col-6 button-resize">
                     <fa-icon icon="save"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
                 </button>
@@ -38,12 +38,12 @@
             <div class="row mt-3" *ngIf="exampleSubmission && !isNewSubmission">
                 <div class="form-check col-6 align-baseline"></div>
 
-                <button class="btn btn-secondary col-6" *ngIf="!assessmentMode" (click)="showAssessment()">
+                <button class="btn btn-secondary col-6 button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
                     <fa-icon icon="chalkboard-teacher"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleAssessment">Show assessment</span>
                 </button>
 
-                <button class="btn btn-secondary col-6 mb-3" *ngIf="assessmentMode" (click)="showSubmission()">
+                <button class="btn btn-secondary col-6 mb-3 button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
                     <fa-icon icon="code-branch"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleSubmission">Show submission</span>
                 </button>
@@ -51,22 +51,23 @@
         </div>
 
         <div class="col-12 text-right" *ngIf="readOnly">
-            <button (click)="readAndUnderstood()" class="btn btn-success col-3">
+            <button (click)="readAndUnderstood()" class="btn btn-success">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
             </button>
         </div>
 
         <div class="col-12 text-right" *ngIf="toComplete">
-            <button class="btn btn-primary col-3" (click)="checkAssessment()"
+            <button class="btn btn-primary px-5" (click)="checkAssessment()"
                     [disabled]="!feedbacks || !assessmentsAreValid" jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment">
                 Submit Assessment
             </button>
         </div>
 
         <div class="col-12">
-            <p class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement" [translateValues]="{ problemStatement: exercise?.problemStatement }">
-                <strong>Problem Statement:</strong> {{ exercise?.problemStatement }}<br/>
+            <p *ngIf="formattedProblemStatement" class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
+               [translateValues]="{ problemStatement: formattedProblemStatement }">
+                <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br/>
             </p>
         </div>
 

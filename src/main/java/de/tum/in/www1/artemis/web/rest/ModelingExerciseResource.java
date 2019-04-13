@@ -104,7 +104,6 @@ public class ModelingExerciseResource {
             return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        result = removeCircularDependencies(result);
         groupNotificationService.notifyGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
@@ -151,7 +150,6 @@ public class ModelingExerciseResource {
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        result = removeCircularDependencies(result);
         groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, modelingExercise.getId().toString())).body(result);
     }
@@ -218,9 +216,6 @@ public class ModelingExerciseResource {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(id);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
-        }
-        if (modelingExercise.isPresent()) {
-            return ResponseEntity.ok().body(removeCircularDependencies(modelingExercise.get()));
         }
         return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
@@ -313,21 +308,5 @@ public class ModelingExerciseResource {
             modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
         }
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-    /**
-     * Break circular dependency:
-     *      exercise -> exampleSubmission -> tutorParticipation -> assessedExercise -> exampleSubmission -> ...
-     */
-    private ModelingExercise removeCircularDependencies (ModelingExercise modelingExercise) {
-        if (modelingExercise == null) {
-            return null;
-        }
-        for (ExampleSubmission exampleSubmission : modelingExercise.getExampleSubmissions()) {
-            if (exampleSubmission.getTutorParticipation() != null) {
-                exampleSubmission.getTutorParticipation().setAssessedExercise(null);
-            }
-        }
-        return modelingExercise;
     }
 }

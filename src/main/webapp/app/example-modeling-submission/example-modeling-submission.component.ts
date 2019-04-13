@@ -17,6 +17,7 @@ import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -46,6 +47,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
+    formattedProblemStatement: string;
 
     private exampleSubmissionId: number;
 
@@ -60,6 +62,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit(): void {
@@ -92,6 +95,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         });
 
         if (this.isNewSubmission) {
@@ -322,6 +326,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.back();
         });
     }
 }

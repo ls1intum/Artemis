@@ -6,6 +6,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExercise, ModelingExercisePopupService, ModelingExerciseService } from 'app/entities/modeling-exercise';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-example-modeling-solution',
@@ -20,6 +21,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     exerciseId: number;
     exampleSolution: UMLModel;
     isAtLeastInstructor = false;
+    formattedProblemStatement: string;
 
     constructor(
         private exerciseService: ModelingExerciseService,
@@ -28,6 +30,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         private modelingExercisePopupService: ModelingExercisePopupService,
         private route: ActivatedRoute,
         private router: Router,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit(): void {
@@ -42,6 +45,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         });
     }
 

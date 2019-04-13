@@ -1,3 +1,7 @@
 .editor-container {
     height: 80vh;
 }
+
+.button-resize {
+    min-width: 200px; // prevent button from cutting text when resizing
+}

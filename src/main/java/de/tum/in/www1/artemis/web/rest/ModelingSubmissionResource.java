@@ -213,7 +213,6 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            // TODO CZ: is the auth check restriction good enough?
             if (exercise != null && exercise instanceof ModelingExercise &&
                 !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 // make sure the solution is not sent to the client for students

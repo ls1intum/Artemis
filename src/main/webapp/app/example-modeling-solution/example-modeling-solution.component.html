@@ -1,26 +1,27 @@
 <jhi-alert></jhi-alert>
 <div class="p-4" *ngIf="exercise">
     <div class="row">
-        <div class="col-lg-2">
+        <div class="col-lg-1">
             <button class="btn btn-secondary" (click)="back()">&larr;</button>
         </div>
 
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-7">
             <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
                 Example Solution for Modeling Exercise {{exercise?.title}}
             </h2>
         </div>
 
         <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
-            <button (click)="saveExampleSolution()" class="btn btn-primary col-6">
+            <button (click)="saveExampleSolution()" class="btn btn-primary col-6 button-resize">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleSolution">Save example solution</span>
             </button>
         </div>
 
         <div class="col-12">
-            <p class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement" [translateValues]="{ problemStatement: exercise?.problemStatement }">
-                <strong>Problem Statement:</strong> {{ exercise?.problemStatement }}<br/>
+            <p *ngIf="formattedProblemStatement" class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
+               [translateValues]="{ problemStatement: formattedProblemStatement }">
+                <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br/>
             </p>
         </div>
 

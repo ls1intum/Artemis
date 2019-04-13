@@ -169,15 +169,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
 
         // It is allowed to get the example assessment, if the user is an instructor or
-        // the submission is not used for tutorial for a tutor in the tutor dashboard
+        // if the user is a tutor and the submission is not used for tutorial in the tutor dashboard
         boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(modelingExercise) ||
             authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise) && !exampleSubmission.isUsedForTutorial();
         if (!isAllowed) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(
-                "modelingSubmission",
-                "notAuthorized",
-                "You cannot see results"
-            )).body(null);
+            forbidden();
         }
 
         return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
