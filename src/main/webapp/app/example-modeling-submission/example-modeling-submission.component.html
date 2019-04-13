@@ -31,38 +31,31 @@
             <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
-        <div class="mt-2" *ngIf="exampleSubmission && !isNewSubmission">
+        <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
                 <fa-icon icon="chalkboard-teacher"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleAssessment">Show assessment</span>
             </button>
 
-            <button class="btn btn-secondary mb-3 button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
+            <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
                 <fa-icon icon="code-branch"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
     </div>
 
-    <div class="col-12 text-right" *ngIf="readOnly">
+    <div class="col-12 text-right mb-2" *ngIf="readOnly">
         <button (click)="readAndUnderstood()" class="btn btn-success">
             <fa-icon icon="save"></fa-icon>
             <span jhiTranslate="arTeMiSApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
         </button>
     </div>
 
-    <div class="col-12 text-right" *ngIf="toComplete">
+    <div class="col-12 text-right mb-2" *ngIf="toComplete">
         <button class="btn btn-primary px-5" (click)="checkAssessment()"
                 [disabled]="!feedbacks || !assessmentsAreValid" jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment">
             Submit Assessment
         </button>
-    </div>
-
-    <div class="col-12">
-        <p *ngIf="formattedProblemStatement" class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
-           [translateValues]="{ problemStatement: formattedProblemStatement }">
-            <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br/>
-        </p>
     </div>
 
     <div class="col-12 editor-container">
