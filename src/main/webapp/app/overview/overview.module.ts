@@ -9,7 +9,7 @@ import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ExerciseTypePipe } from 'app/entities/exercise/';
-import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
+import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
 
 import {
     CourseExerciseDetailsComponent,
@@ -27,11 +27,22 @@ import {
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { HeaderExercisePageWithDetailsComponent } from 'app/overview/exercise-details/header-exercise-page-with-details.component';
+import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ChartsModule, ClipboardModule, MomentModule, ArTEMiSResultModule, ArTEMiSProgrammingExerciseModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [
+        ArTEMiSSharedModule,
+        ChartsModule,
+        ClipboardModule,
+        MomentModule,
+        ArTEMiSResultModule,
+        ArTEMiSProgrammingExerciseModule,
+        ArTEMiSStudentQuestionsModule,
+        ArTEMiSSidePanelModule,
+        RouterModule.forChild(ENTITY_STATES),
+    ],
     declarations: [
         OverviewComponent,
         CourseOverviewComponent,
@@ -45,7 +56,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseDetailsStudentActionsComponent,
         DifficultyBadgeComponent,
         ExerciseTypePipe,
-        SidePanelComponent,
         HeaderExercisePageWithDetailsComponent,
     ],
     entryComponents: [],

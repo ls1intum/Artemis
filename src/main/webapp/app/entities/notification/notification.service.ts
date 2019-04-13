@@ -78,17 +78,26 @@ export class NotificationService {
         return res;
     }
 
-    public handleUserNotifications(user: User): void {
-        if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification>(null);
-        }
-        const userTopic = `topic/user/${user.id}`;
-        if (!this.subscribedTopics.includes(userTopic)) {
-            this.subscribedTopics.push(userTopic);
-            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                this.notificationObserver.next(notification);
-            });
-        }
+    subscribeUserNotifications(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.accountService
+                .identity()
+                .then((user: User) => {
+                    if (!this.notificationObserver) {
+                        this.notificationObserver = new BehaviorSubject<Notification>(null);
+                    }
+                    const userTopic = `/topic/user/${user.id}/notifications`;
+                    if (!this.subscribedTopics.includes(userTopic)) {
+                        this.subscribedTopics.push(userTopic);
+                        this.jhiWebsocketService.subscribe(userTopic);
+                        this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                            this.notificationObserver.next(notification);
+                        });
+                        resolve();
+                    }
+                })
+                .catch(error => reject(error));
+        });
     }
 
     public handleCourseNotifications(course: Course): void {
@@ -116,18 +125,6 @@ export class NotificationService {
         });
     }
 
-    subscribeUserNotifications(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            this.accountService
-                .identity()
-                .then((account: User) => {
-                    this.jhiWebsocketService.subscribe(`topic/user/${account.id}/singleUser`);
-                    resolve();
-                })
-                .catch(error => reject(error));
-        });
-    }
-
     subscribeToSocketMessages(): BehaviorSubject<Notification> {
         if (!this.notificationObserver) {
             this.notificationObserver = new BehaviorSubject<Notification>(null);
@@ -137,6 +134,7 @@ export class NotificationService {
 
     interpretNotification(notification: GroupNotification): void {
         const target = JSON.parse(notification.target);
-        this.router.navigate([target.mainPage, notification.course.id, target.entity, target.id]);
+        const courseId = target.course || notification.course.id;
+        this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
     }
 }
