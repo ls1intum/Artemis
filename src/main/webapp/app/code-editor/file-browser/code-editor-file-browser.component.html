@@ -20,7 +20,7 @@
         <fa-icon [icon]="getSaveStatusIcon().icon" [spin]="getSaveStatusIcon().spin" [ngClass]="getSaveStatusIcon().class"></fa-icon>
         <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
         <hr />
-        <span *ngIf="isExerciseCommitted()"> <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes committed.</span> </span>
+        <span *ngIf="isExerciseCommitted()"> <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success" jhiTranslate="arTeMiSApp.editor.changesCommited"> All changes committed.</span> </span>
         <span *ngIf="!isExerciseCommitted()">
             <fa-icon icon="exclamation-triangle" class="text-warning"></fa-icon>
             <span class="text-warning" jhiTranslate="arTeMiSApp.editor.uncommittedChanges">There are uncommitted changes.</span>
