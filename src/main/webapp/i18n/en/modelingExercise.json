@@ -16,8 +16,24 @@
                 "title": "Modeling Exercise"
             },
             "diagramType": "Diagram Type",
-            "sampleSolutionModel": "Sample Solution Model",
-            "sampleSolutionExplanation": "Sample Solution Explanation"
+            "problemStatement": "<strong>Problem Statement:</strong> {{ problemStatement }}",
+            "exampleSolution": "Example Solution",
+            "exampleSolutionExplanation": "Example Solution Explanation",
+            "createExampleSolution": "Create Example Solution",
+            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the text exercise.",
+            "exampleSolutionForModelingExercise": "Example Solution for Modeling Exercise {{ exerciseTitle }}",
+            "saveExampleSolution": "Save Example Solution",
+            "exampleSubmission": "Example Submission {{ number }}",
+            "exampleSubmissions": "Example Submissions",
+            "createExampleSubmission": "Create Example Submission",
+            "createNewExampleSubmission": "Create new Example Submission",
+            "updateExampleSubmission": "Update Example Submission",
+            "saveExampleAssessment": "Save Example Assessment",
+            "showExampleSubmission": "Show Submission",
+            "showExampleAssessment": "Show Assessment",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
+            "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
+            "usedForTutorial": "Used for Tutorial"
         }
     }
 }
