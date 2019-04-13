@@ -293,17 +293,16 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.17"
 
-"@ls1intum/apollon@2.0.0-rc.2":
-  version "2.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.2.tgz#3f932e2b51d32b70b2c4f3b629c8b8cab2b262c9"
-  integrity sha512-IVsOw+prEXCYs5kO8yOXtsZgtP9pmuzpc8Wh196TIW6mrqBIjuSlNKLRMtBq/236ZE/DYUS4oqKFRr5DZtjeeg==
+"@ls1intum/apollon@2.0.0-rc.3":
+  version "2.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.3.tgz#62c3f8d62a0ace6e37986ef8cdb555b007cd519c"
+  integrity sha512-gcDGv6Zdi+NpjrT86EU2O4t6DPmenop8xl5hLBYcxhM2h+mtJ3txb/AjN3GHFpAF2shxUJSZWf8EE92Oh8M3mA==
   dependencies:
     react "16.8.6"
     react-dom "16.8.6"
     react-redux "6.0.1"
     redux "4.0.1"
     redux-saga "1.0.2"
-    reselect "4.0.0"
     styled-components "4.2.0"
     tslib "1.9.3"
     uuid "3.3.2"
@@ -9432,11 +9431,6 @@ requires-port@1.x.x, requires-port@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/requires-port/-/requires-port-1.0.0.tgz#925d2601d39ac485e091cf0da5c6e694dc3dcaff"
   integrity sha1-kl0mAdOaxIXgkc8NpcbmlNw9yv8=
-
-reselect@4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/reselect/-/reselect-4.0.0.tgz#f2529830e5d3d0e021408b246a206ef4ea4437f7"
-  integrity sha512-qUgANli03jjAyGlnbYVAV5vvnOmJnODyABz51RdBN7M4WaVu8mecZWgyQNkG8Yqe3KRGRt0l4K4B3XVEULC4CA==
 
 reserved-words@^0.1.1:
   version "0.1.2"

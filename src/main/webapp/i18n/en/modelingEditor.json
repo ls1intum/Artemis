@@ -21,37 +21,45 @@
             "helpModal": {
                 "help": "Help",
                 "title": "How to use the modeling editor",
-                "addClass": {
-                    "title": "Add Class",
-                    "text": "To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side."
+                "createElement": {
+                    "title": "Add Elements",
+                    "text": "To add an element, simply drag and drop one of the elements from the right side into the editor area on the left side."
                 },
-                "editClass": {
-                    "title": "Edit Class",
-                    "text": "To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc."
+                "createRelationship": {
+                    "title": "Add Relationships",
+                    "text": "To add a relationship, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship."
                 },
-                "moveClass": {
-                    "title": "Move Class",
-                    "text": "To move a class, select it with a single click and either use your keyboard arrows or drag and drop it."
+                "updateElement": {
+                    "title": "Edit Elements/Relationships",
+                    "text": "To edit an element or relationship, double click it and a popup will open up in which you can edit its properties, e.g. name, type, attributes, methods, etc."
                 },
-                "deleteClass": {
-                    "title": "Delete Class",
-                    "text": "To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
+                "deleteElement": {
+                    "title": "Delete Elements/Relationships",
+                    "text": "To delete an element or relationship, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
                 },
-                "addAssociation": {
-                    "title": "Add Association",
-                    "text": "To add a association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for associations. Click and hold on one of those and drag it to another blue circle to create a association."
+                "moveElement": {
+                    "title": "Move Elements",
+                    "text": "To move an element, select it with a single click and either use your keyboard arrows or drag and drop it."
                 },
-                "editAssociation": {
-                    "title": "Edit Association",
-                    "text": "To edit an association, double click it and a popup will open up, in which you can edit its properties, e.g. type."
+                "resizeElement": {
+                    "title": "Resize Elements",
+                    "text": "To resize an element, drag and drop the right bottom corner of the element."
                 },
-                "deleteAssociation": {
-                    "title": "Delete Association",
-                    "text": "To delete an association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
+                "reconnectRelationship": {
+                    "title": "Move Relationships",
+                    "text": "To move a relationship, drag and drop one of its line ends."
+                },
+                "select": {
+                    "title": "Multi-Selection",
+                    "text": "When selecting elements or relationships, you can keep your <code>Shift</code> button pressed to add the element to your current selection. With <code>Ctrl+A</code> you can select all available elements."
+                },
+                "duplicate": {
+                    "title": "Duplicate Elements",
+                    "text": "With <code>Ctrl+D</code> you can duplicate the currently selected elements with all their properties."
                 },
                 "undo": {
                     "title": "Undo & Redo",
-                    "text": "With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes."
+                    "text": "With <code>Ctrl+Z</code> and <code>Ctrl+Shift+Z</code> you can undo and redo your changes."
                 }
             }
         }
