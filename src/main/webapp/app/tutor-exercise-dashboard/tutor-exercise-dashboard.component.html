@@ -24,10 +24,20 @@
         <p [innerHTML]="formattedProblemStatement"></p>
     </div>
 
-    <div class="col-12" *ngIf="formattedSampleSolution && formattedSampleSolution.length > 0">
+    <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution && formattedSampleSolution.length > 0">
         <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.sampleSolution' | translate }}</h4>
 
         <p [innerHTML]="formattedSampleSolution"></p>
+    </div>
+
+    <div class="col-12" *ngIf="exercise.type === ExerciseType_MODELING && exampleSolutionModel">
+        <h4>{{ 'arTeMiSApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
+        <jhi-modeling-editor
+            [umlModel]="exampleSolutionModel"
+            [diagramType]="modelingExercise.diagramType"
+            [readOnly]="true">
+        </jhi-modeling-editor>
+        <p class="mt-2" *ngIf="formattedSampleSolution" [innerHTML]="formattedSampleSolution"></p>
     </div>
 
     <div class="col-12" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">

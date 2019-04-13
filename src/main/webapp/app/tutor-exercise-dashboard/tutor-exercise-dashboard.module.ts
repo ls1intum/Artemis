@@ -18,6 +18,7 @@ import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSOverviewModule } from 'app/overview';
+import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -31,6 +32,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSOverviewModule,
+        ArTEMiSModelingEditorModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],

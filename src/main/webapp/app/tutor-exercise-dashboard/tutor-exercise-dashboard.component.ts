@@ -11,6 +11,8 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { UMLModel } from '@ls1intum/apollon';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
@@ -26,6 +28,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
+    modelingExercise: ModelingExercise;
     courseId: number;
     exerciseId: number;
     numberOfTutorAssessments = 0;
@@ -37,12 +40,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
+    exampleSolutionModel: UMLModel;
 
     formattedGradingInstructions: string;
     formattedProblemStatement: string;
     formattedSampleSolution: string;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
+    readonly ExerciseType_MODELING = ExerciseType.MODELING;
 
     stats = {
         toReview: {
@@ -92,6 +97,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
                 if (this.exercise.type === this.ExerciseType_TEXT) {
                     this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                } else if (this.exercise.type === this.ExerciseType_MODELING) {
+                    this.modelingExercise = this.exercise as ModelingExercise;
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                    this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
                 }
 
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
