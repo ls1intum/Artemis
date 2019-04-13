@@ -129,6 +129,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
+    // TODO CZ: too much duplicated code
     private getSubmissions(): void {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService
@@ -171,6 +172,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
     }
 
+    // TODO CZ: too much duplicated code
     private getSubmissionWithoutAssessment(): void {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
