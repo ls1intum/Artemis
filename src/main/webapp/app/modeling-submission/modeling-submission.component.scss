@@ -1,11 +1,12 @@
 .submission-container {
     display: flex;
+    min-height: 100vh;
     flex-flow: column nowrap;
 }
 
 .assessment-result-container {
     display: flex;
-    height: calc(100vh - 148px);
+    height: calc(100vh - 173px); // TODO CZ: set dynamic height here to prevent scrolling in Apollon editor -> but min-height doesnt work
     flex-flow: column nowrap;
 }
 
@@ -23,4 +24,8 @@
     jhi-modeling-assessment {
         width: 100%;
     }
+}
+
+.editor-large {
+    min-height: 100vh;
 }

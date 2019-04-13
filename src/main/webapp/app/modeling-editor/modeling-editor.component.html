@@ -1,4 +1,4 @@
-<div class="p-4">
+<div class="modeling-editor">
     <ng-template #help let-c="close" let-d="dismiss">
         <div class="modal-header">
             <h4 class="modal-title" jhiTranslate="arTeMiSApp.modelingEditor.helpModal.title">How to use the modeling editor</h4>
@@ -67,13 +67,11 @@
             <button type="button" class="btn btn-outline" (click)="c()" jhiTranslate="entity.action.close">Close</button>
         </div>
     </ng-template>
-    <div>
-        <button class="btn btn-warning" (click)="open(help)">
-            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
-            <span jhiTranslate="arTeMiSApp.modelingEditor.helpModal.help">Help</span>
-        </button>
-    </div>
-    <br />
+
+    <button *ngIf="!readOnly" class="btn btn-warning mb-2 align-self-start" (click)="open(help)">
+        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
+        <span jhiTranslate="arTeMiSApp.modelingEditor.helpModal.help">Help</span>
+    </button>
 
     <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions">
         <div #editorContainer class="apollon-container"></div>

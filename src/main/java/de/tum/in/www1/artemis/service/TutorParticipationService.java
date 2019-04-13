@@ -149,7 +149,7 @@ public class TutorParticipationService {
 
     /**
      * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as argument, if it is valid (e.g: if it is an example submission used
-     * for review, we check the result is close enough to the one of the instructor)
+     * for tutorial, we check the result is close enough to the one of the instructor)
      *
      * @param exercise          - the exercise we are referring to
      * @param exampleSubmission - the example submission to add
@@ -205,13 +205,22 @@ public class TutorParticipationService {
             return existingTutorParticipation;
         }
 
-        int numberOfExampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).size();
+        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).stream()
+            // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
+            // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
+            // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
+            // to asses student submissions in the tutor dashboard.
+            .filter(exSub ->
+                exSub.getSubmission() != null &&
+                exSub.getSubmission().getResult() != null &&
+                exSub.getSubmission().getResult().isExampleResult()
+            ).count();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 
         /*
          * When the tutor has read and assessed all the exercises, the tutor status goes to the next step.
          */
-        if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissions) {
+        if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissionsForTutor) {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 

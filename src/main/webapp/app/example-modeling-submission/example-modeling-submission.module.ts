@@ -14,11 +14,21 @@ import { exampleModelingSubmissionRoute } from 'app/example-modeling-submission/
 import { ExampleModelingSubmissionComponent } from 'app/example-modeling-submission/example-modeling-submission.component';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor/modeling-editor.module';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...exampleModelingSubmissionRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ModelingAssessmentModule, ArTEMiSModelingEditorModule],
+    imports: [
+        ArTEMiSSharedModule,
+        ArTEMiSResultModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ModelingAssessmentModule,
+        AssessmentInstructionsModule,
+        ArTEMiSModelingEditorModule,
+    ],
     declarations: [ExampleModelingSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],

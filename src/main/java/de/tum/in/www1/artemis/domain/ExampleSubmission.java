@@ -33,7 +33,7 @@ public class ExampleSubmission implements Serializable {
     private Submission submission;
 
     @ManyToOne
-    @JsonIgnoreProperties("trainedExampleSubmissions")
+    @JsonIgnoreProperties({"trainedExampleSubmissions", "assessedExercise"})
     private TutorParticipation tutorParticipation;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

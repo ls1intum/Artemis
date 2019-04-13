@@ -63,6 +63,7 @@ import { ArTEMiSNotificationModule } from 'app/entities/notification/notificatio
 import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
 import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import * as moment from 'moment';
+import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solution';
 
 @NgModule({
     imports: [
@@ -115,6 +116,7 @@ import * as moment from 'moment';
         ArTEMiSModelingSubmissionModule,
         ArTEMiSExampleTextSubmissionModule,
         ArTEMiSExampleModelingSubmissionModule,
+        ArTEMiSExampleModelingSolutionModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

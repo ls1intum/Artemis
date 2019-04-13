@@ -65,8 +65,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
-        this.readOnly = !!this.route.snapshot.paramMap.get('readOnly');
-        this.toComplete = !!this.route.snapshot.paramMap.get('toComplete');
+        this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
+        this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
 
         if (exampleSubmissionId === 'new') {
             this.isNewSubmission = true;
@@ -74,6 +74,12 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         } else {
             // (+) converts string 'id' to a number
             this.exampleSubmissionId = +exampleSubmissionId;
+        }
+
+        // if one of the flags is set, we navigated here from the tutor dashboard which means that we are not
+        // interested in the modeling editor, i.e. we only wanna use the assessment mode
+        if (this.readOnly || this.toComplete) {
+            this.assessmentMode = true;
         }
 
         // Make sure the modeling exercise popup gets closed
@@ -201,6 +207,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.feedbacks = feedbacks;
         this.feedbackChanged = true;
+        this.checkScoreBoundaries();
     }
 
     showAssessment() {
@@ -315,6 +322,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.back();
         });
     }
 }

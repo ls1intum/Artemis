@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;

@@ -74,7 +74,7 @@
                 (selectionChanged)="onSelectionChanged($event)"
             ></jhi-modeling-assessment>
         </div>
-        <div *ngIf="submission && !submission.submitted" class="col-12">
+        <div *ngIf="submission && !submission.submitted" class="col-12 editor-large">
             <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
         </div>
         <div class="col-3" *ngIf="submission?.submitted">

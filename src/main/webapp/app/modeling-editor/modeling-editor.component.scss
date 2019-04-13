@@ -3,6 +3,8 @@ $draggable-width: 15px;
 .modeling-editor {
     position: relative;
     height: 100%;
+    display: flex;
+    flex-flow: column nowrap;
 }
 
 .resizable {
@@ -16,6 +18,6 @@ $draggable-width: 15px;
 }
 
 .apollon-container {
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
 }
