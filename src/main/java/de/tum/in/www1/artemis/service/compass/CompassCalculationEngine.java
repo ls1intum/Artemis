@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.Submission;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +50,15 @@ public class CompassCalculationEngine implements CalculationEngine {
         // modelsWaitingForAssessment are added ? No differentiation between
         // submitted and saved assessments!
 
-        for (ModelingSubmission submission : submissions) {
-            String model = submission.getModel();
+        for (Submission submission : submissions) {
+            // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
+            // when iterating over the ModelingSubmissions directly (i.e. for (ModelingSubmission submission : submissions)).
+            ModelingSubmission modelingSubmission = (ModelingSubmission) Hibernate.unproxy(submission);
+            String model = modelingSubmission.getModel();
             if (model != null) {
-                buildModel(submission);
-                buildAssessment(submission);
-                modelSelector.addAlreadyAssessedModel(submission.getId());
+                buildModel(modelingSubmission);
+                buildAssessment(modelingSubmission);
+                modelSelector.addAlreadyAssessedModel(modelingSubmission.getId());
             }
         }
 
