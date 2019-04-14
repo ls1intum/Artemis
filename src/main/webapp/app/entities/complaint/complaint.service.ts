@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import { Complaint } from 'app/entities/complaint/complaint.model';
 
 type EntityResponseType = HttpResponse<Complaint>;
+type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintService {
@@ -28,6 +29,17 @@ export class ComplaintService {
         return this.http.get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    getForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
+        return this.http
+            .get<Complaint[]>(`${this.resourceUrl}/for-tutor-dashboard/${exerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
+    }
+
+    updateComplaint(complaint: Complaint) {
+        const copy = this.convertDateFromClient(complaint);
+        return this.http.put<Complaint>(`${this.resourceUrl}/${complaint.id}`, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
             submittedTime: complaint.submittedTime != null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,
@@ -38,6 +50,16 @@ export class ComplaintService {
         if (res.body) {
             res.body.submittedTime = res.body.submittedTime != null ? moment(res.body.submittedTime) : null;
         }
+        return res;
+    }
+
+    private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
+        if (res.body) {
+            res.body.forEach(complaint => {
+                complaint.submittedTime = complaint.submittedTime != null ? moment(complaint.submittedTime) : null;
+            });
+        }
+
         return res;
     }
 }
