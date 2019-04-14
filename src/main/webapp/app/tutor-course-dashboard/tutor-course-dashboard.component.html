@@ -48,8 +48,8 @@
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
                 <tr>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</th>
+                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</th>
+                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
                     <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</th>
@@ -58,6 +58,9 @@
             </thead>
             <tbody>
                 <tr *ngFor="let exercise of exercises">
+                    <td>
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type)" container="body"></fa-icon>
+                    </td>
                     <td>
                         <span>{{ exercise.title }}</span>
                         <span
@@ -69,9 +72,6 @@
                             {{ 'arTeMiSApp.tutorCourseDashboard.notReleased' | translate }}</span
                         >
                         <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
-                    </td>
-                    <td>
-                        <span>{{ 'arTeMiSApp.tutorCourseDashboard.exerciseTypes.' + exercise.type | translate }}</span>
                     </td>
                     <td>
                         <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]"> </jhi-tutor-participation-graph>

@@ -5,7 +5,7 @@ import { Course, CourseService, StatsForTutorDashboard } from '../entities/cours
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import * as moment from 'moment';
 
@@ -26,6 +26,10 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
     showFinishedExercises = false;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
+
     private tutor: User;
 
     constructor(
@@ -55,7 +59,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.finishedExercises = this.course.exercises
                         .filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED)
                         .sort(this.sortByAssessmentDueDate);
-                    this.exercises = this.unfinishedExercises;
+                    // sort exercises by type to get a better overview in the dashboard
+                    this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
                 }
             },
             (response: string) => this.onError(response),

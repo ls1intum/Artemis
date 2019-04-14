@@ -12,10 +12,6 @@
             "showFinishedExercises": "Beendete Übungen anzeigen",
             "exercise": "Übungen",
             "exerciseType": "Aufgabentyp",
-            "exerciseTypes": {
-                "modeling": "Modellierungsaufgabe",
-                "text": "Textaufgabe"
-            },
             "yourStatus": "Dein Status",
             "exerciseDueDate": "Fälligkeitsdatum der Übung",
             "assessmentsDueDate": "Fälligkeitsdatum der Bewertungen",
