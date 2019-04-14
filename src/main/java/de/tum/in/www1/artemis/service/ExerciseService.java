@@ -145,46 +145,52 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by id.
+     * Get one exercise by exerciseId.
      *
-     * @param id the id of the entity
+     * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOne(Long id) {
-        Optional<Exercise> exercise = exerciseRepository.findById(id);
+    public Exercise findOne(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (!exercise.isPresent()) {
-            throw new EntityNotFoundException("Exercise with id " + id + " does not exist!");
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        if (exercise.get() instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) exercise.get();
-            // eagerly load questions and statistic
-            quizExercise.getQuizQuestions().size();
-            quizExercise.getQuizPointStatistic().getId();
-        }
-        else if (exercise.get() instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise.get();
-            // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((Participation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((Participation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
-        }
+        updateExerciseElementsAfterDatabaseFetch(exercise.get());
         return exercise.get();
     }
 
     /**
-     * Find exercise by id and load participations in this exercise.
+     * Find exercise by exerciseId and load participations in this exercise.
      *
-     * @param id the id of the exercise entity
+     * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOneLoadParticipations(Long id) {
-        log.debug("Request to find Exercise with participations loaded: {}", id);
-        Exercise exercise = findOne(id);
-        if (Optional.ofNullable(exercise).isPresent()) {
-            exercise.getParticipations().size();
+    public Exercise findOneLoadParticipations(Long exerciseId) {
+        log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
+        if (!exercise.isPresent()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        return exercise;
+        updateExerciseElementsAfterDatabaseFetch(exercise.get());
+        return exercise.get();
+    }
+
+    // TODO: we could move this to Exercise.java and override it in the subclasses to avoid the if-else statements
+    private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            // eagerly load questions and statistic
+            quizExercise.getQuizQuestions().size();
+            quizExercise.getQuizPointStatistic().getId();
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            // eagerly load templateParticipation and solutionParticipation
+            programmingExercise.setTemplateParticipation((Participation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((Participation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+        }
     }
 
     /**

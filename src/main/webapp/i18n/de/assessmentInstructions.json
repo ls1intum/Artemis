@@ -2,7 +2,7 @@
     "assessmentInstructions": {
         "instructions": "Instruktionen",
         "problemStatement": "Aufgabenstellung",
-        "sampleSolution": "Musterlösung",
+        "sampleSolution": "Beispiel Lösung",
         "gradingCriteria": "Bewertungskriterien"
     }
 }

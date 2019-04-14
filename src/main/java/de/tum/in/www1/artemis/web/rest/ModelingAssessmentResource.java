@@ -91,7 +91,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        // TODO: we need to make sure that per participation there is only one optimalModel
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
             if (optimalModelSubmissions.isEmpty()) {
