@@ -19,6 +19,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSOverviewModule } from 'app/overview';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
+import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSOverviewModule,
         ArTEMiSModelingEditorModule,
+        AssessmentInstructionsModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],

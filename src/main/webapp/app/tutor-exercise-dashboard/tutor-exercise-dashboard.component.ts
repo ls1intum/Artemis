@@ -99,8 +99,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
                     this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
                 } else if (this.exercise.type === this.ExerciseType_MODELING) {
                     this.modelingExercise = this.exercise as ModelingExercise;
-                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
-                    this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                    if (this.modelingExercise.sampleSolutionModel) {
+                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                        this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                    }
                 }
 
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
