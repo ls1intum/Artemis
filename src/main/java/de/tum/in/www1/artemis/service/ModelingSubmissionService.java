@@ -43,7 +43,8 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
+     * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
@@ -77,15 +78,10 @@ public class ModelingSubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(long exerciseId) {
-        return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId).stream().peek(participation -> participation.getExercise().setParticipations(null))
-            // Map to Latest Submission
-            .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get)
-            // It needs to be submitted to be ready for assessment
-            .filter(Submission::isSubmitted).filter(textSubmission -> {
-                Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
-                return result == null;
-            })
-            .findAny();
+        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(exerciseId).stream()
+                .peek(participation -> participation.getExercise().setParticipations(null))
+                // Map to Latest Submission
+                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
     }
 
     /**
