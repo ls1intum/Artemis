@@ -18,6 +18,8 @@
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
             "noCourseIcon": "Kein Kurs Icon verfügbar",
+            "showMore": "Mehr anzeigen",
+            "showLess": "Weniger anzeigen",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken"
@@ -39,6 +41,12 @@
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
+                "userNotStartedExerciseShort": "Noch nicht angefangen.",
+                "quizNotStartedShort": "Noch nicht begonnen.",
+                "userNotStartedQuizShort": "Noch nicht begonnen.",
+                "userNotParticipatedShort": "Nicht teilgenommen.",
+                "userParticipatingShort": "Aktuelle Teilnahme",
+                "userSubmittedShort": "Bereits abgegeben.",
                 "details": {
                     "courseInformation": "Kurs Informationen:",
                     "totalExercises": "Aufgaben insgesamt:",
@@ -84,7 +92,32 @@
                 "hideResults": "Ergebnisse verbergen",
                 "showResults": "Alle Ergebnisse anzeigen",
                 "graded": "Bewertet",
-                "notGraded": "Nicht bewertet"
+                "notGraded": "Nicht bewertet",
+                "rated": "Bewertet",
+                "practice": "Übung",
+                "faq": {
+                    "header": "Fragen und Antworten",
+                    "noQuestions": "Es wurden noch keine Fragen gestellt.",
+                    "addNewQuestion": "+ Eine neue Frage stellen",
+                    "newQuestionLabel": "Neue Frage",
+                    "answerLabel": "Antwort",
+                    "questionLabel": "Frage",
+                    "answerNow": "Jetzt beantworten",
+                    "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
+                    "answerCount": "Antworten: {{count}}",
+                    "yourQuestion": "Deine Frage",
+                    "cancel": "Abbrechen",
+                    "addQuestion": "Frage hinzufügen",
+                    "saveQuestion": "Frage speichern",
+                    "addAnswer": "Anwort hinzufügen",
+                    "saveAnswer": "Anwort speichern",
+                    "deleteQuestion": "Möchtest du deine Frage löschen?",
+                    "confirmDeleteQuestion": "Bitte bestätige, dass du deine Frage löschen möchtest!",
+                    "editQuestion": "Frage bearbeiten",
+                    "deleteAnswer": "Möchtest du deine Antwort löschen?",
+                    "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
+                    "editAnswer": "Answort bearbeiten"
+                }
             }
         }
     }

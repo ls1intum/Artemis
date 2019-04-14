@@ -101,9 +101,8 @@ public class ParticipationService {
     }
 
     /**
-     * This method is triggered when a student starts an exercise. It creates a Participation which connects the
-     * corresponding student and exercise.
-     * Additionally, it configures repository / build plan related stuff for programming exercises.
+     * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
+     * repository / build plan related stuff for programming exercises.
      *
      * @param exercise
      * @param username

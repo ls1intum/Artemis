@@ -6,27 +6,27 @@
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
-                "tooLow": "Die Punktzahl Ihrer Bewertung dieser Einreichung ist zu niedrig. Bitte überprüfen Sie die Bewertungskriterien und die Einreichung noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein.",
-                "tooHigh": "Die Bewertung dieser Einreichung durch Sie ist zu hoch. Bitte überprüfen Sie die Bewertungskriterien und die Einreichung noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein."
+                "tooLow": "Die Punktzahl Ihrer Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfen Sie die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein.",
+                "tooHigh": "Die Bewertung dieser Abgabe durch Sie ist zu hoch. Bitte überprüfen Sie die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein."
             },
-            "submitSuccessful": "Ihre Beispiel-Einreichung wurde ordnungsgemäß eingereicht.",
-            "saveSuccessful": "Deine Beispiel-Einreichung wurde gespeichert.",
-            "readSuccessfully": "Sie haben die Bewertungsanweisungen gelesen, Sie können nun mit der Überprüfung der Beispiel-Einreichung beginnen.",
+            "submitSuccessful": "Ihre Beispielabgabe wurde ordnungsgemäß eingereicht.",
+            "saveSuccessful": "Deine Beispielabgabe wurde gespeichert.",
+            "readSuccessfully": "Sie haben die Bewertungsanweisungen gelesen, Sie können nun mit der Überprüfung der BeispielAbgabe beginnen.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
             "usedForTutorial": "Die Tutoren müssen diese Einreichung bewerten.",
-            "createNewSubmission": "Neue Einreichung erstellen",
+            "createNewSubmission": "Neue Abgabe erstellen",
             "updateTextSubmission": "Aktualisieren der Textvorlage",
             "problemStatement": "Problemstellung",
             "sampleSolution": "Musterlösung",
             "exampleAssessment": "Beispiel Bewertung",
             "createNewAssessment": "Neue Bewertung anlegen",
             "updateAssessment": "Bewertung aktualisieren",
-            "youNeedToCreate": "Sie müssen die Beispiel-Einreichungen erstellen, bevor Sie die Beispiel-Bewertung erstellen können.",
+            "youNeedToCreate": "Sie müssen die Beispielabgabe erstellen, bevor Sie die Beispielbewertung erstellen können.",
             "score": "Punktzahl",
             "submitAssessment": "Bewertung einreichen",
             "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
-            "exampleSubmission": "Beispiel-Einreichung"
+            "exampleSubmission": "Beispielabgabe"
         }
     }
 }

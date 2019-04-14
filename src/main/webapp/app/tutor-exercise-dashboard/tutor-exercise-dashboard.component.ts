@@ -4,7 +4,7 @@ import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
@@ -12,6 +12,13 @@ import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
+import { Submission } from 'app/entities/submission';
+import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+
+export interface ExampleSubmissionQueryParams {
+    readOnly?: boolean;
+    toComplete?: boolean;
+}
 
 @Component({
     selector: 'jhi-courses',
@@ -24,8 +31,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exerciseId: number;
     numberOfTutorAssessments = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: TextSubmission[] = [];
-    unassessedSubmission: TextSubmission;
+    submissions: Submission[] = [];
+    unassessedSubmission: Submission;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -60,6 +67,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
+        private modelingSubmissionService: ModelingSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
@@ -98,6 +106,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
                 }
+
+                this.getSubmissions();
+                this.getSubmissionWithoutAssessment();
             },
             (response: string) => this.onError(response),
         );
@@ -105,44 +116,78 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.complaintService
             .getForTutor(this.exerciseId)
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
-        this.getSubmissions();
-        this.getSubmissionWithoutAssessment();
     }
 
     private getSubmissions(): void {
-        this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-            .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body.map((submission: TextSubmission) => {
-                    if (submission.result) {
-                        // reconnect some associations
-                        submission.result.submission = submission;
-                        submission.result.participation = submission.participation;
-                        submission.participation.results = [submission.result];
-                    }
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService
+                .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
+                .map((response: HttpResponse<TextSubmission[]>) =>
+                    response.body.map((submission: TextSubmission) => {
+                        if (submission.result) {
+                            // reconnect some associations
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                        }
 
-                    return submission;
-                }),
-            )
-            .subscribe((submissions: TextSubmission[]) => {
-                this.submissions = submissions;
-                this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
-            });
+                        return submission;
+                    }),
+                )
+                .subscribe((submissions: TextSubmission[]) => {
+                    this.submissions = submissions;
+                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
+                });
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.modelingSubmissionService
+                .getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
+                .map((response: HttpResponse<ModelingSubmission[]>) =>
+                    response.body.map((submission: ModelingSubmission) => {
+                        if (submission.result) {
+                            // reconnect some associations
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                        }
+
+                        return submission;
+                    }),
+                )
+                .subscribe((submissions: ModelingSubmission[]) => {
+                    this.submissions = submissions;
+                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
+                });
+        }
     }
 
     private getSubmissionWithoutAssessment(): void {
-        this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-            (response: HttpResponse<TextSubmission>) => {
-                this.unassessedSubmission = response.body;
-            },
-            (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there aren't unassessed submission, nothing we have to worry about
-                } else {
-                    this.onError(error.message);
-                }
-            },
-        );
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
+                (response: HttpResponse<TextSubmission>) => {
+                    this.unassessedSubmission = response.body;
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
+                (response: HttpResponse<ModelingSubmission>) => {
+                    this.unassessedSubmission = response.body;
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        }
     }
 
     readInstruction() {
@@ -161,12 +206,50 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.jhiAlertService.error(error, null, null);
     }
 
-    calculateStatus(submission: TextSubmission) {
+    calculateStatus(submission: Submission) {
         if (submission.result && submission.result.completionDate) {
             return 'DONE';
         }
 
         return 'DRAFT';
+    }
+
+    openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
+            return;
+        }
+        const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
+        // TODO CZ: add both flags and check for value in example submission components
+        const queryParams: ExampleSubmissionQueryParams = {};
+        if (readOnly) {
+            queryParams.readOnly = readOnly;
+        }
+        if (toComplete) {
+            queryParams.toComplete = toComplete;
+        }
+
+        this.router.navigate([route], { queryParams });
+    }
+
+    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
+            return;
+        }
+        let route: string;
+        const queryParams: any = {}; // TODO CZ: remove query parameters?
+
+        if (this.exercise.type === ExerciseType.TEXT) {
+            route = `/text/${this.exercise.id}/assessment/`;
+            if (isNewAssessment) {
+                route = route.concat('new');
+            } else {
+                route = route.concat(submissionId.toString());
+            }
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionId}/assessment`;
+            queryParams.forTutorDashboard = true;
+        }
+        this.router.navigate([route], { queryParams });
     }
 
     back() {
