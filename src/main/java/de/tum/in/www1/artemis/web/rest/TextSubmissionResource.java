@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
@@ -200,7 +201,6 @@ public class TextSubmissionResource {
 
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-
             return ResponseEntity.ok().body(textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId()));
         }
 
@@ -219,12 +219,15 @@ public class TextSubmissionResource {
     @Transactional(readOnly = true)
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
-
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+        }
+        if (!(exercise instanceof TextExercise)) {
+            return badRequest();
+        }
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }

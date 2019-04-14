@@ -101,12 +101,12 @@ public class TextSubmissionService {
      * Given an exercise id, find a random text submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
      * element of the stream. While it is not mathematically random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
      *
-     * @param exerciseId the exercise we want to retrieve
+     * @param textExercise the exercise for which we want to retrieve a submission without result
      * @return a textSubmission without any result, if any
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
-        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(exerciseId).stream()
+    public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
+        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
                 .peek(participation -> participation.getExercise().setParticipations(null))
                 // Map to Latest Submission
                 .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
