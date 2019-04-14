@@ -1,19 +1,28 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
-
 import java.util.*;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 
 public class ModelSelector {
 
     private static final int MAX_CANDIDATE_LIST_SIZE = 50;
 
+    /**
+     * Tracks which models have been selected for assessment and have been sent to the client, typically these models are the ones where Compass learns the most, when they are
+     * assessed. Note: the key is the ModelSubmission id
+     */
     private Set<Long> modelsWaitingForAssessment = new HashSet<>();
+
+    /**
+     * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though) The key
+     * is the ModelSubmission id
+     */
     private Set<Long> alreadyAssessedModels = new HashSet<>();
 
     /**
-     * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process
-     * The selected model is currently unassessed and not queued into assessment
+     * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process The selected model is currently unassessed and not queued into
+     * assessment (i.e. in alreadyAssessedModels)
      *
      * @param modelIndex manages the models
      * @return the id of the model which should be assessed next by an assessor
@@ -22,25 +31,24 @@ public class ModelSelector {
         double threshold = 0.15;
         int maxCandidateListSize = 10;
 
-        List<UMLClassModel> partiallyAssessed = new ArrayList<>();
-        for (UMLClassModel umlModel: modelIndex.getModelCollection()) {
-            if (!alreadyAssessedModels.contains(umlModel.getModelID()) && !umlModel.isEntirelyAssessed()) {
+        List<UMLClassDiagram> partiallyAssessed = new ArrayList<>();
+        for (UMLClassDiagram umlModel : modelIndex.getModelCollection()) {
+            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId()) && !umlModel.isEntirelyAssessed()) {
                 partiallyAssessed.add(umlModel);
             }
         }
 
         // Make sure that the candidate list is not too big
-        List<UMLClassModel> candidates = partiallyAssessed;
+        List<UMLClassDiagram> candidates = partiallyAssessed;
 
-        candidates.sort(Comparator.comparingDouble(UMLClassModel::getLastAssessmentCoverage));
+        candidates.sort(Comparator.comparingDouble(UMLClassDiagram::getLastAssessmentCoverage));
 
         if (!candidates.isEmpty()) {
             double smallestCoverage = candidates.get(0).getLastAssessmentCoverage();
 
             if (smallestCoverage < 1) {
-                while (maxCandidateListSize + 5 < candidates.size()
-                    && smallestCoverage > (candidates.get(maxCandidateListSize).getLastAssessmentCoverage() - threshold)
-                    && maxCandidateListSize < MAX_CANDIDATE_LIST_SIZE) {
+                while (maxCandidateListSize + 5 < candidates.size() && smallestCoverage > (candidates.get(maxCandidateListSize).getLastAssessmentCoverage() - threshold)
+                        && maxCandidateListSize < MAX_CANDIDATE_LIST_SIZE) {
                     maxCandidateListSize += 5;
                 }
 
@@ -51,17 +59,17 @@ public class ModelSelector {
         // select a model which covers many other models (= high similarity to others)
         Long selectedCandidateId = null;
         double lastMeanSimilarity = 0;
-        for (UMLClassModel candidate : candidates) {
+        for (UMLClassDiagram candidate : candidates) {
             double similarity = 0;
-            for (UMLClassModel model : partiallyAssessed) {
+            for (UMLClassDiagram model : partiallyAssessed) {
                 similarity += model.similarity(candidate);
             }
 
-            //similarity /= modelIndex.getModelList().size();
+            // similarity /= modelIndex.getModelList().size();
             similarity /= partiallyAssessed.size();
 
             if (similarity > lastMeanSimilarity) {
-                selectedCandidateId = candidate.getModelID();
+                selectedCandidateId = candidate.getModelSubmissionId();
                 lastMeanSimilarity = similarity;
             }
         }
@@ -73,24 +81,21 @@ public class ModelSelector {
         }
 
         // if none exists, select any unassessed model
-        for (UMLClassModel model : modelIndex.getModelCollection()) {
-            if (model.isUnassessed() && !alreadyAssessedModels.contains(model.getModelID())) {
-                alreadyAssessedModels.add(model.getModelID());
-                modelsWaitingForAssessment.add(model.getModelID());
-                return model.getModelID();
+        for (UMLClassDiagram model : modelIndex.getModelCollection()) {
+            if (model.isUnassessed() && !alreadyAssessedModels.contains(model.getModelSubmissionId())) {
+                alreadyAssessedModels.add(model.getModelSubmissionId());
+                modelsWaitingForAssessment.add(model.getModelSubmissionId());
+                return model.getModelSubmissionId();
             }
         }
 
         // Do not reassess already assessed models as this will lead to confusion
         // if all models are assessed, select any poorly assessed model
-        /*for (UMLModel model : modelIndex.getModelCollection()) {
-            if (model.getLastAssessmentConfidence() < CompassConfiguration.POORLY_ASSESSED_MODEL_THRESHOLD &&
-                !alreadyAssessedModels.contains(model.getModelID())) {
-                alreadyAssessedModels.add(model.getModelID());
-                modelsWaitingForAssessment.add(model.getModelID());
-                return model.getModelID();
-            }
-        }*/
+        /*
+         * for (UMLModel model : modelIndex.getModelCollection()) { if (model.getLastAssessmentConfidence() < CompassConfiguration.POORLY_ASSESSED_MODEL_THRESHOLD &&
+         * !alreadyAssessedModels.contains(model.getModelSubmissionId())) { alreadyAssessedModels.add(model.getModelSubmissionId());
+         * modelsWaitingForAssessment.add(model.getModelSubmissionId()); return model.getModelSubmissionId(); } }
+         */
         return null;
     }
 

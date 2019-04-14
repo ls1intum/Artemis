@@ -101,7 +101,3 @@ export function getIconTooltip(exerciseType: ExerciseType): string {
 
     return tooltips[exerciseType];
 }
-
-export const isProgrammingExercise = (exerciseType: ExerciseType) => {
-    return exerciseType === ExerciseType.PROGRAMMING;
-};

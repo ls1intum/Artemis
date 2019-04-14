@@ -10,7 +10,8 @@
             "alreadySubmitted": "Sie haben bereits eine Beschwerde eingereicht:",
             "submit": "Eine Beschwerde einreichen",
             "submitted": "Deine Beschwerde wurde eingereicht!",
-            "moreInfo": "Senden Sie eine Beschwerde oder bitten Sie um mehr Feedback."
+            "moreInfo": "Senden Sie eine Beschwerde oder bitten Sie um mehr Feedback.",
+            "hasReplied": "hat auf Ihre Beschwerde geantwortet:"
         }
     }
 }

@@ -56,9 +56,11 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         if (this.result) {
-            const exercise = this.participation.exercise;
-            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
+            if (this.participation) {
+                const exercise = this.participation.exercise;
+                if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
+                    this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
+                }
             }
             this.init();
         } else if (this.participation && this.participation.id) {
