@@ -11,6 +11,7 @@
             "totalComplaints": "Gesamtzahl der Beschwerden",
             "showFinishedExercises": "Beendete Übungen anzeigen",
             "exercise": "Übungen",
+            "exerciseType": "Aufgabentyp",
             "yourStatus": "Dein Status",
             "exerciseDueDate": "Fälligkeitsdatum der Übung",
             "assessmentsDueDate": "Fälligkeitsdatum der Bewertungen",

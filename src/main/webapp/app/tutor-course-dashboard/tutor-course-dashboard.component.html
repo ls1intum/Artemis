@@ -48,8 +48,9 @@
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
                 <tr>
+                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</th>
                     <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
-                    <th class="col-xs-4">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</th>
                     <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.actions' | translate }}</th>
@@ -57,6 +58,9 @@
             </thead>
             <tbody>
                 <tr *ngFor="let exercise of exercises">
+                    <td>
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type)" container="body"></fa-icon>
+                    </td>
                     <td>
                         <span>{{ exercise.title }}</span>
                         <span
