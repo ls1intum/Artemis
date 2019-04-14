@@ -37,7 +37,11 @@
             "openAssessment": "Open assessment",
             "startAssessment": "Start new assessment",
             "new": "NEW",
-            "noSubmissions": "There are no submissions by students at the moment"
+            "noSubmissions": "There are no submissions by students at the moment",
+            "complaints": "Complaints",
+            "noComplaints": "There isn't any complaint.",
+            "evaluateComplaint": "Evaluate the complaint.",
+            "showComplaint": "Show the complaint."
         }
     }
 }

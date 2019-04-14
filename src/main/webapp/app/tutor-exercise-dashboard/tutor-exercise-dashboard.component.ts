@@ -13,6 +13,8 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { UMLModel } from '@ls1intum/apollon';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
@@ -41,6 +43,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
+    complaints: Complaint[];
 
     formattedGradingInstructions: string;
     formattedProblemStatement: string;
@@ -77,6 +80,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private modelingSubmissionService: ModelingSubmissionService,
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
+        private complaintService: ComplaintService,
     ) {}
 
     ngOnInit(): void {
@@ -129,6 +133,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
             },
             (response: string) => this.onError(response),
         );
+
+        this.complaintService
+            .getForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
     }
 
     // TODO CZ: too much duplicated code
@@ -269,5 +277,13 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
+    }
+
+    calculateComplaintStatus(accepted?: boolean) {
+        if (accepted) {
+            return 'The complaint has already been evaluated';
+        }
+
+        return 'The complaint still needs to be evaluated';
     }
 }

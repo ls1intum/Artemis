@@ -19,7 +19,14 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    stats: StatsForInstructorDashboard;
+    stats: StatsForInstructorDashboard = {
+        numberOfStudents: 0,
+        numberOfSubmissions: 0,
+        numberOfTutors: 0,
+        numberOfAssessments: 0,
+        numberOfComplaints: 0,
+        numberOfOpenComplaints: 0,
+    };
     dataForAssessmentPieChart: number[];
 
     tutorLeaderboardData: TutorLeaderboardData = {};

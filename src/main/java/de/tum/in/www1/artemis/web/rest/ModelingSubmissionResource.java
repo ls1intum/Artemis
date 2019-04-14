@@ -7,7 +7,6 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
-import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
+import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.*;
 
 /**
@@ -49,12 +49,14 @@ public class ModelingSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     private final CompassService compassService;
+
     private final ExerciseService exerciseService;
+
     private final UserService userService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-                                      ParticipationService participationService, CourseService courseService, ResultService resultService,
-                                      AuthorizationCheckService authCheckService, CompassService compassService, ExerciseService exerciseService, UserService userService) {
+            ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService,
+            CompassService compassService, ExerciseService exerciseService, UserService userService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -131,9 +133,8 @@ public class ModelingSubmissionResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId,
-                                                                              @RequestParam(defaultValue = "false") boolean submittedOnly,
-                                                                              @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -183,7 +184,6 @@ public class ModelingSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
-
     /**
      * GET /modeling-submission-without-assessment : get one modeling submission without assessment.
      *
@@ -199,12 +199,10 @@ public class ModelingSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
             return forbidden();
 
-        Optional<ModelingSubmission> modelingSubmissionWithoutAssessment =
-            this.modelingSubmissionService.getModelingSubmissionWithoutResult(exerciseId);
+        Optional<ModelingSubmission> modelingSubmissionWithoutAssessment = this.modelingSubmissionService.getModelingSubmissionWithoutResult(exerciseId);
 
         return ResponseUtil.wrapOrNotFound(modelingSubmissionWithoutAssessment);
     }
-
 
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client
@@ -213,14 +211,12 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null && exercise instanceof ModelingExercise &&
-                !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            if (exercise != null && exercise instanceof ModelingExercise && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 // make sure the solution is not sent to the client for students
                 ((ModelingExercise) exercise).filterSensitiveInformation();
             }
         }
     }
-
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());
