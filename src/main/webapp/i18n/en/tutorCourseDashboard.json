@@ -11,6 +11,11 @@
             "totalComplaints": "Total complaints",
             "showFinishedExercises": "Show finished exercises",
             "exercise": "Exercise",
+            "exerciseType": "Exercise type",
+            "exerciseTypes": {
+                "modeling": "Modeling Exercise",
+                "text": "Text Exercise"
+            },
             "yourStatus": "Your status",
             "exerciseDueDate": "Exercise due date",
             "assessmentsDueDate": "Assessments due date",
