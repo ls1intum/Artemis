@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -92,7 +91,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        // TODO: we need to make sure that per participation there is only one optimalModel
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
             if (optimalModelSubmissions.isEmpty()) {
@@ -168,8 +166,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the tutor dashboard
-        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(modelingExercise) ||
-            authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise) && !exampleSubmission.isUsedForTutorial();
+        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(modelingExercise)
+                || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise) && !exampleSubmission.isUsedForTutorial();
         if (!isAllowed) {
             forbidden();
         }

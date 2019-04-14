@@ -117,6 +117,8 @@ public class CompassService {
             return new HashSet<>();
         }
 
+        // TODO: double check that the returned modelSubmissions (respectively their ids) do not have a result yet
+
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
         if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS) {
             Map.Entry<Long, Grade> optimalModel = this.getNextOptimalModel(exerciseId);
