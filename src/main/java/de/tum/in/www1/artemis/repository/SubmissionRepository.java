@@ -11,5 +11,8 @@ import org.springframework.stereotype.Repository;
 @SuppressWarnings("unused")
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
-
+    /**
+     * return the number of submissions for the given courseId
+     */
+    long countByParticipation_Exercise_Course_Id(Long courseId);
 }

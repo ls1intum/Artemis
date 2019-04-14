@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -67,8 +68,6 @@ public class CourseResource {
 
     private final ExerciseService exerciseService;
 
-    private final TextSubmissionService submissionService;
-
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
 
     private final TutorParticipationService tutorParticipationService;
@@ -77,15 +76,17 @@ public class CourseResource {
 
     private final TextAssessmentService textAssessmentService;
 
+    private final SubmissionRepository submissionRepository;
+
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            TextSubmissionService submissionService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository) {
+                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+                          TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+                          ComplaintResponseRepository complaintResponseRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -94,7 +95,7 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
-        this.submissionService = submissionService;
+        this.submissionRepository = submissionRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.textAssessmentService = textAssessmentService;
@@ -349,7 +350,7 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
+        long numberOfSubmissions = submissionRepository.countByParticipation_Exercise_Course_Id(courseId);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
         long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);

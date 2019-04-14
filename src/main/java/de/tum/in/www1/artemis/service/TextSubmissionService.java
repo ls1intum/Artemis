@@ -139,16 +139,6 @@ public class TextSubmissionService {
     }
 
     /**
-     * Given a courseId, return the number of submissions for that course
-     * 
-     * @param courseId - the course we are interested in
-     * @return a number of submissions for the course
-     */
-    public long countNumberOfSubmissions(Long courseId) {
-        return textSubmissionRepository.countByParticipation_Exercise_Course_Id(courseId);
-    }
-
-    /**
      * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
