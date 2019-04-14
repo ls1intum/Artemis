@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URISyntaxException;
@@ -196,11 +197,15 @@ public class ModelingSubmissionResource {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
+        }
+        if (!(exercise instanceof ModelingExercise)) {
+            return badRequest();
+        }
 
         Optional<ModelingSubmission> modelingSubmissionWithoutAssessment =
-            this.modelingSubmissionService.getModelingSubmissionWithoutResult(exerciseId);
+            this.modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(modelingSubmissionWithoutAssessment);
     }
