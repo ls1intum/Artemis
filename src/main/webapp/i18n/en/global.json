@@ -157,6 +157,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "download": "Download",
             "edit": "Edit",
             "editLink": "Edit Link",
             "open": "Open",
