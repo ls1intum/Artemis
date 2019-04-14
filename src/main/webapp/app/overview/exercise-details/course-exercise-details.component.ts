@@ -170,7 +170,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         const results = this.exercise.participations[0].results;
         const currentResult = results.filter(el => el.rated).pop();
-        currentResult.participation = this.exercise.participations[0];
+        if (currentResult) {
+            currentResult.participation = this.exercise.participations[0];
+        }
         return currentResult;
     }
 }

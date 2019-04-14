@@ -60,7 +60,9 @@ export class ParticipationWebsocketService {
             const participationResultTopic = `/topic/participation/${participation.id}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationResultObservable = this.jhiWebsocketService.receive(participationResultTopic);
-            participationResultObservable.subscribe(this.addResultToParticipation);
+            participationResultObservable.subscribe((result: Result) => {
+                this.addResultToParticipation(result);
+            });
             this.openWebsocketConnections.set(participation.id, participationResultTopic);
         }
     }
