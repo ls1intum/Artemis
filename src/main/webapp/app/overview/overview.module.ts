@@ -8,7 +8,6 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ExerciseTypePipe } from 'app/entities/exercise/';
 import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
 
 import {
@@ -18,7 +17,6 @@ import {
     CourseGradeBookComponent,
     CourseOverviewComponent,
     CourseStatisticsComponent,
-    DifficultyBadgeComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
     OVERVIEW_ROUTES,
@@ -26,8 +24,8 @@ import {
     OverviewCourseCardComponent,
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
-import { HeaderExercisePageWithDetailsComponent } from 'app/overview/exercise-details/header-exercise-page-with-details.component';
 import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -42,6 +40,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArTEMiSStudentQuestionsModule,
         ArTEMiSSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
+        ArTEMiSHeaderExercisePageWithDetailsModule,
     ],
     declarations: [
         OverviewComponent,
@@ -54,14 +53,11 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
-        DifficultyBadgeComponent,
-        ExerciseTypePipe,
-        HeaderExercisePageWithDetailsComponent,
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    exports: [HeaderExercisePageWithDetailsComponent],
+    exports: [],
 })
 export class ArTEMiSOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -17,9 +17,9 @@ import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
-import { ArTEMiSOverviewModule } from 'app/overview';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -32,9 +32,9 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSTutorCourseDashboardModule,
-        ArTEMiSOverviewModule,
         ArTEMiSModelingEditorModule,
         AssessmentInstructionsModule,
+        ArTEMiSHeaderExercisePageWithDetailsModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],
