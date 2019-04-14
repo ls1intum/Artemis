@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -128,17 +129,21 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
-
-        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+        }
 
         // TODO CZ: load results of submissions eagerly to prevent additional database calls
         List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+        if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
+            tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+        }
+        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }

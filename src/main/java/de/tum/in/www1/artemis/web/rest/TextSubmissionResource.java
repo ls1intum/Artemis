@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -40,8 +39,6 @@ public class TextSubmissionResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ResultRepository resultRepository;
-
     private final ExerciseService exerciseService;
 
     private final TextExerciseService textExerciseService;
@@ -58,7 +55,7 @@ public class TextSubmissionResource {
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            ResultRepository resultRepository, AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -67,7 +64,6 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.authCheckService = authCheckService;
-        this.resultRepository = resultRepository;
     }
 
     /**
