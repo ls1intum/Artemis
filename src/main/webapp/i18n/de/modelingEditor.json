@@ -21,37 +21,45 @@
             "helpModal": {
                 "help": "Hilfe",
                 "title": "So verwendet man den Modellierungseditor",
-                "addClass": {
-                    "title": "Klasse hinzufügen",
-                    "text": "Um eine Klasse hinzuzufügen, ziehen Sie einfach eines der Elemente auf der rechten Seite per Drag & Drop in den Editorbereich auf der linken Seite."
+                "createElement": {
+                    "title": "Elemente hinzufügen",
+                    "text": "Um ein Element hinzuzufügen, ziehen Sie einfach eines der Elemente von der rechten Seite per Drag & Drop in den Editorbereich auf der linken Seite."
                 },
-                "editClass": {
-                    "title": "Klasse editieren",
-                    "text": "Um eine Klasse zu bearbeiten, doppelklicken Sie darauf und es öffnet sich ein Popup, in dem Sie die Komponenten der Klasse bearbeiten können, z.B. Name, Attribute, Methoden, etc."
+                "createRelationship": {
+                    "title": "Beziehungen hinzufügen",
+                    "text": "Um eine Beziehung hinzuzufügen, wählen Sie die Ausgangsklasse mit einem Klick aus und Sie sehen vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Beziehungen. Klicken und halten Sie einen dieser Punkte gedrückt und ziehen Sie die Maus auf einen anderen blauen Halbkreis, um eine Beziehung zu erstellen."
                 },
-                "moveClass": {
-                    "title": "Klasse bewegen",
-                    "text": "Um eine Klasse zu verschieben, wählen Sie sie mit einem Klick aus und verwenden Sie entweder die Pfeile Ihrer Tastatur oder bewegen Sie sie per Drag & Drop."
+                "updateElement": {
+                    "title": "Elemente/Beziehungen editieren",
+                    "text": "Um ein Element oder eine Beziehung zu bearbeiten, doppelklicken Sie darauf und es öffnet sich ein Popup, in dem Sie die Eigenschaften der Klasse bearbeiten können, z.B. Name, Typ, Attribute, Methoden, etc."
                 },
-                "deleteClass": {
-                    "title": "Klasse löschen",
-                    "text": "Um eine Klasse zu löschen, wählen Sie sie mit einem Klick aus und drücken Sie entweder <code>Entfernen</code> oder <code>Backspace</code> auf Ihrer Tastatur."
+                "deleteElement": {
+                    "title": "Elemente/Beziehungen löschen",
+                    "text": "Um ein Element oder eine Beziehung zu löschen, wählen Sie diese mit einem Klick aus und drücken Sie entweder <code>Entfernen</code> oder die <code>Rücktaste</code> auf Ihrer Tastatur."
                 },
-                "addAssociation": {
-                    "title": "Assoziation hinzufügen",
-                    "text": "Um eine Assoziation hinzuzufügen, wählen Sie die Ausgangsklasse mit einem Klick aus und Sie sehen vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Assoziationen. Klicken und halten Sie einen dieser Punkte gedrückt und ziehen Sie die Maus auf einen anderen blauen Halbkreis, um eine Assoziation zu erstellen."
+                "moveElement": {
+                    "title": "Elemente verschieben",
+                    "text": "Um ein Element zu verschieben, wählen Sie dieses mit einem Klick aus und verwenden Sie entweder die Pfeiltasten Ihrer Tastatur oder bewegen Sie sie per Drag & Drop."
                 },
-                "editAssociation": {
-                    "title": "Assoziation editieren",
-                    "text": "Um eine Assoziation zu bearbeiten, doppelklicken Sie darauf und es öffnet sich ein Popup, in dem Sie ihre Eigenschaften, z.B. den Typ, bearbeiten können."
+                "resizeElement": {
+                    "title": "Größe von Elementen verändern",
+                    "text": "Um die eines Elements zu verändern, bewegen Sie per Drag & Drop die rechte, untere Ecke des Elements."
                 },
-                "deleteAssociation": {
-                    "title": "Assoziation löschen",
-                    "text": "Um eine Assoziation zu löschen, wählen Sie sie mit einem Klick aus und drücken Sie entweder <code>Entfernen</code> oder <code>Backspace</code> auf Ihrer Tastatur."
+                "reconnectRelationship": {
+                    "title": "Beziehungen neu verbinden",
+                    "text": "Um eine Beziehung neu zu verbinden, bewegen Sie per Drag & Drop eine der Beziehungsenden."
+                },
+                "select": {
+                    "title": "Multi-Selektion",
+                    "text": "Wenn Sie ein Element oder eine Beziehung selektieren können Sie die <code>Umschalt</code>-taste gedrückt halten, um dieses zu ihrer aktuellen Auswaähl hinzuzufügen. Mit <code>Strg+A</code> können Sie alle verfügbaren Element auswählen."
+                },
+                "duplicate": {
+                    "title": "Elemente dulizieren",
+                    "text": "Mit <code>Strg+D</code> können Sie aktuell selektierte Element mit all ihren Eigenschaften duplizieren."
                 },
                 "undo": {
                     "title": "Rückgängig machen & Wiederherstellen",
-                    "text": "Mit <code>Strg+Z</code> und <code>Strg+Y</code> können Sie Ihre Änderungen rückgängig machen und wiederholen."
+                    "text": "Mit <code>Strg+Z</code> und <code>Strg+Umschalt+Z</code> können Sie Ihre Änderungen rückgängig machen oder wiederherstellen."
                 }
             }
         }
