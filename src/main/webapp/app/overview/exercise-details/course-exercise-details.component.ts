@@ -7,7 +7,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -46,7 +45,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
@@ -68,7 +66,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-            this.setExerciseStatusBadge();
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                     const aValue = moment(a.completionDate).valueOf();
@@ -120,10 +117,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     backToCourse() {
         this.$location.back();
-    }
-
-    setExerciseStatusBadge(): void {
-        this.exerciseStatusBadge = moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
     }
 
     exerciseRatedBadge(result: Result): string {
