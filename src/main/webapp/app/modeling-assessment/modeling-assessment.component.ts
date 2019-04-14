@@ -153,8 +153,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return feedbacks;
         }
+        if (!this.model || !this.model.elements) {
+            return [];
+        }
+
         let availableIds: string[] = this.model.elements.map(element => element.id);
-        availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        if (this.model.relationships) {
+            availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        }
         return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
     }
 

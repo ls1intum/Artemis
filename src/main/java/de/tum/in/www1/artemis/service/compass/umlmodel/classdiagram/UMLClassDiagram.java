@@ -1,27 +1,24 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import java.util.List;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-import java.util.List;
+public class UMLClassDiagram extends UMLDiagram {
 
+    private final List<UMLPackage> packageList;
 
-public class UMLClassModel {
+    private final List<UMLClass> classList;
 
-    private List<UMLPackage> packageList;
-    private List<UMLClass> classList;
-    private List<UMLClassRelationship> associationList;
+    private final List<UMLClassRelationship> associationList;
 
-    private long modelID;
-
-    private CompassResult lastAssessmentCompassResult = null;
-
-    public UMLClassModel(List<UMLPackage> packageList, List<UMLClass> classList, List<UMLClassRelationship> associationList, long modelID) {
+    public UMLClassDiagram(long modelSubmissionId, List<UMLClass> classList, List<UMLClassRelationship> associationList, List<UMLPackage> packageList) {
+        super(modelSubmissionId);
         this.packageList = packageList;
         this.classList = classList;
         this.associationList = associationList;
-        this.modelID = modelID;
     }
 
     /**
@@ -30,14 +27,14 @@ public class UMLClassModel {
      * @param reference the uml model to compare with
      * @return the similarity as number [0-1]
      */
-    public double similarity(UMLClassModel reference) {
+    public double similarity(UMLClassDiagram reference) {
         double sim1 = reference.similarityScore(this);
         double sim2 = this.similarityScore(reference);
 
         return sim1 * sim2;
     }
 
-    private double similarityScore(UMLClassModel reference) {
+    private double similarityScore(UMLClassDiagram reference) {
         double similarity = 0;
 
         int elementCount = classList.size() + associationList.size();
@@ -76,15 +73,15 @@ public class UMLClassModel {
 
         missingCount += referenceMissingCount;
 
-        if (missingCount > 0 ) {
+        if (missingCount > 0) {
             double penaltyWeight = 1.0 / missingCount;
             similarity -= penaltyWeight * CompassConfiguration.MISSING_ELEMENT_PENALTY * missingCount;
         }
 
-
         if (similarity < 0) {
             similarity = 0;
-        } else if (similarity > 1 && similarity < 1.000001) {
+        }
+        else if (similarity > 1 && similarity < 1.000001) {
             similarity = 1;
         }
 
@@ -92,20 +89,18 @@ public class UMLClassModel {
     }
 
     private double similarConnectableElementScore(UMLClass referenceConnectable) {
-        return classList.stream().mapToDouble(connectableElement ->
-            connectableElement.overallSimilarity(referenceConnectable)).max().orElse(0);
+        return classList.stream().mapToDouble(connectableElement -> connectableElement.overallSimilarity(referenceConnectable)).max().orElse(0);
     }
 
     private double similarUMLRelationScore(UMLClassRelationship referenceRelation) {
-        return associationList.stream().mapToDouble(umlRelation ->
-            umlRelation.similarity(referenceRelation)).max().orElse(0);
+        return associationList.stream().mapToDouble(umlRelation -> umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
 
     public String getName() {
-        return "Model " + modelID;
+        return "Model " + modelSubmissionId;
     }
 
-    public boolean isUnassessed () {
+    public boolean isUnassessed() {
         return lastAssessmentCompassResult == null;
     }
 
@@ -114,7 +109,7 @@ public class UMLClassModel {
      *
      * @return isEntirelyAssessed
      */
-    public boolean isEntirelyAssessed () {
+    public boolean isEntirelyAssessed() {
         if (isUnassessed() || lastAssessmentCompassResult.getCoverage() != 1) {
             return false;
         }
@@ -151,13 +146,12 @@ public class UMLClassModel {
         return true;
     }
 
-
     private int getModelElementCount() {
         return classList.stream().mapToInt(UMLClass::getElementCount).sum() + associationList.size();
     }
 
     @SuppressWarnings("unused")
-    public double getLastAssessmentConfidence () {
+    public double getLastAssessmentConfidence() {
         if (isUnassessed()) {
             return -1;
         }
@@ -165,7 +159,7 @@ public class UMLClassModel {
         return lastAssessmentCompassResult.getConfidence();
     }
 
-    public double getLastAssessmentCoverage () {
+    public double getLastAssessmentCoverage() {
         if (isUnassessed()) {
             return -1;
         }
@@ -179,7 +173,7 @@ public class UMLClassModel {
      * @param jsonElementId the id of the UML element
      * @return the UML element if one could be found for the given id, null otherwise
      */
-    public UMLElement getElementByJSONID (String jsonElementId) {
+    public UMLElement getElementByJSONID(String jsonElementId) {
         UMLElement element;
 
         for (UMLPackage umlPackage : packageList) {
@@ -204,16 +198,6 @@ public class UMLClassModel {
         return null;
     }
 
-    public long getModelID () {return modelID;}
-
-    public void setLastAssessmentCompassResult(CompassResult compassResult) {
-        lastAssessmentCompassResult = compassResult;
-    }
-
-    public CompassResult getLastAssessmentCompassResult() {
-        return lastAssessmentCompassResult;
-    }
-
     public List<UMLClass> getClassList() {
         return classList;
     }
@@ -222,7 +206,9 @@ public class UMLClassModel {
         return associationList;
     }
 
-    public List<UMLPackage> getPackageList() { return packageList; }
+    public List<UMLPackage> getPackageList() {
+        return packageList;
+    }
 
     /**
      * Checks if the model contains an element with the given elementId.
