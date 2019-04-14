@@ -19,7 +19,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
@@ -32,13 +32,13 @@ public class JSONParser {
     /**
      * Process a json object retrieved from a json formatted file to retrieve an UML model TODO adapt the parser to support different UML diagrams
      *
-     * @param root    the json object of an UML diagram
-     * @param modelId the Id of the model (actually the modeling submission id)
+     * @param root              the json object of an UML diagram
+     * @param modelSubmissionId the Id of the model (actually the modeling submission id)
      * @return the model as java object
      * @throws IOException on unexpected json formats
      */
     // TODO CZ: refactor this (extract buildModelFromJSON to specific UML classes, e.g. UMLClass.buildModelFromJSON() to get the parsed class)
-    public static UMLClassModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
+    public static UMLClassDiagram buildModelFromJSON(JsonObject root, long modelSubmissionId) throws IOException {
         JsonArray elements = root.getAsJsonArray(JSONMapping.elements);
         Map<String, JsonObject> jsonElementMap = generateJsonElementMap(elements);
 
@@ -174,7 +174,7 @@ public class JSONParser {
         }
         // </editor-fold>
 
-        return new UMLClassModel(new ArrayList<>(umlPackageMap.values()), new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
+        return new UMLClassDiagram(modelSubmissionId, new ArrayList<>(umlClassMap.values()), umlAssociationList, new ArrayList<>(umlPackageMap.values()));
     }
 
     private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
