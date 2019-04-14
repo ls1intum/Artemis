@@ -4,18 +4,16 @@
             <tr>
                 <th>ID</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.username' | translate }}</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaints' | translate }}</th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of (tutorsData | keyvalue)">
-                <td>{{ tutor.key }}</td>
-                <td>{{ tutor.value.tutor.firstName }} {{ tutor.value.tutor.lastName }}</td>
-                <td>{{ tutor.value.tutor.login }}</td>
-                <td>{{ tutor.value.numberOfAssessments }}</td>
-                <td>{{ tutor.value.numberOfComplaints }}</td>
+            <tr *ngFor="let tutor of sortedTutorData; let i=index;">
+                <td>{{ i + 1 }}</td>
+                <td>{{ tutor.tutor.firstName }} {{ tutor.tutor.lastName }}</td>
+                <td>{{ tutor.numberOfAssessments }}</td>
+                <td>{{ tutor.numberOfComplaints }}</td>
             </tr>
         </tbody>
     </table>
