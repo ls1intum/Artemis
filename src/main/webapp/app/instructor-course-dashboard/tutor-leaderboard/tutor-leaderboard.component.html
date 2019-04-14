@@ -2,8 +2,9 @@
     <table class="table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</th>
+                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.username' | translate }}</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</th>
                 <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaints' | translate }}</th>
             </tr>
@@ -12,6 +13,7 @@
             <tr *ngFor="let tutor of sortedTutorData; let i=index;">
                 <td>{{ i + 1 }}</td>
                 <td>{{ tutor.tutor.firstName }} {{ tutor.tutor.lastName }}</td>
+                <td>{{ tutor.tutor.login }}</td>
                 <td>{{ tutor.numberOfAssessments }}</td>
                 <td>{{ tutor.numberOfComplaints }}</td>
             </tr>
