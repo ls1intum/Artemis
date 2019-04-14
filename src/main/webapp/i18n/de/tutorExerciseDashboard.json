@@ -35,7 +35,11 @@
             "openAssessment": "Bewertung öffnen",
             "startAssessment": "Neue Bewertung starten",
             "new": "NEU",
-            "noSubmissions": "Zur Zeit gibt es keine Abgaben von Studenten."
+            "noSubmissions": "Zur Zeit gibt es keine Abgaben von Studenten.",
+            "complaints": "Reklamationen",
+            "noComplaints": "Es gibt keine Reklamation.",
+            "evaluateComplaint": "Auswertung der Reklamation.",
+            "showComplaint": "Zeigen Sie die Reklamation an."
         }
     }
 }

@@ -60,7 +60,7 @@
         </ng-template>
     </div>
 
-    <div class="row" *ngIf="result">
+    <div class="row" *ngIf="result && result.completionDate">
         <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>
     </div>
 

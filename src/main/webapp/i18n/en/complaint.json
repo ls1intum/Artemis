@@ -10,7 +10,8 @@
             "alreadySubmitted": "You have already submitted a complaint: ",
             "submit": "Submit a complaint",
             "submitted": "Your complaint has been submitted!",
-            "moreInfo": "Submit complaint or ask for more feedback"
+            "moreInfo": "Submit complaint or ask for more feedback",
+            "hasReplied": "has replied to your complaint on"
         }
     }
 }
