@@ -25,6 +25,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
+    totalAssessmentPercentage = 0;
     showFinishedExercises = false;
 
     getIcon = getIcon;
@@ -73,6 +74,10 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfAssessments = res.body.numberOfAssessments;
                 this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
                 this.numberOfComplaints = res.body.numberOfComplaints;
+
+                if (this.numberOfSubmissions > 0) {
+                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
+                }
             },
             (response: string) => this.onError(response),
         );
