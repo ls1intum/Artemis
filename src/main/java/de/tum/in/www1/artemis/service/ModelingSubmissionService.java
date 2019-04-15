@@ -86,10 +86,16 @@ public class ModelingSubmissionService {
             }
         }
         // otherwise return any submission that is not assessed
-        return participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-            .peek(participation -> participation.getExercise().setParticipations(null))
-            // Map to Latest Submission
-            .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+        // TODO: optimize performance
+        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
+                .peek(participation -> participation.getExercise().setParticipations(null))
+                // Map to Latest Submission
+                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get)
+                // It needs to be submitted to be ready for assessment
+                .filter(Submission::isSubmitted).filter(modelingSubmission -> {
+                    Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
+                    return result == null;
+                }).findAny();
     }
 
     /**

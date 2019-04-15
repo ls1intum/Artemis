@@ -106,10 +106,16 @@ public class TextSubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
+        // TODO: optimize performance
         return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
                 .peek(participation -> participation.getExercise().setParticipations(null))
                 // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get)
+                // It needs to be submitted to be ready for assessment
+                .filter(Submission::isSubmitted).filter(textSubmission -> {
+                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
+                    return result == null;
+                }).findAny();
     }
 
     /**
