@@ -143,7 +143,7 @@ public class ParticipationResource {
         }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now())) {
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
 
             if (authCheckService.isOnlyStudentInCourse(course, null)) {
                 return forbidden();
