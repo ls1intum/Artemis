@@ -30,7 +30,7 @@ public class ExampleSubmission implements Serializable {
     @ManyToOne
     private Exercise exercise;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(unique = true)
     private Submission submission;
 
