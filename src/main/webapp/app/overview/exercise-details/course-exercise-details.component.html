@@ -1,65 +1,17 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <div class="course-info-bar">
-        <div class="row">
-            <div class="col general-info">
-                <h3>
-                    <fa-icon [icon]="'arrow-left'" (click)="backToCourse()" class="back-button mr-2"></fa-icon>
-                    <span>{{ exercise.title }}</span>
-                </h3>
-                <h4>
-                    <span class="mr-2">{{ 'arTeMiSApp.courseOverview.exerciseDetails.dueDate' | translate }}
-                        {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}</span>
-                    <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge"
-                        exercise.dueDate>{{ exercise.dueDate | amTimeAgo }}</span>
-                </h4>
-                <div class="d-md-flex" *ngIf="exercise.categories">
-                    <h4 class="mr-1">{{ 'arTeMiSApp.courseOverview.exerciseDetails.categories' | translate }}</h4>
-                    <h4 *ngFor="let category of exerciseCategories">
-                        <span class="badge text-white mr-1"
-                            [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                    </h4>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="row" *ngIf="exercise.type">
-                    <div class="col-6">
-                        <h5>{{ 'arTeMiSApp.courseOverview.exerciseDetails.exerciseType' | translate }}</h5>
-                    </div>
-                    <div class="col-6">
-                        <h5>
-                            {{ exercise.type | exerciseTypeLabel }}
-                            <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
-                        </h5>
-                    </div>
-                </div>
-                <div class="row" *ngIf="exercise.difficulty">
-                    <div class="col-6">
-                        <h5>{{ 'arTeMiSApp.courseOverview.exerciseDetails.difficulty' | translate }}</h5>
-                    </div>
-                    <div class="col-6">
-                        <h5>
-                            <jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge>
-                        </h5>
-                    </div>
-                </div>
-                <div class="row" *ngIf="exercise.maxScore">
-                    <div class="col-6">
-                        <h5>{{ 'arTeMiSApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h5>
-                    </div>
-                    <div class="col-6">
-                        <h5>{{ exercise.maxScore }} pts.</h5>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <jhi-header-exercise-page-with-details
+        [exercise]="exercise"
+        [onBackClick]="backToCourse.bind(this)"
+    >
+        <span pagetitle>{{ exercise.title }}</span>
+    </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise">
         </jhi-exercise-details-student-actions>
-        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
+        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span
                 class="mr-1">{{ 'arTeMiSApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -78,7 +30,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-12 col-md-8 col-lg-6">
+        <div class="col-sm-12 col-md-10 col-lg-8">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
@@ -88,7 +40,7 @@
             </div>
             <ng-template #exerciseTemplate>
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
-                    <div class="col-12 col-md-8">
+                    <div class="col-12 col-md-12">
                         <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
                         <p [innerHTML]="formattedProblemStatement"></p>
                     </div>
@@ -102,7 +54,7 @@
                 </div>
             </div>
             <div class="row mb-2" *ngIf="hasResults && currentResult">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <div class="row justify-content-between">
                         <div class="col">
                             <h4>
@@ -142,7 +94,7 @@
                 </div>
             </div>
             <div class="row mb-2 d-none d-md-flex" *ngIf="hasResults">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"
                         [maxScore]="exercise.maxScore"></jhi-result-history>
                 </div>
@@ -153,7 +105,7 @@
                 </div>
             </div>
             <div class="row" *ngIf="showMoreResults && hasResults">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <div *ngFor="let result of sortedResults">
                         <div class="row justify-content-between">
                             <div class="col">
@@ -182,7 +134,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline"
+            <div class="row mb-2 mt-2 align-iexercise.participations[0].resultstems-baseline"
                 *ngIf="hasResults && exercise.participations[0].results.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
@@ -197,7 +149,7 @@
             </div>
         </div>
         <!-- RESULTS END -->
-        <div class="col-sm-12 col-md-4 col-lg-6">
+        <div class="col-sm-12 col-md-4 col-lg-4">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>

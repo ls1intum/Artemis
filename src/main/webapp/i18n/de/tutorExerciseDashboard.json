@@ -14,6 +14,8 @@
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "startYourParticipation": "Beginnen Sie Ihre Teilnahme an der Übung.",
             "gradingInstructions": "Bewertungsanweisungen",
+            "problemStatement": "Aufgabenstellung",
+            "exampleSolution": "Beispiel Lösung",
             "close": "Schließen",
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
             "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",

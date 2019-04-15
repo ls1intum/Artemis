@@ -28,7 +28,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exercise: Exercise;
     public showMoreResults = false;
     public exerciseStatusBadge = 'badge-success';
-    public sortedResults: Result[];
+    public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private websocketChannelResults: string;
@@ -68,7 +68,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-            this.setExerciseStatusBadge();
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                     const aValue = moment(a.completionDate).valueOf();
@@ -120,10 +121,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     backToCourse() {
         this.$location.back();
-    }
-
-    setExerciseStatusBadge(): void {
-        this.exerciseStatusBadge = moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
     }
 
     exerciseRatedBadge(result: Result): string {
