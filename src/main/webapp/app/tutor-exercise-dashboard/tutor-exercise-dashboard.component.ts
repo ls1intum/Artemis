@@ -10,6 +10,9 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { TextExercise } from 'app/entities/text-exercise';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
@@ -27,6 +30,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
+    modelingExercise: ModelingExercise;
     courseId: number;
     exerciseId: number;
     numberOfTutorAssessments = 0;
@@ -38,9 +42,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
+    exampleSolutionModel: UMLModel;
     complaints: Complaint[];
 
     formattedGradingInstructions: string;
+    formattedProblemStatement: string;
+    formattedSampleSolution: string;
+
+    readonly ExerciseType_TEXT = ExerciseType.TEXT;
+    readonly ExerciseType_MODELING = ExerciseType.MODELING;
 
     stats = {
         toReview: {
@@ -87,6 +97,17 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+
+                if (this.exercise.type === this.ExerciseType_TEXT) {
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                } else if (this.exercise.type === this.ExerciseType_MODELING) {
+                    this.modelingExercise = this.exercise as ModelingExercise;
+                    if (this.modelingExercise.sampleSolutionModel) {
+                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                        this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                    }
+                }
 
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
@@ -118,6 +139,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
     }
 
+    // TODO CZ: too much duplicated code
     private getSubmissions(): void {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService
@@ -160,6 +182,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
     }
 
+    // TODO CZ: too much duplicated code
     private getSubmissionWithoutAssessment(): void {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(

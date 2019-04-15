@@ -17,11 +17,25 @@ import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
+import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
+import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSTutorCourseDashboardModule],
+    imports: [
+        BrowserModule,
+        ArTEMiSSharedModule,
+        ArTEMiSResultModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArTEMiSTutorCourseDashboardModule,
+        ArTEMiSModelingEditorModule,
+        AssessmentInstructionsModule,
+        ArTEMiSHeaderExercisePageWithDetailsModule,
+    ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],

@@ -38,8 +38,8 @@
         "dragAndDropQuestionStatistic": {
             "xAxes": "DropLocation",
             "yAxes": "Häufigkeit",
-            "showSampleSolution": "Zeige Beispiellösung",
-            "hideSampleSolution": "Verberge Beispiellösung"
+            "showSampleSolution": "Zeige Beispiel Lösung",
+            "hideSampleSolution": "Verberge Beispiel Lösung"
         },
         "invalid": "(ungültig)",
         "quizhasEnded": "Quiz ist zu Ende!",
