@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -27,7 +28,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exercise: Exercise;
     public showMoreResults = false;
     public exerciseStatusBadge = 'badge-success';
-    public sortedResults: Result[];
+    public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private websocketChannelResults: string;
@@ -45,6 +46,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
@@ -67,6 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                     const aValue = moment(a.completionDate).valueOf();
