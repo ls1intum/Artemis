@@ -66,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                     const aValue = moment(a.completionDate).valueOf();

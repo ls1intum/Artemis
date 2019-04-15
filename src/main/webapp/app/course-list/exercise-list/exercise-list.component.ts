@@ -140,6 +140,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             }
 
             exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+            exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
             if (a.dueDate === null && b.dueDate === null) {
