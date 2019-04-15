@@ -239,7 +239,7 @@ public class ResultResource {
         if (!Hibernate.isInitialized(participation.getExercise())) {
             participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
         }
-        if (participation.getStudent() == null) {
+        if (participation.getStudent() == null && participation.getExercise() != null) {
             if (!Hibernate.isInitialized(participation.getExercise().getCourse())) {
                 participation.getExercise().setCourse((Course) Hibernate.unproxy(participation.getExercise().getCourse()));
             }
