@@ -51,6 +51,7 @@ export class TutorCourseDashboardComponent implements OnInit {
             (res: HttpResponse<Course>) => {
                 this.course = res.body;
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
+                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     this.unfinishedExercises = this.course.exercises
