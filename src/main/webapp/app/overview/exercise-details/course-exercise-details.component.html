@@ -30,7 +30,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-12 col-md-8 col-lg-6">
+        <div class="col-sm-12 col-md-10 col-lg-8">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
@@ -40,7 +40,7 @@
             </div>
             <ng-template #exerciseTemplate>
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
-                    <div class="col-12 col-md-8">
+                    <div class="col-12 col-md-12">
                         <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
                         <p [innerHTML]="formattedProblemStatement"></p>
                     </div>
@@ -54,7 +54,7 @@
                 </div>
             </div>
             <div class="row mb-2" *ngIf="hasResults && currentResult">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <div class="row justify-content-between">
                         <div class="col">
                             <h4>
@@ -94,7 +94,7 @@
                 </div>
             </div>
             <div class="row mb-2 d-none d-md-flex" *ngIf="hasResults">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"
                         [maxScore]="exercise.maxScore"></jhi-result-history>
                 </div>
@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div class="row" *ngIf="showMoreResults && hasResults">
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <div *ngFor="let result of sortedResults">
                         <div class="row justify-content-between">
                             <div class="col">
@@ -134,7 +134,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline"
+            <div class="row mb-2 mt-2 align-iexercise.participations[0].resultstems-baseline"
                 *ngIf="hasResults && exercise.participations[0].results.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
@@ -149,7 +149,7 @@
             </div>
         </div>
         <!-- RESULTS END -->
-        <div class="col-sm-12 col-md-4 col-lg-6">
+        <div class="col-sm-12 col-md-4 col-lg-4">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>
