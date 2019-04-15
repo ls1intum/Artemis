@@ -14,6 +14,8 @@
             "readGradingInstructions": "Read grading instructions",
             "startYourParticipation": "Start your participation to the exercise",
             "gradingInstructions": "Grading instructions",
+            "problemStatement": "Problem statement",
+            "exampleSolution": "Example solution",
             "close": "Close",
             "readAndUnderstood": "I read and understood the instructions",
             "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
