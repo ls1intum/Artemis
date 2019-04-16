@@ -200,6 +200,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
                 (response: ModelingSubmission) => {
+                    console.log('got modeling submission:');
+                    console.log(response);
                     this.unassessedSubmission = response;
                 },
                 (error: HttpErrorResponse) => {
