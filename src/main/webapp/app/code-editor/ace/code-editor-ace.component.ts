@@ -14,15 +14,16 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
 import { compose, fromPairs, map, toPairs, unionBy } from 'lodash/fp';
-import { fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subscription, Subject } from 'rxjs';
 
-import { Participation } from 'app/entities/participation';
+import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
 import { AnnotationArray, TextChange, SaveStatusChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -59,6 +60,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     updateFileChannel: string;
     receiveFileUpdatesChannel: string;
 
+    fileChanges: Subject<string>;
+
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
@@ -72,7 +75,21 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @desc Initially sets the labels for file save status
      */
     ngOnInit(): void {
-        this.updateSaveStatusLabel();
+        this.fileChanges = new Subject();
+        this.fileChanges.pipe(debounceTime(5000)).subscribe((filename: string) => {
+            this.updateSaveStatusLabel(true);
+            this.saveFile(filename);
+        });
+        // TODO: Move icon and class info into code-editor component
+        this.onSaveStatusChange({
+            isSaved: true,
+            saveStatusIcon: {
+                spin: false,
+                icon: 'check-circle',
+                class: 'text-success',
+            },
+            saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
+        });
     }
 
     /**
@@ -95,12 +112,10 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.participation && changes.participation.currentValue) {
+        if (hasParticipationChanged(changes)) {
             this.updateFileChannel = `/topic/repository/${this.participation.id}/file`;
             this.receiveFileUpdatesChannel = `/user${this.updateFileChannel}`;
             this.setUpReceiveFileUpdates();
-        }
-        if (changes.participation && this.participation) {
             this.updateSaveStatusLabel();
         }
         // Current file has changed
@@ -123,15 +138,20 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             if (!this.editorFileSessions[this.selectedFile].code) {
                 this.loadFile(this.selectedFile);
                 // Reset the undo stack after file change, otherwise the user can undo back to the old file
-                this.editor
-                    .getEditor()
-                    .getSession()
-                    .setUndoManager(new ace.UndoManager());
             } else {
                 this.editor
                     .getEditor()
                     .getSession()
                     .setValue(this.editorFileSessions[this.selectedFile].code);
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setUndoManager(new ace.UndoManager());
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
+                this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             }
         }
         // Update editor file session object to include new files and remove old files
@@ -295,6 +315,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     .getEditor()
                     .getSession()
                     .setUndoManager(new ace.UndoManager());
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
+                this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             },
             err => {
                 console.log('There was an error while getting file', this.selectedFile, err);
@@ -340,18 +365,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             };
 
             this.updateSaveStatusLabel();
-            // Trigger file save with delay
-            setTimeout(() => {
-                this.saveFile(this.selectedFile);
-                this.updateSaveStatusLabel(true);
-            }, 2000);
-            // On initial change set annotations and subscribe to changes
-        } else if (this.editorFileSessions[this.selectedFile]) {
-            this.editor
-                .getEditor()
-                .getSession()
-                .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
-            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
+            this.fileChanges.next(this.selectedFile);
         }
     }
 
