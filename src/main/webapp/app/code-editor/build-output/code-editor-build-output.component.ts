@@ -98,16 +98,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             if (this.isInitial) {
                 this.setupResultWebsocket();
                 this.isInitial = false;
-            }
-            if (!this.participation.results) {
-                this.resultService
-                    .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
-                        showAllResults: false,
-                        ratedOnly: this.participation.exercise.type === 'quiz',
-                    })
-                    .subscribe(results => {
-                        this.toggleBuildLogs(_maxBy(results.body, 'id'));
-                    });
             } else if (this.participation.results && this.participation.results.length) {
                 const latestResultPrev =
                     changes.participation && changes.participation.previousValue ? _maxBy((changes.participation.previousValue as Participation).results, 'id') : undefined;
@@ -141,16 +131,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     toggleBuildLogs(result: Result) {
-        // TODO: can we use the result in code-editor-instructions.component.ts?
-        this.resultService.getFeedbackDetailsForResult(result.id).subscribe(details => {
-            if (details.body.length === 0) {
-                this.getBuildLogs();
-            } else {
-                this.buildLogs = new BuildLogEntryArray();
-                // If there are no compile errors, send recent timestamp
-                this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
-            }
-        });
+        if ((result.successful && (!result.feedbacks || result.feedbacks.length)) || (!result.successful && result.feedbacks && result.feedbacks.length)) {
+            this.buildLogs = new BuildLogEntryArray();
+            // If there are no compile errors, send recent timestamp
+            this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
+        } else {
+            // If the build failed, find out why
+            this.getBuildLogs();
+        }
     }
 
     /**
