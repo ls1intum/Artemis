@@ -10,10 +10,10 @@ import { ParticipationService } from '../entities/participation/participation.se
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
-import { ModelingAssessmentService } from '../modeling-assessment-editor/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
