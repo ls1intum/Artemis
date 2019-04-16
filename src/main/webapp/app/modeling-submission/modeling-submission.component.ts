@@ -14,9 +14,9 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 
 @Component({
     selector: 'jhi-modeling-submission',
