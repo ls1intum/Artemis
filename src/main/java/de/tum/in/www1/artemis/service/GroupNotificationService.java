@@ -10,10 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GroupNotification;
-import de.tum.in.www1.artemis.domain.Notification;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
@@ -36,37 +33,37 @@ public class GroupNotificationService {
     public void notifyGroupAboutExerciseStart(Exercise exercise) {
         String title = "Exercise started";
         String notificationText = "Exercise \"" + exercise.getTitle() + "\" just started.";
-        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated", GroupNotificationType.STUDENT);
     }
 
     public void notifyGroupAboutExerciseVisibility(Exercise exercise) {
         String title = "New exercise available";
         String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now available.";
-        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated", GroupNotificationType.STUDENT);
     }
 
     public void notifyGroupAboutExercisePractice(Exercise exercise) {
         String title = "Exercise open for practice";
         String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated", GroupNotificationType.STUDENT);
     }
 
     public void notifyGroupAboutExerciseChange(Exercise exercise) {
         String title = "Exercise updated";
         String notificationText = "Exercise \"" + exercise.getTitle() + "\" got updated.";
-        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated", GroupNotificationType.STUDENT);
     }
 
     public void notifyGroupAboutExerciseCreated(Exercise exercise) {
         String title = "Exercise created";
         String notificationText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseCreated");
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseCreated", GroupNotificationType.TA);
     }
 
-    private void notifyGroupAboutExercise(Exercise exercise, String title, String notificationText, String message) {
+    private void notifyGroupAboutExercise(Exercise exercise, String title, String notificationText, String message, GroupNotificationType type) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setCourse(exercise.getCourse());
-        groupNotification.setType(GroupNotificationType.STUDENT);
+        groupNotification.setType(type);
         groupNotification.setNotificationDate(ZonedDateTime.now());
         groupNotification.setTitle(title);
         groupNotification.setText(notificationText);
@@ -74,11 +71,26 @@ public class GroupNotificationService {
         target.addProperty("message", message);
         target.addProperty("id", exercise.getId());
         target.addProperty("entity", "exercises");
+        target.addProperty("course", exercise.getCourse().getId());
         target.addProperty("mainPage", "overview");
         groupNotification.setTarget(target.toString());
         groupNotification.setAuthor(userService.getUser());
         String topic = "/topic/course/" + groupNotification.getCourse().getId() + "/" + groupNotification.getType();
         saveAndSendGroupNotification(topic, groupNotification);
+    }
+
+    public void notifyGroupAboutNewQuestion(StudentQuestion studentQuestion) {
+        String title = "New Question";
+        String notificationText = "Exercise \"" + studentQuestion.getExercise().getTitle() + "\" got a new question.";
+        notifyGroupAboutExercise(studentQuestion.getExercise(), title, notificationText, "newQuestion", GroupNotificationType.TA);
+        notifyGroupAboutExercise(studentQuestion.getExercise(), title, notificationText, "newQuestion", GroupNotificationType.INSTRUCTOR);
+    }
+
+    public void notifyGroupAboutNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
+        String title = "New Answer";
+        String notificationText = "Exercise \"" + studentQuestionAnswer.getQuestion().getExercise().getTitle() + "\" got a new answer.";
+        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newAnswer", GroupNotificationType.TA);
+        notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newAnswer", GroupNotificationType.INSTRUCTOR);
     }
 
     private void saveAndSendGroupNotification(String topic, GroupNotification groupNotification) {

@@ -16,6 +16,10 @@ import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 import { WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { Complaint } from 'app/entities/complaint';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ComplaintResponse } from 'app/entities/complaint-response';
+import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -36,6 +40,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     accountId = 0;
     busy = true;
     showResult = true;
+    includeComplaint = false;
+    complaint: Complaint;
+    complaintResponse: ComplaintResponse = new ComplaintResponse();
 
     formattedProblemStatement: string;
     formattedSampleSolution: string;
@@ -61,6 +68,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
+        private complaintService: ComplaintService,
+        private complaintResponseService: ComplaintResponseService,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -70,6 +79,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionValue = this.route.snapshot.paramMap.get('submissionId');
+        this.includeComplaint = !!this.route.snapshot.queryParamMap.get('includeComplaint');
 
         if (submissionValue === 'new') {
             this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(participation => {
@@ -110,6 +120,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
+                target.style.minWidth = event.rect.width + 'px';
             });
 
         this.interactResizableTop = interact('.resizable-horizontal')
@@ -203,6 +214,21 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
+
+        if (this.includeComplaint && this.result) {
+            this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                this.complaint = res.body;
+
+                if (this.complaint.accepted) {
+                    this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => {
+                        this.complaintResponse = complaintResponse.body;
+                    });
+                } else {
+                    this.complaintResponse.complaint = this.complaint;
+                }
+            });
+        }
+
         this.assessments = this.result.feedbacks || [];
         this.busy = false;
         this.checkScoreBoundaries();
@@ -245,10 +271,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         if ($card.hasClass('collapsed')) {
             $card.removeClass('collapsed');
             this.interactResizable.resizable({ enabled: true });
-            $card.css({ width: this.resizableMinWidth + 'px' });
+            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
         } else {
             $card.addClass('collapsed');
-            $card.css({ width: '55px' });
+            $card.css({ width: '55px', minWidth: '55px' });
             this.interactResizable.resizable({ enabled: false });
         }
     }
@@ -260,5 +286,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return baseKey + 'exampleAssessment';
         }
         return baseKey + 'assessment';
+    }
+
+    submitComplaintResponse() {
+        if (this.complaintResponse.responseText.length > 0) {
+            this.complaintResponseService.create(this.complaintResponse).subscribe(() => {
+                this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
+                this.complaint.accepted = true;
+            });
+        }
     }
 }

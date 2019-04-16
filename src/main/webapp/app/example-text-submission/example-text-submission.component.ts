@@ -112,6 +112,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
+                target.style.minWidth = event.rect.width + 'px';
             });
 
         this.interactResizableAssessment = interact('.resizable-assessment')
@@ -129,6 +130,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
+                target.style.minWidth = event.rect.width + 'px';
             });
 
         this.interactResizableTop = interact('.resizable-horizontal')
@@ -208,7 +210,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             } else if (resizable === 'assessment') {
                 this.interactResizableAssessment.resizable({ enabled: true });
             }
-            $card.css({ width: this.resizableMinWidth + 'px' });
+            $card.css({ width: this.resizableMinWidth + 'px', minWidth: this.resizableMinWidth + 'px' });
         } else {
             $card.addClass('collapsed');
             if (resizable === 'submission') {
@@ -216,7 +218,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             } else if (resizable === 'assessment') {
                 this.interactResizableAssessment.resizable({ enabled: false });
             }
-            $card.css({ width: '55px' });
+            $card.css({ width: '55px', minWidth: '55px' });
         }
     }
 

@@ -100,6 +100,19 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * method used to check whether the current logged in user is only a student of this course. This means the user is NOT a tutor, NOT an instructor and NOT an ADMIN
+     *
+     * @param course course to check the rights for
+     * @return true, if user is only student of this course, otherwise false
+     */
+    public boolean isOnlyStudentInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
      * method used to check whether the current logged in user is student of this course
      *
      * @param course course to check the rights for

@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.time.ZonedDateTime.now;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -32,12 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.google.common.collect.Sets;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -142,6 +141,15 @@ public class ParticipationResource {
                     .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
                     .body(null);
         }
+
+        // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
+
+            if (authCheckService.isOnlyStudentInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+
         Participation participation = participationService.startExercise(exercise, principal.getName());
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
     }
@@ -237,31 +245,34 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercise/{exerciseId}/participation-without-assessment Given an exerciseId, retrieve a participation where the latest submission has no assessment, or returns 404 If
-     * any, it creates the result and assign to the tutor, as a draft
+     * GET /exercise/{exerciseId}/participation-without-assessment Given an exerciseId of a text exercise, retrieve a participation where the latest submission has no assessment
+     * returns 404 If any, it creates the result and assign to the tutor, as a draft
      *
      * @param exerciseId the id of the exercise of which we want a submission
      * @return a student participation
      */
     @GetMapping(value = "/exercise/{exerciseId}/participation-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationForExerciseWithoutAssessment(@PathVariable Long exerciseId) {
-        Optional<TextSubmission> textSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
-
+    public ResponseEntity<Participation> getParticipationForTextExerciseWithoutAssessment(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
+        if (!(exercise instanceof TextExercise)) {
+            return badRequest();
+        }
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
-        if (!textSubmission.isPresent()) {
+        if (!textSubmissionWithoutAssessment.isPresent()) {
+            // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
         }
 
-        Participation participation = textSubmission.get().getParticipation();
+        Participation participation = textSubmissionWithoutAssessment.get().getParticipation();
 
         Result result = new Result();
         result.setParticipation(participation);
-        result.setSubmission(textSubmission.get());
+        result.setSubmission(textSubmissionWithoutAssessment.get());
         resultService.createNewResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);

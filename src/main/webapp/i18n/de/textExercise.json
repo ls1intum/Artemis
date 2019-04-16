@@ -15,10 +15,10 @@
             "detail": {
                 "title": "Textaufgabe"
             },
-            "sampleSolution": "Musterlösung",
-            "exampleSubmissions": "Beispiel-Einreichungen",
-            "createExampleSubmissions": "Beispiel-Einreichungen erstellen",
-            "exampleSubmissionsRequireExercise": "Um eine Beispiel-Einreichung zu erstellen, müssen Sie zunächst die Erstellung der Textaufgabe abschließen.",
+            "sampleSolution": "Beispiel Lösung",
+            "exampleSubmissions": "Beispielabgabe",
+            "createExampleSubmissions": "Beispielabgabe erstellen",
+            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, müssen Sie zunächst die Erstellung der Textaufgabe abschließen.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
             "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",
             "submitSuccessful": "Dein Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",

@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,9 +42,17 @@ public class ModelingSubmissionService {
         this.participationRepository = participationRepository;
     }
 
+    /**
+     * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of modeling submissions for the given exercise id
+     */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (Participation participation : participations) {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
@@ -58,13 +66,62 @@ public class ModelingSubmissionService {
             // avoid infinite recursion
             participation.getExercise().setParticipations(null);
         }
-        submissions.forEach(submission -> {
-            Hibernate.initialize(submission.getResult()); // eagerly load the association
-            if (submission.getResult() != null) {
-                Hibernate.initialize(submission.getResult().getAssessor());
-            }
-        });
         return submissions;
+    }
+
+    /**
+     * Given an exercise, find a random modeling submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
+     * element of the stream. While it is not mathematically random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
+     *
+     * @param modelingExercise the modeling exercise for which we want to get a modeling submission
+     * @return a modeling submission without any result
+     */
+    @Transactional(readOnly = true)
+    public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
+        // ask Compass for optimal submission to assess if diagram type is supported
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
+            if (!optimalModelSubmissions.isEmpty()) {
+                return modelingSubmissionRepository.findById(optimalModelSubmissions.iterator().next());
+            }
+        }
+        // otherwise return any submission that is not assessed
+        // TODO: optimize performance
+        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
+                .peek(participation -> participation.getExercise().setParticipations(null))
+                // Map to Latest Submission
+                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get)
+                // It needs to be submitted to be ready for assessment
+                .filter(Submission::isSubmitted).filter(modelingSubmission -> {
+                    Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
+                    return result == null;
+                }).findAny();
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the modeling submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of modeling submissions
+     */
+    @Transactional(readOnly = true)
+    public List<ModelingSubmission> getAllModelingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
+        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
+
+        return results.stream().map(result -> {
+            Submission submission = result.getSubmission();
+            ModelingSubmission modelingSubmission = new ModelingSubmission();
+
+            result.setSubmission(null);
+            modelingSubmission.setResult(result);
+            modelingSubmission.setParticipation(submission.getParticipation());
+            modelingSubmission.setId(submission.getId());
+            modelingSubmission.setSubmissionDate(submission.getSubmissionDate());
+
+            return modelingSubmission;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -112,7 +169,7 @@ public class ModelingSubmissionService {
 
     /**
      * Creates and sets new Result object in given submission and stores changes to the database.
-     * 
+     *
      * @param submission
      */
     public void setNewResult(ModelingSubmission submission) {

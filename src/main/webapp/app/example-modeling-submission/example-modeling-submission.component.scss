@@ -1,3 +1,19 @@
-.assessment-container {
+.editor-container {
+    display: flex;
+    justify-content: space-between;
     height: 80vh;
+    width: 100%;
+    overflow: auto;
+    jhi-modeling-assessment {
+        min-width: 0;
+        width: 100%;
+    }
+    jhi-modeling-editor {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+.button-resize {
+    min-width: 245px; // prevent buttons from cutting text when resizing
 }

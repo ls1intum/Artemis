@@ -30,7 +30,7 @@ public class AutomaticAssessmentController {
      * @param model                the UML model - contains all elements with its corresponding jsonIds
      * @throws IOException if the score for the element is null
      */
-    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassModel model) throws IOException {
+    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassDiagram model) throws IOException {
         for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
@@ -62,7 +62,7 @@ public class AutomaticAssessmentController {
         totalCoverage = 0;
         totalConfidence = 0;
 
-        for (UMLClassModel model : modelIndex.getModelCollection()) {
+        for (UMLClassDiagram model : modelIndex.getModelCollection()) {
 
             CompassResult compassResult = assessModelAutomatically(model, assessmentIndex);
 
@@ -82,7 +82,7 @@ public class AutomaticAssessmentController {
      * @param assessmentIndex manages all assessments
      * @return a result
      */
-    public CompassResult assessModelAutomatically(UMLClassModel model, AssessmentIndex assessmentIndex) {
+    public CompassResult assessModelAutomatically(UMLClassDiagram model, AssessmentIndex assessmentIndex) {
         List<CompassResult> compassResultList = new ArrayList<>();
 
         double totalCount = 0;
@@ -109,7 +109,7 @@ public class AutomaticAssessmentController {
             else {
                 Score score = assessmentOptional.get().getScore(relation.getContext());
                 if (score == null) {
-                    log.debug("Unable to find score for relation " + relation.getJSONElementID() + " in model " + model.getModelID() + " with the specific context");
+                    log.debug("Unable to find score for relation " + relation.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
                 }
                 else {
                     scoreHashMap.put(relation, score);

@@ -468,8 +468,10 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
-        return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+    public List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
+        // TODO optimize performance
+        List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+        return participations;
     }
 
     @Transactional(readOnly = true)

@@ -48,6 +48,7 @@ export class CourseExerciseRowComponent implements OnInit {
             this.exercise.participations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
+        this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);

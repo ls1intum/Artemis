@@ -17,7 +17,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     totalScore = 0;
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
-
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
@@ -37,11 +36,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
     ngAfterViewInit(): void {
-        if (this.model) {
-            this.initializeApollonEditor();
-        } else {
-            this.jhiAlertService.error('modelingAssessment.noModel');
-        }
+        this.initializeApollonEditor();
         this.applyStateConfiguration();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -177,8 +172,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return feedbacks;
         }
+        if (!this.model || !this.model.elements) {
+            return [];
+        }
+
         let availableIds: string[] = this.model.elements.map(element => element.id);
-        availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        if (this.model.relationships) {
+            availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        }
         return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
     }
 

@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A StudentQuestion.
@@ -22,7 +23,7 @@ import java.util.Set;
 public class StudentQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,7 +39,6 @@ public class StudentQuestion implements Serializable {
     private Boolean visibleForStudents;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<StudentQuestionAnswer> answers = new HashSet<>();
 
     @ManyToOne
@@ -188,11 +188,7 @@ public class StudentQuestion implements Serializable {
 
     @Override
     public String toString() {
-        return "StudentQuestion{" +
-            "id=" + getId() +
-            ", questionText='" + getQuestionText() + "'" +
-            ", creationDate='" + getCreationDate() + "'" +
-            ", visibleForStudents='" + isVisibleForStudents() + "'" +
-            "}";
+        return "StudentQuestion{" + "id=" + getId() + ", questionText='" + getQuestionText() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='"
+                + isVisibleForStudents() + "'" + "}";
     }
 }

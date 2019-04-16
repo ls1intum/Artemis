@@ -1,5 +1,7 @@
 <div class="assessment-container">
     <h3 class="top-container">
+        <!--back button only used in tutor dashboard-->
+        <fa-icon *ngIf="forTutorDashboard" [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
         <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>

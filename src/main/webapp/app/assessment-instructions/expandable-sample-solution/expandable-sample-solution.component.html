@@ -3,6 +3,6 @@
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
 <div [ngbCollapse]="isCollapsed">
-    <jhi-modeling-editor *ngIf="exercise.sampleSolutionModel"></jhi-modeling-editor>
+    <jhi-modeling-editor *ngIf="sampleSolution" [readOnly]="true" [diagramType]="exercise.diagramType" [umlModel]="sampleSolution"></jhi-modeling-editor>
     <p [innerHTML]="formattedSampleSolutionExplanation"></p>
 </div>
