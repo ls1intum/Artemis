@@ -223,6 +223,7 @@ public class ModelingSubmissionResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            // ask Compass for optimal submission to assess if diagram type is supported
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
             if (optimalModelSubmissions.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
@@ -230,7 +231,16 @@ public class ModelingSubmissionResource {
             return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
         }
         else {
-            return ResponseEntity.ok(new Long[] {}); // empty
+            // if diagram type is not supported get any (not optimal) submission that is not assessed
+            Optional<ModelingSubmission> optionalModelingSubmission =
+                participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
+                // map to latest submission
+                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+            if (!optionalModelingSubmission.isPresent())
+            {
+                return ResponseEntity.ok(new Long[] {}); // empty
+            }
+            return ResponseEntity.ok(new Long[] {optionalModelingSubmission.get().getId()});
         }
     }
 
