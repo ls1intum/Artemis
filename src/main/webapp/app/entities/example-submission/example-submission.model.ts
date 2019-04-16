@@ -9,7 +9,7 @@ export class ExampleSubmission implements BaseEntity {
     public usedForTutorial: boolean;
     public exercise: Exercise;
     public submission: Submission;
-    public tutorParticipation: TutorParticipation;
+    public tutorParticipations: TutorParticipation[];
 
     constructor() {}
 }
