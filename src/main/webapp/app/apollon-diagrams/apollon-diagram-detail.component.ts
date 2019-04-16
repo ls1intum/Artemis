@@ -19,15 +19,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
-    /** Wether to crop the downloaded image to the selection. */
+    /** Whether to crop the downloaded image to the selection. */
     crop = true;
 
-    /** Wether some elements are interactive in the apollon editor. */
+    /** Whether some elements are interactive in the apollon editor. */
     get hasInteractive(): boolean {
         return !!this.apollonEditor && !![...this.apollonEditor.model.interactive.elements, ...this.apollonEditor.model.interactive.relationships].length;
     }
 
-    /** Wether some elements are selected in the apollon editor. */
+    /** Whether some elements are selected in the apollon editor. */
     get hasSelection(): boolean {
         return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
     }
