@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { Notification } from 'app/entities/notification';
 import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
 import { HttpResponse } from '@angular/common/http';
-import { JhiWebsocketService } from 'app/core';
+import { AccountService, JhiWebsocketService, User } from 'app/core';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -18,16 +18,28 @@ export class SystemNotificationComponent implements OnInit {
     alertIcon: string;
     websocketChannel: string;
 
-    constructor(private route: ActivatedRoute, private jhiWebsocketService: JhiWebsocketService, private systemNotificationService: SystemNotificationService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private accountService: AccountService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private systemNotificationService: SystemNotificationService,
+    ) {}
 
     ngOnInit() {
-        this.loadActiveNotification();
-        // maybe use connectedPromise as a set function
-        setTimeout(() => {
-            this.jhiWebsocketService.bind('connect', () => {
-                this.subscribeSocket();
-            });
-        }, 500);
+        this.accountService
+            .identity()
+            .then((user: User) => {
+                if (user) {
+                    this.loadActiveNotification();
+                    // maybe use connectedPromise as a set function
+                    setTimeout(() => {
+                        this.jhiWebsocketService.bind('connect', () => {
+                            this.subscribeSocket();
+                        });
+                    }, 500);
+                }
+            })
+            .catch(error => console.log(error));
     }
 
     loadActiveNotification() {
