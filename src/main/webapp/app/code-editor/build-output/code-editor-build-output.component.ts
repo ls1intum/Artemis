@@ -1,17 +1,18 @@
-import { Participation } from '../../entities/participation';
+import { hasParticipationChanged, Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { maxBy as _maxBy } from 'lodash';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
-import { JhiWebsocketService, AccountService } from '../../core';
 import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
-import * as moment from 'moment';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 import { BuildLogEntryArray } from '../../entities/build-log';
+import { Feedback } from 'app/entities/feedback';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -32,8 +33,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     isBuilding: boolean;
     @Output()
     buildLogChange = new EventEmitter<BuildLogEntryArray>();
-    @Input()
-    isInitial = true;
 
     private unsubscribeResults: () => void;
 
@@ -81,30 +80,22 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @function ngOnChanges
      * @desc We need to update the participation results under certain conditions:
      *       - Participation changed
-     *          OR
-     *       - Repository status was 'building' and is now done
      * @param {SimpleChanges} changes
-     *
-     * TODO: avoid this call and rather use the websocket mechanism to retrieve the latest result
-     * TODO: in any case make sure to ask the server for the latest rated result if the call cannot be avoided
      *
      */
     ngOnChanges(changes: SimpleChanges): void {
+        const participationChange = hasParticipationChanged(changes);
         // If the participation changes, set component to initial as everything needs to be reloaded now
-        if (this.participation && changes.participation && changes.participation.currentValue && this.participation.id !== changes.participation.currentValue.id) {
-            this.isInitial = true;
+        if (participationChange) {
+            this.setupResultWebsocket();
         }
-        if ((changes.participation && this.participation) || (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
-            if (this.isInitial) {
-                this.setupResultWebsocket();
-                this.isInitial = false;
-            } else if (this.participation.results && this.participation.results.length) {
-                const latestResultPrev =
-                    changes.participation && changes.participation.previousValue ? _maxBy((changes.participation.previousValue as Participation).results, 'id') : undefined;
-                const latestResultNew = _maxBy(this.participation.results, 'id');
-                if ((!latestResultPrev && latestResultNew) || (latestResultPrev && latestResultNew && latestResultNew.id !== latestResultPrev.id)) {
-                    this.toggleBuildLogs(latestResultNew);
-                }
+        // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
+        if (participationChange && this.participation.results) {
+            const latestResultPrev = changes.participation.previousValue ? _maxBy((changes.participation.previousValue as Participation).results, 'id') : null;
+            const latestResultNew = _maxBy(this.participation.results, 'id');
+            // Check if the result is new, if not the component does not need to be updated
+            if ((!latestResultPrev && latestResultNew) || (latestResultPrev && latestResultNew && latestResultNew.id !== latestResultPrev.id)) {
+                this.loadAndAttachResultDetails(latestResultNew).subscribe(result => this.toggleBuildLogs(result));
             }
         }
     }
@@ -116,6 +107,20 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         return this.resultWebsocketService
             .subscribeResultForParticipation(this.participation.id, this.toggleBuildLogs.bind(this))
             .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
+    }
+
+    /**
+     * @function loadResultDetails
+     * @desc Fetches details for the result (if we received one) => Input latestResult
+     */
+    loadAndAttachResultDetails(result: Result): Observable<Result> {
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+            map(({ body }: { body: Feedback[] }) => body),
+            map((feedbacks: Feedback[]) => {
+                result.feedbacks = feedbacks;
+                return result;
+            }),
+        );
     }
 
     /**
@@ -131,7 +136,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     toggleBuildLogs(result: Result) {
-        if ((result.successful && (!result.feedbacks || result.feedbacks.length)) || (!result.successful && result.feedbacks && result.feedbacks.length)) {
+        if ((result.successful && (!result.feedbacks || !result.feedbacks.length)) || (!result.successful && result.feedbacks && result.feedbacks.length)) {
             this.buildLogs = new BuildLogEntryArray();
             // If there are no compile errors, send recent timestamp
             this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
