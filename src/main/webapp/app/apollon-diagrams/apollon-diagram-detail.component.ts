@@ -22,6 +22,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     /** Wether to crop the downloaded image to the selection. */
     crop = true;
 
+    /** Wether some elements are interactive in the apollon editor. */
+    get hasInteractive(): boolean {
+        return !!this.apollonEditor && !![...this.apollonEditor.model.interactive.elements, ...this.apollonEditor.model.interactive.relationships].length;
+    }
+
     /** Wether some elements are selected in the apollon editor. */
     get hasSelection(): boolean {
         return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
@@ -102,6 +107,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     generateExercise() {
+        if (!this.hasInteractive) {
+            return;
+        }
+
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
