@@ -239,7 +239,7 @@ public class ResultResource {
         if (!Hibernate.isInitialized(participation.getExercise())) {
             participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
         }
-        if (participation.getStudent() == null) {
+        if (participation.getStudent() == null && participation.getExercise() != null) {
             if (!Hibernate.isInitialized(participation.getExercise().getCourse())) {
                 participation.getExercise().setCourse((Course) Hibernate.unproxy(participation.getExercise().getCourse()));
             }
@@ -305,8 +305,7 @@ public class ResultResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
-        // TODO: why do we even have this call, when we load all participations below anyway?
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         if (!userHasPermissions(course))
             return forbidden();
@@ -325,7 +324,7 @@ public class ResultResource {
             }
 
             Result relevantResult;
-            if (ratedOnly == true) {
+            if (ratedOnly) {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
             }
             else {

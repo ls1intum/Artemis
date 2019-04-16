@@ -65,7 +65,8 @@ export abstract class Exercise implements BaseEntity {
     public studentQuestions: StudentQuestion[];
 
     // helper attributes
-    public isAtLeastTutor: boolean;
+    public isAtLeastTutor = false; // default value
+    public isAtLeastInstructor = false; // default value
     public loading: boolean;
     public numberOfParticipationsWithRatedResult: number;
     public numberOfSuccessfulParticipations: number;
@@ -101,7 +102,3 @@ export function getIconTooltip(exerciseType: ExerciseType): string {
 
     return tooltips[exerciseType];
 }
-
-export const isProgrammingExercise = (exerciseType: ExerciseType) => {
-    return exerciseType === ExerciseType.PROGRAMMING;
-};

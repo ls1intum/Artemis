@@ -6,16 +6,30 @@
     </div>
     <div class="col">
         <div class="row">
-            <div class="col-sm col-12">
+            <div class="col-auto d-sm-none">
+                <h4><fa-icon [icon]="getIcon(exercise.type)"></fa-icon></h4>
+            </div>
+            <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <div class="col-sm-auto col-12" [ngSwitch]="exercise.participationStatus">
-                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
+            <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+                <div class="d-none d-sm-inline">
+                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
+                </div>
+                <div class="d-sm-none">
+                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'arTeMiSApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
+                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
+
+                </div>
                 <span *ngSwitchCase="'initialized'">
                     <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
                 </span>
@@ -41,8 +55,9 @@
                 [smallColumns]="true"
                 [equalColumns]="false"
                 [exercise]="exercise"
+                [ngClass]="'mt-2 mb-2'"
             ></jhi-exercise-details-student-actions>
-            <div class="col d-md-flex justify-content-center">
+            <div class="col-auto col-sm d-flex justify-content-center mt-2">
                 <h4>
                     <span
                         class="badge badge-warning mr-1"
@@ -63,12 +78,12 @@
                     <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
             </div>
-            <div class="col-auto" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">
-                {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | date: 'dd/MM/yy' }}
-                <span class="d-none d-sm-inline"> ({{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo }}) </span>
+            <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">
+                <span class="d-none d-sm-inline"> {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | date: 'dd/MM/yy' }} </span>
+                ({{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo }})
             </div>
             <ng-template #noDate>
-                <div class="col-auto">{{ 'arTeMiSApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
+                <div class="col-auto mb-2">{{ 'arTeMiSApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
             </ng-template>
         </div>
     </div>

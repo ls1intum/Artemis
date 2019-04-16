@@ -158,6 +158,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "download": "Download",
             "edit": "Edit",
             "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",

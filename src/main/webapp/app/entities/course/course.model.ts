@@ -25,7 +25,8 @@ export class Course implements BaseEntity {
     public tutorGroups: TutorGroup[];
 
     // helper attributes
-    public isAtLeastTutor: boolean;
+    public isAtLeastTutor = false; // default value
+    public isAtLeastInstructor = false; // default value
     public relativeScore: number;
     public absoluteScore: number;
     public maxScore: number;

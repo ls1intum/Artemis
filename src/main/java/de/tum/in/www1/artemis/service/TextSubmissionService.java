@@ -101,23 +101,21 @@ public class TextSubmissionService {
      * Given an exercise id, find a random text submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
      * element of the stream. While it is not mathematically random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
      *
-     * @param exerciseId the exercise we want to retrieve
+     * @param textExercise the exercise for which we want to retrieve a submission without result
      * @return a textSubmission without any result, if any
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
-        return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId).stream().peek(participation -> participation.getExercise().setParticipations(null))
-
+    public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
+        // TODO: optimize performance
+        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
+                .peek(participation -> participation.getExercise().setParticipations(null))
                 // Map to Latest Submission
                 .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get)
                 // It needs to be submitted to be ready for assessment
                 .filter(Submission::isSubmitted).filter(textSubmission -> {
                     Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
                     return result == null;
-
-                })
-
-                .findAny();
+                }).findAny();
     }
 
     /**
@@ -144,16 +142,6 @@ public class TextSubmissionService {
 
             return textSubmission;
         }).collect(Collectors.toList());
-    }
-
-    /**
-     * Given a courseId, return the number of submissions for that course
-     * 
-     * @param courseId - the course we are interested in
-     * @return a number of submissions for the course
-     */
-    public long countNumberOfSubmissions(Long courseId) {
-        return textSubmissionRepository.countByParticipation_Exercise_Course_Id(courseId);
     }
 
     /**

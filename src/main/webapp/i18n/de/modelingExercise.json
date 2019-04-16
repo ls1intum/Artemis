@@ -16,8 +16,24 @@
                 "title": "Modellierungsaufgabe"
             },
             "diagramType": "Diagrammtyp",
-            "sampleSolutionModel": "Modell Beispiellösung",
-            "sampleSolutionExplanation": "Erklärung Beispiellösung"
+            "problemStatement": "<strong>Aufgabenstellung:</strong> {{ problemStatement }}",
+            "exampleSolution": "Beispiel Lösung",
+            "exampleSolutionExplanation": "Erklärung Beispiel Lösung",
+            "createExampleSolution": "Beispiel Lösung erstellen",
+            "exampleSolutionRequiresExercise": "Um eine Beispiel Lösung zu erstellen, müssen Sie zunächst die Erstellung der Textaufgabe abschließen.",
+            "exampleSolutionForModelingExercise": "Beispiel Lösung für Modellierungsaufgabe {{ exerciseTitle }}",
+            "saveExampleSolution": "Beispiel Lösung speichern",
+            "exampleSubmission": "Beispielabgabe {{ number }}",
+            "exampleSubmissions": "Beispielabgaben",
+            "createExampleSubmission": "Beispielabgabe erstellen",
+            "createNewExampleSubmission": "Neue Beispielabgabe erstellen",
+            "updateExampleSubmission": "Beispielabgabe aktualisieren",
+            "saveExampleAssessment": "Beispielbewertung speichern",
+            "showExampleSubmission": "Abgabe anzeigen",
+            "showExampleAssessment": "Bewertung anzeigen",
+            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, müssen Sie zunächst die Erstellung der Textaufgabe abschließen.",
+            "exampleSubmissionForModelingExercise": "Beispielabgabe für Modellierungsaufgabe {{ exerciseTitle }}",
+            "usedForTutorial": "Für Tutorial"
         }
     }
 }

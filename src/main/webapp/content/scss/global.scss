@@ -22,6 +22,20 @@ a {
     font-weight: bold;
 }
 
+.clickable {
+    cursor: pointer;
+}
+
+.overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.overflow-parent {
+    min-width: 0;
+}
+
 /*
  The following line makes sure the behavior of the buttons is consistent with a previous Bootstrap version 4.1.x
  TODO: In the future, we should find a better solution to displays buttons with wraps
@@ -146,6 +160,7 @@ Generic styles
         position: relative;
     }
 }
+
 .main-container {
     @media (max-width: 576px) {
         padding: 0;

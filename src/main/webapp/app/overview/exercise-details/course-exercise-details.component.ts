@@ -28,7 +28,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exercise: Exercise;
     public showMoreResults = false;
     public exerciseStatusBadge = 'badge-success';
-    public sortedResults: Result[];
+    public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private websocketChannelResults: string;
@@ -51,32 +51,38 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
+            const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
+            const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
+            if (didExerciseChange || didCourseChange) {
+                this.loadExercise();
+            }
         });
-
         if (this.exercise === undefined) {
-            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
-                this.exercise = exercise;
-                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-                this.setExerciseStatusBadge();
-                if (this.exercise.problemStatement) {
-                    this.formattedProblemStatement = this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-                }
-                if (this.hasResults) {
-                    this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
-                        const aValue = moment(a.completionDate).valueOf();
-                        const bValue = moment(b.completionDate).valueOf();
-                        return aValue - bValue;
-                    });
-                    const sortedResultLength = this.sortedResults.length;
-                    const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
-                    this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
-                }
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.subscribeForNewResults(this.exercise);
-            });
+            this.loadExercise();
         }
+    }
+
+    loadExercise() {
+        this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
+            this.exercise = exercise;
+            this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+            if (this.hasResults) {
+                this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
+                    const aValue = moment(a.completionDate).valueOf();
+                    const bValue = moment(b.completionDate).valueOf();
+                    return aValue - bValue;
+                });
+                const sortedResultLength = this.sortedResults.length;
+                const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
+                this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
+            }
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+            this.subscribeForNewResults(this.exercise);
+        });
     }
 
     ngOnDestroy() {
@@ -115,10 +121,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     backToCourse() {
         this.$location.back();
-    }
-
-    setExerciseStatusBadge(): void {
-        this.exerciseStatusBadge = moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
     }
 
     exerciseRatedBadge(result: Result): string {

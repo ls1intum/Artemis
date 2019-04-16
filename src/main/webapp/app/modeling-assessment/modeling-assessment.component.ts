@@ -34,11 +34,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
     ngAfterViewInit(): void {
-        if (this.model) {
-            this.initializeApollonEditor();
-        } else {
-            this.jhiAlertService.error('modelingAssessment.noModel');
-        }
+        this.initializeApollonEditor();
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
             // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);
@@ -157,8 +153,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return feedbacks;
         }
+        if (!this.model || !this.model.elements) {
+            return [];
+        }
+
         let availableIds: string[] = this.model.elements.map(element => element.id);
-        availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        if (this.model.relationships) {
+            availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+        }
         return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
     }
 

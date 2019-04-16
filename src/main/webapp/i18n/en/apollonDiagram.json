@@ -25,6 +25,8 @@
             },
             "detail": {
                 "title": "Apollon Diagram",
+                "crop": "Crop image to selection",
+                "help": "Download your current selection as a PNG image.",
                 "createLabel": "Generate a Quiz Exercise",
                 "generate": "Generate",
                 "error": {

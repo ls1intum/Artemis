@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.Result;
  * Representing a model element and the corresponding result that is in conflict
  */
 @Entity
-@Table(name = "conflicting-result")
+@Table(name = "conflicting_result")
 public class ConflictingResult {
 
     @Id

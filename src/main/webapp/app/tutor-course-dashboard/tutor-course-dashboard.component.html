@@ -1,35 +1,40 @@
-<div *ngIf="course">
-    <jhi-alert></jhi-alert>
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                {{ 'arTeMiSApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}
 
-    <div class="header-container  bg-primary text-white">
-        <h4 class="card-header">
-            <strong>{{ 'arTeMiSApp.tutorCourseDashboard.pageHeader' | translate }} {{ course.title }}</strong>
-            &nbsp;
-            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{ course.id }}/dashboard" routerLinkActive="active">
-                <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
-            </a>
-        </h4>
+                <a class="text-primary card-link" *ngIf="course?.isAtLeastInstructor" routerLink="/course/{{ course?.id }}/dashboard" routerLinkActive="active">
+                    <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
+                </a>
+            </h2>
+        </div>
     </div>
+</div>
 
+<jhi-alert></jhi-alert>
+
+<div *ngIf="course">
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
-            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
-            <p class="font-weight-bold">{{ numberOfTutorAssessments }}</p>
+            <p class="font-weight-bold">{{ 'arTeMiSApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
+            <p class="h3">{{ numberOfTutorAssessments }}</p>
         </div>
         <div class="col-4 text-center">
-            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
-            <p class="font-weight-bold">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ (numberOfAssessments / numberOfSubmissions) * 100 }}%)</p>
+            <p class="font-weight-bold">{{ 'arTeMiSApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
+            <p class="h3">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ totalAssessmentPercentage }}%)</p>
         </div>
     </div>
 
     <div class="row justify-content-around">
         <div class="col-4 text-center">
-            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
-            <p class="font-weight-bold">{{ numberOfTutorComplaints }}</p>
+            <p class="font-weight-bold">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
+            <p class="h3">{{ numberOfTutorComplaints }}</p>
         </div>
         <div class="col-4 text-center">
-            <p class="h3">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
-            <p class="font-weight-bold">{{ numberOfComplaints }}</p>
+            <p class="font-weight-bold">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
+            <p class="h3">{{ numberOfComplaints }}</p>
         </div>
     </div>
 
@@ -43,8 +48,9 @@
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
                 <tr>
+                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</th>
                     <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
-                    <th class="col-xs-4">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</th>
                     <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</th>
                     <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.actions' | translate }}</th>
@@ -52,6 +58,9 @@
             </thead>
             <tbody>
                 <tr *ngFor="let exercise of exercises">
+                    <td>
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type)" container="body"></fa-icon>
+                    </td>
                     <td>
                         <span>{{ exercise.title }}</span>
                         <span

@@ -6,13 +6,24 @@ import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
 import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { ExerciseTypePipe } from 'app/entities/exercise';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent],
+    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent, ExerciseTypePipe],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
-    exports: [ArTEMiSSharedCommonModule, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent],
+    exports: [
+        ArTEMiSSharedCommonModule,
+        HasAnyAuthorityDirective,
+        DatePipe,
+        SafeHtmlPipe,
+        SafeUrlPipe,
+        RemoveKeysPipe,
+        JhiDynamicTranslateDirective,
+        SecuredImageComponent,
+        ExerciseTypePipe,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSSharedModule {
