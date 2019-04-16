@@ -178,8 +178,9 @@
             "import": "Import",
             "export": "Export",
             "lecture": "Lecture",
-            "addAttachment": "Add attachment",
+            "attachments": "Attachments",
             "saveAttachment": "Save attachment",
+            "addAttachment": "Add attachment",
             "tutorCourseDashboard": "Tutor Course Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
@@ -243,6 +244,7 @@
     "overview": {
         "title": "Course overview",
         "course": "Course details",
+        "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics"
     }

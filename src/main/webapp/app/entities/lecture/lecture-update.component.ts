@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { JhiAlertService } from 'ng-jhipster';
@@ -33,8 +32,6 @@ export class LectureUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
-            this.startDate = this.lecture.startDate != null ? this.lecture.startDate.format(DATE_TIME_FORMAT) : null;
-            this.endDate = this.lecture.endDate != null ? this.lecture.endDate.format(DATE_TIME_FORMAT) : null;
             this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
                 this.lecture.course = response.body;
             });
@@ -47,8 +44,6 @@ export class LectureUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.lecture.startDate = this.startDate != null ? moment(this.startDate, DATE_TIME_FORMAT) : null;
-        this.lecture.endDate = this.endDate != null ? moment(this.endDate, DATE_TIME_FORMAT) : null;
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {

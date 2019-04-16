@@ -52,6 +52,7 @@ export class AttachmentService {
     protected convertDateFromClient(attachment: Attachment): Attachment {
         const copy: Attachment = Object.assign({}, attachment, {
             releaseDate: attachment.releaseDate != null && attachment.releaseDate.isValid() ? attachment.releaseDate.toJSON() : null,
+            uploadDate: attachment.uploadDate != null && attachment.uploadDate.isValid() ? attachment.uploadDate.toJSON() : null,
         });
         return copy;
     }
@@ -59,6 +60,7 @@ export class AttachmentService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
+            res.body.uploadDate = res.body.uploadDate != null ? moment(res.body.uploadDate) : null;
         }
         return res;
     }
@@ -67,6 +69,7 @@ export class AttachmentService {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {
                 attachment.releaseDate = attachment.releaseDate != null ? moment(attachment.releaseDate) : null;
+                attachment.uploadDate = attachment.uploadDate != null ? moment(attachment.uploadDate) : null;
             });
         }
         return res;

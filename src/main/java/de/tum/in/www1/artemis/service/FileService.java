@@ -58,6 +58,10 @@ public class FileService {
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
+        return manageFilesForUpdatedFilePath(oldFilePath, newFilePath, targetFolder, entityId, false);
+    }
+
+    public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId, Boolean keepFileName) {
         log.debug("Manage files for {} to {}", oldFilePath, newFilePath);
 
         if (oldFilePath != null) {
@@ -81,7 +85,7 @@ public class FileService {
             // rename and move file
             try {
                 Path source = Paths.get(actualPathForPublicPath(newFilePath));
-                File targetFile = generateTargetFile(newFilePath, targetFolder);
+                File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
                 newFilePath = publicPathForActualPath(target.toString(), entityId);
@@ -165,7 +169,7 @@ public class FileService {
      * @return the newly created file
      * @throws IOException
      */
-    private File generateTargetFile(String originalFilename, String targetFolder) throws IOException {
+    private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
@@ -173,6 +177,12 @@ public class FileService {
         }
         if (targetFolder.equals(Constants.DRAG_ITEM_FILEPATH)) {
             filenameBase = "DragItem_";
+        }
+        if (targetFolder.equals(Constants.COURSE_ICON_FILEPATH)) {
+            filenameBase = "CourseIcon_";
+        }
+        if (targetFolder.equals(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+            filenameBase = "LectureAttachment_";
         }
 
         // extract the file extension
@@ -192,11 +202,22 @@ public class FileService {
         File newFile;
         String filename;
         do {
-            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                    + fileExtension;
+            if (keepFileName) {
+                if (originalFilename.contains("/api/files/temp/")) {
+                    originalFilename = originalFilename.replace("/api/files/temp/", "");
+                }
+                filename = originalFilename;
+            }
+            else {
+                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                        + fileExtension;
+            }
             String path = targetFolder + filename;
 
             newFile = new File(path);
+            if (keepFileName && newFile.exists()) {
+                newFile.delete();
+            }
             fileCreated = newFile.createNewFile();
         }
         while (!fileCreated);

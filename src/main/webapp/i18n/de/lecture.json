@@ -20,7 +20,14 @@
                 "title": "Vorlesung"
             },
             "attachments": {
-                "title": "Anhänge der Vorlesung"
+                "title": "Anhänge der Vorlesung",
+                "name": "Name",
+                "type": "Typ",
+                "link": "Link",
+                "file": "Datei",
+                "releaseDate": "Freigabedatum",
+                "uploadDate": "Upload-Datum",
+                "version": "Version"
             }
         }
     }

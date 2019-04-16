@@ -10,7 +10,7 @@ export interface FileUploadResponse {
 export class FileUploaderService {
     constructor(private http: HttpClient) {}
 
-    uploadFile(file: Blob | File, fileName?: string): Promise<FileUploadResponse> {
+    uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
         /** Check file extension **/
         const fileExtension = fileName
             ? fileName
@@ -33,7 +33,8 @@ export class FileUploaderService {
 
         const formData = new FormData();
         formData.append('file', file, fileName);
-        return this.http.post<FileUploadResponse>('/api/fileUpload', formData).toPromise();
+        const url = options.keepFileName ? '/api/fileUpload?keepFileName=true' : '/api/fileUpload';
+        return this.http.post<FileUploadResponse>(url, formData).toPromise();
     }
 
     /**

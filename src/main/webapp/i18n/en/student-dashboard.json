@@ -22,7 +22,8 @@
             "showLess": "Show less",
             "menu": {
                 "exercises": "Exercises",
-                "statistics": "Statistics"
+                "statistics": "Statistics",
+                "lectures": "Lectures"
             },
             "exerciseList": {
                 "noExerciseDate": "No date associated",
@@ -68,6 +69,14 @@
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
                 "noStatistics": "No statistics available for the course."
+            },
+            "lectureList": {
+                "lectureGroupHeader": "Lectures: {{ total }}"
+            },
+            "lectureDetails": {
+                "description": "Description",
+                "attachments": "Attachments",
+                "lectureDate": "Date of lecture"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

@@ -177,8 +177,9 @@
             "import": "Import",
             "export": "Export",
             "lecture": "Vorlesung",
+            "attachments": "Anhänge",
+            "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
-            "addAttachment": "Anhang speichern",
             "tutorCourseDashboard": "Tutor Kurs Dashboard",
             "exerciseDashboard": "Aufgaben Dashboard",
             "newResult": "Neues Ergebnis",
@@ -240,6 +241,7 @@
         "title": "Kursübersicht",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
+        "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken"
     }
 }

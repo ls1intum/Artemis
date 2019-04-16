@@ -36,13 +36,12 @@ Course Info Bar
     margin-top: 25px;
 
     .chart-container {
-        position: relative;
         display: flex;
+        align-items: center;
         justify-content: center;
 
         .chart-text {
             position: absolute;
-            top: calc(50% - 35px);
         }
     }
 }

@@ -1,0 +1,26 @@
+<div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
+    <div class="col-auto d-none d-sm-block">
+        <div class="exercise-row-icon">
+            <fa-icon [icon]="'chalkboard-teacher'" size="2x" placement="right" [ngbTooltip]="'This is a lecture'" container="body"></fa-icon>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row">
+            <div class="col-auto d-sm-none">
+                <h4><fa-icon [icon]="'chalkboard-teacher'"></fa-icon></h4>
+            </div>
+            <div class="col-sm col">
+                <h4>{{ lecture.title }}</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-auto mb-2" *ngIf="lecture.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
+                <span class="d-none d-sm-inline"> {{ (lecture.startDate) | date: 'dd/MM/yy' }} </span>
+                ({{ (lecture.startDate) | amTimeAgo }})
+            </div>
+            <ng-template #noDate>
+                <div class="col-auto mb-2">{{ 'arTeMiSApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
+            </ng-template>
+        </div>
+    </div>
+</div>

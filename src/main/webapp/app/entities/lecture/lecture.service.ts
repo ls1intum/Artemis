@@ -67,11 +67,25 @@ export class LectureService {
 
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((lecture: Lecture) => {
-                lecture.startDate = lecture.startDate != null ? moment(lecture.startDate) : null;
-                lecture.endDate = lecture.endDate != null ? moment(lecture.endDate) : null;
+            res.body.map((lecture: Lecture) => {
+                return this.convertDatesForLectureFromServer(lecture);
             });
         }
         return res;
+    }
+
+    public convertDatesForLectureFromServer(lecture: Lecture): Lecture {
+        lecture.startDate = lecture.startDate ? moment(lecture.startDate) : null;
+        lecture.endDate = lecture.endDate ? moment(lecture.endDate) : null;
+        return lecture;
+    }
+
+    public convertDatesForLecturesFromServer(lectures: Lecture[]): Lecture[] {
+        if (!lectures) {
+            return lectures;
+        }
+        return lectures.map(lecture => {
+            return this.convertDatesForLectureFromServer(lecture);
+        });
     }
 }

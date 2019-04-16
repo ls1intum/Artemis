@@ -20,7 +20,14 @@
                 "title": "Lecture"
             },
             "attachments": {
-                "title": "Attachment of lecture"
+                "title": "Attachment of lecture",
+                "name": "Name",
+                "type": "Type",
+                "link": "Link",
+                "file": "File",
+                "releaseDate": "Release date",
+                "uploadDate": "Upload date",
+                "version": "Version"
             }
         }
     }

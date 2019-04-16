@@ -88,7 +88,7 @@ public class Attachment implements Serializable {
     public void beforeCreate() {
         if (attachmentType == AttachmentType.FILE) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH, getId());
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH, getId(), true);
         }
     }
 
@@ -104,7 +104,7 @@ public class Attachment implements Serializable {
     public void onUpdate() {
         if (attachmentType == AttachmentType.FILE) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.COURSE_ICON_FILEPATH, getId());
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.COURSE_ICON_FILEPATH, getId(), true);
         }
     }
 
@@ -112,7 +112,7 @@ public class Attachment implements Serializable {
     public void onDelete() {
         if (attachmentType == AttachmentType.FILE) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.COURSE_ICON_FILEPATH, getId());
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.COURSE_ICON_FILEPATH, getId(), true);
         }
     }
 

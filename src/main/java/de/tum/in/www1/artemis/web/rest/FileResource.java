@@ -54,7 +54,7 @@ public class FileResource {
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file) throws URISyntaxException {
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam("keepFileName") Boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
         // NOTE: Maximum file size is set in resources/config/application.yml
@@ -82,11 +82,19 @@ public class FileResource {
             File newFile;
             String filename;
             do {
-                filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
-                        + fileExtension;
+                if (keepFileName) {
+                    filename = file.getOriginalFilename();
+                }
+                else {
+                    filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                            + fileExtension;
+                }
                 String path = Constants.TEMP_FILEPATH + filename;
 
                 newFile = new File(path);
+                if (keepFileName && newFile.exists()) {
+                    newFile.delete();
+                }
                 fileCreated = newFile.createNewFile();
             }
             while (!fileCreated);
