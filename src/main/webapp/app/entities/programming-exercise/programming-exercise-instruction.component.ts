@@ -17,8 +17,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { filter, map } from 'rxjs/operators';
-import * as moment from 'moment';
+import { filter, flatMap, map } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
@@ -28,7 +27,6 @@ import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { Participation } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { JhiWebsocketService, AccountService } from 'app/core';
 import { Observable } from 'rxjs';
 
 type Step = {
@@ -60,7 +58,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isInitial = true;
     public isLoading = true;
     private latestResult: Result;
-    private resultDetails: Feedback[];
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
@@ -99,7 +96,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 })
                 .then(() => this.subscribeResultsForParticipation())
                 .then(() => this.isInitial && this.loadInitialResult())
+                .then((result: Result) => (this.latestResult = result))
                 .finally(() => {
+                    this.updateMarkdown();
                     this.isInitial = false;
                 });
         }
@@ -110,44 +109,29 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.unsubscribeResults();
         }
         return this.resultWebsocketService
-            .subscribeResultForParticipation(this.participation.id, this.handleNewResult.bind(this))
+            .subscribeResultForParticipation(this.participation.id, (result: Result) => {
+                this.latestResult = result;
+                this.updateMarkdown();
+            })
             .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
     }
 
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    async loadInitialResult() {
+    async loadInitialResult(): Promise<Result> {
         return new Promise((resolve, reject) => {
             if (this.participation && this.participation.results && this.participation.results.length) {
                 // Get the result with the highest id (most recent result)
-                resolve(this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc)));
+                const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+                return this.loadAndAttachResultDetails(latestResult).subscribe(result => (result ? resolve(result) : reject()), () => reject());
             } else if (this.exercise && this.exercise.id) {
                 // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
-                return this.loadLatestResult().subscribe(result => (result ? resolve(result) : reject()));
+                return this.loadLatestResult().subscribe(result => (result ? resolve(result) : reject()), () => reject());
             } else {
                 reject();
             }
-        })
-            .catch(() => this.updateMarkdown())
-            .then((result: Result) => {
-                return this.handleNewResult(result);
-            });
-    }
-
-    /**
-     * If a new result is received, this method is triggered.
-     * It only reacts if this is the first result received or the result is new.
-     * @param latestResult
-     */
-    async handleNewResult(newResult: Result) {
-        // If the same result comes again, don't handle it
-        if (!this.latestResult || newResult.id !== this.latestResult.id) {
-            this.latestResult = newResult;
-            return this.loadResultsDetails().finally(() => this.updateMarkdown());
-        }
-        this.updateMarkdown();
-        Promise.resolve();
+        });
     }
 
     /**
@@ -169,28 +153,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null
      */
     loadLatestResult(): Observable<Result> {
-        return this.resultService
-            .findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id)
-            .pipe(map((latestResult: any) => (latestResult.body.length ? latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc)) : null)));
+        return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
+            filter((latestResult: any) => !latestResult.body.length),
+            map((latestResult: { body: Result[] }) => latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc))),
+            flatMap((latestResult: Result) => this.loadAndAttachResultDetails(latestResult)),
+        );
     }
 
     /**
      * @function loadResultDetails
      * @desc Fetches details for the result (if we received one) => Input latestResult
      */
-    loadResultsDetails(): Promise<void> {
-        return new Promise((resolve, reject) =>
-            this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
-                resultDetails => {
-                    this.resultDetails = resultDetails.body;
-                    this.latestResult.feedbacks = this.resultDetails;
-                    resolve();
-                },
-                err => {
-                    console.log('Error while loading result details!', err);
-                    reject();
-                },
-            ),
+    loadAndAttachResultDetails(result: Result): Observable<Result> {
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+            map(({ body }: { body: Feedback[] }) => body),
+            map((feedbacks: Feedback[]) => {
+                result.feedbacks = feedbacks;
+                return result;
+            }),
         );
     }
 
@@ -498,10 +478,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.resultDetails && this.resultDetails.length > 0) {
+        if (this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
             let failedTests = 0;
             for (const test of tests) {
-                for (const result of this.resultDetails) {
+                for (const result of this.latestResult.feedbacks) {
                     if (result.text === test) {
                         failedTests++;
                     }

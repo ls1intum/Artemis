@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -28,14 +29,16 @@ public class ResultService {
     private final UserService userService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
+    private final FeedbackService feedbackService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final LtiService ltiService;
     private final SimpMessageSendingOperations messagingTemplate;
 
 
-    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+    public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
         this.userService = userService;
         this.participationService = participationService;
+        this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
@@ -91,6 +94,8 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+        List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result);
+        result.setFeedbacks(feedbackItems);
         notifyUser(participation, result);
     }
 
