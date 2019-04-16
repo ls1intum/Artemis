@@ -10,8 +10,8 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',

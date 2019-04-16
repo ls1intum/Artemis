@@ -15,8 +15,8 @@ import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-modeling-submission',
