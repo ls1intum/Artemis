@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.TutorParticipation;
 
 /**
  * Spring Data JPA repository for the ExampleSubmission entity.
@@ -19,8 +18,6 @@ import de.tum.in.www1.artemis.domain.TutorParticipation;
 public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
 
     List<ExampleSubmission> findAllByExerciseId(long exerciseId);
-
-    List<ExampleSubmission> findAllByExerciseIdAndTutorParticipation(Long exercise_id, TutorParticipation tutorParticipation);
 
     List<ExampleSubmission> findAllByExerciseIdAndUsedForTutorial(Long exercise_id, Boolean usedForTutorial);
 

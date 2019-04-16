@@ -148,7 +148,7 @@ public class TextExerciseResource {
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
+            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
         groupNotificationService.notifyGroupAboutExerciseChange(textExercise);
