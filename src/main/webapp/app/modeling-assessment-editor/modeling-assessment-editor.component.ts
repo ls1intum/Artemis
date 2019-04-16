@@ -98,8 +98,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
                 this.location.go(newUrl);
             },
-            error => {
-                this.onError();
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there is no submission waiting for assessment at the moment
+                    this.goToExerciseDashboard();
+                    this.jhiAlertService.info('arTeMiSApp.tutorExerciseDashboard.noSubmissions');
+                } else {
+                    this.onError();
+                }
             },
         );
     }
@@ -251,7 +257,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
     }
 
-    back() {
-        this.location.back();
+    goToExerciseDashboard() {
+        this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
     }
 }
