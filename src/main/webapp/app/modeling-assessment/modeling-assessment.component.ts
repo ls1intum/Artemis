@@ -52,6 +52,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                     },
                     inertia: true,
                 })
+                .on('resizestart', function(event: any) {
+                    event.target.classList.add('card-resizable');
+                })
+                .on('resizeend', function(event: any) {
+                    event.target.classList.remove('card-resizable');
+                })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
                     target.style.width = event.rect.width + 'px';
