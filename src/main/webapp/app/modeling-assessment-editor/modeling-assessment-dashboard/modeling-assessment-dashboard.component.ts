@@ -11,8 +11,8 @@ import { Result, ResultDetailComponent, ResultService } from 'app/entities/resul
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
