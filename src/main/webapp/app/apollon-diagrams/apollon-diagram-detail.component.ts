@@ -22,6 +22,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     /** Wether to crop the downloaded image to the selection. */
     crop = true;
 
+    /** Wether some elements are selected in the apollon editor. */
+    get hasSelection(): boolean {
+        return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
+    }
+
     constructor(
         private apollonDiagramService: ApollonDiagramService,
         private jhiAlertService: JhiAlertService,
@@ -109,10 +114,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        const { selection } = this.apollonEditor;
+        if (!this.hasSelection) {
+            return;
+        }
+
+        const selection = [...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships];
         const svg = this.apollonEditor.exportAsSVG({
             keepOriginalSize: !this.crop,
-            include: [...selection.elements, ...selection.relationships],
+            include: selection,
         });
         const png = await convertRenderedSVGToPNG(svg);
         this.download(png);

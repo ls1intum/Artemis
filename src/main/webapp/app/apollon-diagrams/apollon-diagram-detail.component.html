@@ -10,7 +10,7 @@
                 <input type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="arTeMiSApp.apollonDiagram.detail.crop">Crop</span>
             </label>
             <fa-icon class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'arTeMiSApp.apollonDiagram.detail.help' | translate }}"></fa-icon>
-            <button class="btn btn-info mr-1" (click)="downloadSelection()" [hidden]="!apollonDiagram">
+            <button class="btn btn-info mr-1" (click)="downloadSelection()" [hidden]="!apollonDiagram" [disabled]="!hasSelection">
                 <fa-icon [icon]="'download'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
             </button>
             <span class="border-right border-secondary mr-2"></span>
