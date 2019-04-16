@@ -70,10 +70,14 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Given an exercise, find a random modeling submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
-     * element of the stream. While it is not mathematically random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
+     * Given an exercise, find a modeling submission for that exercise which still doesn't have any result.
+     * If the diagram type is supported by Compass we get the next optimal submission from Compass, i.e. the submission
+     * for which an assessment means the most knowledge gain for the automatic assessment mechanism.
+     * If it's not supported by Compass we just get a random submission without assessment. We relay for the randomness
+     * to `findAny()`, which return any element of the stream. While it is not mathematically random, it is not
+     * deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
      *
-     * @param modelingExercise the modeling exercise for which we want to get a modeling submission
+     * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @return a modeling submission without any result
      */
     @Transactional(readOnly = true)
@@ -86,9 +90,8 @@ public class ModelingSubmissionService {
             }
         }
         // otherwise return any submission that is not assessed
-        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-                .peek(participation -> participation.getExercise().setParticipations(null))
-                // Map to Latest Submission
+        return participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
+                // map to latest submission
                 .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
     }
 

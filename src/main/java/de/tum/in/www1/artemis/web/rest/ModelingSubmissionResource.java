@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.*;
 import org.springframework.http.*;
@@ -169,16 +171,7 @@ public class ModelingSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
-        if (modelingSubmission.getResult() == null) {
-            modelingSubmissionService.setNewResult(modelingSubmission);
-        }
-        if (modelingSubmission.getResult().getAssessor() == null) {
-            if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), submissionId);
-            }
-            // we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
-            resultService.setAssessor(modelingSubmission.getResult());
-        }
+        lockSubmission(modelingSubmission, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
         modelingSubmission.getParticipation().setExercise(modelingExercise);
         hideDetails(modelingSubmission);
@@ -192,8 +185,9 @@ public class ModelingSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    @Transactional
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+                                                                                     @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -204,9 +198,74 @@ public class ModelingSubmissionResource {
             return badRequest();
         }
 
-        Optional<ModelingSubmission> modelingSubmissionWithoutAssessment = this.modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+        Optional<ModelingSubmission> optionalModelingSubmissionWithoutAssessment =
+            this.modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+        if (!optionalModelingSubmissionWithoutAssessment.isPresent()) {
+            return notFound();
+        }
 
-        return ResponseUtil.wrapOrNotFound(modelingSubmissionWithoutAssessment);
+        ModelingSubmission modelingSubmission = optionalModelingSubmissionWithoutAssessment.get();
+        if (lockSubmission) {
+            lockSubmission(modelingSubmission, (ModelingExercise) exercise);
+        }
+
+        // Make sure the exercise is connected to the participation in the json response
+        modelingSubmission.getParticipation().setExercise(exercise);
+        hideDetails(modelingSubmission);
+        return ResponseEntity.ok(modelingSubmission);
+    }
+
+    // TODO MJ add api documentation (returns list of submission ids as array)
+    @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+            if (optimalModelSubmissions.isEmpty()) {
+                return ResponseEntity.ok(new Long[] {}); // empty
+            }
+            return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
+        }
+        else {
+            return ResponseEntity.ok(new Long[] {}); // empty
+        }
+    }
+
+    @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.resetModelsWaitingForAssessment(exerciseId);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it.
+     * We remove the model from the models waiting for assessment in Compass to prevent other tutors from retrieving it
+     * in the first place.
+     * Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client
+     * will not allow tutors to assess a model when an assessor is already assigned. If no result exists for this
+     * submission we create one first.
+     *
+     * @param modelingSubmission the submission to lock
+     * @param modelingExercise the exercise to which the submission belongs to (needed for Compass)
+     */
+    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        if (modelingSubmission.getResult() == null) {
+            modelingSubmissionService.setNewResult(modelingSubmission);
+        }
+        if (modelingSubmission.getResult().getAssessor() == null) {
+            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
+            }
+            resultService.setAssessor(modelingSubmission.getResult());
+        }
     }
 
     private void hideDetails(ModelingSubmission modelingSubmission) {
