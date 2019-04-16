@@ -258,6 +258,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     goToExerciseDashboard() {
-        this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
+        if (this.modelingExercise && this.modelingExercise.course) {
+            this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
     }
 }
