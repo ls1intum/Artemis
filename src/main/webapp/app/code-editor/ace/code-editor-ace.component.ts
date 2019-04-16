@@ -120,8 +120,18 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     .clearAnnotations();
             }
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (this.editorFileSessions[this.selectedFile] && !this.editorFileSessions[this.selectedFile].code) {
+            if (!this.editorFileSessions[this.selectedFile].code) {
                 this.loadFile(this.selectedFile);
+                // Reset the undo stack after file change, otherwise the user can undo back to the old file
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setUndoManager(new ace.UndoManager());
+            } else {
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setValue(this.editorFileSessions[this.selectedFile].code);
             }
         }
         // Update editor file session object to include new files and remove old files
@@ -279,6 +289,12 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 this.editor.setMode(this.editorMode);
                 this.editor.getEditor().resize();
                 this.editor.getEditor().focus();
+                this.editor.getEditor().setValue(this.editorFileSessions[this.selectedFile].code || '', -1);
+                // Reset the undo stack after file change, otherwise the user can undo back to the old file
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setUndoManager(new ace.UndoManager());
             },
             err => {
                 console.log('There was an error while getting file', this.selectedFile, err);

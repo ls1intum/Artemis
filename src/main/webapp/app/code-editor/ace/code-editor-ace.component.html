@@ -9,7 +9,6 @@
     <div class="card-body">
         <ace-editor
             #editor
-            [text]="editorFileSessions[selectedFile] ? editorFileSessions[selectedFile].code : ''"
             [mode]="editorMode"
             [readOnly]="false"
             [autoUpdateContent]="true"
