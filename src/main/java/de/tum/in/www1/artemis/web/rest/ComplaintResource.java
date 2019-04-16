@@ -137,7 +137,7 @@ public class ComplaintResource {
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmission(exerciseId);
+        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
 
         if (!databaseComplaints.isPresent()) {
             return ResponseEntity.ok(responseComplaints);
