@@ -75,7 +75,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.8.0'
+version = '2.8.1'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
