@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 
 /**
  * A TutorParticipation.
@@ -39,8 +42,10 @@ public class TutorParticipation implements Serializable {
     @ManyToOne
     private User tutor;
 
-    @OneToMany(mappedBy = "tutorParticipation")
+    @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JoinTable(name = "tutor_participation_trained_example_submissions", joinColumns = @JoinColumn(name = "tutor_participation_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "trained_example_submissions_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "tutorParticipations" })
     private Set<ExampleSubmission> trainedExampleSubmissions = new HashSet<>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -115,13 +120,13 @@ public class TutorParticipation implements Serializable {
 
     public TutorParticipation addTrainedExampleSubmissions(ExampleSubmission exampleSubmission) {
         this.trainedExampleSubmissions.add(exampleSubmission);
-        exampleSubmission.setTutorParticipation(this);
+        exampleSubmission.getTutorParticipations().add(this);
         return this;
     }
 
     public TutorParticipation removeTrainedExampleSubmissions(ExampleSubmission exampleSubmission) {
         this.trainedExampleSubmissions.remove(exampleSubmission);
-        exampleSubmission.setTutorParticipation(null);
+        exampleSubmission.getTutorParticipations().remove(this);
         return this;
     }
 
@@ -152,10 +157,6 @@ public class TutorParticipation implements Serializable {
 
     @Override
     public String toString() {
-        return "TutorParticipation{" +
-            "id=" + getId() +
-            ", status='" + getStatus() + "'" +
-            ", points=" + getPoints() +
-            "}";
+        return "TutorParticipation{" + "id=" + getId() + ", status='" + getStatus() + "'" + ", points=" + getPoints() + "}";
     }
 }
