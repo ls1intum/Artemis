@@ -210,7 +210,7 @@
         {{ 'arTeMiSApp.tutorExerciseDashboard.complaints' | translate }}
     </h2>
     <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-        <table class="table table-striped exercise-table" *ngIf="complaints.length > 0; else noComplaints">
+        <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
             <thead>
             <tr>
                 <th>#</th>
