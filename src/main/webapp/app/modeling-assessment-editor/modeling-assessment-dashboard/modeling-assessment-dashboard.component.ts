@@ -13,7 +13,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
 import { retryWhen } from 'rxjs/operators';
-import { ModelingAssessmentService, genericRetryStrategy } from '../modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
