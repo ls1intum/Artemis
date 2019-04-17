@@ -137,6 +137,10 @@ export class LectureAttachmentsComponent implements OnInit {
             return this.saveAttachment();
         }
 
+        if (!this.attachmentToBeCreated.name || !file) {
+            return;
+        }
+
         this.isUploadingAttachment = true;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {

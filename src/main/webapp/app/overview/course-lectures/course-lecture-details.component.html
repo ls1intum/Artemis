@@ -35,7 +35,7 @@
                     <h3>{{ 'arTeMiSApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2">
+            <div class="row mb-2" *ngIf="lecture.attachments">
                 <a href="{{ attachment.link }}" target="_blank" class="col-3" *ngFor="let attachment of lecture.attachments">
                     <div class="attachment-wrapper">
                         <div class="attachment-icon">

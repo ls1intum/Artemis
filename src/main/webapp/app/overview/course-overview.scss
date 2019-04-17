@@ -69,7 +69,7 @@ Course Info Bar
     padding-top: 29px;
 
     .exercise-panel {
-        .row {
+        .row.has-exercises {
             cursor: pointer;
             border-radius: 3px;
             &:hover {
