@@ -57,7 +57,7 @@ public class ModelAssessmentConflict {
         this.id = id;
     }
 
-    public ConflictingResult getCausingResult() {
+    public ConflictingResult getCausingConflictingResult() {
         return causingConflictingResult;
     }
 
@@ -95,5 +95,10 @@ public class ModelAssessmentConflict {
 
     public void setResultsInConflict(Set<ConflictingResult> resultsInConflict) {
         this.resultsInConflict = resultsInConflict;
+    }
+
+    public boolean isResolved() {
+        return (state == EscalationState.RESOLVED_BY_CAUSER || state == EscalationState.RESOLVED_BY_OTHER_TUTORS || state == EscalationState.RESOLVED_BY_INSTRUCTOR)
+                && resolutionDate != null;
     }
 }

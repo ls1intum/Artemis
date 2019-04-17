@@ -191,16 +191,17 @@ public class CompassService {
 
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
-        if (elementConflictingFeedbackMapping.isEmpty()) {
+        Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
+        if (conflictingFeedbacks.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
         else {
-            List<ModelAssessmentConflict> conflicts = modelAssessmentConflictService.createConflicts(elementConflictingFeedbackMapping, result);
-            modelAssessmentConflictService.saveConflicts(conflicts);
-            return conflicts;
+            List<ModelAssessmentConflict> existingUnresolvedConflicts = modelAssessmentConflictService.getUnresolvedConflictsForResult(result);
+            modelAssessmentConflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
+            modelAssessmentConflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
+            modelAssessmentConflictService.saveConflicts(existingUnresolvedConflicts);
+            return existingUnresolvedConflicts;
         }
-
     }
 
     /**
