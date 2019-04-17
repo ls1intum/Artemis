@@ -26,20 +26,17 @@ export class SystemNotificationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user: User) => {
-                if (user) {
-                    this.loadActiveNotification();
-                    // maybe use connectedPromise as a set function
-                    setTimeout(() => {
-                        this.jhiWebsocketService.bind('connect', () => {
-                            this.subscribeSocket();
-                        });
-                    }, 500);
-                }
-            })
-            .catch(error => console.log(error));
+        this.accountService.getAuthenticationState().subscribe((user: User) => {
+            if (user) {
+                this.loadActiveNotification();
+                // maybe use connectedPromise as a set function
+                setTimeout(() => {
+                    this.jhiWebsocketService.bind('connect', () => {
+                        this.subscribeSocket();
+                    });
+                }, 500);
+            }
+        });
     }
 
     loadActiveNotification() {
