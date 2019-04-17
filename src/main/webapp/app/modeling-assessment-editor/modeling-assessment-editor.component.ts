@@ -58,7 +58,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.route.params.subscribe(params => {
             const submissionId: String = params['submissionId'];
             const exerciseId = Number(params['exerciseId']);
-            console.log('submission id: ' + submissionId);
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
@@ -77,8 +76,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
-                console.log('loaded submission:');
-                console.log(submission);
                 this.handleReceivedSubmission(submission);
             },
             error => {
@@ -90,8 +87,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     loadOptimalSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
-                console.log('loaded optimal submission:');
-                console.log(submission);
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
