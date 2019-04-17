@@ -6,6 +6,7 @@ import { JhiWebsocketService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
 import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
+import { Attachment } from 'app/entities/attachment';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -52,5 +53,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     backToCourse() {
         this.$location.back();
+    }
+
+    attachmentNotReleased(attachment: Attachment) {
+        return !moment(attachment.releaseDate).isBefore(moment());
     }
 }

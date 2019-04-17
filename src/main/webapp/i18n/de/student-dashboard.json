@@ -81,7 +81,8 @@
                 "description": "Beschreibung",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
-                "lectureDate": "Datum:"
+                "lectureDate": "Datum:",
+                "notReleased": "Nicht freigegeben"
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",

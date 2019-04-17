@@ -84,10 +84,13 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lecture = lectureRepository.findById(id);
+        if (lecture.isPresent()) {
+            lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
+        }
         return ResponseUtil.wrapOrNotFound(lecture);
     }
 

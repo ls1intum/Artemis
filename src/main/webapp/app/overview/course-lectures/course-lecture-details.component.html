@@ -39,7 +39,7 @@
                 <ul>
                     <li *ngFor="let attachment of lecture.attachments">
                         <a href="{{ attachment.link }}" target="_blank">
-                            {{ attachment.name }}
+                            {{ attachment.name }} <span class="badge badge-warning" *ngIf="attachmentNotReleased(attachment)">{{"arTeMiSApp.courseOverview.lectureDetails.notReleased" | translate}}</span>
                         </a>
 
                     </li>

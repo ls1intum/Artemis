@@ -81,7 +81,8 @@
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "lectureDate": "Date:"
+                "lectureDate": "Date:",
+                "notReleased": "Not released"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
