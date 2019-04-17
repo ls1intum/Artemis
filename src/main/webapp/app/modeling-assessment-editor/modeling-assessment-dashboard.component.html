@@ -93,7 +93,7 @@
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
         >
     </p>
-    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (modelingExercise.diagramType !== CLASS_DIAGRAM || allSubmissionsVisible)">
+    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (!modelingExercise.automaticAssessmentSupported || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
