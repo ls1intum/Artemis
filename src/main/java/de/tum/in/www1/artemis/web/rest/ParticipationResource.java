@@ -246,7 +246,8 @@ public class ParticipationResource {
 
     /**
      * GET /exercise/{exerciseId}/participation-without-assessment Given an exerciseId of a text exercise, retrieve a participation where the latest submission has no assessment
-     * returns 404 If any, it creates the result and assign to the tutor, as a draft
+     * returns 404 If any, it creates the result and assign to the tutor, as a draft. This also involves a soft lock (setting the assessor of the result) so that other tutors
+     * cannot assess the submission. TODO unify this approach with the one for modeling exercises
      *
      * @param exerciseId the id of the exercise of which we want a submission
      * @return a student participation
