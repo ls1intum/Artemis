@@ -417,6 +417,7 @@ public class ResultResource {
 
         try {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
+            // TODO: send an empty list to the client and do not send a 404
             return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(notFound());
         }
         catch (Exception e) {

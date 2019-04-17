@@ -112,13 +112,11 @@ public class BambooService implements ContinuousIntegrationService {
         String projectKey = getProjectKeyFromBuildPlanId(templateBuildPlanId);
         try {
             return clonePlan(projectKey, getPlanKeyFromBuildPlanId(templateBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
-        }
-        catch(BambooException bambooException) {
+        } catch (BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
                 log.info("Build Plan already exists. Going to recover build plan information...");
                 return getProjectKeyFromBuildPlanId(templateBuildPlanId) + "-" + wantedPlanKey;
-            }
-            else throw bambooException;
+            } else throw bambooException;
         }
     }
 
@@ -145,7 +143,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         // Empty commit - Bamboo bug workaround
 
-        if(BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
+        if (BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
             try {
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
                 gitService.commitAndPush(repo, "Setup");
@@ -153,8 +151,7 @@ public class BambooService implements ContinuousIntegrationService {
                 if (exercise == null) {
                     log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
                     gitService.deleteLocalRepository(repo);
-                }
-                else {
+                } else {
                     //only delete the git repository, if the online editor is NOT allowed
                     //this saves some performance on the server, when the student opens the online editor, because the repo does not need to be cloned again
                     //Note: the null check is necessary, because otherwise we might get a null pointer exception
@@ -218,17 +215,19 @@ public class BambooService implements ContinuousIntegrationService {
         }
         if (status.get("isActive") && !status.get("isBuilding")) {
             return BuildStatus.QUEUED;
-        }
-        else if (status.get("isActive") && status.get("isBuilding")) {
+        } else if (status.get("isActive") && status.get("isBuilding")) {
             return BuildStatus.BUILDING;
-        }
-        else {
+        } else {
             return BuildStatus.INACTIVE;
         }
     }
 
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
+        if (result.getParticipation() == null || result.getParticipation().getBuildPlanId() == null) {
+            // most probably the build was cleaned and we do not have access to it any more.
+            return null;
+        }
         Map<String, Object> buildResultDetails = retrieveLatestBuildResult(result.getParticipation().getBuildPlanId());
         List<Feedback> feedbackItems = addFeedbackToResult(result, buildResultDetails);
         return feedbackItems;
@@ -254,9 +253,9 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param templateProject The Bamboo project in which the plan is contained.
      * @param templatePlan    The plan's name.
-     * @param toProject   The Bamboo project in which the new plan should be contained.
-     * @param name        The name to give the cloned plan.
-     * @return            The name of the new build plan
+     * @param toProject       The Bamboo project in which the new plan should be contained.
+     * @param name            The name to give the cloned plan.
+     * @return The name of the new build plan
      */
     public String clonePlan(String templateProject, String templatePlan, String toProject, String name) throws BambooException {
 
@@ -352,7 +351,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         if (buildResults.containsKey("buildReason")) {
-            String buildReason = (String)buildResults.get("buildReason");
+            String buildReason = (String) buildResults.get("buildReason");
             if (buildReason.contains("First build for this plan")) {
                 //Filter the first build plan that was automatically executed when the build plan was created
                 return null;
@@ -463,7 +462,7 @@ public class BambooService implements ContinuousIntegrationService {
             List<Object> vcsList = (List<Object>) buildMap.get("vcs");
 
             String commitHash = null;
-            for(Object changeSet : vcsList) {
+            for (Object changeSet : vcsList) {
                 Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
                 if (changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
                     commitHash = (String) changeSetMap.get("id");
@@ -506,38 +505,38 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Converts build result details into feedback and stores it in the result object
+     *
      * @param
      * @param buildResultDetails returned build result details from the rest API of bamboo
-     *
      * @return a list of feedbacks itemsstored in a result
      */
     public List<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
-        if(buildResultDetails == null) {
+        if (buildResultDetails == null) {
             return null;
         }
 
         try {
-            List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");
-            if(!details.isEmpty()) {
+            List<Map<String, Object>> details = (List<Map<String, Object>>) buildResultDetails.get("details");
+            if (!details.isEmpty()) {
                 result.setHasFeedback(true);
             }
             //breaking down the Bamboo API answer to get all the relevant details
-            for(Map<String, Object> detail : details) {
-                String className = (String)detail.get("className");
-                String methodName = (String)detail.get("methodName");
+            for (Map<String, Object> detail : details) {
+                String className = (String) detail.get("className");
+                String methodName = (String) detail.get("methodName");
 
                 Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
-                List<Map<String, Object>> errors = (List<Map<String, Object>>)errorsMap.get("error");
+                List<Map<String, Object>> errors = (List<Map<String, Object>>) errorsMap.get("error");
 
                 String errorMessageString = "";
-                for(Map<String, Object> error : errors) {
+                for (Map<String, Object> error : errors) {
                     //Splitting string at the first linebreak to only get the first line of the Exception
-                    errorMessageString += ((String)error.get("message")).split("\\n", 2)[0] + "\n";
+                    errorMessageString += ((String) error.get("message")).split("\\n", 2)[0] + "\n";
                 }
 
                 createAutomaticFeedback(result, methodName, errorMessageString);
             }
-        } catch(Exception failedToParse) {
+        } catch (Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
         }
 
@@ -556,13 +555,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Converts build result details into feedback and stores it in the result object
-     * @param result the result for which the feedback should be added
-     * @param failedJobs the failedJobs list of the requestBody
      *
+     * @param result     the result for which the feedback should be added
+     * @param failedJobs the failedJobs list of the requestBody
      * @return a list of feedbacks itemsstored in a result
      */
     public List<Feedback> addFeedbackToResultNew(Result result, List<Object> failedJobs) {
-        if(failedJobs == null) {
+        if (failedJobs == null) {
             return null;
         }
 
@@ -581,7 +580,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                     List<String> errors = (List<String>) failedTest.get("errors");
                     String errorMessageString = "";
-                    for(String error : errors) {
+                    for (String error : errors) {
                         //Splitting string at the first linebreak to only get the first line of the Exception
                         errorMessageString += error.split("\\n", 2)[0] + "\n";
                     }
@@ -592,7 +591,7 @@ public class BambooService implements ContinuousIntegrationService {
                 }
             }
 
-        } catch (Exception e)  {
+        } catch (Exception e) {
             log.error("Could not get feedback from failedJobs " + e);
         }
 
@@ -670,13 +669,13 @@ public class BambooService implements ContinuousIntegrationService {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }
             if (response.getBody().containsKey("changes")) {
-                Map<String, Object> changesEntry = (Map<String, Object>)response.getBody().get("changes");
+                Map<String, Object> changesEntry = (Map<String, Object>) response.getBody().get("changes");
                 int size = (int) changesEntry.get("size");
                 if (changesEntry.containsKey("change")) {
                     List<Object> changesList = (List<Object>) changesEntry.get("change");
                     if (changesList.size() > 0) {
                         //Take the latest change, i.e. size - 1
-                        Map<String, Object> change = (Map<String, Object>)changesList.get(size - 1);
+                        Map<String, Object> change = (Map<String, Object>) changesList.get(size - 1);
                         if (change.containsKey("changesetId")) {
                             result.put("changesetId", change.get("changesetId"));
                         }
@@ -685,15 +684,14 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             //search for artifacts: take the first one that is not a build log
-            if(response.getBody().containsKey("artifacts")) {
-                Map<String, Object> artifactsEntity = (Map<String, Object>)response.getBody().get("artifacts");
-                if((int)artifactsEntity.get("size") > 0 && artifactsEntity.containsKey("artifact")) {
+            if (response.getBody().containsKey("artifacts")) {
+                Map<String, Object> artifactsEntity = (Map<String, Object>) response.getBody().get("artifacts");
+                if ((int) artifactsEntity.get("size") > 0 && artifactsEntity.containsKey("artifact")) {
                     List<Map<String, Object>> artifacts = (List<Map<String, Object>>) artifactsEntity.get("artifact");
-                    for(Map<String, Object> artifact : artifacts) {
-                        if (((String)artifact.get("name")).equalsIgnoreCase("Build log")) {
+                    for (Map<String, Object> artifact : artifacts) {
+                        if (((String) artifact.get("name")).equalsIgnoreCase("Build log")) {
                             continue;
-                        }
-                        else {
+                        } else {
                             String link = (String) ((Map<String, Object>) artifact.get("link")).get("href");
                             result.put("artifact", link);
                         }
@@ -771,7 +769,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Gets the latest available artifact for the given plan key
      *
-      * @param participation
+     * @param participation
      * @return
      */
     public ResponseEntity retrieveLatestArtifact(Participation participation) {
@@ -779,12 +777,11 @@ public class BambooService implements ContinuousIntegrationService {
         Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
         // If the build has an artifact, the response contains an artifact key.
         // It seems this key is only available if the "Share" checkbox in Bamboo was used.
-        if(latestResult.containsKey("artifact")) {
+        if (latestResult.containsKey("artifact")) {
             // The URL points to the directory. Bamboo returns an "Index of" page.
             // Recursively walk through the responses until we get the actual artifact.
-            return retrieveArtifactPage((String)latestResult.get("artifact"));
-        }
-        else {
+            return retrieveArtifactPage((String) latestResult.get("artifact"));
+        } else {
             throw new BambooException("No build artifact available for this plan");
         }
     }
@@ -812,10 +809,10 @@ public class BambooService implements ContinuousIntegrationService {
                     HttpMethod.GET,
                     entity,
                     Map.class);
-                if ((Integer)response.getBody().get("size") != 0) {
+                if ((Integer) response.getBody().get("size") != 0) {
                     List<Object> ciProjects = (List<Object>) response.getBody().get("searchResults");
                     for (Object ciProject : ciProjects) {
-                        String ciProjectName = (String) ((Map)((Map) ciProject).get("searchEntity")).get("projectName");
+                        String ciProjectName = (String) ((Map) ((Map) ciProject).get("searchEntity")).get("projectName");
                         if (ciProjectName.equalsIgnoreCase(projectName)) {
                             log.warn("Bamboo project with name" + projectName + " already exists");
                             return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
@@ -849,7 +846,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         //Note: Content-Type might contain additional elements such as the UTF-8 encoding, therefore we now use contains instead of equals
-        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).contains("text/html")) {
+        if (response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).contains("text/html")) {
             // This is an "Index of" HTML page.
             String html = new String(response.getBody(), StandardCharsets.UTF_8);
             Pattern pattern = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
@@ -861,8 +858,7 @@ public class BambooService implements ContinuousIntegrationService {
             } else {
                 throw new BambooException("No artifact link found on artifact page");
             }
-        }
-        else {
+        } else {
             // Actual artifact file
             return response;
         }
