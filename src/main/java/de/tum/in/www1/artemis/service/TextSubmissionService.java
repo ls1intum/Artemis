@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -35,6 +38,31 @@ public class TextSubmissionService {
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Handles text submissions sent from the client and saves them in the database.
+     *
+     * @param textSubmission the text submission that should be saved
+     * @param textExercise the corresponding text exercise
+     * @param principal the user principal
+     * @return the saved text submission
+     */
+    @Transactional
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
+        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
+            textSubmission = save(textSubmission);
+        }
+        else {
+            Optional<Participation> optionalParticipation =
+                participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+            if (!optionalParticipation.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
+            }
+            Participation participation = optionalParticipation.get();
+            textSubmission = save(textSubmission, textExercise, participation);
+        }
+        return textSubmission;
     }
 
     /**

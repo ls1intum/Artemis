@@ -25,6 +25,8 @@ public class ModelingSubmissionService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
+    private final ResultService resultService;
+
     private final ResultRepository resultRepository;
 
     private final CompassService compassService;
@@ -33,9 +35,10 @@ public class ModelingSubmissionService {
 
     private final ParticipationRepository participationRepository;
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultRepository resultRepository, CompassService compassService,
-            ParticipationService participationService, ParticipationRepository participationRepository) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository, CompassService compassService,
+                                     ParticipationService participationService, ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
@@ -67,6 +70,21 @@ public class ModelingSubmissionService {
             participation.getExercise().setParticipations(null);
         }
         return submissions;
+    }
+
+    @Transactional
+    public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+        ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedback(submissionId);
+        lockSubmission(modelingSubmission, modelingExercise);
+        return modelingSubmission;
+    }
+
+    @Transactional
+    public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
+        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutResult(modelingExercise)
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+        lockSubmission(modelingSubmission, modelingExercise);
+        return modelingSubmission;
     }
 
     /**
@@ -128,11 +146,17 @@ public class ModelingSubmissionService {
      *
      * @param modelingSubmission the submission to notifyCompass
      * @param modelingExercise   the exercise to notifyCompass in
-     * @param participation      the participation where the result should be saved
+     * @param username           the name of the corresponding user
      * @return the modelingSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
-    public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
+    public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
+
+        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), username);
+        if (!optionalParticipation.isPresent()) {
+            throw new EntityNotFoundException("No participation found for " + username + " in exercise " + modelingExercise.getId());
+        }
+        Participation participation = optionalParticipation.get();
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -165,11 +189,34 @@ public class ModelingSubmissionService {
     }
 
     /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it.
+     * We remove the model from the models waiting for assessment in Compass to prevent other tutors from retrieving it
+     * in the first place.
+     * Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client
+     * will not allow tutors to assess a model when an assessor is already assigned. If no result exists for this
+     * submission we create one first.
+     *
+     * @param modelingSubmission the submission to lock
+     * @param modelingExercise the exercise to which the submission belongs to (needed for Compass)
+     */
+    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        if (modelingSubmission.getResult() == null) {
+            setNewResult(modelingSubmission);
+        }
+        if (modelingSubmission.getResult().getAssessor() == null) {
+            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
+            }
+            resultService.setAssessor(modelingSubmission.getResult());
+        }
+    }
+
+    /**
      * Creates and sets new Result object in given submission and stores changes to the database.
      *
      * @param submission
      */
-    public void setNewResult(ModelingSubmission submission) {
+    private void setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
@@ -190,13 +237,19 @@ public class ModelingSubmissionService {
         }
     }
 
+    public ModelingSubmission findOne(Long id) {
+        return modelingSubmissionRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+    }
+
     public ModelingSubmission findOneWithEagerResult(Long id) {
-        return modelingSubmissionRepository.findByIdWithEagerResult(id).orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+        return modelingSubmissionRepository.findByIdWithEagerResult(id)
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     public ModelingSubmission findOneWithEagerResultAndFeedback(Long id) {
         return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(id)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     /**
