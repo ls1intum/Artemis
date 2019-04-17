@@ -33,7 +33,9 @@
                 "isBeingEdited": "Wird gerade bearbeitet...",
                 "attachments": "Anhänge",
                 "newAttachment": "Neuer Anhang",
-                "editAttachment": "Anhang bearbeiten"
+                "editAttachment": "Anhang bearbeiten",
+                "notificationText": "Mitteilungstext",
+                "notificationPlaceholder": "(Optional)"
             }
         }
     }

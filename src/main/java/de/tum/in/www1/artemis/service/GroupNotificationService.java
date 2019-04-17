@@ -93,6 +93,25 @@ public class GroupNotificationService {
         notifyGroupAboutExercise(studentQuestionAnswer.getQuestion().getExercise(), title, notificationText, "newAnswer", GroupNotificationType.INSTRUCTOR);
     }
 
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
+        GroupNotification groupNotification = new GroupNotification();
+        groupNotification.setCourse(attachment.getLecture().getCourse());
+        groupNotification.setType(GroupNotificationType.STUDENT);
+        groupNotification.setNotificationDate(ZonedDateTime.now());
+        groupNotification.setTitle("Attachment " + attachment.getName() + " updated");
+        groupNotification.setText(notificationText);
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "attachmentUpdated");
+        target.addProperty("id", attachment.getLecture().getId());
+        target.addProperty("entity", "lectures");
+        target.addProperty("course", attachment.getLecture().getCourse().getId());
+        target.addProperty("mainPage", "overview");
+        groupNotification.setTarget(target.toString());
+        groupNotification.setAuthor(userService.getUser());
+        String topic = "/topic/course/" + groupNotification.getCourse().getId() + "/" + groupNotification.getType();
+        saveAndSendGroupNotification(topic, groupNotification);
+    }
+
     private void saveAndSendGroupNotification(String topic, GroupNotification groupNotification) {
         groupNotificationRepository.save(groupNotification);
         messagingTemplate.convertAndSend(topic, groupNotification);

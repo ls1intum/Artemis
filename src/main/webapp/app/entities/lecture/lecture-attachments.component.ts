@@ -31,6 +31,7 @@ export class LectureAttachmentsComponent implements OnInit {
     attachmentBackup: Attachment;
     attachmentFile: any;
     isUploadingAttachment: boolean;
+    notificationText: string;
 
     constructor(protected activatedRoute: ActivatedRoute, private attachmentService: AttachmentService, private fileUploaderService: FileUploaderService) {}
 
@@ -62,7 +63,11 @@ export class LectureAttachmentsComponent implements OnInit {
         }
         this.attachmentToBeCreated.version++;
         if (this.attachmentToBeCreated.id) {
-            this.attachmentService.update(this.attachmentToBeCreated).subscribe((attachmentRes: HttpResponse<Attachment>) => {
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.attachmentService.update(this.attachmentToBeCreated, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
             });

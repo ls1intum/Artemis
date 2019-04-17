@@ -33,7 +33,9 @@
                 "isBeingEdited": "Is currently being edited...",
                 "attachments": "Attachments",
                 "newAttachment": "New Attachment",
-                "editAttachment": "Edit Attachment"
+                "editAttachment": "Edit Attachment",
+                "notificationText": "Notification Text",
+                "notificationPlaceholder": "(Optional)"
             }
         }
     }

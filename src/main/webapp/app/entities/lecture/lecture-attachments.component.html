@@ -118,6 +118,11 @@
                                 name="endDate"
                             ></jhi-date-time-picker>
                         </div>
+                        <div class="form-group" *ngIf="attachmentToBeCreated.id">
+                            <label for="attachmentName" jhiTranslate="arTeMiSApp.lecture.attachments.notificationText">Notification Text</label>
+                            <input type="text" class="form-control" id="notificationText" name="attachmentName" [placeholder]="('arTeMiSApp.lecture.attachments.notificationPlaceholder' | translate)"
+                                   [(ngModel)]="notificationText"/>
+                        </div>
                     </div>
                 </div>
 

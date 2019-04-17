@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.service.AttachmentService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -34,9 +35,12 @@ public class AttachmentResource {
 
     private final AttachmentService attachmentService;
 
-    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService) {
+    private final GroupNotificationService groupNotificationService;
+
+    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -68,12 +72,16 @@ public class AttachmentResource {
      */
     @PutMapping("/attachments")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
+    public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws URISyntaxException {
         log.debug("REST request to update Attachment : {}", attachment);
         if (attachment.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, attachment.getId().toString())).body(result);
     }
 

@@ -23,9 +23,10 @@ export class AttachmentService {
         return this.http.post<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    update(attachment: Attachment): Observable<EntityResponseType> {
+    update(attachment: Attachment, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         const copy = this.convertDateFromClient(attachment);
-        return this.http.put<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<Attachment>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
