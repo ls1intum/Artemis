@@ -58,8 +58,10 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        groupNotificationService.notifyGroupAboutNewAnswer(result);
-        singleUserNotificationService.notifyUserAboutNewAnswer(result);
+        if (result.getQuestion().getExercise() != null) {
+            groupNotificationService.notifyGroupAboutNewAnswer(result);
+            singleUserNotificationService.notifyUserAboutNewAnswer(result);
+        }
         return ResponseEntity.created(new URI("/api/question-answers/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }

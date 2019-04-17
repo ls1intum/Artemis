@@ -17,10 +17,9 @@ export enum QuestionActionName {
 @Component({
     selector: 'jhi-student-question-row',
     templateUrl: './student-question-row.component.html',
-    styleUrls: ['student-questions.scss'],
+    styleUrls: ['./student-questions.scss'],
 })
 export class StudentQuestionRowComponent implements OnInit, OnDestroy {
-    // @Input() exercise: Exercise;
     @Input() studentQuestion: StudentQuestion;
     @Input() selectedStudentQuestion: StudentQuestion;
     @Input() user: User;
