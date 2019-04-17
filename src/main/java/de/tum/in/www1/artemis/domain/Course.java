@@ -97,7 +97,6 @@ public class Course implements Serializable {
     private Set<Exercise> exercises = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    // @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Lecture> lectures = new HashSet<>();
 

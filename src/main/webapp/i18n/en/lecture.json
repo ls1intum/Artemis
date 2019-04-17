@@ -27,7 +27,9 @@
                 "file": "File",
                 "releaseDate": "Release date",
                 "uploadDate": "Upload date",
-                "version": "Version"
+                "version": "Version",
+                "uploading": "Uploading...",
+                "isBeingEdited": "Is currently being edited..."
             }
         }
     }

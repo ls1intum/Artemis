@@ -84,6 +84,12 @@ export class LectureAttachmentsComponent implements OnInit {
         return attachmentLink.replace(/\/.*\//, '');
     }
 
+    deleteAttachment(attachment: Attachment) {
+        this.attachmentService.delete(attachment.id).subscribe(() => {
+            this.attachments = this.attachments.filter(el => el.id !== attachment.id);
+        });
+    }
+
     cancel() {
         if (this.attachmentBackup) {
             this.resetAttachment();

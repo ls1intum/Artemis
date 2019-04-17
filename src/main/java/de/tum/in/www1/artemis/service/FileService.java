@@ -121,6 +121,9 @@ public class FileService {
         if (publicPath.contains("files/course/icons")) {
             return Constants.COURSE_ICON_FILEPATH + filename;
         }
+        if (publicPath.contains("files/attachments/lecture")) {
+            return Constants.LECTURE_ATTACHMENT_FILEPATH + filename;
+        }
 
         // path is unknown => cannot convert
         throw new RuntimeException("Unknown Filepath: " + publicPath);
