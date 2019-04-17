@@ -71,7 +71,10 @@
                 "noStatistics": "No statistics available for the course."
             },
             "lectureList": {
-                "lectureGroupHeader": "Lectures: {{ total }}"
+                "lectureGroupHeader": "Lectures: {{ total }}",
+                "totalLectures": "Total lectures:",
+                "totalAttachments": "Total attachments:",
+                "isLecture": "This is a lecture"
             },
             "lectureDetails": {
                 "description": "Description",

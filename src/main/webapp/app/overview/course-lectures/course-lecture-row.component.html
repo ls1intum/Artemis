@@ -1,7 +1,7 @@
 <div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon [icon]="'chalkboard-teacher'" size="2x" placement="right" [ngbTooltip]="'This is a lecture'" container="body"></fa-icon>
+            <fa-icon [icon]="'chalkboard-teacher'" size="2x" placement="right" [ngbTooltip]="('arTeMiSApp.courseOverview.lectureList.isLecture' | translate)" container="body"></fa-icon>
         </div>
     </div>
     <div class="col">
@@ -14,7 +14,10 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-auto mb-2" *ngIf="lecture.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
+            <div class="col">
+                <span *ngIf="lecture.attachments">{{ lecture.attachments.length}} {{"arTeMiSApp.courseOverview.lectureDetails.attachments" | translate}}</span>
+            </div>
+            <div class="col-auto mb-2" *ngIf="lecture.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ (lecture.startDate) | date: 'dd/MM/yy' }} </span>
                 ({{ (lecture.startDate) | amTimeAgo }})
             </div>

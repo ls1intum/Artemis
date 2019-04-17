@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { getIcon } from 'app/entities/exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiWebsocketService } from 'app/core';
@@ -16,11 +15,6 @@ import * as moment from 'moment';
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public lecture: Lecture;
-    private websocketChannelResults: string;
-
-    formattedProblemStatement: string;
-
-    getIcon = getIcon;
 
     constructor(
         private $location: Location,
@@ -51,8 +45,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.websocketChannelResults) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        if (this.subscription) {
+            this.subscription.unsubscribe();
         }
     }
 

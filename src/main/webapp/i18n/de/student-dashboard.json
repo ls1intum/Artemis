@@ -71,7 +71,10 @@
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
             },
             "lectureList": {
-                "lectureGroupHeader": "Vorlesungen: {{ total }}"
+                "lectureGroupHeader": "Vorlesungen: {{ total }}",
+                "totalLectures": "Vorlesungen insgesamt:",
+                "totalAttachments": "Anhänge insgesamt:",
+                "isLecture": "Das ist eine Vorlesung"
             },
             "lectureDetails": {
                 "description": "Beschreibung",

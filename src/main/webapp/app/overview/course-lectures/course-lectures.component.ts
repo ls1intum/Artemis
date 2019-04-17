@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ExerciseService } from 'app/entities/exercise';
 import { Lecture } from 'app/entities/lecture';
 
 @Component({
@@ -22,8 +22,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public course: Course;
     public weeklyIndexKeys: string[];
     public weeklyLecturesGrouped: object;
-
-    public upcomingLectures: Lecture[];
 
     public exerciseCountMap: Map<string, number>;
 
@@ -108,7 +106,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                 upcomingLectures.push(lecture);
             }
         });
-        this.updateUpcomingLectures(upcomingLectures);
         if (notAssociatedLectures.length > 0) {
             this.weeklyLecturesGrouped = {
                 ...groupedLectures,
@@ -135,26 +132,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
     }
 
-    private increaseExerciseCounter(exercise: Exercise) {
-        if (!this.exerciseCountMap.has(exercise.type)) {
-            this.exerciseCountMap.set(exercise.type, 1);
-        } else {
-            let exerciseCount = this.exerciseCountMap.get(exercise.type);
-            this.exerciseCountMap.set(exercise.type, ++exerciseCount);
-        }
-    }
-
-    private updateUpcomingLectures(upcomingLectures: Lecture[]) {
-        if (upcomingLectures.length < 5) {
-            this.upcomingLectures = this.sortLectures(upcomingLectures, this.DUE_DATE_ASC);
-        } else {
-            const numberOfExercises = upcomingLectures.length;
-            upcomingLectures = upcomingLectures.slice(numberOfExercises - 5, numberOfExercises);
-            this.upcomingLectures = this.sortLectures(upcomingLectures, this.DUE_DATE_ASC);
-        }
-    }
-
-    get nextRelevantExercise(): Exercise {
-        return this.exerciseService.getNextExerciseForHours(this.course.exercises);
+    getTotalAttachments() {
+        return this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0);
     }
 }
