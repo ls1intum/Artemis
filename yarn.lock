@@ -293,11 +293,12 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.17"
 
-"@ls1intum/apollon@2.0.0-rc.3":
-  version "2.0.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.3.tgz#62c3f8d62a0ace6e37986ef8cdb555b007cd519c"
-  integrity sha512-gcDGv6Zdi+NpjrT86EU2O4t6DPmenop8xl5hLBYcxhM2h+mtJ3txb/AjN3GHFpAF2shxUJSZWf8EE92Oh8M3mA==
+"@ls1intum/apollon@2.0.0-rc.4":
+  version "2.0.0-rc.4"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.4.tgz#60920cfd1f927356d4525d6f35a823a61576c1bf"
+  integrity sha512-D/w5SORg11K6m5Hq0ixCzXkl7SGzq5CrYcmgP/XVe+7ZPAS2B82l1aDSv3dVHcGpn9eBuGQ5jCPAls/iVxnhSQ==
   dependencies:
+    pepjs "0.5.2"
     react "16.8.6"
     react-dom "16.8.6"
     react-redux "6.0.1"
@@ -8267,6 +8268,11 @@ pend@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/pend/-/pend-1.2.0.tgz#7a57eb550a6783f9115331fcf4663d5c8e007a50"
   integrity sha1-elfrVQpng/kRUzH89GY9XI4AelA=
+
+pepjs@0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/pepjs/-/pepjs-0.5.2.tgz#f0d10bb160bcbf4b72d2069d931170661491a05c"
+  integrity sha512-acPfplXnTKaG8p7VBgkNaBJSGsZu7LYrqEmLCQFoeHYl21B74mMBeVoQA/Gl9u5GmysgzrOCeHsEjw0mXo61nw==
 
 performance-now@^2.1.0:
   version "2.1.0"
