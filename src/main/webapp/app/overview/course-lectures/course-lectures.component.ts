@@ -64,10 +64,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.weeklyIndexKeys = [];
         const groupedLectures = {};
         const indexKeys: string[] = [];
-        const courseLectures = [...this.course.lectures];
+        const courseLectures = this.course.lectures ? [...this.course.lectures] : [];
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
-        const upcomingLectures: Lecture[] = [];
         sortedLectures.forEach(lecture => {
             const dateValue = moment(lecture.startDate);
             if (!dateValue) {
@@ -102,9 +101,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                 }
             }
             groupedLectures[dateIndex].lectures.push(lecture);
-            if (lecture.startDate && moment().isSameOrBefore(lecture.startDate, 'day')) {
-                upcomingLectures.push(lecture);
-            }
         });
         if (notAssociatedLectures.length > 0) {
             this.weeklyLecturesGrouped = {
@@ -133,6 +129,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     getTotalAttachments() {
+        if (!this.course.lectures) {
+            return 0;
+        }
         return this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0);
     }
 }

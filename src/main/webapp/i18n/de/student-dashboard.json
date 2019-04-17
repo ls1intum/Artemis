@@ -74,7 +74,8 @@
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
-                "isLecture": "Das ist eine Vorlesung"
+                "isLecture": "Das ist eine Vorlesung",
+                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs."
             },
             "lectureDetails": {
                 "description": "Beschreibung",

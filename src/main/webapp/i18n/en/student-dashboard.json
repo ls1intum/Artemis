@@ -74,7 +74,8 @@
                 "lectureGroupHeader": "Lectures: {{ total }}",
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
-                "isLecture": "This is a lecture"
+                "isLecture": "This is a lecture",
+                "noLectures": "No lectures available for the course."
             },
             "lectureDetails": {
                 "description": "Description",
