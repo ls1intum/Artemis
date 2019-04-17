@@ -37,6 +37,9 @@ export class CourseLectureRowComponent implements OnInit {
             ...this.lecture,
             startDate: this.lecture.startDate.valueOf(),
             endDate: this.lecture.endDate.valueOf(),
+            course: {
+                id: this.course.id,
+            },
         };
         if (this.extendedLink) {
             this.router.navigate(['overview', this.course.id, 'lectures', this.lecture.id], {

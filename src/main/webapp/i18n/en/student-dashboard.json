@@ -80,7 +80,7 @@
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "lectureDate": "Date of lecture"
+                "lectureDate": "Date:"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

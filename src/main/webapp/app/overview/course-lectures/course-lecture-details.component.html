@@ -10,7 +10,7 @@
                 <h4>
                 <span class="mr-2">
                     {{ 'arTeMiSApp.courseOverview.lectureDetails.lectureDate' | translate }} {{ (lecture.startDate | date: 'dd.MM.yy HH:mm')}}
-                    - {{ (lecture.startDate | date: 'dd.MM.yy HH:mm') }}
+                    - {{ (lecture.startDate | date: 'HH:mm') }}
                 </span>
                 </h4>
             </div>
@@ -18,7 +18,7 @@
     </div>
     <!-- HEADER INFORMATION END -->
     <!-- LECTURE START -->
-    <div class="row">
+    <div class="row mt-2">
         <div class="col-sm-12 col-md-10 col-lg-8">
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
@@ -36,16 +36,14 @@
                 </div>
             </div>
             <div class="row mb-2" *ngIf="lecture.attachments">
-                <a href="{{ attachment.link }}" target="_blank" class="col-3" *ngFor="let attachment of lecture.attachments">
-                    <div class="attachment-wrapper">
-                        <div class="attachment-icon">
-                            <fa-icon [icon]="'file'" size="3x"></fa-icon>
-                        </div>
-                        <div class="attachment-name">
+                <ul>
+                    <li *ngFor="let attachment of lecture.attachments">
+                        <a href="{{ attachment.link }}" target="_blank">
                             {{ attachment.name }}
-                        </div>
-                    </div>
-                </a>
+                        </a>
+
+                    </li>
+                </ul>
             </div>
             <div class="row mb-2" *ngIf="!lecture.attachments">
                 <div class="col-12 col-md-12">
