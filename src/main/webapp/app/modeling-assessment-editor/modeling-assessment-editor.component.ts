@@ -211,7 +211,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 } else {
                     this.jhiAlertService.clear();
                     this.router.onSameUrlNavigation = 'reload';
-                    this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`);
+                    // navigate to root and then to new assessment page to trigger re-initialization of the components
+                    this.router
+                        .navigateByUrl('/', { skipLocationChange: true })
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`));
                 }
             },
             () => {
