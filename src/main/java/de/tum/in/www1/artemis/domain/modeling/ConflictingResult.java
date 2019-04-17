@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.modeling;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 
 /**
@@ -29,6 +30,7 @@ public class ConflictingResult {
     @ManyToOne
     private Result result;
 
+    @JsonIgnore
     @ManyToOne
     private ModelAssessmentConflict conflict;
 
