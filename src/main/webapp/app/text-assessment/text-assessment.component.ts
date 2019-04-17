@@ -116,6 +116,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 },
                 inertia: true,
             })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element width
@@ -132,6 +138,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                     min: { height: this.resizableMinHeight },
                 },
                 inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
             })
             .on('resizemove', function(event) {
                 const target = event.target;

@@ -76,6 +76,12 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 },
                 inertia: true,
             })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
             .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element width
