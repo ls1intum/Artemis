@@ -2,6 +2,7 @@ import { Injectable, ErrorHandler } from '@angular/core';
 import { init, captureException, showReportDialog, ReportDialogOptions } from '@sentry/browser';
 import { AccountService, User } from 'app/core';
 import { VERSION } from 'app/app.constants';
+import { ProfileService } from 'app/layouts';
 
 @Injectable()
 export class SentryErrorHandler implements ErrorHandler {
@@ -18,16 +19,23 @@ export class SentryErrorHandler implements ErrorHandler {
         }
     }
 
-    private static initSentry(): void {
+    private async initSentry(): Promise<void> {
+        const profileInfo = await this.profileService.getProfileInfo();
+
+        if (!profileInfo.sentry) {
+            return;
+        }
+
         init({
-            dsn: 'https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029',
+            dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: SentryErrorHandler.environment,
         });
     }
 
-    constructor(private accountService: AccountService) {
-        SentryErrorHandler.initSentry();
+    constructor(private accountService: AccountService, private profileService: ProfileService) {
+        // noinspection JSIgnoredPromiseFromCall
+        this.initSentry();
 
         // noinspection JSIgnoredPromiseFromCall
         this.getCurrentAccount();
