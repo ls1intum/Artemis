@@ -65,7 +65,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     @Output()
     onEditorStateChange = new EventEmitter<EditorState>();
     @Output()
-    onFileSaveStatusChange = new EventEmitter<string[]>();
+    onUnsavedFilesChange = new EventEmitter<string[]>();
 
     updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
@@ -74,7 +74,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         private localStorageService: LocalStorageService,
-        private translate: TranslateService,
         public modalService: NgbModal,
     ) {}
 
@@ -206,7 +205,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                         savedFiles.push(fileName);
                     }
                 });
-                this.onFileSaveStatusChange.emit(Object.keys(res).filter(f => !savedFiles.includes(f)));
+                this.onUnsavedFilesChange.emit(Object.keys(res).filter(f => !savedFiles.includes(f)));
                 if (errors.length) {
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                 } else {
@@ -297,6 +296,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 unsavedChanges: true,
             };
             this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
+            this.onUnsavedFilesChange.emit(
+                Object.entries(this.editorFileSessions)
+                    .filter(([fileName, { unsavedChanges }]) => unsavedChanges)
+                    .map(([fileName]) => fileName),
+            );
         }
     }
 

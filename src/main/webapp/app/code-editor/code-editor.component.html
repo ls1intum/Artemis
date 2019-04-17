@@ -26,6 +26,8 @@
                 [participation]="participation"
                 [fileName]="selectedFile"
                 [repositoryFiles]="repositoryFiles"
+                [unsavedFiles]="unsavedFiles"
+                [errorFiles]="buildLogErrors && buildLogErrors.errors ? (buildLogErrors.errors | keys) : []"
                 [editorState]="editorState"
                 [commitState]="commitState"
                 (selectedFile)="updateSelectedFile($event)"
@@ -43,7 +45,7 @@
                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
                 [editorState]="editorState"
                 (onEditorStateChange)="setEditorState($event)"
-                (onFileSaveStatusChange)="setUnsavedFiles($event)"
+                (onUnsavedFilesChange)="setUnsavedFiles($event)"
             >
             </jhi-code-editor-ace>
         </div>

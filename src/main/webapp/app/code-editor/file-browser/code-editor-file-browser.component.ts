@@ -20,6 +20,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     repositoryFiles: string[];
     @Input()
+    unsavedFiles: string[];
+    @Input()
+    errorFiles: string[];
+    @Input()
     fileName: string;
     @Input()
     editorState: EditorState;
