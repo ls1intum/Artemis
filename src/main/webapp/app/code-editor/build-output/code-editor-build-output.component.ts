@@ -11,8 +11,8 @@ import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -34,7 +34,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     @Output()
     buildLogChange = new EventEmitter<BuildLogEntryArray>();
 
-    private unsubscribeResults: () => void;
+    private resultSubscription: Subscription;
 
     constructor(
         private parent: CodeEditorComponent,
@@ -101,12 +101,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     async setupResultWebsocket() {
-        if (this.unsubscribeResults) {
-            this.unsubscribeResults();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
-        return this.resultWebsocketService
-            .subscribeResultForParticipation(this.participation.id, this.toggleBuildLogs.bind(this))
-            .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
+        return this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
+            this.resultSubscription = observable
+                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
+                .subscribe(result => this.toggleBuildLogs(result));
+        });
     }
 
     /**
@@ -157,8 +159,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     ngOnDestroy() {
-        if (this.unsubscribeResults) {
-            this.unsubscribeResults();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
     }
 }

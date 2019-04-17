@@ -27,7 +27,8 @@ import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { Participation } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 type Step = {
     title: string;
@@ -53,7 +54,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onInstructionLoad = new EventEmitter();
 
-    private unsubscribeResults: () => void;
+    private resultSubscription: Subscription;
 
     public isInitial = true;
     public isLoading = true;
@@ -94,7 +95,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 .catch(() => {
                     this.exercise.problemStatement = '';
                 })
-                .then(() => this.subscribeResultsForParticipation())
+                .then(() => this.setupResultWebsocket())
                 .then(() => this.isInitial && this.loadInitialResult())
                 .then((result: Result) => (this.latestResult = result))
                 .finally(() => {
@@ -104,16 +105,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
     }
 
-    private async subscribeResultsForParticipation() {
-        if (this.unsubscribeResults) {
-            this.unsubscribeResults();
+    private setupResultWebsocket() {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
-        return this.resultWebsocketService
-            .subscribeResultForParticipation(this.participation.id, (result: Result) => {
+        return this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
+            this.resultSubscription = observable.pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2)).subscribe(result => {
                 this.latestResult = result;
                 this.updateMarkdown();
-            })
-            .then(unsubscribe => (this.unsubscribeResults = unsubscribe));
+            });
+        });
     }
 
     /**
@@ -515,8 +516,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.listenerRemoveFunctions.forEach(f => f());
         this.listenerRemoveFunctions = [];
         this.steps = [];
-        if (this.unsubscribeResults) {
-            this.unsubscribeResults();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
     }
 }

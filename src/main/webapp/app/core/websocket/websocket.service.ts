@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Observable, Observer, Subscription, Subject } from 'rxjs/Rx';
+import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
 import { CSRFService } from 'app/core/auth/csrf.service';
 import { WindowRef } from './window.service';
@@ -15,7 +15,8 @@ export class JhiWebsocketService implements OnDestroy {
     subscribers: { [key: string]: Stomp.Subscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
-    myListeners: { [key: string]: Subject<any> } = {};
+    myListeners: { [key: string]: Observable<any> } = {};
+    listenerObservers: { [key: string]: Observer<any> } = {};
     alreadyConnectedOnce = false;
     private subscription: Subscription;
     shouldReconnect = false;
@@ -93,12 +94,15 @@ export class JhiWebsocketService implements OnDestroy {
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
-                    Object.entries(this.myListeners).forEach(
-                        ([channel, observer]) =>
-                            (this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
-                                this.myListeners[channel].next(JSON.parse(data.body));
-                            })),
-                    );
+                    if (Object.keys(this.myListeners).length !== 0) {
+                        for (const channel in this.myListeners) {
+                            if (this.myListeners.hasOwnProperty(channel)) {
+                                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                                    this.listenerObservers[channel].next(JSON.parse(data.body));
+                                });
+                            }
+                        }
+                    }
                 } else {
                     this.alreadyConnectedOnce = true;
                 }
@@ -117,7 +121,7 @@ export class JhiWebsocketService implements OnDestroy {
 
     disconnect() {
         this.connection = this.createConnection();
-        Object.keys(this.subscribers).forEach(listener => this.unsubscribe(listener), this);
+        Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
@@ -162,36 +166,32 @@ export class JhiWebsocketService implements OnDestroy {
             if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
                 this.myListeners[channel] = this.createListener(channel);
             }
-            // Don't add more subscribers for a subscription that already exists
-            if (!this.subscribers[channel]) {
-                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
-                    const res = JSON.parse(data.body);
-                    if (!res.error) {
-                        this.myListeners[channel].next(JSON.parse(data.body));
-                    } else {
-                        // Response objects with error properties will be counted as a reason to fail
-                        // The response objects needs to be prepared accordingly on the server
-                        this.myListeners[channel].error(res);
-                    }
-                });
-            }
+            this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                const res = JSON.parse(data.body);
+                if (!res.error) {
+                    this.listenerObservers[channel].next(JSON.parse(data.body));
+                } else {
+                    // Response objects with error properties will be counted as a reason to fail
+                    // The response objects needs to be prepared accordingly on the server
+                    this.listenerObservers[channel].error(res);
+                }
+            });
         });
     }
 
     unsubscribe(channel?: string) {
-        // TODO: Atm the subscription is cancelled for all receivers if one subscriber unsubscribes
-        // It should be possible for single subscribers to unsubscribe
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
-            delete this.subscribers[channel];
-            this.myListeners[channel].unsubscribe();
-            delete this.myListeners[channel];
+        }
+        if (this && channel != null && this.myListeners != null && (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))) {
+            this.myListeners[channel] = this.createListener(channel);
         }
     }
 
-    private createListener<T>(channel: string): Subject<T> {
-        // Use subject to allow multicast
-        return new Subject();
+    private createListener<T>(channel: string): Observable<T> {
+        return Observable.create((observer: Observer<T>) => {
+            this.listenerObservers[channel] = observer;
+        });
     }
 
     private createConnection(): Promise<void> {
