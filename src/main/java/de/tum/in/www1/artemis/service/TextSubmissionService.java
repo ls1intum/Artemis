@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -18,7 +19,6 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -44,8 +44,8 @@ public class TextSubmissionService {
      * Handles text submissions sent from the client and saves them in the database.
      *
      * @param textSubmission the text submission that should be saved
-     * @param textExercise the corresponding text exercise
-     * @param principal the user principal
+     * @param textExercise   the corresponding text exercise
+     * @param principal      the user principal
      * @return the saved text submission
      */
     @Transactional
@@ -54,8 +54,7 @@ public class TextSubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            Optional<Participation> optionalParticipation =
-                participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
             if (!optionalParticipation.isPresent()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
             }
@@ -135,7 +134,6 @@ public class TextSubmissionService {
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
         return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
-                .peek(participation -> participation.getExercise().setParticipations(null))
                 // Map to Latest Submission
                 .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
     }
