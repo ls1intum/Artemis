@@ -58,7 +58,7 @@ public class FileResource {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
         // NOTE: Maximum file size is set in resources/config/application.yml
-        // Currently set to 5 MB
+        // Currently set to 10 MB
 
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
@@ -83,7 +83,7 @@ public class FileResource {
             String filename;
             do {
                 if (keepFileName) {
-                    filename = file.getOriginalFilename();
+                    filename = file.getOriginalFilename().replaceAll("\\s", "");
                 }
                 else {
                     filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
