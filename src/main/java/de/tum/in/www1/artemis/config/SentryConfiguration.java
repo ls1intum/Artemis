@@ -51,6 +51,8 @@ public class SentryConfiguration {
             return "prod";
         case "https://artemistest.ase.in.tum.de":
             return "test";
+        case "https://vmbruegge60.in.tum.de":
+            return "e2e";
         default:
             return "local";
         }

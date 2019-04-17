@@ -11,6 +11,8 @@ export class SentryErrorHandler implements ErrorHandler {
                 return 'prod';
             case 'artemistest.ase.in.tum.de':
                 return 'test';
+            case 'vmbruegge60.in.tum.de':
+                return 'e2e';
             default:
                 return 'local';
         }
