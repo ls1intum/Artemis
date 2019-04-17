@@ -211,9 +211,11 @@ public class CompassService {
             return Collections.EMPTY_LIST;
         }
         else {
-            List<ModelAssessmentConflict> conflicts = conflictService.createConflicts(elementConflictingFeedbackMapping, result);
-            conflictService.saveConflicts(conflicts);
-            return conflicts;
+            List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getUnresolvedConflictsForResult(result);
+            conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
+            conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
+            conflictService.saveConflicts(existingUnresolvedConflicts);
+            return existingUnresolvedConflicts;
         }
     }
 
