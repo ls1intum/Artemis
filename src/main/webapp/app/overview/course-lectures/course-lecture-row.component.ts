@@ -15,7 +15,7 @@ import { Lecture } from 'app/entities/lecture';
 @Component({
     selector: 'jhi-course-lecture-row',
     templateUrl: './course-lecture-row.component.html',
-    styleUrls: ['./course-lecture-row.scss'],
+    styleUrls: ['../course-exercises/course-exercise-row.scss'],
 })
 export class CourseLectureRowComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;

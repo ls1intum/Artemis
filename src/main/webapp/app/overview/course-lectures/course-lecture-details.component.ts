@@ -11,7 +11,7 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', './course-lectures.scss'],
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;

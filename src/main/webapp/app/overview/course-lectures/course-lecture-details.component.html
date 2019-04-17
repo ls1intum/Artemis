@@ -35,13 +35,21 @@
                     <h3>{{ 'arTeMiSApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="lecture.description">
+            <div class="row mb-2">
+                <a href="{{ attachment.link }}" target="_blank" class="col-3" *ngFor="let attachment of lecture.attachments">
+                    <div class="attachment-wrapper">
+                        <div class="attachment-icon">
+                            <fa-icon [icon]="'file'" size="3x"></fa-icon>
+                        </div>
+                        <div class="attachment-name">
+                            {{ attachment.name }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="row mb-2" *ngIf="!lecture.attachments">
                 <div class="col-12 col-md-12">
-                    <ul>
-                        <li *ngFor="let attachment of lecture.attachments">
-                            <a href="{{ attachment.link }}" target="_blank">{{ attachment.name }}</a>
-                        </li>
-                    </ul>
+                    {{ 'arTeMiSApp.courseOverview.lectureDetails.noAttachments' | translate }}
                 </div>
             </div>
         </div>

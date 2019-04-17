@@ -1,0 +1,19 @@
+@import '../_overview-vars.scss';
+
+.attachment-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 1px solid;
+    height: 150px;
+    border-radius: 3px;
+    .attachment-icon {
+        flex: 3;
+        display: flex;
+        align-items: center;
+    }
+    .attachment-name {
+        flex: 1;
+    }
+}

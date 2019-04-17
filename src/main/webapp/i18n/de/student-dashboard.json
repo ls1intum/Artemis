@@ -76,6 +76,7 @@
             "lectureDetails": {
                 "description": "Beschreibung",
                 "attachments": "Anhänge",
+                "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
                 "lectureDate": "Datum der Vorlesung"
             },
             "exerciseDetails": {
