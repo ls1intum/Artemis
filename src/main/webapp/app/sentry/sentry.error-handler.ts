@@ -1,13 +1,10 @@
 import { Injectable, ErrorHandler } from '@angular/core';
-import { init, captureException, showReportDialog, ReportDialogOptions } from '@sentry/browser';
-import { AccountService, User } from 'app/core';
+import { init, captureException } from '@sentry/browser';
 import { VERSION } from 'app/app.constants';
 import { ProfileService } from 'app/layouts';
 
 @Injectable()
 export class SentryErrorHandler implements ErrorHandler {
-    currAccount: User;
-
     private static get environment(): string {
         switch (window.location.host) {
             case 'artemis.ase.in.tum.de':
@@ -33,30 +30,12 @@ export class SentryErrorHandler implements ErrorHandler {
         });
     }
 
-    constructor(private accountService: AccountService, private profileService: ProfileService) {
+    constructor(private profileService: ProfileService) {
         // noinspection JSIgnoredPromiseFromCall
         this.initSentry();
-
-        // noinspection JSIgnoredPromiseFromCall
-        this.getCurrentAccount();
-    }
-
-    private async getCurrentAccount(): Promise<void> {
-        if (!this.currAccount && this.accountService.isAuthenticated()) {
-            this.currAccount = await this.accountService.identity();
-        }
     }
 
     handleError(error: any): void {
-        const eventId = captureException(error.originalError || error);
-
-        const dialogOptions: ReportDialogOptions = { eventId };
-        if (this.currAccount) {
-            dialogOptions.user = {
-                email: this.currAccount.email,
-                name: this.currAccount.login,
-            };
-        }
-        showReportDialog(dialogOptions);
+        captureException(error.originalError || error);
     }
 }
