@@ -7,6 +7,11 @@ export class ModelingExercise extends Exercise {
     public sampleSolutionModel: string;
     public sampleSolutionExplanation: string;
 
+    // helper attributs
+
+    public automaticAssessmentSupported = false; // TODO: in the future, we will set this value to true when loading the modeling exercise
+    // from the server when the corresponding diagram type supports automatic assessment
+
     constructor(diagramType: DiagramType, course?: Course) {
         super(ExerciseType.MODELING);
         this.course = course;

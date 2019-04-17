@@ -4,7 +4,7 @@
     </h4>
     <div>
         <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div class="button-toolbar float-right" *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM">
+        <div class="button-toolbar float-right" *ngIf="modelingExercise.automaticAssessmentSupported">
             <button
                 [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)"
                 class="btn btn-success btn-sm mr-1"
@@ -26,7 +26,7 @@
     </h4>
     <jhi-alert></jhi-alert>
     <!-- These statements only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
-    <div *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM">
+    <div *ngIf="modelingExercise.automaticAssessmentSupported">
         <h4>
             <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
         </h4>
@@ -83,12 +83,12 @@
             <p style="color: #5cb85c"><strong>Congratulation all models have been assessed</strong></p>
         </div>
         <!-- This statement only makes sense when Compass is activated so for now we only use it for ClassDiagrams -->
-        <div *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && assessedSubmissions !== submissions.length">
+        <div *ngIf="modelingExercise.automaticAssessmentSupported && assessedSubmissions !== submissions.length">
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && otherSubmissions.length > 0" style="padding-top: 5px">Other submissions:</h5>
-    <p *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && !allSubmissionsVisible && otherSubmissions.length > 0">
+    <h5 *ngIf="modelingExercise.automaticAssessmentSupported && otherSubmissions.length > 0" style="padding-top: 5px">Other submissions:</h5>
+    <p *ngIf="modelingExercise.automaticAssessmentSupported && !allSubmissionsVisible && otherSubmissions.length > 0">
         <strong
             ><a (click)="makeAllSubmissionsVisible()">Show {{ otherSubmissions.length }} other submissions</a></strong
         >
