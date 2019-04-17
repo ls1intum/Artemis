@@ -94,6 +94,9 @@ public class GroupNotificationService {
     }
 
     public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
+        if (!attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
+            return;
+        }
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setCourse(attachment.getLecture().getCourse());
         groupNotification.setType(GroupNotificationType.STUDENT);
