@@ -56,6 +56,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     attachmentNotReleased(attachment: Attachment) {
-        return !moment(attachment.releaseDate).isBefore(moment());
+        return attachment.releaseDate && !moment(attachment.releaseDate).isBefore(moment());
     }
 }
