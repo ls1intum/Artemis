@@ -93,6 +93,7 @@ public class Participation implements Serializable {
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
     @ManyToOne
+    @JsonIgnoreProperties("participations")
     @JsonView(QuizView.Before.class)
     private Exercise exercise;
 
