@@ -9,3 +9,5 @@ export * from './file-browser/code-editor-file-browser-create';
 export * from './file-browser/code-editor-file-browser-delete';
 export * from './instructions/code-editor-instructions.component';
 export * from './instructions/code-editor-instructions-result-detail';
+export * from './status/code-editor-status.component';
+export * from './actions/code-editor-actions.component';

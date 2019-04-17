@@ -3,7 +3,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, Simpl
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
-import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent } from 'app/code-editor';
+import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as interact from 'interactjs';
@@ -21,6 +21,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     repositoryFiles: string[];
     @Input()
     fileName: string;
+    @Input()
+    editorState: EditorState;
+    @Input()
+    commitState: CommitState;
     @Output()
     createdFile = new EventEmitter<object>();
     @Output()
@@ -286,18 +290,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             }
         }
         return tree;
-    }
-
-    getSaveStatusLabel(): string {
-        return this.parent.saveStatusLabel;
-    }
-
-    getSaveStatusIcon(): { spin: boolean; icon: string; class: string } {
-        return this.parent.saveStatusIcon;
-    }
-
-    isExerciseCommitted(): boolean {
-        return this.parent.isCommitted;
     }
 
     /**

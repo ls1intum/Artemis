@@ -15,21 +15,11 @@
     <div class="card-body">
         <ngx-treeview #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
     </div>
-
-    <div class="card-footer text-nowrap">
-        <fa-icon [icon]="getSaveStatusIcon().icon" [spin]="getSaveStatusIcon().spin" [ngClass]="getSaveStatusIcon().class"></fa-icon>
-        <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
-        <hr />
-        <span *ngIf="isExerciseCommitted()"> <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success" jhiTranslate="arTeMiSApp.editor.changesCommited"> All changes committed.</span> </span>
-        <span *ngIf="!isExerciseCommitted()">
-            <fa-icon icon="exclamation-triangle" class="text-warning"></fa-icon>
-            <span class="text-warning" jhiTranslate="arTeMiSApp.editor.uncommittedChanges">There are uncommitted changes.</span>
-        </span>
-    </div>
-
+    <jhi-code-editor-status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-right"><span></span></div>
 </div>
+
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">

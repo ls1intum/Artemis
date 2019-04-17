@@ -13,12 +13,18 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
+import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
 import { Interactable } from 'interactjs';
 import { CodeEditorAceComponent, EditorState } from 'app/code-editor/ace/code-editor-ace.component';
+
+export enum CommitState {
+    CLEAN = 'CLEAN',
+    UNCOMMITTED_CHANGES = 'UNCOMMITTED_CHANGES',
+    COMMITTING = 'COMMITTING',
+}
 
 @Component({
     selector: 'jhi-editor',
@@ -34,16 +40,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
+    unsavedFiles: string[] = [];
     session: Session;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
-    saveStatusLabel: string;
-    saveStatusIcon: { spin: boolean; icon: string; class: string };
+
+    receiveFileUpdatesChannel: string;
 
     /** File Status Booleans **/
-    isSaved = true;
-    isCommitted: boolean;
-
     editorState = EditorState.CLEAN;
+    commitState: CommitState;
     isBuilding = false;
 
     /**
@@ -115,6 +120,14 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     ngOnChanges(changes: SimpleChanges) {
         this.checkIfRepositoryIsClean();
+        // TODO: Implement save all
+        //         if(hasParticipationChanged(changes)){
+        // if (this.receiveFileUpdatesChannel)
+        // {             this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
+        //  }
+        // this.file
+        // this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
+        //}
     }
 
     /**
@@ -123,26 +136,19 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     checkIfRepositoryIsClean(): void {
         this.repository.isClean(this.participation.id).subscribe(res => {
-            this.isCommitted = res.isClean;
+            this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
         });
     }
 
     setEditorState(editorState: EditorState) {
+        if (this.editorState === EditorState.SAVING && editorState === EditorState.CLEAN) {
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        }
         this.editorState = editorState;
     }
 
-    /**
-     * @function updateSaveStatusLabel
-     * @desc Callback function for a save status changes of files
-     * @param $event Event object which contains information regarding the save status of files
-     */
-    updateSaveStatusLabel($event: SaveStatusChange) {
-        this.isSaved = $event.isSaved;
-        if (!this.isSaved) {
-            this.isCommitted = false;
-        }
-        this.saveStatusLabel = $event.saveStatusLabel;
-        this.saveStatusIcon = $event.saveStatusIcon;
+    setUnsavedFiles(fileNames: string[]) {
+        this.unsavedFiles = fileNames;
     }
 
     /**
@@ -179,8 +185,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
     updateRepositoryCommitStatus($event: any) {
-        this.isSaved = false;
-        this.isCommitted = false;
+        this.commitState = CommitState.UNCOMMITTED_CHANGES;
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(
             files => {
@@ -263,10 +268,12 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     commit($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
-        this.isBuilding = true;
+        this.commitState = CommitState.COMMITTING;
+        // this.editor.saveChangedFiles();
         this.repository.commit(this.participation.id).subscribe(
             () => {
-                this.isCommitted = true;
+                this.commitState = CommitState.CLEAN;
+                this.isBuilding = true;
             },
             err => {
                 console.log('Error during commit ocurred!', err);

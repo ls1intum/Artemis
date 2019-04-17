@@ -21,7 +21,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { AnnotationArray, TextChange, SaveStatusChange } from '../../entities/ace-editor';
+import { AnnotationArray, TextChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -63,9 +63,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     @Input()
     editorState: EditorState;
     @Output()
-    saveStatusChange = new EventEmitter<SaveStatusChange>();
-    @Output()
     onEditorStateChange = new EventEmitter<EditorState>();
+    @Output()
+    onFileSaveStatusChange = new EventEmitter<string[]>();
 
     updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
@@ -82,18 +82,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @function ngOnInit
      * @desc Initially sets the labels for file save status
      */
-    ngOnInit(): void {
-        // TODO: Move icon and class info into code-editor component
-        this.onSaveStatusChange({
-            isSaved: true,
-            saveStatusIcon: {
-                spin: false,
-                icon: 'check-circle',
-                class: 'text-success',
-            },
-            saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
-        });
-    }
+    ngOnInit(): void {}
 
     /**
      * @function ngAfterViewInit
@@ -119,7 +108,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             this.updateUnsavedFilesChannel = `/topic/repository/${this.participation.id}/files`;
             this.receiveFileUpdatesChannel = `/user${this.updateUnsavedFilesChannel}`;
             this.setUpReceiveFileUpdates();
-            this.updateSaveStatusLabel();
         }
         // Current file has changed
         if (changes.selectedFile && this.selectedFile) {
@@ -209,27 +197,20 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 );
                 this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
                 const errors = [];
+                const savedFiles: string[] = [];
                 Object.entries(res).forEach(([fileName, error]: [string, string | null]) => {
                     if (error) {
                         errors.push(error);
                     } else {
                         this.editorFileSessions[fileName].unsavedChanges = false;
+                        savedFiles.push(fileName);
                     }
                 });
+                this.onFileSaveStatusChange.emit(Object.keys(res).filter(f => !savedFiles.includes(f)));
                 if (errors.length) {
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
-                    this.onSaveStatusChange({
-                        isSaved: false,
-                        saveStatusIcon: {
-                            spin: false,
-                            icon: 'times-circle',
-                            class: 'text-danger',
-                        },
-                        saveStatusLabel: `<span class="text-danger">${this.translate.instant('arTeMiSApp.editor.failedToSave')}</span>`,
-                    });
                 } else {
                     this.onEditorStateChange.emit(EditorState.CLEAN);
-                    this.updateSaveStatusLabel();
                 }
             });
     }
@@ -241,39 +222,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     updateAnnotationPositions = (change: TextChange) => {
         this.editorFileSessions[this.selectedFile].errors = this.editorFileSessions[this.selectedFile].errors.update(change);
     };
-
-    onSaveStatusChange(statusChange: SaveStatusChange) {
-        this.saveStatusChange.emit(statusChange);
-    }
-
-    /**
-     * @function updateSaveStatusLabel
-     * @desc Sets the labels under the ngx-treeview (files) according to the status of the files
-     */
-    updateSaveStatusLabel() {
-        const unsavedFiles = Object.entries(this.editorFileSessions).filter(([fileName, { unsavedChanges }]) => unsavedChanges).length;
-        if (unsavedFiles > 0) {
-            this.onSaveStatusChange({
-                isSaved: false,
-                saveStatusIcon: {
-                    spin: false,
-                    icon: 'exclamation-triangle',
-                    class: 'text-warning',
-                },
-                saveStatusLabel: `<span class="text-warning">${this.translate.instant('arTeMiSApp.editor.unsavedChanges', { unsavedFiles })}</span>`,
-            });
-        } else {
-            this.onSaveStatusChange({
-                isSaved: true,
-                saveStatusIcon: {
-                    spin: false,
-                    icon: 'check-circle',
-                    class: 'text-info',
-                },
-                saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
-            });
-        }
-    }
 
     /**
      * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
@@ -331,16 +279,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             .filter(([, { unsavedChanges }]) => unsavedChanges)
             .map(([fileName, { code }]) => ({ fileName, fileContent: code }));
         this.onEditorStateChange.emit(EditorState.SAVING);
-        this.onSaveStatusChange({
-            isSaved: false,
-            saveStatusIcon: {
-                spin: true,
-                icon: 'circle-notch',
-                class: 'text-info',
-            },
-            saveStatusLabel: `<span class="text-info">${this.translate.instant('arTeMiSApp.editor.savingChanges', { unsavedFiles: unsavedFiles.length })}<span>`,
-        });
-
         this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, unsavedFiles);
     }
 
@@ -359,7 +297,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 unsavedChanges: true,
             };
             this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
-            this.updateSaveStatusLabel();
         }
     }
 
