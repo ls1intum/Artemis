@@ -33,7 +33,7 @@ export const lectureRoute: Routes = [
         component: LectureComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -45,7 +45,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -57,7 +57,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.attachments.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -69,7 +69,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -81,7 +81,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -96,7 +96,7 @@ export const lecturePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'arTeMiSApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

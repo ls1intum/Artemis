@@ -3,7 +3,8 @@
         "lecture": {
             "home": {
                 "title": "Vorlesungen",
-                "createLabel": "Vorlesung erstellen"
+                "createLabel": "Vorlesung erstellen",
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
@@ -29,7 +30,10 @@
                 "uploadDate": "Upload-Datum",
                 "version": "Version",
                 "uploading": "Lade hoch...",
-                "isBeingEdited": "Wird gerade bearbeitet..."
+                "isBeingEdited": "Wird gerade bearbeitet...",
+                "attachments": "Anhänge",
+                "newAttachment": "Neuer Anhang",
+                "editAttachment": "Anhang bearbeiten"
             }
         }
     }

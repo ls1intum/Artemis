@@ -109,6 +109,10 @@ export class LectureAttachmentsComponent implements OnInit {
         }
     }
 
+    trackId(index: number, item: Attachment) {
+        return item.id;
+    }
+
     /**
      * @function setLectureAttachment
      * @param $event {object} Event object which contains the uploaded file

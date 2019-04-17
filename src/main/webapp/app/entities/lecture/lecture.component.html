@@ -40,31 +40,38 @@
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
-                        <button type="submit" [routerLink]="[lecture.id, 'attachments']"
-                                class="btn btn-info btn-sm">
-                            <fa-icon [icon]="'eye'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
-                        </button>
-                        <button type="submit" [routerLink]="[lecture.id, 'view']"
-                                class="btn btn-info btn-sm">
-                            <fa-icon [icon]="'eye'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
-                        <button type="submit" [routerLink]="[lecture.id, 'edit']"
-                                class="btn btn-primary btn-sm">
-                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                        </button>
-                        <button
-                            type="submit"
-                            [routerLink]="['/', { outlets: { popup: 'lecture/' + lecture.id + '/delete' } }]"
-                            replaceUrl="true"
-                            queryParamsHandling="merge"
-                            class="btn btn-danger btn-sm"
-                        >
-                            <fa-icon [icon]="'times'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                        </button>
+
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit" [routerLink]="[lecture.id, 'attachments']"
+                                    class="btn btn-primary mb-1 btn-sm">
+                                <fa-icon [icon]="'file'"></fa-icon>
+                                <span class="d-none d-md-inline"
+                                      jhiTranslate="entity.action.attachments">Attachment</span>
+                            </button>
+                            <button type="submit" [routerLink]="[lecture.id, 'view']"
+                                    class="btn btn-info btn-sm">
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                        </div>
+
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit" [routerLink]="[lecture.id, 'edit']"
+                                    class="btn btn-primary mb-1 btn-sm">
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'lecture/' + lecture.id + '/delete' } }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm"
+                            >
+                                <fa-icon [icon]="'times'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            </button>
+                        </div>
                     </div>
                 </td>
             </tr>

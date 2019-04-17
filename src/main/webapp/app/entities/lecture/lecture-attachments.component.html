@@ -29,7 +29,7 @@
             <hr class="mt-2 mb-2"/>
             <div class="row">
                 <div class="col-12">
-                    <h4>Attachments</h4>
+                    <h4 jhiTranslate="arTeMiSApp.lecture.attachments.attachments">Attachments</h4>
                 </div>
             </div>
 
@@ -52,7 +52,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr *ngFor="let attachment of attachments; trackBy: trackId" class="position-relative">
+                            <tr *ngFor="let attachment of attachments; trackBy: trackId;" class="position-relative">
                                 <td [ngClass]="{'edit-overlay' :attachmentToBeCreated && attachmentToBeCreated.id === attachment.id}">
                                     <span *ngIf="attachmentToBeCreated && attachmentToBeCreated.id === attachment.id">{{"arTeMiSApp.lecture.attachments.isBeingEdited" | translate}}</span>
                                     <span *ngIf="!attachmentToBeCreated || attachmentToBeCreated.id !== attachment.id">{{ attachment.id }}</span>
@@ -88,16 +88,21 @@
             <div *ngIf="attachmentToBeCreated">
                 <div class="row">
                     <div class="col-12">
+                        <h4 jhiTranslate="arTeMiSApp.lecture.attachments.newAttachment" *ngIf="!attachmentToBeCreated.id">New Attachment</h4>
+                        <h4 jhiTranslate="arTeMiSApp.lecture.attachments.editAttachment" *ngIf="attachmentToBeCreated.id">Edit Attachment</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-md-6">
                         <div class="form-group">
                             <label for="attachmentName" jhiTranslate="arTeMiSApp.lecture.attachments.name">Name</label>
                             <input type="text" class="form-control" id="attachmentName" name="attachmentName"
                                    [(ngModel)]="attachmentToBeCreated.name"/>
                         </div>
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="arTeMiSApp.lecture.attachments.file"
-                                   for="field_shortName">File</label>
+                            <label class="form-control-label" jhiTranslate="arTeMiSApp.lecture.attachments.file">File</label>
                             <div class="input-group background-file">
-                                <div class="custom-file">
+                                <div class="custom-file overflow-ellipsis">
                                     <input id="lectureAttachmentInput{{ attachmentToBeCreated.name }}" type="file"
                                            accept="application/pdf" class="custom-file-input"
                                            (change)="setLectureAttachment($event)"/>
