@@ -54,9 +54,15 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.userId = user.id;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
         this.route.params.subscribe(params => {
-            const submissionId = Number(params['submissionId']);
-            this.loadSubmission(submissionId);
+            const submissionId: String = params['submissionId'];
+            const exerciseId = Number(params['exerciseId']);
+            if (submissionId === 'new') {
+                this.loadOptimalSubmission(exerciseId);
+            } else {
+                this.loadSubmission(Number(submissionId));
+            }
         });
         this.forTutorDashboard = !!this.route.snapshot.queryParamMap.get('forTutorDashboard');
     }
@@ -67,45 +73,74 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {}
 
-    loadSubmission(submissionId: number) {
+    loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
-                this.submission = submission;
-                this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
-                this.result = this.submission.result;
-                this.localFeedbacks = this.result.feedbacks;
-                if (this.result.feedbacks) {
-                    this.result = this.modelingAssessmentService.convertResult(this.result);
-                } else {
-                    this.result.feedbacks = [];
-                }
-                this.submission.participation.results = [this.result];
-                this.result.participation = this.submission.participation;
-                if (this.modelingExercise.diagramType == null) {
-                    this.modelingExercise.diagramType = DiagramType.ClassDiagram;
-                }
-                if (this.submission.model) {
-                    this.model = JSON.parse(this.submission.model);
-                } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
-                }
-                if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
-                }
-                this.checkAuthorization();
-                this.validateFeedback();
+                this.handleReceivedSubmission(submission);
             },
             error => {
-                this.submission = undefined;
-                this.modelingExercise = undefined;
-                this.result = undefined;
-                this.model = undefined;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
+                this.onError();
             },
         );
+    }
+
+    loadOptimalSubmission(exerciseId: number): void {
+        this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+            (submission: ModelingSubmission) => {
+                this.handleReceivedSubmission(submission);
+
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                this.location.go(newUrl);
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there is no submission waiting for assessment at the moment
+                    this.goToExerciseDashboard();
+                    this.jhiAlertService.info('arTeMiSApp.tutorExerciseDashboard.noSubmissions');
+                } else {
+                    this.onError();
+                }
+            },
+        );
+    }
+
+    handleReceivedSubmission(submission: ModelingSubmission): void {
+        this.submission = submission;
+        this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+        this.result = this.submission.result;
+        this.localFeedbacks = this.result.feedbacks;
+        if (this.result.feedbacks) {
+            this.result = this.modelingAssessmentService.convertResult(this.result);
+        } else {
+            this.result.feedbacks = [];
+        }
+        this.submission.participation.results = [this.result];
+        this.result.participation = this.submission.participation;
+        if (this.modelingExercise.diagramType == null) {
+            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+        }
+        if (this.submission.model) {
+            this.model = JSON.parse(this.submission.model);
+        } else {
+            this.jhiAlertService.clear();
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
+        }
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+            this.jhiAlertService.clear();
+            this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
+        }
+        this.checkAuthorization();
+        this.validateFeedback();
+    }
+
+    onError(): void {
+        this.submission = undefined;
+        this.modelingExercise = undefined;
+        this.result = undefined;
+        this.model = undefined;
+        this.jhiAlertService.clear();
+        this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
     onSaveAssessment() {
@@ -217,7 +252,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
     }
 
-    back() {
-        this.location.back();
+    goToExerciseDashboard() {
+        if (this.modelingExercise && this.modelingExercise.course) {
+            this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
     }
 }

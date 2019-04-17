@@ -49,7 +49,7 @@
                     ></a>
                     <a class="text-primary" *ngIf="exercise.isAtLeastInstructor"
                         ><fa-icon
-                            *ngIf="exercise.type === MODELING && asModelingExercise(exercise).diagramType === CLASS_DIAGRAM"
+                            *ngIf="exercise.type === MODELING && asModelingExercise(exercise).automaticAssessmentSupported"
                             [fixedWidth]="true"
                             icon="chart-pie"
                             routerLink="/course/{{ exercise.course.id }}/exercise/{{ exercise.id }}/statistics"

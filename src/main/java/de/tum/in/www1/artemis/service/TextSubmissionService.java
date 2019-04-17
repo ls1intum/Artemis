@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -35,6 +38,30 @@ public class TextSubmissionService {
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Handles text submissions sent from the client and saves them in the database.
+     *
+     * @param textSubmission the text submission that should be saved
+     * @param textExercise   the corresponding text exercise
+     * @param principal      the user principal
+     * @return the saved text submission
+     */
+    @Transactional
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
+        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
+            textSubmission = save(textSubmission);
+        }
+        else {
+            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+            if (!optionalParticipation.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
+            }
+            Participation participation = optionalParticipation.get();
+            textSubmission = save(textSubmission, textExercise, participation);
+        }
+        return textSubmission;
     }
 
     /**
@@ -106,16 +133,9 @@ public class TextSubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
-        // TODO: optimize performance
         return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
-                .peek(participation -> participation.getExercise().setParticipations(null))
                 // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get)
-                // It needs to be submitted to be ready for assessment
-                .filter(Submission::isSubmitted).filter(textSubmission -> {
-                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
-                    return result == null;
-                }).findAny();
+                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
     }
 
     /**

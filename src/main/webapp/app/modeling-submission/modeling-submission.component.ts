@@ -286,7 +286,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Retrieves names for displaying the assessment and calculates the total score
      */
     initializeAssessmentInfo(): void {
-        if (this.assessmentResult && this.submission && this.submission.model) {
+        if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
