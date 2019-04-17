@@ -13,6 +13,18 @@
         </div>
         <button
             type="button"
+            class="btn btn-secondary navbar-btn mr-3"
+            [disabled]="editorState !== 'UNSAVED_CHANGES'"
+            (click)="editor.saveChangedFiles()"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="Save all unsaved changes in your files."
+        >
+            <span *ngIf="editorState === 'SAVING'"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.saving">Saving</span></span>
+            <span *ngIf="editorState !== 'SAVING'"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.saveFiles">Save Files</span></span>
+        </button>
+        <button
+            type="button"
             class="btn btn-primary navbar-btn"
             [disabled]="!isSaved || isBuilding"
             (click)="commit($event)"
@@ -45,6 +57,8 @@
                 [repositoryFiles]="repositoryFiles"
                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
                 (saveStatusChange)="updateSaveStatusLabel($event)"
+                [editorState]="editorState"
+                (onEditorStateChange)="setEditorState($event)"
             >
             </jhi-code-editor-ace>
         </div>

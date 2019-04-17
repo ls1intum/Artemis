@@ -38,6 +38,7 @@
             "title": "Code Editor für Übung:",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "unsavedChanges": "&nbsp; Nicht gespeicherte Änderungen in {{ unsavedFiles }} Datei(en).",
+            "savingChanges": "&nbsp; Änderungen in {{ unsavedFiles }} Datei(en) werden gespeichert.",
             "savingFile": "&nbsp; Datei wird gespeichert.",
             "changesSaved": "&nbsp; Alle Änderungen gespeichert.",
             "failedToSave": "&nbsp; Änderungen konnten nicht gespeichert werden.",
@@ -49,7 +50,9 @@
             "buildFailed": "Build gescheitert",
             "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
-            "downloadBuildResult": "Build Ergebnis herunterladen"
+            "downloadBuildResult": "Build Ergebnis herunterladen",
+            "saving": "Änderungen werden gespeichert",
+            "saveFiles": "Änderungen speichern"
         }
     }
 }

@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -13,12 +13,12 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { Result } from '../entities/result';
 import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
 import { Interactable } from 'interactjs';
+import { CodeEditorAceComponent, EditorState } from 'app/code-editor/ace/code-editor-ace.component';
 
 @Component({
     selector: 'jhi-editor',
@@ -26,6 +26,8 @@ import { Interactable } from 'interactjs';
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
 export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
+    @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
+
     /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
@@ -33,15 +35,16 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     paramSub: Subscription;
     repositoryFiles: string[];
     session: Session;
-    latestResult: Result;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
     /** File Status Booleans **/
     isSaved = true;
-    isBuilding = false;
     isCommitted: boolean;
+
+    editorState = EditorState.CLEAN;
+    isBuilding = false;
 
     /**
      * @constructor CodeEditorComponent
@@ -122,6 +125,10 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         this.repository.isClean(this.participation.id).subscribe(res => {
             this.isCommitted = res.isClean;
         });
+    }
+
+    setEditorState(editorState: EditorState) {
+        this.editorState = editorState;
     }
 
     /**

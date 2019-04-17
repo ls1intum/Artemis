@@ -14,7 +14,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
 import { compose, fromPairs, map, toPairs, unionBy } from 'lodash/fp';
-import { fromEvent, Subscription, Subject } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { RepositoryFileService } from 'app/entities/repository';
@@ -23,7 +23,13 @@ import * as ace from 'brace';
 
 import { AnnotationArray, TextChange, SaveStatusChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
+export enum EditorState {
+    CLEAN = 'CLEAN',
+    UNSAVED_CHANGES = 'UNSAVED_CHANGES',
+    SAVING = 'SAVING',
+}
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -54,13 +60,15 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     repositoryFiles: string[];
     @Input()
     buildLogErrors: { [fileName: string]: AnnotationArray[] };
+    @Input()
+    editorState: EditorState;
     @Output()
     saveStatusChange = new EventEmitter<SaveStatusChange>();
+    @Output()
+    onEditorStateChange = new EventEmitter<EditorState>();
 
-    updateFileChannel: string;
+    updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
-
-    fileChanges: Subject<string>;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -75,11 +83,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @desc Initially sets the labels for file save status
      */
     ngOnInit(): void {
-        this.fileChanges = new Subject();
-        this.fileChanges.pipe(debounceTime(5000)).subscribe((filename: string) => {
-            this.updateSaveStatusLabel(true);
-            this.saveFile(filename);
-        });
         // TODO: Move icon and class info into code-editor component
         this.onSaveStatusChange({
             isSaved: true,
@@ -113,8 +116,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.updateFileChannel = `/topic/repository/${this.participation.id}/file`;
-            this.receiveFileUpdatesChannel = `/user${this.updateFileChannel}`;
+            this.updateUnsavedFilesChannel = `/topic/repository/${this.participation.id}/files`;
+            this.receiveFileUpdatesChannel = `/user${this.updateUnsavedFilesChannel}`;
             this.setUpReceiveFileUpdates();
             this.updateSaveStatusLabel();
         }
@@ -185,10 +188,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
             }
         }
-        // If the active file is changed, save file immediately if any changes exist
-        if (changes.selectedFile && changes.selectedFile.previousValue && this.editorFileSessions[changes.selectedFile.previousValue].unsavedChanges) {
-            this.saveFile(changes.selectedFile.previousValue);
-        }
     }
 
     setUpReceiveFileUpdates() {
@@ -196,36 +195,43 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
         this.jhiWebsocketService
             .receive(this.receiveFileUpdatesChannel)
-            .debounceTime(this.updateFilesDebounceTime)
-            .distinctUntilChanged()
-            .subscribe(
-                res => {
-                    const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
-                        (acc, [file, { errors }]) => ({
-                            ...acc,
-                            [file]: errors,
-                        }),
-                        {},
-                    );
-                    this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
-                    this.editorFileSessions[res.fileName].unsavedChanges = false;
-                    this.updateSaveStatusLabel();
-                },
-                err => {
-                    if (this.onSaveStatusChange) {
-                        this.onSaveStatusChange({
-                            isSaved: false,
-                            saveStatusIcon: {
-                                spin: false,
-                                icon: 'times-circle',
-                                class: 'text-danger',
-                            },
-                            saveStatusLabel: '<span class="text-danger">${this.translate.instant("arTeMiSApp.editor.failedToSave")}</span>',
-                        });
+            .pipe(
+                debounceTime(this.updateFilesDebounceTime),
+                distinctUntilChanged(),
+            )
+            .subscribe(res => {
+                const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
+                    (acc, [file, { errors }]) => ({
+                        ...acc,
+                        [file]: errors,
+                    }),
+                    {},
+                );
+                this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
+                const errors = [];
+                Object.entries(res).forEach(([fileName, error]: [string, string | null]) => {
+                    if (error) {
+                        errors.push(error);
+                    } else {
+                        this.editorFileSessions[fileName].unsavedChanges = false;
                     }
-                    console.log('There was an error while saving file', err.fileName, err.error);
-                },
-            );
+                });
+                if (errors.length) {
+                    this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
+                    this.onSaveStatusChange({
+                        isSaved: false,
+                        saveStatusIcon: {
+                            spin: false,
+                            icon: 'times-circle',
+                            class: 'text-danger',
+                        },
+                        saveStatusLabel: `<span class="text-danger">${this.translate.instant('arTeMiSApp.editor.failedToSave')}</span>`,
+                    });
+                } else {
+                    this.onEditorStateChange.emit(EditorState.CLEAN);
+                    this.updateSaveStatusLabel();
+                }
+            });
     }
 
     /**
@@ -244,28 +250,17 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @function updateSaveStatusLabel
      * @desc Sets the labels under the ngx-treeview (files) according to the status of the files
      */
-    updateSaveStatusLabel(isSaving = false) {
-        const sessionKeys = Object.keys(this.editorFileSessions);
-        const unsavedFiles = sessionKeys.filter(session => this.editorFileSessions[session].unsavedChanges === true).length;
-        if (unsavedFiles > 0 && isSaving) {
-            this.onSaveStatusChange({
-                isSaved: false,
-                saveStatusIcon: {
-                    spin: true,
-                    icon: 'circle-notch',
-                    class: 'text-info',
-                },
-                saveStatusLabel: `<span class="text-info">${this.translate.instant('arTeMiSApp.editor.unsavedChanges', { unsavedFiles })}</span>`,
-            });
-        } else if (unsavedFiles > 0 && !isSaving) {
+    updateSaveStatusLabel() {
+        const unsavedFiles = Object.entries(this.editorFileSessions).filter(([fileName, { unsavedChanges }]) => unsavedChanges).length;
+        if (unsavedFiles > 0) {
             this.onSaveStatusChange({
                 isSaved: false,
                 saveStatusIcon: {
                     spin: false,
-                    icon: 'check-circle',
-                    class: 'text-success',
+                    icon: 'exclamation-triangle',
+                    class: 'text-warning',
                 },
-                saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
+                saveStatusLabel: `<span class="text-warning">${this.translate.instant('arTeMiSApp.editor.unsavedChanges', { unsavedFiles })}</span>`,
             });
         } else {
             this.onSaveStatusChange({
@@ -273,7 +268,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 saveStatusIcon: {
                     spin: false,
                     icon: 'check-circle',
-                    class: 'text-success',
+                    class: 'text-info',
                 },
                 saveStatusLabel: `<span class="text-success">${this.translate.instant('arTeMiSApp.editor.changesSaved')}</span>`,
             });
@@ -328,14 +323,14 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     }
 
     /**
-     * @function saveFile
-     * @desc Saves the currently selected file; is being called when the file is changed (onFileChanged)
-     * @param fileName: name of currently selected file
+     * @function saveFiles
+     * @desc Saves all files that have unsaved changes in the editor.
      */
-    saveFile(fileName: string) {
-        const unsavedFiles = Object.values(this.editorFileSessions)
-            .map(({ unsavedChanges }) => unsavedChanges)
-            .filter(Boolean).length;
+    saveChangedFiles() {
+        const unsavedFiles = Object.entries(this.editorFileSessions)
+            .filter(([, { unsavedChanges }]) => unsavedChanges)
+            .map(([fileName, { code }]) => ({ fileName, fileContent: code }));
+        this.onEditorStateChange.emit(EditorState.SAVING);
         this.onSaveStatusChange({
             isSaved: false,
             saveStatusIcon: {
@@ -343,10 +338,10 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 icon: 'circle-notch',
                 class: 'text-info',
             },
-            saveStatusLabel: `<span class="text-info">${this.translate.instant('arTeMiSApp.editor.unsavedChanges', { unsavedFiles })}<span>`,
+            saveStatusLabel: `<span class="text-info">${this.translate.instant('arTeMiSApp.editor.savingChanges', { unsavedFiles: unsavedFiles.length })}<span>`,
         });
 
-        this.jhiWebsocketService.send(this.updateFileChannel, { fileName, fileContent: this.editorFileSessions[fileName].code });
+        this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, unsavedFiles);
     }
 
     /**
@@ -363,9 +358,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 code,
                 unsavedChanges: true,
             };
-
+            this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
             this.updateSaveStatusLabel();
-            this.fileChanges.next(this.selectedFile);
         }
     }
 
@@ -373,8 +367,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        if (this.jhiWebsocketService) {
-            this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
+        if (this.updateUnsavedFilesChannel) {
+            this.jhiWebsocketService.unsubscribe(this.updateUnsavedFilesChannel);
         }
     }
 }
