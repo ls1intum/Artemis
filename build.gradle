@@ -54,6 +54,7 @@ idea {
 }
 
 spotless {
+    // allows to execute the command ./gradlew spotlessApply
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
