@@ -195,18 +195,18 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     {},
                 );
                 this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
-                const errors = [];
+                const errorFiles = [];
                 const savedFiles: string[] = [];
                 Object.entries(res).forEach(([fileName, error]: [string, string | null]) => {
                     if (error) {
-                        errors.push(error);
+                        errorFiles.push(error);
                     } else {
                         this.editorFileSessions[fileName].unsavedChanges = false;
                         savedFiles.push(fileName);
                     }
                 });
                 this.onUnsavedFilesChange.emit(Object.keys(res).filter(f => !savedFiles.includes(f)));
-                if (errors.length) {
+                if (errorFiles.length) {
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                 } else {
                     this.onEditorStateChange.emit(EditorState.CLEAN);
