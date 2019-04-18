@@ -64,6 +64,7 @@ import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-e
 import * as moment from 'moment';
 import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solution';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 
 @NgModule({
     imports: [
@@ -110,6 +111,7 @@ import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSComplaintsModule,
+        ArTEMiSComplaintsForTutorModule,
         ArTEMiSNotificationModule,
         ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
