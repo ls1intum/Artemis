@@ -199,7 +199,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("permitAll()") //TODO: make sure this call is only allowed for students of the corresponding course in the future
     public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         try {
