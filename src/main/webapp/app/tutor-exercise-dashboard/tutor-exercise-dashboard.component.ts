@@ -270,7 +270,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             route = `/text/${this.exercise.id}/assessment/${submission}`;
         } else if (this.exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
-            queryParams.forTutorDashboard = true;
+            queryParams.showBackButton = true;
         }
         this.router.navigate([route], { queryParams });
     }

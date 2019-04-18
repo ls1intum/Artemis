@@ -33,7 +33,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAuthorized = false;
     isAtLeastInstructor = false;
-    forTutorDashboard: boolean; // flag indicating if we are in tutor dashboard -> back button visible only in tutor dashboard
+    showBackButton: boolean;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -64,7 +64,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.forTutorDashboard = !!this.route.snapshot.queryParamMap.get('forTutorDashboard');
+        this.showBackButton = !!this.route.snapshot.queryParamMap.get('showBackButton');
     }
 
     checkAuthorization() {
@@ -214,7 +214,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`));
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
                 }
             },
             () => {
