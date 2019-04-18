@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { CodeEditorComponent } from './code-editor.component';
+import { PendingChangesGuard } from 'app/shared';
 
 export const codeEditorRoute: Routes = [
     {
@@ -15,5 +16,6 @@ export const codeEditorRoute: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
     },
 ];

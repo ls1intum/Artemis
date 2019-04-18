@@ -19,6 +19,7 @@ import { WindowRef } from '../core/websocket/window.service';
 import { textFileExtensions } from './text-files.json';
 import { Interactable } from 'interactjs';
 import { CodeEditorAceComponent, EditorState } from 'app/code-editor/ace/code-editor-ace.component';
+import { ComponentCanDeactivate } from 'app/shared';
 
 export enum CommitState {
     CLEAN = 'CLEAN',
@@ -32,7 +33,7 @@ export enum CommitState {
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
-export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
+export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, ComponentCanDeactivate {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
     /** Dependencies as defined by the Editor component */
@@ -120,6 +121,10 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     ngOnChanges(changes: SimpleChanges) {
         this.checkIfRepositoryIsClean();
+    }
+
+    canDeactivate() {
+        return !this.unsavedFiles || !this.unsavedFiles.length;
     }
 
     /**
