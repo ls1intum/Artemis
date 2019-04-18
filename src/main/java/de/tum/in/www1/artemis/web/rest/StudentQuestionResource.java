@@ -58,8 +58,8 @@ public class StudentQuestionResource {
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        StudentQuestion result = studentQuestionRepository.save(studentQuestion);
-        if (result.getExercise() != null) {
+        StudentQuestion question = studentQuestionRepository.save(studentQuestion);
+        if (question.getExercise() != null) { //TODO what happens if the question belongs to a lecture?
             groupNotificationService.notifyGroupAboutNewQuestion(result);
         }
         return ResponseEntity.created(new URI("/api/student-questions/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -113,7 +113,7 @@ public class StudentQuestionResource {
         if (exerciseId != null) {
             studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
         }
-        else {
+        else if (lectureId != null) {
             studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
         }
 
