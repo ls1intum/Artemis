@@ -52,9 +52,6 @@ public abstract class Notification implements Serializable {
     @ManyToOne
     private User author;
 
-    @ManyToOne
-    private Course course;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
