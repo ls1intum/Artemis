@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,9 +155,16 @@ public class ModelingSubmissionService {
 
         Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), username);
         if (!optionalParticipation.isPresent()) {
-            throw new EntityNotFoundException("No participation found for " + username + " in exercise " + modelingExercise.getId());
+            throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
         Participation participation = optionalParticipation.get();
+
+        // TODO: enable retry mechanism again
+        // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
+        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(submission -> submission.isSubmitted());
+        if (submittedSubmissionExists) {
+            throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission", "participationExists");
+        }
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
