@@ -84,11 +84,13 @@ public class CourseResource {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final NotificationService notificationService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
             TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService) {
+            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -104,6 +106,7 @@ public class CourseResource {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -489,6 +492,11 @@ public class CourseResource {
         }
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
+        }
+
+        List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
+        for (GroupNotification notification : notifications) {
+            notificationService.deleteNotification(notification);
         }
         String title = course.getTitle();
         courseService.delete(id);

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 
 @Service
@@ -17,14 +18,18 @@ public class NotificationService {
 
     private NotificationRepository notificationRepository;
 
+    private GroupNotificationRepository groupNotificationRepository;
+
     private SingleUserNotificationService singleUserNotificationService;
 
     private GroupNotificationService groupNotificationService;
 
     public NotificationService(SimpMessageSendingOperations messagingTemplate, NotificationRepository notificationRepository,
-            SingleUserNotificationService singleUserNotificationService, GroupNotificationService groupNotificationService) {
+            GroupNotificationRepository groupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
+            GroupNotificationService groupNotificationService) {
         this.messagingTemplate = messagingTemplate;
         this.notificationRepository = notificationRepository;
+        this.groupNotificationRepository = groupNotificationRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.groupNotificationService = groupNotificationService;
     }
@@ -37,4 +42,11 @@ public class NotificationService {
         return groupNotifications;
     }
 
+    public List<GroupNotification> findAllNotificationsForCourse(Course course) {
+        return groupNotificationRepository.findAllByCourseId(course.getId());
+    }
+
+    public void deleteNotification(GroupNotification notification) {
+        notificationRepository.delete(notification);
+    }
 }
