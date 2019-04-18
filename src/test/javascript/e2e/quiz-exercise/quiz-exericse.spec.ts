@@ -6,7 +6,7 @@ import { errorRoute } from '../../../../main/webapp/app/layouts';
 
 const expect = chai.expect;
 
-describe('quiz-exercise', () => {
+describe('quiz-exercise', function() {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
     let coursePage: CoursePage;
@@ -17,7 +17,7 @@ describe('quiz-exercise', () => {
 
     let courseName: string;
 
-    before(async () => {
+    before(async function() {
         await browser.get('/');
         navBarPage = new NavBarPage(true);
         signInPage = await navBarPage.getSignInPage();
@@ -44,16 +44,16 @@ describe('quiz-exercise', () => {
         await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
     });
 
-    beforeEach(async () => {});
+    beforeEach(async function() {});
 
-    it('navigate into course-exercises', async () => {
+    it('navigate into course-exercises', async function() {
         await navBarPage.clickOnCourseAdminMenu();
         courseId = await coursePage.navigateIntoLastCourseExercises();
 
         await expect(browser.wait(ec.urlContains(`/course/${courseId}`), 1000)).to.become(true);
     });
 
-    it('create quiz', async () => {
+    it('create quiz', async function() {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -96,7 +96,7 @@ describe('quiz-exercise', () => {
         //TODO: check that we leave the page and there is a new entry
     });
 
-    it('participate in quiz', async () => {
+    it('participate in quiz', async function() {
         const quizRows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         quizId = await quizRows
             .last()
@@ -184,7 +184,7 @@ describe('quiz-exercise', () => {
         browser.waitForAngularEnabled(true);
     });
 
-    it('delete quiz', async () => {
+    it('delete quiz', async function() {
         browser.waitForAngularEnabled(false);
         await navBarPage.clickOnCourseAdminMenu();
         browser.waitForAngularEnabled(true);
@@ -194,7 +194,7 @@ describe('quiz-exercise', () => {
         await element(by.id('delete-quiz-confirmation-button')).click();
     });
 
-    it('create SA quiz', async () => {
+    it('create SA quiz', async function() {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -239,7 +239,7 @@ describe('quiz-exercise', () => {
         //TODO: check that we leave the page and there is a new entry
     });
 
-    after(async () => {
+    after(async function() {
         await navBarPage.autoSignOut();
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);
