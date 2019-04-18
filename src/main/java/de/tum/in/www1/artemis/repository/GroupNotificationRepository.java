@@ -22,4 +22,8 @@ public interface GroupNotificationRepository extends JpaRepository<Notification,
             + "or (groupNotification.course.studentGroupName in :#{#currentGroups} AND groupNotification.type = 'STUDENT'))")
     List<Notification> findAllNewNotificationsForCurrentUser(@Param("currentGroups") List<String> currentUserGroups,
             @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
+
+    @Query("select groupNotification from GroupNotification groupNotification where groupNotification.course.id = :#{#courseId}")
+    List<Notification> findAllByCourseId(@Param("courseId") Long courseId);
+
 }

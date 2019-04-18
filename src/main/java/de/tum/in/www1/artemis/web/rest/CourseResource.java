@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
@@ -84,11 +85,13 @@ public class CourseResource {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final GroupNotificationRepository groupNotificationRepository;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
             TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService) {
+            ComplaintResponseRepository complaintResponseRepository, GroupNotificationRepository groupNotificationRepository, LectureService lectureService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -103,6 +106,7 @@ public class CourseResource {
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.groupNotificationRepository = groupNotificationRepository;
         this.lectureService = lectureService;
     }
 
@@ -490,6 +494,10 @@ public class CourseResource {
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
         }
+
+        List<Notification> notifications = this.groupNotificationRepository.findAllByCourseId(id);
+        this.groupNotificationRepository.deleteAll(notifications);
+
         String title = course.getTitle();
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
