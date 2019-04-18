@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
-import { compose, fromPairs, map, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -23,6 +23,7 @@ import { CodeEditorAceComponent, EditorState } from 'app/code-editor/ace/code-ed
 export enum CommitState {
     CLEAN = 'CLEAN',
     UNCOMMITTED_CHANGES = 'UNCOMMITTED_CHANGES',
+    WANTS_TO_COMMIT = 'WANTS_TO_COMMIT',
     COMMITTING = 'COMMITTING',
 }
 
@@ -62,7 +63,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     constructor(
         private route: ActivatedRoute,
-        private $window: WindowRef,
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
@@ -120,14 +120,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      */
     ngOnChanges(changes: SimpleChanges) {
         this.checkIfRepositoryIsClean();
-        // TODO: Implement save all
-        //         if(hasParticipationChanged(changes)){
-        // if (this.receiveFileUpdatesChannel)
-        // {             this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
-        //  }
-        // this.file
-        // this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
-        //}
     }
 
     /**
@@ -149,6 +141,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
     setUnsavedFiles(fileNames: string[]) {
         this.unsavedFiles = fileNames;
+        if (this.commitState === CommitState.WANTS_TO_COMMIT) {
+            if (this.unsavedFiles.length === 0) {
+                // Success state: all files could be saved before commit, so try to commit again.
+                this.commit();
+            } else {
+                // Error state: some files could not not be saved, show an error
+                console.log('error');
+            }
+        }
     }
 
     /**
@@ -156,7 +157,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Callback function for when a new result is received from the result component
      * @param $event Event object which contains the newly received result
      */
-    updateLatestResult($event: any) {
+    updateLatestResult() {
         this.isBuilding = false;
     }
 
@@ -219,6 +220,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     errors: compose(
                         fromPairs,
                         map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
+                        filter(([, errors]) => errors.length),
                         toPairs,
                     )(this.session.errors),
                     timestamp: this.session.timestamp,
@@ -265,20 +267,27 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Commits the current repository files
      * @param $event
      */
-    commit($event: any) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
-        target.blur();
-        this.commitState = CommitState.COMMITTING;
-        // this.editor.saveChangedFiles();
-        this.repository.commit(this.participation.id).subscribe(
-            () => {
-                this.commitState = CommitState.CLEAN;
-                this.isBuilding = true;
-            },
-            err => {
-                console.log('Error during commit ocurred!', err);
-            },
-        );
+    commit() {
+        // Avoid multiple commits at the same time.
+        if (this.commitState === CommitState.COMMITTING) {
+            return;
+        }
+        // If there are unsaved changes, save them before trying to commit again.
+        if (!this.unsavedFiles.length) {
+            this.commitState = CommitState.COMMITTING;
+            this.repository.commit(this.participation.id).subscribe(
+                () => {
+                    this.commitState = CommitState.CLEAN;
+                    this.isBuilding = true;
+                },
+                err => {
+                    console.log('Error during commit ocurred!', err);
+                },
+            );
+        } else {
+            this.commitState = CommitState.WANTS_TO_COMMIT;
+            this.editor.saveChangedFiles();
+        }
     }
 
     /**

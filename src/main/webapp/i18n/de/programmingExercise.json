@@ -45,6 +45,7 @@
             "changesCommitted": "Alle Änderungen commited.",
             "uncommittedChanges": "Es gibt Änderungen, die nicht committed wurden",
             "committingChanges": "Änderungen werden committed.",
+            "preparingForCommit": "Commit wird vorbereitet.",
             "commitAndRun": "Commit & Tests starten",
             "buildOutput": "Build Ergebnisse",
             "building": "Building...",

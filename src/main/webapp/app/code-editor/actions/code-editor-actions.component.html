@@ -15,7 +15,7 @@
         type="button"
         class="btn btn-primary navbar-btn"
         [disabled]="editorState === 'SAVING' || isBuilding"
-        (click)="onCommit($event)"
+        (click)="onCommit()"
         data-toggle="tooltip"
         data-placement="left"
         title="Stage, commit, push, build and test your changes."

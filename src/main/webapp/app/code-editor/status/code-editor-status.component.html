@@ -23,6 +23,10 @@
             <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning mr-1"></fa-icon>
             <span class="text-info">{{ 'arTeMiSApp.editor.uncommittedChanges' | translate }}</span>
         </div>
+        <div *ngSwitchCase="'WANTS_TO_COMMIT'">
+            <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
+            <span class="text-info">{{ 'arTeMiSApp.editor.preparingForCommit' | translate }}</span>
+        </div>
         <div *ngSwitchCase="'COMMITTING'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
             <span class="text-info">{{ 'arTeMiSApp.editor.committingChanges' | translate }}</span>

@@ -45,6 +45,7 @@
             "changesCommitted": "All changes committed.",
             "uncommittedChanges": "There are uncommitted changes.",
             "committingChanges": "Committing changes.",
+            "preparingForCommit": "Preparing for commit.",
             "commitAndRun": "Commit & Run Tests",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building...",
