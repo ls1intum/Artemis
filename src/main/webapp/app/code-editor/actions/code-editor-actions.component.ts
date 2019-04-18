@@ -16,5 +16,5 @@ export class CodeEditorActionsComponent {
     @Input()
     onSave: () => void;
     @Input()
-    onCommit: (event: any) => void;
+    onCommit: () => void;
 }

@@ -58,7 +58,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     public isInitial = true;
     public isLoading = true;
-    private latestResult: Result | null;
+    public latestResult: Result | null;
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
