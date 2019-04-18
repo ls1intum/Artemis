@@ -1,0 +1,42 @@
+{
+    "arTeMiSApp": {
+        "lecture": {
+            "home": {
+                "title": "Lecture",
+                "createLabel": "Create Lecture",
+                "createOrEditLabel": "Create or Edit Lecture"
+            },
+            "created": "A new lecture is created with identifier {{ param }}",
+            "updated": "A lecture is updated with identifier {{ param }}",
+            "deleted": "A lecture is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the lecture {{ title }}? This action can NOT be undone!"
+            },
+            "title": "Title",
+            "description": "Description",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "course": "Course",
+            "detail": {
+                "title": "Lecture"
+            },
+            "attachments": {
+                "title": "Attachments of lecture",
+                "name": "Name",
+                "type": "Type",
+                "link": "Link",
+                "file": "File",
+                "releaseDate": "Release date",
+                "uploadDate": "Upload date",
+                "version": "Version",
+                "uploading": "Uploading...",
+                "isBeingEdited": "Is currently being edited...",
+                "attachments": "Attachments",
+                "newAttachment": "New Attachment",
+                "editAttachment": "Edit Attachment",
+                "notificationText": "Notification Text",
+                "notificationPlaceholder": "(Optional)"
+            }
+        }
+    }
+}

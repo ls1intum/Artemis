@@ -54,6 +54,7 @@ idea {
 }
 
 spotless {
+    // allows to execute the command ./gradlew spotlessApply
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
@@ -75,7 +76,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.8.1'
+version = '2.9.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {

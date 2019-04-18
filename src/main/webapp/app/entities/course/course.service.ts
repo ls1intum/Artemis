@@ -16,6 +16,7 @@ import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
 import { AccountService, User } from 'app/core';
 import { NotificationService } from 'app/entities/notification';
+import { LectureService } from 'app/entities/lecture/lecture.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -24,7 +25,13 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private notificationService: NotificationService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+        private lectureService: LectureService,
+        private notificationService: NotificationService,
+        private accountService: AccountService,
+    ) {}
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -127,6 +134,7 @@ export class CourseService {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
             res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
+            res.body.lectures = this.lectureService.convertDatesForLecturesFromServer(res.body.lectures);
         }
         return res;
     }
@@ -137,6 +145,7 @@ export class CourseService {
                 course.startDate = course.startDate != null ? moment(course.startDate) : null;
                 course.endDate = course.endDate != null ? moment(course.endDate) : null;
                 course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+                course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
             });
         }
         return res;

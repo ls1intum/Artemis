@@ -1,6 +1,15 @@
 import { Routes } from '@angular/router';
 
-import { CourseExercisesComponent, CourseOverviewComponent, CourseGradeBookComponent, CourseStatisticsComponent, OverviewComponent, CourseExerciseDetailsComponent } from './';
+import {
+    CourseExercisesComponent,
+    CourseOverviewComponent,
+    CourseGradeBookComponent,
+    CourseStatisticsComponent,
+    OverviewComponent,
+    CourseExerciseDetailsComponent,
+    CourseLecturesComponent,
+    CourseLectureDetailsComponent,
+} from './';
 import { UserRouteAccessService } from 'app/core';
 
 export const OVERVIEW_ROUTES: Routes = [
@@ -28,6 +37,15 @@ export const OVERVIEW_ROUTES: Routes = [
                 data: {
                     authorities: ['ROLE_USER'],
                     pageTitle: 'overview.course',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'lectures',
+                component: CourseLecturesComponent,
+                data: {
+                    authorities: ['ROLE_USER'],
+                    pageTitle: 'overview.lectures',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -62,6 +80,15 @@ export const OVERVIEW_ROUTES: Routes = [
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'overview.exercise',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'overview/:courseId/lectures/:lectureId',
+        component: CourseLectureDetailsComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.lectures',
         },
         canActivate: [UserRouteAccessService],
     },
