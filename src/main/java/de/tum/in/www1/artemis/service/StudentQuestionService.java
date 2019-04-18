@@ -22,4 +22,9 @@ public class StudentQuestionService {
     public List<StudentQuestion> findStudentQuestionsForExercise(Long exerciseId) {
         return studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
     }
+
+    @Transactional(readOnly = true)
+    public List<StudentQuestion> findStudentQuestionsForLecture(Long lectureId) {
+        return studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
+    }
 }

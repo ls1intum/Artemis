@@ -1,0 +1,42 @@
+{
+    "arTeMiSApp": {
+        "lecture": {
+            "home": {
+                "title": "Vorlesungen",
+                "createLabel": "Vorlesung erstellen",
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
+            },
+            "created": "Vorlesung erstellt mit ID {{ param }}",
+            "updated": "Vorlesung aktualisiert mit ID {{ param }}",
+            "deleted": "Vorlesung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll die Vorlesung {{ title }} wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            },
+            "title": "Title",
+            "description": "Beschreibung",
+            "startDate": "Start",
+            "endDate": "Ende",
+            "course": "Kurs",
+            "detail": {
+                "title": "Vorlesung"
+            },
+            "attachments": {
+                "title": "Anhänge der Vorlesung",
+                "name": "Name",
+                "type": "Typ",
+                "link": "Link",
+                "file": "Datei",
+                "releaseDate": "Freigabedatum",
+                "uploadDate": "Upload-Datum",
+                "version": "Version",
+                "uploading": "Lade hoch...",
+                "isBeingEdited": "Wird gerade bearbeitet...",
+                "attachments": "Anhänge",
+                "newAttachment": "Neuer Anhang",
+                "editAttachment": "Anhang bearbeiten",
+                "notificationText": "Mitteilungstext",
+                "notificationPlaceholder": "(Optional)"
+            }
+        }
+    }
+}
