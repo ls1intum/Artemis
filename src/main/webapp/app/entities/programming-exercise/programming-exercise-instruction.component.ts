@@ -58,7 +58,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     public isInitial = true;
     public isLoading = true;
-    private latestResult: Result;
+    private latestResult: Result | null;
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
@@ -98,6 +98,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 .then(() => this.setupResultWebsocket())
                 .then(() => this.isInitial && this.loadInitialResult())
                 .then((result: Result) => (this.latestResult = result))
+                .catch(() => (this.latestResult = null))
                 .finally(() => {
                     this.updateMarkdown();
                     this.isInitial = false;
@@ -105,7 +106,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
     }
 
-    private setupResultWebsocket() {
+    private async setupResultWebsocket() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
@@ -128,7 +129,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 return this.loadAndAttachResultDetails(latestResult).subscribe(result => (result ? resolve(result) : reject()), () => reject());
             } else if (this.exercise && this.exercise.id) {
                 // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
-                return this.loadLatestResult().subscribe(result => (result ? resolve(result) : reject()), () => reject());
+                return this.loadLatestResult().subscribe(result => (result.id ? resolve(result) : reject()), () => reject());
             } else {
                 reject();
             }
@@ -479,7 +480,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
+        if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
             let failedTests = 0;
             for (const test of tests) {
                 for (const result of this.latestResult.feedbacks) {
