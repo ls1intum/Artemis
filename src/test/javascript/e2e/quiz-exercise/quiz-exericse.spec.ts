@@ -36,7 +36,7 @@ describe('quiz-exercise', function() {
         await newCoursePage.setInstructorGroupName('ls1instructor');
         await newCoursePage.clickSave();
 
-        browser.wait(ec.urlContains('/course'), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains('/course'), 1000)).to.become(true);
 
         // Sign in with instructor account
         await navBarPage.autoSignOut();
@@ -86,23 +86,23 @@ describe('quiz-exercise', function() {
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
         //TODO: check that the button name is "Back"
         await backButton.click();
 
-        //TODO: check that we leave the page and there is a new entry
-    });
-
-    it('participate in quiz', async function() {
         const quizRows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         quizId = await quizRows
             .last()
             .element(by.css('td:nth-child(1) > a'))
             .getText();
 
+        //TODO: check that we leave the page and there is a new entry
+    });
+
+    it('participate in quiz', async function() {
         //set visible
         const setVisibleButton = await element(by.id(`quiz-set-visible-${quizId}`));
         expect(setVisibleButton.isPresent());
@@ -129,7 +129,7 @@ describe('quiz-exercise', function() {
         expect(startQuizButton.isPresent());
         await startQuizButton.click();
 
-        browser.wait(ec.urlContains(`quiz/${quizId}`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`quiz/${quizId}`), 1000)).to.become(true);
 
         // deactivate because we use timeouts in the quiz participation and otherwise it would not work
         browser.waitForAngularEnabled(false);
@@ -153,33 +153,31 @@ describe('quiz-exercise', function() {
         await submitQuizButton.click();
 
         //wait until the quiz has finished
-        await browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000).then(async (result: any) => {
-            await element(by.id('quiz-score-result'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('1/1 (100 %)');
-                });
+        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000)).to.become(true);
 
-            await element(by.id('answer-option-0-correct'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('Correct');
-                })
-                .catch(error => {
-                    expect.fail('first answer option not found as correct');
-                });
+        await element(by.id('quiz-score-result'))
+            .getText()
+            .then(text => {
+                expect(text).equals('1/1 (100 %)');
+            });
 
-            await element(by.id('answer-option-1-correct'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('Correct');
-                })
-                .catch(error => {
-                    expect.fail('second answer option not found as correct');
-                });
-        });
+        await element(by.id('answer-option-0-correct'))
+            .getText()
+            .then(text => {
+                expect(text).equals('Correct');
+            })
+            .catch(error => {
+                expect.fail('first answer option not found as correct');
+            });
 
-        await browser.sleep(500);
+        await element(by.id('answer-option-1-correct'))
+            .getText()
+            .then(text => {
+                expect(text).equals('Correct');
+            })
+            .catch(error => {
+                expect.fail('second answer option not found as correct');
+            });
 
         browser.waitForAngularEnabled(true);
     });
@@ -223,7 +221,7 @@ describe('quiz-exercise', function() {
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
