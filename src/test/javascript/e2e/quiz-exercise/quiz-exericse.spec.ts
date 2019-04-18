@@ -46,12 +46,11 @@ describe('quiz-exercise', () => {
 
     beforeEach(async () => {});
 
-    it('navigate into quiz-exercise', async () => {
+    it('navigate into course-exercises', async () => {
         await navBarPage.clickOnCourseAdminMenu();
         courseId = await coursePage.navigateIntoLastCourseExercises();
 
-        //TODO: this does not seem to work properly
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise`), 5000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`/course/${courseId}`), 1000)).to.become(true);
     });
 
     it('create quiz', async () => {
