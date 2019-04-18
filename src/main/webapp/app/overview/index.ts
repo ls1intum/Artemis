@@ -7,6 +7,8 @@ export * from './course-exercises/course-exercises.component';
 export * from './exercise-details/course-exercise-details.component';
 export * from './exercise-details/exercise-details-student-actions.component';
 export * from './exercise-details/exercise-action-button.component';
+export * from './course-lectures/course-lectures.component';
+export * from './course-lectures/course-lecture-details.component';
 export * from './overview-course-card.component';
 export * from './overview.route';
 export * from './overview.module';
