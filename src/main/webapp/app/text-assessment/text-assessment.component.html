@@ -46,6 +46,10 @@
     </div>
 </div>
 
+<div *ngIf="notFound" class="alert alert-warning text-center mt-4" role="alert">
+    <p jhiTranslate="arTeMiSApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+</div>
+
 <div class="row justify-content-end mt-4">
     <div class="col text-right">
         <span *ngIf="result && participation && showResult"><jhi-result
@@ -94,7 +98,7 @@
     <div class="col-12 resizing-bar-bottom"><span></span></div>
 </div>
 
-<div class="col-12 mt-3" *ngIf="!busy">
+<div class="col-12 mt-3" *ngIf="!busy && !notFound">
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
     <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary text-center" role="alert">
         <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess
