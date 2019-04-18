@@ -25,6 +25,7 @@
         "@nguniversal/express-engine": "7.1.1",
         "@ngx-translate/core": "11.0.1",
         "@ngx-translate/http-loader": "4.0.0",
+        "@sentry/browser": "5.0.8",
         "@types/smoothscroll-polyfill": "0.3.1",
         "ace-builds": "1.4.3",
         "angular-fittext": "2.1.1",
