@@ -252,6 +252,7 @@ dependencies {
     testCompile "com.h2database:h2"
     testCompile 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+    compile 'io.sentry:sentry-spring:1.7.16'
 }
 
 task cleanResources(type: Delete) {
