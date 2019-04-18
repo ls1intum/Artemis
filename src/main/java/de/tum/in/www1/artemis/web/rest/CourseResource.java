@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -33,6 +32,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -76,17 +76,21 @@ public class CourseResource {
 
     private final TextAssessmentService textAssessmentService;
 
+    private final LectureService lectureService;
+
     private final SubmissionRepository submissionRepository;
 
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final NotificationService notificationService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-                          MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-                          TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-                          ComplaintResponseRepository complaintResponseRepository) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -101,6 +105,8 @@ public class CourseResource {
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.lectureService = lectureService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -282,6 +288,8 @@ public class CourseResource {
 
         long exerciseCount = 0;
         for (Course course : courses) {
+            Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
+            course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
@@ -484,6 +492,11 @@ public class CourseResource {
         }
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
+        }
+
+        List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
+        for (GroupNotification notification : notifications) {
+            notificationService.deleteNotification(notification);
         }
         String title = course.getTitle();
         courseService.delete(id);

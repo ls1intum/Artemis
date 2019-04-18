@@ -29,6 +29,7 @@ export class ProfileService {
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                         }
+                        profileInfo.sentry = data.sentry;
                         return profileInfo;
                     }),
                 )

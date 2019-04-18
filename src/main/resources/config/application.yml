@@ -14,6 +14,9 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
+artemis:
+    version: #project.version#
+
 management:
     endpoints:
         web:
@@ -81,7 +84,7 @@ spring:
         mode: HTML
     servlet:
         multipart:
-            max-file-size: 5MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
+            max-file-size: 10MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
             max-request-size: 10MB
 
 server:
@@ -94,6 +97,8 @@ server:
 info:
     # Comma separated list of profiles that will trigger the ribbon to show
     display-ribbon-on-profiles: "dev"
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
 
 # ===================================================================
 # JHipster specific properties

@@ -1,13 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.config.Constants;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +14,15 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.config.Constants;
 
 @Service
 public class FileService {
@@ -35,20 +36,20 @@ public class FileService {
      * @return file contents as a byte[], or null, if the file doesn't exist
      * @throws IOException
      */
-    @Cacheable(value="files", unless="#result == null")
+    @Cacheable(value = "files", unless = "#result == null")
     public byte[] getFileForPath(String path) throws IOException {
         File file = new File(path);
         if (file.exists()) {
             return Files.readAllBytes(file.toPath());
-        } else {
+        }
+        else {
             return null;
         }
     }
 
     /**
-     * Takes care of any changes that have to be made to the filesystem
-     * (deleting old files, moving temporary files into their proper location)
-     * and returns the public path for the resulting file (as it might have been moved from newFilePath to another path)
+     * Takes care of any changes that have to be made to the filesystem (deleting old files, moving temporary files into their proper location) and returns the public path for the
+     * resulting file (as it might have been moved from newFilePath to another path)
      *
      * @param oldFilePath  the old file path (this file will be deleted if not null and different from newFilePath)
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
@@ -57,18 +58,24 @@ public class FileService {
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
+        return manageFilesForUpdatedFilePath(oldFilePath, newFilePath, targetFolder, entityId, false);
+    }
+
+    public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId, Boolean keepFileName) {
         log.debug("Manage files for {} to {}", oldFilePath, newFilePath);
 
         if (oldFilePath != null) {
             if (oldFilePath.equals(newFilePath)) {
                 // Do nothing
                 return newFilePath;
-            } else {
+            }
+            else {
                 // delete old file
                 File oldFile = new File(actualPathForPublicPath(oldFilePath));
                 if (!oldFile.delete()) {
                     log.warn("Could not delete file: {}", oldFile);
-                } else {
+                }
+                else {
                     log.debug("Deleted Orphaned File: {}", oldFile);
                 }
             }
@@ -78,12 +85,13 @@ public class FileService {
             // rename and move file
             try {
                 Path source = Paths.get(actualPathForPublicPath(newFilePath));
-                File targetFile = generateTargetFile(newFilePath, targetFolder);
+                File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
                 newFilePath = publicPathForActualPath(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("Error moving file: {}", newFilePath);
             }
         }
@@ -112,6 +120,9 @@ public class FileService {
         }
         if (publicPath.contains("files/course/icons")) {
             return Constants.COURSE_ICON_FILEPATH + filename;
+        }
+        if (publicPath.contains("files/attachments/lecture")) {
+            return Constants.LECTURE_ATTACHMENT_FILEPATH + filename;
         }
 
         // path is unknown => cannot convert
@@ -145,6 +156,9 @@ public class FileService {
         if (actualPath.contains(Constants.COURSE_ICON_FILEPATH)) {
             return "/api/files/course/icons/" + id + "/" + filename;
         }
+        if (actualPath.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+            return "/api/files/attachments/lecture/" + id + "/" + filename;
+        }
 
         // path is unknown => cannot convert
         throw new RuntimeException("Unknown Filepath: " + actualPath);
@@ -158,7 +172,7 @@ public class FileService {
      * @return the newly created file
      * @throws IOException
      */
-    private File generateTargetFile(String originalFilename, String targetFolder) throws IOException {
+    private File generateTargetFile(String originalFilename, String targetFolder, Boolean keepFileName) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
@@ -166,6 +180,12 @@ public class FileService {
         }
         if (targetFolder.equals(Constants.DRAG_ITEM_FILEPATH)) {
             filenameBase = "DragItem_";
+        }
+        if (targetFolder.equals(Constants.COURSE_ICON_FILEPATH)) {
+            filenameBase = "CourseIcon_";
+        }
+        if (targetFolder.equals(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+            filenameBase = "LectureAttachment_";
         }
 
         // extract the file extension
@@ -185,12 +205,25 @@ public class FileService {
         File newFile;
         String filename;
         do {
-            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+            if (keepFileName) {
+                if (originalFilename.contains("/api/files/temp/")) {
+                    originalFilename = originalFilename.replace("/api/files/temp/", "");
+                }
+                filename = originalFilename;
+            }
+            else {
+                filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                        + fileExtension;
+            }
             String path = targetFolder + filename;
 
             newFile = new File(path);
+            if (keepFileName && newFile.exists()) {
+                newFile.delete();
+            }
             fileCreated = newFile.createNewFile();
-        } while (!fileCreated);
+        }
+        while (!fileCreated);
 
         return newFile;
     }
@@ -198,7 +231,7 @@ public class FileService {
     /**
      * This copies the directory at the old directory path to the new path, including all files and subfolders
      *
-     * @param resources the resources that should be copied
+     * @param resources           the resources that should be copied
      * @param targetDirectoryPath the path of the folder where the copy should be located
      * @throws IOException
      */
@@ -207,17 +240,17 @@ public class FileService {
         for (Resource resource : resources) {
 
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
-            //cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
+            // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = fileUrl.substring(index + prefix.length());
-            //special case for '.git.ignore.file' file which would not be included in build otherwise
+            // special case for '.git.ignore.file' file which would not be included in build otherwise
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
             }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
-            if(!parentFolder.exists()) {
+            if (!parentFolder.exists()) {
                 Files.createDirectories(parentFolder.toPath());
             }
 
@@ -303,7 +336,7 @@ public class FileService {
 
         for (String subdirectory : subdirectories) {
             if (subdirectory.equalsIgnoreCase(".git")) {
-                //ignore files in the '.git' folder
+                // ignore files in the '.git' folder
                 continue;
             }
             replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
@@ -311,7 +344,8 @@ public class FileService {
     }
 
     /**
-     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the order of the argument is the same
+     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the
+     * order of the argument is the same
      *
      * @param filePath           the path where the file is located
      * @param targetStrings      the strings that should be replaced

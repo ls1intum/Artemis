@@ -15,6 +15,8 @@ import {
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseGradeBookComponent,
+    CourseLectureDetailsComponent,
+    CourseLecturesComponent,
     CourseOverviewComponent,
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
@@ -26,6 +28,7 @@ import {
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -50,6 +53,9 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         CourseExerciseRowComponent,
         CourseExercisesComponent,
         CourseExerciseDetailsComponent,
+        CourseLecturesComponent,
+        CourseLectureRowComponent,
+        CourseLectureDetailsComponent,
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,

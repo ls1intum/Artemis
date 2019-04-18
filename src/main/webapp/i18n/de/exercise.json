@@ -55,7 +55,12 @@
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",
             "showAll": "Alle anzeigen",
-            "tagPlaceholder": "Neues Tag eingeben"
+            "tagPlaceholder": "Neue Kategorie eingeben",
+            "isProgramming": "Das ist eine Programmierübung",
+            "isModeling": "Das ist eine Modelierungsübung",
+            "isQuiz": "Das ist eine Quizübung",
+            "isText": "Das ist eine Textübung",
+            "isFileUpload": "Das ist eine Datei-Upload-Übung"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

@@ -87,7 +87,7 @@
         </jhi-side-panel>
         <div class="exercise-panel mt-3">
             <jhi-side-panel [panelHeader]="'arTeMiSApp.courseOverview.exerciseList.details.upcomingDeadlines' | translate">
-                <div class="row mb-1 align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
+                <div class="row mb-1 has-exercises  align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | date: 'dd/MM/yy HH:mm' }}</div>
                     <div class="col-5">{{ exercise.title }}</div>
                     <div class="col-2 icon">

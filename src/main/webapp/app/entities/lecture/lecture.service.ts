@@ -39,6 +39,12 @@ export class LectureService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/courses/${courseId}/lectures`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
@@ -61,11 +67,25 @@ export class LectureService {
 
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((lecture: Lecture) => {
-                lecture.startDate = lecture.startDate != null ? moment(lecture.startDate) : null;
-                lecture.endDate = lecture.endDate != null ? moment(lecture.endDate) : null;
+            res.body.map((lecture: Lecture) => {
+                return this.convertDatesForLectureFromServer(lecture);
             });
         }
         return res;
+    }
+
+    public convertDatesForLectureFromServer(lecture: Lecture): Lecture {
+        lecture.startDate = lecture.startDate ? moment(lecture.startDate) : null;
+        lecture.endDate = lecture.endDate ? moment(lecture.endDate) : null;
+        return lecture;
+    }
+
+    public convertDatesForLecturesFromServer(lectures: Lecture[]): Lecture[] {
+        if (!lectures) {
+            return lectures;
+        }
+        return lectures.map(lecture => {
+            return this.convertDatesForLectureFromServer(lecture);
+        });
     }
 }
