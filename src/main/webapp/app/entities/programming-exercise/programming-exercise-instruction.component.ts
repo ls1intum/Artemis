@@ -84,6 +84,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
+    /**
+     * If the participation changes, the participation's instructions need to be loaded and the
+     * subscription for the participation's result needs to be set up.
+     * @param changes
+     */
     public ngOnChanges(changes: SimpleChanges) {
         // If the participation changes, set component to initial as everything needs to be reloaded now
         if (this.participation && changes.participation && changes.participation.currentValue && this.participation.id !== changes.participation.currentValue.id) {
@@ -106,6 +111,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
     }
 
+    /**
+     * Set up the websocket for retrieving build results.
+     * Online updates the build logs if the result is new, otherwise doesn't react.
+     */
     private async setupResultWebsocket() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
@@ -152,7 +161,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     /**
      * Retrieve latest result for the participation/exercise/course combination.
-     * If there is no result, return null
+     * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result> {
         return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
@@ -164,7 +173,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     /**
      * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) => Input latestResult
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(

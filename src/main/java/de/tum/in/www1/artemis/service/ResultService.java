@@ -86,9 +86,10 @@ public class ResultService {
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it
+     * Use the given requestBody to extract the relevant information from it.
+     * Fetch and attach the result's feedback items to it.
      * @param participation Participation for which the build was finished
-     * @param requestBody RequestBody containing all relevant information
+     * @param requestBody RequestBody containing the build result and its feedback items
      */
     public void onResultNotifiedNew(Participation participation, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participation.getId());

@@ -12,6 +12,11 @@ export class ResultWebsocketService {
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private accountService: AccountService) {}
 
+    /**
+     * Subscribe to receiving new results for a given participation.
+     * Unsubscribes from the websocket channel when the last subscriber has unsubscribed.
+     * @param participationId
+     */
     async subscribeResultForParticipation(participationId: number): Promise<Observable<Result>> {
         return this.accountService.identity().then(() => {
             const channel = `/topic/participation/${participationId}/newResults`;

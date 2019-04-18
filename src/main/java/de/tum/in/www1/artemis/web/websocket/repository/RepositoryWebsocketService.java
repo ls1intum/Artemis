@@ -23,7 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.HashMap;
 
 
 @Controller
@@ -71,7 +73,17 @@ public class RepositoryWebsocketService {
     }
 
 
-    private void loadAndSaveFile(Long participationId, FileSubmission submission, Principal principal) throws InterruptedException, IOException, NoPermissionException {
+    /**
+     * Retrieve the file from repository and update its content with the submission's content.
+     * Throws exceptions if the user doesn't have permissions, the file can't be retrieved or it can't be updated.
+     * @param participationId id of participation to which the file belongs
+     * @param submission information about file update
+     * @param principal used to check if the user can update the file
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws NoPermissionException
+     */
+    private void fetchAndUpdateFile(Long participationId, FileSubmission submission, Principal principal) throws InterruptedException, IOException, NoPermissionException {
         Participation participation = participationService.findOne(participationId);
         if (checkParticipation(participation, principal)) {
             Repository repository;
@@ -91,12 +103,18 @@ public class RepositoryWebsocketService {
         }
     }
 
+    /**
+     * Update a list of files based on the submission's content.
+     * @param participationId id of participation to which the files belong
+     * @param submissions information about the file updates
+     * @param principal used to check if the user can update the files
+     */
     @MessageMapping("/topic/repository/{participationId}/files")
     public void updateFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
-        HashMap<String, String> fileSaveResult = new HashMap();
+        HashMap<String, String> fileSaveResult = new HashMap<>();
         submissions.forEach((submission) -> {
             try {
-                loadAndSaveFile(participationId, submission, principal);
+                fetchAndUpdateFile(participationId, submission, principal);
                 fileSaveResult.put(submission.getFileName(), null);
             } catch (IOException | InterruptedException ex) {
                 fileSaveResult.put(submission.getFileName(), ex.getMessage());

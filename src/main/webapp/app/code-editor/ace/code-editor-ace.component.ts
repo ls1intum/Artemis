@@ -7,11 +7,10 @@ import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
 import { compose, fromPairs, map, toPairs, unionBy } from 'lodash/fp';
 import { fromEvent, Subscription } from 'rxjs';
@@ -24,19 +23,14 @@ import * as ace from 'brace';
 import { AnnotationArray, TextChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-
-export enum EditorState {
-    CLEAN = 'CLEAN',
-    UNSAVED_CHANGES = 'UNSAVED_CHANGES',
-    SAVING = 'SAVING',
-}
+import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService],
 })
-export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor')
     editor: AceEditorComponent;
 
@@ -76,12 +70,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         private localStorageService: LocalStorageService,
         public modalService: NgbModal,
     ) {}
-
-    /**
-     * @function ngOnInit
-     * @desc Initially sets the labels for file save status
-     */
-    ngOnInit(): void {}
 
     /**
      * @function ngAfterViewInit
@@ -177,6 +165,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         }
     }
 
+    /**
+     * Set up the websocket for retrieving the result of attempted file updates.
+     * Checks which files could be updated within the file submission and updates the editor state accordingly.
+     * All files could be updated -> clean / Some files could not be updated -> unsaved changes.
+     */
     setUpReceiveFileUpdates() {
         this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
         this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
@@ -186,32 +179,37 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 debounceTime(this.updateFilesDebounceTime),
                 distinctUntilChanged(),
             )
-            .subscribe(res => {
-                const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
-                    (acc, [file, { errors }]) => ({
-                        ...acc,
-                        [file]: errors,
-                    }),
-                    {},
-                );
-                this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
-                const errorFiles = [];
-                const savedFiles: string[] = [];
-                Object.entries(res).forEach(([fileName, error]: [string, string | null]) => {
-                    if (error) {
-                        errorFiles.push(error);
+            .subscribe(
+                res => {
+                    const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
+                        (acc, [file, { errors }]) => ({
+                            ...acc,
+                            [file]: errors,
+                        }),
+                        {},
+                    );
+                    this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
+                    const { errorFiles, savedFiles } = Object.entries(res).reduce(
+                        (acc, [fileName, error]: [string, string | null]) =>
+                            error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : { ...acc, savedFiles: [fileName, ...acc.savedFiles] },
+                        { errorFiles: [], savedFiles: [] },
+                    );
+
+                    savedFiles.forEach(fileName => (this.editorFileSessions[fileName].unsavedChanges = false));
+
+                    if (errorFiles.length) {
+                        const unsavedFiles = Object.keys(res).filter(f => !savedFiles.includes(f));
+                        this.onUnsavedFilesChange.emit(unsavedFiles);
+                        this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                     } else {
-                        this.editorFileSessions[fileName].unsavedChanges = false;
-                        savedFiles.push(fileName);
+                        this.onUnsavedFilesChange.emit([]);
+                        this.onEditorStateChange.emit(EditorState.CLEAN);
                     }
-                });
-                this.onUnsavedFilesChange.emit(Object.keys(res).filter(f => !savedFiles.includes(f)));
-                if (errorFiles.length) {
+                },
+                () => {
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
-                } else {
-                    this.onEditorStateChange.emit(EditorState.CLEAN);
-                }
-            });
+                },
+            );
     }
 
     /**
@@ -283,7 +281,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
 
     /**
      * @function onFileTextChanged
-     * @desc Callback function for text changes in the Ace Editor
+     * @desc Callback function for text changes in the Ace Editor.
+     * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.
      * @param code {string} Current editor code
      */
     onFileTextChanged(code: string) {

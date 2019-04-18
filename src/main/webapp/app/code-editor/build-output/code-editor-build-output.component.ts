@@ -100,6 +100,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
     }
 
+    /**
+     * Set up the websocket for retrieving build results.
+     * Online updates the build logs if the result is new, otherwise doesn't react.
+     */
     private setupResultWebsocket() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
@@ -113,7 +117,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
 
     /**
      * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) => Input latestResult
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
@@ -137,6 +142,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         });
     }
 
+    /**
+     * Decides if the build log should be shown.
+     * If All tests were successful or there is test feedback -> don't show build logs.
+     * Else -> show build logs.
+     * @param result
+     */
     toggleBuildLogs(result: Result) {
         if ((result.successful && (!result.feedbacks || !result.feedbacks.length)) || (!result.successful && result.feedbacks && result.feedbacks.length)) {
             this.buildLogs = new BuildLogEntryArray();

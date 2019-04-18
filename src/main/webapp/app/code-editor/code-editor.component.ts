@@ -18,15 +18,10 @@ import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
 import { Interactable } from 'interactjs';
-import { CodeEditorAceComponent, EditorState } from 'app/code-editor/ace/code-editor-ace.component';
+import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { ComponentCanDeactivate } from 'app/shared';
-
-export enum CommitState {
-    CLEAN = 'CLEAN',
-    UNCOMMITTED_CHANGES = 'UNCOMMITTED_CHANGES',
-    WANTS_TO_COMMIT = 'WANTS_TO_COMMIT',
-    COMMITTING = 'COMMITTING',
-}
+import { EditorState } from 'app/entities/ace-editor/editor-state.model';
+import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 
 @Component({
     selector: 'jhi-editor',
@@ -46,9 +41,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
     session: Session;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
-    receiveFileUpdatesChannel: string;
-
-    /** File Status Booleans **/
+    /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
     commitState: CommitState;
     isBuilding = false;
@@ -56,11 +49,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
     /**
      * @constructor CodeEditorComponent
      * @param {ActivatedRoute} route
-     * @param {WindowRef} $window
      * @param {ParticipationService} participationService
      * @param {ParticipationDataProvider} participationDataProvider
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
+     * @param {LocalStorageService} localStorageService
      */
     constructor(
         private route: ActivatedRoute,
@@ -123,6 +116,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         this.checkIfRepositoryIsClean();
     }
 
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
     canDeactivate() {
         return !this.unsavedFiles || !this.unsavedFiles.length;
     }
@@ -137,6 +133,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         });
     }
 
+    /**
+     * Set the editor state.
+     * Also updates the commit state: changes were saved -> uncommited changes.
+     * @param editorState
+     */
     setEditorState(editorState: EditorState) {
         if (this.editorState === EditorState.SAVING && editorState === EditorState.CLEAN) {
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -144,6 +145,10 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         this.editorState = editorState;
     }
 
+    /**
+     * Set unsaved files and check if this changes the commit state.
+     * @param fileNames
+     */
     setUnsavedFiles(fileNames: string[]) {
         this.unsavedFiles = fileNames;
         if (this.commitState === CommitState.WANTS_TO_COMMIT) {
@@ -269,7 +274,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
 
     /**
      * @function commit
-     * @desc Commits the current repository files
+     * @desc Commits the current repository files.
+     * If there are unsaved changes, save them first before trying to commit again.
      * @param $event
      */
     commit() {
