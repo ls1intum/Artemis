@@ -22,7 +22,8 @@
             "showLess": "Weniger anzeigen",
             "menu": {
                 "exercises": "Aufgaben",
-                "statistics": "Statistiken"
+                "statistics": "Statistiken",
+                "lectures": "Vorlesungen"
             },
             "exerciseList": {
                 "noExerciseDate": "Kein Datum zugeordnet",
@@ -68,6 +69,20 @@
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",
                 "relativeScore": "Relative Punktzahl: {{ number }}%",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
+            },
+            "lectureList": {
+                "lectureGroupHeader": "Vorlesungen: {{ total }}",
+                "totalLectures": "Vorlesungen insgesamt:",
+                "totalAttachments": "Anhänge insgesamt:",
+                "isLecture": "Das ist eine Vorlesung",
+                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs."
+            },
+            "lectureDetails": {
+                "description": "Beschreibung",
+                "attachments": "Anhänge",
+                "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
+                "lectureDate": "Datum:",
+                "notReleased": "Nicht freigegeben"
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",

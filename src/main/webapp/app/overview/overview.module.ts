@@ -8,7 +8,6 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ExerciseTypePipe } from 'app/entities/exercise/';
 import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
 
 import {
@@ -16,9 +15,10 @@ import {
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseGradeBookComponent,
+    CourseLectureDetailsComponent,
+    CourseLecturesComponent,
     CourseOverviewComponent,
     CourseStatisticsComponent,
-    DifficultyBadgeComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
     OVERVIEW_ROUTES,
@@ -27,6 +27,8 @@ import {
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -41,6 +43,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArTEMiSStudentQuestionsModule,
         ArTEMiSSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
+        ArTEMiSHeaderExercisePageWithDetailsModule,
     ],
     declarations: [
         OverviewComponent,
@@ -50,15 +53,17 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         CourseExerciseRowComponent,
         CourseExercisesComponent,
         CourseExerciseDetailsComponent,
+        CourseLecturesComponent,
+        CourseLectureRowComponent,
+        CourseLectureDetailsComponent,
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
-        DifficultyBadgeComponent,
-        ExerciseTypePipe,
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    exports: [],
 })
 export class ArTEMiSOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

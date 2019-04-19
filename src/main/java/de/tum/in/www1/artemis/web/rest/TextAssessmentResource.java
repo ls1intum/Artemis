@@ -128,11 +128,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
-            // TODO: check that the latest submission is not null
-            User assessor = participation.findLatestSubmission().get().getResult().getAssessor();
-            // Another tutor started assessing this submission.
-            if (!assessor.getLogin().equals(user.getLogin())) {
-                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+
+            if (participation.findLatestSubmission().isPresent()) {
+                Result latestResult = participation.findLatestSubmission().get().getResult();
+                User assessor = latestResult.getAssessor();
+
+                // Another tutor started assessing this submission and hasn't finished yet
+                if (!assessor.getLogin().equals(user.getLogin()) && latestResult.getCompletionDate() == null) {
+                    throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+                }
             }
         }
 

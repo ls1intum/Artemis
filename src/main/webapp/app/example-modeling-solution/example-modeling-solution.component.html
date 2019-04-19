@@ -1,0 +1,33 @@
+<jhi-alert></jhi-alert>
+<div *ngIf="exercise" class="row">
+    <div class="col-lg-1">
+        <button class="btn btn-secondary" (click)="back()">&larr;</button>
+    </div>
+
+    <div class="col-12 col-lg-7">
+        <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
+            Example Solution for Modeling Exercise {{exercise?.title}}
+        </h2>
+    </div>
+
+    <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
+        <button (click)="saveExampleSolution()" class="btn btn-primary px-5">
+            <fa-icon icon="save"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleSolution">Save example solution</span>
+        </button>
+    </div>
+
+    <div class="col-12">
+        <p *ngIf="formattedProblemStatement" class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
+           [translateValues]="{ problemStatement: formattedProblemStatement }">
+            <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br/>
+        </p>
+    </div>
+
+    <div class="col-12 editor-container">
+        <jhi-modeling-editor
+            [umlModel]="exampleSolution"
+            [diagramType]="exercise.diagramType"
+        ></jhi-modeling-editor>
+    </div>
+</div>

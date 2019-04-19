@@ -33,6 +33,12 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
                 },
                 inertia: true,
             })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
             .on('resizemove', event => {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';

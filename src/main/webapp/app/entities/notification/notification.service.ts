@@ -83,17 +83,21 @@ export class NotificationService {
             this.accountService
                 .identity()
                 .then((user: User) => {
-                    if (!this.notificationObserver) {
-                        this.notificationObserver = new BehaviorSubject<Notification>(null);
-                    }
-                    const userTopic = `/topic/user/${user.id}/notifications`;
-                    if (!this.subscribedTopics.includes(userTopic)) {
-                        this.subscribedTopics.push(userTopic);
-                        this.jhiWebsocketService.subscribe(userTopic);
-                        this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
-                            this.notificationObserver.next(notification);
-                        });
-                        resolve();
+                    if (user) {
+                        if (!this.notificationObserver) {
+                            this.notificationObserver = new BehaviorSubject<Notification>(null);
+                        }
+                        const userTopic = `/topic/user/${user.id}/notifications`;
+                        if (!this.subscribedTopics.includes(userTopic)) {
+                            this.subscribedTopics.push(userTopic);
+                            this.jhiWebsocketService.subscribe(userTopic);
+                            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                                this.notificationObserver.next(notification);
+                            });
+                            resolve();
+                        }
+                    } else {
+                        reject('no User');
                     }
                 })
                 .catch(error => reject(error));

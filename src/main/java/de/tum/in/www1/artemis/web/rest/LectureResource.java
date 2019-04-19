@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,10 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -33,8 +36,11 @@ public class LectureResource {
 
     private final LectureRepository lectureRepository;
 
-    public LectureResource(LectureRepository lectureRepository) {
+    LectureService lectureService;
+
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService) {
         this.lectureRepository = lectureRepository;
+        this.lectureService = lectureService;
     }
 
     /**
@@ -82,11 +88,28 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lecture = lectureRepository.findById(id);
+        if (lecture.isPresent()) {
+            lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
+        }
         return ResponseUtil.wrapOrNotFound(lecture);
+    }
+
+    /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
+    @GetMapping(value = "/courses/{courseId}/lectures")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public List<Lecture> getLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        return lectureService.findAllByCourseId(courseId);
     }
 
     /**

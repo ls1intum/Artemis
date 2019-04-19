@@ -68,7 +68,7 @@ public class ProgrammingSubmissionResource {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
-        if (exercise == null || !(exercise instanceof ProgrammingExercise)) {
+        if (!(exercise instanceof ProgrammingExercise)) {
             log.warn("REST request to inform about changed test cases of non existing ProgrammingExercise : {}", exerciseId);
             return ResponseEntity.notFound().build();
         }

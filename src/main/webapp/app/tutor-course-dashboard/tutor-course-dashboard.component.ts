@@ -5,7 +5,7 @@ import { Course, CourseService, StatsForTutorDashboard } from '../entities/cours
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import * as moment from 'moment';
 
@@ -25,7 +25,12 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
+    totalAssessmentPercentage = 0;
     showFinishedExercises = false;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
+
     private tutor: User;
 
     constructor(
@@ -47,6 +52,7 @@ export class TutorCourseDashboardComponent implements OnInit {
             (res: HttpResponse<Course>) => {
                 this.course = res.body;
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
+                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     this.unfinishedExercises = this.course.exercises
@@ -55,7 +61,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.finishedExercises = this.course.exercises
                         .filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED)
                         .sort(this.sortByAssessmentDueDate);
-                    this.exercises = this.unfinishedExercises;
+                    // sort exercises by type to get a better overview in the dashboard
+                    this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
                 }
             },
             (response: string) => this.onError(response),
@@ -67,6 +74,10 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfAssessments = res.body.numberOfAssessments;
                 this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
                 this.numberOfComplaints = res.body.numberOfComplaints;
+
+                if (this.numberOfSubmissions > 0) {
+                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
+                }
             },
             (response: string) => this.onError(response),
         );

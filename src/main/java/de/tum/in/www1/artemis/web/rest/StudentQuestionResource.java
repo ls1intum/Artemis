@@ -62,10 +62,12 @@ public class StudentQuestionResource {
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        StudentQuestion result = studentQuestionRepository.save(studentQuestion);
-        groupNotificationService.notifyGroupAboutNewQuestion(result);
-        return ResponseEntity.created(new URI("/api/student-questions/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        StudentQuestion question = studentQuestionRepository.save(studentQuestion);
+        if (question.getExercise() != null) { // TODO what happens if the question belongs to a lecture?
+            groupNotificationService.notifyGroupAboutNewQuestion(question);
+        }
+        return ResponseEntity.created(new URI("/api/student-questions/" + question.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, question.getId().toString())).body(question);
     }
 
     /**
@@ -109,8 +111,15 @@ public class StudentQuestionResource {
      */
     @GetMapping("/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentQuestion>> getAllQuestions(@RequestParam("exercise") Long exerciseId) {
-        List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
+    public ResponseEntity<List<StudentQuestion>> getAllQuestions(@RequestParam(value = "lecture", required = false) Long lectureId,
+            @RequestParam(value = "exercise", required = false) Long exerciseId) {
+        List<StudentQuestion> studentQuestions = null;
+        if (exerciseId != null) {
+            studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
+        }
+        else if (lectureId != null) {
+            studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
+        }
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }

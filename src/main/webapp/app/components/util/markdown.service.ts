@@ -109,6 +109,9 @@ export class ArtemisMarkdown {
      * @returns {string} the resulting html as a string
      */
     htmlForMarkdown(markdownText: string) {
+        if (markdownText == null || markdownText === '') {
+            return '';
+        }
         const converter = new showdown.Converter({
             parseImgDimensions: true,
             headerLevelStart: 3,

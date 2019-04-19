@@ -11,7 +11,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.service.FileService;
 
 /**
  * A Attachment.
@@ -23,6 +26,12 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 public class Attachment implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @Transient
+    private FileService fileService = new FileService();
+
+    @Transient
+    private String prevLink;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +65,57 @@ public class Attachment implements Serializable {
     private Lecture lecture;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+    /*
+     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
+     * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
+     * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
+     * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
+     * new courseIcon pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value
+     * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
+     * This happens in @PostRemove
+     */
+    @PostLoad
+    public void onLoad() {
+        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
+        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+        // save current path as old path (needed to know old path in onUpdate() and onDelete())
+        prevLink = link;
+    }
+
+    @PrePersist
+    public void beforeCreate() {
+        if (attachmentType == AttachmentType.FILE) {
+            // move file if necessary (id at this point will be null, so placeholder will be inserted)
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH, getId(), true);
+        }
+    }
+
+    @PostPersist
+    public void afterCreate() {
+        // replace placeholder with actual id if necessary (id is no longer null at this point)
+        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        if (attachmentType == AttachmentType.FILE) {
+            // move file and delete old file if necessary
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.COURSE_ICON_FILEPATH, getId(), true);
+        }
+    }
+
+    @PostRemove
+    public void onDelete() {
+        if (attachmentType == AttachmentType.FILE) {
+            // delete old file if necessary
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.COURSE_ICON_FILEPATH, getId(), true);
+        }
+    }
+
     public Long getId() {
         return id;
     }

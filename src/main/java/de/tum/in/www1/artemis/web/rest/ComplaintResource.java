@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -124,5 +126,40 @@ public class ComplaintResource {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintRepository.findByResult_Id(resultId);
         return ResponseUtil.wrapOrNotFound(complaint);
+    }
+
+    /**
+     * Get /complaints/for-tutor-dashboard/:exerciseId
+     * <p>
+     * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
+     *
+     * @param exerciseId the id of the exercise we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/complaints/for-tutor-dashboard/{exerciseId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
+        List<Complaint> responseComplaints = new ArrayList<>();
+
+        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
+
+        if (!databaseComplaints.isPresent()) {
+            return ResponseEntity.ok(responseComplaints);
+        }
+
+        databaseComplaints.get().forEach(complaint -> {
+            String submissorName = principal.getName();
+            User assessor = complaint.getResult().getAssessor();
+
+            if (!assessor.getLogin().equals(submissorName)) {
+                // Remove data about the student
+                complaint.getResult().getParticipation().setStudent(null);
+                complaint.setStudent(null);
+
+                responseComplaints.add(complaint);
+            }
+        });
+
+        return ResponseEntity.ok(responseComplaints);
     }
 }

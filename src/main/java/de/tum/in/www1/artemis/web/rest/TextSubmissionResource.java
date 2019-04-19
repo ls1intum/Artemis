@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
@@ -13,13 +14,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -43,8 +41,6 @@ public class TextSubmissionResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ResultRepository resultRepository;
-
     private final ExerciseService exerciseService;
 
     private final TextExerciseService textExerciseService;
@@ -61,7 +57,7 @@ public class TextSubmissionResource {
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            ResultRepository resultRepository, AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -70,7 +66,6 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.authCheckService = authCheckService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -83,7 +78,6 @@ public class TextSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
@@ -105,7 +99,6 @@ public class TextSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
@@ -119,20 +112,11 @@ public class TextSubmissionResource {
     private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
-        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
-            textSubmission = textSubmissionService.save(textSubmission);
-        }
-        else {
-            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!optionalParticipation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            Participation participation = optionalParticipation.get();
-            textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);
-        }
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
@@ -206,7 +190,6 @@ public class TextSubmissionResource {
 
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-
             return ResponseEntity.ok().body(textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId()));
         }
 
@@ -225,12 +208,15 @@ public class TextSubmissionResource {
     @Transactional(readOnly = true)
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
-
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+        }
+        if (!(exercise instanceof TextExercise)) {
+            return badRequest();
+        }
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }

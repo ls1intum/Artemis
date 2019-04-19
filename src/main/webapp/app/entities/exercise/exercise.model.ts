@@ -65,7 +65,8 @@ export abstract class Exercise implements BaseEntity {
     public studentQuestions: StudentQuestion[];
 
     // helper attributes
-    public isAtLeastTutor: boolean;
+    public isAtLeastTutor = false; // default value
+    public isAtLeastInstructor = false; // default value
     public loading: boolean;
     public numberOfParticipationsWithRatedResult: number;
     public numberOfSuccessfulParticipations: number;
@@ -92,16 +93,12 @@ export function getIcon(exerciseType: ExerciseType): string {
 
 export function getIconTooltip(exerciseType: ExerciseType): string {
     const tooltips = {
-        [ExerciseType.PROGRAMMING]: 'This is a programming exercise',
-        [ExerciseType.MODELING]: 'This is a modeling exercise',
-        [ExerciseType.QUIZ]: 'This is a quiz exercise',
-        [ExerciseType.TEXT]: 'This is a text exercise',
-        [ExerciseType.FILE_UPLOAD]: 'This is a file upload exercise',
+        [ExerciseType.PROGRAMMING]: 'arTeMiSApp.exercise.isProgramming',
+        [ExerciseType.MODELING]: 'arTeMiSApp.exercise.isModeling',
+        [ExerciseType.QUIZ]: 'arTeMiSApp.exercise.isQuiz',
+        [ExerciseType.TEXT]: 'arTeMiSApp.exercise.isText',
+        [ExerciseType.FILE_UPLOAD]: 'arTeMiSApp.exercise.isFileUpload',
     };
 
     return tooltips[exerciseType];
 }
-
-export const isProgrammingExercise = (exerciseType: ExerciseType) => {
-    return exerciseType === ExerciseType.PROGRAMMING;
-};

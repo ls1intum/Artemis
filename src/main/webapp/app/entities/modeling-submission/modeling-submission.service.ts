@@ -33,8 +33,6 @@ export class ModelingSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    // TODO: move this into a separate submission service
-    // TODO MJ why?
     getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -43,6 +41,14 @@ export class ModelingSubmissionService {
                 observe: 'response',
             })
             .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
+    }
+
+    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
+        let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<ModelingSubmission>(url);
     }
 
     getSubmission(submissionId: number): Observable<ModelingSubmission> {

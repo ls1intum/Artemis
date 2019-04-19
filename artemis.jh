@@ -468,7 +468,6 @@ relationship OneToMany {
     DragAndDropQuestion{correctMappings} to DragAndDropMapping{quizQuestion},
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{quizQuestion}
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
-    TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
     StudentQuestion{answers} to StudentQuestionAnswer{quizQuestion},
     Lecture{attachments} to Attachment{lecture},
@@ -519,8 +518,9 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
-    TutorGroup{students} to User    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
-	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
+    TutorGroup{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
+	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
+	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},
 }
 
 paginate Exercise with infinite-scroll

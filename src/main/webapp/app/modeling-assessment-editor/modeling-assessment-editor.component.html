@@ -1,11 +1,14 @@
 <div *ngIf="true; else conflictResolution" class="assessment-container">
     <h2 class="top-container">
+        <!--back button only used in tutor dashboard-->
+        <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
         <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
+            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%">Submission locked by another user!</span>
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>

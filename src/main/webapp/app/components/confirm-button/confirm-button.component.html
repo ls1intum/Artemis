@@ -1,0 +1,10 @@
+<button class="btn btn-sm btn-danger" *ngIf="!showConfirm" (click)="this.showConfirm = !this.showConfirm">
+    <fa-icon [icon]="'times'"></fa-icon>
+    <span class="d-none d-md-inline"
+          jhiTranslate="entity.action.delete">Delete</span>
+</button>
+<button *ngIf="showConfirm" class="btn btn-sm btn-danger" (mouseleave)="this.showConfirm = !this.showConfirm" (click)="confirmAction()">
+    <fa-icon [icon]="'check'"></fa-icon>
+    <span class="d-none d-md-inline"
+          jhiTranslate="entity.action.confirm">Confirm</span>
+</button>

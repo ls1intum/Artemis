@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -132,16 +133,21 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
+        }
 
-        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-
+        // TODO CZ: load results of submissions eagerly to prevent additional database calls
         List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+        if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
+            tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+        }
+        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
@@ -156,7 +162,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
-        Exercise exercise = exerciseService.findOneLoadParticipations(id);
+        Exercise exercise = exerciseService.findOne(id);
         if (Optional.ofNullable(exercise).isPresent()) {
             if (!authCheckService.isAtLeastInstructorForExercise(exercise))
                 return forbidden();

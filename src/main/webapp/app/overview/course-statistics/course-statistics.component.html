@@ -1,6 +1,6 @@
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
-        <div class="co-12 col-md-4 quizStatistic-summary">
+        <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'arTeMiSApp.courseOverview.statistics.totalScore' | translate }}</h2>
             <div class="chart-container">
                 <div class="chart-text">
@@ -49,7 +49,7 @@
     </div>
     <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
         <div class="col mt-3">
-            {{ 'arTeMiSApp.courseOverview.statistics.noStatistics' }}
+            {{ 'arTeMiSApp.courseOverview.statistics.noStatistics' | translate}}
         </div>
     </div>
 </div>

@@ -80,7 +80,9 @@ public class CompassService {
 
     public boolean isSupported(DiagramType diagramType) {
         // at the moment, we only support class diagrams
-        return diagramType == DiagramType.ClassDiagram;
+        // TODO CZ: enable class diagrams again
+//        return diagramType == DiagramType.ClassDiagram;
+        return false;
     }
 
     /**
@@ -98,14 +100,14 @@ public class CompassService {
     /**
      * Remove a model from the waiting list of models which should be assessed next
      *
-     * @param exerciseId the exerciseId
-     * @param modelId    the modelId which can be removed
+     * @param exerciseId        the exerciseId
+     * @param modelSubmissionId the id of the model submission which can be removed
      */
-    public void removeModelWaitingForAssessment(long exerciseId, long modelId) {
+    public void removeModelWaitingForAssessment(long exerciseId, long modelSubmissionId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
         }
-        compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelId, true);
+        compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelSubmissionId, true);
     }
 
     /**
@@ -116,6 +118,8 @@ public class CompassService {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return new HashSet<>();
         }
+
+        // TODO: double check that the returned modelSubmissions (respectively their ids) do not have a result yet
 
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
         if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS) {
@@ -137,8 +141,8 @@ public class CompassService {
             return;
         }
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        for (long modelId : optimalModels.keySet()) {
-            compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelId, false);
+        for (long modelSubmissionId : optimalModels.keySet()) {
+            compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelSubmissionId, false);
         }
     }
 
@@ -353,9 +357,9 @@ public class CompassService {
         }
         log.info("Loading Compass calculation engine for exercise " + exerciseId);
         // get all the submissions for the given exercise that have a manual assessment
-        Set<ModelingSubmission> submissions = getSubmissionsWithManualAssessmentsForExercise(exerciseId);
+        Set<ModelingSubmission> manuallyAssessedSubmissions = getSubmissionsWithManualAssessmentsForExercise(exerciseId);
         // load new calculation engine with the submissions and add to list of engines
-        CalculationEngine calculationEngine = new CompassCalculationEngine(submissions);
+        CalculationEngine calculationEngine = new CompassCalculationEngine(manuallyAssessedSubmissions);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         // assess models after reload
         for (long id : calculationEngine.getModelIds()) {

@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -59,14 +55,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
-
     private final ExampleSubmissionService exampleSubmissionService;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ModelingSubmissionRepository modelingSubmissionRepository,
-            ExampleSubmissionService exampleSubmissionService, ResultRepository resultRepository) {
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -75,38 +68,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
-    }
-
-    @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            compassService.resetModelsWaitingForAssessment(exerciseId);
-        }
-        return ResponseEntity.noContent().build();
-    }
-
-    // TODO MJ add api documentation (returns list of submission ids as array)
-    @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
-    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
-        // TODO: we need to make sure that per participation there is only one optimalModel
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
-            if (optimalModelSubmissions.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
-            return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
-        }
-        else {
-            return ResponseEntity.ok(new Long[] {}); // empty
-        }
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -168,11 +129,16 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        // If the user is not an instructor do not provide the results
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingSubmission", "notAuthorized", "You cannot see results"))
-                    .body(null);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+
+        // It is allowed to get the example assessment, if the user is an instructor or
+        // if the user is a tutor and the submission is not used for tutorial in the tutor dashboard
+        boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(modelingExercise)
+                || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise) && !exampleSubmission.isUsedForTutorial();
+        if (!isAllowed) {
+            forbidden();
         }
+
         return ResponseEntity.ok(modelingAssessmentService.getExampleAssessment(submissionId));
     }
 

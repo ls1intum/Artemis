@@ -1,6 +1,6 @@
 import './vendor.ts';
 
-import { NgModule } from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
@@ -32,7 +32,6 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import { ArTEMiSStudentQuestionsModule } from './student-questions/';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import {
     ActiveMenuDirective,
@@ -63,6 +62,10 @@ import { ArTEMiSNotificationModule } from 'app/entities/notification/notificatio
 import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
 import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import * as moment from 'moment';
+import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solution';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 
 @NgModule({
     imports: [
@@ -109,12 +112,15 @@ import * as moment from 'moment';
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSComplaintsModule,
+        ArTEMiSComplaintsForTutorModule,
         ArTEMiSNotificationModule,
         ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
         ArTEMiSModelingSubmissionModule,
         ArTEMiSExampleTextSubmissionModule,
         ArTEMiSExampleModelingSubmissionModule,
+        ArTEMiSExampleModelingSolutionModule,
+        ArTEMiSHeaderExercisePageWithDetailsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -129,6 +135,10 @@ import * as moment from 'moment';
         QuizExerciseExportComponent,
     ],
     providers: [
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler,
+        },
         ProfileService,
         RepositoryService,
         PaginationConfig,
