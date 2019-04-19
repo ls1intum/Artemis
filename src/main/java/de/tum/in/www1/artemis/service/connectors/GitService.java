@@ -18,6 +18,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -71,7 +72,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(Participation participation) throws IOException, CheckoutConflictException, InterruptedException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
@@ -86,7 +87,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, CheckoutConflictException, InterruptedException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -196,12 +197,15 @@ public class GitService {
      * @return The PullResult which contains FetchResult and MergeResult.
      * @throws GitAPIException
      */
-    public PullResult pull(Repository repo) {
+    public PullResult pull(Repository repo) throws CheckoutConflictException {
         try {
             Git git = new Git(repo);
             // flush cache of files
             repo.setFiles(null);
             return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        }
+        catch (CheckoutConflictException ex) {
+            throw ex;
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);

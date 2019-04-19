@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { tap } from 'rxjs/operators';
+import { map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -23,6 +23,7 @@ import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.comp
 import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-editor',
@@ -54,6 +55,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
      * @param {LocalStorageService} localStorageService
+     * @param {jhiAlertService} jhiAlertService
      */
     constructor(
         private route: ActivatedRoute,
@@ -62,6 +64,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
         private localStorageService: LocalStorageService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     /**
@@ -79,9 +82,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
 
     private loadFiles() {
         /** Query the repositoryFileService for files in the repository */
-        this.repositoryFileService
-            .query(this.participation.id)
+        this.checkIfRepositoryIsClean()
             .pipe(
+                switchMap(() => this.repositoryFileService.query(this.participation.id)),
                 tap((files: string[]) => {
                     // do not display the README.md, because students should not edit it
                     this.repositoryFiles = files
@@ -90,13 +93,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
                         // Remove binary files as they can't be displayed in an editor
                         .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
                 }),
-                tap(() => this.checkIfRepositoryIsClean()),
                 tap(() => this.loadSession()),
             )
             .subscribe(
                 () => {},
                 (error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                    if (error.status === 409) {
+                        this.jhiAlertService.error('arTeMiSApp.editor.checkoutConflict');
+                        this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                    }
                 },
             );
     }
@@ -123,7 +128,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * @desc Checks if the repository has uncommitted changes
      */
     ngOnChanges() {
-        this.checkIfRepositoryIsClean();
+        this.checkIfRepositoryIsClean().subscribe();
     }
 
     /**
@@ -137,10 +142,12 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * @function checkIfRepositoryIsClean
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
-    checkIfRepositoryIsClean(): void {
-        this.repositoryService.isClean(this.participation.id).subscribe(res => {
-            this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
-        });
+    checkIfRepositoryIsClean(): Observable<void> {
+        return this.repositoryService.isClean(this.participation.id).pipe(
+            rxMap(res => {
+                this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+            }),
+        );
     }
 
     /**
@@ -302,8 +309,17 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
                     this.commitState = CommitState.CLEAN;
                     this.isBuilding = true;
                 },
-                err => {
-                    console.log('Error during commit ocurred!', err);
+                (error: HttpErrorResponse) => {
+                    // const errorType = error.headers.get('X-arTeMiSApp-params');
+                    // this.jhiAlertService.error(error.headers.get('X-arTeMiSApp-error'));
+                    // this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                    // if (errorType === 'mergeConflict') {
+                    //     console.log(errorType);
+                    // }
+                    if (error.status === 409) {
+                        this.jhiAlertService.error('arTeMiSApp.editor.checkoutConflict');
+                        this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                    }
                 },
             );
         } else {

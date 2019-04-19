@@ -39,6 +39,13 @@ public final class HeaderUtil {
         return createAlert(APPLICATION_NAME + "." + entityName + ".deleted", param);
     }
 
+    public static HttpHeaders createEntityAlert(String entityName, String errorKey) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-arTeMiSApp-error", APPLICATION_NAME + "." + entityName + "." + errorKey);
+        headers.add("X-arTeMiSApp-params", errorKey);
+        return headers;
+    }
+
     public static HttpHeaders createFailureAlert(String entityName, String errorKey, String defaultMessage) {
         log.error("Entity processing failed, {}", defaultMessage);
         HttpHeaders headers = new HttpHeaders();

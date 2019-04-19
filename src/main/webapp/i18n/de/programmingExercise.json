@@ -54,7 +54,9 @@
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
             "downloadBuildResult": "Build Ergebnis herunterladen",
             "saving": "Änderungen werden gespeichert",
-            "saveFiles": "Änderungen speichern"
+            "saveFiles": "Änderungen speichern",
+            "lockFailed": "Mehrere gleichzeitige Änderungen im git Repository dieser Submission. Bitte versuche es zu einem späteren Zeitpunkt wieder.",
+            "checkoutConflict": "Checkout Konflikt, lokale Änderungen konkurrieren mit Stand im git Repository. Setze das Repository durch Klick auf <Zurücksetzen> auf den letzten Commit zurück."
         }
     }
 }

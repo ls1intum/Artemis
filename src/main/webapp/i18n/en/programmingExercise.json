@@ -54,7 +54,9 @@
             "selectFile": "Select a file to get started!",
             "downloadBuildResult": "Download Build Result",
             "saving": "Saving",
-            "saveFiles": "Save Files"
+            "saveFiles": "Save Files",
+            "lockFailed": "Multiple simultanous changes on the git repository of this submission. Please try again later.",
+            "checkoutConflict": "Checkout Conflikt, local changes diverge from changes in git repository. Reset the repository to the last commit by clicking <reset>."
         }
     }
 }

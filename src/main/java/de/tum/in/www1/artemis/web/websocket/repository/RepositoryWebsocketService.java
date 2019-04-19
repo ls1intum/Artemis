@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -83,7 +84,7 @@ public class RepositoryWebsocketService {
      * @throws IOException
      * @throws NoPermissionException
      */
-    private void fetchAndUpdateFile(Long participationId, FileSubmission submission, Principal principal) throws InterruptedException, IOException, NoPermissionException {
+    private void fetchAndUpdateFile(Long participationId, FileSubmission submission, Principal principal) throws InterruptedException, IOException, CheckoutConflictException, NoPermissionException {
         Participation participation = participationService.findOne(participationId);
         if (checkParticipation(participation, principal)) {
             Repository repository;
@@ -116,7 +117,7 @@ public class RepositoryWebsocketService {
             try {
                 fetchAndUpdateFile(participationId, submission, principal);
                 fileSaveResult.put(submission.getFileName(), null);
-            } catch (IOException | InterruptedException ex) {
+            } catch (IOException | CheckoutConflictException | InterruptedException ex) {
                 fileSaveResult.put(submission.getFileName(), ex.getMessage());
             } catch (NoPermissionException ex) {
                 fileSaveResult.put(submission.getFileName(), "User does not have the necessary permissions.");

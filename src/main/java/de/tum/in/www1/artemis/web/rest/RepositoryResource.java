@@ -10,6 +10,9 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import javax.annotation.Nullable;
+
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.errors.LockFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -66,21 +69,24 @@ public class RepositoryResource {
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<Collection<String>> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Collection<String>> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            Iterator<File> itr = gitService.get().listFiles(repository).iterator();
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator<File> itr = gitService.get().listFiles(repository).iterator();
+            Collection<String> fileList = new LinkedList<>();
 
-        Collection<String> fileList = new LinkedList<>();
+            while (itr.hasNext()) {
+                fileList.add(itr.next().toString());
+            }
 
-        while (itr.hasNext()) {
-            fileList.add(itr.next().toString());
+            return new ResponseEntity<>(fileList, HttpStatus.OK);
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-
-        return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
 
 
@@ -96,21 +102,25 @@ public class RepositoryResource {
     public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         log.debug("REST request to file {} for Participation : {}", filename, participationId);
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<String> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<String> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if(!file.isPresent()) { return notFound(); }
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            Optional<File> file = gitService.get().getFileByName(repository, filename);
+            if(!file.isPresent()) { return notFound(); }
 
-        InputStream inputStream = new FileInputStream(file.get());
+            InputStream inputStream = new FileInputStream(file.get());
 
-        byte[]out=org.apache.commons.io.IOUtils.toByteArray(inputStream);
+            byte[]out=org.apache.commons.io.IOUtils.toByteArray(inputStream);
 
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-        return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity(HttpStatus.CONFLICT);
+        }
     }
 
     @Nullable
@@ -137,27 +147,33 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<Void> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        if(gitService.get().getFileByName(repository, filename).isPresent()) {
-            // File already existing. Conflict.
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            if(gitService.get().getFileByName(repository, filename).isPresent()) {
+                // File already existing. Conflict.
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
+            }
+
+            File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
+            if(!repository.isValidFile(file)) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            file.getParentFile().mkdirs();
+
+            InputStream inputStream = request.getInputStream();
+            Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            repository.setFiles(null); // invalidate cache
+
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
+        } catch (LockFailedException ex) {
+            return createLockFailedAlert();
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity(HttpStatus.CONFLICT);
         }
-
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
-        if(!repository.isValidFile(file)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        file.getParentFile().mkdirs();
-
-        InputStream inputStream = request.getInputStream();
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setFiles(null); // invalidate cache
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
     }
 
     /**
@@ -171,18 +187,23 @@ public class RepositoryResource {
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file")  String filename) throws IOException, InterruptedException {
         log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<Void> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            Optional<File> file = gitService.get().getFileByName(repository, filename);
+            if(!file.isPresent()) { return notFound(); }
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if(!file.isPresent()) { return notFound(); }
-
-        Files.delete(file.get().toPath());
-        repository.setFiles(null); // invalidate cache
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
+            Files.delete(file.get().toPath());
+            repository.setFiles(null); // invalidate cache
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
+        } catch (LockFailedException ex) {
+            return createLockFailedAlert();
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
     }
 
     /**
@@ -195,14 +216,29 @@ public class RepositoryResource {
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<Void> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        gitService.get().pull(repository);
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            gitService.get().pull(repository);
+        } catch (LockFailedException ex) {
+            return createLockFailedAlert();
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private ResponseEntity<Void> createLockFailedAlert() {
+        return ResponseEntity.badRequest()
+            .headers(HeaderUtil.createEntityAlert("editor", "lockFailed")).body(null);
+    }
+
+    private ResponseEntity<Void> createCheckoutConflictAlert() {
+        return ResponseEntity.badRequest()
+            .headers(HeaderUtil.createEntityAlert("editor", "mergeConflict")).body(null);
     }
 
     /**
@@ -216,15 +252,20 @@ public class RepositoryResource {
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<Void> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        gitService.get().stageAllChanges(repository);
-        gitService.get().commitAndPush(repository, "Changes by Online Editor");
-        return new ResponseEntity<>(HttpStatus.OK);
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            gitService.get().stageAllChanges(repository);
+            gitService.get().commitAndPush(repository, "Changes by Online Editor");
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch(LockFailedException ex) {
+            return createLockFailedAlert();
+        } catch(CheckoutConflictException ex) {
+            return createCheckoutConflictAlert();
+        }
     }
 
 
@@ -239,20 +280,23 @@ public class RepositoryResource {
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for Participation : {}", participationId);
+        try {
+            Participation participation = participationService.findOne(participationId);
+            ResponseEntity<RepositoryStatusDTO> failureResponse = checkParticipation(participation);
+            if (failureResponse != null) return failureResponse;
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<RepositoryStatusDTO> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            RepositoryStatusDTO status = new RepositoryStatusDTO();
+            status.isClean = gitService.get().isClean(repository);
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        RepositoryStatusDTO status = new RepositoryStatusDTO();
-        status.isClean = gitService.get().isClean(repository);
+            if(status.isClean) {
+                gitService.get().pull(repository);
+            }
 
-        if(status.isClean) {
-            gitService.get().pull(repository);
+            return new ResponseEntity<>(status, HttpStatus.OK);
+        } catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-
-        return new ResponseEntity<>(status, HttpStatus.OK);
     }
 
     /**
