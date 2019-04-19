@@ -1,21 +1,21 @@
-<form name="form" role="form" (ngSubmit)="save()" novalidate>
+<form name="generate-quiz-exercise" role="form" (ngSubmit)="save()" novalidate>
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="arTeMiSApp.apollonDiagram.detail.createLabel">Generate a Quiz Exercise</h4>
     </div>
 
     <div class="modal-body">
-        <label for="GenerateQuizExercise_Course" class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course">Course</label>
-        <select id="GenerateQuizExercise_Course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
+        <label for="generate-quiz-exercise-course" class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course">Course</label>
+        <select id="generate-quiz-exercise-course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
             <option *ngFor="let course of courses" [ngValue]="course">{{ course.title }}</option>
         </select>
     </div>
 
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="dismiss()">
+        <button id="generate-quiz-exercise-cancel" type="button" class="btn btn-secondary" (click)="dismiss()">
             <fa-icon icon="ban"></fa-icon>
             <span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-success">
+        <button id="generate-quiz-exercise-save" type="submit" class="btn btn-success">
             <fa-icon icon="save"></fa-icon>
             <span jhiTranslate="arTeMiSApp.apollonDiagram.detail.generate">Generate</span>
         </button>
