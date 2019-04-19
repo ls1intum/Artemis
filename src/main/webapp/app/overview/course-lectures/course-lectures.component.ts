@@ -68,7 +68,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
         sortedLectures.forEach(lecture => {
-            const dateValue = moment(lecture.startDate);
+            const dateValue = lecture.startDate ? moment(lecture.startDate) : null;
             if (!dateValue) {
                 notAssociatedLectures.push(lecture);
                 return;
@@ -96,7 +96,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                         label: `No date associated`,
                         isCollapsed: false,
                         isCurrentWeek: false,
-                        lectrues: [],
+                        lectures: [],
                     };
                 }
             }
@@ -109,7 +109,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                     label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
                     isCollapsed: false,
                     isCurrentWeek: false,
-                    exercises: notAssociatedLectures,
+                    lectures: notAssociatedLectures,
                 },
             };
             this.weeklyIndexKeys = [...indexKeys, 'noDate'];
@@ -121,8 +121,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     private sortLectures(exercises: Lecture[], selectedOrder: number): Lecture[] {
         return exercises.sort((a, b) => {
-            const aValue = a.startDate.valueOf();
-            const bValue = b.startDate.valueOf();
+            const aValue = a.startDate ? a.startDate.valueOf() : moment().valueOf();
+            const bValue = b.startDate ? b.startDate.valueOf() : moment().valueOf();
 
             return selectedOrder * (aValue - bValue);
         });
