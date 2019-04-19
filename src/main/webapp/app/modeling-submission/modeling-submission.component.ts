@@ -145,9 +145,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * This function initialized the Apollon editor depending on the submission status.
-     * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
-     * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
+     * This function sets and starts an auto-save timer that automatically saves changes
+     * to the model after at most 60 seconds.
      */
     setAutoSaveTimer(): void {
         if (this.submission.submitted) {
@@ -216,7 +215,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.updateSubmissionModel();
-        if (!this.umlModel || this.umlModel.elements.length === 0) {
+        if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -263,6 +262,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
+    private isModelEmpty(model: string): boolean {
+        const umlModel: UMLModel = JSON.parse(model);
+        return !umlModel || !umlModel.elements || umlModel.elements.length === 0;
+    }
+
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
         clearInterval(this.autoSaveInterval);
@@ -275,8 +279,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel(): void {
-        this.umlModel = this.modelingEditor.getCurrentModel();
-        const diagramJson = JSON.stringify(this.umlModel);
+        const umlModel = this.modelingEditor.getCurrentModel();
+        const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
