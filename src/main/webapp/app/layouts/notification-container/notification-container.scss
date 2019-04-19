@@ -1,7 +1,7 @@
 .notification-container {
     width: 400px;
     max-height: 500px;
-    overflow: scroll;
+    overflow: auto;
     .notification-item {
         cursor: pointer;
         .notification-description {
