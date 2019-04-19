@@ -8,9 +8,9 @@
                     <span>{{ lecture.title }}</span>
                 </h3>
                 <h4>
-                <span class="mr-2">
+                <span class="mr-2" *ngIf="lecture.startDate && lecture.endDate">
                     {{ 'arTeMiSApp.courseOverview.lectureDetails.lectureDate' | translate }} {{ (lecture.startDate | date: 'dd.MM.yy HH:mm')}}
-                    - {{ (lecture.startDate | date: 'HH:mm') }}
+                    - {{ (lecture.endDate | date: 'HH:mm') }}
                 </span>
                 </h4>
             </div>
