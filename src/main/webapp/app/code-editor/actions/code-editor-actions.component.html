@@ -14,7 +14,7 @@
     <button
         type="button"
         class="btn btn-primary navbar-btn"
-        [disabled]="editorState === 'SAVING' || isBuilding"
+        [disabled]="editorState === 'SAVING' || commitState === 'COMMITTING' || isBuilding"
         (click)="onCommit()"
         data-toggle="tooltip"
         data-placement="left"
