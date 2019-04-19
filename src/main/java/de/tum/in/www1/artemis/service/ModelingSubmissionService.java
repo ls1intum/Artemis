@@ -159,7 +159,8 @@ public class ModelingSubmissionService {
         }
         Participation participation = optionalParticipation.get();
 
-        // TODO: enable retry mechanism again
+        // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have a chance to try it out again.
+        // TODO: think about how we can enable retry again in the future in a fair way
         // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
         boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(submission -> submission.isSubmitted());
         if (submittedSubmissionExists) {
