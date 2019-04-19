@@ -12,7 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
-import { compose, fromPairs, map, toPairs, unionBy } from 'lodash/fp';
+import { compose, difference, fromPairs, map, toPairs, union, unionBy } from 'lodash/fp';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
@@ -96,6 +96,21 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.receiveFileUpdatesChannel = `/user${this.updateUnsavedFilesChannel}`;
             this.setUpReceiveFileUpdates();
         }
+        // Update editor file session object to include new files and remove old files
+        if (changes.repositoryFiles) {
+            const newFiles = _difference(changes.repositoryFiles.currentValue, changes.repositoryFiles.previousValue);
+            const removedFiles = _difference(changes.repositoryFiles.previousValue, changes.repositoryFiles.currentValue);
+            const filteredEntries = _differenceWith(toPairs(this.editorFileSessions), removedFiles, (a, b) => a[0] === b);
+            const newEntries = newFiles.map(fileName => [fileName, { errors: new AnnotationArray(), code: '', unsavedChanges: false }]);
+            this.editorFileSessions = compose(
+                fromPairs,
+                unionBy('[0]', newEntries),
+            )(filteredEntries);
+            const unsavedFiles = Object.entries(this.editorFileSessions)
+                .filter(([, { unsavedChanges }]) => unsavedChanges)
+                .map(([fileName]) => fileName);
+            this.onUnsavedFilesChange.emit(unsavedFiles);
+        }
         // Current file has changed
         if (changes.selectedFile && this.selectedFile) {
             if (this.annotationChange) {
@@ -131,17 +146,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
                 this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             }
-        }
-        // Update editor file session object to include new files and remove old files
-        if (changes.repositoryFiles) {
-            const newFiles = _difference(changes.repositoryFiles.currentValue, changes.repositoryFiles.previousValue);
-            const removedFiles = _difference(changes.repositoryFiles.previousValue, changes.repositoryFiles.currentValue);
-            const filteredEntries = _differenceWith(toPairs(this.editorFileSessions), removedFiles, (a, b) => a === b[0]);
-            const newEntries = newFiles.map(fileName => [fileName, { errors: new AnnotationArray(), code: '', unsavedChanges: false }]);
-            this.editorFileSessions = compose(
-                fromPairs,
-                unionBy('[0]', newEntries),
-            )(filteredEntries);
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
         if (changes.buildLogErrors) {
@@ -197,8 +201,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
                     savedFiles.forEach(fileName => (this.editorFileSessions[fileName].unsavedChanges = false));
 
-                    if (errorFiles.length) {
-                        const unsavedFiles = Object.keys(res).filter(f => !savedFiles.includes(f));
+                    const unsavedFiles = compose(
+                        union(errorFiles),
+                        difference(
+                            Object.entries(this.editorFileSessions)
+                                .filter(([fileName, { unsavedChanges }]) => unsavedChanges)
+                                .map(([fileName]) => fileName),
+                        ),
+                    )(savedFiles);
+
+                    if (unsavedFiles.length) {
                         this.onUnsavedFilesChange.emit(unsavedFiles);
                         this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                     } else {

@@ -151,6 +151,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      */
     setUnsavedFiles(fileNames: string[]) {
         this.unsavedFiles = fileNames;
+        if (this.unsavedFiles.length) {
+            this.editorState = EditorState.UNSAVED_CHANGES;
+        } else {
+            this.editorState = EditorState.CLEAN;
+        }
         if (this.commitState === CommitState.WANTS_TO_COMMIT) {
             if (this.unsavedFiles.length === 0) {
                 // Success state: all files could be saved before commit, so try to commit again.
@@ -208,6 +213,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
                 // Select newly created file
                 if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
                     this.selectedFile = $event.file;
+                } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
+                    this.selectedFile = undefined;
                 }
             },
             (error: HttpErrorResponse) => {
