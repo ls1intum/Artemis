@@ -1,6 +1,7 @@
 {
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
+        "assessmentLocked": "Bewertung blockiert durch: {{otherUser}}",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe bewerten"
