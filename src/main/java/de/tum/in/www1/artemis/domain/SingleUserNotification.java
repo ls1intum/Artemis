@@ -1,23 +1,22 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+
+import com.google.gson.JsonObject;
 
 /**
  * A SingleUserNotification.
  */
 @Entity
-@DiscriminatorValue(value="U")
+@DiscriminatorValue(value = "U")
 public class SingleUserNotification extends Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @ManyToOne
     private User recipient;
 
@@ -35,6 +34,31 @@ public class SingleUserNotification extends Notification implements Serializable
         this.recipient = user;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    public String getTopic() {
+        return "/topic/user/" + getRecipient().getId() + "/notifications";
+    }
+
+    public SingleUserNotification() {
+    }
+
+    public SingleUserNotification(User recipient, User author, String title, String text) {
+        this.setRecipient(recipient);
+        this.setAuthor(author);
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setTitle(title);
+        this.setText(text);
+    }
+
+    public String studentQuestionAnswerTarget(StudentQuestionAnswer studentQuestionAnswer) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "newAnswer");
+        target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
+        target.addProperty("entity", "exercises");
+        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
+        target.addProperty("mainPage", "overview");
+        return target.toString();
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -58,8 +82,6 @@ public class SingleUserNotification extends Notification implements Serializable
 
     @Override
     public String toString() {
-        return "SingleUserNotification{" +
-            "id=" + getId() +
-            "}";
+        return "SingleUserNotification{" + "id=" + getId() + "}";
     }
 }

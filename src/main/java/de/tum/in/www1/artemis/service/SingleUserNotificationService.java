@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.gson.JsonObject;
-
 import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
 @Service
@@ -28,26 +26,18 @@ public class SingleUserNotificationService {
     }
 
     public void notifyUserAboutNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
-        SingleUserNotification userNotification = new SingleUserNotification();
-        userNotification.setRecipient(studentQuestionAnswer.getQuestion().getAuthor());
-        userNotification.setAuthor(studentQuestionAnswer.getAuthor());
-        userNotification.setNotificationDate(ZonedDateTime.now());
-        userNotification.setTitle("New Answer");
-        userNotification.setText("Your Question got answered!");
-        JsonObject target = new JsonObject();
-        target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
-        target.addProperty("entity", "exercises");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
-        target.addProperty("mainPage", "overview");
-        userNotification.setTarget(target.toString());
+        User recipient = studentQuestionAnswer.getQuestion().getAuthor();
+        User author = studentQuestionAnswer.getAuthor();
+        String title = "New Answer";
+        String text = "Your Question got answered!";
+        SingleUserNotification userNotification = new SingleUserNotification(recipient, author, title, text);
+        userNotification.setTarget(userNotification.studentQuestionAnswerTarget(studentQuestionAnswer));
         saveAndSendSingleUserNotification(userNotification);
     }
 
     private void saveAndSendSingleUserNotification(SingleUserNotification userNotification) {
         singleUserNotificationRepository.save(userNotification);
-        String userTopic = "/topic/user/" + userNotification.getRecipient().getId() + "/notifications";
-        messagingTemplate.convertAndSend(userTopic, userNotification);
+        messagingTemplate.convertAndSend(userNotification.getTopic(), userNotification);
     }
 
     public List<Notification> findAllNewNotificationsForCurrentUser() {
