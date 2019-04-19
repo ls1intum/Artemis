@@ -58,8 +58,8 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        if (result.getQuestion().getExercise() != null) { //TODO: what happens if the questions belongs to a Lecture?
-            groupNotificationService.notifyGroupAboutNewAnswer(result); //TODO Which group do we notify about the new answer here? This should be specified in the method name
+        if (result.getQuestion().getExercise() != null) { // TODO: what happens if the questions belongs to a Lecture?
+            groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswer(result);
             singleUserNotificationService.notifyUserAboutNewAnswer(result);
         }
         return ResponseEntity.created(new URI("/api/question-answers/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))

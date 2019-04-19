@@ -60,7 +60,7 @@ public class StudentQuestionResource {
         }
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) { // TODO what happens if the question belongs to a lecture?
-            groupNotificationService.notifyGroupAboutNewQuestion(question);
+            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestion(question);
         }
         return ResponseEntity.created(new URI("/api/student-questions/" + question.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, question.getId().toString()))
                 .body(question);
