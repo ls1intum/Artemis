@@ -55,8 +55,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.translateSubscription.unsubscribe();
-        this.paramSubscription.unsubscribe();
+        if (this.translateService) {
+            this.translateSubscription.unsubscribe();
+        }
+        if (this.paramSubscription) {
+            this.paramSubscription.unsubscribe();
+        }
     }
 
     public groupLectures(selectedOrder: number): void {
