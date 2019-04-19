@@ -110,7 +110,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
         this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
             this.resultSubscription = observable
-                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
+                // .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
                 .subscribe(result => this.toggleBuildLogs(result));
         });
     }
