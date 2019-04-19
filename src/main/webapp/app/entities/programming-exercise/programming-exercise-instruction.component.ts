@@ -102,8 +102,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 })
                 .then(() => this.setupResultWebsocket())
                 .then(() => this.isInitial && this.loadInitialResult())
-                .then((result: Result) => (this.latestResult = result))
-                .catch(() => (this.latestResult = null))
                 .finally(() => {
                     this.updateMarkdown();
                     this.isInitial = false;
@@ -130,17 +128,36 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    async loadInitialResult(): Promise<Result> {
+    async loadInitialResult(): Promise<void> {
         return new Promise((resolve, reject) => {
             if (this.participation && this.participation.results && this.participation.results.length) {
                 // Get the result with the highest id (most recent result)
                 const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
-                return this.loadAndAttachResultDetails(latestResult).subscribe(result => (result ? resolve(result) : reject()), () => reject());
+                return this.loadAndAttachResultDetails(latestResult).subscribe(
+                    result => {
+                        this.latestResult = result;
+                        resolve();
+                    },
+                    () => {
+                        this.latestResult = null;
+                        resolve();
+                    },
+                );
             } else if (this.exercise && this.exercise.id) {
                 // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
-                return this.loadLatestResult().subscribe(result => (result.id ? resolve(result) : reject()), () => reject());
+                return this.loadLatestResult().subscribe(
+                    result => {
+                        this.latestResult = result;
+                        resolve();
+                    },
+                    () => {
+                        this.latestResult = null;
+                        resolve();
+                    },
+                );
             } else {
-                reject();
+                this.latestResult = null;
+                resolve();
             }
         });
     }
@@ -165,7 +182,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadLatestResult(): Observable<Result> {
         return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
-            filter((latestResult: any) => !latestResult.body.length),
+            filter((latestResult: any) => latestResult.body.length),
             map((latestResult: { body: Result[] }) => latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc))),
             flatMap((latestResult: Result) => this.loadAndAttachResultDetails(latestResult)),
         );

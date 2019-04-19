@@ -179,12 +179,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
                     this.editorFileSession.setSaved(...savedFiles);
                     const unsavedFiles = this.editorFileSession.getUnsavedFileNames();
-
-                    if (unsavedFiles.length) {
-                        this.onUnsavedFilesChange.emit(unsavedFiles);
-                    } else {
-                        this.onUnsavedFilesChange.emit([]);
-                    }
+                    this.onUnsavedFilesChange.emit(unsavedFiles);
                 },
                 () => {
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
