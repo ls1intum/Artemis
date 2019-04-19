@@ -20,7 +20,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { AnnotationArray, TextChange } from '../../entities/ace-editor';
+import { AnnotationArray, EditorFileSession, TextChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
@@ -38,7 +38,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly aceModeList = ace.acequire('ace/ext/modelist');
 
     /** Ace Editor Options **/
-    editorFileSessions: { [fileName: string]: { code: string; errors: AnnotationArray; unsavedChanges: boolean } } = {};
+    editorFileSession = new EditorFileSession();
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
 
     annotationChange: Subscription;
@@ -53,7 +53,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     repositoryFiles: string[];
     @Input()
-    buildLogErrors: { [fileName: string]: AnnotationArray[] };
+    buildLogErrors: { [fileName: string]: AnnotationArray };
     @Input()
     editorState: EditorState;
     @Output()
@@ -98,17 +98,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         // Update editor file session object to include new files and remove old files
         if (changes.repositoryFiles) {
-            const newFiles = _difference(changes.repositoryFiles.currentValue, changes.repositoryFiles.previousValue);
-            const removedFiles = _difference(changes.repositoryFiles.previousValue, changes.repositoryFiles.currentValue);
-            const filteredEntries = _differenceWith(toPairs(this.editorFileSessions), removedFiles, (a, b) => a[0] === b);
-            const newEntries = newFiles.map(fileName => [fileName, { errors: new AnnotationArray(), code: '', unsavedChanges: false }]);
-            this.editorFileSessions = compose(
-                fromPairs,
-                unionBy('[0]', newEntries),
-            )(filteredEntries);
-            const unsavedFiles = Object.entries(this.editorFileSessions)
-                .filter(([, { unsavedChanges }]) => unsavedChanges)
-                .map(([fileName]) => fileName);
+            const newFiles: string[] = _difference(changes.repositoryFiles.currentValue, changes.repositoryFiles.previousValue);
+            const removedFiles: string[] = _difference(changes.repositoryFiles.previousValue, changes.repositoryFiles.currentValue);
+            this.editorFileSession.update(newFiles, removedFiles);
+            const unsavedFiles = this.editorFileSession.getUnsavedFileNames();
             this.onUnsavedFilesChange.emit(unsavedFiles);
         }
         // Current file has changed
@@ -128,14 +121,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     .clearAnnotations();
             }
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.editorFileSessions[this.selectedFile].code) {
+            if (!this.editorFileSession.getCode(this.selectedFile)) {
                 this.loadFile(this.selectedFile);
                 // Reset the undo stack after file change, otherwise the user can undo back to the old file
             } else {
                 this.editor
                     .getEditor()
                     .getSession()
-                    .setValue(this.editorFileSessions[this.selectedFile].code);
+                    .setValue(this.editorFileSession.getCode(this.selectedFile));
                 this.editor
                     .getEditor()
                     .getSession()
@@ -143,29 +136,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.editor
                     .getEditor()
                     .getSession()
-                    .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
+                    .setAnnotations(this.editorFileSession.getErrors(this.selectedFile));
                 this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             }
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
         if (changes.buildLogErrors) {
-            this.editorFileSessions = compose(
-                fromPairs,
-                map(([fileName, { errors, ...session }]) => [
-                    fileName,
-                    {
-                        ...session,
-                        errors: changes.buildLogErrors.currentValue[fileName] || new AnnotationArray(),
-                    },
-                ]),
-                toPairs,
-            )(this.editorFileSessions);
-            if (this.editorFileSessions[this.selectedFile]) {
-                this.editor
-                    .getEditor()
-                    .getSession()
-                    .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
-            }
+            this.editorFileSession.setErrors(
+                ...Object.entries(changes.buildLogErrors.currentValue).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
+            );
+            this.editor
+                .getEditor()
+                .getSession()
+                .setAnnotations(this.editorFileSession.getErrors(this.selectedFile));
         }
     }
 
@@ -185,37 +168,22 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             )
             .subscribe(
                 res => {
-                    const sessionAnnotations = Object.entries(this.editorFileSessions).reduce(
-                        (acc, [file, { errors }]) => ({
-                            ...acc,
-                            [file]: errors,
-                        }),
-                        {},
-                    );
+                    const sessionAnnotations = this.editorFileSession.serialize();
                     this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
+
                     const { errorFiles, savedFiles } = Object.entries(res).reduce(
                         (acc, [fileName, error]: [string, string | null]) =>
                             error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : { ...acc, savedFiles: [fileName, ...acc.savedFiles] },
                         { errorFiles: [], savedFiles: [] },
                     );
 
-                    savedFiles.forEach(fileName => (this.editorFileSessions[fileName].unsavedChanges = false));
-
-                    const unsavedFiles = compose(
-                        union(errorFiles),
-                        difference(
-                            Object.entries(this.editorFileSessions)
-                                .filter(([fileName, { unsavedChanges }]) => unsavedChanges)
-                                .map(([fileName]) => fileName),
-                        ),
-                    )(savedFiles);
+                    this.editorFileSession.setSaved(...savedFiles);
+                    const unsavedFiles = this.editorFileSession.getUnsavedFileNames();
 
                     if (unsavedFiles.length) {
                         this.onUnsavedFilesChange.emit(unsavedFiles);
-                        this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                     } else {
                         this.onUnsavedFilesChange.emit([]);
-                        this.onEditorStateChange.emit(EditorState.CLEAN);
                     }
                 },
                 () => {
@@ -229,7 +197,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param change
      */
     updateAnnotationPositions = (change: TextChange) => {
-        this.editorFileSessions[this.selectedFile].errors = this.editorFileSessions[this.selectedFile].errors.update(change);
+        this.editorFileSession.updateErrorPositions(this.selectedFile, change);
     };
 
     /**
@@ -240,19 +208,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(
             fileObj => {
-                if (!this.editorFileSessions[fileName]) {
-                    this.editorFileSessions[fileName] = {
-                        code: fileObj.fileContent,
-                        errors: new AnnotationArray(),
-                        unsavedChanges: false,
-                    };
-                } else {
-                    this.editorFileSessions[fileName] = {
-                        ...this.editorFileSessions[fileName],
-                        code: fileObj.fileContent,
-                        unsavedChanges: false,
-                    };
-                }
+                this.editorFileSession.setCode(fileName, fileObj.fileContent);
                 /**
                  * Assign the obtained file content to the editor and set the ace mode
                  * Additionally, we resize the editor window and set focus to it
@@ -261,7 +217,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.editor.setMode(this.editorMode);
                 this.editor.getEditor().resize();
                 this.editor.getEditor().focus();
-                this.editor.getEditor().setValue(this.editorFileSessions[this.selectedFile].code || '', -1);
+                this.editor.getEditor().setValue(this.editorFileSession.getCode(fileName) || '', -1);
                 // Reset the undo stack after file change, otherwise the user can undo back to the old file
                 this.editor
                     .getEditor()
@@ -270,7 +226,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.editor
                     .getEditor()
                     .getSession()
-                    .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
+                    .setAnnotations(this.editorFileSession.getErrors(fileName));
                 this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             },
             err => {
@@ -284,9 +240,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles() {
-        const unsavedFiles = Object.entries(this.editorFileSessions)
-            .filter(([, { unsavedChanges }]) => unsavedChanges)
-            .map(([fileName, { code }]) => ({ fileName, fileContent: code }));
+        const unsavedFiles = this.editorFileSession.getUnsavedFiles();
         this.onEditorStateChange.emit(EditorState.SAVING);
         this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, unsavedFiles);
     }
@@ -299,19 +253,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.editorFileSessions[this.selectedFile].code !== code) {
-            // Assign received code to our session
-            this.editorFileSessions[this.selectedFile] = {
-                ...this.editorFileSessions[this.selectedFile],
-                code,
-                unsavedChanges: true,
-            };
-            this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
-            this.onUnsavedFilesChange.emit(
-                Object.entries(this.editorFileSessions)
-                    .filter(([fileName, { unsavedChanges }]) => unsavedChanges)
-                    .map(([fileName]) => fileName),
-            );
+        if (this.editorFileSession.getCode(this.selectedFile) !== code) {
+            this.editorFileSession.setCode(this.selectedFile, code);
+            this.editorFileSession.setUnsaved(this.selectedFile);
+            const unsavedFiles = this.editorFileSession.getUnsavedFileNames();
+            this.onUnsavedFilesChange.emit(unsavedFiles);
         }
     }
 

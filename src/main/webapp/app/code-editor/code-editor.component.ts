@@ -135,13 +135,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
 
     /**
      * Set the editor state.
-     * Also updates the commit state: changes were saved -> uncommited changes.
      * @param editorState
      */
     setEditorState(editorState: EditorState) {
-        if (this.editorState === EditorState.SAVING && editorState === EditorState.CLEAN) {
-            this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        }
         this.editorState = editorState;
     }
 
@@ -151,19 +147,17 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      */
     setUnsavedFiles(fileNames: string[]) {
         this.unsavedFiles = fileNames;
-        if (this.unsavedFiles.length) {
-            this.editorState = EditorState.UNSAVED_CHANGES;
-        } else {
+
+        if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
-        }
-        if (this.commitState === CommitState.WANTS_TO_COMMIT) {
-            if (this.unsavedFiles.length === 0) {
-                // Success state: all files could be saved before commit, so try to commit again.
-                this.commit();
-            } else {
-                // Error state: some files could not not be saved, show an error
-                console.log('error');
-            }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        } else if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState === CommitState.WANTS_TO_COMMIT) {
+            this.editorState = EditorState.CLEAN;
+            this.commit();
+        } else if (!this.unsavedFiles.length) {
+            this.editorState = EditorState.CLEAN;
+        } else {
+            this.editorState = EditorState.UNSAVED_CHANGES;
         }
     }
 
