@@ -33,7 +33,8 @@ export class FileUploaderService {
 
         const formData = new FormData();
         formData.append('file', file, fileName);
-        const url = options.keepFileName ? '/api/fileUpload?keepFileName=true' : '/api/fileUpload';
+        const keepFileName: boolean = !!options && options.keepFileName;
+        const url = `/api/fileUpload?keepFileName=${keepFileName}`;
         return this.http.post<FileUploadResponse>(url, formData).toPromise();
     }
 
