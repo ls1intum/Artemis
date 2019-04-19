@@ -66,9 +66,11 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         studentQuestion.author = this.currentUser;
         studentQuestion.visibleForStudents = true;
         if (this.exercise) {
-            studentQuestion.exercise = this.exercise;
+            studentQuestion.exercise = Object.assign({}, this.exercise, {});
+            delete studentQuestion.exercise.course;
         } else {
-            studentQuestion.lecture = this.lecture;
+            studentQuestion.lecture = Object.assign({}, this.lecture, {});
+            delete studentQuestion.lecture.course;
         }
         studentQuestion.creationDate = moment();
         this.studentQuestionService.create(studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
