@@ -39,5 +39,6 @@ export class SentryErrorHandler implements ErrorHandler {
 
     handleError(error: any): void {
         captureException(error.originalError || error);
+        throw error;
     }
 }
