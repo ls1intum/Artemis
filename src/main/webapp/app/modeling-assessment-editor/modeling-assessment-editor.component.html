@@ -9,7 +9,7 @@
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
             <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
-                  jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName + ' ' + result?.assessor?.lastName }">
+                  jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
                 Assessment locked by another user!
             </span>
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
