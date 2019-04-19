@@ -6,6 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -33,7 +34,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
 
     /** Dependencies as defined by the Editor component */
     participation: Participation;
-    repository: RepositoryService;
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
@@ -71,48 +71,58 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * we use it in order to spare any additional REST calls
      */
     ngOnInit(): void {
-        /** Assign repository */
-        this.repository = this.repositoryService;
-
         this.paramSub = this.route.params.subscribe(params => {
-            // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
-                // We found a matching participation in the data provider, so we can avoid doing a REST call
-                this.participation = this.participationDataProvider.participationStorage;
-            } else {
-                /** Query the participationService for the participationId given by the params */
-                this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
-                    this.participation = response.body;
-                });
-            }
-            /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(params['participationId']).subscribe(
-                files => {
+            const participationId = Number(params['participationId']);
+            this.loadParticipation(participationId).then(() => this.loadFiles());
+        });
+    }
+
+    private loadFiles() {
+        /** Query the repositoryFileService for files in the repository */
+        this.repositoryFileService
+            .query(this.participation.id)
+            .pipe(
+                tap((files: string[]) => {
                     // do not display the README.md, because students should not edit it
                     this.repositoryFiles = files
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(value => value !== 'README.md')
                         // Remove binary files as they can't be displayed in an editor
                         .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
-                    this.checkIfRepositoryIsClean();
-                    this.loadSession();
-                },
+                }),
+                tap(() => this.checkIfRepositoryIsClean()),
+                tap(() => this.loadSession()),
+            )
+            .subscribe(
+                () => {},
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
                 },
             );
-        });
+    }
 
-        /** Assign repository */
-        this.repository = this.repositoryService;
+    private loadParticipation(participationId: number) {
+        return new Promise(resolve => {
+            // Cast params id to Number or strict comparison will lead to result false (due to differing types)
+            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
+                // We found a matching participation in the data provider, so we can avoid doing a REST call
+                this.participation = this.participationDataProvider.participationStorage;
+                resolve();
+            } else {
+                /** Query the participationService for the participationId given by the params */
+                this.participationService.findWithLatestResult(participationId).subscribe((response: HttpResponse<Participation>) => {
+                    this.participation = response.body;
+                    resolve();
+                });
+            }
+        });
     }
 
     /**
      * @function ngOnChanges
      * @desc Checks if the repository has uncommitted changes
-     * @param changes
      */
-    ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges() {
         this.checkIfRepositoryIsClean();
     }
 
@@ -128,7 +138,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
     checkIfRepositoryIsClean(): void {
-        this.repository.isClean(this.participation.id).subscribe(res => {
+        this.repositoryService.isClean(this.participation.id).subscribe(res => {
             this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
         });
     }
@@ -287,7 +297,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         // If there are unsaved changes, save them before trying to commit again.
         if (!this.unsavedFiles.length) {
             this.commitState = CommitState.COMMITTING;
-            this.repository.commit(this.participation.id).subscribe(
+            this.repositoryService.commit(this.participation.id).subscribe(
                 () => {
                     this.commitState = CommitState.CLEAN;
                     this.isBuilding = true;
