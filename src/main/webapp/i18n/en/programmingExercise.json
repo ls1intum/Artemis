@@ -37,7 +37,7 @@
         "editor": {
             "title": "Code Editor for Exercise:",
             "instructions": "&nbsp; Instructions &nbsp;",
-            "unsavedChanges": "Unsaved changes exist.",
+            "unsavedChanges": "There are unsaved changes.",
             "savingChanges": "Saving changes.",
             "savingFile": "Saving file.",
             "changesSaved": "All changes saved.",
