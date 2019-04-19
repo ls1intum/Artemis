@@ -307,7 +307,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onSelectionChanged(selection: Selection) {
         this.selectedEntities = selection.elements;
+        for (const selectedEntity of this.selectedEntities) {
+            this.selectedEntities.push(...this.getSelectedChildren(selectedEntity));
+        }
         this.selectedRelationships = selection.relationships;
+    }
+
+    /**
+     * Returns the elementIds of all the children of the element with the given elementId
+     * or an empty list, if no children exist for this element.
+     */
+    private getSelectedChildren(elementId: string): string[] {
+        if (!this.umlModel || !this.umlModel.elements) {
+            return [];
+        }
+        return this.umlModel.elements.filter(element => element.owner === elementId).map(element => element.id);
     }
 
     /**
