@@ -35,8 +35,8 @@ export class CourseLectureRowComponent implements OnInit {
     showDetails(event: any) {
         const lectureToAttach = {
             ...this.lecture,
-            startDate: this.lecture.startDate.valueOf(),
-            endDate: this.lecture.endDate.valueOf(),
+            startDate: this.lecture.startDate ? this.lecture.startDate.valueOf() : null,
+            endDate: this.lecture.endDate ? this.lecture.endDate.valueOf() : null,
             course: {
                 id: this.course.id,
             },

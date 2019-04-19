@@ -27,8 +27,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         const navigation = this.router.getCurrentNavigation();
         if (navigation.extras.state) {
             const stateLecture = navigation.extras.state.lecture as Lecture;
-            if (stateLecture) {
+            if (stateLecture && stateLecture.startDate) {
                 stateLecture.startDate = moment(stateLecture.startDate);
+            }
+            if (stateLecture && stateLecture.endDate) {
                 stateLecture.endDate = moment(stateLecture.endDate);
             }
             this.lecture = stateLecture;
