@@ -56,6 +56,16 @@ public class GroupNotificationService {
         return groupNotification;
     }
 
+    private GroupNotification createLectureQuestionCreatedGroupNotification(StudentQuestion studentQuestion, GroupNotificationType type) {
+        Lecture lecture = studentQuestion.getLecture();
+        String title = "New Question";
+        String notificationText = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
+        User user = userService.getUser();
+        GroupNotification groupNotification = new GroupNotification(lecture.getCourse(), title, notificationText, user, type);
+        groupNotification.setTarget(groupNotification.getLectureQuestionTarget(lecture));
+        return groupNotification;
+    }
+
     private GroupNotification createExerciseAnswerCreatedGroupNotification(StudentQuestionAnswer studentQuestionAnswer, GroupNotificationType type) {
         Exercise exercise = studentQuestionAnswer.getQuestion().getExercise();
         String title = "New Answer";
@@ -63,6 +73,16 @@ public class GroupNotificationService {
         User user = userService.getUser();
         GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
         groupNotification.setTarget(groupNotification.getExerciseAnswerTarget(exercise));
+        return groupNotification;
+    }
+
+    private GroupNotification createLectureAnswerCreatedGroupNotification(StudentQuestionAnswer studentQuestionAnswer, GroupNotificationType type) {
+        Lecture lecture = studentQuestionAnswer.getQuestion().getLecture();
+        String title = "New Answer";
+        String notificationText = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
+        User user = userService.getUser();
+        GroupNotification groupNotification = new GroupNotification(lecture.getCourse(), title, notificationText, user, type);
+        groupNotification.setTarget(groupNotification.getLectureAnswerTarget(lecture));
         return groupNotification;
     }
 
@@ -110,16 +130,30 @@ public class GroupNotificationService {
         saveAndSendGroupNotification(groupNotification);
     }
 
-    public void notifyTutorAndInstructorGroupAboutNewQuestion(StudentQuestion studentQuestion) {
+    public void notifyTutorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
         GroupNotification tutorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
         GroupNotification instructorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
         saveAndSendGroupNotification(tutorNotification);
         saveAndSendGroupNotification(instructorNotification);
     }
 
-    public void notifyTutorAndInstructorGroupAboutNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
+    public void notifyTutorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
+        GroupNotification tutorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
+        GroupNotification instructorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
+        saveAndSendGroupNotification(tutorNotification);
+        saveAndSendGroupNotification(instructorNotification);
+    }
+
+    public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
         GroupNotification tutorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
         GroupNotification instructorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
+        saveAndSendGroupNotification(tutorNotification);
+        saveAndSendGroupNotification(instructorNotification);
+    }
+
+    public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
+        GroupNotification tutorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
+        GroupNotification instructorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
         saveAndSendGroupNotification(tutorNotification);
         saveAndSendGroupNotification(instructorNotification);
     }

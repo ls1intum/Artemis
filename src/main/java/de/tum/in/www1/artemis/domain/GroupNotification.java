@@ -99,6 +99,14 @@ public class GroupNotification extends Notification implements Serializable {
         return getExerciseTarget(exercise, "newQuestion");
     }
 
+    public String getLectureQuestionTarget(Lecture lecture) {
+        return getLectureTarget(lecture, "newQuestion");
+    }
+
+    public String getLectureAnswerTarget(Lecture lecture) {
+        return getLectureTarget(lecture, "newAnswer");
+    }
+
     public String getAttachmentUpdated(Lecture lecture) {
         return getLectureTarget(lecture, "attachmentUpdated");
     }

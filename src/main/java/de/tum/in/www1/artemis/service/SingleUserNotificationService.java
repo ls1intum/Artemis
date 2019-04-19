@@ -25,13 +25,23 @@ public class SingleUserNotificationService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public void notifyUserAboutNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
+    private SingleUserNotification createUserNotificationForNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
         User recipient = studentQuestionAnswer.getQuestion().getAuthor();
         User author = studentQuestionAnswer.getAuthor();
         String title = "New Answer";
         String text = "Your Question got answered!";
-        SingleUserNotification userNotification = new SingleUserNotification(recipient, author, title, text);
-        userNotification.setTarget(userNotification.studentQuestionAnswerTarget(studentQuestionAnswer));
+        return new SingleUserNotification(recipient, author, title, text);
+    }
+
+    public void notifyUserAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
+        SingleUserNotification userNotification = createUserNotificationForNewAnswer(studentQuestionAnswer);
+        userNotification.setTarget(userNotification.studentQuestionAnswerTargetForExercise(studentQuestionAnswer));
+        saveAndSendSingleUserNotification(userNotification);
+    }
+
+    public void notifyUserAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
+        SingleUserNotification userNotification = createUserNotificationForNewAnswer(studentQuestionAnswer);
+        userNotification.setTarget(userNotification.studentQuestionAnswerTargetForLecture(studentQuestionAnswer));
         saveAndSendSingleUserNotification(userNotification);
     }
 

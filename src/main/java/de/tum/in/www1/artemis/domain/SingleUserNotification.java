@@ -50,12 +50,22 @@ public class SingleUserNotification extends Notification implements Serializable
         this.setText(text);
     }
 
-    public String studentQuestionAnswerTarget(StudentQuestionAnswer studentQuestionAnswer) {
+    public String studentQuestionAnswerTargetForExercise(StudentQuestionAnswer studentQuestionAnswer) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
         target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
         target.addProperty("entity", "exercises");
         target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
+        target.addProperty("mainPage", "overview");
+        return target.toString();
+    }
+
+    public String studentQuestionAnswerTargetForLecture(StudentQuestionAnswer studentQuestionAnswer) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "newAnswer");
+        target.addProperty("id", studentQuestionAnswer.getQuestion().getLecture().getId());
+        target.addProperty("entity", "lectures");
+        target.addProperty("course", studentQuestionAnswer.getQuestion().getLecture().getCourse().getId());
         target.addProperty("mainPage", "overview");
         return target.toString();
     }
