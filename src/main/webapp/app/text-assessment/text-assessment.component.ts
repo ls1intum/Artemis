@@ -18,9 +18,6 @@ import { Interactable } from 'interactjs';
 import { WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
-import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -43,7 +40,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     showResult = true;
     includeComplaint = false;
     complaint: Complaint;
-    complaintResponse: ComplaintResponse = new ComplaintResponse();
     notFound = false;
 
     formattedProblemStatement: string;
@@ -70,8 +66,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
-        private complaintService: ComplaintService,
-        private complaintResponseService: ComplaintResponseService,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -250,20 +244,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.result = this.participation.results[0];
 
-        if (this.includeComplaint && this.result) {
-            this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                this.complaint = res.body;
-
-                if (this.complaint.accepted) {
-                    this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => {
-                        this.complaintResponse = complaintResponse.body;
-                    });
-                } else {
-                    this.complaintResponse.complaint = this.complaint;
-                }
-            });
-        }
-
         this.assessments = this.result.feedbacks || [];
         this.busy = false;
         this.checkScoreBoundaries();
@@ -323,20 +303,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         return baseKey + 'assessment';
     }
 
-    submitComplaintResponse() {
-        if (this.complaintResponse.responseText.length > 0) {
-            this.complaintResponseService.create(this.complaintResponse).subscribe(
-                () => {
-                    this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
-                    this.complaint.accepted = true;
-                },
-                (error: HttpErrorResponse) => this.onError(error.message),
-            );
-        }
-    }
-
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
     }
+
 }
