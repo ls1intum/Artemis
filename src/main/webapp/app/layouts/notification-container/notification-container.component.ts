@@ -18,22 +18,29 @@ export class NotificationContainerComponent implements OnInit {
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
     ngOnInit() {
+        if (this.accountService.isAuthenticated()) {
+            this.loadNotifications();
+        }
         this.accountService.getAuthenticationState().subscribe((user: User) => {
             if (user) {
-                this.notificationService.getRecentNotificationsForUser().subscribe((res: HttpResponse<Notification[]>) => {
-                    this.notifications = res.body;
-                    this.updateNotificationCount();
-                });
-                setTimeout(() => {
-                    this.notificationService.subscribeUserNotifications();
-                }, 500);
-                this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
-                    if (notification) {
-                        notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
-                        this.notifications.push(notification);
-                        this.updateNotificationCount();
-                    }
-                });
+                this.loadNotifications();
+            }
+        });
+    }
+
+    private loadNotifications() {
+        this.notificationService.getRecentNotificationsForUser().subscribe((res: HttpResponse<Notification[]>) => {
+            this.notifications = res.body;
+            this.updateNotificationCount();
+        });
+        setTimeout(() => {
+            this.notificationService.subscribeUserNotifications();
+        }, 500);
+        this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
+            if (notification) {
+                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
+                this.notifications.push(notification);
+                this.updateNotificationCount();
             }
         });
     }

@@ -153,7 +153,8 @@ public class ModelingSubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
 
-        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), username);
+        Optional<Participation> optionalParticipation =
+            participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(), username);
         if (!optionalParticipation.isPresent()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
