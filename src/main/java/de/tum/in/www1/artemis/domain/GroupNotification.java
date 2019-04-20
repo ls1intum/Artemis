@@ -1,24 +1,24 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 
 /**
  * A GroupNotification.
  */
 @Entity
-@DiscriminatorValue(value="G")
+@DiscriminatorValue(value = "G")
 public class GroupNotification extends Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private GroupNotificationType type;
@@ -51,6 +51,18 @@ public class GroupNotification extends Notification implements Serializable {
         return this;
     }
 
+    public GroupNotification() {
+    }
+
+    public GroupNotification(Course course, String title, String notificationText, User user, GroupNotificationType type) {
+        this.setCourse(course);
+        this.setType(type);
+        this.setNotificationDate(ZonedDateTime.now());
+        this.setTitle(title);
+        this.setText(notificationText);
+        this.setAuthor(user);
+    }
+
     public void setCourse(Course course) {
         this.course = course;
     }
@@ -71,6 +83,58 @@ public class GroupNotification extends Notification implements Serializable {
         return Objects.equals(getId(), groupNotification.getId());
     }
 
+    public String getExerciseCreatedTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "exerciseCreated");
+    }
+
+    public String getExerciseUpdatedTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "exerciseUpdated");
+    }
+
+    public String getExerciseAnswerTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "newAnswer");
+    }
+
+    public String getExerciseQuestionTarget(Exercise exercise) {
+        return getExerciseTarget(exercise, "newQuestion");
+    }
+
+    public String getLectureQuestionTarget(Lecture lecture) {
+        return getLectureTarget(lecture, "newQuestion");
+    }
+
+    public String getLectureAnswerTarget(Lecture lecture) {
+        return getLectureTarget(lecture, "newAnswer");
+    }
+
+    public String getAttachmentUpdated(Lecture lecture) {
+        return getLectureTarget(lecture, "attachmentUpdated");
+    }
+
+    public String getExerciseTarget(Exercise exercise, String message) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", message);
+        target.addProperty("id", exercise.getId());
+        target.addProperty("entity", "exercises");
+        target.addProperty("course", exercise.getCourse().getId());
+        target.addProperty("mainPage", "overview");
+        return target.toString();
+    }
+
+    public String getLectureTarget(Lecture lecture, String message) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", message);
+        target.addProperty("id", lecture.getId());
+        target.addProperty("entity", "lectures");
+        target.addProperty("course", lecture.getCourse().getId());
+        target.addProperty("mainPage", "overview");
+        return target.toString();
+    }
+
+    public String getTopic() {
+        return "/topic/course/" + getCourse().getId() + "/" + getType();
+    }
+
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
@@ -78,9 +142,6 @@ public class GroupNotification extends Notification implements Serializable {
 
     @Override
     public String toString() {
-        return "GroupNotification{" +
-            "id=" + getId() +
-            ", type='" + getType() + "'" +
-            "}";
+        return "GroupNotification{" + "id=" + getId() + ", type='" + getType() + "'" + "}";
     }
 }
