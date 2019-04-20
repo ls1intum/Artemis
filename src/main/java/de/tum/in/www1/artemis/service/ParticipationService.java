@@ -436,6 +436,19 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation (in any state) by its student and exercise with eager submissions.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Optional<Participation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+        return participationRepository.findByExerciseIdAndStudentLoginWithEagerSubmissions(exerciseId, username);
+    }
+
+    /**
      * Get all participations for the given student including all results
      *
      * @param username the username of the student

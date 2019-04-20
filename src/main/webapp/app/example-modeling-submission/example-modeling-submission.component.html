@@ -4,10 +4,13 @@
         <button class="btn btn-secondary" (click)="back()">&larr;</button>
     </div>
 
-    <div class="col-12 col-lg-7">
+    <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
         <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
             Example Modeling Submission for Exercise {{exercise?.title}}
         </h2>
+        <p *ngIf="assessmentMode" jhiTranslate="arTeMiSApp.exampleSubmission.assessmentInstruction">
+            Double-click on a model element to view and edit the element's assessment.
+        </p>
     </div>
 
     <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
