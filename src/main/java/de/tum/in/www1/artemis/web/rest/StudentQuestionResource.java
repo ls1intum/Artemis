@@ -59,8 +59,11 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
-        if (question.getExercise() != null) { // TODO what happens if the question belongs to a lecture?
-            groupNotificationService.notifyGroupAboutNewQuestion(question);
+        if (question.getExercise() != null) {
+            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
+        }
+        if (question.getLecture() != null) {
+            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForLecture(question);
         }
         return ResponseEntity.created(new URI("/api/student-questions/" + question.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, question.getId().toString()))
                 .body(question);
