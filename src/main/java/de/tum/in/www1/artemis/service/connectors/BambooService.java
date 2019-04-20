@@ -569,7 +569,7 @@ public class BambooService implements ContinuousIntegrationService {
             List<Map<String, Object>> castedfailedJobs = (List<Map<String, Object>>) (Object) failedJobs; // TODO: check if this works correctly
 
             for (Map<String, Object> failedJob : castedfailedJobs) {
-                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) (Object) failedJob.get("failedTests");
+                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) failedJob.get("failedTests");
                 if (!failedTests.isEmpty()) {
                     result.setHasFeedback(true);
                 }
