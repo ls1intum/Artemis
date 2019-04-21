@@ -79,9 +79,7 @@ public class ModelAssessmentConflictService {
         existingConflicts.forEach(conflict -> {
             List<Feedback> newFeedbacks = newConflictingFeedbacks.get(conflict.getCausingConflictingResult().getModelElementId());
             if (newFeedbacks != null) {
-                Set<ConflictingResult> updatedResultsInConflict = conflictingResultService.updateExistingConflictingResults(conflict, conflict.getResultsInConflict(),
-                        newFeedbacks);
-                conflict.setResultsInConflict(updatedResultsInConflict);
+                conflictingResultService.updateExistingConflictingResults(conflict, conflict.getResultsInConflict(), newFeedbacks);
             }
             else {
                 resolveConflict(conflict);
