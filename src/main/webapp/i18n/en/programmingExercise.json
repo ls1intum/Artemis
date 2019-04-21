@@ -42,6 +42,7 @@
             "savingFile": "Saving file.",
             "changesSaved": "All changes saved.",
             "failedToSave": "Failed to save file.",
+            "changesUndefined": "Fetching submission status.",
             "changesSubmitted": "All changes submitted.",
             "unsubmittedChanges": "There are unsubmitted changes.",
             "submittingChanges": "Submitting changes.",

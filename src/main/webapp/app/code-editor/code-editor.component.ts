@@ -46,7 +46,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
-    commitState: CommitState;
+    commitState = CommitState.UNDEFINED;
     isBuilding = false;
 
     /**

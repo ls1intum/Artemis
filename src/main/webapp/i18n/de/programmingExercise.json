@@ -42,6 +42,7 @@
             "savingFile": "Datei wird gespeichert.",
             "changesSaved": "Alle Änderungen gespeichert.",
             "failedToSave": "Änderungen konnten nicht gespeichert werden.",
+            "changesUndefined": "Frage Absende-Status an.",
             "changesSubmitted": "Alle Änderungen abgesendet.",
             "unsubmittedChanges": "Nicht abgesendete Änderungen vorhanden.",
             "submittingChanges": "Änderungen werden abgesendet.",
