@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -26,6 +26,7 @@ import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-editor',
@@ -67,6 +68,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private resultService: ResultService,
         private localStorageService: LocalStorageService,
         private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -96,6 +98,14 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 )
                 .subscribe();
         });
+    }
+
+    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     private loadFiles(): Observable<string[]> {
