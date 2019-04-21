@@ -17,19 +17,19 @@
     <div [ngSwitch]="commitState">
         <div *ngSwitchCase="'CLEAN'">
             <fa-icon [icon]="['fas', 'check-circle']" class="text-success mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.changesCommitted' | translate }}</span>
+            <span class="text-info">{{ 'arTeMiSApp.editor.changesSubmitted' | translate }}</span>
         </div>
         <div *ngSwitchCase="'UNCOMMITTED_CHANGES'">
             <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.uncommittedChanges' | translate }}</span>
+            <span class="text-info">{{ 'arTeMiSApp.editor.unsubmittedChanges' | translate }}</span>
         </div>
         <div *ngSwitchCase="'WANTS_TO_COMMIT'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.preparingForCommit' | translate }}</span>
+            <span class="text-info">{{ 'arTeMiSApp.editor.preparingForSubmit' | translate }}</span>
         </div>
         <div *ngSwitchCase="'COMMITTING'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.committingChanges' | translate }}</span>
+            <span class="text-info">{{ 'arTeMiSApp.editor.submittingChanges' | translate }}</span>
         </div>
     </div>
 </div>
