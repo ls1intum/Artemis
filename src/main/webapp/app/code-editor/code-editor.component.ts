@@ -1,7 +1,7 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
@@ -150,6 +150,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return this.repositoryService.isClean(this.participation.id).pipe(rxMap(res => (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES)));
     }
 
+    storeSession() {
+        this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: this.buildLogErrors }));
+    }
+
     /**
      * Set the editor state.
      * @param editorState
@@ -204,6 +208,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+            // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
+            if (this.session) {
+                this.storeSession();
+            }
         }
     }
 
@@ -260,6 +268,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 )(this.session.errors),
                 timestamp: this.session.timestamp,
             };
+        } else if (this.buildLogErrors) {
+            this.storeSession();
         }
     }
 

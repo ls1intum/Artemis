@@ -143,15 +143,20 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
-        if (changes.buildLogErrors) {
+        if ((this.repositoryFiles && changes.buildLogErrors) || (changes.repositoryFiles && this.buildLogErrors)) {
             this.editorFileSession.setErrors(
-                ...Object.entries(changes.buildLogErrors.currentValue).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
+                ...Object.entries(this.buildLogErrors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
             );
             this.editor
                 .getEditor()
                 .getSession()
                 .setAnnotations(this.editorFileSession.getErrors(this.selectedFile));
         }
+    }
+
+    storeSession() {
+        const sessionAnnotations = this.editorFileSession.serialize();
+        this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
     }
 
     /**
@@ -170,8 +175,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             )
             .subscribe(
                 res => {
-                    const sessionAnnotations = this.editorFileSession.serialize();
-                    this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
+                    this.storeSession();
 
                     const { errorFiles, savedFiles } = Object.entries(res).reduce(
                         (acc, [fileName, error]: [string, string | null]) =>
