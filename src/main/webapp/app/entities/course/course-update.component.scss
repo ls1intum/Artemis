@@ -1,0 +1,17 @@
+.color-preview {
+    cursor: pointer;
+}
+
+jhi-secured-image {
+    float: right;
+
+    ::ng-deep img {
+        border-radius: 50%;
+        height: 100px;
+        width: auto;
+    }
+}
+
+image-cropper {
+    padding: 10px 0 0 0 !important;
+}
