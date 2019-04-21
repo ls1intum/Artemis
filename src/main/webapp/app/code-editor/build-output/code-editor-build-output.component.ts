@@ -12,7 +12,7 @@ import { Interactable } from 'interactjs';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -109,9 +109,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             this.resultSubscription.unsubscribe();
         }
         this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable
-                // .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
-                .subscribe(result => this.toggleBuildLogs(result));
+            this.resultSubscription = observable.subscribe(result => this.toggleBuildLogs(result));
         });
     }
 
