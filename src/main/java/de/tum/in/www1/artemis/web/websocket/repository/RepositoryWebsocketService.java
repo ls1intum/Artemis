@@ -86,11 +86,8 @@ public class RepositoryWebsocketService {
     private void fetchAndUpdateFile(Long participationId, FileSubmission submission, Principal principal) throws InterruptedException, IOException, NoPermissionException {
         Participation participation = participationService.findOne(participationId);
         if (checkParticipation(participation, principal)) {
-            Repository repository;
-            Optional<File> file;
-
-            repository = gitService.get().getOrCheckoutRepository(participation);
-            file = gitService.get().getFileByName(repository, submission.getFileName());
+            Repository repository = gitService.get().getOrCheckoutRepository(participation);
+            Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
 
             if(!file.isPresent()) {
                 FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "File could not be found.");
