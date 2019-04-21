@@ -25,10 +25,11 @@ import { Feedback } from '../feedback';
 import { Result, ResultService, ResultWebsocketService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
-import { Participation } from '../participation';
+import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { hasExerciseChanged } from '../exercise';
 
 type Step = {
     title: string;
@@ -90,17 +91,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param changes
      */
     public ngOnChanges(changes: SimpleChanges) {
-        // If the participation changes, set component to initial as everything needs to be reloaded now
-        if (this.participation && changes.participation && changes.participation.currentValue && this.participation.id !== changes.participation.currentValue.id) {
+        const participationHasChanged = hasParticipationChanged(changes);
+        const exerciseHasChanged = hasExerciseChanged(changes);
+        if (participationHasChanged) {
             this.isInitial = true;
+            this.setupResultWebsocket();
         }
-        // Only load instructions, details etc. if the participation and exercise are available
-        if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.currentValue && changes.exercise.firstChange))) {
+        // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
+        if (this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
             this.loadInstructions()
                 .pipe(
                     tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
-                    tap(() => this.setupResultWebsocket()),
-                    switchMap(() => (this.isInitial ? this.loadInitialResult() : Observable.of(null))),
+                    switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
                     map(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
                         this.updateMarkdown();
@@ -131,11 +133,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result> {
-        if (this.participation && this.participation.results && this.participation.results.length) {
+        if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
             return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
-        } else if (this.exercise && this.exercise.id) {
+        } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
             return this.loadLatestResult();
         } else {

@@ -5,3 +5,4 @@ export * from './exercise-popup.service';
 export * from './exercise-lti-configuration-dialog.component';
 export * from './exercise-reset-dialog.component';
 export * from './exercise-type.pipe';
+export * from './exercise-utils';
