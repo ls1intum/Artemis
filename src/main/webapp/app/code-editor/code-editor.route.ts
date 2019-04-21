@@ -6,7 +6,7 @@ import { PendingChangesGuard } from 'app/shared';
 
 export const codeEditorRoute: Routes = [
     {
-        path: 'editor/:participationId',
+        path: 'code-editor/:participationId',
         component: CodeEditorComponent,
         data: {
             authorities: ['ROLE_USER'],
