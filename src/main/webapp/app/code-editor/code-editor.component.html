@@ -29,7 +29,7 @@
                 [fileName]="selectedFile"
                 [repositoryFiles]="repositoryFiles"
                 [unsavedFiles]="unsavedFiles"
-                [errorFiles]="buildLogErrors && buildLogErrors.errors ? (buildLogErrors.errors | keys) : []"
+                [errorFiles]="errorFiles"
                 [editorState]="editorState"
                 [commitState]="commitState"
                 (selectedFile)="updateSelectedFile($event)"

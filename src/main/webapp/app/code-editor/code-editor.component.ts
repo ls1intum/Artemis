@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -42,6 +42,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     paramSub: Subscription;
     repositoryFiles: string[];
     unsavedFiles: string[] = [];
+    errorFiles: string[] = [];
     session: Session;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -83,13 +84,21 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             // First: Load participation, which is needed for all successive calls
             this.loadParticipation(participationId)
                 .pipe(
-                    rxMap(participation => (this.participation = participation)),
-                    // If the participation has a result, load the result details for this result
-                    switchMap(participation => {
+                    // Load the participation with its result and result details, so that sub components don't try to also load the details
+                    flatMap(participation => {
                         const latestResult = participation.results.length ? participation.results[0] : null;
-                        return latestResult ? this.loadResultDetails(latestResult) : Observable.of(null);
+                        return latestResult
+                            ? this.loadResultDetails(latestResult).pipe(
+                                  rxMap(feedback => {
+                                      if (feedback) {
+                                          participation.results[0].feedbacks = feedback;
+                                      }
+                                      return participation;
+                                  }),
+                              )
+                            : Observable.of(participation);
                     }),
-                    tap(feedback => feedback && (this.participation.results[0].feedbacks = feedback)),
+                    tap(participation => (this.participation = participation)),
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
                     switchMap(() => this.loadFiles()),
@@ -141,7 +150,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @desc Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
-    loadResultDetails(result: Result): Observable<Feedback[]> {
+    loadResultDetails(result: Result): Observable<Feedback[] | null> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(rxMap(({ body }: { body: Feedback[] }) => body));
     }
 
@@ -218,6 +227,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+            this.errorFiles = Object.keys(this.buildLogErrors.errors);
             // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
             if (this.session) {
                 this.storeSession();
@@ -278,6 +288,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 )(this.session.errors),
                 timestamp: this.session.timestamp,
             };
+            this.errorFiles = Object.keys(this.buildLogErrors.errors);
         } else if (this.buildLogErrors) {
             this.storeSession();
         }

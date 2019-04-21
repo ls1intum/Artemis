@@ -17,7 +17,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { filter, flatMap, map } from 'rxjs/operators';
+import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
@@ -97,15 +97,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         // Only load instructions, details etc. if the participation and exercise are available
         if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.currentValue && changes.exercise.firstChange))) {
             this.loadInstructions()
-                .catch(() => {
-                    this.exercise.problemStatement = '';
-                })
-                .then(() => this.setupResultWebsocket())
-                .then(() => this.isInitial && this.loadInitialResult())
-                .finally(() => {
-                    this.updateMarkdown();
-                    this.isInitial = false;
-                });
+                .pipe(
+                    tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
+                    tap(() => this.setupResultWebsocket()),
+                    switchMap(() => (this.isInitial ? this.loadInitialResult() : Observable.of(null))),
+                    map(latestResult => (this.latestResult = latestResult)),
+                    tap(() => {
+                        this.updateMarkdown();
+                        this.isInitial = false;
+                    }),
+                )
+                .subscribe();
         }
     }
 
@@ -128,42 +130,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    async loadInitialResult(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (this.participation && this.participation.results && this.participation.results.length) {
-                // Get the result with the highest id (most recent result)
-                const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
-                if (!latestResult.feedbacks) {
-                    return this.loadAndAttachResultDetails(latestResult).subscribe(
-                        result => {
-                            this.latestResult = result;
-                            resolve();
-                        },
-                        () => {
-                            this.latestResult = null;
-                            resolve();
-                        },
-                    );
-                } else {
-                    resolve();
-                }
-            } else if (this.exercise && this.exercise.id) {
-                // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
-                return this.loadLatestResult().subscribe(
-                    result => {
-                        this.latestResult = result;
-                        resolve();
-                    },
-                    () => {
-                        this.latestResult = null;
-                        resolve();
-                    },
-                );
-            } else {
-                this.latestResult = null;
-                resolve();
-            }
-        });
+    loadInitialResult(): Observable<Result> {
+        if (this.participation && this.participation.results && this.participation.results.length) {
+            // Get the result with the highest id (most recent result)
+            const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+            return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
+        } else if (this.exercise && this.exercise.id) {
+            // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
+            return this.loadLatestResult();
+        } else {
+            return Observable.of(null);
+        }
     }
 
     /**
@@ -218,26 +195,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            // Historical fallback: Older exercises have an instruction file in the git repo
-            if (this.exercise.problemStatement === undefined) {
-                const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
-                this.repositoryFileService.get(participationId, 'README.md').subscribe(
-                    fileObj => {
-                        // Old readme files contain unescaped unicode, convert it to make it persistable by the database
-                        this.exercise.problemStatement = fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]');
-                        resolve();
-                    },
-                    err => {
-                        console.log('Error while getting README.md file!', err);
-                        reject();
-                    },
-                );
-            } else {
-                resolve();
-            }
-        });
+    loadInstructions(): Observable<string> {
+        if (this.exercise.problemStatement) {
+            return Observable.of(this.exercise.problemStatement);
+        } else {
+            const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+            return this.repositoryFileService.get(participationId, 'README.md').pipe(catchError(() => Observable.of('')));
+        }
     }
 
     /**

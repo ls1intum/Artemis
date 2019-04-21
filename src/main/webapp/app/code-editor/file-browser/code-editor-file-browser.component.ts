@@ -5,9 +5,9 @@ import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
 import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
-import { HttpErrorResponse } from '@angular/common/http';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -167,7 +167,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             }
         }
     }
-
     /**
      * @function getRepositoryFiles
      * @desc Checks if the repository files have been requested already

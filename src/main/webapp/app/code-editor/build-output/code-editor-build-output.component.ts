@@ -91,9 +91,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results) {
             const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
-            if (latestResult) {
-                this.loadAndAttachResultDetails(latestResult).subscribe(result => this.toggleBuildLogs(result));
-            }
+            this.toggleBuildLogs(latestResult);
         }
     }
 
