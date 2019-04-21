@@ -60,6 +60,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onEditorStateChange = new EventEmitter<EditorState>();
     @Output()
     onUnsavedFilesChange = new EventEmitter<string[]>();
+    @Output()
+    onError = new EventEmitter<string>();
 
     updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
@@ -180,8 +182,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     this.editorFileSession.setSaved(...savedFiles);
                     const unsavedFiles = this.editorFileSession.getUnsavedFileNames();
                     this.onUnsavedFilesChange.emit(unsavedFiles);
+
+                    if (errorFiles.length) {
+                        this.onError.emit('saveFailed');
+                    }
                 },
-                () => {
+                err => {
+                    this.onError.emit(err.error);
                     this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
                 },
             );

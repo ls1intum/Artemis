@@ -54,7 +54,12 @@
             "selectFile": "Select a file to get started!",
             "downloadBuildResult": "Download Build Result",
             "saving": "Saving",
-            "saveFiles": "Save Files"
+            "saveFiles": "Save Files",
+            "errors": {
+                "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
+                "noPermissions": "You don't have the necessary permissions.",
+                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor."
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
 <div class="editor-wrapper">
+    <jhi-alert></jhi-alert>
+    <jhi-alert-error></jhi-alert-error>
     <nav class="navbar navbar-light navbar-expand-sm jh-navbar">
         <div class="jh-logo-container float-left editor-top-left">
             <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title"> </span>
@@ -46,6 +48,7 @@
                 [editorState]="editorState"
                 (onEditorStateChange)="setEditorState($event)"
                 (onUnsavedFilesChange)="setUnsavedFiles($event)"
+                (onError)="onError($event)"
             >
             </jhi-code-editor-ace>
         </div>

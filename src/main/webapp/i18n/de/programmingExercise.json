@@ -54,7 +54,12 @@
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
             "downloadBuildResult": "Build Ergebnis herunterladen",
             "saving": "Änderungen werden gespeichert",
-            "saveFiles": "Änderungen speichern"
+            "saveFiles": "Änderungen speichern",
+            "errors": {
+                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor."
+            }
         }
     }
 }

@@ -62,6 +62,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
         private localStorageService: LocalStorageService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     /**
@@ -149,6 +150,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      */
     setEditorState(editorState: EditorState) {
         this.editorState = editorState;
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(`arTeMiSApp.editor.errors.${error}`);
     }
 
     /**
