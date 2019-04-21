@@ -95,8 +95,6 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
-        List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result);
-        result.setFeedbacks(feedbackItems);
         notifyUser(participation, result);
     }
 
