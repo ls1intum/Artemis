@@ -92,7 +92,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         if (participationChange && this.participation.results) {
             const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
             if (latestResult) {
-                this.toggleBuildLogs(latestResult);
+                this.loadAndAttachResultDetails(latestResult).subscribe(result => this.toggleBuildLogs(result));
             }
         }
     }

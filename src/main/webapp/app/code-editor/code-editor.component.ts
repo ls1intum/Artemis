@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -24,6 +24,8 @@ import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable } from 'rxjs';
+import { ResultService, Result } from 'app/entities/result';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-editor',
@@ -62,6 +64,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
+        private resultService: ResultService,
         private localStorageService: LocalStorageService,
         private jhiAlertService: JhiAlertService,
     ) {}
@@ -75,48 +78,61 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const participationId = Number(params['participationId']);
-            this.loadParticipation(participationId).then(() => this.loadFiles());
+            // First: Load participation, which is needed for all successive calls
+            this.loadParticipation(participationId)
+                .pipe(
+                    rxMap(participation => (this.participation = participation)),
+                    // If the participation has a result, load the result details for this result
+                    switchMap(participation => {
+                        const latestResult = participation.results.length ? participation.results[0] : null;
+                        return latestResult ? this.loadResultDetails(latestResult) : Observable.of(null);
+                    }),
+                    tap(feedback => feedback && (this.participation.results[0].feedbacks = feedback)),
+                    switchMap(() => this.checkIfRepositoryIsClean()),
+                    tap(commitState => (this.commitState = commitState)),
+                    switchMap(() => this.loadFiles()),
+                    tap(files => (this.repositoryFiles = files)),
+                    tap(() => this.loadSession()),
+                )
+                .subscribe();
         });
     }
 
-    private loadFiles() {
-        /** Query the repositoryFileService for files in the repository */
-        this.checkIfRepositoryIsClean()
-            .pipe(
-                switchMap(() => this.repositoryFileService.query(this.participation.id)),
-                tap((files: string[]) => {
-                    // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files
+    private loadFiles(): Observable<string[]> {
+        return this.repositoryFileService.query(this.participation.id).pipe(
+            tap((files: string[]) => {
+                // do not display the README.md, because students should not edit it
+                return (
+                    files
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(value => value !== 'README.md')
                         // Remove binary files as they can't be displayed in an editor
-                        .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
-                }),
-                tap(() => this.loadSession()),
-            )
-            .subscribe(
-                () => {},
-                (error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                },
-            );
+                        .filter(filename => textFileExtensions.includes(filename.split('.').pop()))
+                );
+            }),
+            catchError((error: HttpErrorResponse) => {
+                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                return Observable.of([]);
+            }),
+        );
     }
 
-    private loadParticipation(participationId: number) {
-        return new Promise(resolve => {
-            // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
-                // We found a matching participation in the data provider, so we can avoid doing a REST call
-                this.participation = this.participationDataProvider.participationStorage;
-                resolve();
-            } else {
-                /** Query the participationService for the participationId given by the params */
-                this.participationService.findWithLatestResult(participationId).subscribe((response: HttpResponse<Participation>) => {
-                    this.participation = response.body;
-                    resolve();
-                });
-            }
-        });
+    private loadParticipation(participationId: number): Observable<Participation> {
+        if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
+            // We found a matching participation in the data provider, so we can avoid doing a REST call
+            return Observable.of(this.participationDataProvider.participationStorage);
+        } else {
+            return this.participationService.findWithLatestResult(participationId).pipe(rxMap(res => res.body));
+        }
+    }
+
+    /**
+     * @function loadResultDetails
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
+     */
+    loadResultDetails(result: Result): Observable<Feedback[]> {
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(rxMap(({ body }: { body: Feedback[] }) => body));
     }
 
     /**
@@ -130,12 +146,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @function checkIfRepositoryIsClean
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
-    checkIfRepositoryIsClean(): Observable<void> {
-        return this.repositoryService.isClean(this.participation.id).pipe(
-            rxMap(res => {
-                this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
-            }),
-        );
+    checkIfRepositoryIsClean(): Observable<CommitState> {
+        return this.repositoryService.isClean(this.participation.id).pipe(rxMap(res => (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES)));
     }
 
     /**
@@ -236,21 +248,18 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @desc Gets the user's session data from localStorage to load editor settings
      */
     loadSession() {
-        // Only do this if we already received a participation object from parent
-        if (this.participation) {
-            const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
-            this.session = sessions[this.participation.id];
-            if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
-                this.buildLogErrors = {
-                    errors: compose(
-                        fromPairs,
-                        map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
-                        filter(([, errors]) => errors.length),
-                        toPairs,
-                    )(this.session.errors),
-                    timestamp: this.session.timestamp,
-                };
-            }
+        const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
+        this.session = sessions[this.participation.id];
+        if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
+            this.buildLogErrors = {
+                errors: compose(
+                    fromPairs,
+                    map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
+                    filter(([, errors]) => errors.length),
+                    toPairs,
+                )(this.session.errors),
+                timestamp: this.session.timestamp,
+            };
         }
     }
 

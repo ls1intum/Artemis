@@ -133,16 +133,20 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             if (this.participation && this.participation.results && this.participation.results.length) {
                 // Get the result with the highest id (most recent result)
                 const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
-                return this.loadAndAttachResultDetails(latestResult).subscribe(
-                    result => {
-                        this.latestResult = result;
-                        resolve();
-                    },
-                    () => {
-                        this.latestResult = null;
-                        resolve();
-                    },
-                );
+                if (!latestResult.feedbacks) {
+                    return this.loadAndAttachResultDetails(latestResult).subscribe(
+                        result => {
+                            this.latestResult = result;
+                            resolve();
+                        },
+                        () => {
+                            this.latestResult = null;
+                            resolve();
+                        },
+                    );
+                } else {
+                    resolve();
+                }
             } else if (this.exercise && this.exercise.id) {
                 // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
                 return this.loadLatestResult().subscribe(
