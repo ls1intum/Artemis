@@ -1,7 +1,6 @@
 import { hasParticipationChanged, Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { maxBy as _maxBy } from 'lodash';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
@@ -91,11 +90,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results) {
-            const latestResultPrev = changes.participation.previousValue ? _maxBy((changes.participation.previousValue as Participation).results, 'id') : null;
-            const latestResultNew = _maxBy(this.participation.results, 'id');
-            // Check if the result is new, if not the component does not need to be updated
-            if ((!latestResultPrev && latestResultNew) || (latestResultPrev && latestResultNew && latestResultNew.id !== latestResultPrev.id)) {
-                this.loadAndAttachResultDetails(latestResultNew).subscribe(result => this.toggleBuildLogs(result));
+            const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
+            if (latestResult) {
+                this.toggleBuildLogs(latestResult);
             }
         }
     }
