@@ -100,6 +100,7 @@ import {
     faListOl,
     faListUl,
     faImage,
+    faPaperclip,
     faGripLinesVertical,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -225,4 +226,5 @@ library.add(farPlayCircle);
 library.add(farFileCode);
 library.add(farCircle);
 library.add(faGripLinesVertical);
+library.add(faPaperclip);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

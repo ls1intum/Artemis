@@ -54,6 +54,7 @@ idea {
 }
 
 spotless {
+    // allows to execute the command ./gradlew spotlessApply
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
@@ -75,7 +76,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.8.0'
+version = '2.9.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -252,6 +253,7 @@ dependencies {
     testCompile "com.h2database:h2"
     testCompile 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+    compile 'io.sentry:sentry-spring:1.7.16'
 }
 
 task cleanResources(type: Delete) {
@@ -263,7 +265,7 @@ task executeTests (type: Exec) {
 }
 
 wrapper {
-    gradleVersion = '5.3.1'
+    gradleVersion = '5.4'
 }
 
 task stage(dependsOn: 'bootWar') {

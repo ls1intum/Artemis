@@ -1,6 +1,7 @@
 {
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
+        "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
         "conflicts": "Konflikt",
         "ownAssessmentTitle": "Deine aktuelle Bewertung",
         "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewerted von",

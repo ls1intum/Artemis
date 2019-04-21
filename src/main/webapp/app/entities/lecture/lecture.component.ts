@@ -7,6 +7,7 @@ import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 import { AccountService } from 'app/core';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-lecture',
@@ -16,9 +17,11 @@ export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];
     currentAccount: any;
     eventSubscriber: Subscription;
+    courseId: number;
 
     constructor(
         protected lectureService: LectureService,
+        private route: ActivatedRoute,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
@@ -26,7 +29,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     loadAll() {
         this.lectureService
-            .query()
+            .findAllByCourseId(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
@@ -40,6 +43,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.accountService.identity().then(account => {
             this.currentAccount = account;

@@ -18,6 +18,17 @@ export class NotificationContainerComponent implements OnInit {
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
     ngOnInit() {
+        if (this.accountService.isAuthenticated()) {
+            this.loadNotifications();
+        }
+        this.accountService.getAuthenticationState().subscribe((user: User) => {
+            if (user) {
+                this.loadNotifications();
+            }
+        });
+    }
+
+    private loadNotifications() {
         this.notificationService.getRecentNotificationsForUser().subscribe((res: HttpResponse<Notification[]>) => {
             this.notifications = res.body;
             this.updateNotificationCount();

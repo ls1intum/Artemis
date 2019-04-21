@@ -126,7 +126,6 @@ public class CacheConfiguration {
             cm.createCache(TutorParticipation.class.getName(), jcacheConfiguration);
             cm.createCache(TutorParticipation.class.getName() + ".trainedExampleSubmissions", jcacheConfiguration);
             cm.createCache(ExampleSubmission.class.getName(), jcacheConfiguration);
-            cm.createCache(ExampleSubmission.class.getName() + ".exercises", jcacheConfiguration);
             cm.createCache(Exercise.class.getName() + ".tutorParticipations", jcacheConfiguration);
             cm.createCache(Course.class.getName() + ".lectures", jcacheConfiguration);
             cm.createCache(Course.class.getName() + ".tutorGroups", jcacheConfiguration);
@@ -148,6 +147,7 @@ public class CacheConfiguration {
             cm.createCache(ModelAssessmentConflict.class.getName(), jcacheConfiguration);
             cm.createCache(ModelAssessmentConflict.class.getName() + ".resultsInConflict", jcacheConfiguration);
             cm.createCache(ConflictingResult.class.getName(), jcacheConfiguration);
+            cm.createCache(ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
         };

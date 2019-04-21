@@ -97,7 +97,7 @@ public class TutorParticipationResource {
 
         // Avoid infinite recursion for JSON
         resultTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
-            t.setTutorParticipation(null);
+            t.setTutorParticipations(null);
             t.setExercise(null);
         });
 

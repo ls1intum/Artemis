@@ -17,6 +17,7 @@
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
+                "lecture": "Lecture",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -157,8 +158,10 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",
             "open": "Open",
             "save": "Save",
@@ -175,6 +178,10 @@
             "close": "Close",
             "import": "Import",
             "export": "Export",
+            "lecture": "Lecture",
+            "attachments": "Attachments",
+            "saveAttachment": "Save attachment",
+            "addAttachment": "Add attachment",
             "tutorCourseDashboard": "Tutor Course Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
@@ -238,6 +245,7 @@
     "overview": {
         "title": "Course overview",
         "course": "Course details",
+        "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics"
     }

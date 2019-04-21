@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -30,13 +32,14 @@ public class ExampleSubmission implements Serializable {
     @ManyToOne
     private Exercise exercise;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(unique = true)
     private Submission submission;
 
-    @ManyToOne
+    @ManyToMany(mappedBy = "trainedExampleSubmissions")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties({ "trainedExampleSubmissions", "assessedExercise" })
-    private TutorParticipation tutorParticipation;
+    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -86,18 +89,31 @@ public class ExampleSubmission implements Serializable {
         this.submission = submission;
     }
 
-    public TutorParticipation getTutorParticipation() {
-        return tutorParticipation;
+    public Set<TutorParticipation> getTutorParticipations() {
+        return tutorParticipations;
     }
 
-    public ExampleSubmission tutorParticipation(TutorParticipation tutorParticipation) {
-        this.tutorParticipation = tutorParticipation;
+    public ExampleSubmission tutorParticipations(Set<TutorParticipation> tutorParticipations) {
+        this.tutorParticipations = tutorParticipations;
         return this;
     }
 
-    public void setTutorParticipation(TutorParticipation tutorParticipation) {
-        this.tutorParticipation = tutorParticipation;
+    public ExampleSubmission addTutorParticipations(TutorParticipation tutorParticipation) {
+        this.tutorParticipations.add(tutorParticipation);
+        tutorParticipation.getTrainedExampleSubmissions().add(this);
+        return this;
     }
+
+    public ExampleSubmission removeTutorParticipations(TutorParticipation tutorParticipation) {
+        this.tutorParticipations.remove(tutorParticipation);
+        tutorParticipation.getTrainedExampleSubmissions().remove(this);
+        return this;
+    }
+
+    public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
+        this.tutorParticipations = tutorParticipations;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

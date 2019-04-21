@@ -13,6 +13,7 @@
             "updated": "Apollon Diagram aktualisiert mit ID {{ param }}",
             "deleted": "Apollon Diagram gelöscht mit ID {{ param }}",
             "create": {
+                "success": "Apollon Diagram mit Titel {{ title }} wurde erfolgreich generiert",
                 "error": "Fehler beim Erstellen des Apollon Diagramms"
             },
             "update": {

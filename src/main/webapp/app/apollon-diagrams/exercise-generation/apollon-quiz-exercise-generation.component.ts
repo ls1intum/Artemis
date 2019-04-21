@@ -25,13 +25,10 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.courseService.query().subscribe(
-            response => {
-                this.courses = response.body;
-                this.selectedCourse = this.courses[0];
-            },
-            () => {},
-        );
+        this.courseService.query().subscribe(response => {
+            this.courses = response.body;
+            this.selectedCourse = this.courses[0];
+        });
     }
 
     async save() {
@@ -41,12 +38,15 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
 
         const model = this.apollonEditor.model;
 
-        await generateDragAndDropQuizExercise(this.selectedCourse, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
-
-        this.activeModal.close();
+        try {
+            const quizExercise = await generateDragAndDropQuizExercise(this.selectedCourse, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
+            this.activeModal.close(quizExercise);
+        } catch (error) {
+            this.activeModal.dismiss(error);
+        }
     }
 
     dismiss() {
-        this.activeModal.dismiss('cancel');
+        this.activeModal.close();
     }
 }

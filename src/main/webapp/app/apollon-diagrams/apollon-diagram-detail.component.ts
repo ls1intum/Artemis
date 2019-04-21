@@ -19,8 +19,18 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
-    /** Wether to crop the downloaded image to the selection. */
+    /** Whether to crop the downloaded image to the selection. */
     crop = true;
+
+    /** Whether some elements are interactive in the apollon editor. */
+    get hasInteractive(): boolean {
+        return !!this.apollonEditor && !![...this.apollonEditor.model.interactive.elements, ...this.apollonEditor.model.interactive.relationships].length;
+    }
+
+    /** Whether some elements are selected in the apollon editor. */
+    get hasSelection(): boolean {
+        return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
+    }
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -44,7 +54,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(model);
                 },
-                response => {
+                () => {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.detail.error.loading');
                 },
             );
@@ -78,7 +88,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     saveDiagram() {
         if (this.apollonDiagram === null) {
-            // Should never happen, but let's be defensive anyway
             return;
         }
 
@@ -90,17 +99,36 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.apollonDiagramService.update(updatedDiagram).subscribe(
             () => {},
-            response => {
+            () => {
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.update.error');
             },
         );
     }
 
-    generateExercise() {
+    /**
+     * Opens a modal to select a course and finally generate the Drag and Drop Model Quiz.
+     *
+     * @async
+     */
+    async generateExercise() {
+        if (!this.hasInteractive) {
+            return;
+        }
+
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
         modalComponentInstance.diagramTitle = this.apollonDiagram.title;
+
+        try {
+            const result = await modalRef.result;
+            if (result) {
+                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.create.success', { title: result.title });
+            }
+        } catch (error) {
+            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+            throw error;
+        }
     }
 
     /**
@@ -109,10 +137,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        const { selection } = this.apollonEditor;
+        if (!this.hasSelection) {
+            return;
+        }
+
+        const selection = [...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships];
         const svg = this.apollonEditor.exportAsSVG({
             keepOriginalSize: !this.crop,
-            include: [...selection.elements, ...selection.relationships],
+            include: selection,
         });
         const png = await convertRenderedSVGToPNG(svg);
         this.download(png);

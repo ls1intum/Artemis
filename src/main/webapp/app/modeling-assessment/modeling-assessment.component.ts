@@ -51,6 +51,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                     },
                     inertia: true,
                 })
+                .on('resizestart', function(event: any) {
+                    event.target.classList.add('card-resizable');
+                })
+                .on('resizeend', function(event: any) {
+                    event.target.classList.remove('card-resizable');
+                })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
                     target.style.width = event.rect.width + 'px';
@@ -188,7 +194,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * (updated) Feedback list from the server.
      *
      * @param feedbacks new Feedback elements to insert
-     * @param initialize initialize a new map, if this flag is true
      */
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {
         if (!this.elementFeedback) {

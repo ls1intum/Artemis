@@ -22,4 +22,7 @@ public interface StudentQuestionRepository extends JpaRepository<StudentQuestion
     @Query("select student_question from StudentQuestion student_question where student_question.exercise.id = :#{#exerciseId}")
     List<StudentQuestion> findStudentQuestionsForExercise(@Param("exerciseId") Long exerciseId);
 
+    @Query("select student_question from StudentQuestion student_question where student_question.lecture.id = :#{#lectureId}")
+    List<StudentQuestion> findStudentQuestionsForLecture(@Param("lectureId") Long lectureId);
+
 }

@@ -38,9 +38,10 @@
             >
                 Submit (deadline missed)
             </button>
-            <button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">
-                <fa-icon icon="sync"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>
-            </button>
+            <!--TODO: enable retry button again-->
+            <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
+                <!--<fa-icon icon="sync"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
+            <!--</button>-->
         </div>
     </div>
     <br />
@@ -85,7 +86,7 @@
             >
                 There is no assessment available yet.
             </p>
-            <ng-container *ngIf="assessmentResult?.feedbacks.length > 0">
+            <ng-container *ngIf="assessmentResult?.feedbacks?.length > 0">
                 <p jhiTranslate="arTeMiSApp.modelingSubmission.assessment.instructions">
                     Select elements in the editor to filter the assessment.
                 </p>

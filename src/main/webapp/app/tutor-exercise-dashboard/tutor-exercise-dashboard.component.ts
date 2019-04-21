@@ -199,8 +199,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             );
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-                (response: HttpResponse<ModelingSubmission>) => {
-                    this.unassessedSubmission = response.body;
+                (response: ModelingSubmission) => {
+                    this.unassessedSubmission = response;
                 },
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
@@ -258,19 +258,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
+
+        const queryParams: any = {};
         let route: string;
-        const queryParams: any = {}; // TODO CZ: remove query parameters?
+        let submission = submissionId.toString();
+        if (isNewAssessment) {
+            submission = 'new';
+        }
 
         if (this.exercise.type === ExerciseType.TEXT) {
-            route = `/text/${this.exercise.id}/assessment/`;
-            if (isNewAssessment) {
-                route = route.concat('new');
-            } else {
-                route = route.concat(submissionId.toString());
-            }
+            route = `/text/${this.exercise.id}/assessment/${submission}`;
         } else if (this.exercise.type === ExerciseType.MODELING) {
-            route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionId}/assessment`;
-            queryParams.forTutorDashboard = true;
+            route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
+            queryParams.showBackButton = true;
         }
         this.router.navigate([route], { queryParams });
     }

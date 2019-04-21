@@ -2,18 +2,19 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -21,7 +22,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
-import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.*;
 
 /**
@@ -80,7 +80,6 @@ public class ModelingSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     // TODO MJ return 201 CREATED with location header instead of ModelingSubmission
     // TODO MJ merge with update
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
@@ -89,12 +88,8 @@ public class ModelingSubmissionResource {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-        if (!participation.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-        }
         checkAuthorization(modelingExercise);
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -112,19 +107,14 @@ public class ModelingSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-        if (!participation.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-        }
         checkAuthorization(modelingExercise);
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -161,24 +151,14 @@ public class ModelingSubmissionResource {
      */
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+        // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
+        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmissionService.findOne(submissionId).getParticipation().getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
-        if (modelingSubmission.getResult() == null) {
-            modelingSubmissionService.setNewResult(modelingSubmission);
-        }
-        if (modelingSubmission.getResult().getAssessor() == null) {
-            if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), submissionId);
-            }
-            // we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
-            resultService.setAssessor(modelingSubmission.getResult());
-        }
+        ModelingSubmission modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
         modelingSubmission.getParticipation().setExercise(modelingExercise);
         hideDetails(modelingSubmission);
@@ -192,11 +172,10 @@ public class ModelingSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
-
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -204,9 +183,61 @@ public class ModelingSubmissionResource {
             return badRequest();
         }
 
-        Optional<ModelingSubmission> modelingSubmissionWithoutAssessment = this.modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+        ModelingSubmission modelingSubmission;
+        if (lockSubmission) {
+            modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
+        }
+        else {
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            if (!optionalModelingSubmission.isPresent()) {
+                return notFound();
+            }
+            modelingSubmission = optionalModelingSubmission.get();
+        }
 
-        return ResponseUtil.wrapOrNotFound(modelingSubmissionWithoutAssessment);
+        // Make sure the exercise is connected to the participation in the json response
+        modelingSubmission.getParticipation().setExercise(exercise);
+        hideDetails(modelingSubmission);
+        return ResponseEntity.ok(modelingSubmission);
+    }
+
+    // TODO MJ add api documentation (returns list of submission ids as array)
+    @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
+    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            // ask Compass for optimal submission to assess if diagram type is supported
+            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+            if (optimalModelSubmissions.isEmpty()) {
+                return ResponseEntity.ok(new Long[] {}); // empty
+            }
+            return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
+        }
+        else {
+            // if diagram type is not supported get any (not optimal) submission that is not assessed
+            Optional<ModelingSubmission> optionalModelingSubmission = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId())
+                    .stream()
+                    // map to latest submission
+                    .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+            if (!optionalModelingSubmission.isPresent()) {
+                return ResponseEntity.ok(new Long[] {}); // empty
+            }
+            return ResponseEntity.ok(new Long[] { optionalModelingSubmission.get().getId() });
+        }
+    }
+
+    @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.resetModelsWaitingForAssessment(exerciseId);
+        }
+        return ResponseEntity.noContent().build();
     }
 
     private void hideDetails(ModelingSubmission modelingSubmission) {

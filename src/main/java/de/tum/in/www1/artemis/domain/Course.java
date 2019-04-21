@@ -1,20 +1,23 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.service.FileService;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FileService;
 
 /**
  * A Course.
@@ -93,9 +96,8 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Lecture> lectures = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -359,30 +361,13 @@ public class Course implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /*
-     * NOTE:
-     *
-     * The file management is necessary to differentiate between temporary and used files
-     * and to delete used files when the corresponding course is deleted or it is replaced by
-     * another file.
-     *
-     * The workflow is as follows
-     *
-     * 1. user uploads a file -> this is a temporary file,
-     *           because at this point the corresponding course
-     *           might not exist yet.
-     * 2. user saves the course -> now we move the temporary file
-     *           which is addressed in courseIcon to a permanent
-     *           location and update the value in courseIcon accordingly.
-     *           => This happens in @PrePersist and @PostPersist
-     * 3. user might upload another file to replace the existing file
-     *           -> this new file is a temporary file at first
-     * 4. user saves changes (with the new courseIcon pointing to the new temporary file)
-     *           -> now we delete the old file in the permanent location
-     *              and move the new file to a permanent location and update
-     *              the value in courseIcon accordingly.
-     *           => This happens in @PreUpdate and uses @PostLoad to know the old path
-     * 5. When course is deleted, the file in the permanent location is deleted
-     *           => This happens in @PostRemove
+     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
+     * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
+     * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
+     * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
+     * new courseIcon pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value
+     * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
+     * This happens in @PostRemove
      */
     @PostLoad
     public void onLoad() {
@@ -419,6 +404,7 @@ public class Course implements Serializable {
         // delete old file if necessary
         fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, Constants.COURSE_ICON_FILEPATH, getId());
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -441,20 +427,9 @@ public class Course implements Serializable {
 
     @Override
     public String toString() {
-        return "Course{" +
-            "id=" + getId() +
-            ", title='" + getTitle() + "'" +
-            ", description='" + getDescription() + "'" +
-            ", shortName='" + getShortName() + "'" +
-            ", studentGroupName='" + getStudentGroupName() + "'" +
-            ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" +
-            ", instructorGroupName='" + getInstructorGroupName() + "'" +
-            ", startDate='" + getStartDate() + "'" +
-            ", endDate='" + getEndDate() + "'" +
-            ", onlineCourse='" + isOnlineCourse() + "'" +
-            ", color='" + getColor() + "'" +
-            ", courseIcon='" + getCourseIcon() + "'" +
-            ", registrationEnabled='" + isRegistrationEnabled() + "'" +
-            "}";
+        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
+                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
+                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", onlineCourse='" + isOnlineCourse() + "'"
+                + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "}";
     }
 }

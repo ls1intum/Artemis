@@ -342,6 +342,10 @@ ui bootstrap tweaks
     color: inherit;
 }
 
+.card-resizable {
+    user-select: none;
+}
+
 .card-title > a,
 .card-title > small,
 .card-title > .small,

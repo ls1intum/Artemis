@@ -290,6 +290,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     }
 
     checkAssessment() {
+        // scroll to top that the user definitely recognizes the response message (success OR score too low/high)
+        window.scroll(0, 0);
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.modelingAssessment.invalidAssessments');

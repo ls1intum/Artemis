@@ -72,7 +72,9 @@ public class CompassService {
 
     public boolean isSupported(DiagramType diagramType) {
         // at the moment, we only support class diagrams
-        return diagramType == DiagramType.ClassDiagram;
+        // TODO CZ: enable class diagrams again
+        // return diagramType == DiagramType.ClassDiagram;
+        return false;
     }
 
     /**

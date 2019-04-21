@@ -1,13 +1,17 @@
 <div class="assessment-container">
     <h3 class="top-container">
         <!--back button only used in tutor dashboard-->
-        <fa-icon *ngIf="forTutorDashboard" [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+        <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
         <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-button-container row-container">
+            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
+                  jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
+                Assessment locked by another user!
+            </span>
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>

@@ -52,6 +52,12 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
                 },
                 inertia: true,
             })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
             .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width

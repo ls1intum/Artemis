@@ -13,10 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -76,7 +74,6 @@ public class TextSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
@@ -98,7 +95,6 @@ public class TextSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
@@ -112,20 +108,11 @@ public class TextSubmissionResource {
     private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
-        if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
-            textSubmission = textSubmissionService.save(textSubmission);
-        }
-        else {
-            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!optionalParticipation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            Participation participation = optionalParticipation.get();
-            textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);
-        }
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);

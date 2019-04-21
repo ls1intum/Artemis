@@ -29,7 +29,7 @@ export async function generateDragAndDropQuizExercise(
     model: UMLModel,
     fileUploaderService: FileUploaderService,
     quizExerciseService: QuizExerciseService,
-) {
+): Promise<QuizExercise> {
     const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
     const elements = [...model.elements, ...model.relationships];
 
@@ -64,6 +64,8 @@ export async function generateDragAndDropQuizExercise(
 
     // Save the quiz exercise
     await quizExerciseService.create(quizExercise).toPromise();
+
+    return quizExercise;
 }
 
 /**

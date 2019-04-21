@@ -43,12 +43,12 @@ export class ModelingSubmissionService {
             .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
     }
 
-    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<HttpResponse<ModelingSubmission>> {
-        return this.http
-            .get<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submission-without-assessment`, {
-                observe: 'response',
-            })
-            .map((res: HttpResponse<ModelingSubmission>) => this.convertResponse(res));
+    getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
+        let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<ModelingSubmission>(url);
     }
 
     getSubmission(submissionId: number): Observable<ModelingSubmission> {
