@@ -1,12 +1,12 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { tap } from 'rxjs/operators';
+import { map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -23,13 +23,14 @@ import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.comp
 import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
-export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, ComponentCanDeactivate {
+export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
     /** Dependencies as defined by the Editor component */
@@ -80,9 +81,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
 
     private loadFiles() {
         /** Query the repositoryFileService for files in the repository */
-        this.repositoryFileService
-            .query(this.participation.id)
+        this.checkIfRepositoryIsClean()
             .pipe(
+                switchMap(() => this.repositoryFileService.query(this.participation.id)),
                 tap((files: string[]) => {
                     // do not display the README.md, because students should not edit it
                     this.repositoryFiles = files
@@ -91,7 +92,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
                         // Remove binary files as they can't be displayed in an editor
                         .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
                 }),
-                tap(() => this.checkIfRepositoryIsClean()),
                 tap(() => this.loadSession()),
             )
             .subscribe(
@@ -120,14 +120,6 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
     }
 
     /**
-     * @function ngOnChanges
-     * @desc Checks if the repository has uncommitted changes
-     */
-    ngOnChanges() {
-        this.checkIfRepositoryIsClean();
-    }
-
-    /**
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
     canDeactivate() {
@@ -138,10 +130,12 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy, Compon
      * @function checkIfRepositoryIsClean
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
-    checkIfRepositoryIsClean(): void {
-        this.repositoryService.isClean(this.participation.id).subscribe(res => {
-            this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
-        });
+    checkIfRepositoryIsClean(): Observable<void> {
+        return this.repositoryService.isClean(this.participation.id).pipe(
+            rxMap(res => {
+                this.commitState = res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+            }),
+        );
     }
 
     /**
