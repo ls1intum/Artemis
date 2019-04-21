@@ -58,7 +58,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private resultSubscription: Subscription;
 
     public isInitial = true;
-    public isLoading = true;
+    public isLoading: boolean;
     public latestResult: Result | null;
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
@@ -98,7 +98,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-        if (this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+        if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+            this.isLoading = true;
             this.loadInstructions()
                 .pipe(
                     tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
@@ -107,6 +108,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     tap(() => {
                         this.updateMarkdown();
                         this.isInitial = false;
+                        this.isLoading = false;
                     }),
                 )
                 .subscribe();
@@ -151,7 +153,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
-        this.isLoading = false;
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
             this.setUpClickListeners();
