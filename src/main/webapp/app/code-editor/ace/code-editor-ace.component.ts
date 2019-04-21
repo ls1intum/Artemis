@@ -11,8 +11,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Ou
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
-import { compose, difference, fromPairs, map, toPairs, union, unionBy } from 'lodash/fp';
+import { difference as _difference } from 'lodash';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
@@ -88,8 +87,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /**
      * @function ngOnChanges
-     * @desc New participation => update the file save status labels
-     *       New fileName      => load the file from the repository and open it in the editor
+     * @desc New participation     => reset the file update subscriptions
+     *       New selectedFile      => load the file from the repository and open it in the editor
+     *       New repositoryFiles   => update the editorFileSession
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -154,6 +154,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
+    /**
+     * Store the error data in the localStorage (synchronous action).
+     */
     storeSession() {
         const sessionAnnotations = this.editorFileSession.serialize();
         this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));

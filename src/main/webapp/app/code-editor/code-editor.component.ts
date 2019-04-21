@@ -117,10 +117,13 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
+    /**
+     * Load files from the participants repository.
+     * Files that are not relevant for the conduction of the exercise are removed from result.
+     */
     private loadFiles(): Observable<string[]> {
         return this.repositoryFileService.query(this.participation.id).pipe(
             tap((files: string[]) => {
-                // do not display the README.md, because students should not edit it
                 return (
                     files
                         // Filter Readme file that was historically in the student's assignment repo
@@ -136,6 +139,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
+    /**
+     * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
+     * @param participationId
+     */
     private loadParticipation(participationId: number): Observable<Participation> {
         if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
             // We found a matching participation in the data provider, so we can avoid doing a REST call
@@ -169,6 +176,9 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return this.repositoryService.isClean(this.participation.id).pipe(rxMap(res => (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES)));
     }
 
+    /**
+     * Store the build log error data in the localStorage of the browser (synchronous action).
+     */
     storeSession() {
         this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: this.buildLogErrors }));
     }

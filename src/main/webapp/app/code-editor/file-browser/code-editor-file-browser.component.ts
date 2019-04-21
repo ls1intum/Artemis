@@ -99,7 +99,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     /**
      * @function ngOnInit
-     * @desc Tracks changes to the provided participation and repositoryFiles
+     * @desc Updates the file tree with the repositoryFiles
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -109,7 +109,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         /**
          * Update the treeview when files have been added or removed
          */
-        if (this.repositoryFiles) {
+        if (changes.repositoryFiles && this.repositoryFiles) {
             this.setupTreeview(this.repositoryFiles);
         }
     }
