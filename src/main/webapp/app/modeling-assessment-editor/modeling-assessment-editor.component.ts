@@ -34,6 +34,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAuthorized = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
+    includeComplaint: boolean;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -64,7 +65,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.showBackButton = !!this.route.snapshot.queryParamMap.get('showBackButton');
+        this.route.queryParams.subscribe(params => {
+            this.showBackButton = params['showBackButton'] === 'true';
+            this.includeComplaint = params['includeComplaint'] === 'true';
+        });
     }
 
     checkAuthorization() {

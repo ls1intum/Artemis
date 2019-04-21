@@ -53,6 +53,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     websocketChannel: string;
 
     problemStatement: string;
+    showComplaintForm = false;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,

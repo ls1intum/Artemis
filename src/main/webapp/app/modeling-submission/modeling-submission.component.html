@@ -118,4 +118,12 @@
             </ng-container>
         </div>
     </div>
+
+    <div class="row mt-2 ml-0" *ngIf="result && result.completionDate">
+        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>
+    </div>
+</div>
+
+<div class="row" *ngIf="showComplaintForm">
+    <jhi-complaint-form [resultId]="result.id"></jhi-complaint-form>
 </div>

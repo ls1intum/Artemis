@@ -75,7 +75,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionValue = this.route.snapshot.paramMap.get('submissionId');
-        this.includeComplaint = !!this.route.snapshot.queryParamMap.get('includeComplaint');
+        this.route.queryParams.subscribe(params => {
+            this.includeComplaint = params['includeComplaint'] === 'true';
+        });
 
         if (submissionValue === 'new') {
             this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
@@ -307,5 +309,4 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         console.error(error);
         this.jhiAlertService.error(error, null, null);
     }
-
 }
