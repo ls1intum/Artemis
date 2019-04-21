@@ -36,19 +36,17 @@ public class ConflictingResultService {
         return conflictingResult;
     }
 
-    public Set<ConflictingResult> updateExistingConflictingResults(ModelAssessmentConflict conflict, Set<ConflictingResult> existingConflictingResults,
-            List<Feedback> newFeedbacks) {
-        Set<ConflictingResult> updatedConflictingResults = new HashSet<>(newFeedbacks.size());
+    public void updateExistingConflictingResults(ModelAssessmentConflict conflict, Set<ConflictingResult> existingConflictingResults, List<Feedback> newFeedbacks) {
+        existingConflictingResults.clear();
         newFeedbacks.forEach(feedback -> {
             Optional<ConflictingResult> existingConflictingResult = existingConflictingResults.stream()
                     .filter(conflictingResult -> conflictingResult.getResult().getId().equals(feedback.getResult().getId())).findFirst();
             if (existingConflictingResult.isPresent()) {
-                updatedConflictingResults.add(existingConflictingResult.get());
+                existingConflictingResults.add(existingConflictingResult.get());
             }
             else {
-                updatedConflictingResults.add(createConflictingResult(conflict, feedback));
+                existingConflictingResults.add(createConflictingResult(conflict, feedback));
             }
         });
-        return updatedConflictingResults;
     }
 }
