@@ -97,7 +97,7 @@
                             <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
                         </button>
                         <button
-                            routerLink="/editor/{{ result.participation.id }}"
+                            routerLink="/code-editor/{{ result.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor"
                         >
