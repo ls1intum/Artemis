@@ -17,7 +17,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
@@ -28,7 +28,6 @@ import { RepositoryFileService } from '../repository';
 import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
 import { hasExerciseChanged } from '../exercise';
 
 type Step = {
@@ -203,7 +202,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return Observable.of(this.exercise.problemStatement);
         } else {
             const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
-            return this.repositoryFileService.get(participationId, 'README.md').pipe(catchError(() => Observable.of('')));
+            return this.repositoryFileService.get(participationId, 'README.md').pipe(
+                catchError(() => Observable.of('')),
+                // Old readme files contain chars instead of our domain command tags - replace them when loading the file
+                map(fileObj => fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
+            );
         }
     }
 
