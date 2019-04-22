@@ -173,8 +173,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadLatestResult(): Observable<Result | null> {
         return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
+            catchError(() => Observable.of(null)),
             map((latestResult: { body: Result[] }) => {
-                if (latestResult.body.length) {
+                if (latestResult && latestResult.body && latestResult.body.length) {
                     return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
                 } else {
                     return null;
