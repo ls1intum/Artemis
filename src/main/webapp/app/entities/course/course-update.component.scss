@@ -2,6 +2,20 @@
     cursor: pointer;
 }
 
+.no-image {
+    background: #dddddd url('../../../content/images/image-placeholder.png') no-repeat center;
+    background-size: 60%;
+    border-radius: 50%;
+    float: right;
+    height: 100px;
+    width: 100px;
+
+    img {
+        height: 50px;
+        width: auto;
+    }
+}
+
 jhi-secured-image {
     float: right;
 
