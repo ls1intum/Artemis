@@ -114,6 +114,7 @@ import {
     faListAlt as farListAlt,
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
+    faSave as farSave,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
 } from '@fortawesome/free-regular-svg-icons';
@@ -225,6 +226,7 @@ library.add(farFileAlt);
 library.add(farPlayCircle);
 library.add(farFileCode);
 library.add(farCircle);
+library.add(farSave);
 library.add(faGripLinesVertical);
 library.add(faPaperclip);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

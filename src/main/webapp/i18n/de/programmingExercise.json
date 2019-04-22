@@ -36,20 +36,33 @@
         },
         "editor": {
             "title": "Code Editor für Übung:",
-            "instructions": "&nbsp; Aufgabenstellung &nbsp;",
-            "unsavedChanges": "&nbsp; Nicht gespeicherte Änderungen in {{ unsavedFiles }} Datei(en).",
-            "savingFile": "&nbsp; Datei wird gespeichert.",
-            "changesSaved": "&nbsp; Alle Änderungen gespeichert.",
-            "failedToSave": "&nbsp; Änderungen konnten nicht gespeichert werden.",
-            "changesCommited": "&nbsp; Alle Änderungen commited.",
-            "uncommittedChanges": "&nbsp; Es gibt Änderungen, die nicht committed wurden",
-            "commitAndRun": "Commit & Tests starten",
-            "buildOutput": "&nbsp; Build Ergebnisse",
+            "instructions": "Aufgabenstellung &nbsp;",
+            "unsavedChanges": "Nicht gespeicherte Änderungen vorhanden.",
+            "savingChanges": "Änderungen werden gespeichert.",
+            "savingFile": "Datei wird gespeichert.",
+            "changesSaved": "Alle Änderungen gespeichert.",
+            "failedToSave": "Änderungen konnten nicht gespeichert werden.",
+            "changesUndefined": "Frage Absende-Status an.",
+            "changesError": "Absende-Status konnte nicht angefragt werden.",
+            "changesSubmitted": "Alle Änderungen abgesendet.",
+            "unsubmittedChanges": "Nicht abgesendete Änderungen vorhanden.",
+            "submittingChanges": "Änderungen werden abgesendet.",
+            "preparingForSubmit": "Absendung wird vorbereitet.",
+            "submit": "Absenden",
+            "buildOutput": "Build Ergebnisse",
             "building": "Building...",
             "buildFailed": "Build gescheitert",
             "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
-            "downloadBuildResult": "Build Ergebnis herunterladen"
+            "downloadBuildResult": "Build Ergebnis herunterladen",
+            "saving": "Speichert",
+            "saveFiles": "Speichern",
+            "errors": {
+                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor."
+            }
         }
     }
 }

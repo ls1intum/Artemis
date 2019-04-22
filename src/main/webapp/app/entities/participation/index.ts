@@ -5,3 +5,4 @@ export * from './participation-delete-dialog.component';
 export * from './participation-cleanup-build-plan-dialog.component';
 export * from './participation.component';
 export * from './participation.route';
+export * from './participation-utils';
