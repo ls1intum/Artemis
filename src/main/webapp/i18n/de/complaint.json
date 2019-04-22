@@ -1,7 +1,7 @@
 {
     "arTeMiSApp": {
         "complaint": {
-            "complaints": "Reklamationen",
+            "complaints": "Beschwerden",
             "description": "Sie können eine Beschwerde einreichen, wenn Sie das Gefühl haben, dass die Bewertung nicht fair war: Sie haben die Möglichkeit zu beschreiben, was Ihrer Meinung nach falsch ist und warum die Einreichung neu bewertet werden sollte. Die Neubewertung wird von einem anderen Tutor durchgeführt.",
             "moreFeedback": "Mehr Feedback",
             "moreFeedbackDescription": "Wenn etwas nicht klar genug ist oder Sie weitere Erklärungen benötigen, bitten Sie den Tutor, Ihnen mehr Feedback zu geben.",
@@ -9,9 +9,10 @@
             "beDescriptive": "Bitte versuchen Sie, so beschreibend wie möglich zu sein, einschließlich der Teile der Einreichung, von denen Sie denken, dass wir sie neu bewerten müssen. Wenn Sie keine Beschwerden haben, aber der Eindruck besteht, dass das Feedback nicht klar genug ist, drücken Sie einfach die entsprechende Taste.",
             "alreadySubmitted": "Sie haben bereits eine Beschwerde eingereicht:",
             "submit": "Eine Beschwerde einreichen",
-            "submitted": "Deine Beschwerde wurde eingereicht!",
+            "created": "Ihre Beschwerde wurde eingereicht!",
             "moreInfo": "Senden Sie eine Beschwerde oder bitten Sie um mehr Feedback.",
-            "hasReplied": "hat auf Ihre Beschwerde geantwortet:"
+            "hasReplied": "hat auf Ihre Beschwerde geantwortet:",
+            "hint": "Sie finden die Beschwerde am Ende der Seite"
         }
     }
 }
