@@ -123,15 +123,13 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     private loadFiles(): Observable<string[]> {
         return this.repositoryFileService.query(this.participation.id).pipe(
-            tap((files: string[]) => {
-                return (
-                    files
-                        // Filter Readme file that was historically in the student's assignment repo
-                        .filter(value => value !== 'README.md')
-                        // Remove binary files as they can't be displayed in an editor
-                        .filter(filename => textFileExtensions.includes(filename.split('.').pop()))
-                );
-            }),
+            rxMap((files: string[]) =>
+                files
+                    // Filter Readme file that was historically in the student's assignment repo
+                    .filter(value => !value.includes('README.md'))
+                    // Remove binary files as they can't be displayed in an editor
+                    .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
+            ),
             catchError((error: HttpErrorResponse) => {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
                 return Observable.of([]);
@@ -261,24 +259,22 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     updateRepositoryCommitStatus($event: any) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         /** Query the repositoryFileService for updated files in the repository */
-        this.repositoryFileService.query(this.participation.id).subscribe(
-            files => {
-                this.repositoryFiles = files
-                    // Filter Readme file that was historically in the student's assignment repo
-                    .filter(value => value !== 'README.md')
-                    // Remove binary files as they can't be displayed in an editor
-                    .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
-                // Select newly created file
-                if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
-                    this.selectedFile = $event.file;
-                } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
-                    this.selectedFile = undefined;
-                }
-            },
-            (error: HttpErrorResponse) => {
-                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-            },
-        );
+        this.loadFiles()
+            .pipe(
+                tap(
+                    files => (this.repositoryFiles = files),
+                    tap(() => {
+                        if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
+                            // Select newly created file
+                            this.selectedFile = $event.file;
+                        } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
+                            // If the selected file was deleted, unselect it
+                            this.selectedFile = undefined;
+                        }
+                    }),
+                ),
+            )
+            .subscribe();
     }
 
     /**

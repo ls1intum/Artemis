@@ -7,7 +7,6 @@ import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFi
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
-import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -165,28 +164,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     .map(str => str.trim())
                     .join('/');
             }
-        }
-    }
-    /**
-     * @function getRepositoryFiles
-     * @desc Checks if the repository files have been requested already
-     * Also initiates the building of a filetree for the filetree viewer
-     */
-    getRepositoryFiles() {
-        if (!this.repositoryFiles) {
-            /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(this.parent.participation.id).subscribe(
-                files => {
-                    // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files.filter(value => value !== 'README.md');
-                    this.setupTreeview(this.repositoryFiles);
-                },
-                (error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                },
-            );
-        } else {
-            this.setupTreeview(this.repositoryFiles);
         }
     }
 
