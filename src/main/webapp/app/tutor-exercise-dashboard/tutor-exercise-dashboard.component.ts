@@ -144,7 +144,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             .getForTutor(this.exerciseId)
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
 
-        this.exerciseService.getStatsForTutors(this.courseId).subscribe(
+        this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForTutorDashboard>) => {
                 this.numberOfSubmissions = res.body.numberOfSubmissions;
                 this.numberOfAssessments = res.body.numberOfAssessments;
