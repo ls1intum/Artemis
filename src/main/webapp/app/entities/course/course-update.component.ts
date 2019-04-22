@@ -119,23 +119,14 @@ export class CourseUpdateComponent implements OnInit {
         this.croppedImage = $event.base64;
     }
 
-    /**
-     *
-     */
     imageLoaded() {
         this.showCropper = true;
     }
 
-    /**
-     *
-     */
     cropperReady() {
         console.log('Cropper ready');
     }
 
-    /**
-     *
-     */
     loadImageFailed() {
         console.log('Load failed');
     }
@@ -165,6 +156,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.courseImageFileName = this.course.courseIcon;
             },
         );
+        this.showCropper = false;
     }
 
     private onSaveError(error: HttpErrorResponse) {
