@@ -204,6 +204,40 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/:id/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard
+     * of the exercise with the given id
+     *
+     * @param id the id of the exercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
+     */
+    @GetMapping("/exercises/{id}/stats-for-instructor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<JsonNode> getStatsForInstructorExerciseDashboard(@PathVariable Long id) {
+        log.debug("REST request to get exercise statistics for instructor dashboard : {}", id);
+        Exercise exercise = exerciseService.findOne(id);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+
+        ObjectNode data = objectMapper.createObjectNode();
+
+        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
+        data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+
+        return ResponseEntity.ok(data);
+    }
+
+    /**
      * DELETE /exercises/:id : delete the "id" exercise.
      *
      * @param id the id of the exercise to delete

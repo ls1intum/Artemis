@@ -11,22 +11,27 @@
     <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-8">
-                <jhi-side-panel [panelHeader]="'arTeMiSApp.instructorExerciseDashboard.informationAboutExercise' | translate">
+                <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.instructorExerciseDashboard.submissions' | translate }}</div>
-                        <div class="col-4">{{ exercise.participations.length }}</div>
+                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfSubmissions }}</div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.instructorExerciseDashboard.assessments' | translate }}</div>
-                        <div class="col-4"> {{ numberOfAssessments }} ({{
-                            exercise.participations.length - numberOfAssessments
-                            }}
-                            {{ 'arTeMiSApp.instructorExerciseDashboard.open' | translate }})</div>
+                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfAssessments }} ({{totalAssessmentPercentage}}%)</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{100 - totalAssessmentPercentage}}%)</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfComplaints }}</div>
                     </div>
                 </jhi-side-panel>
             </div>
 
-            <div class="col-md-4" *ngIf="exercise.participations.length > 0">
+            <div class="col-md-4" *ngIf="stats.numberOfSubmissions > 0">
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
             </div>
         </div>
