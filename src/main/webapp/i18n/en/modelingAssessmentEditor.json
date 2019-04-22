@@ -2,6 +2,7 @@
     "modelingAssessmentEditor": {
         "assessment": "Assessment",
         "assessmentLocked": "Assessment locked by: {{otherUser}}",
+        "assessmentLockedCurrentUser": "You have the lock for this assessment",
         "button": {
             "overrideAssessment": "Override Assessment",
             "nextSubmission": "Assess Next Submission"
