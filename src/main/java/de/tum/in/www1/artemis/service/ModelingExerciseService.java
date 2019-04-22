@@ -6,6 +6,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,9 +29,18 @@ public class ModelingExerciseService {
 
     private final ParticipationService participationService;
 
-    public ModelingExerciseService(ParticipationService participationService, ModelingExerciseRepository modelingExerciseRepository) {
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    public ModelingExerciseService(ParticipationService participationService,
+                                   ModelingExerciseRepository modelingExerciseRepository,
+                                   ComplaintRepository complaintRepository,
+                                   ComplaintResponseRepository complaintResponseRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.participationService = participationService;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
     }
 
     /**
@@ -52,6 +63,10 @@ public class ModelingExerciseService {
     @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Modeling Exercise : {}", id);
+        // delete all complaint responses belonging to this exercise
+        complaintResponseRepository.deleteByComplaint_Result_Participation_Exercise_Id(id);
+        // delete all complaints belonging to this exercise
+        complaintRepository.deleteByResult_Participation_Exercise_Id(id);
         // delete all participations belonging to this modeling exercise
         participationService.deleteAllByExerciseId(id, false, false);
         modelingExerciseRepository.deleteById(id);
