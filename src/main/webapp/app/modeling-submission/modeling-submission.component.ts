@@ -188,7 +188,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
-                    console.log('model has elements: ' + this.hasElements);
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                 },
                 error => {
@@ -202,7 +201,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = submission.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
-                    console.log('model has elements: ' + this.hasElements);
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                     this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                     this.subscribeToWebsocket();
