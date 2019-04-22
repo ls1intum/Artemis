@@ -13,8 +13,33 @@
             <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
         </div>
-        <div class="col-4 text-center">
-            <p class="h3" jhiTranslate="arTeMiSApp.tutorExerciseDashboard.youAssessedSoFar" [translateValues]="{ numberOfTutorAssessments: numberOfTutorAssessments }"></p>
+        <div class="col-4">
+            <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
+                    <div class="col-4">{{ numberOfSubmissions }}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
+                    <div class="col-4">{{ numberOfAssessments }} ({{totalAssessmentPercentage}}%)</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                    <div class="col-4">{{ numberOfSubmissions - numberOfAssessments }} ({{100 - totalAssessmentPercentage}}%)</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfSubmissionsAssessedByYou' | translate }}</div>
+                    <div class="col-4">{{ numberOfTutorAssessments }} ({{tutorAssessmentPercentage}}%)</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
+                    <div class="col-4">{{ numberOfComplaints }}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}</div>
+                    <div class="col-4">{{ numberOfTutorComplaints }}</div>
+                </div>
+            </jhi-side-panel>
         </div>
     </div>
 
