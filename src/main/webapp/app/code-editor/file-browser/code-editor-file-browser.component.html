@@ -15,18 +15,7 @@
     <div class="card-body">
         <ngx-treeview #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
     </div>
-
-    <div class="card-footer text-nowrap">
-        <fa-icon [icon]="getSaveStatusIcon().icon" [spin]="getSaveStatusIcon().spin" [ngClass]="getSaveStatusIcon().class"></fa-icon>
-        <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
-        <hr />
-        <span *ngIf="isExerciseCommitted()"> <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes committed.</span> </span>
-        <span *ngIf="!isExerciseCommitted()">
-            <fa-icon icon="exclamation-triangle" class="text-warning"></fa-icon>
-            <span class="text-warning" jhiTranslate="arTeMiSApp.editor.uncommittedChanges">There are uncommitted changes.</span>
-        </span>
-    </div>
-
+    <jhi-code-editor-status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-right"><span></span></div>
 </div>
@@ -37,8 +26,17 @@
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span>{{ item.text }}</span>
     </li>
-    <li *ngIf="!item.children" (click)="handleNodeSelected(item)" class="list-group-item" [class.node-selected]="item.checked">
+    <li
+        *ngIf="!item.children"
+        (click)="handleNodeSelected(item)"
+        class="list-group-item"
+        [class.node-selected]="item.checked"
+        [class.text-danger]="!item.checked && errorFiles && errorFiles.includes(item.value)"
+    >
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+        <span class="text-warning">
+            <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
+        </span>
         <span>{{ item.text }}</span>
     </li>
 </ng-template>

@@ -86,7 +86,7 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyGroupAboutExerciseCreated(fileUploadExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -118,7 +118,7 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyGroupAboutExerciseChange(fileUploadExercise);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getId().toString())).body(result);
     }
 

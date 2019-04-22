@@ -38,6 +38,7 @@ public class FeedbackService {
      * @return a set of feedback objects including test case names and error messages
      */
     @Transactional
+    @Deprecated
     public List<Feedback> getFeedbackForBuildResult(Result result) {
 
         // Please note: this is a migration for the old case when we did not store feedback in the database

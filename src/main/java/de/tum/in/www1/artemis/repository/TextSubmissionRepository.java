@@ -15,4 +15,6 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
     List<TextSubmission> findByIdIn(List<Long> textSubmissionsId);
+
+    long countBySubmittedAndParticipation_Exercise_Id(boolean submitted, long exerciseId);
 }

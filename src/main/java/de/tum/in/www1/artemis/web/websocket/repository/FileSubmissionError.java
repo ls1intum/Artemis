@@ -1,20 +1,26 @@
 package de.tum.in.www1.artemis.web.websocket.repository;
 
-import de.tum.in.www1.artemis.web.websocket.WebsocketError;
-
 import java.io.Serializable;
+
+import de.tum.in.www1.artemis.web.websocket.WebsocketError;
 
 /**
  * Class for marshalling and sending errors encountered when trying to persist file updates received by websocket.
  */
 public class FileSubmissionError extends WebsocketError implements Serializable {
+
     private Long participationId;
+
     private String fileName;
 
-    FileSubmissionError(Long participationId, String fileName, String error) {
+    FileSubmissionError(String fileName, String error) {
+        super(error);
+        this.fileName = fileName;
+    }
+
+    FileSubmissionError(Long participationId, String error) {
         super(error);
         this.participationId = participationId;
-        this.fileName = fileName;
     }
 
     public Long getParticipationId() {
@@ -41,4 +47,3 @@ public class FileSubmissionError extends WebsocketError implements Serializable 
         this.error = errorMessage;
     }
 }
-

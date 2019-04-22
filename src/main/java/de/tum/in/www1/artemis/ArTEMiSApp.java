@@ -58,9 +58,6 @@ public class ArTEMiSApp implements InitializingBean {
 
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3 * 1000);                          // every 3 seconds
-
-        // activate Automatic Submission Service
-        automaticSubmissionService.startSchedule(10 * 1000);                  // every 10 seconds
     }
 
     /**

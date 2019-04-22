@@ -13,6 +13,7 @@
             "updated": "Apollon Diagram updated with ID {{ param }}",
             "deleted": "Apollon Diagram deleted with ID {{ param }}",
             "create": {
+                "success": "Apollon diagram with title {{ title }} was created successfully",
                 "error": "Error while creating Apollon diagram"
             },
             "update": {
@@ -20,7 +21,7 @@
             },
             "delete": {
                 "question": "Are you sure you want to delete Apollon Diagram {{ id }}?",
-                "success": "Apollon diagram with title {{ title }} was deleted successfully'",
+                "success": "Apollon diagram with title {{ title }} was deleted successfully",
                 "error": "Error while deleting the apollon diagrams with title {{ title }}"
             },
             "detail": {

@@ -54,7 +54,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(model);
                 },
-                response => {
+                () => {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.detail.error.loading');
                 },
             );
@@ -88,7 +88,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     saveDiagram() {
         if (this.apollonDiagram === null) {
-            // Should never happen, but let's be defensive anyway
             return;
         }
 
@@ -100,13 +99,18 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.apollonDiagramService.update(updatedDiagram).subscribe(
             () => {},
-            response => {
+            () => {
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.update.error');
             },
         );
     }
 
-    generateExercise() {
+    /**
+     * Opens a modal to select a course and finally generate the Drag and Drop Model Quiz.
+     *
+     * @async
+     */
+    async generateExercise() {
         if (!this.hasInteractive) {
             return;
         }
@@ -115,6 +119,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
         modalComponentInstance.diagramTitle = this.apollonDiagram.title;
+
+        try {
+            const result = await modalRef.result;
+            if (result) {
+                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.create.success', { title: result.title });
+            }
+        } catch (error) {
+            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+            throw error;
+        }
     }
 
     /**

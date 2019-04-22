@@ -108,7 +108,7 @@ public class ModelingExerciseResource {
             return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyGroupAboutExerciseCreated(modelingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -155,7 +155,7 @@ public class ModelingExerciseResource {
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString())).body(result);
     }
 

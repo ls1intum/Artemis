@@ -2,16 +2,12 @@ package de.tum.in.www1.artemis.service.compass;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
@@ -81,7 +77,7 @@ public class CompassService {
     public boolean isSupported(DiagramType diagramType) {
         // at the moment, we only support class diagrams
         // TODO CZ: enable class diagrams again
-//        return diagramType == DiagramType.ClassDiagram;
+        // return diagramType == DiagramType.ClassDiagram;
         return false;
     }
 
@@ -390,14 +386,14 @@ public class CompassService {
         return compassCalculationEngines.get(exerciseId).getStatistics();
     }
 
-    // Call every hour and free memory for unused calculation engines (older than 1
-    // day)
-    @Scheduled(fixedRate = TIME_TO_CHECK_FOR_UNUSED_ENGINES)
-    private static void cleanUpCalculationEngines() {
-        LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
-        compassCalculationEngines = compassCalculationEngines.entrySet().stream()
-                .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
-    }
+    // Call every night at 2:00 am to free memory for unused calculation engines (older than 1 day)
+    // TODO reactivate when Compass is active again
+    // @Scheduled(cron = "0 0 2 * * *") // execute this every night at 2:00:00 am
+    // private static void cleanUpCalculationEngines() {
+    // LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
+    // compassCalculationEngines = compassCalculationEngines.entrySet().stream()
+    // .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
+    // .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    // LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
+    // }
 }

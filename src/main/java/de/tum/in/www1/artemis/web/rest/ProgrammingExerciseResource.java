@@ -154,7 +154,7 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.notifyGroupAboutExerciseCreated(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -259,7 +259,7 @@ public class ProgrammingExerciseResource {
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
 
-            groupNotificationService.notifyGroupAboutExerciseCreated(result);
+            groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
             return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
         }
@@ -315,7 +315,7 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.notifyGroupAboutExerciseChange(result);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
     }
 

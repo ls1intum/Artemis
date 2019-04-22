@@ -26,7 +26,8 @@
             "score": "Punktzahl",
             "submitAssessment": "Bewertung einreichen",
             "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
-            "exampleSubmission": "Beispielabgabe"
+            "exampleSubmission": "Beispielabgabe",
+            "assessmentInstruction": "Doppelklicken Sie auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten."
         }
     }
 }

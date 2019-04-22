@@ -3,7 +3,6 @@ import {
     ElementRef,
     EventEmitter,
     Input,
-    OnChanges,
     Output,
     OnDestroy,
     Renderer2,
@@ -12,20 +11,24 @@ import {
     ComponentFactoryResolver,
     ApplicationRef,
     EmbeddedViewRef,
+    OnChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
-import { Result, ResultService } from '../result';
+import { Result, ResultService, ResultWebsocketService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
-import { Participation } from '../participation';
+import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Observable, Subscription } from 'rxjs';
+import { hasExerciseChanged } from '../exercise';
 
 type Step = {
     title: string;
@@ -46,14 +49,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // If true, shows the participation of the exercise's template, instead of the assignment participation
     @Input()
     private showTemplatePartipation = false;
-    // Emits an event, if this component loads a readme file from a student's git repository.
-    // This is a workaround, see the comments on loadInstructions for more info.
+    // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
-    public onInstructionLoad = new EventEmitter();
+    public onNoInstructionsAvailable = new EventEmitter();
 
-    public isLoading = true;
-    private latestResult: Result;
-    private resultDetails: Feedback[];
+    private resultSubscription: Subscription;
+
+    public isInitial = true;
+    public isLoading: boolean;
+    public latestResult: Result | null;
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
@@ -64,6 +68,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
+        private resultWebsocketService: ResultWebsocketService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -78,33 +83,74 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
+    /**
+     * If the participation changes, the participation's instructions need to be loaded and the
+     * subscription for the participation's result needs to be set up.
+     * @param changes
+     */
     public ngOnChanges(changes: SimpleChanges) {
-        // To avoid unnecessary api calls, wait until both the participation and exercise are available.
-        // Only reload api data on the first change of the exercise, as it doesn't have an influence on test results.
-        if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.currentValue && changes.exercise.firstChange))) {
+        const participationHasChanged = hasParticipationChanged(changes);
+        const exerciseHasChanged = hasExerciseChanged(changes);
+        if (participationHasChanged) {
+            this.isInitial = true;
+            this.setupResultWebsocket();
+        }
+        // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
+        if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+            this.isLoading = true;
             this.loadInstructions()
-                .catch(() => {
-                    this.exercise.problemStatement = '';
-                })
-                .then(() => {
-                    if (this.participation.results) {
-                        // Get the result with the highest id (most recent result)
-                        this.latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
-                    } else if (this.exercise.id) {
-                        // Only load results if the exercise already is in our database, otherwise their can be no build result anyway
-                        return this.loadLatestResult();
-                    }
-                })
-                .then(() => {
-                    if (this.latestResult) {
-                        return this.loadResultsDetails();
-                    }
-                })
-                .finally(() => {
-                    this.updateMarkdown();
-                });
-        } else if (changes.exercise && changes.exercise.currentValue) {
-            this.updateMarkdown();
+                .pipe(
+                    // If no instructions can be loaded, abort pipe and hide the instruction panel
+                    tap(problemStatement => {
+                        if (!problemStatement) {
+                            this.onNoInstructionsAvailable.emit();
+                            this.isLoading = false;
+                            return Observable.of(null);
+                        }
+                    }),
+                    filter(problemStatement => !!problemStatement),
+                    tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
+                    switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
+                    map(latestResult => (this.latestResult = latestResult)),
+                    tap(() => {
+                        this.updateMarkdown();
+                        this.isInitial = false;
+                        this.isLoading = false;
+                    }),
+                )
+                .subscribe();
+        }
+    }
+
+    /**
+     * Set up the websocket for retrieving build results.
+     * Online updates the build logs if the result is new, otherwise doesn't react.
+     */
+    private async setupResultWebsocket() {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        return this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
+            this.resultSubscription = observable.pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2)).subscribe(result => {
+                this.latestResult = result;
+                this.updateMarkdown();
+            });
+        });
+    }
+
+    /**
+     * This method is used for initially loading the results so that the instructions can be rendered.
+     */
+    loadInitialResult(): Observable<Result> {
+        if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
+            // Get the result with the highest id (most recent result)
+            const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+            return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
+        } else if (this.participation && this.participation.id) {
+            // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
+            return this.loadLatestResult();
+        } else {
+            return Observable.of(null);
         }
     }
 
@@ -119,44 +165,39 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.setUpClickListeners();
             this.setUpTaskIcons();
         }, 100);
-        this.isLoading = false;
     }
 
     /**
      * Retrieve latest result for the participation/exercise/course combination.
+     * If there is no result, return null.
      */
-    loadLatestResult(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).subscribe(
-                (latestResult: any) => {
-                    this.latestResult = latestResult.body.length && latestResult.body[0];
-                    resolve();
-                },
-                err => {
-                    console.log('Error while loading latest results!', err);
-                    reject();
-                },
-            );
-        });
+    loadLatestResult(): Observable<Result | null> {
+        return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
+            catchError(() => Observable.of(null)),
+            map((latestResult: { body: Result[] }) => {
+                if (latestResult && latestResult.body && latestResult.body.length) {
+                    return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                } else {
+                    return null;
+                }
+            }),
+            flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+        );
     }
 
     /**
      * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) => Input latestResult
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
      */
-    loadResultsDetails(): Promise<void> {
-        return new Promise((resolve, reject) =>
-            this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
-                resultDetails => {
-                    this.resultDetails = resultDetails.body;
-                    this.latestResult.feedbacks = this.resultDetails;
-                    resolve();
-                },
-                err => {
-                    console.log('Error while loading result details!', err);
-                    reject();
-                },
-            ),
+    loadAndAttachResultDetails(result: Result): Observable<Result> {
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+            catchError(() => Observable.of(null)),
+            map(res => res && res.body),
+            map((feedbacks: Feedback[]) => {
+                result.feedbacks = feedbacks;
+                return result;
+            }),
         );
     }
 
@@ -166,26 +207,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            // Historical fallback: Older exercises have an instruction file in the git repo
-            if (this.exercise.problemStatement === undefined) {
-                const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
-                this.repositoryFileService.get(participationId, 'README.md').subscribe(
-                    fileObj => {
-                        // Old readme files contain unescaped unicode, convert it to make it persistable by the database
-                        this.exercise.problemStatement = fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]');
-                        resolve();
-                    },
-                    err => {
-                        console.log('Error while getting README.md file!', err);
-                        reject();
-                    },
-                );
-            } else {
-                resolve();
-            }
-        });
+    loadInstructions(): Observable<string> {
+        if (this.exercise.problemStatement) {
+            return Observable.of(this.exercise.problemStatement);
+        } else {
+            const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+            return this.repositoryFileService.get(participationId, 'README.md').pipe(
+                catchError(() => Observable.of(null)),
+                // Old readme files contain chars instead of our domain command tags - replace them when loading the file
+                map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
+            );
+        }
     }
 
     /**
@@ -464,10 +496,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.resultDetails && this.resultDetails.length > 0) {
+        if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
             let failedTests = 0;
             for (const test of tests) {
-                for (const result of this.resultDetails) {
+                for (const result of this.latestResult.feedbacks) {
                     if (result.text === test) {
                         failedTests++;
                     }
@@ -501,5 +533,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.listenerRemoveFunctions.forEach(f => f());
         this.listenerRemoveFunctions = [];
         this.steps = [];
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
     }
 }
