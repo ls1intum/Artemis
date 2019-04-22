@@ -20,6 +20,7 @@ import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -35,6 +36,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArTEMiSModelingEditorModule,
         AssessmentInstructionsModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
+        ArTEMiSSidePanelModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],

@@ -9,6 +9,7 @@ import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
+import { StatsForTutorDashboard } from 'app/entities/course';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -143,6 +144,10 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-tutor-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForTutorDashboard>> {
+        return this.http.get<StatsForTutorDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 }
 
