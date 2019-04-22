@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -66,15 +67,15 @@ public class ExerciseResource {
 
     private final ObjectMapper objectMapper;
 
-    private final TextSubmissionService textSubmissionService;
-
     private final TextAssessmentService textAssessmentService;
 
     private final ComplaintRepository complaintRepository;
 
+    private final TextSubmissionRepository submissionRepository;
+
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
                             CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper, TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository) {
+                            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper, TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -86,9 +87,9 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.objectMapper = objectMapper;
-        this.textSubmissionService = textSubmissionService;
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -184,9 +185,8 @@ public class ExerciseResource {
 
         ObjectNode data = objectMapper.createObjectNode();
 
-        // TODO: add numbers of modeling submissions
-        long numberOfTextSubmissions = textSubmissionService.countSubmittedSubmissionsForExerciseId(id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfTextSubmissions));
+        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
         long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
         data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
