@@ -142,7 +142,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @param result
      */
     toggleBuildLogs(result: Result) {
-        if (result && ((result.successful && (!result.feedbacks || !result.feedbacks.length)) || (!result.successful && result.feedbacks && result.feedbacks.length))) {
+        if (
+            !result ||
+            ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
+        ) {
             this.buildLogs = new BuildLogEntryArray();
             // If there are no compile errors, send recent timestamp
             this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
