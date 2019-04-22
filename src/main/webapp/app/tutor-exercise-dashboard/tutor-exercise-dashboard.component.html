@@ -16,11 +16,11 @@
         <div class="col-4">
             <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'arTeMiSApp.instructorCourseDashboard.assessments' | translate }}</div>
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
                     <div class="col-4">{{ numberOfSubmissions }}</div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalAssessments' | translate }}</div>
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
                     <div class="col-4">{{ numberOfAssessments }} ({{totalAssessmentPercentage}}%)</div>
                 </div>
                 <div class="row mb-1">
@@ -28,7 +28,7 @@
                     <div class="col-4">{{ numberOfSubmissions - numberOfAssessments }} ({{100 - totalAssessmentPercentage}}%)</div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.yourAssessments' | translate }}</div>
+                    <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfSubmissionsAssessedByYou' | translate }}</div>
                     <div class="col-4">{{ numberOfTutorAssessments }} ({{tutorAssessmentPercentage}}%)</div>
                 </div>
                 <div class="row mb-1">

@@ -43,7 +43,10 @@
             "evaluateComplaint": "Evaluate the complaint",
             "showComplaint": "Show the complaint.",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
-            "exerciseInformation": "Exercise information"
+            "exerciseInformation": "Exercise information",
+            "numberOfTotalSubmissions": "Total submissions",
+            "numberOfAssessedSubmissions": "Assessed submissions",
+            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you"
         }
     }
 }

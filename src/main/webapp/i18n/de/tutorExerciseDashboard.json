@@ -43,7 +43,10 @@
             "evaluateComplaint": "Auswertung der Reklamation.",
             "showComplaint": "Zeigen Sie die Reklamation an.",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
-            "exerciseInformation": "Übungsinformationen"
+            "exerciseInformation": "Übungsinformationen",
+            "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
+            "numberOfAssessedSubmissions": "Bewertete Einreichungen",
+            "numberOfSubmissionsAssessedByYou": "Von Ihnen bewertete Einreichungen"
         }
     }
 }
