@@ -1,5 +1,6 @@
 import { User } from 'app/core';
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { KeyValue } from '@angular/common';
 
 interface TutorLeaderboardElement {
     tutor: User;
@@ -15,20 +16,10 @@ export interface TutorLeaderboardData {
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
 })
-export class TutorLeaderboardComponent implements OnInit, OnChanges {
+export class TutorLeaderboardComponent {
     @Input() public tutorsData: TutorLeaderboardData = {};
-    sortedTutorData: TutorLeaderboardElement[] = [];
 
-    ngOnInit() {
-        this.sortTutorData();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        this.sortTutorData();
-    }
-
-    private sortTutorData() {
-        this.sortedTutorData = Object.values(this.tutorsData);
-        this.sortedTutorData = this.sortedTutorData.sort((firstElement, secondElement) => secondElement.numberOfAssessments - firstElement.numberOfAssessments);
+    orderByNumberOfAssessments(firstElement: KeyValue<number, TutorLeaderboardElement>, secondElement: KeyValue<number, TutorLeaderboardElement>) {
+        return secondElement.value.numberOfAssessments - firstElement.value.numberOfAssessments;
     }
 }
