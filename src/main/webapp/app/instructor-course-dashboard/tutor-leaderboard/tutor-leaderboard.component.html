@@ -10,7 +10,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of tutorsData | keyvalue | orderBy:'numberOfAssessments'; let i=index;">
+            <tr *ngFor="let tutor of tutorsData | keyvalue | orderBy:'value.numberOfAssessments'; let i=index;">
                 <td>{{ i + 1 }}</td>
                 <td>{{ tutor.value.tutor.firstName }} {{ tutor.value.tutor.lastName }}</td>
                 <td>{{ tutor.value.tutor.login }}</td>
