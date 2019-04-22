@@ -1,40 +1,29 @@
-<div class="course-info-bar">
-    <h2>
-        <fa-icon [icon]="'arrow-left'" [routerLink]="'/course/' + courseId + '/instructor-dashboard'" class="back-button mr-2"></fa-icon>
-        {{ 'arTeMiSApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}
-    </h2>
-</div>
+<jhi-header-exercise-page-with-details
+    [exercise]="exercise"
+    [onBackClick]="back.bind(this)"
+>
+    <span pagetitle>{{ 'arTeMiSApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
+</jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
 
 <div *ngIf="exercise">
-    <div class="container-fluid">
+    <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="card-title">{{ 'arTeMiSApp.instructorExerciseDashboard.informationAboutExercise' | translate }}</h4>
+                <jhi-side-panel [panelHeader]="'arTeMiSApp.instructorExerciseDashboard.informationAboutExercise' | translate">
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'arTeMiSApp.instructorExerciseDashboard.submissions' | translate }}</div>
+                        <div class="col-4">{{ exercise.participations.length }}</div>
                     </div>
-                    <div class="card-body">
-                        <ul>
-                            <li>
-                                <b>{{ 'arTeMiSApp.instructorExerciseDashboard.exerciseDueDate' | translate }}:</b> {{ exercise.dueDate | date: 'medium' }}
-                            </li>
-                            <li>
-                                <b>{{ 'arTeMiSApp.instructorExerciseDashboard.submissions' | translate }}:</b> {{ exercise.participations.length }}
-                            </li>
-                            <li>
-                                <b>{{ 'arTeMiSApp.instructorExerciseDashboard.assessmentDueDate' | translate }}:</b> {{ exercise.assessmentDueDate | date: 'medium' }}
-                            </li>
-                            <li>
-                                <b>{{ 'arTeMiSApp.instructorExerciseDashboard.assessments' | translate }}:</b> {{ numberOfAssessments }} ({{
-                                    exercise.participations.length - numberOfAssessments
-                                }}
-                                {{ 'arTeMiSApp.instructorExerciseDashboard.open' | translate }})
-                            </li>
-                        </ul>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'arTeMiSApp.instructorExerciseDashboard.assessments' | translate }}</div>
+                        <div class="col-4"> {{ numberOfAssessments }} ({{
+                            exercise.participations.length - numberOfAssessments
+                            }}
+                            {{ 'arTeMiSApp.instructorExerciseDashboard.open' | translate }})</div>
                     </div>
-                </div>
+                </jhi-side-panel>
             </div>
 
             <div class="col-md-4" *ngIf="exercise.participations.length > 0">

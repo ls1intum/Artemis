@@ -1,6 +1,6 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
@@ -26,11 +26,16 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private participationService: ParticipationService,
         private resultService: ResultService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
         this.courseId = +this.route.snapshot.paramMap.get('courseId');
         this.loadExercise(+this.route.snapshot.paramMap.get('exerciseId'));
+    }
+
+    back() {
+        this.router.navigate([`/course/${this.courseId}/instructor-dashboard`]);
     }
 
     private loadExercise(exerciseId: number) {
