@@ -76,7 +76,7 @@ public class ComplaintResponseResource {
         User reviewer = this.userService.getUser();
 
         // Do not trust user input
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findById(complaintId);
+        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
 
         if (!originalComplaintOptional.isPresent()) {
             throw new BadRequestAlertException("The complaint you are referring to does not exist", ENTITY_NAME, "noresult");
