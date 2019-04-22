@@ -43,6 +43,7 @@
             "changesSaved": "All changes saved.",
             "failedToSave": "Failed to save file.",
             "changesUndefined": "Fetching submission status.",
+            "changesError": "Submission status could not be retrieved.",
             "changesSubmitted": "All changes submitted.",
             "unsubmittedChanges": "There are unsubmitted changes.",
             "submittingChanges": "Submitting changes.",
@@ -57,6 +58,7 @@
             "saving": "Saving",
             "saveFiles": "Save",
             "errors": {
+                "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
                 "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
                 "noPermissions": "You don't have the necessary permissions.",
                 "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor."

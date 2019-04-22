@@ -191,7 +191,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            map(({ body }: { body: Feedback[] }) => body),
+            catchError(() => Observable.of(null)),
+            map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;

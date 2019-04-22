@@ -23,7 +23,7 @@ import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.comp
 import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
@@ -84,6 +84,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             // First: Load participation, which is needed for all successive calls
             this.loadParticipation(participationId)
                 .pipe(
+                    // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
+                    switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
                     // Load the participation with its result and result details, so that sub components don't try to also load the details
                     flatMap(participation => {
                         const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
@@ -105,7 +107,13 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     tap(files => (this.repositoryFiles = files)),
                     tap(() => this.loadSession()),
                 )
-                .subscribe();
+                .subscribe(
+                    () => {},
+                    err => {
+                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                        this.onError(err);
+                    },
+                );
         });
     }
 
@@ -141,12 +149,15 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
      * @param participationId
      */
-    private loadParticipation(participationId: number): Observable<Participation> {
+    private loadParticipation(participationId: number): Observable<Participation | null> {
         if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
             // We found a matching participation in the data provider, so we can avoid doing a REST call
             return Observable.of(this.participationDataProvider.participationStorage);
         } else {
-            return this.participationService.findWithLatestResult(participationId).pipe(rxMap(res => res.body));
+            return this.participationService.findWithLatestResult(participationId).pipe(
+                catchError(() => Observable.of(null)),
+                rxMap(res => res && res.body),
+            );
         }
     }
 
@@ -156,7 +167,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Mutates the input parameter result.
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(rxMap(({ body }: { body: Feedback[] }) => body));
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => res && res.body),
+        );
     }
 
     /**
@@ -171,7 +185,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
     checkIfRepositoryIsClean(): Observable<CommitState> {
-        return this.repositoryService.isClean(this.participation.id).pipe(rxMap(res => (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES)));
+        return this.repositoryService.isClean(this.participation.id).pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        );
     }
 
     /**

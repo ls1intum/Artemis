@@ -19,6 +19,10 @@
             <fa-icon [icon]="['fas', 'circle-notch']" [spin]="true" class="text-info mr-1"></fa-icon>
             <span class="text-info">{{ 'arTeMiSApp.editor.changesUndefined' | translate }}</span>
         </div>
+        <div *ngSwitchCase="'COULD_NOT_BE_RETRIEVED'">
+            <fa-icon [icon]="['fas', 'times-circle']" class="text-danger mr-1"></fa-icon>
+            <span class="text-danger">{{ 'arTeMiSApp.editor.changesError' | translate }}</span>
+        </div>
         <div *ngSwitchCase="'CLEAN'">
             <fa-icon [icon]="['fas', 'check-circle']" class="text-success mr-1"></fa-icon>
             <span class="text-info">{{ 'arTeMiSApp.editor.changesSubmitted' | translate }}</span>

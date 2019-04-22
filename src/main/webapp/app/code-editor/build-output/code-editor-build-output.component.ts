@@ -11,7 +11,7 @@ import { Interactable } from 'interactjs';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -115,7 +115,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            map(({ body }: { body: Feedback[] }) => body),
+            catchError(() => Observable.of(null)),
+            map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
