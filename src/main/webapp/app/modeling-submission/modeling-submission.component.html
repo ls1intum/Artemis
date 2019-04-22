@@ -120,7 +120,8 @@
     </div>
 
     <div class="row mt-2 ml-0" *ngIf="result && result.completionDate">
-        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>
+        <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
+        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}</button>
     </div>
 </div>
 

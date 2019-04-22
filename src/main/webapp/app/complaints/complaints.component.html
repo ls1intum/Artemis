@@ -1,19 +1,21 @@
 <div class="col-12 mt-4">
     <div class="row">
-        <div class="col-6">
+        <div class="col-12">
             <h3>{{ 'arTeMiSApp.complaint.complaints' | translate }}</h3>
             <p>{{ 'arTeMiSApp.complaint.description' | translate }}</p>
         </div>
 
-        <div class="col-6">
-            <h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>
-            <p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>
-            <button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>
-        </div>
+        <!--TODO: uncomment again when the 'request more feedback' feature is implemented-->
+        <!--<div class="col-6">-->
+            <!--<h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>-->
+            <!--<p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>-->
+            <!--<button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>-->
+        <!--</div>-->
     </div>
 
     <p *ngIf="!alreadySubmitted" class="mt-4">
-        {{ 'arTeMiSApp.complaint.beDescriptive' | translate }}
+        <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
+        {{ 'arTeMiSApp.complaint.beDescriptive_temp' | translate }}
     </p>
 
     <p *ngIf="alreadySubmitted" class="mt-4">{{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}.</p>

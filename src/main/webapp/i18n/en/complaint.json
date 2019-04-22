@@ -7,10 +7,12 @@
             "moreFeedbackDescription": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
             "moreFeedbackButton": "Request more feedback",
             "beDescriptive": "Please try to be as descriptive as possible, including which parts of the submission you think we need to re-evaluate. If you don't have any complaint, but you think the feedback is not clear enough, just press the relative button.",
+            "beDescriptive_temp": "Please try to be as descriptive as possible, including which parts of the submission you think we need to re-evaluate.",
             "alreadySubmitted": "You have already submitted a complaint: ",
             "submit": "Submit a complaint",
             "created": "Your complaint has been submitted!",
             "moreInfo": "Submit complaint or ask for more feedback",
+            "moreInfo_temp": "Submit a complaint",
             "hasReplied": "has replied to your complaint on",
             "hint": "You find the complaint at the end of the page"
         }

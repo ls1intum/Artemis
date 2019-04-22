@@ -7,10 +7,12 @@
             "moreFeedbackDescription": "Wenn etwas nicht klar genug ist oder Sie weitere Erklärungen benötigen, bitten Sie den Tutor, Ihnen mehr Feedback zu geben.",
             "moreFeedbackButton": "Mehr Feedback anfordern",
             "beDescriptive": "Bitte versuchen Sie, so beschreibend wie möglich zu sein, einschließlich der Teile der Einreichung, von denen Sie denken, dass wir sie neu bewerten müssen. Wenn Sie keine Beschwerden haben, aber der Eindruck besteht, dass das Feedback nicht klar genug ist, drücken Sie einfach die entsprechende Taste.",
+            "beDescriptive_temp": "Bitte versuchen Sie, so beschreibend wie möglich zu sein, einschließlich der Teile der Einreichung, von denen Sie denken, dass wir sie neu bewerten müssen.",
             "alreadySubmitted": "Sie haben bereits eine Beschwerde eingereicht:",
             "submit": "Eine Beschwerde einreichen",
             "created": "Ihre Beschwerde wurde eingereicht!",
-            "moreInfo": "Senden Sie eine Beschwerde oder bitten Sie um mehr Feedback.",
+            "moreInfo": "Reichen Sie eine Beschwerde ein oder bitten Sie um mehr Feedback.",
+            "moreInfo_temp": "Beschwerde einreichen",
             "hasReplied": "hat auf Ihre Beschwerde geantwortet:",
             "hint": "Sie finden die Beschwerde am Ende der Seite"
         }
