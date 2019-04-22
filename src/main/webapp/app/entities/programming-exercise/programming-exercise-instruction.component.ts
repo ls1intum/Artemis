@@ -17,7 +17,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { catchError, distinctUntilChanged, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
@@ -49,10 +49,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     // If true, shows the participation of the exercise's template, instead of the assignment participation
     @Input()
     private showTemplatePartipation = false;
-    // Emits an event, if this component loads a readme file from a student's git repository.
-    // This is a workaround, see the comments on loadInstructions for more info.
+    // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
-    public onInstructionLoad = new EventEmitter();
+    public onNoInstructionsAvailable = new EventEmitter();
 
     private resultSubscription: Subscription;
 
@@ -101,6 +100,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.isLoading = true;
             this.loadInstructions()
                 .pipe(
+                    // If no instructions can be loaded, abort pipe and hide the instruction panel
+                    tap(problemStatement => {
+                        if (!problemStatement) {
+                            this.onNoInstructionsAvailable.emit();
+                            this.isLoading = false;
+                            return Observable.of(null);
+                        }
+                    }),
+                    filter(problemStatement => !!problemStatement),
                     tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
                     switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
                     map(latestResult => (this.latestResult = latestResult)),
@@ -203,9 +211,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         } else {
             const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
             return this.repositoryFileService.get(participationId, 'README.md').pipe(
-                catchError(() => Observable.of('')),
+                catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
-                map(fileObj => fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
+                map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
             );
         }
     }

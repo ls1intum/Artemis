@@ -6,7 +6,8 @@
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
         </h3>
     </div>
-    <jhi-programming-exercise-instructions [exercise]="participation?.exercise" [participation]="participation"> </jhi-programming-exercise-instructions>
+    <jhi-programming-exercise-instructions (onNoInstructionsAvailable)="onNoInstructionsAvailable()" [exercise]="participation?.exercise" [participation]="participation">
+    </jhi-programming-exercise-instructions>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>
