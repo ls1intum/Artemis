@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -42,6 +44,8 @@ public class ComplaintResource {
 
     private ComplaintRepository complaintRepository;
 
+    private ComplaintResponseRepository complaintResponseRepository;
+
     private ResultRepository resultRepository;
 
     private UserRepository userRepository;
@@ -49,8 +53,9 @@ public class ComplaintResource {
     private AuthorizationCheckService authCheckService;
     private ExerciseService exerciseService;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+    public ComplaintResource(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -162,7 +167,7 @@ public class ComplaintResource {
             String submissorName = principal.getName();
             User assessor = complaint.getResult().getAssessor();
 
-            if (!assessor.getLogin().equals(submissorName)) {
+            if (!assessor.getLogin().equals(submissorName) || userIsComplaintReviewer(submissorName, complaint.getId())) {
                 // Remove data about the student
                 complaint.getResult().getParticipation().setStudent(null);
                 complaint.setStudent(null);
@@ -172,5 +177,21 @@ public class ComplaintResource {
         });
 
         return ResponseEntity.ok(responseComplaints);
+    }
+
+    /**
+     * Checks if there is a complaint response and if the given user is the reviewer of the corresponding complaint.
+     * This is used for returning complaints for a user. We want to return any complaint that does not belong to
+     * the user's own assessments OR that was reviewed by the user. The additional check for the reviewer is necessary
+     * because the assessor of an assessment changes when a user reviews a complaint and overrides the assessment.
+     * Therefore, the reviewed complaint would not be shown in the list of complaints for the reviewer anymore.
+     *
+     * @param username the name of the current user
+     * @param complaintId the id of the complaint
+     * @return true if the current user is the reviwer of the complaint, false otherwise
+     */
+    private boolean userIsComplaintReviewer(String username, Long complaintId) {
+        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
+        return optionalComplaintResponse.map(complaintResponse -> complaintResponse.getReviewer().getLogin().equals(username)).orElse(false);
     }
 }

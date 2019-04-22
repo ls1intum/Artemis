@@ -55,6 +55,7 @@
             "complaintAlreadyAccepted": "Die Reklamation wurde bereits geprüft und beantwortet von",
             "complaintResponse": "Antwort der Reklamation",
             "submitComplaintResponse": "Die Antwort der Reklamation einreichen",
+            "complaintResponseCreated": "Ihre Antwort auf die Beschwerde wurde eingereicht",
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück."
         }
     }

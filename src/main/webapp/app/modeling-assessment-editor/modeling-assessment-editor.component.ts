@@ -35,6 +35,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAtLeastInstructor = false;
     showBackButton: boolean;
     includeComplaint: boolean;
+    canOverride = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -71,13 +72,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    checkAuthorization() {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-    }
-
     ngOnDestroy() {}
 
-    loadSubmission(submissionId: number): void {
+    private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -88,7 +85,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    loadOptimalSubmission(exerciseId: number): void {
+    private loadOptimalSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -109,7 +106,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    handleReceivedSubmission(submission: ModelingSubmission): void {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
@@ -136,6 +133,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         this.checkAuthorization();
         this.validateFeedback();
+    }
+
+    private checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        // Enable the override button when handling a complaint OR the user is an instructor.
+        // Note, that it is disabled if the current user is the assessor of the result as '!this.isAuthorized' will be false then.
+        // This prevents an assessor from overriding his own assessment.
+        this.canOverride = (!this.isAuthorized && this.includeComplaint && this.result && this.result.hasComplaint) || this.isAtLeastInstructor;
     }
 
     onError(): void {
@@ -180,6 +185,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
                 this.ignoreConflicts = false;
+                // re-check authorization as the assessor can change if the assessment was overridden
+                this.checkAuthorization();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
