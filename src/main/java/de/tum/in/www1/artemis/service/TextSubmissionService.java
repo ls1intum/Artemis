@@ -59,6 +59,11 @@ public class TextSubmissionService {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
             }
             Participation participation = optionalParticipation.get();
+
+            if (participation.getInitializationState() == InitializationState.FINISHED) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
+            }
+
             textSubmission = save(textSubmission, textExercise, participation);
         }
         return textSubmission;
