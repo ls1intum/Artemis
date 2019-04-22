@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 
 @Service
 @Transactional
@@ -92,10 +91,6 @@ public class TextSubmissionService {
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
-        }
-        else if (textExercise.getDueDate() != null && !textExercise.isEnded()) {
-            // save submission to HashMap if exercise not ended yet
-            AutomaticSubmissionService.updateSubmission(textExercise.getId(), user.getLogin(), textSubmission);
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (textSubmission.getId() == null) {
