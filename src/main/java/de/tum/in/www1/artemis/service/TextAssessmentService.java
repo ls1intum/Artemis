@@ -107,7 +107,7 @@ public class TextAssessmentService extends AssessmentService {
     /**
      * Given a courseId, return the number of assessments for that course
      * @param courseId - the course we are interested in
-     * @return a number of submissions for the course
+     * @return a number of assessments for the course
      */
     public long countNumberOfAssessments(Long courseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseId(courseId);
@@ -117,9 +117,28 @@ public class TextAssessmentService extends AssessmentService {
      * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
      * @param courseId - the course we are interested in
      * @param tutorId - the tutor we are interested in
-     * @return a number of submissions for the course
+     * @return a number of assessments for the course
      */
     public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseId(tutorId, courseId);
+    }
+
+    /**
+     * Given an exerciseId, return the number of assessments for that exerciseId
+     * @param exerciseId - the exercise we are interested in
+     * @return a number of assessments for the exercise
+     */
+    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseId(exerciseId);
+    }
+
+    /**
+     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor
+     * @param exerciseId - the exercise we are interested in
+     * @param tutorId - the tutor we are interested in
+     * @return a number of assessments for the exercise
+     */
+    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_ExerciseId(tutorId, exerciseId);
     }
 }

@@ -77,4 +77,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
     Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);
+
+    long countByAssessorIsNotNullAndParticipation_ExerciseId(Long exerciseId);
+
+    long countByAssessor_IdAndParticipation_ExerciseId(Long tutorId, Long exerciseId);
 }

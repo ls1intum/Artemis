@@ -194,4 +194,12 @@ public class TextSubmissionService {
         }
         return textSubmissions;
     }
+
+    /**
+     * @param id the exercise we are interested in
+     * @return the number of submitted submissions for the exercise passed as argument
+     */
+    public long countSubmittedSubmissionsForExerciseId(Long id) {
+        return textSubmissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
+    }
 }

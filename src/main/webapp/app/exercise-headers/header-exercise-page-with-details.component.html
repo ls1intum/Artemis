@@ -15,7 +15,7 @@
             </h4>
             <h4 *ngIf="exercise.assessmentDueDate">
                 <span class="mr-2">
-                    {{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }} {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}
+                    {{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}
                 </span>
                 <span [ngClass]="exerciseStatusBadge" class="badge">
                     {{ exercise.assessmentDueDate | amTimeAgo }}

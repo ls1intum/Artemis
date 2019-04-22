@@ -41,7 +41,9 @@
             "complaints": "Reklamationen",
             "noComplaints": "Es gibt keine Reklamation.",
             "evaluateComplaint": "Auswertung der Reklamation.",
-            "showComplaint": "Zeigen Sie die Reklamation an."
+            "showComplaint": "Zeigen Sie die Reklamation an.",
+            "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
+            "exerciseInformation": "Übungsinformationen"
         }
     }
 }
