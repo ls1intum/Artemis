@@ -1,10 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
+import { Complaint } from 'app/entities/complaint';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -14,6 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() resultId: number;
     loading = true;
+    complaint: Complaint;
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
@@ -25,11 +27,11 @@ export class ComplaintsForTutorComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
-                this.complaintText = res.body.complaintText;
+                this.complaint = res.body;
+                this.complaintText = this.complaint.complaintText;
+                this.accepted = this.complaint.accepted;
                 this.alreadySubmitted = true;
-                this.submittedDate = res.body.submittedTime;
                 this.loading = false;
-                this.accepted = res.body.accepted;
 
                 if (this.accepted) {
                     this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
@@ -46,6 +48,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     submitComplaintResponse() {
         if (this.complaintResponse.responseText.length > 0) {
+            this.complaintResponse.complaint = this.complaint;
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
                     this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
