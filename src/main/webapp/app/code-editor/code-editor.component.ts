@@ -86,7 +86,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 .pipe(
                     // Load the participation with its result and result details, so that sub components don't try to also load the details
                     flatMap(participation => {
-                        const latestResult = participation.results.length ? participation.results[0] : null;
+                        const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
                         return latestResult
                             ? this.loadResultDetails(latestResult).pipe(
                                   rxMap(feedback => {
