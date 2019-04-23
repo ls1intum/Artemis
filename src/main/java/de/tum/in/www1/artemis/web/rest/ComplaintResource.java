@@ -148,7 +148,7 @@ public class ComplaintResource {
         List<Complaint> responseComplaints = new ArrayList<>();
 
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
 

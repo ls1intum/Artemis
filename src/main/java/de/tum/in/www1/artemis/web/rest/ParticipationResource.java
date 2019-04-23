@@ -155,6 +155,7 @@ public class ParticipationResource {
         // Hide information from students
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             participation.getExercise().setExampleSubmissions(null);
+            participation.getExercise().setGradingInstructions(null);
 
             if (participation.getExercise() instanceof TextExercise) {
                 ((TextExercise) participation.getExercise()).setSampleSolution(null);
