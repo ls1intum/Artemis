@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../out-tsc/spec",
+        "module": "es2015",
+        "target": "es5",
+        "baseUrl": "./",
+        "types": ["jest", "node"],
+        "allowJs": true
+    },
+    "files": ["src/test/javascript/spec/entry.ts"],
+    "include": ["src/test/javascript/spec/code-editor/*.ts"]
+}
