@@ -15,6 +15,9 @@ class ConflictSimulation extends Simulation {
         .userAgentHeader("Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0")
         .silentResources
 
+    val userCredentials: Array[(String, String)] = Array(("artemis_test_user_1", "ArTEMiS_1_pw2017"), ("artemis_test_user_2", "ArTEMiS_2_pw2017"))
+
+
     val headers_http = Map(
         "Accept" -> """application/json"""
     )
@@ -47,7 +50,7 @@ class ConflictSimulation extends Simulation {
         .exec(http("Authentication")
             .post("/api/authenticate")
             .headers(headers_http_authentication)
-            .body(StringBody("""{"username":"artemis_test_user_1", "password":"ArTEMiS_1_pw2017"}""")).asJson
+            .body(StringBody("""{"username":"""" + userCredentials(0)._1 + """", "password":"""" + userCredentials(0)._2 + """"}""")).asJson
             .check(status.is(200))
             .check(header("Authorization").saveAs("access_token"))).exitHereIfFailed
         .exec((http("Create Course"))
@@ -60,19 +63,22 @@ class ConflictSimulation extends Simulation {
         .exec((http("Create ModelingExercise"))
             .post("/api/modeling-exercises")
             .headers(headers_http_authenticated_JSON)
-            .body(StringBody("""{"isAtLeastTutor":false,"isAtLeastInstructor":false,"type":"modeling","automaticAssessmentSupported":false,"course":{"id":""" + "${course_id}"+ ""","title":"CourseXY","shortName":"TTTXY","studentGroupName":"tumuser","instructorGroupName":"tumuser","onlineCourse":false,"registrationEnabled":false,"startDate":null,"endDate":null,"exercises":[]},"diagramType":"ClassDiagram","title":"Exercise 1","maxScore":10,"problemStatement":"","releaseDate":null,"dueDate":null,"assessmentDueDate":null}""")).asJson
+            .body(StringBody("""{"isAtLeastTutor":false,"isAtLeastInstructor":false,"type":"modeling","automaticAssessmentSupported":false,"course":{"id":""" + "${course_id}" + ""","title":"CourseXY","shortName":"TTTXY","studentGroupName":"tumuser","instructorGroupName":"tumuser","onlineCourse":false,"registrationEnabled":false,"startDate":null,"endDate":null,"exercises":[]},"diagramType":"ClassDiagram","title":"Exercise 1","maxScore":10,"problemStatement":"","releaseDate":null,"dueDate":null,"assessmentDueDate":null}""")).asJson
             .check(status.is(201))
             .check(jsonPath("$.id").saveAs("exercise_id"))
             .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .exec((http("Participate in Modeling Exercise"))
             .post("/api/courses/${course_id}/exercises/${exercise_id}/participations")
             .headers(headers_http_authenticated_JSON)
-            .check(status.is(201)))
-        .exec((http("Submit Model")
+            .check(status.is(201))
+            .check(jsonPath("$.id").saveAs("participation_id"))
+            .check(bodyString.saveAs("participation"))
+            .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
+        .exec((http("Submit Model"))
             .put("/api/exercises/${exercise_id}/modeling-submissions")
             .headers(headers_http_authenticated_JSON)
-            .check(status.is(200))
-
+            .body(StringBody("""{"submissionExerciseType":"modeling","submitted":false,"participation":"${participation}","model":""}""")).asJson
+            .check(status.is(200)))
 
     setUp(scn.inject(atOnceUsers(1))).protocols(httpProtocol)
 }
