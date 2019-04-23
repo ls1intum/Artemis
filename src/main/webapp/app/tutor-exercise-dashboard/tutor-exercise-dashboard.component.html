@@ -11,7 +11,7 @@
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
-            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
+            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation" [exerciseStats]="statsForTutorStatusComponent"></jhi-tutor-participation-graph>
         </div>
         <div class="col-4">
             <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">

@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
+import { StatsForTutorDashboard } from '../../entities/course';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -10,6 +11,7 @@ import * as _ from 'lodash';
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
+    @Input() public exerciseStats: StatsForTutorDashboard;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -60,5 +62,35 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
             return 'orange';
         }
+    }
+
+    calculatePercentage(numerator: number, denominator: number): number {
+        if (denominator === 0) {
+            return 0;
+        }
+
+        return Math.round((numerator / denominator) * 100);
+    }
+
+    calculateProgressBarClass(numberOfAssessments: number, length: number): string {
+        const percentage = this.calculatePercentage(numberOfAssessments, length);
+
+        if (percentage < 50) {
+            return 'bg-danger';
+        } else if (percentage < 100) {
+            return 'bg-warning';
+        }
+
+        return 'bg-success';
+    }
+
+    chooseProgressBarTextColor(numberOfAssessments: number, numberOfSubmissions: number) {
+        const percentage = this.calculatePercentage(numberOfAssessments, numberOfSubmissions);
+
+        if (percentage < 100) {
+            return 'text-dark';
+        }
+
+        return 'text-white';
     }
 }

@@ -1,4 +1,4 @@
-<div>
+<div class="row">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.readGradingInstructions' | translate">
@@ -7,8 +7,24 @@
         <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
             <fa-icon icon="chalkboard-teacher"></fa-icon>
         </li>
-        <li [ngClass]="calculateClasses(COMPLETED)" (click)="navigate()"  [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
-            <fa-icon icon="check-circle"></fa-icon>
-        </li>
     </ul>
+
+    <div class="progress position-relative" *ngIf="exerciseStats" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
+        <div
+            class="progress-bar"
+            role="progressbar"
+            [ngClass]="calculateProgressBarClass(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions)"
+            [style.width]="calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions) + '%'"
+            attr.aria-valuenow="{{ calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions) }}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+        >
+                <span
+                    class="justify-content-center d-flex position-absolute w-100"
+                    [ngClass]="chooseProgressBarTextColor(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions)"
+                >
+                    {{ exerciseStats?.numberOfAssessments }} / {{ exerciseStats?.numberOfSubmissions }} ({{calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats.numberOfSubmissions) + '%'}})
+                </span>
+        </div>
+    </div>
 </div>
