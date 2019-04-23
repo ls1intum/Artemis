@@ -1,37 +1,61 @@
 import { Feedback } from 'app/entities/feedback';
 
+enum FeedbackType {
+    POSITIVE = 'positive',
+    NEGATIVE = 'negative',
+    NEUTRAL = 'neutral',
+}
+
 export class TextResultBlock {
-    constructor(text: string, startIndex: number, feedback?: Feedback) {
+    constructor(public text: string, public startIndex: number, public feedback?: Feedback) {
         this.text = text;
-        this.position = [startIndex, text.length];
+        this.startIndex = startIndex;
         this.feedback = feedback;
     }
 
-    text: string;
-    position: [number, number]; // start index, length
-    feedback?: Feedback;
-
-    get startIndex(): number {
-        return this.position[0];
-    }
-
     get length(): number {
-        return this.position[1];
+        return this.text.length;
     }
 
     get endIndex(): number {
         return this.startIndex + this.length;
     }
 
-    get cssClass(): string {
+    get feedbackType(): FeedbackType {
         if (!this.feedback) {
-            return '';
+            return null;
         } else if (this.feedback.credits > 0) {
-            return 'feedback-text-positive';
+            return FeedbackType.POSITIVE;
         } else if (this.feedback.credits < 0) {
-            return 'feedback-text-negative';
+            return FeedbackType.NEGATIVE;
         } else {
-            return 'feedback-text-neutral';
+            return FeedbackType.NEUTRAL;
+        }
+    }
+
+    get cssClass(): string {
+        return `feedback-text-${this.feedbackType}`;
+    }
+
+    get icon(): string {
+        if (this.feedbackType === FeedbackType.POSITIVE) {
+            return 'faCheck';
+        } else if (this.feedbackType === FeedbackType.NEGATIVE) {
+            return 'faTimes';
+        }
+    }
+
+    get iconCssClass(): string {
+        return `feedback-icon-${this.feedbackType}`;
+    }
+
+    get feedbackCssClass(): string {
+        if (this.feedbackType === FeedbackType.POSITIVE) {
+            return 'alert alert-success';
+        } else if (this.feedbackType === FeedbackType.NEGATIVE) {
+            return 'alert alert-danger';
+        } else if (this.feedbackType === FeedbackType.NEUTRAL) {
+            return 'alert alert-secondary';
         }
     }
 }

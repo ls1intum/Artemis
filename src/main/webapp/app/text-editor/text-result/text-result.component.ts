@@ -37,7 +37,7 @@ export class TextResultComponent {
                 startIndex = nextBlock.endIndex;
                 nextBlock = resultBlocks.pop();
             } else {
-                const endOfSlice = nextBlock ? nextBlock.position[0] : endIndex;
+                const endOfSlice = nextBlock ? nextBlock.startIndex : endIndex;
                 const slice = this.submissionText.slice(startIndex, endOfSlice);
                 const textResultBlock = new TextResultBlock(slice, startIndex);
                 this.textResults.push(textResultBlock);

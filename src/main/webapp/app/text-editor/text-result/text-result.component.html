@@ -1,3 +1,9 @@
 <ng-container *ngFor="let block of textResults">
     <span [ngClass]="block.cssClass">{{block.text}}</span>
+    <span [ngClass]="block.cssClass" *ngIf="block.feedback && block.icon">
+        <fa-icon *ngFor="let i of block.feedback.credits | abs | nTimes" [icon]="block.icon"></fa-icon>
+    </span>
+    <div class="alert alert-info" *ngIf="block.feedback.detailText">
+        <b>Feedback:</b> {{block.feedback.detailText}}
+    </div>
 </ng-container>
