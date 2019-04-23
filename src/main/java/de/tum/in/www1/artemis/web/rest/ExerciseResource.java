@@ -111,6 +111,10 @@ public class ExerciseResource {
         }
 
         List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            result.forEach(Exercise::filterSensitiveInformation);
+        }
 
         return ResponseEntity.ok(result);
     }
@@ -361,6 +365,7 @@ public class ExerciseResource {
 
         User student = userService.getUser();
         Exercise exercise = exerciseService.findOne(exerciseId);
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
 
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
@@ -373,6 +378,11 @@ public class ExerciseResource {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);
+            }
+
+            // remove sensitive information for students
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
             }
         }
 

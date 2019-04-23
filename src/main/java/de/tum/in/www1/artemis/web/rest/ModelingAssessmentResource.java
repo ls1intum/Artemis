@@ -100,14 +100,19 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Participation participation = submission.getParticipation();
-        if (!courseService.userHasAtLeastStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
+        Exercise exercise = participation.getExercise();
+        if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return forbidden();
         }
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            exercise.filterSensitiveInformation();
+        }
+
         Result result = submission.getResult();
         if (result != null) {
             return ResponseEntity.ok(result);
-        }
-        else {
+        } else {
             return notFound();
         }
     }
