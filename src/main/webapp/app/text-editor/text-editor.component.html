@@ -48,14 +48,8 @@
         </div>
 
         <ng-template #hasFeedback>
-            <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
-                <jhi-highlighted-text-area [submissionText]="answer" [assessments]="result.feedbacks"></jhi-highlighted-text-area>
-            </div>
-            <div class="col-sm-12 col-md-5 col-xl-4" *ngIf="submission?.submitted && result && result.feedbacks">
-                <h4>Assessment</h4>
-                <ng-container *ngFor="let feedback of result.feedbacks; let i = index">
-                    <jhi-text-editor-score-card [feedback]="feedback" [highlightColor]="getColorForIndex(i)"></jhi-text-editor-score-card>
-                </ng-container>
+            <div class="col mb-3">
+                <jhi-text-result [result]="result"></jhi-text-result>
             </div>
         </ng-template>
     </div>
