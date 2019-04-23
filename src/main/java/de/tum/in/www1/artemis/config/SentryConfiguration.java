@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.config;
 
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +16,8 @@ import io.sentry.SentryClient;
 @Configuration
 public class SentryConfiguration {
 
+    private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
+
     @Value("${server.url}")
     private String SERVER_URL;
 
@@ -21,16 +27,16 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private String SENTRY_DSN;
 
-    SentryConfiguration() {
-        initSentry();
-    }
+    @PostConstruct
+    public void init() {
+        final String dsn = SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis";
+        log.info("Sentry DSN: " + dsn);
 
-    private void initSentry() {
         if (SENTRY_DSN == null) {
             return;
         }
 
-        final SentryClient client = Sentry.init(SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis");
+        final SentryClient client = Sentry.init(dsn);
         client.setRelease(VERSION);
         client.setEnvironment(getEnvironment());
     }

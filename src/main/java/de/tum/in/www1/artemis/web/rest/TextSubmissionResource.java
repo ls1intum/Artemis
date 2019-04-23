@@ -127,10 +127,9 @@ public class TextSubmissionResource {
             textSubmission.getParticipation().setSubmissions(null);
             textSubmission.getParticipation().setResults(null);
 
-            if (textSubmission.getParticipation().getExercise() != null && textSubmission.getParticipation().getExercise() instanceof TextExercise) {
-                // make sure the solution is not sent to the client
-                TextExercise textExerciseForClient = (TextExercise) textSubmission.getParticipation().getExercise();
-                textExerciseForClient.setSampleSolution(null);
+            if (textSubmission.getParticipation().getExercise() != null) {
+                // make sure sensitive information are not sent to the client
+                textSubmission.getParticipation().getExercise().filterSensitiveInformation();
             }
         }
     }

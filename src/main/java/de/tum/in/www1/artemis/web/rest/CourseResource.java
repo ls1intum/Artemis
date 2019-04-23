@@ -288,11 +288,16 @@ public class CourseResource {
 
         long exerciseCount = 0;
         for (Course course : courses) {
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                // remove sensitive information from the exercise for students
+                if (isStudent) {
+                    exercise.filterSensitiveInformation();
+                }
                 exerciseCount++;
             }
         }
@@ -518,6 +523,7 @@ public class CourseResource {
 
         User student = userService.getUser();
         Course course = courseService.findOne(courseId);
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
 
         List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
 
@@ -526,8 +532,11 @@ public class CourseResource {
 
             exercise.setParticipations(new HashSet<>());
 
-            // Removing not needed properties
+            // Removing not needed properties and sensitive information for students
             exercise.setCourse(null);
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
+            }
 
             for (Participation participation : participations) {
                 // Removing not needed properties
@@ -537,7 +546,6 @@ public class CourseResource {
                 exercise.addParticipation(participation);
             }
             course.addExercises(exercise);
-
         }
 
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");

@@ -15,7 +15,7 @@ export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
     public coursesToSelect: Course[];
-    public courseToRegister: Course;
+    public courseToRegister: Course = null;
     public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
