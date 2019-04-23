@@ -263,10 +263,8 @@ public class ModelingExerciseResource {
                         .headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
             }
 
-            // make sure the solution is not sent to the client
-            modelingExercise.setSampleSolutionExplanation(null);
-            modelingExercise.setSampleSolutionModel(null);
-
+            // make sure sensitive information are not sent to the client
+            modelingExercise.filterSensitiveInformation();
         }
         else {
             return ResponseEntity.badRequest()

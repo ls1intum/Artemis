@@ -87,4 +87,8 @@ public class ExampleSubmissionService {
         return exampleSubmissionRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission for submission with id \"" + submissionId + "\" does not exist"));
     }
+
+    public Optional<ExampleSubmission> getWithEagerExercise(Long exampleSubmissionId) {
+        return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
+    }
 }

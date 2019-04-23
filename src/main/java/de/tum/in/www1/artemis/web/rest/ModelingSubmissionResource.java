@@ -241,6 +241,13 @@ public class ModelingSubmissionResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before
+     * sending an exercise to the client for a student.
+     *
+     * IMPORTANT:   Do not call this method from a transactional context as this would remove the sensitive information
+     *              also from the entity in the database without explicitly saving it.
+     */
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client
         if (modelingSubmission.getParticipation() != null) {
@@ -248,9 +255,9 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null && exercise instanceof ModelingExercise && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                // make sure the solution is not sent to the client for students
-                ((ModelingExercise) exercise).filterSensitiveInformation();
+            if (exercise != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                // make sure that sensitive information is not sent to the client for students
+                exercise.filterSensitiveInformation();
             }
         }
     }
