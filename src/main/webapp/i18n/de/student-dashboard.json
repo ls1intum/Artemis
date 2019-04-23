@@ -64,7 +64,7 @@
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
-                "exerciseCount": "Anzahl an Aufgaben: {{ number }}",
+                "exerciseCount": "Teilgenommen an {{ number }} Übungen",
                 "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",
                 "relativeScore": "Relative Punktzahl: {{ number }}%",

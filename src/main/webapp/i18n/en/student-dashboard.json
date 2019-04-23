@@ -64,7 +64,7 @@
             },
             "statistics": {
                 "totalScore": "Your total score",
-                "exerciseCount": "Number of exercises: {{ number }}",
+                "exerciseCount": "Participated in {{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
