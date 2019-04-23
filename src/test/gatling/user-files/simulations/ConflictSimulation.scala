@@ -68,6 +68,10 @@ class ConflictSimulation extends Simulation {
             .post("/api/courses/${course_id}/exercises/${exercise_id}/participations")
             .headers(headers_http_authenticated_JSON)
             .check(status.is(201)))
+        .exec((http("Submit Model")
+            .put("/api/exercises/${exercise_id}/modeling-submissions")
+            .headers(headers_http_authenticated_JSON)
+            .check(status.is(200))
 
 
     setUp(scn.inject(atOnceUsers(1))).protocols(httpProtocol)
