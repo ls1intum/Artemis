@@ -57,7 +57,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
                     for (const participation of validParticipations) {
                         for (const result of participation.results) {
-                            if (result.rated) {
+                            if (result.rated && result.assessor) {
                                 const tutorId = result.assessor.id;
                                 if (!this.tutorLeaderboardData[tutorId]) {
                                     this.tutorLeaderboardData[tutorId] = {
