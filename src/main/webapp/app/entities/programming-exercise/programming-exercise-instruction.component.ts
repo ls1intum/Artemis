@@ -211,7 +211,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+            let participationId: number;
+            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
+                participationId = this.exercise.templateParticipation.id;
+            } else if (this.participation) {
+                participationId = this.participation.id;
+            } else {
+                // in this case, no participation is available
+                return Observable.of(null);
+            }
             return this.repositoryFileService.get(participationId, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
