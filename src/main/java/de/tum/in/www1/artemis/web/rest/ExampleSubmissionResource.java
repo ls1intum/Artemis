@@ -103,7 +103,7 @@ public class ExampleSubmissionResource {
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
 
         if (exampleSubmission.isPresent()) {
-            if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.get().getExercise())) {
+            if (! authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
                 return forbidden();
             }
         }
