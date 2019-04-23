@@ -6,7 +6,7 @@
         </span>
     </a>
     <ul class="dropdown-menu notification-container" ngbDropdownMenu>
-        <li class="dropdown-item" *ngFor="let notification of notifications">
+        <li class="dropdown-item" *ngFor="let notification of sortedNotifications">
             <div class="row notification-item mb-2 align-items-center" (click)="startNotification(notification)">
                 <div class="col">
                     <h5>
