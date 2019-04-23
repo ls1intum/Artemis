@@ -151,6 +151,16 @@ public class ParticipationResource {
         }
 
         Participation participation = participationService.startExercise(exercise, principal.getName());
+
+        // Hide information from students
+        if (!courseService.userHasAtLeastTAPermissions(course)) {
+            participation.getExercise().setExampleSubmissions(null);
+
+            if (participation.getExercise() instanceof TextExercise) {
+                ((TextExercise) participation.getExercise()).setSampleSolution(null);
+            }
+        }
+
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
     }
 
