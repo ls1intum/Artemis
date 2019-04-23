@@ -3,16 +3,16 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
-import { ResultComponent, ResultDetailComponent, ResultService } from './';
+import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
 import { MomentModule } from 'angular2-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 import { ResultWebsocketService } from './result-websocket.service';
 
 @NgModule({
     imports: [ArTEMiSSharedModule, MomentModule],
-    declarations: [ResultComponent, ResultDetailComponent, ResultHistoryComponent],
-    exports: [ResultComponent, ResultDetailComponent, ResultHistoryComponent],
-    entryComponents: [ResultComponent, ResultDetailComponent],
+    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],
     providers: [ResultService, ResultWebsocketService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

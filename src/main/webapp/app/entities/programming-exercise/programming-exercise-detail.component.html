@@ -68,11 +68,11 @@
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.templateParticipation.results"><jhi-result [participation]="programmingExercise.templateParticipation"></jhi-result></div>
+                    <div *ngIf="programmingExercise.templateParticipation.results"><jhi-updating-result [participation]="programmingExercise.templateParticipation"></jhi-updating-result></div>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.solutionParticipation.results"><jhi-result [participation]="programmingExercise.solutionParticipation"></jhi-result></div>
+                    <div *ngIf="programmingExercise.solutionParticipation.results"><jhi-updating-result [participation]="programmingExercise.solutionParticipation"></jhi-updating-result></div>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.problemStatement">Problem Statement</span></dt>
                 <dd>

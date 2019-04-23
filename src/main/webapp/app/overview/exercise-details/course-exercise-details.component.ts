@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
+import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
@@ -9,6 +10,7 @@ import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -32,6 +34,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
+    private participationUpdateListener: Subscription;
+    combinedParticipation: Participation;
     private resultSubscription: Subscription;
 
     formattedProblemStatement: string;
@@ -61,67 +65,71 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.loadExercise();
             }
         });
-        if (this.exercise === undefined) {
-            this.loadExercise();
-        }
     }
 
     loadExercise() {
-        this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
-            this.exercise = exercise;
-            this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-            if (this.hasResults) {
-                this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
-                    const aValue = moment(a.completionDate).valueOf();
-                    const bValue = moment(b.completionDate).valueOf();
-                    return aValue - bValue;
-                });
-                const sortedResultLength = this.sortedResults.length;
-                const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
-                this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
-            }
-            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-            this.subscribeForNewResults(this.exercise);
-        });
+        const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
+        if (cachedParticipations && cachedParticipations.length > 0) {
+            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                this.exercise = exerciseResponse.body;
+                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+                this.exercise.participations = cachedParticipations;
+                this.setExerciseStatusBadge();
+                this.mergeParticipations();
+                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+                this.subscribeForNewResults();
+            });
+        } else {
+            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
+                this.exercise = exercise;
+                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+                this.setExerciseStatusBadge();
+                this.mergeParticipations();
+                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+                this.subscribeForNewResults();
+            });
+        }
     }
 
     ngOnDestroy() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (this.participationUpdateListener) {
+            this.participationUpdateListener.unsubscribe();
         }
     }
 
-    subscribeForNewResults(exercise: Exercise) {
-        this.accountService.identity().then(user => {
-            if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
-                const participation = this.exercise.participations[0];
-                if (participation) {
-                    this.setupResultWebsocket(participation.id);
+    sortResults() {
+        if (this.hasResults) {
+            this.sortedResults = this.combinedParticipation.results.sort((a, b) => {
+                const aValue = moment(a.completionDate).valueOf();
+                const bValue = moment(b.completionDate).valueOf();
+                return aValue - bValue;
+            });
+            const sortedResultLength = this.sortedResults.length;
+            const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
+            this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
+        }
+    }
+
+    mergeParticipations() {
+        if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
+            this.combinedParticipation = this.participationService.mergeParticipations(this.exercise.participations);
+            this.sortResults();
+        }
+    }
+
+    subscribeForNewResults() {
+        if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
+            this.exercise.participations.forEach(participation => {
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
+            });
+            this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+                if (changedParticipation) {
+                    this.exercise.participations.map(el => {
+                        return el.id === changedParticipation.id ? changedParticipation : el;
+                    });
+                    this.mergeParticipations();
                 }
-            }
-        });
-    }
-
-    private setupResultWebsocket(participationId: number) {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-        this.resultWebsocketService.subscribeResultForParticipation(participationId).then(observable => {
-            this.resultSubscription = observable
-                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
-                .subscribe((result: Result) => this.handleNewResult(result));
-        });
-    }
-
-    handleNewResult(result: Result) {
-        const participation = this.exercise.participations[0];
-        if (participation) {
-            const results = participation.results;
-            if (!results.some(el => el.id === result.id)) {
-                participation.results.push(result);
-            }
+            });
         }
     }
 
@@ -161,6 +169,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return null;
         }
         const results = this.exercise.participations[0].results;
-        return results.filter(el => el.rated).pop();
+        const currentResult = results.filter(el => el.rated).pop();
+        currentResult.participation = this.exercise.participations[0];
+        return currentResult;
     }
 }

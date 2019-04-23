@@ -31,19 +31,19 @@
 
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
             </div>
         </div>

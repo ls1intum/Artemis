@@ -250,7 +250,7 @@
                 <td>{{ i + 1 }}</td>
                 <td>{{ complaint.submittedTime | date: 'MMM d, y HH:mm:ss' }}</td>
                 <td>
-                    <jhi-result [result]="complaint.result"></jhi-result>
+                    <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
                 </td>
                 <td>
                     {{ calculateComplaintStatus(complaint.accepted) }}
