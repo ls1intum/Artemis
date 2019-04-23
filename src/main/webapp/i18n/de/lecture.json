@@ -35,7 +35,7 @@
                 "newAttachment": "Neuer Anhang",
                 "editAttachment": "Anhang bearbeiten",
                 "notificationText": "Mitteilungstext",
-                "notificationPlaceholder": "(Optional)"
+                "notificationPlaceholder": "Optional: Mitteilung über die Änderung"
             }
         }
     }
