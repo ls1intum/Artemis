@@ -35,7 +35,7 @@
                 "newAttachment": "New Attachment",
                 "editAttachment": "Edit Attachment",
                 "notificationText": "Notification Text",
-                "notificationPlaceholder": "(Optional)"
+                "notificationPlaceholder": "Optional: Notification about changes"
             }
         }
     }
