@@ -54,14 +54,15 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs ArTEMiS about changed test cases for the "id" programmingExercise.
-     *
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs ArTEMiS about changed test cases for the "id" programmingExercise. e
+     * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
+        // TODO: the following leads to an exception: org.springframework.dao.InvalidDataAccessApiUsageException: Authentication object cannot be null
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
         if (!(exercise instanceof ProgrammingExercise)) {
