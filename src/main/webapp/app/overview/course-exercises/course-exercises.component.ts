@@ -71,7 +71,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
             const dateValue = exercise.dueDate;
-            debugger;
             this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
