@@ -148,7 +148,8 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(result);
 
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        // NOTE: it does not make sense to notify students here!
+        // groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(result);
     }
 
@@ -390,7 +391,6 @@ public class QuizExerciseResource {
             quizStatisticService.recalculateStatistics(updatedQuizExercise);
         }
 
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedQuizExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(updatedQuizExercise);
     }
 }
