@@ -277,7 +277,6 @@ public class QuizExerciseResource {
 
             // set quiz to visible
             quizExercise.setIsVisibleBeforeStart(true);
-            groupNotificationService.notifyStudentGroupAboutExerciseVisibility(quizExercise);
             break;
         case "open-for-practice":
             // check if quiz has ended
