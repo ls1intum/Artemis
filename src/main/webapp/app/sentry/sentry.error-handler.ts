@@ -38,9 +38,9 @@ export class SentryErrorHandler implements ErrorHandler {
     }
 
     handleError(error: any): void {
-        // We ignore HttpError in the range 400-499
+        // We do not send to Sentry HttpError in the range 400-499
         if (error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
-            return;
+            throw error;
         }
 
         captureException(error.originalError || error);
