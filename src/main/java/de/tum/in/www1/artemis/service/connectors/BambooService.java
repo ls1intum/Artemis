@@ -646,7 +646,7 @@ public class BambooService implements ContinuousIntegrationService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving results", e);
+            log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ":" + e.getMessage());
         }
         if (response != null) {
             Map<String, Object> result = new HashMap<>();
