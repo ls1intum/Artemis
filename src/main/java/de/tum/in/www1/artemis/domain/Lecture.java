@@ -43,7 +43,7 @@ public class Lecture implements Serializable {
     private ZonedDateTime endDate;
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties("lecture")
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
