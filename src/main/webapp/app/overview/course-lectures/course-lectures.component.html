@@ -4,7 +4,7 @@
             <div class="exercise-controls d-none d-sm-block" *ngIf="course.lectures && course.lectures.length > 0">
                 <div ngbDropdown placement="bottom-right" class="d-inline-block">
                     <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
-                        {{ 'arTeMiSApp.courseOverview.exerciseList.sortExercises' | translate }}
+                        {{ 'arTeMiSApp.courseOverview.lectureList.sortLectures' | translate }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button class="dropdown-item" (click)="groupLectures(DUE_DATE_DESC)">

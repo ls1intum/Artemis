@@ -75,7 +75,8 @@
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
-                "noLectures": "No lectures available for the course."
+                "noLectures": "No lectures available for the course.",
+                "sortLectures": "Sort lectures"
             },
             "lectureDetails": {
                 "description": "Description",

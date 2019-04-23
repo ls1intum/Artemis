@@ -75,7 +75,8 @@
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
                 "isLecture": "Das ist eine Vorlesung",
-                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs."
+                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs.",
+                "sortLectures": "Vorlesungen sortieren"
             },
             "lectureDetails": {
                 "description": "Beschreibung",
