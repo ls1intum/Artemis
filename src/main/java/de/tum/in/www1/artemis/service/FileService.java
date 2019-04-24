@@ -71,12 +71,18 @@ public class FileService {
             }
             else {
                 // delete old file
-                File oldFile = new File(actualPathForPublicPath(oldFilePath));
-                if (!oldFile.delete()) {
-                    log.warn("Could not delete file: {}", oldFile);
+                try {
+                    File oldFile = new File(actualPathForPublicPath(oldFilePath));
+
+                    if (!oldFile.delete()) {
+                        log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
+                    }
+                    else {
+                        log.debug("Deleted Orphaned File: {}", oldFile);
+                    }
                 }
-                else {
-                    log.debug("Deleted Orphaned File: {}", oldFile);
+                catch (Exception ex) {
+                    log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file '{}' due to exception {}", oldFilePath, ex.getMessage());
                 }
             }
         }
