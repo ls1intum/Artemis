@@ -105,7 +105,7 @@
                     <div *ngSwitchCase="'initialized'">
                         <div *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
                             <a
-                                routerLink="/code-editor/{{ exercise.participations[0].id }}"
+                                routerLink="/editor/{{ exercise.participations[0].id }}"
                                 routerLinkActive="active"
                                 class="btn btn-primary btn-sm btn-block"
                                 id="btn-online-editor"

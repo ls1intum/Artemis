@@ -42,8 +42,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
-    umlModel: UMLModel; // input model for Apollon
-    hasElements = false; // indicates if the current model has at least one element
+    umlModel: UMLModel;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -96,7 +95,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
                             this.umlModel = JSON.parse(this.submission.model);
-                            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                         }
                         if (this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
@@ -134,7 +132,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.submission = submission;
                 if (this.submission.model) {
                     this.umlModel = JSON.parse(this.submission.model);
-                    this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
                 if (this.submission.result && this.submission.result.rated) {
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
@@ -283,13 +280,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel(): void {
-        if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
-            return;
-        }
         const umlModel = this.modelingEditor.getCurrentModel();
-        this.hasElements = umlModel.elements && umlModel.elements.length !== 0;
         const diagramJson = JSON.stringify(umlModel);
-        if (this.submission && diagramJson) {
+        if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
     }
@@ -389,9 +382,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * is used in the submit() function
      */
     calculateNumberOfModelElements(): number {
-        if (this.submission && this.submission.model) {
-            const umlModel = JSON.parse(this.submission.model);
-            return umlModel.elements.length + umlModel.relationships.length;
+        if (this.umlModel) {
+            return this.umlModel.elements.length + this.umlModel.relationships.length;
         }
         return 0;
     }

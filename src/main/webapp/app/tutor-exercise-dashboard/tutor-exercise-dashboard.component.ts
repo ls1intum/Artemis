@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService, StatsForTutorDashboard } from '../entities/course';
+import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -34,12 +34,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
     courseId: number;
     exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfSubmissions = 0;
-    numberOfAssessments = 0;
-    numberOfComplaints = 0;
-    numberOfTutorComplaints = 0;
-    totalAssessmentPercentage = 0;
-    tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
     unassessedSubmission: Submission;
@@ -143,22 +137,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.complaintService
             .getForTutor(this.exerciseId)
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
-
-        this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<StatsForTutorDashboard>) => {
-                this.numberOfSubmissions = res.body.numberOfSubmissions;
-                this.numberOfAssessments = res.body.numberOfAssessments;
-                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
-                this.numberOfComplaints = res.body.numberOfComplaints;
-                this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
-
-                if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
-                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions) * 100);
-                }
-            },
-            (response: string) => this.onError(response),
-        );
     }
 
     // TODO CZ: too much duplicated code
@@ -180,6 +158,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 )
                 .subscribe((submissions: TextSubmission[]) => {
                     this.submissions = submissions;
+                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
                 });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.modelingSubmissionService

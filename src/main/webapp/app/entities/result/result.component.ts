@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation';
-import { Result, ResultDetailComponent, ResultService, ResultWebsocketService } from '.';
+import { Result, ResultDetailComponent, ResultService } from '.';
 import { ProgrammingSubmission } from '../programming-submission';
 import { JhiWebsocketService, AccountService } from '../../core';
 import { RepositoryService } from 'app/entities/repository/repository.service';
@@ -12,8 +12,6 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-result',
@@ -38,7 +36,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showUngradedResults: boolean;
     @Output() newResult = new EventEmitter<object>();
 
-    private resultSubscription: Subscription;
+    websocketChannelResults: string;
     websocketChannelSubmissions: string;
     textColorClass: string;
     hasFeedback: boolean;
@@ -50,7 +48,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private resultWebsocketService: ResultWebsocketService,
         private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,
@@ -104,10 +101,25 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 (this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) ||
                 (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))
             ) {
+                // unsubscribe old results if a subscription exists
                 // subscribe for new results (e.g. when a programming exercise was automatically tested)
-                this.setupResultWebsocket();
+                if (this.websocketChannelResults) {
+                    this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+                }
+                this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
+                this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+                this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
+                    // convert json string to moment
+                    console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                    newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                    this.handleNewResult(newResult);
+                });
 
+                // unsubscribe old submissions if a subscription exists
                 // subscribe for new submissions (e.g. when code was pushed and is currently built)
+                if (this.websocketChannelSubmissions) {
+                    this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
+                }
                 this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
                 this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
                 this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
@@ -115,17 +127,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
                 });
             }
-        });
-    }
-
-    private setupResultWebsocket() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-        this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable
-                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
-                .subscribe(result => this.handleNewResult(result));
         });
     }
 
@@ -163,8 +164,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (this.websocketChannelResults) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
         }
         if (this.websocketChannelSubmissions) {
             this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);

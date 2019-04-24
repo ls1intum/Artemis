@@ -2,11 +2,10 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { CodeEditorComponent } from './code-editor.component';
-import { PendingChangesGuard } from 'app/shared';
 
 export const codeEditorRoute: Routes = [
     {
-        path: 'code-editor/:participationId',
+        path: 'editor/:participationId',
         component: CodeEditorComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -16,6 +15,5 @@ export const codeEditorRoute: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
 ];

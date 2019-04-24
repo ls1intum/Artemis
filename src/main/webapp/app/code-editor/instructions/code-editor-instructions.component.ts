@@ -8,7 +8,7 @@ import { CodeEditorComponent } from '../code-editor.component';
 import { CodeEditorService } from '../code-editor.service';
 import { Participation } from '../../entities/participation';
 import { RepositoryService } from '../../entities/repository/repository.service';
-import { ResultService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
 
 @Component({
@@ -27,6 +27,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
 
     @Input()
     participation: Participation;
+    @Input()
+    latestResult: Result;
 
     constructor(private parent: CodeEditorComponent, private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
 
@@ -71,9 +73,5 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
-    }
-
-    onNoInstructionsAvailable() {
-        this.noInstructionsAvailable = true;
     }
 }

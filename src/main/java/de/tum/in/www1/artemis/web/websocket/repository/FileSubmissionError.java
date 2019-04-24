@@ -11,14 +11,10 @@ public class FileSubmissionError extends WebsocketError implements Serializable 
     private Long participationId;
     private String fileName;
 
-    FileSubmissionError(String fileName, String error) {
-        super(error);
-        this.fileName = fileName;
-    }
-
-    FileSubmissionError(Long participationId, String error) {
+    FileSubmissionError(Long participationId, String fileName, String error) {
         super(error);
         this.participationId = participationId;
+        this.fileName = fileName;
     }
 
     public Long getParticipationId() {

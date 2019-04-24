@@ -227,6 +227,7 @@ File browser styles
 }
 
 .node-selected {
+    color: #ffffff;
     background-color: #428bca !important;
 }
 
@@ -391,14 +392,6 @@ Stepwizard styles (editor instructions)
     display: table-cell;
     text-align: center;
     position: relative;
-
-    &--no-result.btn {
-        cursor: default;
-    }
-
-    &--failed.btn {
-        cursor: pointer;
-    }
 }
 
 .btn-circle.btn-circle {

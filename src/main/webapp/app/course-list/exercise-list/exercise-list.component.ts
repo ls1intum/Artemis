@@ -95,7 +95,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         this.routerSubscription = this.router.events
             .filter(event => event instanceof NavigationStart)
             .subscribe((event: NavigationStart) => {
-                if (event.url.startsWith('/code-editor')) {
+                if (event.url.startsWith('/editor')) {
                     // Extract participation id from event url and cast to number
                     const participationId = Number(event.url.split('/').slice(-1));
                     // Search through all exercises and the participations within each of them to obtain the target participation

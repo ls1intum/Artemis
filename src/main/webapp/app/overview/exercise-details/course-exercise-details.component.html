@@ -34,7 +34,8 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.participations && exercise.participations[0]">
+                <jhi-programming-exercise-instructions [exercise]="exercise"
+                    [participation]="exercise.participations && exercise.participations[0]">
                 </jhi-programming-exercise-instructions>
             </div>
             <ng-template #exerciseTemplate>

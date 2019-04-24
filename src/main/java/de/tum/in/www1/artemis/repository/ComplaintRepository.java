@@ -62,21 +62,4 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * Delete all complaints that belong to submission results of a given exercise
      */
     void deleteByResult_Participation_Exercise_Id(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * This magic method counts the number of complaints associated to an exercise id
-     *
-     * @param exerciseId - the id of the course we want to filter by
-     * @return number of complaints associated to exercise exerciseId
-     */
-    long countByResult_Participation_Exercise_Id(Long exerciseId);
-
-    /**
-     * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id
-     *
-     * @param exerciseId - the id of the exercise we want to filter by
-     * @param tutorId  - the id of the tutor we are interested in
-     * @return number of complaints associated to exercise exerciseId and tutor tutorId
-     */
-    long countByResult_Participation_Exercise_IdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
 }

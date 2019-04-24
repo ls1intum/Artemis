@@ -15,7 +15,6 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.Nullable;
-import javax.naming.NoPermissionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
-import java.util.HashMap;
 
 
 @Controller
@@ -72,62 +69,53 @@ public class RepositoryWebsocketService {
         return true;
     }
 
-
     /**
-     * Retrieve the file from repository and update its content with the submission's content.
-     * Throws exceptions if the user doesn't have permissions, the file can't be retrieved or it can't be updated.
-     * @param participationId id of participation to which the file belongs
-     * @param submission information about file update
-     * @param principal used to check if the user can update the file
-     * @throws InterruptedException
-     * @throws IOException
-     * @throws NoPermissionException
+     * Path used for processing and persisting file updates.
+     * Sends a success message if the file changes could be saved, error messages if the process fails
+     * when the git repository can't be reached or the file can't be found.
+     * To store the update it is necessary that the user has the necessary permissions to make changes in the repository.
+     *
+     * @param participationId Participation ID
+     * @param submission
+     * @param principal
+     * @return
      */
-    private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
-        Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
-
-        if(!file.isPresent()) {
-            FileSubmissionError error = new FileSubmissionError(submission.getFileName(), "File could not be found.");
-        }
-
-        InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
-        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    /**
-     * Update a list of files based on the submission's content.
-     * @param participationId id of participation to which the files belong
-     * @param submissions information about the file updates
-     * @param principal used to check if the user can update the files
-     */
-    @MessageMapping("/topic/repository/{participationId}/files")
-    public void updateFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
+    @MessageMapping("/topic/repository/{participationId}/file")
+    public void updateFile(@DestinationVariable Long participationId, @Payload FileSubmission submission, Principal principal) {
         Participation participation = participationService.findOne(participationId);
-        // User must have the necessary permissions to update a file
-        if (!checkParticipation(participation, principal)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", error);
-            return;
-        }
-        // Git repository must be available to update a file
-        Repository repository;
-        try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
-        } catch (IOException | InterruptedException ex) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", error);
-            return;
-        }
-        // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
-        HashMap<String, String> fileSaveResult = new HashMap<>();
-        submissions.forEach((submission) -> {
+        if (checkParticipation(participation, principal)) {
+            Repository repository;
+            Optional<File> file;
+
             try {
-                fetchAndUpdateFile(submission, repository);
-                fileSaveResult.put(submission.getFileName(), null);
-            } catch (IOException ex) {
-                fileSaveResult.put(submission.getFileName(), ex.getMessage());
+                repository = gitService.get().getOrCheckoutRepository(participation);
+                file = gitService.get().getFileByName(repository, submission.getFileName());
+            } catch (IOException | InterruptedException ex) {
+                messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", ex.getMessage());
+                return;
             }
-        });
-        messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", fileSaveResult);
+
+            if(!file.isPresent()) {
+                FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "File could not be found.");
+                messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", error);
+                return;
+            }
+
+            try {
+                InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
+                Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch(IOException ex) {
+                messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", ex.getMessage());
+                return;
+            }
+
+            FileSubmissionSuccess successMessage = new FileSubmissionSuccess(submission.getFileName());
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", successMessage);
+
+        } else {
+            FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "User does not have the necessary permissions.");
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", error);
+        }
     }
+
 }

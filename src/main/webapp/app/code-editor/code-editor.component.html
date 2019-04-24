@@ -1,6 +1,4 @@
 <div class="editor-wrapper">
-    <jhi-alert></jhi-alert>
-    <jhi-alert-error></jhi-alert-error>
     <nav class="navbar navbar-light navbar-expand-sm jh-navbar">
         <div class="jh-logo-container float-left editor-top-left">
             <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title"> </span>
@@ -9,17 +7,22 @@
         <div class="navbar-collapse editor-top-right">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
-                    <jhi-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult()" [hidden]="isBuilding"> </jhi-result>
+                    <jhi-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult($event)" [hidden]="isBuilding"> </jhi-result>
                 </li>
             </ul>
         </div>
-        <jhi-code-editor-actions
-            [editorState]="editorState"
-            [commitState]="commitState"
-            [isBuilding]="isBuilding"
-            [onSave]="editor.saveChangedFiles.bind(editor)"
-            [onCommit]="commit.bind(this)"
-        ></jhi-code-editor-actions>
+        <button
+            type="button"
+            class="btn btn-primary navbar-btn"
+            [disabled]="!isSaved || isBuilding"
+            (click)="commit($event)"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="Stage, commit, push, build and test your changes."
+        >
+            <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building</span></span>
+            <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.commitAndRun">Commit & Run Tests</span></span>
+        </button>
     </nav>
 
     <div class="editor-main">
@@ -28,10 +31,6 @@
                 [participation]="participation"
                 [fileName]="selectedFile"
                 [repositoryFiles]="repositoryFiles"
-                [unsavedFiles]="unsavedFiles"
-                [errorFiles]="errorFiles"
-                [editorState]="editorState"
-                [commitState]="commitState"
                 (selectedFile)="updateSelectedFile($event)"
                 (createdFile)="updateRepositoryCommitStatus($event)"
                 (deletedFile)="updateRepositoryCommitStatus($event)"
@@ -45,16 +44,13 @@
                 [selectedFile]="selectedFile"
                 [repositoryFiles]="repositoryFiles"
                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
-                [editorState]="editorState"
-                (onEditorStateChange)="setEditorState($event)"
-                (onUnsavedFilesChange)="setUnsavedFiles($event)"
-                (onError)="onError($event)"
+                (saveStatusChange)="updateSaveStatusLabel($event)"
             >
             </jhi-code-editor-ace>
         </div>
 
         <div class="editor-sidebar-right">
-            <jhi-code-editor-instructions [participation]="participation"> </jhi-code-editor-instructions>
+            <jhi-code-editor-instructions [participation]="participation" [latestResult]="latestResult"> </jhi-code-editor-instructions>
         </div>
     </div>
 

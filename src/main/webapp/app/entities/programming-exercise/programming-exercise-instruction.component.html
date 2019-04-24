@@ -9,8 +9,7 @@
                         data-placement="bottom"
                         title="{{ step.title }}"
                         class="btn btn-light btn-circle stepwizard-circle"
-                        [class.stepwizard-step--failed]="!step.done && latestResult?.feedbacks?.length"
-                        [class.stepwizard-step--no-result]="!step.done && !latestResult?.feedbacks?.length"
+                        [class.test-passing]="step.done"
                         (click)="triggerTestStatusClick(i)"
                     >
                         <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done"></fa-icon>

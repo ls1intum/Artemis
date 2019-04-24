@@ -22,10 +22,8 @@ import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build
 import { CodeEditorFileBrowserCreateComponent } from './file-browser/code-editor-file-browser-create';
 import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
-import { CodeEditorStatusComponent } from './status/code-editor-status.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -48,8 +46,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
         EditorInstructionsResultDetailComponent,
-        CodeEditorStatusComponent,
-        CodeEditorActionsComponent,
     ],
     exports: [CodeEditorComponent],
     entryComponents: [
@@ -60,8 +56,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorFileBrowserDeleteComponent,
         EditorInstructionsResultDetailComponent,
         ResultComponent,
-        CodeEditorStatusComponent,
-        CodeEditorActionsComponent,
     ],
     providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

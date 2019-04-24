@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -29,16 +28,14 @@ public class ResultService {
     private final UserService userService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
-    private final FeedbackService feedbackService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final LtiService ltiService;
     private final SimpMessageSendingOperations messagingTemplate;
 
 
-    public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
         this.userService = userService;
         this.participationService = participationService;
-        this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
@@ -86,10 +83,9 @@ public class ResultService {
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it.
-     * Fetch and attach the result's feedback items to it.
+     * Use the given requestBody to extract the relevant information from it
      * @param participation Participation for which the build was finished
-     * @param requestBody RequestBody containing the build result and its feedback items
+     * @param requestBody RequestBody containing all relevant information
      */
     public void onResultNotifiedNew(Participation participation, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participation.getId());

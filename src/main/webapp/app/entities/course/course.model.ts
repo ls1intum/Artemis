@@ -48,5 +48,4 @@ export type StatsForTutorDashboard = {
     numberOfTutorAssessments: number;
     numberOfComplaints: number;
     numberOfSubmissions: number;
-    numberOfTutorComplaints: number;
 };
