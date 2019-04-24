@@ -134,11 +134,22 @@ public class ModelingSubmissionResource {
 
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            return ResponseEntity.ok().body(modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId()));
+            List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise));
         }
 
         List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(clearStudentInformation(submissions, exercise));
+    }
+
+    /**
+     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
+     */
+    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            submissions.forEach(submission -> submission.getParticipation().setStudent(null));
+        }
+        return submissions;
     }
 
     /**
@@ -258,6 +269,10 @@ public class ModelingSubmissionResource {
             if (exercise != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 // make sure that sensitive information is not sent to the client for students
                 exercise.filterSensitiveInformation();
+            }
+            // remove information about the student from the submission for tutors to ensure a double-blind assessment
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                modelingSubmission.getParticipation().setStudent(null);
             }
         }
     }
