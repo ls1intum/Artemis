@@ -28,7 +28,7 @@ import { RepositoryFileService } from '../repository';
 import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
 
 type Step = {
     title: string;
@@ -119,6 +119,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
+        } else if (problemStatementHasChanged(changes)) {
+            // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
+            // This is e.g. the case if the parent component uses an editor to update the problemStatement.
+            this.updateMarkdown();
         }
     }
 
