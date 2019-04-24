@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -35,8 +35,8 @@ public class ModelingSubmissionService {
 
     private final ParticipationRepository participationRepository;
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository, CompassService compassService,
-                                     ParticipationService participationService, ParticipationRepository participationRepository) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository,
+            CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
@@ -82,18 +82,16 @@ public class ModelingSubmissionService {
     @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutResult(modelingExercise)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         lockSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
 
     /**
-     * Given an exercise, find a modeling submission for that exercise which still doesn't have any result.
-     * If the diagram type is supported by Compass we get the next optimal submission from Compass, i.e. the submission
-     * for which an assessment means the most knowledge gain for the automatic assessment mechanism.
-     * If it's not supported by Compass we just get a random submission without assessment. We relay for the randomness
-     * to `findAny()`, which return any element of the stream. While it is not mathematically random, it is not
-     * deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
+     * Given an exercise, find a modeling submission for that exercise which still doesn't have any result. If the diagram type is supported by Compass we get the next optimal
+     * submission from Compass, i.e. the submission for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not supported by Compass
+     * we just get a random submission without assessment. We relay for the randomness to `findAny()`, which return any element of the stream. While it is not mathematically
+     * random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @return a modeling submission without any result
@@ -152,11 +150,22 @@ public class ModelingSubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
 
-        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), username);
+        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(), username);
         if (!optionalParticipation.isPresent()) {
-            throw new EntityNotFoundException("No participation found for " + username + " in exercise " + modelingExercise.getId());
+            throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
         Participation participation = optionalParticipation.get();
+
+        // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
+        // get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have
+        // a chance to try it out again.
+        // TODO: think about how we can enable retry again in the future in a fair way
+        // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
+        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(submission -> submission.isSubmitted());
+        if (submittedSubmissionExists) {
+            throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission",
+                    "participationExists");
+        }
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -168,13 +177,8 @@ public class ModelingSubmissionService {
 
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
-            checkAutomaticResult(modelingSubmission);
+            checkAutomaticResult(modelingSubmission, modelingExercise);
             participation.setInitializationState(InitializationState.FINISHED);
-        }
-        else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
-            // save submission to HashMap if exercise not ended yet
-            User user = participation.getStudent();
-            AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
@@ -189,15 +193,12 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it.
-     * We remove the model from the models waiting for assessment in Compass to prevent other tutors from retrieving it
-     * in the first place.
-     * Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client
-     * will not allow tutors to assess a model when an assessor is already assigned. If no result exists for this
-     * submission we create one first.
+     * Soft lock the submission to prevent other tutors from receiving and assessing it. We remove the model from the models waiting for assessment in Compass to prevent other
+     * tutors from retrieving it in the first place. Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param modelingSubmission the submission to lock
-     * @param modelingExercise the exercise to which the submission belongs to (needed for Compass)
+     * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         if (modelingSubmission.getResult() == null) {
@@ -238,18 +239,16 @@ public class ModelingSubmissionService {
     }
 
     public ModelingSubmission findOne(Long id) {
-        return modelingSubmissionRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+        return modelingSubmissionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     public ModelingSubmission findOneWithEagerResult(Long id) {
-        return modelingSubmissionRepository.findByIdWithEagerResult(id)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+        return modelingSubmissionRepository.findByIdWithEagerResult(id).orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     public ModelingSubmission findOneWithEagerResultAndFeedback(Long id) {
         return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(id)
-            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     /**
@@ -258,7 +257,10 @@ public class ModelingSubmissionService {
      *
      * @param modelingSubmission the modeling submission that should be updated with the automatic assessment
      */
-    public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
+    public void checkAutomaticResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        if (!compassService.isSupported(modelingExercise.getDiagramType())) {
+            return;
+        }
         Participation participation = modelingSubmission.getParticipation();
         Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
         boolean automaticAssessmentAvailable = optionalAutomaticResult.isPresent() && optionalAutomaticResult.get().getAssessmentType().equals(AssessmentType.AUTOMATIC);

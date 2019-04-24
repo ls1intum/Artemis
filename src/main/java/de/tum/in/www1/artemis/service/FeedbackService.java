@@ -38,13 +38,14 @@ public class FeedbackService {
      * @return a set of feedback objects including test case names and error messages
      */
     @Transactional
+    @Deprecated
     public List<Feedback> getFeedbackForBuildResult(Result result) {
 
         // Please note: this is a migration for the old case when we did not store feedback in the database
         // Provide access to results with no feedback in the database
         // If the build failed (no feedback, but build logs) and the build plan does not exist any more (because it was cleaned up before),
         // we cannot send feedback to the student, this case is handled in the continuous integration service
-        if(!result.isSuccessful() && result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
+        if(!result.isSuccessful() && (result.getFeedbacks() == null || result.getFeedbacks().size() == 0)) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }

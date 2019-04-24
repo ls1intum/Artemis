@@ -1,12 +1,12 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Interactable } from 'interactjs';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
-import { compose, fromPairs, map, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -14,52 +14,62 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { Result } from '../entities/result';
-import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
+import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
+import { Interactable } from 'interactjs';
+import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
+import { ComponentCanDeactivate } from 'app/shared';
+import { EditorState } from 'app/entities/ace-editor/editor-state.model';
+import { CommitState } from 'app/entities/ace-editor/commit-state.model';
+import { Observable, throwError } from 'rxjs';
+import { ResultService, Result } from 'app/entities/result';
+import { Feedback } from 'app/entities/feedback';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
-export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
+export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
+
     /** Dependencies as defined by the Editor component */
     participation: Participation;
-    repository: RepositoryService;
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
+    unsavedFiles: string[] = [];
+    errorFiles: string[] = [];
     session: Session;
-    latestResult: Result;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
-    saveStatusLabel: string;
-    saveStatusIcon: { spin: boolean; icon: string; class: string };
 
-    /** File Status Booleans **/
-    isSaved = true;
+    /** Code Editor State Booleans **/
+    editorState = EditorState.CLEAN;
+    commitState = CommitState.UNDEFINED;
     isBuilding = false;
-    isCommitted: boolean;
 
     /**
      * @constructor CodeEditorComponent
      * @param {ActivatedRoute} route
-     * @param {WindowRef} $window
      * @param {ParticipationService} participationService
      * @param {ParticipationDataProvider} participationDataProvider
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
+     * @param {LocalStorageService} localStorageService
      */
     constructor(
         private route: ActivatedRoute,
-        private $window: WindowRef,
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
+        private resultService: ResultService,
         private localStorageService: LocalStorageService,
+        private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -69,81 +79,160 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * we use it in order to spare any additional REST calls
      */
     ngOnInit(): void {
-        /** Assign repository */
-        this.repository = this.repositoryService;
-
         this.paramSub = this.route.params.subscribe(params => {
-            // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
-                // We found a matching participation in the data provider, so we can avoid doing a REST call
-                this.participation = this.participationDataProvider.participationStorage;
-                this.obtainLatestResult();
-            } else {
-                /** Query the participationService for the participationId given by the params */
-                this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
-                    this.participation = response.body;
-                    this.obtainLatestResult();
-                });
-            }
-            /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(params['participationId']).subscribe(
-                files => {
-                    // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files
-                        // Filter Readme file that was historically in the student's assignment repo
-                        .filter(value => value !== 'README.md')
-                        // Remove binary files as they can't be displayed in an editor
-                        .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
-                    this.checkIfRepositoryIsClean();
-                    this.loadSession();
-                },
-                (error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                },
-            );
+            const participationId = Number(params['participationId']);
+            // First: Load participation, which is needed for all successive calls
+            this.loadParticipation(participationId)
+                .pipe(
+                    // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
+                    switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
+                    // Load the participation with its result and result details, so that sub components don't try to also load the details
+                    flatMap(participation => {
+                        const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
+                        return latestResult
+                            ? this.loadResultDetails(latestResult).pipe(
+                                  rxMap(feedback => {
+                                      if (feedback) {
+                                          participation.results[0].feedbacks = feedback;
+                                      }
+                                      return participation;
+                                  }),
+                              )
+                            : Observable.of(participation);
+                    }),
+                    tap(participation => (this.participation = participation)),
+                    switchMap(() => this.checkIfRepositoryIsClean()),
+                    tap(commitState => (this.commitState = commitState)),
+                    switchMap(() => this.loadFiles()),
+                    tap(files => (this.repositoryFiles = files)),
+                    tap(() => this.loadSession()),
+                )
+                .subscribe(
+                    () => {},
+                    err => {
+                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                        this.onError(err);
+                    },
+                );
         });
-
-        /** Assign repository */
-        this.repository = this.repositoryService;
     }
 
-    obtainLatestResult() {
-        if (this.participation.results && this.participation.results.length > 0) {
-            this.latestResult = this.participation.results[0];
+    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
     /**
-     * @function ngOnChanges
-     * @desc Checks if the repository has uncommitted changes
-     * @param changes
+     * Load files from the participants repository.
+     * Files that are not relevant for the conduction of the exercise are removed from result.
      */
-    ngOnChanges(changes: SimpleChanges) {
-        this.checkIfRepositoryIsClean();
+    private loadFiles(): Observable<string[]> {
+        return this.repositoryFileService.query(this.participation.id).pipe(
+            rxMap((files: string[]) =>
+                files
+                    // Filter Readme file that was historically in the student's assignment repo
+                    .filter(value => !value.includes('README.md'))
+                    // Remove binary files as they can't be displayed in an editor
+                    .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
+            ),
+            catchError((error: HttpErrorResponse) => {
+                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                return Observable.of([]);
+            }),
+        );
+    }
+
+    /**
+     * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
+     * @param participationId
+     */
+    private loadParticipation(participationId: number): Observable<Participation | null> {
+        if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
+            // We found a matching participation in the data provider, so we can avoid doing a REST call
+            return Observable.of(this.participationDataProvider.participationStorage);
+        } else {
+            return this.participationService.findWithLatestResult(participationId).pipe(
+                catchError(() => Observable.of(null)),
+                rxMap(res => res && res.body),
+            );
+        }
+    }
+
+    /**
+     * @function loadResultDetails
+     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Mutates the input parameter result.
+     */
+    loadResultDetails(result: Result): Observable<Feedback[] | null> {
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => res && res.body),
+        );
+    }
+
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
+    canDeactivate() {
+        return !this.unsavedFiles || !this.unsavedFiles.length;
     }
 
     /**
      * @function checkIfRepositoryIsClean
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
-    checkIfRepositoryIsClean(): void {
-        this.repository.isClean(this.participation.id).subscribe(res => {
-            this.isCommitted = res.isClean;
-        });
+    checkIfRepositoryIsClean(): Observable<CommitState> {
+        return this.repositoryService.isClean(this.participation.id).pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        );
     }
 
     /**
-     * @function updateSaveStatusLabel
-     * @desc Callback function for a save status changes of files
-     * @param $event Event object which contains information regarding the save status of files
+     * Store the build log error data in the localStorage of the browser (synchronous action).
      */
-    updateSaveStatusLabel($event: SaveStatusChange) {
-        this.isSaved = $event.isSaved;
-        if (!this.isSaved) {
-            this.isCommitted = false;
+    storeSession() {
+        this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: this.buildLogErrors }));
+    }
+
+    /**
+     * Set the editor state.
+     * @param editorState
+     */
+    setEditorState(editorState: EditorState) {
+        this.editorState = editorState;
+    }
+
+    /**
+     * Show an error as an alert in the top of the editor html.
+     * Used by other components to display errors.
+     * The error must already be provided translated by the emitting component.
+     */
+    onError(error: string) {
+        this.jhiAlertService.error(`arTeMiSApp.editor.errors.${error}`);
+    }
+
+    /**
+     * Set unsaved files and check if this changes the commit state.
+     * @param fileNames
+     */
+    setUnsavedFiles(fileNames: string[]) {
+        this.unsavedFiles = fileNames;
+
+        if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
+            this.editorState = EditorState.CLEAN;
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        } else if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState === CommitState.WANTS_TO_COMMIT) {
+            this.editorState = EditorState.CLEAN;
+            this.commit();
+        } else if (!this.unsavedFiles.length) {
+            this.editorState = EditorState.CLEAN;
+        } else {
+            this.editorState = EditorState.UNSAVED_CHANGES;
         }
-        this.saveStatusLabel = $event.saveStatusLabel;
-        this.saveStatusIcon = $event.saveStatusIcon;
     }
 
     /**
@@ -151,10 +240,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Callback function for when a new result is received from the result component
      * @param $event Event object which contains the newly received result
      */
-    updateLatestResult($event: any) {
+    updateLatestResult() {
         this.isBuilding = false;
-        this.latestResult = $event.newResult;
-        this.participation = { ...this.participation, results: [this.latestResult, ...this.participation.results] };
     }
 
     /**
@@ -165,6 +252,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+            this.errorFiles = Object.keys(this.buildLogErrors.errors);
+            // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
+            if (this.session) {
+                this.storeSession();
+            }
         }
     }
 
@@ -182,25 +274,24 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
     updateRepositoryCommitStatus($event: any) {
-        this.isSaved = false;
-        this.isCommitted = false;
+        this.commitState = CommitState.UNCOMMITTED_CHANGES;
         /** Query the repositoryFileService for updated files in the repository */
-        this.repositoryFileService.query(this.participation.id).subscribe(
-            files => {
-                this.repositoryFiles = files
-                    // Filter Readme file that was historically in the student's assignment repo
-                    .filter(value => value !== 'README.md')
-                    // Remove binary files as they can't be displayed in an editor
-                    .filter(filename => textFileExtensions.includes(filename.split('.').pop()));
-                // Select newly created file
-                if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
-                    this.selectedFile = $event.file;
-                }
-            },
-            (error: HttpErrorResponse) => {
-                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-            },
-        );
+        this.loadFiles()
+            .pipe(
+                tap(
+                    files => (this.repositoryFiles = files),
+                    tap(() => {
+                        if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
+                            // Select newly created file
+                            this.selectedFile = $event.file;
+                        } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
+                            // If the selected file was deleted, unselect it
+                            this.selectedFile = undefined;
+                        }
+                    }),
+                ),
+            )
+            .subscribe();
     }
 
     /**
@@ -208,20 +299,21 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Gets the user's session data from localStorage to load editor settings
      */
     loadSession() {
-        // Only do this if we already received a participation object from parent
-        if (this.participation) {
-            const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
-            this.session = sessions[this.participation.id];
-            if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
-                this.buildLogErrors = {
-                    errors: compose(
-                        fromPairs,
-                        map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
-                        toPairs,
-                    )(this.session.errors),
-                    timestamp: this.session.timestamp,
-                };
-            }
+        const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
+        this.session = sessions[this.participation.id];
+        if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
+            this.buildLogErrors = {
+                errors: compose(
+                    fromPairs,
+                    map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
+                    filter(([, errors]) => errors.length),
+                    toPairs,
+                )(this.session.errors),
+                timestamp: this.session.timestamp,
+            };
+            this.errorFiles = Object.keys(this.buildLogErrors.errors);
+        } else if (this.buildLogErrors) {
+            this.storeSession();
         }
     }
 
@@ -260,21 +352,31 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * @function commit
-     * @desc Commits the current repository files
+     * @desc Commits the current repository files.
+     * If there are unsaved changes, save them first before trying to commit again.
      * @param $event
      */
-    commit($event: any) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
-        target.blur();
-        this.isBuilding = true;
-        this.repository.commit(this.participation.id).subscribe(
-            () => {
-                this.isCommitted = true;
-            },
-            err => {
-                console.log('Error during commit ocurred!', err);
-            },
-        );
+    commit() {
+        // Avoid multiple commits at the same time.
+        if (this.commitState === CommitState.COMMITTING) {
+            return;
+        }
+        // If there are unsaved changes, save them before trying to commit again.
+        if (!this.unsavedFiles.length) {
+            this.commitState = CommitState.COMMITTING;
+            this.repositoryService.commit(this.participation.id).subscribe(
+                () => {
+                    this.commitState = CommitState.CLEAN;
+                    this.isBuilding = true;
+                },
+                err => {
+                    console.log('Error during commit ocurred!', err);
+                },
+            );
+        } else {
+            this.commitState = CommitState.WANTS_TO_COMMIT;
+            this.editor.saveChangedFiles();
+        }
     }
 
     /**

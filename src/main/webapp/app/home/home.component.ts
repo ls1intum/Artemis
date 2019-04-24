@@ -73,8 +73,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                     content: 'Sending Authentication Success',
                 });
 
-                // // previousState was set in the authExpiredInterceptor before being redirected to login modal.
-                // // since login is succesful, go to stored previousState and clear previousState
+                // previousState was set in the authExpiredInterceptor before being redirected to login modal.
+                // since login is successful, go to stored previousState and clear previousState
                 const redirect = this.stateStorageService.getUrl();
                 if (redirect) {
                     this.stateStorageService.storeUrl(null);
@@ -95,7 +95,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            this.router.navigate(['courses']);
+            this.router.navigate(['overview']);
         }
     }
 

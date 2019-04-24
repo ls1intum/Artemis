@@ -89,6 +89,8 @@ public class QuizExerciseResource {
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
 
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }
@@ -146,7 +148,8 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(result);
 
-        groupNotificationService.notifyGroupAboutExerciseChange(result);
+        // NOTE: it does not make sense to notify students here!
+        // groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(result);
     }
 
@@ -265,7 +268,7 @@ public class QuizExerciseResource {
             // set release date to now
             quizExercise.setReleaseDate(ZonedDateTime.now());
             quizExercise.setIsPlannedToStart(true);
-            groupNotificationService.notifyGroupAboutExerciseStart(quizExercise);
+            groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
             break;
         case "set-visible":
             // check if quiz is already visible
@@ -275,7 +278,6 @@ public class QuizExerciseResource {
 
             // set quiz to visible
             quizExercise.setIsVisibleBeforeStart(true);
-            groupNotificationService.notifyGroupAboutExerciseVisibility(quizExercise);
             break;
         case "open-for-practice":
             // check if quiz has ended
@@ -289,7 +291,7 @@ public class QuizExerciseResource {
 
             // set quiz to open for practice
             quizExercise.setIsOpenForPractice(true);
-            groupNotificationService.notifyGroupAboutExercisePractice(quizExercise);
+            groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
             break;
         default:
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");
@@ -389,7 +391,6 @@ public class QuizExerciseResource {
             quizStatisticService.recalculateStatistics(updatedQuizExercise);
         }
 
-        groupNotificationService.notifyGroupAboutExerciseChange(updatedQuizExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(updatedQuizExercise);
     }
 }

@@ -17,10 +17,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -209,7 +206,18 @@ public class FileResource {
             }
             ByteArrayResource resource = new ByteArrayResource(file);
 
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/pdf")).body(resource);
+            ContentDisposition contentDisposition = ContentDisposition.builder("inline")
+                .filename(filename)
+                .build();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(contentDisposition);
+
+            return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/pdf"))
+                .body(resource);
         }
         catch (IOException e) {
             e.printStackTrace();

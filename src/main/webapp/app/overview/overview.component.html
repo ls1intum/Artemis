@@ -40,7 +40,7 @@
     </div>
     <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && isTumStudent">
         <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
-            <option disabled="true" [selected]="true" value="null">{{ 'arTeMiSApp.studentDashboard.register.pleaseSelectCourse' | translate }}</option>
+            <option [ngValue]="null" selected disabled>{{ 'arTeMiSApp.studentDashboard.register.pleaseSelectCourse' | translate }}</option>
             <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{ course.title }}</option>
         </select>
     </div>

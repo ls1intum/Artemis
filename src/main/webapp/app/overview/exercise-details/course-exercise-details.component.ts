@@ -4,10 +4,11 @@ import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } fr
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Result } from 'app/entities/result';
+import { Result, ResultWebsocketService } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -31,7 +32,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
-    private websocketChannelResults: string;
+    private resultSubscription: Subscription;
 
     formattedProblemStatement: string;
 
@@ -47,6 +48,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseServer: CourseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdown,
+        private resultWebsocketService: ResultWebsocketService,
     ) {}
 
     ngOnInit() {
@@ -86,8 +88,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.websocketChannelResults) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
     }
 
@@ -96,16 +98,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
                 const participation = this.exercise.participations[0];
                 if (participation) {
-                    this.websocketChannelResults = `/topic/participation/${participation.id}/newResults`;
-                    this.jhiWebsocketService.subscribe(this.websocketChannelResults);
-                    this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                        console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                        // convert json string to moment
-                        newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                        this.handleNewResult(newResult);
-                    });
+                    this.setupResultWebsocket(participation.id);
                 }
             }
+        });
+    }
+
+    private setupResultWebsocket(participationId: number) {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        this.resultWebsocketService.subscribeResultForParticipation(participationId).then(observable => {
+            this.resultSubscription = observable
+                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
+                .subscribe((result: Result) => this.handleNewResult(result));
         });
     }
 

@@ -23,7 +23,7 @@
             <button
                 class="btn btn-success"
                 (click)="submit()"
-                [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
+                [disabled]="!submission || !hasElements"
                 [hidden]="submission?.submitted || !isActive"
                 jhiTranslate="entity.action.submit"
             >
@@ -32,7 +32,7 @@
             <button
                 class="btn btn-warning"
                 (click)="submit()"
-                [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
+                [disabled]="!submission || !hasElements"
                 [hidden]="submission?.submitted || isActive"
                 jhiTranslate="entity.action.submitDeadlineMissed"
             >

@@ -309,10 +309,10 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.17"
 
-"@ls1intum/apollon@2.0.0-rc.4":
-  version "2.0.0-rc.4"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.4.tgz#60920cfd1f927356d4525d6f35a823a61576c1bf"
-  integrity sha512-D/w5SORg11K6m5Hq0ixCzXkl7SGzq5CrYcmgP/XVe+7ZPAS2B82l1aDSv3dVHcGpn9eBuGQ5jCPAls/iVxnhSQ==
+"@ls1intum/apollon@2.0.0-rc.5":
+  version "2.0.0-rc.5"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.5.tgz#b360ffb6512b7b4338577ef7669b81f0bd5b091e"
+  integrity sha512-b2HKS00BxwF4TMmTsdLe9lFInbbDxE0KOUwg7gBDw3bBrocIbzwh4+NHoiqS1sVtBI8yMpUfWR3n3gp80NDowQ==
   dependencies:
     pepjs "0.5.2"
     react "16.8.6"

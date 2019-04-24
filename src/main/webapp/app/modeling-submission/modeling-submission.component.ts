@@ -42,7 +42,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
-    umlModel: UMLModel;
+    umlModel: UMLModel; // input model for Apollon
+    hasElements = false; // indicates if the current model has at least one element
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -94,6 +95,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
                             this.umlModel = JSON.parse(this.submission.model);
+                            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                         }
                         if (this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
@@ -131,6 +133,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.submission = submission;
                 if (this.submission.model) {
                     this.umlModel = JSON.parse(this.submission.model);
+                    this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
                 if (this.submission.result && this.submission.result.rated) {
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
@@ -145,9 +148,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * This function initialized the Apollon editor depending on the submission status.
-     * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
-     * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
+     * This function sets and starts an auto-save timer that automatically saves changes
+     * to the model after at most 60 seconds.
      */
     setAutoSaveTimer(): void {
         if (this.submission.submitted) {
@@ -216,7 +218,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.updateSubmissionModel();
-        if (!this.umlModel || this.umlModel.elements.length === 0) {
+        if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -263,6 +265,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
+    private isModelEmpty(model: string): boolean {
+        const umlModel: UMLModel = JSON.parse(model);
+        return !umlModel || !umlModel.elements || umlModel.elements.length === 0;
+    }
+
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
         clearInterval(this.autoSaveInterval);
@@ -275,9 +282,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel(): void {
-        this.umlModel = this.modelingEditor.getCurrentModel();
-        const diagramJson = JSON.stringify(this.umlModel);
-        if (this.submission && diagramJson != null) {
+        if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
+            return;
+        }
+        const umlModel = this.modelingEditor.getCurrentModel();
+        this.hasElements = umlModel.elements && umlModel.elements.length !== 0;
+        const diagramJson = JSON.stringify(umlModel);
+        if (this.submission && diagramJson) {
             this.submission.model = diagramJson;
         }
     }
@@ -303,7 +314,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onSelectionChanged(selection: Selection) {
         this.selectedEntities = selection.elements;
+        for (const selectedEntity of this.selectedEntities) {
+            this.selectedEntities.push(...this.getSelectedChildren(selectedEntity));
+        }
         this.selectedRelationships = selection.relationships;
+    }
+
+    /**
+     * Returns the elementIds of all the children of the element with the given elementId
+     * or an empty list, if no children exist for this element.
+     */
+    private getSelectedChildren(elementId: string): string[] {
+        if (!this.umlModel || !this.umlModel.elements) {
+            return [];
+        }
+        return this.umlModel.elements.filter(element => element.owner === elementId).map(element => element.id);
     }
 
     /**
@@ -363,8 +388,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * is used in the submit() function
      */
     calculateNumberOfModelElements(): number {
-        if (this.umlModel) {
-            return this.umlModel.elements.length + this.umlModel.relationships.length;
+        if (this.submission && this.submission.model) {
+            const umlModel = JSON.parse(this.submission.model);
+            return umlModel.elements.length + umlModel.relationships.length;
         }
         return 0;
     }

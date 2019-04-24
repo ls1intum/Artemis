@@ -27,8 +27,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         const navigation = this.router.getCurrentNavigation();
         if (navigation.extras.state) {
             const stateLecture = navigation.extras.state.lecture as Lecture;
-            if (stateLecture) {
+            if (stateLecture && stateLecture.startDate) {
                 stateLecture.startDate = moment(stateLecture.startDate);
+            }
+            if (stateLecture && stateLecture.endDate) {
                 stateLecture.endDate = moment(stateLecture.endDate);
             }
             this.lecture = stateLecture;
@@ -57,5 +59,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     attachmentNotReleased(attachment: Attachment) {
         return attachment.releaseDate && !moment(attachment.releaseDate).isBefore(moment());
+    }
+
+    attachmentExtension(attachment: Attachment) {
+        if (!attachment.link) {
+            return 'N/A';
+        }
+
+        return attachment.link.split('.').pop();
     }
 }

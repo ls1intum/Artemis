@@ -64,7 +64,7 @@
             },
             "statistics": {
                 "totalScore": "Your total score",
-                "exerciseCount": "Number of exercises: {{ number }}",
+                "exerciseCount": "Participated in {{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
@@ -75,14 +75,16 @@
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
-                "noLectures": "No lectures available for the course."
+                "noLectures": "No lectures available for the course.",
+                "sortLectures": "Sort lectures"
             },
             "lectureDetails": {
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "lectureDate": "Date:",
-                "notReleased": "Not released"
+                "date": "Date:",
+                "notReleased": "Not released",
+                "version": "Version"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

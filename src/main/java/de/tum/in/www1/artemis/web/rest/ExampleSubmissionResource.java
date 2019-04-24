@@ -100,7 +100,14 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.get(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+
+        if (exampleSubmission.isPresent()) {
+            if (! authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
+                return forbidden();
+            }
+        }
+
         return ResponseUtil.wrapOrNotFound(exampleSubmission);
     }
 }

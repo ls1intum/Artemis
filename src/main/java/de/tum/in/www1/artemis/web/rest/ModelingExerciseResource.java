@@ -103,7 +103,7 @@ public class ModelingExerciseResource {
             return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyGroupAboutExerciseCreated(modelingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }
@@ -149,7 +149,7 @@ public class ModelingExerciseResource {
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, modelingExercise.getId().toString())).body(result);
     }
 
@@ -263,10 +263,8 @@ public class ModelingExerciseResource {
                         .headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
             }
 
-            // make sure the solution is not sent to the client
-            modelingExercise.setSampleSolutionExplanation(null);
-            modelingExercise.setSampleSolutionModel(null);
-
+            // make sure sensitive information are not sent to the client
+            modelingExercise.filterSensitiveInformation();
         }
         else {
             return ResponseEntity.badRequest()
