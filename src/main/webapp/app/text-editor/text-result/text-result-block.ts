@@ -34,19 +34,21 @@ export class TextResultBlock {
     }
 
     get cssClass(): string {
-        return `feedback-text-${this.feedbackType}`;
+        return this.feedbackType ? `text-with-feedback ${this.feedbackType}-feedback` : '';
     }
 
     get icon(): string {
         if (this.feedbackType === FeedbackType.POSITIVE) {
-            return 'faCheck';
+            return 'check';
         } else if (this.feedbackType === FeedbackType.NEGATIVE) {
-            return 'faTimes';
+            return 'times';
+        } else if (this.feedbackType === FeedbackType.NEUTRAL) {
+            return 'dot';
         }
     }
 
     get iconCssClass(): string {
-        return `feedback-icon-${this.feedbackType}`;
+        return this.feedbackType ? `feedback-icon ${this.feedbackType}-feedback` : '';
     }
 
     get feedbackCssClass(): string {
