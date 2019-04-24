@@ -325,11 +325,9 @@ public class ExerciseService {
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
                 zippedRepoFiles.add(zippedRepoFile);
                 boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                if (!allowInlineEditor) { // if onlineeditor is not allowed we are free to delete
-                    log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                    gitService.get().deleteLocalRepository(participation);
-                }
-                if (allowInlineEditor && !repoAlreadyExists) { // if onlineEditor is allowed only delete if the repo didn't exist beforehand
+                // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
+                // --> we are free to delete
+                if (!allowInlineEditor || !repoAlreadyExists) {
                     log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                     gitService.get().deleteLocalRepository(participation);
                 }
