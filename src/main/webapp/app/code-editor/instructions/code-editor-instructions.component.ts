@@ -20,8 +20,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     haveDetailsBeenLoaded = false;
 
     /** Resizable constants **/
+    resizableMinWidth = 100;
+    resizableMaxWidth = 800;
     initialInstructionsWidth: number;
-    minInstructionsWidth: number;
     interactResizable: interact.Interactable;
     noInstructionsAvailable = false;
 
@@ -37,16 +38,15 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
         this.interactResizable = interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
                 // Set maximum width
                 restrictSize: {
-                    min: { width: this.minInstructionsWidth },
-                    max: { width: this.initialInstructionsWidth },
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth },
                 },
                 inertia: true,
             })
@@ -70,7 +70,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
     }
 
     onNoInstructionsAvailable() {
