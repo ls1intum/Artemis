@@ -4,9 +4,7 @@ import * as sinonChai from 'sinon-chai';
 import { spy } from 'sinon';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-// import { ArTEMiSTestModule } from '../test.module';
 import { CodeEditorActionsComponent } from 'app/code-editor';
-import { ArTEMiSCodeEditorModule } from 'app/code-editor';
 import { CommitState, EditorState } from 'app/entities/ace-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
