@@ -312,31 +312,31 @@ public class ExerciseService {
             log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return null;
         }
-        exercise.getParticipations().forEach(participation -> {
+        for (Participation participation : exercise.getParticipations()) {
             try {
-                if (participation.getRepositoryUrl() != null && studentIds.contains(participation.getStudent().getLogin())) {
-                    boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
-
-                    Repository repo = gitService.get().getOrCheckoutRepository(participation);
-                    log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                    Path zippedRepoFile = gitService.get().zipRepository(repo);
-                    zippedRepoFiles.add(zippedRepoFile);
-                    boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                    if (!allowInlineEditor) { // if onlineeditor is not allowed we are free to delete
-                        log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                        gitService.get().deleteLocalRepository(participation);
-                    }
-                    if (allowInlineEditor && !repoAlreadyExists) { // if onlineEditor is allowed only delete if the repo didn't exist beforehand
-                        log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                        gitService.get().deleteLocalRepository(participation);
-                    }
-
+                if (participation.getRepositoryUrl() == null || !studentIds.contains(participation.getStudent().getLogin())) {
+                    continue;
                 }
-            }
-            catch (IOException | GitException | InterruptedException ex) {
+
+                boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
+
+                Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                Path zippedRepoFile = gitService.get().zipRepository(repo);
+                zippedRepoFiles.add(zippedRepoFile);
+                boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
+                if (!allowInlineEditor) { // if onlineeditor is not allowed we are free to delete
+                    log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
+                    gitService.get().deleteLocalRepository(participation);
+                }
+                if (allowInlineEditor && !repoAlreadyExists) { // if onlineEditor is allowed only delete if the repo didn't exist beforehand
+                    log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
+                    gitService.get().deleteLocalRepository(participation);
+                }
+            } catch (IOException | GitException | InterruptedException ex) {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
-        });
+        }
         if (exercise.getParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
             log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
             return null;
