@@ -337,28 +337,26 @@ public class ExerciseService {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
         });
-        if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
-            try {
-                // create a large zip file with all zipped repos and provide it for download
-                log.debug("Create zip file for all repositories");
-                zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                        exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
-                createZipFile(zipFilePath, zippedRepoFiles);
-                scheduleForDeletion(zipFilePath, 10);
-
-                log.debug("Delete all temporary zip repo files");
-                // delete the temporary zipped repo files
-                for (Path zippedRepoFile : zippedRepoFiles) {
-                    Files.delete(zippedRepoFile);
-                }
-            }
-            catch (IOException ex) {
-                log.error("Archiving and deleting the local repositories did not work as expected");
-            }
-        }
-        else {
+        if (exercise.getParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
             log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
             return null;
+        }
+        try {
+            // create a large zip file with all zipped repos and provide it for download
+            log.debug("Create zip file for all repositories");
+            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
+                    exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
+            createZipFile(zipFilePath, zippedRepoFiles);
+            scheduleForDeletion(zipFilePath, 10);
+
+            log.debug("Delete all temporary zip repo files");
+            // delete the temporary zipped repo files
+            for (Path zippedRepoFile : zippedRepoFiles) {
+                Files.delete(zippedRepoFile);
+            }
+        }
+        catch (IOException ex) {
+            log.error("Archiving and deleting the local repositories did not work as expected");
         }
         return new java.io.File(zipFilePath.toString());
     }
