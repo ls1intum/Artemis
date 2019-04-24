@@ -2,7 +2,6 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
@@ -39,7 +38,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
-        FontAwesomeModule,
     ],
     declarations: [
         CodeEditorComponent,
@@ -53,10 +51,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
     ],
-    exports: [CodeEditorComponent, FontAwesomeModule],
+    exports: [CodeEditorComponent],
     entryComponents: [
         HomeComponent,
         CodeEditorComponent,
+        JhiMainComponent,
         CodeEditorFileBrowserCreateComponent,
         CodeEditorFileBrowserDeleteComponent,
         EditorInstructionsResultDetailComponent,
