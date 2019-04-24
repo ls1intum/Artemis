@@ -912,13 +912,6 @@ angular-router-loader@0.8.5:
   dependencies:
     loader-utils "^1.0.2"
 
-angular2-moment@1.9.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/angular2-moment/-/angular2-moment-1.9.0.tgz#d198a4d9bc825f61de19106ac7ea07a78569f5a1"
-  integrity sha512-ybPjYizpKVWAI2Z4AqxAS6s3FMkF3+zRpfvxX1wIdSJUFjl83XxQ5f2yn7retX68NSYZZ/JTK9KGnvOzZfrIZw==
-  dependencies:
-    moment "^2.19.3"
-
 angular2-template-loader@0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/angular2-template-loader/-/angular2-template-loader-0.6.2.tgz#c0d44e90fff0fac95e8b23f043acda7fd1c51d7c"
@@ -7218,7 +7211,7 @@ moment-locales-webpack-plugin@1.0.7:
   dependencies:
     lodash.difference "^4.5.0"
 
-moment@2.24.0, moment@^2.10.2, moment@^2.19.3, moment@^2.22.1:
+moment@2.24.0, moment@^2.10.2, moment@^2.22.1:
   version "2.24.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
   integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
@@ -7399,6 +7392,13 @@ ngx-infinite-scroll@7.1.0:
   integrity sha512-uytsKxUgGcPQjYMcf7FObcducQHkEsilPHZGJ3AMhOM4mtxP+YramnXXdyp2thEcuMgfNr9fBJjYnP0YcJciEQ==
   dependencies:
     opencollective-postinstall "^2.0.2"
+
+ngx-moment@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/ngx-moment/-/ngx-moment-3.4.0.tgz#53bd64557e552c612b0f68b975d1c7ed34f28dfc"
+  integrity sha512-GEqzSsu12VsXXP35aerlQpuZ1ienEYQZxHmp+RH7EuJD7hWamKgLOpmbiDI9Ij3KLW/UApvonYzZvyRSv3ea/w==
+  dependencies:
+    tslib "^1.9.0"
 
 ngx-treeview@6.0.2:
   version "6.0.2"

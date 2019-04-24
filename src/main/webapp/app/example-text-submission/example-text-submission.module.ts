@@ -9,7 +9,7 @@ import { CourseComponent, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArTEMiSResultModule } from '../entities/result';
 import { HomeComponent } from '../home';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { exampleTextSubmissionRoute } from 'app/example-text-submission/example-text-submission.route';
