@@ -160,6 +160,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     updateMarkdown() {
         this.steps = [];
+        this.plantUMLs = {};
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
