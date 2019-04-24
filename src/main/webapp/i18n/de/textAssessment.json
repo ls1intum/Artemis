@@ -22,7 +22,11 @@
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "detail": {
                 "scoreFor": "Bewertung für",
-                "feedback": "Feedback"
+                "feedback": "Feedback",
+                "credits": {
+                    "one": "{{credits}} Punkt",
+                    "many": "{{credits}} Punkte"
+                }
             },
             "editor": {
                 "assess": "Bewerten"
