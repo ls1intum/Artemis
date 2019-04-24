@@ -184,7 +184,6 @@
         "serve": "yarn run start",
         "build": "yarn run webpack:prod",
         "test": "jest --config=src/test/javascript/jest.config.js",
-        "test:watch": "test --watch",
         "test:e2e": "protractor protractor.conf.js",
         "postinstall": "webdriver-manager update --versions.chrome=73.0.3683.86 --gecko false",
         "webpack:dev": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --env.stats=minimal",

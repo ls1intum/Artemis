@@ -1,3 +1,4 @@
+// TODO: We don't need this if we use sinon
 export interface GuinessCompatibleSpy extends jasmine.Spy {
     /** By chaining the spy with and.returnValue, all calls to the function will return a specific
      * value. */

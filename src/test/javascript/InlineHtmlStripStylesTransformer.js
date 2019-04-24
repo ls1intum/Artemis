@@ -1,4 +1,5 @@
 'use strict';
+// Copied from: https://github.com/thymikee/jest-preset-angular
 /*
  * Code is inspired by
  * https://github.com/kulshekhar/ts-jest/blob/25e1c63dd3797793b0f46fa52fdee580b46f66ae/src/transformers/hoist-jest.ts
