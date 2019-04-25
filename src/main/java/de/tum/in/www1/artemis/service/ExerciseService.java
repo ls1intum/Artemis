@@ -331,6 +331,9 @@ public class ExerciseService {
                 if (!allowInlineEditor || !repoAlreadyExists) {
                     log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                     gitService.get().deleteLocalRepository(participation);
+                } else {
+                    // In order to reset the repo state --> Hard reset local repository to origin/master
+                    gitService.get().resetToOriginMaster(repo);
                 }
             } catch (IOException | GitException | InterruptedException ex) {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);

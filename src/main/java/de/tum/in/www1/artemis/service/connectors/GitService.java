@@ -190,6 +190,38 @@ public class GitService {
     }
 
     /**
+     * Resets local repository to ref
+     *
+     * @param repo
+     * @param ref the ref to reset to, e.g. "origin/master"
+     * @throws GitAPIException
+     */
+    public void reset(Repository repo, String ref) throws GitAPIException {
+        Git git = new Git(repo);
+        git.reset()
+            .setMode( ResetCommand.ResetType.HARD )
+            .setRef( ref )
+            .call();
+        git.close();
+    }
+
+    /**
+     * git fetch
+     *
+     * @param repo
+     * @throws GitAPIException
+     */
+    public void fetchAll(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        git.fetch()
+            .setForceUpdate( true )
+            .setRemoveDeletedRefs(true)
+            .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+            .call();
+        git.close();
+    }
+
+    /**
      * Pulls from remote repository.
      *
      * @param repo Local Repository Object.
@@ -208,6 +240,21 @@ public class GitService {
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
         return null;
+    }
+
+    /**
+     * Hard reset local repository to origin/master.
+     *
+     * @param repo Local Repository Object.
+     */
+    public void resetToOriginMaster(Repository repo) {
+        try {
+            fetchAll(repo);
+            reset(repo, "origin/master");
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex);
+        }
     }
 
     /**
