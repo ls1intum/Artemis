@@ -72,6 +72,9 @@ export class LectureAttachmentsComponent implements OnInit {
             this.attachmentService.update(this.attachmentToBeCreated, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
+                this.attachments = this.attachments.map(el => {
+                    return el.id === attachmentRes.body.id ? attachmentRes.body : el;
+                });
             });
         } else {
             this.attachmentService.create(this.attachmentToBeCreated).subscribe((attachmentRes: HttpResponse<Attachment>) => {
