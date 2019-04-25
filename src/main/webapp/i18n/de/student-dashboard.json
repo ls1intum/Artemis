@@ -82,7 +82,7 @@
                 "description": "Beschreibung",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
-                "date": "Datum:",
+                "date": "Datum",
                 "notReleased": "Nicht freigegeben",
                 "version": "Version"
             },

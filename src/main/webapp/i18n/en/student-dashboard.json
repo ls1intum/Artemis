@@ -82,7 +82,7 @@
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "date": "Date:",
+                "date": "Date",
                 "notReleased": "Not released",
                 "version": "Version"
             },

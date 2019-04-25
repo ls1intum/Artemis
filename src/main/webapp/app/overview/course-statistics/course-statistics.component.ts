@@ -254,11 +254,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (!result.resultString) {
             return 0;
         }
-        if (result.resultString.indexOf('of') === -1) {
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
-        } else {
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        if (result.resultString && result.resultString.indexOf('failed')) {
+            return null;
         }
+        if (result.resultString.indexOf('of') === -1) {
+            if (result.resultString.indexOf('points') === -1) {
+                return 0;
+            }
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
+        }
+        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
     }
 
     calculateAbsoluteScores(): void {
