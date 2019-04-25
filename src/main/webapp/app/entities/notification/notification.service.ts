@@ -21,6 +21,7 @@ export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
+    cachedNotifications: Observable<EntityArrayResponseType>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
