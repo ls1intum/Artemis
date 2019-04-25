@@ -321,6 +321,7 @@ public class ExerciseService {
                 boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
 
                 Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
                 zippedRepoFiles.add(zippedRepoFile);
