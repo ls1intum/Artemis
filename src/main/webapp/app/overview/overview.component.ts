@@ -39,10 +39,6 @@ export class OverviewComponent {
         this.jhiAlertService.error(error, null, null);
     }
 
-    trackCourseById(index: number, item: Course) {
-        return item.id;
-    }
-
     get nextRelevantExercise(): Exercise {
         let relevantExercise: Exercise = null;
         if (this.courses) {

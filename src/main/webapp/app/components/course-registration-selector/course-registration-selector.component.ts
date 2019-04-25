@@ -33,6 +33,10 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         this.jhiAlertService.error(error, null, null);
     }
 
+    trackCourseById(index: number, item: Course) {
+        return item.id;
+    }
+
     loadAndFilterCourses() {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
