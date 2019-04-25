@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
 public class FileMove {
-   private String currentFilename;
+   private String currentFilePath;
    private String newFilename;
 
-    public String getCurrentFilename() {
-        return currentFilename;
+    public String getCurrentFilePath() {
+        return currentFilePath;
     }
 
-    public void setCurrentFilename(String currentFilename) {
-        this.currentFilename = currentFilename;
+    public void setCurrentFilePath(String currentFilename) {
+        this.currentFilePath = currentFilename;
     }
 
     public String getNewFilename() {

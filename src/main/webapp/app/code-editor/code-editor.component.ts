@@ -278,6 +278,11 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         /** Query the repositoryFileService for updated files in the repository */
         this.loadFiles()
             .pipe(
+                tap(() => {
+                    if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
+                        this.editor.onFileRename($event.oldFileName, $event.newFileName);
+                    }
+                }),
                 tap(files => (this.repositoryFiles = files)),
                 tap(() => {
                     if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {

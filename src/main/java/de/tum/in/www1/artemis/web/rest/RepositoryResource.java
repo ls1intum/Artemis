@@ -170,16 +170,16 @@ public class RepositoryResource {
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping(value = "/repository/{participationId}/move-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> moveFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+    @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilename());
+        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
         if(!file.isPresent()) { return notFound(); }
-        Path newFilePath = repository.getLocalPath().resolve(Paths.get(fileMove.getNewFilename()));
+        Path newFilePath = file.get().toPath().getParent().resolve(Paths.get(fileMove.getNewFilename()));
 
         Files.move(file.get().toPath(), newFilePath);
         repository.setFiles(null); // invalidate cache

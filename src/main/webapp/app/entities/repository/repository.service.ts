@@ -55,8 +55,8 @@ export class RepositoryFileService {
         return this.http.post<void>(`${this.resourceUrl}/${participationId}/file`, '', { params: new HttpParams().set('file', fileName) });
     }
 
-    move(participationId: number, currentFilename: string, newFilename: string): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/move-file`, { currentFilename, newFilename });
+    rename(participationId: number, currentFilePath: string, newFilename: string): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/rename-file`, { currentFilePath, newFilename });
     }
 
     delete(participationId: number, fileName: string): Observable<void> {

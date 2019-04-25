@@ -255,6 +255,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
+     *
+     **/
+    onFileRename(oldFileName: string, newFileName: string) {
+        console.log(this.editorFileSession);
+        this.editorFileSession.renameFile(oldFileName, newFileName);
+        console.log(this.editorFileSession);
+    }
+
+    /**
      * @function onFileTextChanged
      * @desc Callback function for text changes in the Ace Editor.
      * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.

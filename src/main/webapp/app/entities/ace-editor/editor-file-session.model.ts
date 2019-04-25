@@ -19,6 +19,14 @@ export class EditorFileSession {
         this.fileSession = [...this.fileSession, ...newSessionObjs];
     }
 
+    public renameFile(oldFileName: string, newFileName: string) {
+        const fileSession = this.fileSession.find(([fileName]) => fileName === oldFileName);
+        if (this.fileSession) {
+            const restSession = this.fileSession.filter(([fileName]) => fileName !== oldFileName);
+            this.fileSession = [...restSession, [newFileName, fileSession[1]]];
+        }
+    }
+
     /**
      * Util method for adding new files and removing old ones at the same time.
      * @param filesToAdd files for which an initialized entry should be created.

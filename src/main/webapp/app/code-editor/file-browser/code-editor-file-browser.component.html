@@ -37,18 +37,18 @@
         <span class="text-warning">
             <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
         </span>
-        <span class="ml-1" *ngIf="renamingFile !== item.value">{{ item.text }}</span>
-        <span class="ml-1" *ngIf="renamingFile === item.value"
+        <span class="ml-1" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
             ><input
                 #renamingInput
-                value="{{ item.value }}"
+                value="{{ item.text }}"
                 (keyup.enter)="onRenameFile($event)"
                 (focusout)="onRenameFile($event)"
                 (keyup.esc)="setRenamingFile(null)"
                 class="list-group-item__input"
         /></span>
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text)"></fa-icon>
             <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value)"></fa-icon>
         </span>
     </li>

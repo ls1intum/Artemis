@@ -41,7 +41,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     @ViewChild('renamingInput') renamingInput: ElementRef;
 
-    renamingFile: string | null = null;
+    // Tuple: [filePath, fileName]
+    renamingFile: [string, string] | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
@@ -319,20 +320,31 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * After rename the rename state is exited.
      **/
     onRenameFile(event: any) {
-        if (event.target.value && event.target.value !== this.renamingFile) {
-            this.repositoryFileService.move(this.participation.id, this.renamingFile, event.target.value).subscribe(() => {
-                this.onFileChange.emit({ mode: 'rename', oldFileName: this.renamingFile, newFileName: event.target.value });
+        if (!event.target.value) {
+            return;
+        }
+        if (event.target.value !== this.renamingFile[1]) {
+            // TODO: Find a better way to do this
+            let newFilePath: any = this.renamingFile[0].split('/');
+            newFilePath[newFilePath.length - 1] = event.target.value;
+            newFilePath = newFilePath.join('/');
+            console.log(newFilePath);
+            // TODO: Inform ace editor about rename of file
+            this.repositoryFileService.rename(this.participation.id, this.renamingFile[0], event.target.value).subscribe(() => {
+                this.onFileChange.emit({ mode: 'rename', oldFileName: this.renamingFile[0], newFileName: newFilePath });
                 this.renamingFile = null;
             });
+        } else {
+            this.renamingFile = null;
         }
     }
 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setRenamingFile(event: any, fileName: string) {
+    setRenamingFile(event: any, filePath: string, fileName: string) {
         event.stopPropagation();
-        this.renamingFile = fileName;
+        this.renamingFile = [filePath, fileName];
         setTimeout(() => {
             if (this.renamingInput) {
                 this.renamingInput.nativeElement.focus();
