@@ -221,10 +221,10 @@
                 </ng-template>
             </div>
             <!-- Complaints -->
-            <h2 *ngIf="false && tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+            <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
                 {{ 'arTeMiSApp.tutorExerciseDashboard.complaints' | translate }}
             </h2>
-            <div class="table-responsive" *ngIf="false && tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+            <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
                 <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
                     <thead>
                     <tr>
