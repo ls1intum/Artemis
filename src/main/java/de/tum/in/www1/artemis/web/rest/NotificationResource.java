@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Notification;
+import de.tum.in.www1.artemis.domain.SystemNotification;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.NotificationService;
@@ -81,7 +82,10 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         List<Notification> page = new ArrayList<>();
-        page.add(systemNotificationService.findActiveSystemNotification());
+        SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
+        if (activeSystemNotification != null) {
+            page.add(activeSystemNotification);
+        }
 
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         if (currentUser != null) {
