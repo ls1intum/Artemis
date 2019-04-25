@@ -1,5 +1,5 @@
 import { RepositoryFileService } from 'app/entities/repository';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
@@ -29,9 +29,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     commitState: CommitState;
     @Output()
-    createdFile = new EventEmitter<object>();
-    @Output()
-    deletedFile = new EventEmitter<object>();
+    onFileChange = new EventEmitter<object>();
     @Output()
     selectedFile = new EventEmitter<object>();
 
@@ -40,6 +38,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     folder: string;
     filesTreeViewItem: TreeviewItem[];
+
+    @ViewChild('renamingInput') renamingInput: ElementRef;
+
+    renamingFile: string | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
@@ -110,6 +112,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
          */
         if (changes.repositoryFiles && this.repositoryFiles) {
             this.setupTreeview(this.repositoryFiles);
+        } else if (changes.fileName) {
+            this.renamingFile = null;
         }
     }
 
@@ -119,7 +123,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param statusChange
      */
     onCreatedFile(statusChange: object) {
-        this.createdFile.emit(statusChange);
+        this.onFileChange.emit(statusChange);
     }
 
     /**
@@ -128,7 +132,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param statusChange
      */
     onDeletedFile(statusChange: object) {
-        this.deletedFile.emit(statusChange);
+        this.onFileChange.emit(statusChange);
     }
 
     /**
@@ -299,15 +303,40 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @function openDeleteFileModal
      * @desc Opens a popup to delete the selected repository file
      */
-    openDeleteFileModal() {
-        /**
-         * We only open the modal if the user has a file selected
-         */
-        if (this.fileName) {
+    openDeleteFileModal($event: any, fileName: string) {
+        $event.stopPropagation();
+        if (fileName) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participation = this.participation;
             modalRef.componentInstance.parent = this;
-            modalRef.componentInstance.fileNameToDelete = this.fileName;
+            modalRef.componentInstance.fileNameToDelete = fileName;
         }
+    }
+
+    /**
+     * Rename the file (if new fileName is different than old fileName and new fileName is not empty)
+     * and emit the changes to the parent.
+     * After rename the rename state is exited.
+     **/
+    onRenameFile(event: any) {
+        if (event.target.value && event.target.value !== this.renamingFile) {
+            this.repositoryFileService.move(this.participation.id, this.renamingFile, event.target.value).subscribe(() => {
+                this.onFileChange.emit({ mode: 'rename', oldFileName: this.renamingFile, newFileName: event.target.value });
+                this.renamingFile = null;
+            });
+        }
+    }
+
+    /**
+     * Enter rename file mode and focus the created input.
+     **/
+    setRenamingFile(event: any, fileName: string) {
+        event.stopPropagation();
+        this.renamingFile = fileName;
+        setTimeout(() => {
+            if (this.renamingInput) {
+                this.renamingInput.nativeElement.focus();
+            }
+        });
     }
 }

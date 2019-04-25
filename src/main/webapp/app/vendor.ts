@@ -33,6 +33,7 @@ import {
     faCloud,
     faCodeBranch,
     faDownload,
+    faEdit,
     faCheckDouble,
     faKeyboard,
     faProjectDiagram,
@@ -188,6 +189,7 @@ library.add(faGraduationCap);
 library.add(faChartPie);
 library.add(faExternalLinkAlt);
 library.add(faSignal);
+library.add(faEdit);
 library.add(faChevronUp);
 library.add(faChevronDown);
 library.add(faChevronLeft);

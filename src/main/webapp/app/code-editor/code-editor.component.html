@@ -33,8 +33,7 @@
                 [editorState]="editorState"
                 [commitState]="commitState"
                 (selectedFile)="updateSelectedFile($event)"
-                (createdFile)="updateRepositoryCommitStatus($event)"
-                (deletedFile)="updateRepositoryCommitStatus($event)"
+                (onFileChange)="updateRepositoryCommitStatus($event)"
             >
             </jhi-code-editor-file-browser>
         </div>

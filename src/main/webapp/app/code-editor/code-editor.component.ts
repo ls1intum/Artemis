@@ -278,18 +278,18 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         /** Query the repositoryFileService for updated files in the repository */
         this.loadFiles()
             .pipe(
-                tap(
-                    files => (this.repositoryFiles = files),
-                    tap(() => {
-                        if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
-                            // Select newly created file
-                            this.selectedFile = $event.file;
-                        } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
-                            // If the selected file was deleted, unselect it
-                            this.selectedFile = undefined;
-                        }
-                    }),
-                ),
+                tap(files => (this.repositoryFiles = files)),
+                tap(() => {
+                    if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
+                        // Select newly created file
+                        this.selectedFile = $event.file;
+                    } else if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
+                        this.selectedFile = $event.newFileName;
+                    } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
+                        // If the selected file was deleted, unselect it
+                        this.selectedFile = undefined;
+                    }
+                }),
             )
             .subscribe();
     }

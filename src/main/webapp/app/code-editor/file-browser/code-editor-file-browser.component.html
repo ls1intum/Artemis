@@ -9,7 +9,7 @@
 
     <div class="card-second-header">
         <a class="btn btn-small" (click)="openCreateFileModal()"><fa-icon icon="plus"></fa-icon> </a>
-        <a class="btn btn-small" (click)="openDeleteFileModal()"><fa-icon icon="trash"></fa-icon> </a>
+        <a class="btn btn-small" (click)="openDeleteFileModal($event, fileName)"><fa-icon icon="trash"></fa-icon> </a>
     </div>
 
     <div class="card-body">
@@ -24,7 +24,7 @@
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
     <li *ngIf="item.children" (click)="onCollapseExpand()" class="list-group-item">
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
-        <span>{{ item.text }}</span>
+        <span class="ml-1">{{ item.text }}</span>
     </li>
     <li
         *ngIf="!item.children"
@@ -37,6 +37,19 @@
         <span class="text-warning">
             <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
         </span>
-        <span>{{ item.text }}</span>
+        <span class="ml-1" *ngIf="renamingFile !== item.value">{{ item.text }}</span>
+        <span class="ml-1" *ngIf="renamingFile === item.value"
+            ><input
+                #renamingInput
+                value="{{ item.value }}"
+                (keyup.enter)="onRenameFile($event)"
+                (focusout)="onRenameFile($event)"
+                (keyup.esc)="setRenamingFile(null)"
+                class="list-group-item__input"
+        /></span>
+        <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
+            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value)"></fa-icon>
+        </span>
     </li>
 </ng-template>

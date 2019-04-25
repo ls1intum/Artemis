@@ -55,6 +55,10 @@ export class RepositoryFileService {
         return this.http.post<void>(`${this.resourceUrl}/${participationId}/file`, '', { params: new HttpParams().set('file', fileName) });
     }
 
+    move(participationId: number, currentFilename: string, newFilename: string): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/move-file`, { currentFilename, newFilename });
+    }
+
     delete(participationId: number, fileName: string): Observable<void> {
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName) });
     }

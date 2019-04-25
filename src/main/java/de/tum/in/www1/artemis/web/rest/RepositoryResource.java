@@ -24,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
@@ -158,6 +160,30 @@ public class RepositoryResource {
         repository.setFiles(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
+    }
+
+    /**
+     * Move a file from one path to another.
+     * @param participationId id of the participation the git repository belongs to.
+     * @param fileMove defines current and new path in git repository.
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @PostMapping(value = "/repository/{participationId}/move-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> moveFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilename());
+        if(!file.isPresent()) { return notFound(); }
+        Path newFilePath = repository.getLocalPath().resolve(Paths.get(fileMove.getNewFilename()));
+
+        Files.move(file.get().toPath(), newFilePath);
+        repository.setFiles(null); // invalidate cache
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
     }
 
     /**
