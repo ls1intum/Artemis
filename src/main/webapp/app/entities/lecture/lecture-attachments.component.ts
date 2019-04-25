@@ -62,6 +62,8 @@ export class LectureAttachmentsComponent implements OnInit {
             this.attachmentToBeCreated.version = 0;
         }
         this.attachmentToBeCreated.version++;
+        this.attachmentToBeCreated.uploadDate = moment();
+
         if (this.attachmentToBeCreated.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
