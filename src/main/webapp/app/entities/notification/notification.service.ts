@@ -103,7 +103,7 @@ export class NotificationService {
     protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification {
         let systemNotification: SystemNotification;
         if (res.body) {
-            let receivedSystemNotifications = res.body.filter(el => el.notificationType === NotificationType.SYSTEM);
+            const receivedSystemNotifications = res.body.filter(el => el.notificationType === NotificationType.SYSTEM);
             if (receivedSystemNotifications && receivedSystemNotifications.length > 0) {
                 systemNotification = receivedSystemNotifications[0] as SystemNotification;
             }
