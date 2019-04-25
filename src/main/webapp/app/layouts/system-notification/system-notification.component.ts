@@ -40,8 +40,8 @@ export class SystemNotificationComponent implements OnInit {
     }
 
     loadActiveNotification() {
-        this.systemNotificationService.getActiveNotification().subscribe((res: HttpResponse<SystemNotification>) => {
-            this.notification = res.body;
+        this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
+            this.notification = notification;
             this.setAlertClass();
             this.setAlertIcon();
         });
