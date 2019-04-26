@@ -153,7 +153,7 @@ describe('quiz-exercise', function() {
         await submitQuizButton.click();
 
         //wait until the quiz has finished
-        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 15000)).to.become(true);
+        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 25000)).to.become(true);
 
         await element(by.id('quiz-score-result'))
             .getText()
