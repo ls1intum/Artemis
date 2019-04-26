@@ -21,6 +21,9 @@ import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
@@ -280,6 +283,37 @@ public class GitService {
     }
 
     /**
+     * Stager Task #3: Filter late submissions
+     * Filter all commits after exercise due date
+     *
+     * @param repository    Local Repository Object.
+     * @param exercise      ProgrammingExercise associated with this repo.
+     */
+    public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
+        try {
+            Git git = new Git(repository);
+
+            // Get last commit before deadline
+            ObjectId masterId = git.getRepository().exactRef("refs/heads/master").getObjectId();
+            Date since = Date.from(exercise.getReleaseDate().toInstant());
+            Date until = Date.from(exercise.getDueDate().toInstant());
+            RevFilter between = CommitTimeRevFilter.between(since, until);
+            Iterable<RevCommit> commits = git.log()
+                .add(masterId)
+                .setRevFilter(between)
+                .call();
+            RevCommit latestCommitBeforeDeadline = commits.iterator().next();
+
+            git.close();
+
+            reset(repository, latestCommitBeforeDeadline.getId().getName());
+
+        } catch (GitAPIException | IOException ex) {
+            log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Stager Task #6: Combine commits
      * Combine/Squash all commits after last instructor commit
      *
@@ -295,6 +329,13 @@ public class GitService {
             // flush cache of files
             repository.setFiles(null);
 
+            // checkout own local "stager" branch
+            studentGit.checkout().
+                setCreateBranch(true).
+                setName("stager").
+                call();
+
+            // merge commits into one commit
             RebaseResult result = studentGit.rebase()
                 .setUpstream(latestHash)
                 .runInteractively(new RebaseCommand.InteractiveHandler() {

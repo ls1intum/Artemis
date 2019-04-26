@@ -321,18 +321,20 @@ public class ExerciseService {
                 boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
 
                 Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                gitService.get().resetToOriginMaster(repo); // start with clean state
+                gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
                 zippedRepoFiles.add(zippedRepoFile);
                 boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
-                // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
-                // --> we are free to delete
                 if (!allowInlineEditor || !repoAlreadyExists) {
+                    // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
+                    // --> we are free to delete
                     log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                     gitService.get().deleteLocalRepository(participation);
                 } else {
-                    // In order to reset the repo state --> Hard reset local repository to origin/master
+                    // finish with clean state
                     gitService.get().resetToOriginMaster(repo);
                 }
             } catch (IOException | GitException | InterruptedException ex) {
