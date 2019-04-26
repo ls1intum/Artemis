@@ -1,7 +1,8 @@
 <div class="card">
     <div class="card-header bg-primary text-white">
         <h3 class="card-title">
-            <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
+            <fa-icon *ngIf="isLoading" icon="spinner" spin="true"></fa-icon>
+            <fa-icon *ngIf="!isLoading" [icon]="['far', 'file-alt']"></fa-icon>
             <span> &nbsp;{{ selectedFile }}</span>
         </h3>
     </div>
@@ -9,21 +10,16 @@
     <div class="card-body">
         <ace-editor
             #editor
-            [hidden]="isLoading"
             [mode]="editorMode"
-            [readOnly]="false"
+            [readOnly]="isLoading"
+            [hidden]="!selectedFile"
             [autoUpdateContent]="true"
             [durationBeforeCallback]="200"
             (textChanged)="onFileTextChanged($event)"
             class="panel panel-default"
             style="display: block; width:100%; min-height: 100px; overflow: auto; line-height: 14px;"
-            [hidden]="!selectedFile"
         >
         </ace-editor>
-        <div class="text-center lead text-muted pt-5" *ngIf="selectedFile && isLoading">
-            <fa-icon icon="spinner" spin="true"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.loadingFile">Loading file</span>
-        </div>
         <p class="text-center lead text-muted pt-5" *ngIf="!selectedFile && !isLoading" jhiTranslate="arTeMiSApp.editor.selectFile">
             Select a file to get started!
         </p>

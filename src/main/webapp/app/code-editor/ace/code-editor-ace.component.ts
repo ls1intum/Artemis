@@ -101,7 +101,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!EFS.getCode(this.editorFileSession, this.selectedFile)) {
                 this.loadFile(this.selectedFile);
-                // Reset the undo stack after file change, otherwise the user can undo back to the old file
             } else {
                 this.initEditorAfterFileChange();
             }

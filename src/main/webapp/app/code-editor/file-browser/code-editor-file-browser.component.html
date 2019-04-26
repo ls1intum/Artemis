@@ -16,7 +16,7 @@
         <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
             <fa-icon icon="spinner" spin="true"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.loadingFile">Loading file</span>
+            <span jhiTranslate="arTeMiSApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
     <jhi-code-editor-status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
@@ -30,8 +30,20 @@
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span class="ml-1">{{ item.text }}</span>
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <fa-icon [icon]="['fa', 'plus']" (click)="openCreateFileModal($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'plus']" (click)="setCreatingFile($event, item.value)"></fa-icon>
         </span>
+    </li>
+    <li *ngIf="item.children && creatingFile === item.value" class="list-group-item">
+        <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+        <span class="ml-1"
+            ><input
+                #creatingInput
+                value=""
+                (keyup.enter)="onCreateFile($event)"
+                (focusout)="onCreateFile($event)"
+                (keyup.esc)="setCreatingFile($event, null)"
+                class="list-group-item__input"
+        /></span>
     </li>
     <li
         *ngIf="!item.children"

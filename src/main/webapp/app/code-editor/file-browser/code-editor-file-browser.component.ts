@@ -42,9 +42,11 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     filesTreeViewItem: TreeviewItem[];
 
     @ViewChild('renamingInput') renamingInput: ElementRef;
+    @ViewChild('creatingInput') creatingInput: ElementRef;
 
     // Tuple: [filePath, fileName]
     renamingFile: [string, string] | null = null;
+    creatingFile: string | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
@@ -166,10 +168,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             const parent = TreeviewHelper.findParent(treeviewItem, item);
             // We found our parent => process the value and assign it
             if (parent) {
-                this.folder = parent.text
-                    .split('/')
-                    .map(str => str.trim())
-                    .join('/');
+                this.folder = parent.text;
             }
         }
     }
@@ -266,7 +265,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     compressTree(tree: any): any {
         for (const node of tree) {
             if (node.children && node.children.length === 1 && node.children[0].children) {
-                node.text = node.text + ' / ' + node.children[0].text;
+                node.text = node.text + '/' + node.children[0].text;
                 node.value = node.text;
                 node.children = this.compressTree(node.children[0].children);
                 if (node.children[0].children) {
@@ -299,10 +298,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
         if (folder) {
-            modalRef.componentInstance.folder = folder
-                .split('/')
-                .map(str => str.trim())
-                .join('/');
+            modalRef.componentInstance.folder = folder;
         }
     }
 
@@ -334,8 +330,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             let newFilePath: any = this.renamingFile[0].split('/');
             newFilePath[newFilePath.length - 1] = event.target.value;
             newFilePath = newFilePath.join('/');
-            console.log(newFilePath);
-            // TODO: Inform ace editor about rename of file
             this.repositoryFileService.rename(this.participation.id, this.renamingFile[0], event.target.value).subscribe(() => {
                 this.onFileChange.emit({ mode: 'rename', oldFileName: this.renamingFile[0], newFileName: newFilePath });
                 this.renamingFile = null;
@@ -354,6 +348,31 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         setTimeout(() => {
             if (this.renamingInput) {
                 this.renamingInput.nativeElement.focus();
+            }
+        });
+    }
+
+    onCreateFile(event: any) {
+        if (!event.target.value) {
+            this.creatingFile = null;
+            return;
+        }
+        const file = `${this.creatingFile}/${event.target.value}`;
+        this.repositoryFileService.create(this.participation.id, file).subscribe(() => {
+            this.onFileChange.emit({ mode: 'create', file });
+            this.creatingFile = null;
+        });
+    }
+
+    /**
+     * Enter rename file mode and focus the created input.
+     **/
+    setCreatingFile(event: any, folder: string) {
+        event.stopPropagation();
+        this.creatingFile = folder;
+        setTimeout(() => {
+            if (this.creatingInput) {
+                this.creatingInput.nativeElement.focus();
             }
         });
     }
