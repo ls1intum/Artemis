@@ -89,7 +89,7 @@ export class CourseScoreCalculationService {
     }
 
     getResultForParticipation(participation: Participation, dueDate: Moment): Result {
-        if (participation === null || (participation.results === null && participation.results.length === 0)) {
+        if (participation === null) {
             return null;
         }
         const results: Result[] = participation.results;
@@ -107,6 +107,12 @@ export class CourseScoreCalculationService {
                 return chosenResult;
             }
 
+            const ratedResults = resultsArray.filter(el => el.rated);
+
+            if (ratedResults.length === 1) {
+                return ratedResults[0];
+            }
+
             // sorting in descending order to have the last result at the beginning
             resultsArray.sort(
                 (result1, result2): number => {
@@ -120,10 +126,11 @@ export class CourseScoreCalculationService {
                 },
             );
 
-            if (dueDate === null || dueDate >= resultsArray[0].completionDate) {
+            const gracePeriodInSeconds = 10;
+            if (dueDate === null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate) {
                 // find the first result that is before the due date
                 chosenResult = resultsArray[0];
-            } else if (dueDate < resultsArray[0].completionDate) {
+            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate) {
                 chosenResult = new Result();
                 chosenResult.score = 0;
             } else {

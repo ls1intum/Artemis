@@ -6,7 +6,7 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintsComponent } from './complaints.component';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 

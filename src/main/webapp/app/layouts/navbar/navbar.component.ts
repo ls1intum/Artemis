@@ -41,9 +41,11 @@ export class NavbarComponent implements OnInit {
             this.languages = languages;
         });
 
-        this.profileService.getProfileInfo().then(
+        this.profileService.getProfileInfo().subscribe(
             profileInfo => {
-                this.inProduction = profileInfo.inProduction;
+                if (profileInfo) {
+                    this.inProduction = profileInfo.inProduction;
+                }
             },
             reason => {},
         );
