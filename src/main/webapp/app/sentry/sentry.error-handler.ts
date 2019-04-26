@@ -20,17 +20,15 @@ export class SentryErrorHandler implements ErrorHandler {
 
     private async initSentry(): Promise<void> {
         this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
-            if (profileInfo) {
-                if (!profileInfo.sentry) {
-                    return;
-                }
-
-                init({
-                    dsn: profileInfo.sentry.dsn,
-                    release: VERSION,
-                    environment: SentryErrorHandler.environment,
-                });
+            if (!profileInfo || !profileInfo.sentry) {
+                return;
             }
+
+            init({
+                dsn: profileInfo.sentry.dsn,
+                release: VERSION,
+                environment: SentryErrorHandler.environment,
+            });
         });
     }
 

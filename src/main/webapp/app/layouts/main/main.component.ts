@@ -24,14 +24,12 @@ export class JhiMainComponent implements OnInit {
 
     private async setupAnalytics() {
         this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
-            if (profileInfo) {
-                if (profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
-                    // only Track in Production Environment
-                    this.angularticsPiwik.startTracking();
-                } else {
-                    // Enable Developer Mode in all other environments
-                    this.angulartics.settings.developerMode = true;
-                }
+            if (profileInfo && profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
+                // only Track in Production Environment
+                this.angularticsPiwik.startTracking();
+            } else {
+                // Enable Developer Mode in all other environments
+                this.angulartics.settings.developerMode = true;
             }
         });
     }
