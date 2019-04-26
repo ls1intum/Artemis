@@ -290,6 +290,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     updateRepositoryCommitStatus($event: any) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         /** Query the repositoryFileService for updated files in the repository */
+        // TODO: this loading is unnecessary, because we know which files were created, etc.
+        // If this is removed, loadFiles could be moved to file-browser.
         this.loadFiles()
             .pipe(
                 tap(() => {

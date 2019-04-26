@@ -293,12 +293,16 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @function openCreateFileModal
      * @desc Opens a popup to create a new repository file
      */
-    openCreateFileModal() {
+    openCreateFileModal($event: any, folder: string = this.folder) {
+        $event.stopPropagation();
         const modalRef = this.modalService.open(CodeEditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
-        if (this.folder) {
-            modalRef.componentInstance.folder = this.folder;
+        if (folder) {
+            modalRef.componentInstance.folder = folder
+                .split('/')
+                .map(str => str.trim())
+                .join('/');
         }
     }
 
