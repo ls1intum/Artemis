@@ -59,7 +59,7 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="exercise.type === PROGRAMMING"
+                                *ngIf="exercise?.type === PROGRAMMING"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >
@@ -68,7 +68,7 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId != null"
+                                *ngIf="exercise?.type === PROGRAMMING && participation.buildPlanId != null"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan'] } }]"
                                 class="btn btn-danger btn-sm mr-1"
                             >
