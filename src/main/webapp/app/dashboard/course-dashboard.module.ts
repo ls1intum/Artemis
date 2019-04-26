@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ArTEMiSSharedModule } from '../shared';
 import { JhiLanguageHelper, UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { CourseDashboardComponent } from './course-dashboard.component';
 import { SortByModule } from '../components/pipes/sort-by.module';

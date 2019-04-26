@@ -5,7 +5,7 @@ import { JhiLanguageHelper } from 'app/core';
 
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
