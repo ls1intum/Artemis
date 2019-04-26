@@ -134,6 +134,7 @@ describe('quiz-exercise', function() {
         // deactivate because we use timeouts in the quiz participation and otherwise it would not work
         browser.waitForAngularEnabled(false);
 
+        await browser.sleep(2000); // wait till ui is loaded
         //answer quiz
         //TODO the answer options are random, search for the correct and incorrect answer option before clicking in it
         const firstAnswerOption = await element(by.id(`answer-option-0`));
@@ -153,7 +154,7 @@ describe('quiz-exercise', function() {
         await submitQuizButton.click();
 
         //wait until the quiz has finished
-        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 25000)).to.become(true);
+        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 15000)).to.become(true);
 
         await element(by.id('quiz-score-result'))
             .getText()
@@ -185,7 +186,7 @@ describe('quiz-exercise', function() {
     it('delete quiz', async function() {
         browser.waitForAngularEnabled(false);
         await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
-        //navigate to courses
+        //navigate to course administration
         await navBarPage.clickOnCourseAdminMenu();
 
         browser.wait(ec.urlContains(`course`), 1000).then((result: any) => expect(result).to.be.true);
@@ -196,50 +197,50 @@ describe('quiz-exercise', function() {
         await element(by.id('delete-quiz-confirmation-button')).click();
     });
 
-    // it('create SA quiz', async function() {
-    //     const createQuizButton = await element(by.id('create-quiz-button'));
-    //     // expect(createQuizButton.isPresent());
-    //     await createQuizButton.click();
-    //
-    //     //set title of SA quiz
-    //     const title = element(by.id('quiz-title'));
-    //     title.sendKeys('test-SA-quiz');
-    //
-    //     //set duration of quiz
-    //     const durationMinutes = await element(by.id('quiz-duration-minutes'));
-    //     durationMinutes.clear();
-    //     durationMinutes.sendKeys('0');
-    //     const durationSeconds = await element(by.id('quiz-duration-seconds'));
-    //     durationSeconds.clear();
-    //     durationSeconds.sendKeys('5');
-    //
-    //     //add short answer question
-    //     const addShortAnswerButton = await element(by.id('quiz-add-short-answer-question'));
-    //     await addShortAnswerButton.click();
-    //
-    //     // set title of short answer question
-    //     const shortAnswerQuestionTitle = await element(by.id('short-answer-question-title')); //TODO: we need to support multiple questions
-    //     shortAnswerQuestionTitle.sendKeys('test-short-answer');
-    //
-    //     const quizSaveButton = await element(by.id('quiz-save'));
-    //     expect(quizSaveButton.isPresent());
-    //     await quizSaveButton.click();
-    //
-    //     await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
-    //
-    //     const backButton = await element(by.id('quiz-cancel-back-button'));
-    //     expect(backButton.isPresent());
-    //     //TODO: check that the button name is "Back"
-    //     await backButton.click();
-    //
-    //     await browser
-    //         .switchTo()
-    //         .alert()
-    //         .then((alert: any) => alert.accept())
-    //         .catch((reason: any) => expect.fail('Did not show Alert on unsaed changes!'));
-    //
-    //     //TODO: check that we leave the page and there is a new entry
-    // });
+    it('create SA quiz', async function() {
+        const createQuizButton = await element(by.id('create-quiz-button'));
+        // expect(createQuizButton.isPresent());
+        await createQuizButton.click();
+
+        //set title of SA quiz
+        const title = element(by.id('quiz-title'));
+        title.sendKeys('test-SA-quiz');
+
+        //set duration of quiz
+        const durationMinutes = await element(by.id('quiz-duration-minutes'));
+        durationMinutes.clear();
+        durationMinutes.sendKeys('0');
+        const durationSeconds = await element(by.id('quiz-duration-seconds'));
+        durationSeconds.clear();
+        durationSeconds.sendKeys('5');
+
+        //add short answer question
+        const addShortAnswerButton = await element(by.id('quiz-add-short-answer-question'));
+        await addShortAnswerButton.click();
+
+        // set title of short answer question
+        const shortAnswerQuestionTitle = await element(by.id('short-answer-question-title')); //TODO: we need to support multiple questions
+        shortAnswerQuestionTitle.sendKeys('test-short-answer');
+
+        const quizSaveButton = await element(by.id('quiz-save'));
+        expect(quizSaveButton.isPresent());
+        await quizSaveButton.click();
+
+        await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
+
+        const backButton = await element(by.id('quiz-cancel-back-button'));
+        expect(backButton.isPresent());
+        //TODO: check that the button name is "Back"
+        await backButton.click();
+
+        await browser
+            .switchTo()
+            .alert()
+            .then((alert: any) => alert.accept())
+            .catch((reason: any) => expect.fail('Did not show Alert on unsaed changes!'));
+
+        //TODO: check that we leave the page and there is a new entry
+    });
 
     after(async function() {
         await navBarPage.autoSignOut();

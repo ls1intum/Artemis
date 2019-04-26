@@ -1,6 +1,6 @@
 
 exports.config = {
-    allScriptsTimeout: 30000,
+    allScriptsTimeout: 20000,
 
     specs: [
         './src/test/javascript/e2e/**/*.spec.ts',
