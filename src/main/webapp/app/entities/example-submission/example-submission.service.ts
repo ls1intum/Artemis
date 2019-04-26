@@ -36,6 +36,10 @@ export class ExampleSubmissionService {
             .map((res: HttpResponse<ExampleSubmission>) => this.convertResponse(res));
     }
 
+    delete(exampleSubmissionId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ExampleSubmission = this.convertItemFromServer(res.body);
         return res.clone({ body });

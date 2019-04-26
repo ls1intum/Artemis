@@ -25,7 +25,7 @@ import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
-import { DifferencePipe, MomentModule } from 'angular2-moment';
+import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { ArTEMiSCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';

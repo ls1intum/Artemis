@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ResultService } from '../entities/result/result.service';
-import { DifferencePipe } from 'angular2-moment';
+import { DifferencePipe } from 'ngx-moment';
 import { ParticipationService } from '../entities/participation/participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';

@@ -4,6 +4,7 @@ export class NavBarPage {
     entityMenu = element(by.id('entity-menu'));
     accountMenu = element(by.id('account-menu'));
     coursesMenu = element(by.id('courses-menu'));
+    overviewMenu = element(by.id('overview-menu'));
     courseAdminMenu: ElementFinder;
     adminMenu: ElementFinder;
     signIn = element(by.id('login'));
@@ -29,6 +30,10 @@ export class NavBarPage {
 
     async clickOnCoursesMenu() {
         await this.coursesMenu.click();
+    }
+
+    async clickOnOverviewMenu() {
+        await this.overviewMenu.click();
     }
 
     async clickOnAdminMenu() {
