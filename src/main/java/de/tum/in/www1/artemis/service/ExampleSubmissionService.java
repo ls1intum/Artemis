@@ -91,4 +91,14 @@ public class ExampleSubmissionService {
     public Optional<ExampleSubmission> getWithEagerExercise(Long exampleSubmissionId) {
         return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
     }
+
+    public void deleteById(long exampleSubmissionId) {
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
+
+        if (exampleSubmission.isPresent()) {
+            // ExampleSubmissions do not have a participation linked, so we need to delete only the submission itself
+            submissionRepository.delete(exampleSubmission.get().getSubmission());
+            exampleSubmissionRepository.delete(exampleSubmission.get());
+        }
+    }
 }
