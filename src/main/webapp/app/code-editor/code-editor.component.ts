@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
+import { difference as _difference } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
 
@@ -14,7 +15,7 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session } from '../entities/ace-editor';
+import { AnnotationArray, Session, EditorFileSession } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
@@ -44,6 +45,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     unsavedFiles: string[] = [];
     errorFiles: string[] = [];
     session: Session;
+    editorFileSession = new EditorFileSession();
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Code Editor State Booleans **/
@@ -104,6 +106,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
                     switchMap(() => this.loadFiles()),
+                    tap(files => {
+                        this.editorFileSession = new EditorFileSession();
+                        this.editorFileSession = this.editorFileSession.addNewFiles(...files);
+                    }),
                     tap(files => (this.repositoryFiles = files)),
                     tap(() => this.loadSession()),
                 )
@@ -219,8 +225,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Set unsaved files and check if this changes the commit state.
      * @param fileNames
      */
-    setUnsavedFiles(fileNames: string[]) {
-        this.unsavedFiles = fileNames;
+    setUnsavedFiles() {
+        this.unsavedFiles = this.editorFileSession.getUnsavedFileNames();
 
         if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
@@ -252,6 +258,9 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+            this.editorFileSession = this.editorFileSession.setErrors(
+                ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
+            );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
             // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
             if (this.session) {
@@ -279,9 +288,15 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.loadFiles()
             .pipe(
                 tap(() => {
-                    if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
-                        this.editor.onFileRename($event.oldFileName, $event.newFileName);
+                    if ($event.mode === 'rename') {
+                        this.editorFileSession = this.editorFileSession.renameFile($event.oldFileName, $event.newFileName);
+                        this.repositoryFiles = [...this.repositoryFiles.filter(file => file !== $event.oldFileName), $event.newFilename];
                     }
+                }),
+                tap(files => {
+                    const newFiles: string[] = _difference(files, this.repositoryFiles);
+                    const removedFiles: string[] = _difference(this.repositoryFiles, files);
+                    this.editorFileSession = this.editorFileSession.update(newFiles, removedFiles);
                 }),
                 tap(files => (this.repositoryFiles = files)),
                 tap(() => {
@@ -316,6 +331,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 )(this.session.errors),
                 timestamp: this.session.timestamp,
             };
+
+            this.editorFileSession = this.editorFileSession.setErrors(
+                ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
+            );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
         } else if (this.buildLogErrors) {
             this.storeSession();
@@ -352,6 +371,30 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             $card.addClass('collapsed');
             horizontal ? $card.height('35px') : $card.width('55px');
             interactResizable.resizable({ enabled: false });
+        }
+    }
+
+    onSavedFiles(files: any) {
+        const { errorFiles, savedFiles } = Object.entries(files).reduce(
+            (acc, [fileName, error]: [string, string | null]) =>
+                error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : { ...acc, savedFiles: [fileName, ...acc.savedFiles] },
+            { errorFiles: [], savedFiles: [] },
+        );
+
+        this.editorFileSession = this.editorFileSession.setSaved(...savedFiles);
+        this.setUnsavedFiles();
+
+        if (errorFiles.length) {
+            this.onError('saveFailed');
+        }
+    }
+
+    onFileContentChange({ file, code, unsavedChanges, cursor }: { file: string; code: string; unsavedChanges: boolean; cursor: { column: number; row: number } }) {
+        this.editorFileSession = this.editorFileSession.setCode(file, code);
+        this.editorFileSession = this.editorFileSession.setCursor(file, cursor);
+        if (unsavedChanges) {
+            this.editorFileSession = this.editorFileSession.setUnsaved(file);
+            this.setUnsavedFiles();
         }
     }
 

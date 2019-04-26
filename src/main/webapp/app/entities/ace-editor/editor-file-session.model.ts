@@ -3,28 +3,44 @@ import { differenceWith as _differenceWith } from 'lodash';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
 import { TextChange } from './text-change.model';
 
-type sessionObj = [string, { code: string; unsavedChanges: boolean; errors: AnnotationArray }];
+type sessionObj = [string, { code: string; unsavedChanges: boolean; errors: AnnotationArray; cursor: { column: number; row: number } }];
 
 /**
  * Wrapper class for managing editor file sessions.
  * This includes the files content (code), possible errors and a dirty flag (unsavedChanges).
  */
 export class EditorFileSession {
-    private fileSession: Array<sessionObj>;
+    private fileSession: Array<sessionObj> = [];
 
-    public addFiles(...files: Array<{ fileName: string; code?: string; errors?: AnnotationArray }>) {
+    constructor(fileSession: Array<sessionObj> = []) {
+        this.fileSession = fileSession;
+    }
+
+    public addFiles(...files: Array<{ fileName: string; code?: string; errors?: AnnotationArray; cursor?: { column: number; row: number } }>) {
         const newSessionObjs = files.map(
-            ({ fileName, code, errors }): sessionObj => [fileName, { code: code || undefined, errors: errors || new AnnotationArray(), unsavedChanges: false }],
+            ({ fileName, code, errors, cursor }): sessionObj => [
+                fileName,
+                { code: code || undefined, errors: errors || new AnnotationArray(), unsavedChanges: false, cursor: cursor || { column: 0, row: 0 } },
+            ],
         );
-        this.fileSession = [...this.fileSession, ...newSessionObjs];
+        const fileSession = [...this.fileSession, ...newSessionObjs];
+        return new EditorFileSession(fileSession);
+    }
+
+    public addNewFiles(...files: string[]) {
+        const newSessions = files.map((file): sessionObj => [file, { code: undefined, errors: new AnnotationArray(), unsavedChanges: false, cursor: { column: 0, row: 0 } }]);
+        const fileSession = [...this.fileSession, ...newSessions];
+        return new EditorFileSession(fileSession);
     }
 
     public renameFile(oldFileName: string, newFileName: string) {
         const fileSession = this.fileSession.find(([fileName]) => fileName === oldFileName);
         if (this.fileSession) {
             const restSession = this.fileSession.filter(([fileName]) => fileName !== oldFileName);
-            this.fileSession = [...restSession, [newFileName, fileSession[1]]];
+            const newFileSession: Array<sessionObj> = [...restSession, [newFileName, fileSession[1]]];
+            return new EditorFileSession(newFileSession);
         }
+        return this;
     }
 
     /**
@@ -33,19 +49,24 @@ export class EditorFileSession {
      * @param filesToRemove files that should be removed from the file session.
      */
     public update(filesToAdd: string[], filesToRemove: string[]) {
-        const newEntries = filesToAdd.map((fileName): sessionObj => [fileName, { errors: new AnnotationArray(), code: undefined, unsavedChanges: false }]);
-        this.fileSession = compose(
+        const newEntries = filesToAdd.map(
+            (fileName): sessionObj => [fileName, { errors: new AnnotationArray(), code: undefined, unsavedChanges: false, cursor: { column: 0, row: 0 } }],
+        );
+        const fileSession = compose(
             concat(newEntries),
             differenceWith(([a], b) => a === b, this.fileSession),
         )(filesToRemove);
+        return new EditorFileSession(fileSession);
     }
 
     public updateErrorPositions(fileName: string, change: TextChange) {
-        this.fileSession = this.fileSession.map(([f, session]): sessionObj => [f, f === fileName ? { ...session, errors: session.errors.update(change) } : session]);
+        const fileSession = this.fileSession.map(([f, session]): sessionObj => [f, f === fileName ? { ...session, errors: session.errors.update(change) } : session]);
+        return new EditorFileSession(fileSession);
     }
 
     public setCode(fileName: string, code: string) {
-        this.fileSession = this.fileSession.map(([f, session]): sessionObj => (f === fileName ? [f, { ...session, code }] : [f, session]));
+        const fileSession = this.fileSession.map(([f, session]): sessionObj => (f === fileName ? [f, { ...session, code }] : [f, session]));
+        return new EditorFileSession(fileSession);
     }
 
     public getCode(fileName: string) {
@@ -59,28 +80,42 @@ export class EditorFileSession {
     }
 
     public setErrors(...buildLogErrors: Array<[string, AnnotationArray]>) {
-        this.fileSession = this.fileSession.map(
+        const fileSession = this.fileSession.map(
             ([fileName, session]): sessionObj => {
                 const buildLog = buildLogErrors.find(([f]) => f === fileName);
                 return [fileName, { ...session, errors: buildLog ? buildLog[1] : new AnnotationArray() }];
             },
         );
+        return new EditorFileSession(fileSession);
     }
 
     public removeFiles(...fileNames: string[]) {
-        this.fileSession = _differenceWith(this.fileSession, fileNames, ([fileName], b) => fileName === b);
+        const fileSession = _differenceWith(this.fileSession, fileNames, ([fileName], b) => fileName === b);
+        return new EditorFileSession(fileSession);
     }
 
     public setUnsaved(...fileNames: string[]) {
-        this.fileSession = this.fileSession.map(
+        const fileSession = this.fileSession.map(
             ([fileName, session]): sessionObj => (fileNames.includes(fileName) ? [fileName, { ...session, unsavedChanges: true }] : [fileName, session]),
         );
+        return new EditorFileSession(fileSession);
     }
 
     public setSaved(...fileNames: string[]) {
-        this.fileSession = this.fileSession.map(
+        const fileSession = this.fileSession.map(
             ([fileName, session]): sessionObj => (fileNames.includes(fileName) ? [fileName, { ...session, unsavedChanges: false }] : [fileName, session]),
         );
+        return new EditorFileSession(fileSession);
+    }
+
+    public getCursor(fileName: string) {
+        const session = this.fileSession.find(([f]) => f === fileName);
+        return session ? session[1].cursor : undefined;
+    }
+
+    public setCursor(fileName: string, cursor: { column: number; row: number }) {
+        const fileSession = this.fileSession.map(([f, session]): sessionObj => (f === fileName ? [f, { ...session, cursor }] : [f, session]));
+        return new EditorFileSession(fileSession);
     }
 
     public getUnsavedFileNames() {
@@ -102,5 +137,9 @@ export class EditorFileSession {
             }),
             {},
         );
+    }
+
+    public getLength() {
+        return this.fileSession.length;
     }
 }
