@@ -19,7 +19,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { EditorFileSession as EFS, FileSessions, TextChange } from '../../entities/ace-editor';
+import { EditorFileSession as EFS, FileSessions, TextChange, AnnotationArray } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
@@ -38,7 +38,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /** Ace Editor Options **/
     @Input()
-    readonly editorFileSession: FileSessions;
+    editorFileSession: FileSessions;
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
 
     annotationChange: Subscription;
@@ -63,7 +63,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Output()
     onSavedFiles = new EventEmitter<string[]>();
     @Output()
-    onFileContentChange = new EventEmitter<{ file: string; code: string; unsavedChanges: boolean; cursor: { column: number; row: number } }>();
+    onFileContentChange = new EventEmitter<{ file: string; code: string; unsavedChanges: boolean; errors: AnnotationArray; cursor: { column: number; row: number } }>();
+    @Output()
+    onAnnotationChange = new EventEmitter<{ file: string; change: TextChange }>();
+
+    annotationChangeLog: any[] = [];
 
     updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
@@ -103,25 +107,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         // Current file has changed
         if (changes.selectedFile && this.selectedFile) {
-            if (this.annotationChange) {
-                // Unsubscribe, otherwise the event of changing the whole text will be received
-                if (this.annotationChange) {
-                    this.annotationChange.unsubscribe();
-                }
-                this.editor
-                    .getEditor()
-                    .getSession()
-                    .off('change', this.updateAnnotationPositions);
-                this.editor
-                    .getEditor()
-                    .getSession()
-                    .clearAnnotations();
-            }
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!EFS.getCode(this.editorFileSession, this.selectedFile)) {
                 this.loadFile(this.selectedFile);
                 // Reset the undo stack after file change, otherwise the user can undo back to the old file
             } else {
+                if (this.annotationChange) {
+                    this.annotationChange.unsubscribe();
+                }
                 this.editor
                     .getEditor()
                     .getSession()
@@ -140,13 +133,24 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
         if (changes.editorFileSession && changes.editorFileSession.currentValue && EFS.getLength(this.editorFileSession) && this.selectedFile) {
-            if (!EFS.hasUnsavedChanges(this.editorFileSession, this.selectedFile)) {
+            if (
+                !EFS.hasUnsavedChanges(this.editorFileSession, this.selectedFile) &&
+                this.editor.getEditor().getValue() !== EFS.getCode(this.editorFileSession, this.selectedFile)
+            ) {
+                if (this.annotationChange) {
+                    this.annotationChange.unsubscribe();
+                }
                 this.editor.getEditor().setValue(EFS.getCode(this.editorFileSession, this.selectedFile) || '', -1);
+                this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
                 this.editor.getEditor().moveCursorToPosition(EFS.getCursor(this.editorFileSession, this.selectedFile));
                 this.editor
                     .getEditor()
                     .getSession()
                     .setAnnotations(EFS.getErrors(this.editorFileSession, this.selectedFile));
+                if (this.annotationChange) {
+                    this.annotationChange.unsubscribe();
+                }
+                this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             }
         }
     }
@@ -190,7 +194,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param change
      */
     updateAnnotationPositions = (change: TextChange) => {
-        EFS.updateErrorPositions(this.editorFileSession, this.selectedFile, change);
+        this.annotationChangeLog.push(change);
     };
 
     /**
@@ -201,7 +205,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(
             fileObj => {
-                this.onFileContentChange.emit({ file: fileName, code: fileObj.fileContent, unsavedChanges: false, cursor: { column: 0, row: 0 } });
+                this.onFileContentChange.emit({
+                    file: fileName,
+                    code: fileObj.fileContent,
+                    errors: EFS.getErrors(this.editorFileSession, fileName),
+                    unsavedChanges: false,
+                    cursor: { column: 0, row: 0 },
+                });
                 /**
                  * Assign the obtained file content to the editor and set the ace mode
                  * Additionally, we resize the editor window and set focus to it
@@ -215,7 +225,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     .getEditor()
                     .getSession()
                     .setUndoManager(new ace.UndoManager());
-                this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
+                // this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             },
             err => {
                 console.log('There was an error while getting file', this.selectedFile, err);
@@ -243,7 +253,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (EFS.getCode(this.editorFileSession, this.selectedFile) !== code) {
             const cursor = this.editor.getEditor().getCursorPosition() as { column: number; row: number };
-            this.onFileContentChange.emit({ file: this.selectedFile, code, unsavedChanges: true, cursor });
+            const updatedErrors = this.annotationChangeLog.reduce((errors, change) => errors.update(change), EFS.getErrors(this.editorFileSession, this.selectedFile));
+            console.log(updatedErrors, this.annotationChangeLog);
+            this.annotationChangeLog = [];
+            this.onFileContentChange.emit({ file: this.selectedFile, code, errors: updatedErrors, unsavedChanges: true, cursor });
         }
     }
 

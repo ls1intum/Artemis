@@ -77,7 +77,11 @@ export abstract class EditorFileSession {
         return session ? session[1].errors : undefined;
     }
 
-    public static setErrors(sessions: FileSessions, ...buildLogErrors: Array<[string, AnnotationArray]>) {
+    public static setErrors(sessions: FileSessions, fileName: string, errors: AnnotationArray) {
+        return sessions.map(([f, session]): sessionObj => (f === fileName ? [f, { ...session, errors }] : [f, session]));
+    }
+
+    public static setErrorsFromBuildLogs(sessions: FileSessions, ...buildLogErrors: Array<[string, AnnotationArray]>) {
         return sessions.map(
             ([fileName, session]): sessionObj => {
                 const buildLog = buildLogErrors.find(([f]) => f === fileName);

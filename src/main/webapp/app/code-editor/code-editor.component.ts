@@ -15,7 +15,7 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session, EditorFileSession as EFS, FileSessions } from '../entities/ace-editor';
+import { AnnotationArray, Session, EditorFileSession as EFS, FileSessions, TextChange } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
@@ -258,7 +258,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-            this.editorFileSession = EFS.setErrors(
+            this.editorFileSession = EFS.setErrorsFromBuildLogs(
                 this.editorFileSession,
                 ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
             );
@@ -333,7 +333,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 timestamp: this.session.timestamp,
             };
 
-            this.editorFileSession = EFS.setErrors(
+            this.editorFileSession = EFS.setErrorsFromBuildLogs(
                 this.editorFileSession,
                 ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
             );
@@ -391,13 +391,30 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
-    onFileContentChange({ file, code, unsavedChanges, cursor }: { file: string; code: string; unsavedChanges: boolean; cursor: { column: number; row: number } }) {
+    onFileContentChange({
+        file,
+        code,
+        unsavedChanges,
+        errors,
+        cursor,
+    }: {
+        file: string;
+        code: string;
+        unsavedChanges: boolean;
+        errors: AnnotationArray;
+        cursor: { column: number; row: number };
+    }) {
         this.editorFileSession = EFS.setCode(this.editorFileSession, file, code);
+        this.editorFileSession = EFS.setErrors(this.editorFileSession, file, errors);
         this.editorFileSession = EFS.setCursor(this.editorFileSession, file, cursor);
         if (unsavedChanges) {
             this.editorFileSession = EFS.setUnsaved(this.editorFileSession, file);
             this.setUnsavedFiles();
         }
+    }
+
+    onAnnotationChange({ file, change }: { file: string; change: TextChange }) {
+        this.editorFileSession = EFS.updateErrorPositions(this.editorFileSession, file, change);
     }
 
     /**
