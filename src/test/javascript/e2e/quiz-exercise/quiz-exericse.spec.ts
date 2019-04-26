@@ -117,9 +117,9 @@ describe('quiz-exercise', function() {
 
         await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
         //navigate to courses
-        await navBarPage.clickOnCoursesMenu();
+        await navBarPage.clickOnOverviewMenu();
 
-        browser.wait(ec.urlContains(`courses`), 1000).then((result: any) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`overview`), 1000).then((result: any) => expect(result).to.be.true);
 
         //open or start quiz (depends a bit on the timing)
         let startQuizButton = await element(by.id(`student-quiz-start-${quizId}`));
@@ -170,10 +170,10 @@ describe('quiz-exercise', function() {
                 expect.fail('first answer option not found as correct');
             });
 
-        await element(by.id('answer-option-1-correct'))
+        await element(by.id('answer-option-1-wrong'))
             .getText()
             .then(text => {
-                expect(text).equals('Correct');
+                expect(text).equals('Wrong');
             })
             .catch(error => {
                 expect.fail('second answer option not found as correct');
