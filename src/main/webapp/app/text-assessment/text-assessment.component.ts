@@ -307,5 +307,4 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         console.error(error);
         this.jhiAlertService.error(error, null, null);
     }
-
 }

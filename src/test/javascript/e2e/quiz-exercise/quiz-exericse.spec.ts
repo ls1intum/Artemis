@@ -6,7 +6,7 @@ import { errorRoute } from '../../../../main/webapp/app/layouts';
 
 const expect = chai.expect;
 
-describe('quiz-exercise', () => {
+describe('quiz-exercise', function() {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
     let coursePage: CoursePage;
@@ -17,7 +17,7 @@ describe('quiz-exercise', () => {
 
     let courseName: string;
 
-    before(async () => {
+    before(async function() {
         await browser.get('/');
         navBarPage = new NavBarPage(true);
         signInPage = await navBarPage.getSignInPage();
@@ -36,7 +36,7 @@ describe('quiz-exercise', () => {
         await newCoursePage.setInstructorGroupName('ls1instructor');
         await newCoursePage.clickSave();
 
-        browser.wait(ec.urlContains('/course'), 1000).then(result => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains('/course'), 1000)).to.become(true);
 
         // Sign in with instructor account
         await navBarPage.autoSignOut();
@@ -44,17 +44,16 @@ describe('quiz-exercise', () => {
         await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
     });
 
-    beforeEach(async () => {});
+    beforeEach(async function() {});
 
-    it('navigate into quiz-exercise', async () => {
+    it('navigate into course-exercises', async function() {
         await navBarPage.clickOnCourseAdminMenu();
-        courseId = await coursePage.navigateIntoLastCourseQuizzes();
+        courseId = await coursePage.navigateIntoLastCourseExercises();
 
-        //TODO: this does not seem to work properly
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise`), 5000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`/course/${courseId}`), 1000)).to.become(true);
     });
 
-    it('create quiz', async () => {
+    it('create quiz', async function() {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -87,23 +86,23 @@ describe('quiz-exercise', () => {
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
         //TODO: check that the button name is "Back"
         await backButton.click();
 
-        //TODO: check that we leave the page and there is a new entry
-    });
-
-    it('participate in quiz', async () => {
         const quizRows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         quizId = await quizRows
             .last()
             .element(by.css('td:nth-child(1) > a'))
             .getText();
 
+        //TODO: check that we leave the page and there is a new entry
+    });
+
+    it('participate in quiz', async function() {
         //set visible
         const setVisibleButton = await element(by.id(`quiz-set-visible-${quizId}`));
         expect(setVisibleButton.isPresent());
@@ -118,9 +117,9 @@ describe('quiz-exercise', () => {
 
         await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
         //navigate to courses
-        await navBarPage.clickOnCoursesMenu();
+        await navBarPage.clickOnOverviewMenu();
 
-        browser.wait(ec.urlContains(`courses`), 1000).then((result: any) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`overview`), 1000).then((result: any) => expect(result).to.be.true);
 
         //open or start quiz (depends a bit on the timing)
         let startQuizButton = await element(by.id(`student-quiz-start-${quizId}`));
@@ -130,11 +129,12 @@ describe('quiz-exercise', () => {
         expect(startQuizButton.isPresent());
         await startQuizButton.click();
 
-        browser.wait(ec.urlContains(`quiz/${quizId}`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`quiz/${quizId}`), 1000)).to.become(true);
 
         // deactivate because we use timeouts in the quiz participation and otherwise it would not work
         browser.waitForAngularEnabled(false);
 
+        await browser.sleep(2000); // wait till ui is loaded
         //answer quiz
         //TODO the answer options are random, search for the correct and incorrect answer option before clicking in it
         const firstAnswerOption = await element(by.id(`answer-option-0`));
@@ -154,51 +154,50 @@ describe('quiz-exercise', () => {
         await submitQuizButton.click();
 
         //wait until the quiz has finished
-        await browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000).then(async (result: any) => {
-            //first possibility to check this
-            element(by.id('quiz-score-result'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('1/1 (100 %)');
-                });
+        await expect(browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 15000)).to.become(true);
 
-            //second possibility to check this
-            const text = await element(by.id('quiz-score-result')).getText();
-            expect(text).equals('1/1 (100 %)');
+        await element(by.id('quiz-score-result'))
+            .getText()
+            .then(text => {
+                expect(text).equals('1/1 (100 %)');
+            });
 
-            element(by.id('answer-option-0-correct'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('Correct');
-                })
-                .catch(error => {
-                    expect.fail('first answer option not found as correct');
-                });
+        await element(by.id('answer-option-0-correct'))
+            .getText()
+            .then(text => {
+                expect(text).equals('Correct');
+            })
+            .catch(error => {
+                expect.fail('first answer option not found as correct');
+            });
 
-            element(by.id('answer-option-1-correct'))
-                .getText()
-                .then(text => {
-                    expect(text).equals('Correct');
-                })
-                .catch(error => {
-                    expect.fail('second answer option not found as correct');
-                });
-        });
-
-        await browser.sleep(500);
+        await element(by.id('answer-option-1-wrong'))
+            .getText()
+            .then(text => {
+                expect(text).equals('Wrong');
+            })
+            .catch(error => {
+                expect.fail('second answer option not found as correct');
+            });
 
         browser.waitForAngularEnabled(true);
     });
 
-    it('delete quiz', async () => {
+    it('delete quiz', async function() {
         browser.waitForAngularEnabled(false);
+        await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
+        //navigate to course administration
         await navBarPage.clickOnCourseAdminMenu();
+
+        browser.wait(ec.urlContains(`course`), 1000).then((result: any) => expect(result).to.be.true);
         browser.waitForAngularEnabled(true);
-        courseId = await coursePage.navigateIntoLastCourseQuizzes();
-        //TODO delete quiz
+        courseId = await coursePage.navigateIntoLastCourseExercises();
+        await element(by.id(`delete-quiz-${quizId}`)).click();
+        await element(by.css('input[name="confirmExerciseName"]')).sendKeys('test-quiz');
+        await element(by.id('delete-quiz-confirmation-button')).click();
     });
 
-    it('create SA quiz', async () => {
+    it('create SA quiz', async function() {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -227,17 +226,23 @@ describe('quiz-exercise', () => {
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
+        await expect(browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000)).to.become(true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
         //TODO: check that the button name is "Back"
         await backButton.click();
 
+        await browser
+            .switchTo()
+            .alert()
+            .then((alert: any) => alert.accept())
+            .catch((reason: any) => expect.fail('Did not show Alert on unsaed changes!'));
+
         //TODO: check that we leave the page and there is a new entry
     });
 
-    after(async () => {
+    after(async function() {
         await navBarPage.autoSignOut();
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);
