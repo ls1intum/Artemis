@@ -294,12 +294,10 @@ public class GitService {
             Git git = new Git(repository);
 
             // Get last commit before deadline
-            ObjectId masterId = git.getRepository().exactRef("refs/heads/master").getObjectId();
             Date since = Date.from(exercise.getReleaseDate().toInstant());
             Date until = Date.from(exercise.getDueDate().toInstant());
             RevFilter between = CommitTimeRevFilter.between(since, until);
             Iterable<RevCommit> commits = git.log()
-                .add(masterId)
                 .setRevFilter(between)
                 .call();
             RevCommit latestCommitBeforeDeadline = commits.iterator().next();
@@ -308,7 +306,7 @@ public class GitService {
 
             reset(repository, latestCommitBeforeDeadline.getId().getName());
 
-        } catch (GitAPIException | IOException ex) {
+        } catch (GitAPIException ex) {
             log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
         }
     }
