@@ -30,8 +30,8 @@ export class NotificationContainerComponent implements OnInit {
     }
 
     private loadNotifications() {
-        this.notificationService.getRecentNotificationsForUser().subscribe((res: HttpResponse<Notification[]>) => {
-            this.notifications = res.body;
+        this.notificationService.getRecentNotificationsForUser().subscribe((notifications: Notification[]) => {
+            this.notifications = notifications;
             this.updateNotifications();
         });
         setTimeout(() => {
