@@ -44,7 +44,7 @@
                 value="{{ item.text }}"
                 (keyup.enter)="onRenameFile($event)"
                 (focusout)="onRenameFile($event)"
-                (keyup.esc)="setRenamingFile(null)"
+                (keyup.esc)="setRenamingFile($event, null)"
                 class="list-group-item__input"
         /></span>
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">

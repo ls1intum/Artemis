@@ -15,7 +15,7 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session, EditorFileSession } from '../entities/ace-editor';
+import { AnnotationArray, Session, EditorFileSession as EFS, FileSessions } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
@@ -45,7 +45,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     unsavedFiles: string[] = [];
     errorFiles: string[] = [];
     session: Session;
-    editorFileSession = new EditorFileSession();
+    editorFileSession = EFS.create();
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Code Editor State Booleans **/
@@ -107,8 +107,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     tap(commitState => (this.commitState = commitState)),
                     switchMap(() => this.loadFiles()),
                     tap(files => {
-                        this.editorFileSession = new EditorFileSession();
-                        this.editorFileSession = this.editorFileSession.addNewFiles(...files);
+                        this.editorFileSession = EFS.create();
+                        this.editorFileSession = EFS.addNewFiles(this.editorFileSession, ...files);
                     }),
                     tap(files => (this.repositoryFiles = files)),
                     tap(() => this.loadSession()),
@@ -226,7 +226,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param fileNames
      */
     setUnsavedFiles() {
-        this.unsavedFiles = this.editorFileSession.getUnsavedFileNames();
+        this.unsavedFiles = EFS.getUnsavedFileNames(this.editorFileSession);
 
         if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
@@ -258,7 +258,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-            this.editorFileSession = this.editorFileSession.setErrors(
+            this.editorFileSession = EFS.setErrors(
+                this.editorFileSession,
                 ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
             );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
@@ -289,14 +290,14 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .pipe(
                 tap(() => {
                     if ($event.mode === 'rename') {
-                        this.editorFileSession = this.editorFileSession.renameFile($event.oldFileName, $event.newFileName);
+                        this.editorFileSession = EFS.renameFile(this.editorFileSession, $event.oldFileName, $event.newFileName);
                         this.repositoryFiles = [...this.repositoryFiles.filter(file => file !== $event.oldFileName), $event.newFilename];
                     }
                 }),
                 tap(files => {
                     const newFiles: string[] = _difference(files, this.repositoryFiles);
                     const removedFiles: string[] = _difference(this.repositoryFiles, files);
-                    this.editorFileSession = this.editorFileSession.update(newFiles, removedFiles);
+                    this.editorFileSession = EFS.update(this.editorFileSession, newFiles, removedFiles);
                 }),
                 tap(files => (this.repositoryFiles = files)),
                 tap(() => {
@@ -304,7 +305,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         // Select newly created file
                         this.selectedFile = $event.file;
                     } else if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
-                        this.selectedFile = $event.newFileName;
+                        this.selectedFile = this.repositoryFiles.includes($event.newFileName) ? $event.newFileName : null;
                     } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
                         // If the selected file was deleted, unselect it
                         this.selectedFile = undefined;
@@ -332,7 +333,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 timestamp: this.session.timestamp,
             };
 
-            this.editorFileSession = this.editorFileSession.setErrors(
+            this.editorFileSession = EFS.setErrors(
+                this.editorFileSession,
                 ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
             );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
@@ -381,7 +383,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             { errorFiles: [], savedFiles: [] },
         );
 
-        this.editorFileSession = this.editorFileSession.setSaved(...savedFiles);
+        this.editorFileSession = EFS.setSaved(this.editorFileSession, ...savedFiles);
         this.setUnsavedFiles();
 
         if (errorFiles.length) {
@@ -390,10 +392,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     onFileContentChange({ file, code, unsavedChanges, cursor }: { file: string; code: string; unsavedChanges: boolean; cursor: { column: number; row: number } }) {
-        this.editorFileSession = this.editorFileSession.setCode(file, code);
-        this.editorFileSession = this.editorFileSession.setCursor(file, cursor);
+        this.editorFileSession = EFS.setCode(this.editorFileSession, file, code);
+        this.editorFileSession = EFS.setCursor(this.editorFileSession, file, cursor);
         if (unsavedChanges) {
-            this.editorFileSession = this.editorFileSession.setUnsaved(file);
+            this.editorFileSession = EFS.setUnsaved(this.editorFileSession, file);
             this.setUnsavedFiles();
         }
     }

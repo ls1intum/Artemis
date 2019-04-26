@@ -19,7 +19,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { AnnotationArray, EditorFileSession, TextChange } from '../../entities/ace-editor';
+import { EditorFileSession as EFS, FileSessions, TextChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
@@ -38,7 +38,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /** Ace Editor Options **/
     @Input()
-    readonly editorFileSession: EditorFileSession;
+    readonly editorFileSession: FileSessions;
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
 
     annotationChange: Subscription;
@@ -118,15 +118,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     .clearAnnotations();
             }
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (!this.editorFileSession.getCode(this.selectedFile)) {
+            if (!EFS.getCode(this.editorFileSession, this.selectedFile)) {
                 this.loadFile(this.selectedFile);
                 // Reset the undo stack after file change, otherwise the user can undo back to the old file
             } else {
                 this.editor
                     .getEditor()
                     .getSession()
-                    .setValue(this.editorFileSession.getCode(this.selectedFile));
-                this.editor.getEditor().moveCursorToPosition(this.editorFileSession.getCursor(this.selectedFile));
+                    .setValue(EFS.getCode(this.editorFileSession, this.selectedFile));
+                this.editor.getEditor().moveCursorToPosition(EFS.getCursor(this.editorFileSession, this.selectedFile));
                 this.editor
                     .getEditor()
                     .getSession()
@@ -134,18 +134,20 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.editor
                     .getEditor()
                     .getSession()
-                    .setAnnotations(this.editorFileSession.getErrors(this.selectedFile));
+                    .setAnnotations(EFS.getErrors(this.editorFileSession, this.selectedFile));
                 this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => this.updateAnnotationPositions(change));
             }
         }
         // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
-        if (changes.editorFileSession && changes.editorFileSession.currentValue && changes.editorFileSession.currentValue.getLength() && this.selectedFile) {
-            this.editor.getEditor().setValue(this.editorFileSession.getCode(this.selectedFile) || '', -1);
-            this.editor.getEditor().moveCursorToPosition(this.editorFileSession.getCursor(this.selectedFile));
-            this.editor
-                .getEditor()
-                .getSession()
-                .setAnnotations(this.editorFileSession.getErrors(this.selectedFile));
+        if (changes.editorFileSession && changes.editorFileSession.currentValue && EFS.getLength(this.editorFileSession) && this.selectedFile) {
+            if (!EFS.hasUnsavedChanges(this.editorFileSession, this.selectedFile)) {
+                this.editor.getEditor().setValue(EFS.getCode(this.editorFileSession, this.selectedFile) || '', -1);
+                this.editor.getEditor().moveCursorToPosition(EFS.getCursor(this.editorFileSession, this.selectedFile));
+                this.editor
+                    .getEditor()
+                    .getSession()
+                    .setAnnotations(EFS.getErrors(this.editorFileSession, this.selectedFile));
+            }
         }
     }
 
@@ -153,7 +155,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Store the error data in the localStorage (synchronous action).
      */
     storeSession() {
-        const sessionAnnotations = this.editorFileSession.serialize();
+        const sessionAnnotations = EFS.serialize(this.editorFileSession);
         this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
     }
 
@@ -188,7 +190,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param change
      */
     updateAnnotationPositions = (change: TextChange) => {
-        this.editorFileSession.updateErrorPositions(this.selectedFile, change);
+        EFS.updateErrorPositions(this.editorFileSession, this.selectedFile, change);
     };
 
     /**
@@ -226,7 +228,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles() {
-        const unsavedFiles = this.editorFileSession.getUnsavedFiles();
+        const unsavedFiles = EFS.getUnsavedFiles(this.editorFileSession);
         this.onEditorStateChange.emit(EditorState.SAVING);
         this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, unsavedFiles);
     }
@@ -239,7 +241,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.editorFileSession.getCode(this.selectedFile) !== code) {
+        if (EFS.getCode(this.editorFileSession, this.selectedFile) !== code) {
             const cursor = this.editor.getEditor().getCursorPosition() as { column: number; row: number };
             this.onFileContentChange.emit({ file: this.selectedFile, code, unsavedChanges: true, cursor });
         }
