@@ -1,5 +1,6 @@
 <div>
     <button
+        id="save_button"
         type="button"
         class="btn btn-primary navbar-btn mr-3"
         [disabled]="editorState !== 'UNSAVED_CHANGES' || isBuilding"
@@ -12,6 +13,7 @@
         <span *ngIf="editorState !== 'SAVING'"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.saveFiles">Save Files</span></span>
     </button>
     <button
+        id="submit_button"
         type="button"
         class="btn btn-primary navbar-btn"
         [disabled]="editorState === 'SAVING' || commitState === 'COMMITTING' || isBuilding"
