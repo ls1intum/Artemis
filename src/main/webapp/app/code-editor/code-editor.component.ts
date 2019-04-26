@@ -15,7 +15,7 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session, EditorFileSession as EFS, FileSessions, TextChange } from '../entities/ace-editor';
+import { AnnotationArray, Session, EditorFileSession as EFS } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
@@ -52,6 +52,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
+    isLoadingFiles = true;
 
     /**
      * @constructor CodeEditorComponent
@@ -136,6 +137,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
     private loadFiles(): Observable<string[]> {
+        this.isLoadingFiles = true;
         return this.repositoryFileService.query(this.participation.id).pipe(
             rxMap((files: string[]) =>
                 files
@@ -144,8 +146,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     // Remove binary files as they can't be displayed in an editor
                     .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
             ),
+            tap(() => (this.isLoadingFiles = false)),
             catchError((error: HttpErrorResponse) => {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                this.isLoadingFiles = false;
                 return Observable.of([]);
             }),
         );
@@ -411,10 +415,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.editorFileSession = EFS.setUnsaved(this.editorFileSession, file);
             this.setUnsavedFiles();
         }
-    }
-
-    onAnnotationChange({ file, change }: { file: string; change: TextChange }) {
-        this.editorFileSession = EFS.updateErrorPositions(this.editorFileSession, file, change);
     }
 
     /**

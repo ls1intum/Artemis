@@ -32,6 +32,7 @@
                 [errorFiles]="errorFiles"
                 [editorState]="editorState"
                 [commitState]="commitState"
+                [isLoadingFiles]="isLoadingFiles"
                 (selectedFile)="updateSelectedFile($event)"
                 (onFileChange)="updateRepositoryCommitStatus($event)"
             >
@@ -42,15 +43,12 @@
             <jhi-code-editor-ace
                 [participation]="participation"
                 [selectedFile]="selectedFile"
-                [repositoryFiles]="repositoryFiles"
                 [editorFileSession]="editorFileSession"
                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
                 [editorState]="editorState"
                 (onEditorStateChange)="setEditorState($event)"
-                (onUnsavedFilesChange)="setUnsavedFiles($event)"
                 (onSavedFiles)="onSavedFiles($event)"
                 (onFileContentChange)="onFileContentChange($event)"
-                (onAnnotationChange)="onAnnotationChange($event)"
                 (onError)="onError($event)"
             >
             </jhi-code-editor-ace>

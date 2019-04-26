@@ -57,6 +57,7 @@
             "downloadBuildResult": "Build Ergebnis herunterladen",
             "saving": "Speichert",
             "saveFiles": "Speichern",
+            "loadingFile": "Lade ausgewählte Datei",
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",

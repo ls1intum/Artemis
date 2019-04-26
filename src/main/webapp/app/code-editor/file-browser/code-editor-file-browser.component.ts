@@ -28,6 +28,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     editorState: EditorState;
     @Input()
     commitState: CommitState;
+    @Input()
+    isLoadingFiles: boolean;
     @Output()
     onFileChange = new EventEmitter<object>();
     @Output()

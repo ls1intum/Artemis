@@ -57,6 +57,7 @@
             "downloadBuildResult": "Download Build Result",
             "saving": "Saving",
             "saveFiles": "Save",
+            "loadingFile": "Loading selected File",
             "errors": {
                 "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
                 "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
