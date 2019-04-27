@@ -8,6 +8,7 @@ import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFi
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
+import { CreateFileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -340,7 +341,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             newFilePath[newFilePath.length - 1] = event.target.value;
             newFilePath = newFilePath.join('/');
             this.repositoryFileService.rename(this.participation.id, this.renamingFile[0], event.target.value).subscribe(() => {
-                this.onFileChange.emit({ mode: 'rename', oldFileName: this.renamingFile[0], newFileName: newFilePath });
+                this.onFileChange.emit(new RenameFileChange(this.renamingFile[0], newFilePath));
                 this.renamingFile = null;
             });
         } else {
@@ -368,7 +369,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         }
         const file = `${this.creatingFile}/${event.target.value}`;
         this.repositoryFileService.createFile(this.participation.id, file).subscribe(() => {
-            this.onFileChange.emit({ mode: 'create', file });
+            this.onFileChange.emit(new CreateFileChange(file));
             this.creatingFile = null;
         });
     }
@@ -376,13 +377,13 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     onCreateFolder(event: any) {
         if (!event.target.value) {
             this.creatingFolder = null;
-            return;
+        } else {
+            const file = `${this.creatingFolder}/${event.target.value}`;
+            this.repositoryFileService.createFolder(this.participation.id, file).subscribe(() => {
+                this.onFileChange.emit(new CreateFileChange(file));
+                this.creatingFolder = null;
+            });
         }
-        const file = `${this.creatingFolder}/${event.target.value}`;
-        this.repositoryFileService.createFolder(this.participation.id, file).subscribe(() => {
-            this.onFileChange.emit({ mode: 'create', file });
-            this.creatingFolder = null;
-        });
     }
 
     /**

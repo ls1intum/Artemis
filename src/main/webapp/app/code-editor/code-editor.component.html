@@ -43,9 +43,10 @@
             <jhi-code-editor-ace
                 [participation]="participation"
                 [selectedFile]="selectedFile"
-                [editorFileSession]="editorFileSession"
                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
                 [editorState]="editorState"
+                [fileChange]="fileChange"
+                [unsavedFiles]="unsavedFiles"
                 (onEditorStateChange)="setEditorState($event)"
                 (onSavedFiles)="onSavedFiles($event)"
                 (onFileContentChange)="onFileContentChange($event)"

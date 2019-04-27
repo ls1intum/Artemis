@@ -28,6 +28,7 @@ import { Observable, throwError } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
+import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-editor',
@@ -45,8 +46,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     unsavedFiles: string[] = [];
     errorFiles: string[] = [];
     session: Session;
-    editorFileSession = EFS.create();
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+    fileChange: FileChange;
 
     /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
@@ -111,8 +112,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         const files = Object.entries(repositoryContent)
                             .filter(([, isFile]) => isFile)
                             .map(([fileName]) => fileName);
-                        this.editorFileSession = EFS.create();
-                        this.editorFileSession = EFS.addNewFiles(this.editorFileSession, ...files);
                     }),
                     tap(repositoryContent => (this.repositoryFiles = repositoryContent)),
                     tap(() => this.loadSession()),
@@ -241,8 +240,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param fileNames
      */
     setUnsavedFiles() {
-        this.unsavedFiles = EFS.getUnsavedFileNames(this.editorFileSession);
-
         if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -273,10 +270,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-            this.editorFileSession = EFS.setErrorsFromBuildLogs(
-                this.editorFileSession,
-                ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
-            );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
             // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
             if (this.session) {
@@ -298,7 +291,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @function updateRepositoryCommitStatus
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
-    updateRepositoryCommitStatus($event: any) {
+    updateRepositoryCommitStatus<T extends FileChange>(fileChange: T) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         /** Query the repositoryFileService for updated files in the repository */
         // TODO: this loading is unnecessary, because we know which files were created, etc.
@@ -306,30 +299,35 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.loadFiles()
             .pipe(
                 tap(() => {
-                    if ($event.mode === 'rename') {
-                        this.editorFileSession = EFS.renameFile(this.editorFileSession, $event.oldFileName, $event.newFileName);
-                        this.repositoryFiles = { ...fromPairs(Object.entries(this.repositoryFiles).filter(([file]) => file !== $event.oldFileName)), [$event.newFilename]: true };
+                    if (fileChange instanceof RenameFileChange) {
+                        this.repositoryFiles = {
+                            ...fromPairs(Object.entries(this.repositoryFiles).filter(([file]) => file !== fileChange.oldFileName)),
+                            [fileChange.newFileName]: true,
+                        };
+                        this.unsavedFiles = this.unsavedFiles.includes(fileChange.oldFileName)
+                            ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
+                            : this.unsavedFiles;
+                        this.errorFiles = this.errorFiles.includes(fileChange.oldFileName)
+                            ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
+                            : this.unsavedFiles;
+                        const fileErrors = this.buildLogErrors.errors[fileChange.oldFileName];
+                        delete this.buildLogErrors.errors[fileChange.oldFileName];
+                        this.buildLogErrors[fileChange.newFileName] = fileErrors;
+                        this.fileChange = fileChange;
                     }
-                }),
-                tap(repositoryContent => {
-                    const currentFiles = Object.entries(repositoryContent)
-                        .filter(([, isFile]) => isFile)
-                        .map(([fileName]) => fileName);
-                    const previousFiles = Object.entries(this.repositoryFiles)
-                        .filter(([fileName, isFile]) => isFile)
-                        .map(([fileName]) => fileName);
-                    const newFiles: string[] = _difference(currentFiles, previousFiles);
-                    const removedFiles: string[] = _difference(previousFiles, currentFiles);
-                    this.editorFileSession = EFS.update(this.editorFileSession, newFiles, removedFiles);
                 }),
                 tap(files => (this.repositoryFiles = files)),
                 tap(() => {
-                    if ($event.mode === 'create' && Object.keys(this.repositoryFiles).includes($event.file)) {
+                    if (fileChange instanceof CreateFileChange && Object.keys(this.repositoryFiles).includes(fileChange.fileName)) {
                         // Select newly created file
-                        this.selectedFile = $event.file;
-                    } else if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
-                        this.selectedFile = Object.keys(this.repositoryFiles).includes($event.newFileName) ? $event.newFileName : null;
-                    } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !Object.keys(this.repositoryFiles).includes($event.file)) {
+                        this.selectedFile = fileChange.fileName;
+                    } else if (fileChange instanceof RenameFileChange && fileChange.oldFileName === this.selectedFile) {
+                        this.selectedFile = Object.keys(this.repositoryFiles).includes(fileChange.newFileName) ? fileChange.newFileName : null;
+                    } else if (
+                        fileChange instanceof DeleteFileChange &&
+                        fileChange.fileName === this.selectedFile &&
+                        !Object.keys(this.repositoryFiles).includes(fileChange.fileName)
+                    ) {
                         // If the selected file was deleted, unselect it
                         this.selectedFile = undefined;
                     }
@@ -356,10 +354,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 timestamp: this.session.timestamp,
             };
 
-            this.editorFileSession = EFS.setErrorsFromBuildLogs(
-                this.editorFileSession,
-                ...Object.entries(this.buildLogErrors.errors).map(([fileName, annotations]): [string, AnnotationArray] => [fileName, annotations as AnnotationArray]),
-            );
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
         } else if (this.buildLogErrors) {
             this.storeSession();
@@ -406,7 +400,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             { errorFiles: [], savedFiles: [] },
         );
 
-        this.editorFileSession = EFS.setSaved(this.editorFileSession, ...savedFiles);
+        this.unsavedFiles = _difference(this.unsavedFiles, savedFiles);
         this.setUnsavedFiles();
 
         if (errorFiles.length) {
@@ -414,26 +408,9 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
-    onFileContentChange({
-        file,
-        code,
-        unsavedChanges,
-        errors,
-        cursor,
-    }: {
-        file: string;
-        code: string;
-        unsavedChanges: boolean;
-        errors: AnnotationArray;
-        cursor: { column: number; row: number };
-    }) {
-        this.editorFileSession = EFS.setCode(this.editorFileSession, file, code);
-        this.editorFileSession = EFS.setErrors(this.editorFileSession, file, errors);
-        this.editorFileSession = EFS.setCursor(this.editorFileSession, file, cursor);
-        if (unsavedChanges) {
-            this.editorFileSession = EFS.setUnsaved(this.editorFileSession, file);
-            this.setUnsavedFiles();
-        }
+    onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
+        this.unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
+        this.setUnsavedFiles();
     }
 
     /**

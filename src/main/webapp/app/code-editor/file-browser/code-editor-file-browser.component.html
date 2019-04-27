@@ -60,7 +60,7 @@
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
     <li *ngIf="!repositoryFiles[item.value]" (click)="onCollapseExpand()" class="list-group-item">
-        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1"></fa-icon>
+        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span class="ml-1">{{ item.text }}</span>
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
