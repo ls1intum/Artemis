@@ -7,12 +7,45 @@
         </h3>
     </div>
 
-    <div class="card-second-header">
-        <a class="btn btn-small" (click)="openCreateFileModal()"><fa-icon icon="plus"></fa-icon> </a>
-        <a class="btn btn-small" (click)="openDeleteFileModal($event, fileName)"><fa-icon icon="trash"></fa-icon> </a>
+    <div class="card-second-header d-flex">
+        <button class="btn btn-primary" (click)="setCreatingFile($event, '')">
+            <fa-icon icon="plus"></fa-icon>
+            <fa-icon icon="file" class="ml-1"></fa-icon>
+        </button>
+        <button class="btn btn-primary ml-2" (click)="setCreatingFolder($event, '')">
+            <fa-icon icon="plus"></fa-icon>
+            <fa-icon icon="folder" class="ml-1"></fa-icon>
+        </button>
+        <button class="btn btn-secondary ml-auto" (click)="toggleTreeCompress($event)">
+            <fa-icon [icon]="compressFolders ? ['fa', 'angle-double-up'] : ['fa', 'angle-double-down']"></fa-icon>
+        </button>
     </div>
 
     <div class="card-body">
+        <li *ngIf="creatingFile === ''" class="list-group-item border-0">
+            <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+            <span class="ml-1"
+                ><input
+                    #creatingInput
+                    value=""
+                    (keyup.enter)="onCreateFile($event)"
+                    (focusout)="onCreateFile($event)"
+                    (keyup.esc)="setCreatingFile($event, null)"
+                    class="list-group-item__input"
+            /></span>
+        </li>
+        <li *ngIf="creatingFolder === ''" class="list-group-item border-0">
+            <fa-icon aria-hidden="true" icon="folder" [fixedWidth]="true"></fa-icon>
+            <span class="ml-1"
+                ><input
+                    #creatingInput
+                    value=""
+                    (keyup.enter)="onCreateFolder($event)"
+                    (focusout)="onCreateFolder($event)"
+                    (keyup.esc)="setCreatingFolder($event, null)"
+                    class="list-group-item__input"
+            /></span>
+        </li>
         <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
             <fa-icon icon="spinner" spin="true"></fa-icon>
@@ -26,15 +59,16 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
-    <li *ngIf="item.children" (click)="onCollapseExpand()" class="list-group-item">
+    <li *ngIf="!repositoryFiles[item.value]" (click)="onCollapseExpand()" class="list-group-item">
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1"></fa-icon>
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span class="ml-1">{{ item.text }}</span>
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <fa-icon [icon]="['fa', 'plus']" (click)="setCreatingFile($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'file']" (click)="setCreatingFile($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'folder']" (click)="setCreatingFolder($event, item.value)"></fa-icon>
         </span>
     </li>
-    <li *ngIf="item.children && creatingFile === item.value" class="list-group-item">
+    <li *ngIf="!repositoryFiles[item.value] && creatingFile === item.value" class="list-group-item">
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
         <span class="ml-1"
             ><input
@@ -46,8 +80,20 @@
                 class="list-group-item__input"
         /></span>
     </li>
+    <li *ngIf="!item.IsFile && creatingFolder === item.value" class="list-group-item">
+        <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+        <span class="ml-1"
+            ><input
+                #creatingInput
+                value=""
+                (keyup.enter)="onCreateFolder($event)"
+                (focusout)="onCreateFolder($event)"
+                (keyup.esc)="setCreatingFolder($event, null)"
+                class="list-group-item__input"
+        /></span>
+    </li>
     <li
-        *ngIf="!item.children"
+        *ngIf="repositoryFiles[item.value]"
         (click)="handleNodeSelected(item)"
         class="list-group-item"
         [class.node-selected]="item.checked"

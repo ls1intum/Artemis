@@ -66,20 +66,21 @@ public class RepositoryResource {
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, Boolean>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Collection<String>> failureResponse = checkParticipation(participation);
+        ResponseEntity<HashMap<String, Boolean>> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator<File> itr = gitService.get().listFiles(repository).iterator();
+        Iterator itr = gitService.get().listFiles(repository).entrySet().iterator();
 
-        Collection<String> fileList = new LinkedList<>();
+        HashMap<String, Boolean> fileList = new HashMap<>();
 
         while (itr.hasNext()) {
-            fileList.add(itr.next().toString());
+            HashMap.Entry<File, Boolean> pair = (HashMap.Entry) itr.next();
+            fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
         return new ResponseEntity<>(fileList, HttpStatus.OK);
@@ -153,13 +154,40 @@ public class RepositoryResource {
         if(!repository.isValidFile(file)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        file.getParentFile().mkdirs();
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setFiles(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
+    }
+
+    /**
+     * POST /repository/{participationId}/folder: Create new folder
+     *
+     * @param participationId Participation ID
+     * @param filename
+     * @param request
+     * @return
+     * @throws IOException
+     */
+    @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+        log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
+
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
+        // We need to add an empty keep file so that the folder can be added to the git repository
+        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
+        InputStream inputStream = request.getInputStream();
+        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setFiles(null); // invalidate cache
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("folder", folderName)).build();
     }
 
     /**

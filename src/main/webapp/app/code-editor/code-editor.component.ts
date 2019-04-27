@@ -41,7 +41,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participation: Participation;
     selectedFile: string;
     paramSub: Subscription;
-    repositoryFiles: string[];
+    repositoryFiles: { [fileName: string]: boolean };
     unsavedFiles: string[] = [];
     errorFiles: string[] = [];
     session: Session;
@@ -107,11 +107,14 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
                     switchMap(() => this.loadFiles()),
-                    tap(files => {
+                    tap(repositoryContent => {
+                        const files = Object.entries(repositoryContent)
+                            .filter(([, isFile]) => isFile)
+                            .map(([fileName]) => fileName);
                         this.editorFileSession = EFS.create();
                         this.editorFileSession = EFS.addNewFiles(this.editorFileSession, ...files);
                     }),
-                    tap(files => (this.repositoryFiles = files)),
+                    tap(repositoryContent => (this.repositoryFiles = repositoryContent)),
                     tap(() => this.loadSession()),
                 )
                 .subscribe(
@@ -136,21 +139,29 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Load files from the participants repository.
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
-    private loadFiles(): Observable<string[]> {
+    private loadFiles(): Observable<{ [fileName: string]: boolean }> {
         this.isLoadingFiles = true;
         return this.repositoryFileService.query(this.participation.id).pipe(
-            rxMap((files: string[]) =>
-                files
-                    // Filter Readme file that was historically in the student's assignment repo
-                    .filter(value => !value.includes('README.md'))
-                    // Remove binary files as they can't be displayed in an editor
-                    .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
+            rxMap(files =>
+                fromPairs(
+                    Object.entries(files)
+                        // Filter root folder
+                        .filter(([value]) => value)
+                        // Filter Readme file that was historically in the student's assignment repo
+                        .filter(([value]) => !value.includes('README.md'))
+                        // Remove binary files as they can't be displayed in an editor
+                        .filter(([filename]) => {
+                            const fileSplit = filename.split('.');
+                            // Either the file has no ending or the file ending is allowed
+                            return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
+                        }),
+                ),
             ),
             tap(() => (this.isLoadingFiles = false)),
             catchError((error: HttpErrorResponse) => {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
                 this.isLoadingFiles = false;
-                return Observable.of([]);
+                return Observable.of({});
             }),
         );
     }
@@ -297,22 +308,28 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 tap(() => {
                     if ($event.mode === 'rename') {
                         this.editorFileSession = EFS.renameFile(this.editorFileSession, $event.oldFileName, $event.newFileName);
-                        this.repositoryFiles = [...this.repositoryFiles.filter(file => file !== $event.oldFileName), $event.newFilename];
+                        this.repositoryFiles = { ...fromPairs(Object.entries(this.repositoryFiles).filter(([file]) => file !== $event.oldFileName)), [$event.newFilename]: true };
                     }
                 }),
-                tap(files => {
-                    const newFiles: string[] = _difference(files, this.repositoryFiles);
-                    const removedFiles: string[] = _difference(this.repositoryFiles, files);
+                tap(repositoryContent => {
+                    const currentFiles = Object.entries(repositoryContent)
+                        .filter(([, isFile]) => isFile)
+                        .map(([fileName]) => fileName);
+                    const previousFiles = Object.entries(this.repositoryFiles)
+                        .filter(([fileName, isFile]) => isFile)
+                        .map(([fileName]) => fileName);
+                    const newFiles: string[] = _difference(currentFiles, previousFiles);
+                    const removedFiles: string[] = _difference(previousFiles, currentFiles);
                     this.editorFileSession = EFS.update(this.editorFileSession, newFiles, removedFiles);
                 }),
                 tap(files => (this.repositoryFiles = files)),
                 tap(() => {
-                    if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
+                    if ($event.mode === 'create' && Object.keys(this.repositoryFiles).includes($event.file)) {
                         // Select newly created file
                         this.selectedFile = $event.file;
                     } else if ($event.mode === 'rename' && $event.oldFileName === this.selectedFile) {
-                        this.selectedFile = this.repositoryFiles.includes($event.newFileName) ? $event.newFileName : null;
-                    } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
+                        this.selectedFile = Object.keys(this.repositoryFiles).includes($event.newFileName) ? $event.newFileName : null;
+                    } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !Object.keys(this.repositoryFiles).includes($event.file)) {
                         // If the selected file was deleted, unselect it
                         this.selectedFile = undefined;
                     }

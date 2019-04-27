@@ -1,6 +1,7 @@
 import { RepositoryFileService } from 'app/entities/repository';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { sortBy as _sortBy } from 'lodash';
 import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
 import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
@@ -17,7 +18,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     participation: Participation;
     @Input()
-    repositoryFiles: string[];
+    repositoryFiles: { [fileName: string]: boolean };
     @Input()
     unsavedFiles: string[];
     @Input()
@@ -40,6 +41,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     folder: string;
     filesTreeViewItem: TreeviewItem[];
+    compressFolders = true;
 
     @ViewChild('renamingInput') renamingInput: ElementRef;
     @ViewChild('creatingInput') creatingInput: ElementRef;
@@ -47,6 +49,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     // Tuple: [filePath, fileName]
     renamingFile: [string, string] | null = null;
     creatingFile: string | null = null;
+    creatingFolder: string | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
@@ -116,7 +119,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
          * Update the treeview when files have been added or removed
          */
         if (changes.repositoryFiles && this.repositoryFiles) {
-            this.setupTreeview(this.repositoryFiles);
+            this.setupTreeview();
         } else if (changes.fileName) {
             this.renamingFile = null;
         }
@@ -173,14 +176,21 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         }
     }
 
+    toggleTreeCompress($event: any) {
+        this.compressFolders = !this.compressFolders;
+        this.setupTreeview();
+    }
+
     /**
      * @function setupTreeView
      * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
      * @param files: Provided repository files by parent editor component
      */
-    setupTreeview(files: string[]) {
-        let tree = this.buildTree(files.sort());
-        tree = this.compressTree(tree);
+    setupTreeview() {
+        let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
+        if (this.compressFolders) {
+            tree = this.compressTree(tree);
+        }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }
 
@@ -239,7 +249,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 // Recursive function call to process children
                 node.children = this.buildTree([fileSplit.join('/')], node.children, folder ? folder + '/' + node.text : node.text);
                 node.folder = node.text;
-                node.value = node.folder;
+                node.value = folder ? `${folder}/${node.folder}` : node.folder;
             } else {
                 // File node
                 node.folder = folder;
@@ -292,13 +302,12 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @function openCreateFileModal
      * @desc Opens a popup to create a new repository file
      */
-    openCreateFileModal($event: any, folder: string = this.folder) {
-        $event.stopPropagation();
+    openCreateFileModal() {
         const modalRef = this.modalService.open(CodeEditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
-        if (folder) {
-            modalRef.componentInstance.folder = folder;
+        if (this.folder) {
+            modalRef.componentInstance.folder = this.folder;
         }
     }
 
@@ -349,7 +358,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             if (this.renamingInput) {
                 this.renamingInput.nativeElement.focus();
             }
-        });
+        }, 0);
     }
 
     onCreateFile(event: any) {
@@ -358,9 +367,21 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             return;
         }
         const file = `${this.creatingFile}/${event.target.value}`;
-        this.repositoryFileService.create(this.participation.id, file).subscribe(() => {
+        this.repositoryFileService.createFile(this.participation.id, file).subscribe(() => {
             this.onFileChange.emit({ mode: 'create', file });
             this.creatingFile = null;
+        });
+    }
+
+    onCreateFolder(event: any) {
+        if (!event.target.value) {
+            this.creatingFolder = null;
+            return;
+        }
+        const file = `${this.creatingFolder}/${event.target.value}`;
+        this.repositoryFileService.createFolder(this.participation.id, file).subscribe(() => {
+            this.onFileChange.emit({ mode: 'create', file });
+            this.creatingFolder = null;
         });
     }
 
@@ -374,6 +395,19 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             if (this.creatingInput) {
                 this.creatingInput.nativeElement.focus();
             }
-        });
+        }, 0);
+    }
+
+    /**
+     * Enter rename file mode and focus the created input.
+     **/
+    setCreatingFolder(event: any, folder: string) {
+        event.stopPropagation();
+        this.creatingFolder = folder;
+        setTimeout(() => {
+            if (this.creatingInput) {
+                this.creatingInput.nativeElement.focus();
+            }
+        }, 0);
     }
 }

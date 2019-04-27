@@ -35,8 +35,8 @@ export class RepositoryFileService {
 
     constructor(private http: HttpClient) {}
 
-    query(participationId: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}/${participationId}/files`);
+    query(participationId: number): Observable<{ [fileName: string]: boolean }> {
+        return this.http.get<{ [fileName: string]: boolean }>(`${this.resourceUrl}/${participationId}/files`);
     }
 
     get(participationId: number, fileName: string): Observable<any> {
@@ -51,8 +51,12 @@ export class RepositoryFileService {
         });
     }
 
-    create(participationId: number, fileName: string): Observable<void> {
+    createFile(participationId: number, fileName: string): Observable<void> {
         return this.http.post<void>(`${this.resourceUrl}/${participationId}/file`, '', { params: new HttpParams().set('file', fileName) });
+    }
+
+    createFolder(participationId: number, folderName: string): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/folder`, '', { params: new HttpParams().set('folder', folderName) });
     }
 
     rename(participationId: number, currentFilePath: string, newFilename: string): Observable<void> {
