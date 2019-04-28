@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import de.tum.in.www1.artemis.domain.FileType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.Git;
@@ -216,22 +217,22 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    public HashMap<File, Boolean> listFiles(Repository repo) {
+    public HashMap<File, FileType> listFiles(Repository repo) {
         // Check if list of files is already cached
-        if (repo.getFiles() == null) {
+        if (repo.getContent() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
-            HashMap<File, Boolean> files = new HashMap<>();
+            HashMap<File, FileType> files = new HashMap<>();
 
             while (itr.hasNext()) {
                 File nextFile = new File(itr.next(), repo);
-                files.put(nextFile, nextFile.isFile());
+                files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
             }
 
             // Cache the list of files
             // Avoid expensive rescanning
             repo.setFiles(files);
         }
-        return repo.getFiles();
+        return repo.getContent();
     }
 
     /**

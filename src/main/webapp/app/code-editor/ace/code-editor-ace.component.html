@@ -3,8 +3,8 @@
         <h3 class="card-title">
             <span>
                 <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
-                <fa-icon *ngIf="isLoading" icon="circle-notch" spin="true"></fa-icon>
-                <fa-icon *ngIf="!isLoading && selectedFile" icon="check" class="ml-2"></fa-icon>
+                <fa-icon *ngIf="isLoading" icon="circle-notch" spin="true" title="{{ 'arTeMiSApp.editor.loadingFile' | translate }}"></fa-icon>
+                <fa-icon *ngIf="!isLoading && selectedFile" icon="check" class="ml-2" title="{{ 'arTeMiSApp.editor.fileLoadedSuccess' | translate }}"></fa-icon>
             </span>
             <span> &nbsp;{{ selectedFile }}</span>
         </h3>

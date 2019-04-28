@@ -60,27 +60,28 @@ public class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/files: List all file names of the repository
+     * GET /repository/{participationId}/files: Map of all file and folders of the repository.
+     * Each entry states if it is a file or a folder.
      *
      * @param participationId Participation ID
      * @return
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, Boolean>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<HashMap<String, Boolean>> failureResponse = checkParticipation(participation);
+        ResponseEntity<HashMap<String, FileType>> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Iterator itr = gitService.get().listFiles(repository).entrySet().iterator();
 
-        HashMap<String, Boolean> fileList = new HashMap<>();
+        HashMap<String, FileType> fileList = new HashMap<>();
 
         while (itr.hasNext()) {
-            HashMap.Entry<File, Boolean> pair = (HashMap.Entry) itr.next();
+            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
             fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
@@ -211,7 +212,9 @@ public class RepositoryResource {
         File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
 
         boolean isRenamed = file.get().renameTo(newFile);
-        // TODO: Throw error
+        if (!isRenamed) {
+            return notFound();
+        }
 
         repository.setFiles(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();

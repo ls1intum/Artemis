@@ -28,6 +28,7 @@
             "saveFiles": "Speichern",
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
+            "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fileBrowser": {
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",

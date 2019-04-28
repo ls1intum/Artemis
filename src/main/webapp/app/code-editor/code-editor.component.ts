@@ -195,9 +195,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Set unsaved files and check if this changes the commit state.
-     * @param fileNames
+     * @param unsavedFiles
      */
-    setUnsavedFiles() {
+    setUnsavedFiles(unsavedFiles: string[]) {
+        this.unsavedFiles = unsavedFiles;
         if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -214,7 +215,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     /**
      * @function updateLatestResult
      * @desc Callback function for when a new result is received from the result component
-     * @param $event Event object which contains the newly received result
      */
     updateLatestResult() {
         this.isBuilding = false;
@@ -332,6 +332,11 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
+    /**
+     * When files were saved, check which could be saved and set unsavedFiles to update the ui.
+     * Files that could not be saved will show an error in the header.
+     * @param files
+     */
     onSavedFiles(files: any) {
         const { errorFiles, savedFiles } = Object.entries(files).reduce(
             (acc, [fileName, error]: [string, string | null]) =>
@@ -339,21 +344,29 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             { errorFiles: [], savedFiles: [] },
         );
 
-        this.unsavedFiles = _difference(this.unsavedFiles, savedFiles);
-        this.setUnsavedFiles();
+        const unsavedFiles = _difference(this.unsavedFiles, savedFiles);
+        this.setUnsavedFiles(unsavedFiles);
 
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
     }
 
+    /**
+     * When the files are loaded set the repositoryFiles.
+     * @param files
+     */
     onFilesLoaded(files: string[]) {
         this.repositoryFiles = files;
     }
 
+    /**
+     * When the content of a file changes, set it as unsaved.
+     * @param file
+     */
     onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
-        this.unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
-        this.setUnsavedFiles();
+        const unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
+        this.setUnsavedFiles(unsavedFiles);
     }
 
     /**

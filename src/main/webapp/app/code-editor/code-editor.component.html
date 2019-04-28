@@ -32,7 +32,6 @@
                 [editorState]="editorState"
                 [commitState]="commitState"
                 [isLoadingFiles]="isLoadingFiles"
-                (selectedFile)="updateSelectedFile($event)"
                 (onFileChange)="updateRepositoryCommitStatus($event)"
                 (onFilesLoaded)="onFilesLoaded($event)"
             >

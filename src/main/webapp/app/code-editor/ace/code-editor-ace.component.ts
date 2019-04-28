@@ -11,7 +11,6 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Ou
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { difference as _difference } from 'lodash';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
@@ -93,7 +92,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * @function ngOnChanges
      * @desc New participation     => reset the file update subscriptions
+     *       File has happened     => update internal variables to reflect change
      *       New selectedFile      => load the file from the repository and open it in the editor
+     *       New buildLogErrors    => update the ui with the annotations
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -206,7 +207,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             fileObj => {
                 this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
                 this.isLoading = false;
-                setTimeout(() => this.initEditorAfterFileChange(), 0);
+                this.initEditorAfterFileChange();
             },
             err => {
                 console.log('There was an error while getting file', this.selectedFile, err);
@@ -236,10 +237,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.fileSession[this.selectedFile].code !== code) {
             const cursor = this.editor.getEditor().getCursorPosition();
             this.fileSession[this.selectedFile] = { code, cursor };
-            this.buildLogErrors = {
-                ...this.buildLogErrors,
-                [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors[this.selectedFile]),
-            };
+            if (this.buildLogErrors[this.selectedFile]) {
+                this.buildLogErrors = {
+                    ...this.buildLogErrors,
+                    [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors[this.selectedFile]),
+                };
+            }
             this.editorChangeLog = [];
             this.onFileContentChange.emit({ file: this.selectedFile, unsavedChanges: true });
         }

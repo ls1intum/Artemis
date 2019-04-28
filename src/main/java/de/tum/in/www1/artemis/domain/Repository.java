@@ -15,7 +15,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Participation participation;
     private Path localPath;
-    private HashMap<File, Boolean> files;
+    private HashMap<File, FileType> files;
 
     public Repository(File gitDir) throws IOException {
         super(gitDir);
@@ -64,11 +64,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         this.localPath = localPath;
     }
 
-    public HashMap<File, Boolean> getFiles() {
+    public HashMap<File, FileType> getContent() {
         return files;
     }
 
-    public void setFiles(HashMap<File, Boolean> files) {
+    public void setFiles(HashMap<File, FileType> files) {
         this.files = files;
     }
 }

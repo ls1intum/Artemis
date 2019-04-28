@@ -213,10 +213,14 @@ File browser styles
 
     .treeview-item {
         .list-group-item {
-            padding: 0.3rem 1.25rem;
+            padding: 0.3rem 0.5rem 0.3rem 1.25rem;
             margin-bottom: 2px;
             border: none;
             display: flex;
+
+            &--folder {
+                padding-left: 0;
+            }
 
             &__fileName {
                 cursor: pointer;

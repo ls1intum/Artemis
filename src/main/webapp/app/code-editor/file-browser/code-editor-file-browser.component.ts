@@ -21,6 +21,8 @@ import { HttpErrorResponse } from '@angular/common/http';
     providers: [NgbModal, RepositoryFileService, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+    public FileType = FileType;
+
     @Input()
     participation: Participation;
     @Input()
@@ -44,7 +46,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     treeview: TreeviewComponent;
 
     selectedFileValue: string;
-    repositoryFiles: { [fileName: string]: boolean };
+    repositoryFiles: { [fileName: string]: FileType };
     folder: string;
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
@@ -406,6 +408,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         }, 0);
     }
 
+    /**
+     * Set renamingFile to null to make the input disappear.
+     **/
+    clearRenamingFile($event: any) {
+        event.stopPropagation();
+        this.renamingFile = null;
+    }
+
+    /**
+     * Create a file with the value of the creation input.
+     **/
     onCreateFile(event: any) {
         if (!event.target.value) {
             this.creatingFile = null;
@@ -418,6 +431,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         });
     }
 
+    /**
+     * Create a folder with the value of the creation input.
+     **/
     onCreateFolder(event: any) {
         if (!event.target.value) {
             this.creatingFolder = null;
@@ -444,6 +460,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     /**
+     * Set creatingFile to null to make the input disappear.
+     **/
+    clearCreatingFile(event: any) {
+        event.stopPropagation();
+        this.creatingFile = null;
+    }
+
+    /**
      * Enter rename file mode and focus the created input.
      **/
     setCreatingFolder(event: any, folder: string) {
@@ -454,5 +478,13 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 this.creatingInput.nativeElement.focus();
             }
         }, 0);
+    }
+
+    /**
+     * Set creatingFolder to null to make the input disappear.
+     **/
+    clearCreatingFolder(event: any) {
+        event.stopPropagation();
+        this.creatingFolder = null;
     }
 }
