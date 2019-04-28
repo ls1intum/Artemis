@@ -284,6 +284,11 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.selectedFile = undefined;
             }
         }
+        if (this.unsavedFiles.length && this.editorState === EditorState.CLEAN) {
+            this.editorState = EditorState.UNSAVED_CHANGES;
+        } else if (!this.unsavedFiles.length && this.editorState === EditorState.UNSAVED_CHANGES) {
+            this.editorState = EditorState.CLEAN;
+        }
     }
 
     /**

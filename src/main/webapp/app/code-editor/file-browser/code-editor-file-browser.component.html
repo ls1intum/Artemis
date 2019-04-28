@@ -128,15 +128,14 @@
         [class.text-danger]="!item.checked && errorFiles && errorFiles.includes(item.value)"
     >
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
-        <span class="text-warning">
-            <fa-icon
-                *ngIf="unsavedFiles && unsavedFiles.includes(item.value)"
-                aria-hidden="true"
-                [icon]="['fas', 'circle']"
-                title="{{ 'arTeMiSApp.editor.fileBrowser.unsavedChanges' | translate }}"
-                size="xs"
-            ></fa-icon>
-        </span>
+        <fa-icon
+            *ngIf="unsavedFiles && unsavedFiles.includes(item.value)"
+            aria-hidden="true"
+            [icon]="['fas', 'circle']"
+            class="d-flex align-items-center text-warning"
+            title="{{ 'arTeMiSApp.editor.fileBrowser.unsavedChanges' | translate }}"
+            size="xs"
+        ></fa-icon>
         <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value" [ngClass]="item.checked ? 'text-white' : 'primary'">{{
             item.text
         }}</span>
