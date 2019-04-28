@@ -5,8 +5,8 @@ import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
 import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
-import * as interact from 'interactjs';
-import { Interactable } from 'interactjs';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
