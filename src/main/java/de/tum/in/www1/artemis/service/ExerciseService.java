@@ -314,7 +314,9 @@ public class ExerciseService {
         }
         for (Participation participation : exercise.getParticipations()) {
             try {
-                if (participation.getRepositoryUrl() == null || !studentIds.contains(participation.getStudent().getLogin())) {
+                if (participation.getRepositoryUrl() == null) {
+                    continue;
+                } else if (!studentIds.contains(participation.getStudent().getLogin())) {
                     continue;
                 }
 
