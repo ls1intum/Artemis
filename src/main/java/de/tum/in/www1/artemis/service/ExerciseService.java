@@ -314,12 +314,7 @@ public class ExerciseService {
         }
         for (Participation participation : exercise.getParticipations()) {
             try {
-                if (participation.getRepositoryUrl() == null) {
-                    continue;
-                }
-                User student = participation.getStudent();
-                String login = student.getLogin();
-                if (!studentIds.contains(login)) {
+                if (participation.getRepositoryUrl() == null || !studentIds.contains(participation.getStudent().getLogin())) {
                     continue;
                 }
 
