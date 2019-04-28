@@ -1,14 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -16,10 +7,17 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -30,14 +28,11 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
-    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository,
-            FeedbackRepository feedbackRepository) {
+    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService,
+                                     ModelingSubmissionRepository modelingSubmissionRepository) {
         super(resultRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -49,9 +44,9 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Result result, ModelingExercise exercise) {
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, ZonedDateTime submissionDate) {
         // TODO CZ: use AssessmentService#submitResult() function instead
-        result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for
         // modeling and text exercises (i.e. total score is sum of feedback

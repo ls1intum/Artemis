@@ -12,6 +12,7 @@
                 "signUpForCourse": "Sign up for selected course",
                 "cancel": "Cancel",
                 "noCourse": "No course available to register to",
+                "courseLoading": "Courses are loading...",
                 "pleaseSelectCourse": "# Select a course"
             }
         },
@@ -82,7 +83,7 @@
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "date": "Date:",
+                "date": "Date",
                 "notReleased": "Not released",
                 "version": "Version"
             },

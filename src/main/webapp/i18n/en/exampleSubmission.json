@@ -27,7 +27,8 @@
             "submitAssessment": "Submit Assessment",
             "readAndUnderstood": "I have read and understood the example",
             "exampleSubmission": "Example Submission",
-            "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment."
+            "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
+            "deleted": "Example submission deleted successfully"
         }
     }
 }

@@ -6,7 +6,7 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { ExerciseDashboardComponent } from './exercise-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';

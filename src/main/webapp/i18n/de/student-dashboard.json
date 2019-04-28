@@ -12,6 +12,7 @@
                 "signUpForCourse": "Für den ausgewählten Kurs anmelden",
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "courseLoading": "Kurse werden geladen...",
                 "pleaseSelectCourse": "# Wähle einen Kurs aus"
             }
         },
@@ -82,7 +83,7 @@
                 "description": "Beschreibung",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
-                "date": "Datum:",
+                "date": "Datum",
                 "notReleased": "Nicht freigegeben",
                 "version": "Version"
             },

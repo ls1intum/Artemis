@@ -3,7 +3,7 @@ import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ActivatedRoute } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
-import { DifferencePipe } from 'angular2-moment';
+import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentType, Result } from 'app/entities/result';
 
