@@ -177,6 +177,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     emitFileChange(fileChange: FileChange) {
+        // TODO: This call would be unnecessary if we could easily update the file tree on delete/rename/create
         this.loadFiles()
             .pipe(tap(files => this.onFileChange.emit([Object.keys(files), fileChange])))
             .subscribe();
@@ -423,7 +424,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             this.creatingFile = null;
             return;
         }
-        const file = `${this.creatingFile}/${event.target.value}`;
+        const file = this.creatingFile ? `${this.creatingFile}/${event.target.value}` : event.target.value;
         this.repositoryFileService.createFile(this.participation.id, file).subscribe(() => {
             this.emitFileChange(new CreateFileChange(FileType.FILE, file));
             this.creatingFile = null;

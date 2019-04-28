@@ -213,8 +213,8 @@ File browser styles
 
     .treeview-item {
         .list-group-item {
-            padding: 0.75rem 1.25rem;
-            margin-bottom: -1px;
+            padding: 0.3rem 1.25rem;
+            margin-bottom: 2px;
             border: none;
             display: flex;
 
@@ -244,8 +244,15 @@ File browser styles
     background-color: #428bca !important;
 }
 
-.resizable-filebrowser .card-body {
-    padding: 1rem 0.5rem 1rem 0.5rem;
+.resizable-filebrowser {
+    .card-body {
+        padding: 1rem 0.5rem 1rem 0.5rem;
+    }
+    .card-second-header {
+        button {
+            width: 60px;
+        }
+    }
 }
 
 .file-icons {
