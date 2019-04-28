@@ -49,6 +49,21 @@ describe('course', function() {
         await newCoursePage.clickCancel();
     });
 
+    it('should be able to browse and upload a course icon', async function() {
+        await coursePage.clickOnCreateNewCourse();
+
+        await newCoursePage.setTitle(courseName);
+        await newCoursePage.setShortName(courseName);
+        await newCoursePage.browseCourseIcon();
+        await newCoursePage.uploadCourseIcon();
+
+        const fileName = await browser.executeScript('return arguments[0].innerHTML;', element(by.className('custom-file-label')));
+
+        expect(await element(by.css('.headline jhi-secured-image img'))).to.not.be.undefined;
+        expect(fileName).to.have.string('/api/files/temp');
+        await newCoursePage.clickCancel();
+    });
+
     it('should allow to create new course without tutor group', async function() {
         await coursePage.clickOnCreateNewCourse();
 
@@ -61,11 +76,13 @@ describe('course', function() {
         await newCoursePage.clickCancel();
     });
 
-    it('should save course with title, short title, student, tutor and instructor groups', async function() {
+    it('should save course with title, short title, coure icon, student, tutor and instructor groups', async function() {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
         await newCoursePage.setShortName(courseName);
+        await newCoursePage.browseCourseIcon();
+        await newCoursePage.uploadCourseIcon();
         await newCoursePage.setStudentGroupName('tumuser');
         await newCoursePage.setTutorGroupName('artemis-dev');
         await newCoursePage.setInstructorGroupName('ls1instructor');

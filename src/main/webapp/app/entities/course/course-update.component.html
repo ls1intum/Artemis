@@ -87,7 +87,7 @@
                             ></image-cropper>
                         </div>
                         <div *ngIf="showCropper" class="col-3">
-                            <button class="btn btn-outline-primary" (click)="uploadCourseImage()"
+                            <button class="btn btn-outline-primary icon-upload" (click)="uploadCourseImage()"
                                     [disabled]="isUploadingCourseImage || !courseImageFileName">
                                         <span *ngIf="isUploadingCourseImage"
                                               jhiTranslate="arTeMiSApp.course.uploading"></span>
