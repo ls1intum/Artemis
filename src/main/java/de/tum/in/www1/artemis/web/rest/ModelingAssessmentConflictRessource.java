@@ -45,15 +45,14 @@ public class ModelingAssessmentConflictRessource {
 
     @PutMapping("/model-assessment-conflicts/{conflictId}/escalate")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity escalateConflict(@PathVariable Long conflictId, @RequestBody ModelAssessmentConflict conflict) {
+    public ResponseEntity escalateConflict(@PathVariable Long conflictId) {
         Exercise exercise = conflictService.getExerciseOfConflict(conflictId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
         else {
-            conflictService.escalateConflict(conflictId);
+            return ResponseEntity.ok(conflictService.escalateConflict(conflictId));
         }
-
     }
 
 }
