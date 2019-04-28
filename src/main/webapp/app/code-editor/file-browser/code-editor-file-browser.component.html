@@ -65,7 +65,7 @@
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
     <li *ngIf="repositoryFiles[item.value] === 'FOLDER'" (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
-        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1"></fa-icon>
+        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
         <!-- Renaming folder tree item -->
@@ -108,7 +108,7 @@
         /></span>
     </li>
     <!-- Creating folder tree item -->
-    <li *ngIf="repositoryFiles[item.value] === 'FOLDER' && creatingFolder === item.value" class="list-group-item ">
+    <li *ngIf="repositoryFiles[item.value] === 'FOLDER' && creatingFolder === item.value" class="list-group-item">
         <fa-icon aria-hidden="true" icon="folder" [fixedWidth]="true"></fa-icon>
         <span class="ml-1"
             ><input
@@ -134,15 +134,12 @@
                 aria-hidden="true"
                 [icon]="['fas', 'circle']"
                 title="{{ 'arTeMiSApp.editor.fileBrowser.unsavedChanges' | translate }}"
+                size="xs"
             ></fa-icon>
         </span>
-        <span
-            class="ml-1 list-group-item__fileName"
-            *ngIf="!renamingFile || renamingFile[0] !== item.value"
-            [class.font-weight-bold]="item.checked"
-            [ngClass]="item.checked ? 'text-white' : 'primary'"
-            >{{ item.text }}</span
-        >
+        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value" [ngClass]="item.checked ? 'text-white' : 'primary'">{{
+            item.text
+        }}</span>
         <!-- Renaming file tree item -->
         <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
             ><input

@@ -242,19 +242,20 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     updateRepositoryCommitStatus<T extends FileChange>([files, fileChange]: [string[], T]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        this.repositoryFiles = files;
         if (fileChange instanceof CreateFileChange) {
             // Select newly created file
-            this.repositoryFiles = files;
             if (fileChange.fileType === FileType.FILE) {
                 this.selectedFile = fileChange.fileName;
             }
         } else if (fileChange instanceof RenameFileChange) {
-            this.unsavedFiles = this.unsavedFiles.includes(fileChange.oldFileName)
-                ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
-                : this.unsavedFiles;
-            this.errorFiles = this.errorFiles.includes(fileChange.oldFileName)
-                ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
-                : this.unsavedFiles;
+            const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
+            const renamedUnsavedFiles = this.unsavedFiles
+                .filter(file => file.startsWith(fileChange.oldFileName))
+                .map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
+            this.unsavedFiles = [...this.unsavedFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedUnsavedFiles];
+            const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
+            this.errorFiles = [...this.errorFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedErrorFiles];
             const fileErrors = this.buildLogErrors.errors[fileChange.oldFileName];
             const filteredErrors = compose(
                 fromPairs,
@@ -263,13 +264,23 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             )(this.buildLogErrors.errors);
             this.buildLogErrors = { errors: { ...filteredErrors, [fileChange.newFileName]: fileErrors }, timestamp: this.buildLogErrors.timestamp };
             this.fileChange = fileChange;
-            if (fileChange.oldFileName === this.selectedFile) {
+            if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
                 this.selectedFile = fileChange.newFileName;
+            } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {
+                this.selectedFile = this.selectedFile.replace(oldFileNameRegex, fileChange.newFileName);
             }
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileChange = fileChange;
-            // If the selected file was deleted, unselect it
-            if (!Object.keys(files).includes(fileChange.fileName)) {
+            this.unsavedFiles = this.unsavedFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            this.errorFiles = this.unsavedFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            const errors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors, timestamp: this.buildLogErrors.timestamp };
+            // If the selected file or its containing folder was deleted, unselect it
+            if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
                 this.selectedFile = undefined;
             }
         }

@@ -4,14 +4,14 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { catchError, map as rxMap, tap } from 'rxjs/operators';
 import { sortBy as _sortBy } from 'lodash';
-import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { WindowRef } from 'app/core';
 import { CodeEditorComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
-import { CreateFileChange, RenameFileChange, FileType, FileChange } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -54,7 +54,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @ViewChild('renamingInput') renamingInput: ElementRef;
     @ViewChild('creatingInput') creatingInput: ElementRef;
 
-    // Tuple: [filePath, fileName]
+    // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;
     creatingFile: string | null = null;
     creatingFolder: string | null = null;
@@ -124,8 +124,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (this.commitState !== CommitState.UNDEFINED && this.isInitial) {
             this.isInitial = false;
             this.loadFiles().subscribe();
-        } else if (changes.repositoryFiles && this.repositoryFiles) {
-            this.setupTreeview();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;
             this.setupTreeview();
@@ -179,10 +177,27 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     emitFileChange(fileChange: FileChange) {
-        // TODO: This call would be unnecessary if we could easily update the file tree on delete/rename/create
-        this.loadFiles()
-            .pipe(tap(files => this.onFileChange.emit([Object.keys(files), fileChange])))
-            .subscribe();
+        if (fileChange instanceof CreateFileChange) {
+            this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
+        } else if (fileChange instanceof DeleteFileChange) {
+            const fileRegex = new RegExp(`^${fileChange.fileName}`);
+            // If the deleted item is a folder, also delete all sub files/folders
+            this.repositoryFiles = compose(
+                fromPairs,
+                filter(([fileName]) => !fileRegex.test(fileName)),
+                toPairs,
+            )(this.repositoryFiles);
+        } else if (fileChange instanceof RenameFileChange) {
+            const fileRegex = new RegExp(`^${fileChange.oldFileName}`);
+            // If the renamed item is a folder, also rename the path of all sub files/folders
+            this.repositoryFiles = compose(
+                fromPairs,
+                map(([fileName, fileType]) => [fileName.replace(fileRegex, fileChange.newFileName), fileType]),
+                toPairs,
+            )(this.repositoryFiles);
+        }
+        this.setupTreeview();
+        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange]);
     }
 
     /**
