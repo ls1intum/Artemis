@@ -9,11 +9,10 @@
     <div class="card-body">
         <ace-editor
             #editor
-            [text]="editorFileSessions[selectedFile] ? editorFileSessions[selectedFile].code : ''"
             [mode]="editorMode"
             [readOnly]="false"
             [autoUpdateContent]="true"
-            [durationBeforeCallback]="800"
+            [durationBeforeCallback]="200"
             (textChanged)="onFileTextChanged($event)"
             class="panel panel-default"
             style="display: block; width:100%; min-height: 100px; overflow: auto; line-height: 14px;"

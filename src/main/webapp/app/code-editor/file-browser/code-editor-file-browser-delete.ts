@@ -37,7 +37,6 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
             this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe(
                 () => {
                     this.closeModal();
-                    this.parent.getRepositoryFiles();
                     this.parent.onDeletedFile({ file: this.fileNameToDelete, mode: 'delete' });
                 },
                 err => {

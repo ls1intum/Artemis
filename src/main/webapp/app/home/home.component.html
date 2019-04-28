@@ -82,7 +82,7 @@
                         </div>
                         <button
                             type="submit"
-                            [disabled]="!acceptTerms || (password && password.length < 4) || (username && username.length < 4)"
+                            [disabled]="!acceptTerms || (!password || password.length < 4) || (!username || username.length < 4)"
                             class="btn btn-primary"
                             jhiTranslate="login.form.button"
                         >

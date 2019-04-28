@@ -3,9 +3,8 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, Simpl
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
-import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent } from 'app/code-editor';
+import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
-import { HttpErrorResponse } from '@angular/common/http';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 
@@ -20,7 +19,15 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     repositoryFiles: string[];
     @Input()
+    unsavedFiles: string[];
+    @Input()
+    errorFiles: string[];
+    @Input()
     fileName: string;
+    @Input()
+    editorState: EditorState;
+    @Input()
+    commitState: CommitState;
     @Output()
     createdFile = new EventEmitter<object>();
     @Output()
@@ -91,7 +98,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     /**
      * @function ngOnInit
-     * @desc Tracks changes to the provided participation and repositoryFiles
+     * @desc Updates the file tree with the repositoryFiles
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -101,7 +108,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         /**
          * Update the treeview when files have been added or removed
          */
-        if (this.repositoryFiles) {
+        if (changes.repositoryFiles && this.repositoryFiles) {
             this.setupTreeview(this.repositoryFiles);
         }
     }
@@ -157,29 +164,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     .map(str => str.trim())
                     .join('/');
             }
-        }
-    }
-
-    /**
-     * @function getRepositoryFiles
-     * @desc Checks if the repository files have been requested already
-     * Also initiates the building of a filetree for the filetree viewer
-     */
-    getRepositoryFiles() {
-        if (!this.repositoryFiles) {
-            /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(this.parent.participation.id).subscribe(
-                files => {
-                    // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files.filter(value => value !== 'README.md');
-                    this.setupTreeview(this.repositoryFiles);
-                },
-                (error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                },
-            );
-        } else {
-            this.setupTreeview(this.repositoryFiles);
         }
     }
 
@@ -286,18 +270,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             }
         }
         return tree;
-    }
-
-    getSaveStatusLabel(): string {
-        return this.parent.saveStatusLabel;
-    }
-
-    getSaveStatusIcon(): { spin: boolean; icon: string; class: string } {
-        return this.parent.saveStatusIcon;
-    }
-
-    isExerciseCommitted(): boolean {
-        return this.parent.isCommitted;
     }
 
     /**

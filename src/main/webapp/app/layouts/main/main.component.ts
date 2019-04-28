@@ -5,6 +5,7 @@ import { Angulartics2Piwik } from 'angulartics2/piwik';
 
 import { JhiLanguageHelper } from 'app/core';
 import { ProfileService } from '../profiles/profile.service';
+import { ProfileInfo } from 'app/layouts';
 
 @Component({
     selector: 'jhi-main',
@@ -22,15 +23,15 @@ export class JhiMainComponent implements OnInit {
     }
 
     private async setupAnalytics() {
-        const profileInfo = await this.profileService.getProfileInfo();
-
-        if (profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
-            // only Track in Production Environment
-            this.angularticsPiwik.startTracking();
-        } else {
-            // Enable Developer Mode in all other environments
-            this.angulartics.settings.developerMode = true;
-        }
+        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            if (profileInfo && profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
+                // only Track in Production Environment
+                this.angularticsPiwik.startTracking();
+            } else {
+                // Enable Developer Mode in all other environments
+                this.angulartics.settings.developerMode = true;
+            }
+        });
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {

@@ -1,4 +1,4 @@
-<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card resizable-instructions" [ngStyle]="{ 'width.vw': 40 }">
+<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card-body card resizable-instructions p-0 border-0" [ngStyle]="{ 'width.vw': 40, overflow: 'inherit' }">
     <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
@@ -6,7 +6,14 @@
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
         </h3>
     </div>
-    <jhi-programming-exercise-instructions [exercise]="participation?.exercise" [participation]="participation"> </jhi-programming-exercise-instructions>
+    <jhi-programming-exercise-instructions
+        (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
+        [exercise]="participation?.exercise"
+        [participation]="participation"
+        [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
+        [ngStyle]="{ overflow: 'inherit' }"
+    >
+    </jhi-programming-exercise-instructions>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>

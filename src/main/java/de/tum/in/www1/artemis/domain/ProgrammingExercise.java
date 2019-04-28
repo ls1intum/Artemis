@@ -1,22 +1,25 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
 
+import javax.persistence.*;
+
+import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+
 /**
  * A ProgrammingExercise.
  */
 @Entity
-@DiscriminatorValue(value="P")
+@DiscriminatorValue(value = "P")
 public class ProgrammingExercise extends Exercise implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
@@ -39,12 +42,12 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval=true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
     private Participation templateParticipation;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval=true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
     private Participation solutionParticipation;
@@ -52,36 +55,30 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateRepositoryUrl() {
-        if (templateParticipation != null) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             return templateParticipation.getRepositoryUrl();
         }
         return null;
     }
 
-    public ProgrammingExercise templateRepositoryUrl(String templateRepositoryUrl) {
-        this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
-        return this;
-    }
-
-    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
-        this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
+    private void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
+        }
     }
 
     @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
     public String getSolutionRepositoryUrl() {
-        if (solutionParticipation!= null) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             return solutionParticipation.getRepositoryUrl();
         }
         return null;
     }
 
-    public ProgrammingExercise solutionRepositoryUrl(String solutionRepositoryUrl) {
-        this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
-        return this;
-    }
-
-    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
-        this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
+    private void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
+        }
     }
 
     public void setTestRepositoryUrl(String testRepositoryUrl) {
@@ -99,36 +96,30 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateBuildPlanId() {
-        if (templateParticipation != null) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
             return templateParticipation.getBuildPlanId();
         }
         return null;
     }
 
-    public ProgrammingExercise templateBuildPlanId(String templateBuildPlanId) {
-        this.templateParticipation.setBuildPlanId(templateBuildPlanId);
-        return this;
-    }
-
-    public void setTemplateBuildPlanId(String templateBuildPlanId) {
-        this.templateParticipation.setBuildPlanId(templateBuildPlanId);
+    private void setTemplateBuildPlanId(String templateBuildPlanId) {
+        if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
+            this.templateParticipation.setBuildPlanId(templateBuildPlanId);
+        }
     }
 
     @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
     public String getSolutionBuildPlanId() {
-        if (solutionParticipation != null) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             return solutionParticipation.getBuildPlanId();
         }
         return null;
     }
 
-    public ProgrammingExercise solutionBuildPlanId(String solutionBuildPlanId) {
-        this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
-        return this;
-    }
-
-    public void setSolutionBuildPlanId(String solutionBuildPlanId) {
-        this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
+    private void setSolutionBuildPlanId(String solutionBuildPlanId) {
+        if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
+            this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
+        }
     }
 
     public Boolean isPublishBuildPlanUrl() {
@@ -209,7 +200,8 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         }
         try {
             return new URL(templateRepositoryUrl);
-        } catch (MalformedURLException e) {
+        }
+        catch (MalformedURLException e) {
             log.warn("Cannot create URL for templateRepositoryUrl: " + templateRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
@@ -223,7 +215,8 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         }
         try {
             return new URL(solutionRepositoryUrl);
-        } catch (MalformedURLException e) {
+        }
+        catch (MalformedURLException e) {
             log.warn("Cannot create URL for solutionRepositoryUrl: " + solutionRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
@@ -236,7 +229,8 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         }
         try {
             return new URL(testRepositoryUrl);
-        } catch (MalformedURLException e) {
+        }
+        catch (MalformedURLException e) {
             log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
@@ -244,14 +238,14 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     @JsonIgnore
     public String getProjectKey() {
-        //this is the key used for Bitbucket and Bamboo
-        //remove all whitespace and make sure it is upper case
-        return (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+","");
+        // this is the key used for Bitbucket and Bamboo
+        // remove all whitespace and make sure it is upper case
+        return (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
     @JsonIgnore
     public String getProjectName() {
-        //this is the name used for Bitbucket and Bamboo
+        // this is the name used for Bitbucket and Bamboo
         return this.getCourse().getShortName() + " " + this.getTitle();
     }
 
@@ -295,16 +289,9 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     @Override
     public String toString() {
-        return "ProgrammingExercise{" +
-            "id=" + getId() +
-            ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" +
-            ", solutionRepositoryUrl='" + getSolutionRepositoryUrl() + "'" +
-            ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" +
-            ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" +
-            ", publishBuildPlanUrl='" + isPublishBuildPlanUrl() + "'" +
-            ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" +
-            ", programmingLanguage='" + getProgrammingLanguage() + "'" +
-            ", packageName='" + getPackageName() + "'" +
-            "}";
+        return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
+                + ", packageName='" + getPackageName() + "'" + "}";
     }
 }

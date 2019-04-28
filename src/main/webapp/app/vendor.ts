@@ -114,8 +114,10 @@ import {
     faListAlt as farListAlt,
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
+    faSave as farSave,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
+    faDotCircle as farDotCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 // Imports all fontawesome core and solid icons
@@ -216,6 +218,7 @@ library.add(faListOl);
 library.add(faImage);
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
+library.add(farDotCircle);
 library.add(farTimeCircle);
 library.add(farListAlt);
 library.add(farFileImage);
@@ -225,6 +228,7 @@ library.add(farFileAlt);
 library.add(farPlayCircle);
 library.add(farFileCode);
 library.add(farCircle);
+library.add(farSave);
 library.add(faGripLinesVertical);
 library.add(faPaperclip);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

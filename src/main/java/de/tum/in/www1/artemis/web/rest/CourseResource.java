@@ -271,28 +271,33 @@ public class CourseResource {
     public List<Course> getAllCoursesForDashboard(Principal principal) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
-        log.info("/courses/for-dashboard.start");
+        log.debug("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
-        log.info("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user
         // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
-        log.info("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
 
         long exerciseCount = 0;
         for (Course course : courses) {
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                // remove sensitive information from the exercise for students
+                if (isStudent) {
+                    exercise.filterSensitiveInformation();
+                }
                 exerciseCount++;
             }
         }
@@ -358,7 +363,7 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = submissionRepository.countByParticipation_Exercise_Course_Id(courseId);
+        long numberOfSubmissions = submissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
         long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
@@ -518,6 +523,7 @@ public class CourseResource {
 
         User student = userService.getUser();
         Course course = courseService.findOne(courseId);
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
 
         List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
 
@@ -526,8 +532,11 @@ public class CourseResource {
 
             exercise.setParticipations(new HashSet<>());
 
-            // Removing not needed properties
+            // Removing not needed properties and sensitive information for students
             exercise.setCourse(null);
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
+            }
 
             for (Participation participation : participations) {
                 // Removing not needed properties
@@ -537,7 +546,6 @@ public class CourseResource {
                 exercise.addParticipation(participation);
             }
             course.addExercises(exercise);
-
         }
 
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");

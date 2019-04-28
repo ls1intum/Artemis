@@ -29,6 +29,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
+            id="student-quiz-start-{{ exercise.id }}"
             *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
             (click)="startExercise()"
         ></button>
@@ -170,7 +171,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
-            routerLink="/editor/{{ exercise.participations[0].id }}"
+            routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
             jhi-exercise-action-button
@@ -219,7 +220,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="publishBuildPlanUrl() && exercise.participations && exercise.participations.length > 0"
-            routerLink="/editor/{{ exercise.participations[0].id }}"
+            routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
     </div>
     <!-- ACTION END -->

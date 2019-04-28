@@ -5,7 +5,7 @@ import { JhiLanguageHelper } from 'app/core';
 import { HeaderExercisePageWithDetailsComponent } from './header-exercise-page-with-details.component';
 import { ArTEMiSSharedCommonModule, ArTEMiSSharedModule } from 'app/shared';
 import { DifficultyBadgeComponent } from './difficulty-badge.component';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 
 @NgModule({
     imports: [ArTEMiSSharedCommonModule, MomentModule, ArTEMiSSharedModule],

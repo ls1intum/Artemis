@@ -70,9 +70,8 @@ body {
 }
 
 .editor-wrapper > .editor-main > .editor-sidebar-right .card-body {
+    height: inherit;
     overflow-y: scroll;
-    height: 60vh;
-    padding-bottom: 100px;
 }
 
 .editor-wrapper > .editor-main > .editor-sidebar-left .card-body {
@@ -228,7 +227,6 @@ File browser styles
 }
 
 .node-selected {
-    color: #ffffff;
     background-color: #428bca !important;
 }
 
@@ -393,6 +391,14 @@ Stepwizard styles (editor instructions)
     display: table-cell;
     text-align: center;
     position: relative;
+
+    &--no-result.btn {
+        cursor: default;
+    }
+
+    &--failed.btn {
+        cursor: pointer;
+    }
 }
 
 .btn-circle.btn-circle {
