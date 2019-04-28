@@ -2,7 +2,54 @@
     "arTeMiSApp": {
         "editor": {
             "home": {
-                "title": "Editor"
+                "title": "Code Editor"
+            },
+            "title": "Code Editor for Exercise:",
+            "instructions": "&nbsp; Instructions &nbsp;",
+            "unsavedChanges": "There are unsaved changes.",
+            "savingChanges": "Saving changes.",
+            "savingFile": "Saving file.",
+            "changesSaved": "All changes saved.",
+            "failedToSave": "Failed to save file.",
+            "changesUndefined": "Fetching submission status.",
+            "changesError": "Submission status could not be retrieved.",
+            "changesSubmitted": "All changes submitted.",
+            "unsubmittedChanges": "There are unsubmitted changes.",
+            "submittingChanges": "Submitting changes.",
+            "preparingForSubmit": "Preparing for submit.",
+            "submit": "Submit",
+            "buildOutput": "&nbsp; Build Output",
+            "building": "Building...",
+            "buildFailed": "Build Failed",
+            "noBuildOutput": "No build results available",
+            "selectFile": "Select a file to get started!",
+            "downloadBuildResult": "Download Build Result",
+            "saving": "Saving",
+            "saveFiles": "Save",
+            "loadingFile": "Loading selected file",
+            "loadingFiles": "Loading files",
+            "fileBrowser": {
+                "deleteFileTitle": "Delete file",
+                "deleteFolderTitle": "Delete folder",
+                "deleteFileConfirm": "Are you sure you want to delete the file <strong>{{filename}}</strong>?",
+                "deleteFolderConfirm": "Are you sure you want to delete the folder <strong>{{filename}}</strong> and all its contents?",
+                "delete": "Confirm delete",
+                "unsavedChanges": "File contains unsaved changes",
+                "createFolderRoot": "Create folder on root level",
+                "createFileRoot": "Create file on root level",
+                "createFolder": "Create folder",
+                "createFile": "Create file",
+                "renameFolder": "Rename folder",
+                "renameFile": "Rename file",
+                "deleteFolder": "Delete folder",
+                "deleteFile": "Delete file",
+                "compressTree": "Combine empty folders"
+            },
+            "errors": {
+                "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
+                "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
+                "noPermissions": "You don't have the necessary permissions.",
+                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor."
             },
             "testStatusLabels": {
                 "noResult": "No results",
@@ -10,16 +57,6 @@
                 "testFailing": "Test failing",
                 "totalTestsPassing": "{{totalTests}} tests passing",
                 "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing"
-            },
-            "fileBrowser": {
-                "createTitle": "Create new file",
-                "folder": "Folder",
-                "folderPlaceholder": "leave empty for root folder",
-                "filename": "Filename (including extension)",
-                "create": "Create file",
-                "deleteTitle": "Delete file",
-                "deleteFileConfirm": "Are you sure you want to delete the file <strong>{{filename}}</strong>?",
-                "delete": "Delete file"
             }
         }
     }

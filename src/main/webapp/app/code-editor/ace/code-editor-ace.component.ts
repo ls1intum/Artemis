@@ -19,11 +19,11 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { EditorFileSession as EFS, FileSessions, TextChange, AnnotationArray } from '../../entities/ace-editor';
+import { TextChange, AnnotationArray } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
-import { CreateFileChange, RenameFileChange, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
+import { RenameFileChange, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -49,7 +49,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     fileChange: FileChange;
     @Input()
-    readonly buildLogErrors: { [fileName: string]: AnnotationArray };
+    buildLogErrors: { [fileName: string]: AnnotationArray };
     @Input()
     readonly unsavedFiles: string[];
     @Output()
@@ -59,7 +59,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Output()
     onSavedFiles = new EventEmitter<string[]>();
     @Output()
-    onFileContentChange = new EventEmitter<{ file: string; code: string; unsavedChanges: boolean; errors: AnnotationArray; cursor: { column: number; row: number } }>();
+    onFileContentChange = new EventEmitter<{ file: string; unsavedChanges: boolean }>();
 
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     // We store changes in the editor since the last content emit to update annotation positions.
@@ -236,8 +236,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.fileSession[this.selectedFile].code !== code) {
             const cursor = this.editor.getEditor().getCursorPosition();
             this.fileSession[this.selectedFile] = { code, cursor };
-            // const updatedErrors = this.editorChangeLog.reduce((errors, change) => errors.update(change), EFS.getErrors(this.editorFileSession, this.selectedFile));
-            // this.editorChangeLog = [];
+            this.buildLogErrors = {
+                ...this.buildLogErrors,
+                [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors[this.selectedFile]),
+            };
+            this.editorChangeLog = [];
             this.onFileContentChange.emit({ file: this.selectedFile, unsavedChanges: true });
         }
     }

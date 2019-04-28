@@ -9,15 +9,15 @@
 
     <!-- Root actions -->
     <div class="card-second-header d-flex">
-        <button class="btn btn-primary" (click)="setCreatingFile($event, '')">
+        <button class="btn btn-primary" (click)="setCreatingFile($event, '')" title="{{ 'arTeMiSApp.editor.fileBrowser.createFileRoot' | translate }}">
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="file" class="ml-1"></fa-icon>
         </button>
-        <button class="btn btn-primary ml-2" (click)="setCreatingFolder($event, '')">
+        <button class="btn btn-primary ml-2" (click)="setCreatingFolder($event, '')" title="{{ 'arTeMiSApp.editor.fileBrowser.createFolderRoot' | translate }}">
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="folder" class="ml-1"></fa-icon>
         </button>
-        <button class="btn btn-secondary ml-auto" (click)="toggleTreeCompress($event)">
+        <button class="btn btn-secondary ml-auto" (click)="toggleTreeCompress($event)" title="{{ 'arTeMiSApp.editor.fileBrowser.compressTree' | translate }}">
             <fa-icon [icon]="compressFolders ? ['fa', 'angle-double-up'] : ['fa', 'angle-double-down']"></fa-icon>
         </button>
     </div>
@@ -80,10 +80,18 @@
         /></span>
         <!-- Folder level actions -->
         <span class="file-icons">
-            <fa-icon [icon]="['fa', 'file']" (click)="setCreatingFile($event, item.value)"></fa-icon>
-            <fa-icon [icon]="['fa', 'folder']" (click)="setCreatingFolder($event, item.value)"></fa-icon>
-            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text, 'FOLDER')"></fa-icon>
-            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value, 'FOLDER')"></fa-icon>
+            <fa-icon [icon]="['fa', 'file']" (click)="setCreatingFile($event, item.value)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFile' | translate }}"></fa-icon>
+            <fa-icon [icon]="['fa', 'folder']" (click)="setCreatingFolder($event, item.value)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFolder' | translate }}"></fa-icon>
+            <fa-icon
+                [icon]="['fa', 'edit']"
+                (click)="setRenamingFile($event, item.value, item.text, 'FOLDER')"
+                title="{{ 'arTeMiSApp.editor.fileBrowser.renameFolder' | translate }}"
+            ></fa-icon>
+            <fa-icon
+                [icon]="['fa', 'trash']"
+                (click)="openDeleteFileModal($event, item.value, 'FOLDER')"
+                title="{{ 'arTeMiSApp.editor.fileBrowser.deleteFolder' | translate }}"
+            ></fa-icon>
         </span>
     </li>
     <li *ngIf="!repositoryFiles[item.value] && creatingFile === item.value" class="list-group-item">
@@ -121,9 +129,21 @@
     >
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
         <span class="text-warning">
-            <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
+            <fa-icon
+                *ngIf="unsavedFiles && unsavedFiles.includes(item.value)"
+                aria-hidden="true"
+                [icon]="['fas', 'circle']"
+                [size]="xs"
+                title="{{ 'arTeMiSApp.editor.fileBrowser.unsavedChanges' | translate }}"
+            ></fa-icon>
         </span>
-        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <span
+            class="ml-1 list-group-item__fileName"
+            *ngIf="!renamingFile || renamingFile[0] !== item.value"
+            [class.font-weight-bold]="item.checked"
+            [ngClass]="item.checked ? 'text-white' : 'primary'"
+            >{{ item.text }}</span
+        >
         <!-- Renaming file tree item -->
         <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
             ><input
@@ -136,8 +156,16 @@
         /></span>
         <!-- File level actions -->
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text, 'FILE')"></fa-icon>
-            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value, 'FILE')"></fa-icon>
+            <fa-icon
+                [icon]="['fa', 'edit']"
+                (click)="setRenamingFile($event, item.value, item.text, 'FILE')"
+                title="{{ 'arTeMiSApp.editor.fileBrowser.renameFile' | translate }}"
+            ></fa-icon>
+            <fa-icon
+                [icon]="['fa', 'trash']"
+                (click)="openDeleteFileModal($event, item.value, 'FILE')"
+                title="{{ 'arTeMiSApp.editor.fileBrowser.deleteFile' | translate }}"
+            ></fa-icon>
         </span>
     </li>
 </ng-template>

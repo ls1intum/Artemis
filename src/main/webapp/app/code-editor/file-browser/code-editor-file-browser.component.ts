@@ -7,7 +7,7 @@ import { sortBy as _sortBy } from 'lodash';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { WindowRef } from 'app/core';
-import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
@@ -352,19 +352,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
-    }
-
-    /**
-     * @function openCreateFileModal
-     * @desc Opens a popup to create a new repository file
-     */
-    openCreateFileModal() {
-        const modalRef = this.modalService.open(CodeEditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.participation = this.participation;
-        modalRef.componentInstance.parent = this;
-        if (this.folder) {
-            modalRef.componentInstance.folder = this.folder;
-        }
     }
 
     /**
