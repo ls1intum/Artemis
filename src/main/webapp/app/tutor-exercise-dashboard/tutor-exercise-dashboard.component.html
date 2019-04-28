@@ -246,7 +246,7 @@
                             {{ calculateComplaintStatus(complaint.accepted) }}
                         </td>
                         <td>
-                            <button *ngIf="!complaint.accepted; else continueButton" class="btn btn-success btn-sm"
+                            <button *ngIf="complaint.accepted === undefined; else continueButton" class="btn btn-success btn-sm"
                                 (click)="openAssessmentEditor(complaint.result.submission.id, false, true)"
                             >
                                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>

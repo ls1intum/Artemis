@@ -32,6 +32,14 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], submissionId: number, ignoreConflicts = false): Observable<Result> {
+        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback-after-complaint`;
+        if (ignoreConflicts) {
+            url += '?ignoreConflicts=true';
+        }
+        return this.http.post<Result>(url, feedbacks).map(res => this.convertResult(res));
+    }
+
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
     }

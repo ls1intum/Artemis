@@ -302,10 +302,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     calculateComplaintStatus(accepted?: boolean) {
-        if (accepted) {
+        if (accepted !== undefined) {
             return 'The complaint has already been evaluated';
         }
-
+        // in the case of 'undefined' the complaint is not yet handled
         return 'The complaint still needs to be evaluated';
     }
 }

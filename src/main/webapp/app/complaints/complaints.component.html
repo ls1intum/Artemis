@@ -18,9 +18,17 @@
         {{ 'arTeMiSApp.complaint.beDescriptive_temp' | translate }}
     </p>
 
-    <p *ngIf="alreadySubmitted" class="mt-4">{{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}.</p>
+    <p *ngIf="alreadySubmitted" class="mt-4">
+        {{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}.
+        <span *ngIf="handled && accepted" class="text-light bg-success">
+            &nbsp;{{ 'arTeMiSApp.complaint.acceptedLong' | translate}}&nbsp;
+        </span>
+        <span *ngIf="handled && !accepted" class="text-light bg-danger">
+            &nbsp;{{ 'arTeMiSApp.complaint.rejectedLong' | translate}}&nbsp;
+        </span>
+    </p>
 
-    <textarea class="col-6" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 10vh;"></textarea>
+    <textarea class="col-6 px-1" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 10vh;"></textarea>
 
     <p class="col-12" *ngIf="complaintResponse" class="mt-4">
         {{complaintResponse.reviewer.firstName}} {{ 'arTeMiSApp.complaint.hasReplied' | translate }}  {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br/>

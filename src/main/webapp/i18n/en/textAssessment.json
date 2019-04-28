@@ -52,7 +52,7 @@
                 }
             },
             "complaint": "Complaint",
-            "complaintAlreadyAccepted": "The complaint has been already reviewed and replied by",
+            "complaintAlreadyHandled": "The complaint has been already reviewed and replied by",
             "complaintResponse": "Complaint's response",
             "submitComplaintResponse": "Submit complaint's response",
             "complaintResponseCreated": "Response to complaint has been submitted",

@@ -14,7 +14,13 @@
             "moreInfo": "Reichen Sie eine Beschwerde ein oder bitten Sie um mehr Feedback.",
             "moreInfo_temp": "Beschwerde einreichen",
             "hasReplied": "hat auf Ihre Beschwerde geantwortet:",
-            "hint": "Sie finden die Beschwerde am Ende der Seite"
+            "hint": "Sie finden die Beschwerde am Ende der Seite",
+            "updateAndReply": "Bewertung aktualisieren und antworten",
+            "rejectAndReply": "Beschwerde zurückweisen und antworten",
+            "accepted": "Angenommen",
+            "acceptedLong": "Beschwerde wurde angenommen",
+            "rejected": "Abgelehnt",
+            "rejectedLong": "Beschwerde wurde abgelehnt"
         }
     }
 }

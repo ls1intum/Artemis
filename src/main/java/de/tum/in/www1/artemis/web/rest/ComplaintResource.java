@@ -167,6 +167,7 @@ public class ComplaintResource {
             String submissorName = principal.getName();
             User assessor = complaint.getResult().getAssessor();
 
+            // TODO CZ: remove 'userIsComplaintReviewer' since we do not want to override the original Result when responding to a complaint
             if (!assessor.getLogin().equals(submissorName) || userIsComplaintReviewer(submissorName, complaint.getId())) {
                 // Remove data about the student
                 complaint.getResult().getParticipation().setStudent(null);

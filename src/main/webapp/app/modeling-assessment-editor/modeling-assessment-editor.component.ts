@@ -137,10 +137,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private checkAuthorization() {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        // Enable the override button when handling a complaint OR the user is an instructor.
-        // Note, that it is disabled if the current user is the assessor of the result as '!this.isAuthorized' will be false then.
-        // This prevents an assessor from overriding his own assessment.
-        this.canOverride = (!this.isAuthorized && this.includeComplaint && this.result && this.result.hasComplaint) || this.isAtLeastInstructor;
     }
 
     onError(): void {
@@ -185,8 +181,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
                 this.ignoreConflicts = false;
-                // re-check authorization as the assessor can change if the assessment was overridden
-                this.checkAuthorization();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
@@ -202,6 +196,26 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
                 }
+            },
+        );
+    }
+
+    onUpdateAssessmentAfterComplaint() {
+        this.removeCircularDependencies();
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        // TODO CZ: what about conflicts here?
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, this.submission.id, true).subscribe(
+            (result: Result) => {
+                // TODO CZ: implement response handling
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                // TODO CZ: delete corresponding complaint response when updating the assessment failed?
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
     }

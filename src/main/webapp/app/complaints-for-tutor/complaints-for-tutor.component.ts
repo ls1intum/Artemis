@@ -1,8 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Moment } from 'moment';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Complaint } from 'app/entities/complaint';
@@ -14,12 +13,12 @@ import { Complaint } from 'app/entities/complaint';
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() resultId: number;
+    @Output() updateAssessment = new EventEmitter<void>(); // emits the id of the result that should be updated
     loading = true;
     complaint: Complaint;
     complaintText = '';
     alreadySubmitted: boolean;
-    submittedDate: Moment;
-    accepted: boolean;
+    handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
@@ -29,11 +28,11 @@ export class ComplaintsForTutorComponent implements OnInit {
             res => {
                 this.complaint = res.body;
                 this.complaintText = this.complaint.complaintText;
-                this.accepted = this.complaint.accepted;
+                this.handled = this.complaint.accepted !== undefined;
                 this.alreadySubmitted = true;
                 this.loading = false;
 
-                if (this.accepted) {
+                if (this.handled) {
                     this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
                 }
             },
@@ -46,14 +45,19 @@ export class ComplaintsForTutorComponent implements OnInit {
         );
     }
 
-    submitComplaintResponse() {
+    respondToComplaint(acceptComplaint: boolean): void {
         if (this.complaintResponse.responseText.length > 0) {
+            this.complaint.accepted = acceptComplaint;
             this.complaintResponse.complaint = this.complaint;
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
                     this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
-                    this.accepted = true;
+                    this.handled = true;
                     this.complaintResponse = response.body;
+                    // tell the parent (assessment) component to update the corresponding result if the complaint was accepted
+                    if (acceptComplaint) {
+                        this.updateAssessment.emit();
+                    }
                 },
                 (err: HttpErrorResponse) => {
                     this.onError(err.message);
@@ -62,7 +66,7 @@ export class ComplaintsForTutorComponent implements OnInit {
         }
     }
 
-    private onError(error: string) {
+    private onError(error: string): void {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
     }

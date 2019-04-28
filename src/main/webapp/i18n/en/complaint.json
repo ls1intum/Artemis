@@ -14,7 +14,13 @@
             "moreInfo": "Submit complaint or ask for more feedback",
             "moreInfo_temp": "Submit a complaint",
             "hasReplied": "has replied to your complaint on",
-            "hint": "You find the complaint at the end of the page"
+            "hint": "You find the complaint at the end of the page",
+            "updateAndReply": "Update Assessment and reply",
+            "rejectAndReply": "Reject Complaint and reply",
+            "accepted": "Accepted",
+            "acceptedLong": "Complaint was accepted",
+            "rejected": "Rejected",
+            "rejectedLong": "Complaint was rejected"
         }
     }
 }

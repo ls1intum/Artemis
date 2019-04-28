@@ -74,6 +74,7 @@ public class ModelingAssessmentService extends AssessmentService {
             result = new Result();
         }
 
+        result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
@@ -99,6 +100,11 @@ public class ModelingAssessmentService extends AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
+    }
+
+    public Result updateAssessmentAfterComplaint(ModelingSubmission modelingSubmission, List<Feedback> assessmentAfterComplaint) {
+        // TODO CZ: implement
+        return new Result();
     }
 
     /**

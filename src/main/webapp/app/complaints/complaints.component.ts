@@ -19,6 +19,7 @@ export class ComplaintsComponent implements OnInit {
     alreadySubmitted: boolean;
     submittedDate: Moment;
     accepted: boolean;
+    handled: boolean;
     complaintResponse: ComplaintResponse;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
@@ -29,8 +30,10 @@ export class ComplaintsComponent implements OnInit {
                 this.complaintText = res.body.complaintText;
                 this.alreadySubmitted = true;
                 this.submittedDate = res.body.submittedTime;
+                this.accepted = res.body.accepted;
+                this.handled = this.accepted !== undefined;
 
-                if (res.body.accepted) {
+                if (this.handled) {
                     this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
                 }
             },

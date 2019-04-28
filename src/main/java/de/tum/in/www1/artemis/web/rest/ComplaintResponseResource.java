@@ -84,13 +84,17 @@ public class ComplaintResponseResource {
 
         Complaint originalComplaint = originalComplaintOptional.get();
 
+        if (complaintResponseRepository.findByComplaint_Id(originalComplaint.getId()).isPresent()) {
+            throw new BadRequestAlertException("The complaint you are referring to does already have a response", ENTITY_NAME, "complaintresponseexists");
+        }
+
         // Only tutors who are not part the original assessors can reply to a complaint
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(originalComplaint.getResult().getParticipation().getExercise())
                 || originalComplaint.getResult().getAssessor().equals(reviewer)) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
-        originalComplaint.setAccepted(true);
+        originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
 
         complaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponse.setReviewer(reviewer);
