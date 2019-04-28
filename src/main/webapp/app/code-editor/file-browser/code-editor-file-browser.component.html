@@ -7,6 +7,7 @@
         </h3>
     </div>
 
+    <!-- Root actions -->
     <div class="card-second-header d-flex">
         <button class="btn btn-primary" (click)="setCreatingFile($event, '')">
             <fa-icon icon="plus"></fa-icon>
@@ -21,7 +22,9 @@
         </button>
     </div>
 
+    <!-- File Tree -->
     <div class="card-body">
+        <!-- Root level create file tree element -->
         <li *ngIf="creatingFile === ''" class="list-group-item border-0">
             <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
             <span class="ml-1"
@@ -34,6 +37,7 @@
                     class="list-group-item__input"
             /></span>
         </li>
+        <!-- Root level create folder tree element -->
         <li *ngIf="creatingFolder === ''" class="list-group-item border-0">
             <fa-icon aria-hidden="true" icon="folder" [fixedWidth]="true"></fa-icon>
             <span class="ml-1"
@@ -47,8 +51,9 @@
             /></span>
         </li>
         <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
-            <fa-icon icon="spinner" spin="true"></fa-icon>
+            <fa-icon icon="circle-notch" spin="true"></fa-icon>
             <span jhiTranslate="arTeMiSApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
@@ -62,14 +67,28 @@
     <li *ngIf="!repositoryFiles[item.value]" (click)="onCollapseExpand()" class="list-group-item">
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
-        <span class="ml-1">{{ item.text }}</span>
-        <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
+        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <!-- Renaming folder tree item -->
+        <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
+            ><input
+                #renamingInput
+                value="{{ item.text }}"
+                (keyup.enter)="onRenameFile($event)"
+                (focusout)="onRenameFile($event)"
+                (keyup.esc)="setRenamingFile($event, null)"
+                class="list-group-item__input"
+        /></span>
+        <!-- Folder level actions -->
+        <span class="file-icons">
             <fa-icon [icon]="['fa', 'file']" (click)="setCreatingFile($event, item.value)"></fa-icon>
             <fa-icon [icon]="['fa', 'folder']" (click)="setCreatingFolder($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text, 'FOLDER')"></fa-icon>
+            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value, 'FOLDER')"></fa-icon>
         </span>
     </li>
     <li *ngIf="!repositoryFiles[item.value] && creatingFile === item.value" class="list-group-item">
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+        <!-- Creating file tree item -->
         <span class="ml-1"
             ><input
                 #creatingInput
@@ -80,8 +99,9 @@
                 class="list-group-item__input"
         /></span>
     </li>
-    <li *ngIf="!item.IsFile && creatingFolder === item.value" class="list-group-item">
-        <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+    <!-- Creating folder tree item -->
+    <li *ngIf="!repositoryFiles[item.value] && creatingFolder === item.value" class="list-group-item">
+        <fa-icon aria-hidden="true" icon="folder" [fixedWidth]="true"></fa-icon>
         <span class="ml-1"
             ><input
                 #creatingInput
@@ -103,7 +123,8 @@
         <span class="text-warning">
             <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
         </span>
-        <span class="ml-1" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <!-- Renaming file tree item -->
         <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
             ><input
                 #renamingInput
@@ -113,9 +134,10 @@
                 (keyup.esc)="setRenamingFile($event, null)"
                 class="list-group-item__input"
         /></span>
+        <!-- File level actions -->
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text)"></fa-icon>
-            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value)"></fa-icon>
+            <fa-icon [icon]="['fa', 'edit']" (click)="setRenamingFile($event, item.value, item.text, 'FILE')"></fa-icon>
+            <fa-icon [icon]="['fa', 'trash']" (click)="openDeleteFileModal($event, item.value, 'FILE')"></fa-icon>
         </span>
     </li>
 </ng-template>

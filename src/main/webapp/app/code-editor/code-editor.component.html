@@ -26,8 +26,7 @@
         <div class="editor-sidebar-left">
             <jhi-code-editor-file-browser
                 [participation]="participation"
-                [fileName]="selectedFile"
-                [repositoryFiles]="repositoryFiles"
+                [(selectedFile)]="selectedFile"
                 [unsavedFiles]="unsavedFiles"
                 [errorFiles]="errorFiles"
                 [editorState]="editorState"
@@ -35,6 +34,7 @@
                 [isLoadingFiles]="isLoadingFiles"
                 (selectedFile)="updateSelectedFile($event)"
                 (onFileChange)="updateRepositoryCommitStatus($event)"
+                (onFilesLoaded)="onFilesLoaded($event)"
             >
             </jhi-code-editor-file-browser>
         </div>

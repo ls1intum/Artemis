@@ -1,8 +1,11 @@
 <div class="card">
     <div class="card-header bg-primary text-white">
         <h3 class="card-title">
-            <fa-icon *ngIf="isLoading" icon="spinner" spin="true"></fa-icon>
-            <fa-icon *ngIf="!isLoading" [icon]="['far', 'file-alt']"></fa-icon>
+            <span>
+                <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
+                <fa-icon *ngIf="isLoading" icon="circle-notch" spin="true"></fa-icon>
+                <fa-icon *ngIf="!isLoading && selectedFile" icon="check" class="ml-2"></fa-icon>
+            </span>
             <span> &nbsp;{{ selectedFile }}</span>
         </h3>
     </div>

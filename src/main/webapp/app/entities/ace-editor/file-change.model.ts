@@ -4,24 +4,27 @@ export enum FileChangeType {
     RENAME = 'RENAME',
 }
 
-export abstract class FileChange {
-    public changeType: FileChangeType;
+export enum FileType {
+    FILE = 'FILE',
+    FOLDER = 'FOLDER',
 }
 
+export abstract class FileChange {}
+
 export class CreateFileChange extends FileChange {
-    constructor(public fileName: string) {
+    constructor(public fileType: FileType, public fileName: string) {
         super();
     }
 }
 
 export class DeleteFileChange extends FileChange {
-    constructor(public fileName: string) {
+    constructor(public fileType: FileType, public fileName: string) {
         super();
     }
 }
 
 export class RenameFileChange extends FileChange {
-    constructor(public oldFileName: string, public newFileName: string) {
+    constructor(public fileType: FileType, public oldFileName: string, public newFileName: string) {
         super();
     }
 }

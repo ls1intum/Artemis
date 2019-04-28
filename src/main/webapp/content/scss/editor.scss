@@ -212,13 +212,17 @@ File browser styles
     overflow-y: hidden !important;
 
     .treeview-item {
-        cursor: pointer;
-
         .list-group-item {
             padding: 0.75rem 1.25rem;
             margin-bottom: -1px;
             border: none;
             display: flex;
+
+            &__fileName {
+                cursor: pointer;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
             &__input {
                 border: none;
@@ -248,6 +252,12 @@ File browser styles
     opacity: 0;
     transition: all 100ms ease-in-out;
     margin-left: auto;
+    :not(:last-child) {
+        margin-right: 5px;
+    }
+    fa-icon {
+        cursor: pointer;
+    }
 }
 
 /* ==========================================================================

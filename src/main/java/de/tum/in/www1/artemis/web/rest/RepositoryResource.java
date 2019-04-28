@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -191,7 +192,7 @@ public class RepositoryResource {
     }
 
     /**
-     * Move a file from one path to another.
+     * Change the name of a file.
      * @param participationId id of the participation the git repository belongs to.
      * @param fileMove defines current and new path in git repository.
      * @return
@@ -199,7 +200,7 @@ public class RepositoryResource {
      * @throws InterruptedException
      */
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFolder(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
@@ -207,18 +208,20 @@ public class RepositoryResource {
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
         if(!file.isPresent()) { return notFound(); }
-        Path newFilePath = file.get().toPath().getParent().resolve(Paths.get(fileMove.getNewFilename()));
+        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
 
-        Files.move(file.get().toPath(), newFilePath);
+        boolean isRenamed = file.get().renameTo(newFile);
+        // TODO: Throw error
+
         repository.setFiles(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file
-     *
+     * DELETE /repository/{participationId}/file: Delete the file or the folder specified.
+     * If the path is a folder, all files in it will be deleted, too.
      * @param participationId Participation ID
-     * @param filename
+     * @param filename path of file or folder to delete.
      * @return
      * @throws IOException
      */
@@ -234,7 +237,11 @@ public class RepositoryResource {
         Optional<File> file = gitService.get().getFileByName(repository, filename);
         if(!file.isPresent()) { return notFound(); }
 
-        Files.delete(file.get().toPath());
+        if (file.get().isFile()) {
+            Files.delete(file.get().toPath());
+        } else {
+            FileUtils.deleteDirectory(file.get());
+        }
         repository.setFiles(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
     }

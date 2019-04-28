@@ -221,7 +221,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     saveChangedFiles() {
         if (this.unsavedFiles.length) {
             this.onEditorStateChange.emit(EditorState.SAVING);
-            this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, this.unsavedFiles);
+            this.jhiWebsocketService.send(this.updateUnsavedFilesChannel, this.unsavedFiles.map(fileName => ({ fileName, fileContent: this.fileSession[fileName].code })));
         }
     }
 

@@ -1,7 +1,6 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
@@ -15,10 +14,9 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session, EditorFileSession as EFS } from '../entities/ace-editor';
+import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
-import { textFileExtensions } from './text-files.json';
 import { Interactable } from 'interactjs';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { ComponentCanDeactivate } from 'app/shared';
@@ -28,7 +26,7 @@ import { Observable, throwError } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
-import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
+import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-editor',
@@ -42,7 +40,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participation: Participation;
     selectedFile: string;
     paramSub: Subscription;
-    repositoryFiles: { [fileName: string]: boolean };
+    repositoryFiles: string[];
     unsavedFiles: string[] = [];
     errorFiles: string[] = [];
     session: Session;
@@ -61,7 +59,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param {ParticipationService} participationService
      * @param {ParticipationDataProvider} participationDataProvider
      * @param {RepositoryService} repositoryService
-     * @param {RepositoryFileService} repositoryFileService
      * @param {LocalStorageService} localStorageService
      */
     constructor(
@@ -69,7 +66,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
-        private repositoryFileService: RepositoryFileService,
         private resultService: ResultService,
         private localStorageService: LocalStorageService,
         private jhiAlertService: JhiAlertService,
@@ -107,13 +103,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     tap(participation => (this.participation = participation)),
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
-                    switchMap(() => this.loadFiles()),
-                    tap(repositoryContent => {
-                        const files = Object.entries(repositoryContent)
-                            .filter(([, isFile]) => isFile)
-                            .map(([fileName]) => fileName);
-                    }),
-                    tap(repositoryContent => (this.repositoryFiles = repositoryContent)),
                     tap(() => this.loadSession()),
                 )
                 .subscribe(
@@ -132,37 +121,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
-    }
-
-    /**
-     * Load files from the participants repository.
-     * Files that are not relevant for the conduction of the exercise are removed from result.
-     */
-    private loadFiles(): Observable<{ [fileName: string]: boolean }> {
-        this.isLoadingFiles = true;
-        return this.repositoryFileService.query(this.participation.id).pipe(
-            rxMap(files =>
-                fromPairs(
-                    Object.entries(files)
-                        // Filter root folder
-                        .filter(([value]) => value)
-                        // Filter Readme file that was historically in the student's assignment repo
-                        .filter(([value]) => !value.includes('README.md'))
-                        // Remove binary files as they can't be displayed in an editor
-                        .filter(([filename]) => {
-                            const fileSplit = filename.split('.');
-                            // Either the file has no ending or the file ending is allowed
-                            return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
-                        }),
-                ),
-            ),
-            tap(() => (this.isLoadingFiles = false)),
-            catchError((error: HttpErrorResponse) => {
-                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                this.isLoadingFiles = false;
-                return Observable.of({});
-            }),
-        );
     }
 
     /**
@@ -279,61 +237,42 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     /**
-     * @function updateSelectedFile
-     * @desc Callback function for when a new file is selected within the file-browser component
-     * @param $event Event object which contains the new file name
-     */
-    updateSelectedFile($event: any) {
-        this.selectedFile = $event.fileName;
-    }
-
-    /**
      * @function updateRepositoryCommitStatus
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
-    updateRepositoryCommitStatus<T extends FileChange>(fileChange: T) {
+    updateRepositoryCommitStatus<T extends FileChange>([files, fileChange]: [string[], T]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        /** Query the repositoryFileService for updated files in the repository */
-        // TODO: this loading is unnecessary, because we know which files were created, etc.
-        // If this is removed, loadFiles could be moved to file-browser.
-        this.loadFiles()
-            .pipe(
-                tap(() => {
-                    if (fileChange instanceof RenameFileChange) {
-                        this.repositoryFiles = {
-                            ...fromPairs(Object.entries(this.repositoryFiles).filter(([file]) => file !== fileChange.oldFileName)),
-                            [fileChange.newFileName]: true,
-                        };
-                        this.unsavedFiles = this.unsavedFiles.includes(fileChange.oldFileName)
-                            ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
-                            : this.unsavedFiles;
-                        this.errorFiles = this.errorFiles.includes(fileChange.oldFileName)
-                            ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
-                            : this.unsavedFiles;
-                        const fileErrors = this.buildLogErrors.errors[fileChange.oldFileName];
-                        delete this.buildLogErrors.errors[fileChange.oldFileName];
-                        this.buildLogErrors[fileChange.newFileName] = fileErrors;
-                        this.fileChange = fileChange;
-                    }
-                }),
-                tap(files => (this.repositoryFiles = files)),
-                tap(() => {
-                    if (fileChange instanceof CreateFileChange && Object.keys(this.repositoryFiles).includes(fileChange.fileName)) {
-                        // Select newly created file
-                        this.selectedFile = fileChange.fileName;
-                    } else if (fileChange instanceof RenameFileChange && fileChange.oldFileName === this.selectedFile) {
-                        this.selectedFile = Object.keys(this.repositoryFiles).includes(fileChange.newFileName) ? fileChange.newFileName : null;
-                    } else if (
-                        fileChange instanceof DeleteFileChange &&
-                        fileChange.fileName === this.selectedFile &&
-                        !Object.keys(this.repositoryFiles).includes(fileChange.fileName)
-                    ) {
-                        // If the selected file was deleted, unselect it
-                        this.selectedFile = undefined;
-                    }
-                }),
-            )
-            .subscribe();
+        if (fileChange instanceof CreateFileChange) {
+            // Select newly created file
+            this.repositoryFiles = files;
+            if (fileChange.fileType === FileType.FILE) {
+                this.selectedFile = fileChange.fileName;
+            }
+        } else if (fileChange instanceof RenameFileChange) {
+            this.unsavedFiles = this.unsavedFiles.includes(fileChange.oldFileName)
+                ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
+                : this.unsavedFiles;
+            this.errorFiles = this.errorFiles.includes(fileChange.oldFileName)
+                ? [...this.unsavedFiles.filter(file => file !== fileChange.oldFileName), fileChange.newFileName]
+                : this.unsavedFiles;
+            const fileErrors = this.buildLogErrors.errors[fileChange.oldFileName];
+            const filteredErrors = compose(
+                fromPairs,
+                filter(([fileName]) => fileName !== fileChange.oldFileName),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors: { ...filteredErrors, [fileChange.newFileName]: fileErrors }, timestamp: this.buildLogErrors.timestamp };
+            this.fileChange = fileChange;
+            if (fileChange.oldFileName === this.selectedFile) {
+                this.selectedFile = fileChange.newFileName;
+            }
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.fileChange = fileChange;
+            // If the selected file was deleted, unselect it
+            if (!Object.keys(files).includes(fileChange.fileName)) {
+                this.selectedFile = undefined;
+            }
+        }
     }
 
     /**
@@ -406,6 +345,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
+    }
+
+    onFilesLoaded(files: string[]) {
+        this.repositoryFiles = files;
     }
 
     onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
