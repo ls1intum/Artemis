@@ -316,7 +316,10 @@ public class ExerciseService {
             try {
                 if (participation.getRepositoryUrl() == null) {
                     continue;
-                } else if (!studentIds.contains(participation.getStudent().getLogin())) {
+                }
+                User student = participation.getStudent();
+                String login = student.getLogin();
+                if (!studentIds.contains(login)) {
                     continue;
                 }
 
