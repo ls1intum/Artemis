@@ -28,7 +28,7 @@ import { RepositoryFileService } from '../repository';
 import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
 
 type Step = {
     title: string;
@@ -59,6 +59,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isLoading: boolean;
     public latestResult: Result | null;
     public steps: Array<Step> = [];
+    public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
@@ -119,6 +120,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
+        } else if (problemStatementHasChanged(changes)) {
+            // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
+            // This is e.g. the case if the parent component uses an editor to update the problemStatement.
+            this.updateMarkdown();
         }
     }
 
@@ -159,9 +164,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     updateMarkdown() {
         this.steps = [];
+        this.plantUMLs = {};
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
+            this.loadAndInsertPlantUmls();
             this.setUpClickListeners();
             this.setUpTaskIcons();
         }, 100);
@@ -211,7 +218,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+            let participationId: number;
+            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
+                participationId = this.exercise.templateParticipation.id;
+            } else if (this.participation) {
+                participationId = this.participation.id;
+            } else {
+                // in this case, no participation is available
+                return Observable.of(null);
+            }
             return this.repositoryFileService.get(participationId, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
@@ -265,6 +280,26 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             iconContainer.innerHTML = '';
             iconContainer.append(domElem);
         });
+    }
+
+    /**
+     * PlantUMLs are rendered on the server, we provide their structure as a string.
+     * When parsing the file for plantUMLs we store their ids (= position in HTML) and structure in a dictionary, so that we can load them after the initial render.
+     */
+    public loadAndInsertPlantUmls() {
+        Object.entries(this.plantUMLs).forEach(([id, plantUml]) =>
+            this.editorService.getPlantUmlImage(plantUml).subscribe(
+                plantUmlSrcAttribute => {
+                    // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
+                    if (document.getElementById('plantUml' + id)) {
+                        document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                    }
+                },
+                err => {
+                    console.log('Error getting plantUmlImage', err);
+                },
+            ),
+        );
     }
 
     /**
@@ -466,21 +501,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return done ? 'green' : 'red';
         });
 
-        /**
-         * Explanation: This call fetches the plantUml png as base64 string; the function returns and inserts an empty img tag with a placeholder
-         * When the promise is fulfilled, the src-attribute of the img element is being set with the returned value
-         */
-        this.editorService.getPlantUmlImage(plantUml).subscribe(
-            plantUmlSrcAttribute => {
-                // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
-                if (document.getElementById('plantUml' + id)) {
-                    document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
-                }
-            },
-            err => {
-                console.log('Error getting plantUmlImage', err);
-            },
-        );
+        this.plantUMLs[id] = plantUml;
 
         return "<img id='plantUml" + id + "' alt='plantUml'" + id + " '/>";
     }

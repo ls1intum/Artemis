@@ -18,12 +18,14 @@ export class PageRibbonComponent implements OnInit {
     constructor(private profileService: ProfileService) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().then(
+        this.profileService.getProfileInfo().subscribe(
             profileInfo => {
-                this.profileInfo = profileInfo;
-                this.ribbonEnv = profileInfo.ribbonEnv;
-                if (profileInfo.inProduction && window.location.host === 'artemistest.ase.in.tum.de') {
-                    this.ribbonEnv = 'test';
+                if (profileInfo) {
+                    this.profileInfo = profileInfo;
+                    this.ribbonEnv = profileInfo.ribbonEnv;
+                    if (profileInfo.inProduction && window.location.host === 'artemistest.ase.in.tum.de') {
+                        this.ribbonEnv = 'test';
+                    }
                 }
             },
             reason => {},

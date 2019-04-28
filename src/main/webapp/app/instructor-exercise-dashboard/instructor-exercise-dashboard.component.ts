@@ -55,19 +55,21 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             const results = res.body;
 
             for (const result of results) {
-                const tutorId = result.assessor.id;
-                if (!this.tutorLeaderboardData[tutorId]) {
-                    this.tutorLeaderboardData[tutorId] = {
-                        tutor: result.assessor,
-                        numberOfAssessments: 0,
-                        numberOfComplaints: 0,
-                    };
-                }
+                if (result.rated && result.assessor) {
+                    const tutorId = result.assessor.id;
+                    if (!this.tutorLeaderboardData[tutorId]) {
+                        this.tutorLeaderboardData[tutorId] = {
+                            tutor: result.assessor,
+                            numberOfAssessments: 0,
+                            numberOfComplaints: 0,
+                        };
+                    }
 
-                this.tutorLeaderboardData[tutorId].numberOfAssessments++;
+                    this.tutorLeaderboardData[tutorId].numberOfAssessments++;
 
-                if (result.hasComplaint) {
-                    this.tutorLeaderboardData[tutorId].numberOfComplaints++;
+                    if (result.hasComplaint) {
+                        this.tutorLeaderboardData[tutorId].numberOfComplaints++;
+                    }
                 }
             }
         });

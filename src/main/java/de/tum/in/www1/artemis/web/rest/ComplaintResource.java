@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing complaints.
@@ -41,10 +46,15 @@ public class ComplaintResource {
 
     private UserRepository userRepository;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository) {
+    private AuthorizationCheckService authCheckService;
+    private ExerciseService exerciseService;
+
+    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -136,6 +146,11 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         List<Complaint> responseComplaints = new ArrayList<>();
+
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
 
         Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
 

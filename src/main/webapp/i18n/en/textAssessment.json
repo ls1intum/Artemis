@@ -22,7 +22,11 @@
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
                 "scoreFor": "Assessment for",
-                "feedback": "Feedback"
+                "feedback": "Feedback",
+                "credits": {
+                    "one": "{{credits}} credit",
+                    "many": "{{credits}} credits"
+                }
             },
             "editor": {
                 "assess": "Assess"

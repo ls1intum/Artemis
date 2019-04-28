@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +102,39 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.get(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+
+        if (exampleSubmission.isPresent()) {
+            if (! authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
+                return forbidden();
+            }
+        }
+
         return ResponseUtil.wrapOrNotFound(exampleSubmission);
+    }
+
+    /**
+     * DELETE /example-submissions/:id : delete the "id" exampleSubmission.
+     *
+     * @param id the id of the exampleSubmission to delete
+     * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
+     */
+    @DeleteMapping("/example-submissions/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
+        log.debug("REST request to delete ExampleSubmission : {}", id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+
+        if (!exampleSubmission.isPresent()) {
+            throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
+        }
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.get().getExercise())) {
+            return forbidden();
+        }
+
+        exampleSubmissionService.deleteById(exampleSubmission.get().getId());
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

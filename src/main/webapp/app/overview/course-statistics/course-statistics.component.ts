@@ -232,14 +232,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
             exercise.participations.forEach(participation => {
                 const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate);
-                const participationScore = participationResult.score;
-                const missedScore = 100 - participationScore;
-                groupedExercises[index].scores.data.push(participationScore);
-                groupedExercises[index].missedScores.data.push(missedScore);
-                groupedExercises[index].names.push(exercise.title);
-                groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
-                if (exercise.maxScore) {
-                    groupedExercises[index].missedScores.tooltips.push(`Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`);
+                if (participationResult) {
+                    const participationScore = participationResult.score;
+                    const missedScore = 100 - participationScore;
+                    groupedExercises[index].scores.data.push(participationScore);
+                    groupedExercises[index].missedScores.data.push(missedScore);
+                    groupedExercises[index].names.push(exercise.title);
+                    groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
+                    if (exercise.maxScore) {
+                        groupedExercises[index].missedScores.tooltips.push(
+                            `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
+                        );
+                    }
                 }
             });
             groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
@@ -254,11 +258,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (!result.resultString) {
             return 0;
         }
-        if (result.resultString.indexOf('of') === -1) {
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
-        } else {
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        if (result.resultString && result.resultString.indexOf('failed')) {
+            return null;
         }
+        if (result.resultString.indexOf('of') === -1) {
+            if (result.resultString.indexOf('points') === -1) {
+                return 0;
+            }
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
+        }
+        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
     }
 
     calculateAbsoluteScores(): void {

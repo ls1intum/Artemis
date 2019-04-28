@@ -60,4 +60,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     attachmentNotReleased(attachment: Attachment) {
         return attachment.releaseDate && !moment(attachment.releaseDate).isBefore(moment());
     }
+
+    attachmentExtension(attachment: Attachment) {
+        if (!attachment.link) {
+            return 'N/A';
+        }
+
+        return attachment.link.split('.').pop();
+    }
 }

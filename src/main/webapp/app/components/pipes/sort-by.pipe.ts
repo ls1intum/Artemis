@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DifferencePipe } from 'angular2-moment';
+import { DifferencePipe } from 'ngx-moment';
 
 @Pipe({
     name: 'sortBy',

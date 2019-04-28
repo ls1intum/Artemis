@@ -32,7 +32,7 @@ public class LectureResource {
 
     private final LectureRepository lectureRepository;
 
-    LectureService lectureService;
+    private final LectureService lectureService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService) {
         this.lectureRepository = lectureRepository;
@@ -47,6 +47,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
+    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
@@ -67,6 +68,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
+    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
@@ -84,6 +86,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
+    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
@@ -102,6 +105,7 @@ public class LectureResource {
     @GetMapping(value = "/courses/{courseId}/lectures")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
+    // TODO: check that the user has access to this course!
     public List<Lecture> getLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
@@ -116,6 +120,7 @@ public class LectureResource {
      */
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    // TODO: add courseId into REST URL and check that the user has access to this course!
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         log.debug("REST request to delete Lecture : {}", id);
         lectureRepository.deleteById(id);

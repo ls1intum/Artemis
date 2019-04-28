@@ -5,7 +5,7 @@ import { JhiLanguageHelper } from 'app/core';
 
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { ArTEMiSStudentQuestionsModule } from 'app/student-questions/';
@@ -29,6 +29,7 @@ import { ArTEMiSResultModule } from 'app/entities/result';
 import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
+import { ArTEMiSCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -44,6 +45,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArTEMiSSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSHeaderExercisePageWithDetailsModule,
+        ArTEMiSCourseRegistrationSelector,
     ],
     declarations: [
         OverviewComponent,

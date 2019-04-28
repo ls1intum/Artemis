@@ -32,39 +32,35 @@
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
             <p class="mb-3">
-                <span><strong>Problem Statement:</strong></span> <span [innerHTML]="formattedProblemStatement"></span>
+                <b><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>:</b> <span [innerHTML]="formattedProblemStatement"></span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
             <p>
-                <strong>Max. Score: {{ textExercise.maxScore }}</strong>
+                <strong><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span>: {{ textExercise.maxScore }}</strong>
             </p>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-12" *ngIf="!result; else hasFeedback">
+        <div class="col" *ngIf="!result; else hasFeedback">
             <textarea [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
         </div>
 
         <ng-template #hasFeedback>
-            <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
-                <jhi-highlighted-text-area [submissionText]="answer" [assessments]="result.feedbacks"></jhi-highlighted-text-area>
-            </div>
-            <div class="col-sm-12 col-md-5 col-xl-4" *ngIf="submission?.submitted && result && result.feedbacks">
-                <h4>Assessment</h4>
-                <ng-container *ngFor="let feedback of result.feedbacks; let i = index">
-                    <jhi-text-editor-score-card [feedback]="feedback" [highlightColor]="getColorForIndex(i)"></jhi-text-editor-score-card>
-                </ng-container>
+            <div class="col mt-3">
+                <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
+                <br>
+                <jhi-text-result [result]="result"></jhi-text-result>
             </div>
         </ng-template>
     </div>
 
-    <div class="row" *ngIf="result && result.completionDate">
-        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>
-    </div>
+<!--    <div class="row" *ngIf="result && result.completionDate">-->
+<!--        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>-->
+<!--    </div>-->
 
-    <div class="row" *ngIf="showComplaintForm">
-        <jhi-complaint-form [resultId]="result.id" class="col-12"></jhi-complaint-form>
-    </div>
+<!--    <div class="row" *ngIf="showComplaintForm">-->
+<!--        <jhi-complaint-form [resultId]="result.id" class="col-12"></jhi-complaint-form>-->
+<!--    </div>-->
 </div>

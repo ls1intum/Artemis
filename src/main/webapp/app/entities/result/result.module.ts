@@ -4,7 +4,7 @@ import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 import { ResultWebsocketService } from './result-websocket.service';
 

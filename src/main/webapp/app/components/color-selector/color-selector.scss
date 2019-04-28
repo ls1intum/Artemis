@@ -1,6 +1,6 @@
 .color-selector {
     position: absolute;
-    width: 210px;
+    width: 220px;
     height: 110px;
     background-color: #ffffff;
     z-index: 1000;
@@ -16,6 +16,7 @@
         width: 50px;
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         padding: 4px;
         flex: 1 0 25%;
         border-radius: 3px;

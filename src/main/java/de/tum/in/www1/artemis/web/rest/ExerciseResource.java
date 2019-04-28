@@ -11,8 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -25,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -71,11 +68,11 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final TextSubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
                             CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper, TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionRepository submissionRepository) {
+                            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -111,6 +108,10 @@ public class ExerciseResource {
         }
 
         List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            result.forEach(Exercise::filterSensitiveInformation);
+        }
 
         return ResponseEntity.ok(result);
     }
@@ -361,6 +362,7 @@ public class ExerciseResource {
 
         User student = userService.getUser();
         Exercise exercise = exerciseService.findOne(exerciseId);
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
 
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
@@ -373,6 +375,11 @@ public class ExerciseResource {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);
+            }
+
+            // remove sensitive information for students
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
             }
         }
 
