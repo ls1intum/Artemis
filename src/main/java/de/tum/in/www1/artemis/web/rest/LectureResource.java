@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -12,9 +14,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -34,9 +40,15 @@ public class LectureResource {
 
     private final LectureService lectureService;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService) {
+    private final CourseService courseService;
+
+    private final UserService userService;
+
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
+        this.courseService = courseService;
+        this.userService = userService;
     }
 
     /**
@@ -120,10 +132,25 @@ public class LectureResource {
      */
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    // TODO: add courseId into REST URL and check that the user has access to this course!
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        log.debug("REST request to delete Lecture : {}", id);
-        lectureRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Lecture> optionalLecture = lectureRepository.findById(id);
+        if (!optionalLecture.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        Lecture lecture = optionalLecture.get();
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
+        if (hasCourseInstructorAccess) {
+            log.debug("REST request to delete Lecture : {}", id);
+            lectureRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        }
+        else {
+            return forbidden();
+        }
     }
 }

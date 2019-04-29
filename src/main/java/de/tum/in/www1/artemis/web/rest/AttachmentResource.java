@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -13,9 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.service.AttachmentService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -37,10 +43,17 @@ public class AttachmentResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService) {
+    private final CourseService courseService;
+
+    private final UserService userService;
+
+    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
+            CourseService courseService, UserService userService) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
+        this.courseService = courseService;
+        this.userService = userService;
     }
 
     /**
@@ -122,8 +135,30 @@ public class AttachmentResource {
     @DeleteMapping("/attachments/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
-        log.debug("REST request to delete Attachment : {}", id);
-        attachmentRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
+        if (!optionalAttachment.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        Attachment attachment = optionalAttachment.get();
+        Course course = null;
+        if (attachment.getLecture() != null) {
+            course = attachment.getLecture().getCourse();
+        }
+        else if (attachment.getExercise() != null) {
+            course = attachment.getExercise().getCourse();
+        }
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
+        if (hasCourseInstructorAccess) {
+            log.debug("REST request to delete Attachment : {}", id);
+            attachmentRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        }
+        else {
+            return forbidden();
+        }
     }
 }
