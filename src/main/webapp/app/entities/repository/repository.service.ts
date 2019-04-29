@@ -39,6 +39,10 @@ export class RepositoryFileService {
         return this.http.get<string[]>(`${this.resourceUrl}/${participationId}/files`);
     }
 
+    getTestFiles(exerciseId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/test-files`);
+    }
+
     get(participationId: number, fileName: string): Observable<any> {
         return this.http
             .get(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })

@@ -2,11 +2,14 @@ package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import javax.annotation.Nullable;
@@ -23,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -42,24 +46,66 @@ public class RepositoryResource {
 
     private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
+    private final ExerciseService exerciseService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<GitService> gitService;
+    private final Optional<VersionControlService> versionControlService;
     private final UserService userService;
 
-    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-                              Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public RepositoryResource(UserService userService,
+                              ParticipationService participationService,
+                              AuthorizationCheckService authCheckService,
+                              ExerciseService exerciseService,
+                              Optional<GitService> gitService,
+                              Optional<ContinuousIntegrationService> continuousIntegrationService,
+                              Optional<VersionControlService> versionControlService) {
         this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
+        this.exerciseService = exerciseService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
     }
 
     /**
-     * GET /repository/{participationId}/files: List all file names of the repository
+     * GET /repository/{exerciseId}/files: List all file names of the repository
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
+     * @return
+     * @throws IOException
+     */
+    @GetMapping(value = "/repository/{exerciseId}/test-files", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Collection<String>> getTestFiles(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+        log.debug("REST request to test files for Exercise : {exerciseId}", exerciseId);
+
+        try {
+            ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+            String projectKey = exercise.getProjectKey();
+
+            String testRepoName = projectKey.toLowerCase() + "-tests";
+            URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
+
+            Repository repository = gitService.get().getOrCheckoutRepository(exerciseRepoUrl);
+            Iterator<File> itr = gitService.get().listFiles(repository).iterator();
+
+            Collection<String> fileList = new LinkedList<>();
+
+            while (itr.hasNext()) {
+                fileList.add(itr.next().toString());
+            }
+
+            return new ResponseEntity<>(fileList, HttpStatus.OK);
+        } catch(EntityNotFoundException ex) {
+            return notFound();
+        }
+    }
+
+    /**
+     * GET /repository/{exerciseId}/files: List all file names of the repository
+     *
+     * @param exerciseId Participation ID
      * @return
      * @throws IOException
      */
@@ -82,7 +128,6 @@ public class RepositoryResource {
 
         return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
-
 
     /**
      * GET /repository/{participationId}/file: Get the content of a file

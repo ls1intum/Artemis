@@ -32,7 +32,10 @@
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
             "solutionResult": "Ergebnis Lösung",
-            "structureTestOracle": "Oracle Strukturtest aktualisieren"
+            "structureTestOracle": "Oracle Strukturtest aktualisieren",
+            "problemStatement": {
+                "taskCommand": "[task] Aufgabe"
+            }
         },
         "editor": {
             "title": "Code Editor für Übung:",
