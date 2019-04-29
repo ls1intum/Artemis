@@ -255,7 +255,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (this.compressFolders) {
             this.compressedTreeItems = [];
             tree = this.compressTree(tree);
-            console.log(this.compressedTreeItems);
         }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }
@@ -387,15 +386,24 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * After rename the rename state is exited.
      **/
     onRenameFile(event: any) {
-        if (!event.target.value) {
+        if (!event.target.value || !this.renamingFile) {
             return;
         }
+
         const [filePath, fileName, fileType] = this.renamingFile;
+        let newFilePath: any = filePath.split('/');
+        newFilePath[newFilePath.length - 1] = event.target.value;
+        newFilePath = newFilePath.join('/');
+
+        if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
+            this.parent.onError('fileExists');
+            return;
+        } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
+            this.parent.onError('unsupportedFile');
+            return;
+        }
+
         if (event.target.value !== fileName) {
-            // TODO: Find a better way to do this
-            let newFilePath: any = filePath.split('/');
-            newFilePath[newFilePath.length - 1] = event.target.value;
-            newFilePath = newFilePath.join('/');
             this.repositoryFileService.rename(this.participation.id, filePath, event.target.value).subscribe(
                 () => {
                     this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
@@ -433,10 +441,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Create a file with the value of the creation input.
      **/
     onCreateFile(event: any) {
-        if (!event.target.value) {
+        if (!event.target.value || !this.creatingFile) {
             this.creatingFile = null;
             return;
-        } else if (Object.keys(this.repositoryFiles).includes(event.targetValue)) {
+        } else if (Object.keys(this.repositoryFiles).includes(event.target.value)) {
             this.parent.onError('fileExists');
             return;
         } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {

@@ -42,7 +42,7 @@
             <jhi-code-editor-ace
                 [participation]="participation"
                 [selectedFile]="selectedFile"
-                [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
+                [(buildLogErrors)]="buildLogErrors"
                 [editorState]="editorState"
                 [fileChange]="fileChange"
                 [unsavedFiles]="unsavedFiles"

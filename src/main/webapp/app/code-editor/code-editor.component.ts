@@ -217,15 +217,19 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param buildLogs
      */
     updateLatestBuildLogs(buildLogs: BuildLogEntryArray) {
-        const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
-        if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
-            this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-            this.errorFiles = Object.keys(this.buildLogErrors.errors);
-            // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
-            if (this.session) {
-                this.storeSession();
+        // The build logs come asynchronously while the view of other components are rendered.
+        // To avoid ExpressionChangedAfterItHasBeenCheckedError, we wait a tick so the view can update.
+        setTimeout(() => {
+            const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+            if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
+                this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+                this.errorFiles = Object.keys(this.buildLogErrors.errors);
+                // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
+                if (this.session) {
+                    this.storeSession();
+                }
             }
-        }
+        }, 0);
     }
 
     /**
@@ -262,6 +266,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             )(this.buildLogErrors.errors);
             this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
             this.fileChange = fileChange;
+            // If the renamed file has errors, we also need to update the session in localStorage
+            if (this.errorFiles.includes(fileChange.newFileName)) {
+                this.storeSession();
+            }
             // Also updated the name of the selectedFile
             if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
                 this.selectedFile = fileChange.newFileName;
@@ -271,7 +279,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileChange = fileChange;
             this.unsavedFiles = this.unsavedFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
-            this.errorFiles = this.unsavedFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            this.errorFiles = this.errorFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
             const errors = compose(
                 fromPairs,
                 filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
@@ -365,6 +373,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
+        this.storeSession();
     }
 
     /**

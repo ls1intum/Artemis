@@ -49,8 +49,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     fileChange: FileChange;
     @Input()
-    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: ts };
-    @Input()
     readonly unsavedFiles: string[];
     @Output()
     onEditorStateChange = new EventEmitter<EditorState>();
@@ -60,7 +58,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     onSavedFiles = new EventEmitter<string[]>();
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; unsavedChanges: boolean }>();
+    @Output()
+    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
 
+    buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timeStamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     // We store changes in the editor since the last content emit to update annotation positions.
     editorChangeLog: TextChange[] = [];
@@ -76,6 +77,16 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         private localStorageService: LocalStorageService,
         public modalService: NgbModal,
     ) {}
+
+    @Input()
+    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timeStamp: number } {
+        return this.buildLogErrorsValue;
+    }
+
+    set buildLogErrors(buildLogErrors) {
+        this.buildLogErrorsValue = buildLogErrors;
+        this.buildLogErrorsChange.emit(this.buildLogErrors);
+    }
 
     /**
      * @function ngAfterViewInit
@@ -138,11 +149,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             } else {
                 this.initEditorAfterFileChange();
             }
-        } else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
+        }
+        // Build log errors have changed - this can be new build results, but also a file change that has updated the object
+        if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
             this.editor
                 .getEditor()
                 .getSession()
-                .setAnnotations(this.buildLogErrors[this.selectedFile]);
+                .setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
     }
 
@@ -174,18 +187,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             .getEditor()
             .getSession()
             .setUndoManager(new ace.UndoManager());
-        this.editor
-            .getEditor()
-            .getSession()
-            .setAnnotations(this.buildLogErrors[this.selectedFile]);
-    }
-
-    /**
-     * Store the error data in the localStorage (synchronous action).
-     */
-    storeSession() {
-        const sessionAnnotations = this.buildLogErrors.errors;
-        this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: { errors: sessionAnnotations, timestamp: Date.now() } }));
+        if (this.buildLogErrors) {
+            this.editor
+                .getEditor()
+                .getSession()
+                .setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+        }
     }
 
     /**
@@ -204,7 +211,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             )
             .subscribe(
                 res => {
-                    this.storeSession();
                     this.onSavedFiles.emit(res);
                 },
                 err => {
@@ -255,10 +261,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.fileSession[this.selectedFile].code !== code) {
             const cursor = this.editor.getEditor().getCursorPosition();
             this.fileSession[this.selectedFile] = { code, cursor };
-            if (this.buildLogErrors[this.selectedFile]) {
+            if (this.buildLogErrors.errors[this.selectedFile]) {
                 this.buildLogErrors = {
                     ...this.buildLogErrors,
-                    [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors[this.selectedFile]),
+                    errors: {
+                        ...this.buildLogErrors.errors,
+                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors.errors[this.selectedFile]),
+                    },
                 };
             }
             this.editorChangeLog = [];
