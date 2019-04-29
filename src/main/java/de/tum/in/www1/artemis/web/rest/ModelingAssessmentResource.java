@@ -15,14 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-/** REST controller for managing ModelingAssessment. */
+/**
+ * REST controller for managing ModelingAssessment.
+ */
 @RestController
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -51,17 +55,21 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final ModelAssessmentConflictService conflictService;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService) {
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
+            ModelAssessmentConflictService conflictService) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
-        this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.exampleSubmissionService = exampleSubmissionService;
+        this.conflictService = conflictService;
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -162,6 +170,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
                 try {
                     conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
+                    conflictService.loadSubmissionsAndFeedbacksAndAssessorOfCausingResults(conflicts);
                 }
                 catch (Exception ex) { // catch potential null pointer exceptions as they should not prevent submitting an assessment
                     log.warn("Exception occurred when trying to get conflicts for model with submission id " + modelingSubmission.getId(), ex);

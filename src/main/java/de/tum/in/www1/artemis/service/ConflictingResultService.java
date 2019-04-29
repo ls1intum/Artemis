@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
@@ -52,7 +53,8 @@ public class ConflictingResultService {
         addMissingConflictingResults(conflict, newFeedbacks);
     }
 
-    private void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
+    @Transactional
+    void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
         Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
         conflict.getResultsInConflict().clear();
         Set<String> newFeedbacksElementIds = new HashSet<>();
@@ -63,7 +65,8 @@ public class ConflictingResultService {
                 .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
     }
 
-    private void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
+    @Transactional
+    void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
         Set<String> existingConflictingResultsElementIds = new HashSet<>();
         conflict.getResultsInConflict().forEach(conflictingResult -> existingConflictingResultsElementIds.add(conflictingResult.getModelElementId()));
         newFeedbacks.forEach(feedback -> {
