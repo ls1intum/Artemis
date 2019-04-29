@@ -29,7 +29,7 @@
                 [diagramType]="modelingExercise.diagramType"
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
-                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{currentConflict.causingConflictingResult.result.assessor.firstName}} {{currentConflict.causingConflictingResult.result.assessor.lastName}}"
+                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{conflictingResult.result.assessor.firstName}} {{conflictingResult.result.assessor.lastName}}"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"

@@ -6,15 +6,22 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
+import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
+import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -22,17 +29,20 @@ public class ModelAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(ModelAssessmentConflictService.class);
 
-    private ModelAssessmentConflictRepository modelAssessmentConflictRepository;
+    private final ModelAssessmentConflictRepository modelAssessmentConflictRepository;
 
-    private ConflictingResultService conflictingResultService;
+    private final ConflictingResultService conflictingResultService;
 
-    private ConflictingResultRepository conflictingResultRepository;
+    private final ConflictingResultRepository conflictingResultRepository;
+
+    private final ResultRepository resultRepository;
 
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository) {
+            ConflictingResultRepository conflictingResultRepository, ResultRepository resultRepository) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
         this.conflictingResultRepository = conflictingResultRepository;
+        this.resultRepository = resultRepository;
     }
 
     public ModelAssessmentConflict findOne(Long conflictId) {
@@ -43,8 +53,18 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
+    public void loadSubmissionsAndFeedbacksAndAssessorOfCausingResults(List<ModelAssessmentConflict> conflicts) {
+        conflicts.forEach(conflict -> {
+            conflict.getCausingConflictingResult()
+                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
+            conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult
+                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
+        });
+    }
+
     public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
-        return modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
+        List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
+        return conflicts;
     }
 
     public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
@@ -58,8 +78,9 @@ public class ModelAssessmentConflictService {
     }
 
     public void deleteAllConflicts(Participation participation) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsOfParticipation(participation.getId());
-        existingConflicts.forEach(conflict -> modelAssessmentConflictRepository.delete(conflict));
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
+                .filter(conflict -> conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())).collect(Collectors.toList());
+        modelAssessmentConflictRepository.deleteAll(existingConflicts);
     }
 
     @Transactional
@@ -96,6 +117,7 @@ public class ModelAssessmentConflictService {
         return storedConflict;
     }
 
+    @Transactional
     public void addMissingConflicts(Result causingResult, List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         newConflictingFeedbacks.keySet().forEach(modelElementId -> {
             Optional<ModelAssessmentConflict> foundExistingConflict = existingConflicts.stream()
@@ -107,6 +129,7 @@ public class ModelAssessmentConflictService {
         });
     }
 
+    @Transactional
     public void updateExistingConflicts(List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         existingConflicts.forEach(conflict -> {
             List<Feedback> newFeedbacks = newConflictingFeedbacks.get(conflict.getCausingConflictingResult().getModelElementId());

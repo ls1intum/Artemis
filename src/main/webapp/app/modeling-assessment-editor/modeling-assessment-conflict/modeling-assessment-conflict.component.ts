@@ -47,7 +47,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     ngOnInit() {
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
-            // this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
+            this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts) {
                 this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
                 // this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
@@ -107,22 +107,22 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSave() {
-        // this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
-        //     result => {
-        //         this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
-        //     },
-        //     error => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
-        // );
+        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
+            result => {
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+            },
+            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+        );
     }
 
     onSubmit() {
-        // this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-        //     result => {
-        //         this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-        //         this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
-        //     },
-        //     error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
-        // );
+        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
+            result => {
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
+            },
+            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
+        );
     }
 
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {

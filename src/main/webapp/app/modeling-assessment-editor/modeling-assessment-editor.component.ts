@@ -213,7 +213,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
-                this.ignoreConflicts = false;
+                this.highlightConflictingElements();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
