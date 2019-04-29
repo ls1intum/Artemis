@@ -7,13 +7,12 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Subscription } from 'rxjs';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DifferencePipe } from 'angular2-moment';
 import { Result, ResultDetailComponent, ResultService } from 'app/entities/result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
-import { retryWhen } from 'rxjs/operators';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { DifferencePipe } from 'ngx-moment';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

@@ -28,18 +28,44 @@ public class ModelAssessmentConflictService {
 
     private ConflictingResultRepository conflictingResultRepository;
 
+    public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
+            ConflictingResultRepository conflictingResultRepository) {
+        this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
+        this.conflictingResultService = conflictingResultService;
+        this.conflictingResultRepository = conflictingResultRepository;
+    }
+
+    public ModelAssessmentConflict findOne(Long conflictId) {
+        return modelAssessmentConflictRepository.findById(conflictId).orElseThrow(() -> new EntityNotFoundException("Entity with id " + conflictId + "does not exist"));
+    }
+
     public List<ModelAssessmentConflict> getConflictsForExercise(Long exerciseId) {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
+    }
+
+    public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
+        return modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
+    }
+
+    public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
+        List<ModelAssessmentConflict> existingConflicts = getConflictsForResult(result);
+        return existingConflicts.stream().filter(conflict -> !conflict.isResolved()).collect(Collectors.toList());
+    }
+
+    public List<ModelAssessmentConflict> getConflictsForResultWithState(Result result, EscalationState state) {
+        List<ModelAssessmentConflict> existingConflicts = getConflictsForResult(result);
+        return existingConflicts.stream().filter(conflict -> conflict.getState().equals(state)).collect(Collectors.toList());
+    }
+
+    public void deleteAllConflicts(Participation participation) {
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsOfParticipation(participation.getId());
+        existingConflicts.forEach(conflict -> modelAssessmentConflictRepository.delete(conflict));
     }
 
     @Transactional
     public Exercise getExerciseOfConflict(Long conflictId) {
         ModelAssessmentConflict conflict = findOne(conflictId);
         return conflict.getCausingConflictingResult().getResult().getParticipation().getExercise();
-    }
-
-    public ModelAssessmentConflict findOne(Long conflictId) {
-        return modelAssessmentConflictRepository.findById(conflictId).orElseThrow(() -> new EntityNotFoundException("Entity with id " + conflictId + "does not exist"));
     }
 
     public void saveConflicts(List<ModelAssessmentConflict> conflicts) {
@@ -70,23 +96,6 @@ public class ModelAssessmentConflictService {
         return storedConflict;
     }
 
-    public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository) {
-        this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
-        this.conflictingResultService = conflictingResultService;
-        this.conflictingResultRepository = conflictingResultRepository;
-    }
-
-    public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
-        return existingConflicts;
-    }
-
-    public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
-        return existingConflicts.stream().filter(modelAssessmentConflict -> !modelAssessmentConflict.isResolved()).collect(Collectors.toList());
-    }
-
     public void addMissingConflicts(Result causingResult, List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         newConflictingFeedbacks.keySet().forEach(modelElementId -> {
             Optional<ModelAssessmentConflict> foundExistingConflict = existingConflicts.stream()
@@ -102,7 +111,7 @@ public class ModelAssessmentConflictService {
         existingConflicts.forEach(conflict -> {
             List<Feedback> newFeedbacks = newConflictingFeedbacks.get(conflict.getCausingConflictingResult().getModelElementId());
             if (newFeedbacks != null) {
-                conflictingResultService.updateExistingConflictingResults(conflict, conflict.getResultsInConflict(), newFeedbacks);
+                conflictingResultService.updateExistingConflictingResults(conflict, newFeedbacks);
             }
             else {
                 resolveConflict(conflict);

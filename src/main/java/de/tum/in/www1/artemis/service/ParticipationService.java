@@ -74,9 +74,12 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final ModelAssessmentConflictService conflictService;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ModelAssessmentConflictService conflictService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -86,6 +89,7 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.conflictService = conflictService;
     }
 
     /**
@@ -588,7 +592,7 @@ public class ParticipationService {
         Participation participation = participationRepository.findById(id).get();
         log.debug("Request to delete Participation : {}", participation);
 
-        if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
+        if (participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
@@ -608,6 +612,9 @@ public class ParticipationService {
             catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
+        }
+        else if (participation.getExercise() instanceof ModelingExercise) {
+            conflictService.deleteAllConflicts(participation);
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {

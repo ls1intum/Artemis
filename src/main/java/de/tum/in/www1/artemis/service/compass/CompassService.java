@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +13,23 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.ConflictingResultService;
 import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
-import de.tum.in.www1.artemis.service.compass.grade.*;
+import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
+import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
 @Service
 public class CompassService {
@@ -32,7 +44,9 @@ public class CompassService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ModelAssessmentConflictService modelAssessmentConflictService;
+    private final ModelAssessmentConflictService conflictService;
+
+    private final ConflictingResultService conflictingResultService;
 
     /**
      * Map exerciseId to compass CalculationEngines
@@ -62,12 +76,13 @@ public class CompassService {
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ParticipationRepository participationRepository, ModelAssessmentConflictService modelAssessmentConflictService) {
+            ParticipationRepository participationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.participationRepository = participationRepository;
-        this.modelAssessmentConflictService = modelAssessmentConflictService;
+        this.conflictService = conflictService;
+        this.conflictingResultService = conflictingResultService;
     }
 
     public boolean isSupported(DiagramType diagramType) {
@@ -178,15 +193,16 @@ public class CompassService {
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
+        List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getConflictsForResultWithState(result, EscalationState.UNHANDLED);
+        conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
+        conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
+        conflictService.saveConflicts(existingUnresolvedConflicts);
         if (conflictingFeedbacks.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
         else {
-            List<ModelAssessmentConflict> existingUnresolvedConflicts = modelAssessmentConflictService.getUnresolvedConflictsForResult(result);
-            modelAssessmentConflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
-            modelAssessmentConflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
-            modelAssessmentConflictService.saveConflicts(existingUnresolvedConflicts);
-            return existingUnresolvedConflicts;
+            return existingUnresolvedConflicts.stream().filter(conflict -> !conflict.isResolved()).map(conflictingResultService::filterDoubleConflictingResults)
+                    .collect(Collectors.toList());
         }
     }
 
