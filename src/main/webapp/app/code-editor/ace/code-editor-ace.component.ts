@@ -49,7 +49,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     fileChange: FileChange;
     @Input()
-    buildLogErrors: { [fileName: string]: AnnotationArray };
+    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: ts };
     @Input()
     readonly unsavedFiles: string[];
     @Output()
