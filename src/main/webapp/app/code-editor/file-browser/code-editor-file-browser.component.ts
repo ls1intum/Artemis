@@ -388,6 +388,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     onRenameFile(event: any) {
         if (!event.target.value || !this.renamingFile) {
             return;
+        } else if (event.target.value === this.renamingFile[1]) {
+            this.renamingFile = null;
+            return;
         }
 
         const [filePath, fileName, fileType] = this.renamingFile;
