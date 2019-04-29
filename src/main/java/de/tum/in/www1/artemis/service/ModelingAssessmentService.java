@@ -1,14 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -16,10 +9,18 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -30,14 +31,14 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final FeedbackRepository feedbackRepository;
+    private final ComplaintResponseService complaintResponseService;
 
     public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository,
-            FeedbackRepository feedbackRepository) {
+                                     ComplaintResponseService complaintResponseService) {
         super(resultRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
+        this.complaintResponseService = complaintResponseService;
     }
 
     /**
@@ -102,8 +103,26 @@ public class ModelingAssessmentService extends AssessmentService {
         return resultRepository.save(result);
     }
 
-    public Result updateAssessmentAfterComplaint(ModelingSubmission modelingSubmission, List<Feedback> assessmentAfterComplaint) {
-        // TODO CZ: implement
+    /**
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then
+     * updates the Result that was complaint about.
+     * Note, that it updates the score and the feedback of the original Result, but NOT the assessor. The user that is
+     * responsible for the update can be found in the 'reviewer' field of the complaint. The original Result is stored
+     * in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     *
+     * @param modelingSubmission the modeling submission the assessment that was complained about belongs to
+     * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
+     * @return the updated Result
+     */
+    @Transactional
+    public Result updateAssessmentAfterComplaint(ModelingSubmission modelingSubmission, AssessmentUpdate assessmentUpdate) {
+        if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
+            throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
+        }
+        // save the corresponding complaint response
+        ComplaintResponse complaintResponse = complaintResponseService.createComplaintResponse(assessmentUpdate.getComplaintResponse());
+        // and update the result that was complained about
+        // TODO CZ: implement assessment update
         return new Result();
     }
 

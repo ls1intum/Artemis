@@ -13,7 +13,9 @@ import { Complaint } from 'app/entities/complaint';
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() resultId: number;
-    @Output() updateAssessment = new EventEmitter<void>(); // emits the id of the result that should be updated
+    // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
+    // that should be sent to the server along with the assessment update.
+    @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
     loading = true;
     complaint: Complaint;
     complaintText = '';
@@ -49,20 +51,23 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (this.complaintResponse.responseText.length > 0) {
             this.complaint.accepted = acceptComplaint;
             this.complaintResponse.complaint = this.complaint;
-            this.complaintResponseService.create(this.complaintResponse).subscribe(
-                response => {
-                    this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
-                    this.handled = true;
-                    this.complaintResponse = response.body;
-                    // tell the parent (assessment) component to update the corresponding result if the complaint was accepted
-                    if (acceptComplaint) {
-                        this.updateAssessment.emit();
-                    }
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
+            if (acceptComplaint) {
+                // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
+                // The complaint is sent along with the assessment update by the parent to avoid additional requests.
+                this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
+            } else {
+                // If the complaint was rejected, just the complaint response is created.
+                this.complaintResponseService.create(this.complaintResponse).subscribe(
+                    response => {
+                        this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
+                        this.handled = true;
+                        this.complaintResponse = response.body;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.onError(err.message);
+                    },
+                );
+            }
         }
     }
 

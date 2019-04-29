@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -200,20 +201,24 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    onUpdateAssessmentAfterComplaint() {
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.removeCircularDependencies();
         if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
             this.localFeedbacks = [];
         }
-        // TODO CZ: what about conflicts here?
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, this.submission.id, true).subscribe(
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, complaintResponse, this.submission.id).subscribe(
             (result: Result) => {
-                // TODO CZ: implement response handling
+                this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
             (error: HttpErrorResponse) => {
-                // TODO CZ: delete corresponding complaint response when updating the assessment failed?
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },

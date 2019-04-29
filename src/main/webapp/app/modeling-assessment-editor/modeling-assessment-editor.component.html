@@ -53,7 +53,7 @@
     </div>
 </div>
 <div class="mt-3" *ngIf="includeComplaint && result && result.id">
-    <jhi-complaints-for-tutor-form [resultId]="result.id" (updateAssessment)="onUpdateAssessmentAfterComplaint()"></jhi-complaints-for-tutor-form>
+    <jhi-complaints-for-tutor-form [resultId]="result.id" (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"></jhi-complaints-for-tutor-form>
 </div>
 
 <ng-template #conflictResolution>
