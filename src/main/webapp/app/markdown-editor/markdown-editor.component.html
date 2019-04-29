@@ -32,15 +32,17 @@
                     </div>
                 </ng-container>
             </div>
-            <ace-editor
-                #aceEditor
-                [mode]="aceEditorOptions.mode"
-                [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
-                [(text)]="markdown"
-                (textChange)="markdownChange.emit($event)"
-                style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px"
-                class="form-control"
-            ></ace-editor>
+            <div class="card border-0 markdown-editor markdown-editor__small">
+                <ace-editor
+                    #aceEditor
+                    [mode]="aceEditorOptions.mode"
+                    [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
+                    [(text)]="markdown"
+                    (textChange)="markdownChange.emit($event)"
+                    class="form-control markdown-editor__content"
+                ></ace-editor>
+                <div class="rg-bottom"><span></span></div>
+            </div>
         </ng-template>
     </ngb-tab>
     <!--End Editor-->
