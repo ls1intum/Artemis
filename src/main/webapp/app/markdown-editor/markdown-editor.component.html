@@ -41,7 +41,7 @@
                     (textChange)="markdownChange.emit($event)"
                     class="form-control markdown-editor__content"
                 ></ace-editor>
-                <div class="rg-bottom"><span></span></div>
+                <div *ngIf="enableResize" class="rg-bottom"><span></span></div>
             </div>
         </ng-template>
     </ngb-tab>
