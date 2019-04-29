@@ -12,6 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { fromEvent, Subscription } from 'rxjs';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { RepositoryFileService } from 'app/entities/repository';
@@ -22,7 +23,7 @@ import { TextChange, AnnotationArray } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
-import { RenameFileChange, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
+import { RenameFileChange, DeleteFileChange, FileChange } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -105,11 +106,28 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
         if (changes.fileChange && changes.fileChange.currentValue) {
             if (this.fileChange instanceof RenameFileChange) {
-                const fileSessionContent = this.fileSession[this.fileChange.oldFileName];
-                delete this.fileSession[this.fileChange.oldFileName];
-                this.fileSession[this.fileChange.newFileName] = fileSessionContent;
+                // Rename references to file / path
+                const { oldFileName, newFileName } = this.fileChange;
+                const oldFileNameRegex = new RegExp(`^${oldFileName}`);
+                const renamedSessions = compose(
+                    fromPairs,
+                    map(([fileName, session]) => [fileName.replace(oldFileNameRegex, newFileName), session]),
+                    toPairs,
+                )(this.fileSession);
+                const filteredSession = compose(
+                    fromPairs,
+                    filter(([fileName]) => fileName !== oldFileName),
+                    toPairs,
+                )(this.fileSession);
+                this.fileSession = { ...filteredSession, ...renamedSessions };
             } else if (this.fileChange instanceof DeleteFileChange) {
-                delete this.fileSession[this.fileChange.fileName];
+                // Make sure to also remove references to sub items (files in folder)
+                const { fileName } = this.fileChange;
+                this.fileSession = compose(
+                    fromPairs,
+                    filter(([fn]) => !fn.startsWith(fileName)),
+                    toPairs,
+                )(this.fileSession);
             }
         }
         // Current file has changed

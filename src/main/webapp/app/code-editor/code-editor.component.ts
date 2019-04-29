@@ -237,10 +237,12 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     /**
-     * @function updateRepositoryCommitStatus
-     * @desc Callback function for when a file was created or deleted; updates the current repository files
+     * @function onFileChange
+     * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
+     * Also all references to a file need to be updated in case of rename,
+     * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    updateRepositoryCommitStatus<T extends FileChange>([files, fileChange]: [string[], T]) {
+    onFileChange<T extends FileChange>([files, fileChange]: [string[], T]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         this.repositoryFiles = files;
         if (fileChange instanceof CreateFileChange) {
@@ -256,14 +258,19 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.unsavedFiles = [...this.unsavedFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedUnsavedFiles];
             const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
             this.errorFiles = [...this.errorFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedErrorFiles];
-            const fileErrors = this.buildLogErrors.errors[fileChange.oldFileName];
-            const filteredErrors = compose(
+            const renamedErrors = compose(
                 fromPairs,
-                filter(([fileName]) => fileName !== fileChange.oldFileName),
+                map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
                 toPairs,
             )(this.buildLogErrors.errors);
-            this.buildLogErrors = { errors: { ...filteredErrors, [fileChange.newFileName]: fileErrors }, timestamp: this.buildLogErrors.timestamp };
+            const filteredErrors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.oldFileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
             this.fileChange = fileChange;
+            // Also updated the name of the selectedFile
             if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
                 this.selectedFile = fileChange.newFileName;
             } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {

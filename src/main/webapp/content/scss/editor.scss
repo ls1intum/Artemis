@@ -266,8 +266,11 @@ File browser styles
     :not(:last-child) {
         margin-right: 5px;
     }
-    fa-icon {
-        cursor: pointer;
+    button {
+        padding: 0;
+        fa-icon {
+            cursor: pointer;
+        }
     }
 }
 

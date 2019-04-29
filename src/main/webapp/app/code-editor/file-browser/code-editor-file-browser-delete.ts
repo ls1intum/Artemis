@@ -39,7 +39,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
             this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe(
                 () => {
                     this.closeModal();
-                    this.parent.onDeletedFile(new DeleteFileChange(this.fileType, this.fileNameToDelete));
+                    this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
                 },
                 err => {
                     console.log('Error deleting file: ' + this.fileNameToDelete, err);

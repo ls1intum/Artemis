@@ -50,14 +50,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     folder: string;
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
+    compressedTreeItems: string[];
 
     @ViewChild('renamingInput') renamingInput: ElementRef;
     @ViewChild('creatingInput') creatingInput: ElementRef;
 
     // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;
-    creatingFile: string | null = null;
-    creatingFolder: string | null = null;
+    creatingFile: [string, FileType] | null = null;
 
     isInitial = true;
 
@@ -201,20 +201,11 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     /**
-     * @function onCreatedFile
-     * @desc Emmiter function for when a new file was created; notifies the parent component
-     * @param statusChange
-     */
-    onCreatedFile(fileChange: FileChange) {
-        this.emitFileChange(fileChange);
-    }
-
-    /**
-     * @function onDeletedFile
+     * @function onFileDeleted
      * @desc Emmiter function for when a file was deleted; notifies the parent component
      * @param statusChange
      */
-    onDeletedFile(fileChange: FileChange) {
+    onFileDeleted(fileChange: FileChange) {
         this.emitFileChange(fileChange);
     }
 
@@ -262,7 +253,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     setupTreeview() {
         let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
         if (this.compressFolders) {
+            this.compressedTreeItems = [];
             tree = this.compressTree(tree);
+            console.log(this.compressedTreeItems);
         }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }
@@ -353,6 +346,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 node.children = this.compressTree(node.children[0].children);
                 if (node.children[0].children) {
                     return this.compressTree(tree);
+                } else {
+                    this.compressedTreeItems.push(node.text);
                 }
             } else if (node.children) {
                 node.children = this.compressTree(node.children);
@@ -401,10 +396,13 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
             let newFilePath: any = filePath.split('/');
             newFilePath[newFilePath.length - 1] = event.target.value;
             newFilePath = newFilePath.join('/');
-            this.repositoryFileService.rename(this.participation.id, filePath, event.target.value).subscribe(() => {
-                this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
-                this.renamingFile = null;
-            });
+            this.repositoryFileService.rename(this.participation.id, filePath, event.target.value).subscribe(
+                () => {
+                    this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                    this.renamingFile = null;
+                },
+                () => this.parent.onError('fileOperationFailed'),
+            );
         } else {
             this.renamingFile = null;
         }
@@ -427,7 +425,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Set renamingFile to null to make the input disappear.
      **/
     clearRenamingFile($event: any) {
-        event.stopPropagation();
+        $event.stopPropagation();
         this.renamingFile = null;
     }
 
@@ -438,35 +436,40 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (!event.target.value) {
             this.creatingFile = null;
             return;
+        } else if (Object.keys(this.repositoryFiles).includes(event.targetValue)) {
+            this.parent.onError('fileExists');
+            return;
+        } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
+            this.parent.onError('unsupportedFile');
+            return;
         }
-        const file = this.creatingFile ? `${this.creatingFile}/${event.target.value}` : event.target.value;
-        this.repositoryFileService.createFile(this.participation.id, file).subscribe(() => {
-            this.emitFileChange(new CreateFileChange(FileType.FILE, file));
-            this.creatingFile = null;
-        });
-    }
-
-    /**
-     * Create a folder with the value of the creation input.
-     **/
-    onCreateFolder(event: any) {
-        if (!event.target.value) {
-            this.creatingFolder = null;
+        const [folderPath, fileType] = this.creatingFile;
+        const file = folderPath ? `${folderPath}/${event.target.value}` : event.target.value;
+        if (fileType === FileType.FILE) {
+            this.repositoryFileService.createFile(this.participation.id, file).subscribe(
+                () => {
+                    this.emitFileChange(new CreateFileChange(FileType.FILE, file));
+                    this.creatingFile = null;
+                },
+                () => this.parent.onError('fileOperationFailed'),
+            );
         } else {
-            const file = this.creatingFolder ? `${this.creatingFolder}/${event.target.value}` : event.target.value;
-            this.repositoryFileService.createFolder(this.participation.id, file).subscribe(() => {
-                this.emitFileChange(new CreateFileChange(FileType.FOLDER, file));
-                this.creatingFolder = null;
-            });
+            this.repositoryFileService.createFolder(this.participation.id, file).subscribe(
+                () => {
+                    this.emitFileChange(new CreateFileChange(FileType.FOLDER, file));
+                    this.creatingFile = null;
+                },
+                () => this.parent.onError('fileOperationFailed'),
+            );
         }
     }
 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setCreatingFile(event: any, folder: string) {
+    setCreatingFile(event: any, folder: string, fileType: FileType) {
         event.stopPropagation();
-        this.creatingFile = folder;
+        this.creatingFile = [folder, fileType];
         setTimeout(() => {
             if (this.creatingInput) {
                 this.creatingInput.nativeElement.focus();
@@ -480,26 +483,5 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     clearCreatingFile(event: any) {
         event.stopPropagation();
         this.creatingFile = null;
-    }
-
-    /**
-     * Enter rename file mode and focus the created input.
-     **/
-    setCreatingFolder(event: any, folder: string) {
-        event.stopPropagation();
-        this.creatingFolder = folder;
-        setTimeout(() => {
-            if (this.creatingInput) {
-                this.creatingInput.nativeElement.focus();
-            }
-        }, 0);
-    }
-
-    /**
-     * Set creatingFolder to null to make the input disappear.
-     **/
-    clearCreatingFolder(event: any) {
-        event.stopPropagation();
-        this.creatingFolder = null;
     }
 }
