@@ -166,7 +166,7 @@ public class StudentQuestionResource {
         Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
         Boolean isUserAuthor = user.getId() == studentQuestion.getAuthor().getId();
         if (hasCourseTAAccess || isUserAuthor) {
-            log.debug("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
+            log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
             studentQuestionRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
