@@ -35,7 +35,7 @@ export enum MarkdownEditorHeight {
     selector: 'jhi-markdown-editor',
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
-    styleUrls: ['/markdown-editor.component.scss'],
+    styleUrls: ['./markdown-editor.component.scss'],
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     public MarkdownEditorHeight = MarkdownEditorHeight;
