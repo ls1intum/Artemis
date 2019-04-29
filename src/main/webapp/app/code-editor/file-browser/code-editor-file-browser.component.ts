@@ -9,8 +9,8 @@ import { Participation, hasParticipationChanged } from 'app/entities/participati
 import { WindowRef } from 'app/core';
 import { CodeEditorComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
-import * as interact from 'interactjs';
-import { Interactable } from 'interactjs';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
