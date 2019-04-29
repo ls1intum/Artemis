@@ -1,12 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
 
 @Service
@@ -36,17 +41,43 @@ public class ConflictingResultService {
         return conflictingResult;
     }
 
-    public void updateExistingConflictingResults(ModelAssessmentConflict conflict, Set<ConflictingResult> existingConflictingResults, List<Feedback> newFeedbacks) {
-        existingConflictingResults.clear();
+    /**
+     * Removes
+     *
+     * @param conflict     the conflict object to update
+     * @param newFeedbacks represents the current feedbacks that the given conflict object is in conflict with
+     */
+    public void updateExistingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
+        removeRemovedConflictingResults(conflict, newFeedbacks);
+        addMissingConflictingResults(conflict, newFeedbacks);
+    }
+
+    private void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
+        Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
+        conflict.getResultsInConflict().clear();
+        Set<String> newFeedbacksElementIds = new HashSet<>();
+        newFeedbacks.forEach(feedback -> newFeedbacksElementIds.add(feedback.getReferenceElementId()));
+        existingConflictingResultsCopy.stream()
+                .filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId())
+                        || conflictingResult.getId().equals(conflict.getCausingConflictingResult().getId()))// TODO remove foreign key fix
+                .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
+    }
+
+    private void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
+        Set<String> existingConflictingResultsElementIds = new HashSet<>();
+        conflict.getResultsInConflict().forEach(conflictingResult -> existingConflictingResultsElementIds.add(conflictingResult.getModelElementId()));
         newFeedbacks.forEach(feedback -> {
-            Optional<ConflictingResult> existingConflictingResult = existingConflictingResults.stream()
-                    .filter(conflictingResult -> conflictingResult.getResult().getId().equals(feedback.getResult().getId())).findFirst();
-            if (existingConflictingResult.isPresent()) {
-                existingConflictingResults.add(existingConflictingResult.get());
-            }
-            else {
-                existingConflictingResults.add(createConflictingResult(conflict, feedback));
+            if (!existingConflictingResultsElementIds.contains(feedback.getReferenceElementId())) {
+                conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback));
             }
         });
+    }
+
+    public ModelAssessmentConflict filterDoubleConflictingResults(ModelAssessmentConflict conflict) {
+        Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
+        conflict.getResultsInConflict().clear();
+        existingConflictingResultsCopy.stream().filter(conflictingResult -> !conflictingResult.getId().equals(conflict.getCausingConflictingResult().getId()))
+                .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
+        return conflict;
     }
 }

@@ -51,6 +51,12 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    ModelAssessmentConflictRepository conflictRepo;
+
+    @Autowired
+    ConflictingResultRepository conflictingResultRepo;
+
+    @Autowired
     FeedbackRepository feedbackRepo;
 
     @Autowired
@@ -63,6 +69,8 @@ public class DatabaseUtilService {
     ObjectMapper mapper;
 
     public void resetDatabase() {
+        conflictRepo.deleteAll();
+        conflictingResultRepo.deleteAll();
         feedbackRepo.deleteAll();
         resultRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
@@ -154,8 +162,9 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        submission.getParticipation().addResult(result);
+        participation.addResult(result);
         resultRepo.save(result);
+        participationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         return submission;
     }
