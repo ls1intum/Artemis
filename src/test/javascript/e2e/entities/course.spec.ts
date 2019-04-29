@@ -57,10 +57,7 @@ describe('course', function() {
         await newCoursePage.browseCourseIcon();
         await newCoursePage.uploadCourseIcon();
 
-        const fileName = await browser.executeScript('return arguments[0].innerHTML;', element(by.className('custom-file-label')));
-
         expect(await element(by.css('.headline jhi-secured-image img'))).to.not.be.undefined;
-        expect(fileName).to.have.string('/api/files/temp');
         await newCoursePage.clickCancel();
     });
 
