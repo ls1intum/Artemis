@@ -1,14 +1,16 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from 'app/entities/participation';
-import { Result, ResultDetailComponent, ResultService } from '.';
+import { Result, ResultDetailComponent, ResultService, ResultWebsocketService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { AccountService, JhiWebsocketService } from 'app/core';
 
 @Component({
     selector: 'jhi-result',
