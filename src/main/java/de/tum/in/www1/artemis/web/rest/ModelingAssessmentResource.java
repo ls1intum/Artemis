@@ -206,11 +206,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PostMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission, assessmentUpdate);
+        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
         return ResponseEntity.ok(result);
     }
 

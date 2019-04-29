@@ -1,18 +1,22 @@
 package de.tum.in.www1.artemis.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,12 +37,18 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ComplaintResponseService complaintResponseService;
 
+    private final ComplaintRepository complaintRepository;
+
+    private final ObjectMapper objectMapper;
+
     public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository,
-                                     ComplaintResponseService complaintResponseService) {
+                                     ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ObjectMapper objectMapper) {
         super(resultRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.complaintResponseService = complaintResponseService;
+        this.complaintRepository = complaintRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -80,16 +90,7 @@ public class ModelingAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-
-        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
-        // will also be
-        // deleted in the database because of the 'orphanRemoval = true' flag.
-        result.getFeedbacks().clear();
-        for (Feedback feedback : modelingAssessment) {
-            feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
-            result.addFeedback(feedback);
-        }
+        result.setNewFeedback(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 
@@ -107,23 +108,36 @@ public class ModelingAssessmentService extends AssessmentService {
      * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then
      * updates the Result that was complaint about.
      * Note, that it updates the score and the feedback of the original Result, but NOT the assessor. The user that is
-     * responsible for the update can be found in the 'reviewer' field of the complaint. The original Result is stored
-     * in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     * responsible for the update can be found in the 'reviewer' field of the complaint.
+     * The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
      *
-     * @param modelingSubmission the modeling submission the assessment that was complained about belongs to
+     * @param originalResult the original assessment that was complained about
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
     @Transactional
-    public Result updateAssessmentAfterComplaint(ModelingSubmission modelingSubmission, AssessmentUpdate assessmentUpdate) {
+    public Result updateAssessmentAfterComplaint(Result originalResult, ModelingExercise modelingExercise, AssessmentUpdate assessmentUpdate) {
         if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
             throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
-        // save the corresponding complaint response
+        // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.createComplaintResponse(assessmentUpdate.getComplaintResponse());
-        // and update the result that was complained about
-        // TODO CZ: implement assessment update
-        return new Result();
+
+        try {
+            // Store the original result with the complaint
+            Complaint complaint = complaintResponse.getComplaint();
+            complaint.setResultBeforeComplaint(objectMapper.writeValueAsString(originalResult));
+            complaintRepository.save(complaint);
+        } catch (JsonProcessingException exception) {
+            throw new InternalServerErrorException("Failed to store original result");
+        }
+
+        // Update the result that was complained about with the new feedback
+        originalResult.setNewFeedback(assessmentUpdate.getFeedbacks());
+        originalResult.evaluateFeedback(modelingExercise.getMaxScore());
+        // Note: This also saves the feedback objects in the database because of the 'cascade =
+        // CascadeType.ALL' option.
+        return resultRepository.save(originalResult);
     }
 
     /**

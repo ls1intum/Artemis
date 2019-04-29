@@ -49,6 +49,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     respondToComplaint(acceptComplaint: boolean): void {
         if (this.complaintResponse.responseText.length > 0) {
+            this.handled = true;
             this.complaint.accepted = acceptComplaint;
             this.complaintResponse.complaint = this.complaint;
             if (acceptComplaint) {
@@ -60,7 +61,6 @@ export class ComplaintsForTutorComponent implements OnInit {
                 this.complaintResponseService.create(this.complaintResponse).subscribe(
                     response => {
                         this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
-                        this.handled = true;
                         this.complaintResponse = response.body;
                     },
                     (err: HttpErrorResponse) => {

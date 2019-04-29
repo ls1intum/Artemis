@@ -36,8 +36,8 @@ export class ModelingAssessmentService {
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
-            feedbacks: feedbacks,
-            complaintResponse: complaintResponse,
+            feedbacks,
+            complaintResponse,
         };
         return this.http.post<Result>(url, assessmentUpdate).map(res => this.convertResult(res));
     }
