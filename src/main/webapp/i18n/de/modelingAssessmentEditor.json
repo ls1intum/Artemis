@@ -19,6 +19,7 @@
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
-        }
+        },
+        "reviewComplaint": "Beschwerde überprüfen"
     }
 }

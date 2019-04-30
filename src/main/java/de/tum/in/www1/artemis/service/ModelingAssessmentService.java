@@ -126,7 +126,7 @@ public class ModelingAssessmentService extends AssessmentService {
         try {
             // Store the original result with the complaint
             Complaint complaint = complaintResponse.getComplaint();
-            complaint.setResultBeforeComplaint(objectMapper.writeValueAsString(originalResult));
+            complaint.setResultBeforeComplaint(getOriginalResultAsString(originalResult));
             complaintRepository.save(complaint);
         } catch (JsonProcessingException exception) {
             throw new InternalServerErrorException("Failed to store original result");
@@ -138,6 +138,31 @@ public class ModelingAssessmentService extends AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(originalResult);
+    }
+
+    /**
+     * Creates a copy of the given original result with all properties except for the participation and submission and
+     * converts it to a JSON string.
+     * This method is used for storing the original result of a submission before updating the result due to a complaint.
+     *
+     * @param originalResult the original result that was complained about
+     * @return the reduced result as a JSON string
+     * @throws JsonProcessingException when the conversion to JSON string fails
+     */
+    private String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
+        Result resultCopy = new Result();
+        resultCopy.setId(originalResult.getId());
+        resultCopy.setResultString(originalResult.getResultString());
+        resultCopy.setCompletionDate(originalResult.getCompletionDate());
+        resultCopy.setSuccessful(originalResult.isSuccessful());
+        resultCopy.setScore(originalResult.getScore());
+        resultCopy.setRated(originalResult.isRated());
+        resultCopy.hasFeedback(originalResult.getHasFeedback());
+        resultCopy.setFeedbacks(originalResult.getFeedbacks());
+        resultCopy.setAssessor(originalResult.getAssessor());
+        resultCopy.setAssessmentType(originalResult.getAssessmentType());
+        resultCopy.setHasComplaint(originalResult.getHasComplaint());
+        return objectMapper.writeValueAsString(resultCopy);
     }
 
     /**

@@ -19,6 +19,7 @@
             "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
             "updateAfterComplaintFailed": "Updating the Assessment failed."
-        }
+        },
+        "reviewComplaint": "Review Complaint"
     }
 }
