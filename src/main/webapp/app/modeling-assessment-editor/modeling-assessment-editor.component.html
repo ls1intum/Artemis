@@ -1,10 +1,9 @@
 <div class="assessment-container">
     <h3 class="top-container">
         <!--back button only used in tutor dashboard-->
-        <div class="row-container mr-2" jhiTranslate="modelingAssessmentEditor.assessment">
+        <div class="row-container mr-2">
             <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-            Assessment
-            <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
+            <span jhiTranslate="modelingAssessmentEditor.assessment">Assessment</span>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-button-container row-container">
