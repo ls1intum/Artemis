@@ -124,7 +124,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     onSubmit() {
         const escalatedConflicts: Conflict[] = [];
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
-            if (this.conflictResolutionStates[i] == ConflictResolutionState.ESCALATED) {
+            if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
                 escalatedConflicts.push(this.conflicts[i]);
             }
         }
