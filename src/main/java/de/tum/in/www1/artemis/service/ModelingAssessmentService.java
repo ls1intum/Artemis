@@ -60,9 +60,9 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Result result, ModelingExercise exercise) {
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, ZonedDateTime submissionDate) {
         // TODO CZ: use AssessmentService#submitResult() function instead
-        result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for
         // modeling and text exercises (i.e. total score is sum of feedback

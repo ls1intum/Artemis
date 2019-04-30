@@ -1,10 +1,9 @@
-import { Injectable, EventEmitter } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
-import { DATE_FORMAT } from 'app/shared/constants/input.constants';
-import { map } from 'rxjs/operators';
-import { Notification } from 'app/entities/notification';
+import { map, shareReplay } from 'rxjs/operators';
+import { Notification, NotificationType } from 'app/entities/notification';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
@@ -12,6 +11,7 @@ import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification';
+import { SystemNotification } from 'app/entities/system-notification';
 
 type EntityResponseType = HttpResponse<Notification>;
 type EntityArrayResponseType = HttpResponse<Notification[]>;
@@ -21,6 +21,7 @@ export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
+    cachedNotifications: Observable<EntityArrayResponseType>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
@@ -49,10 +50,22 @@ export class NotificationService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    getRecentNotificationsForUser(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Notification[]>(`${this.resourceUrl}/for-user`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    getRecentNotifications(): Observable<EntityArrayResponseType> {
+        if (!this.cachedNotifications) {
+            this.cachedNotifications = this.http
+                .get<Notification[]>(`${this.resourceUrl}/for-user`, { observe: 'response' })
+                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+                .pipe(shareReplay(1));
+        }
+        return this.cachedNotifications;
+    }
+
+    getRecentNotificationsForUser(): Observable<Notification[]> {
+        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterUserAndGroupNotifications(res)));
+    }
+
+    getRecentSystemNotification(): Observable<SystemNotification> {
+        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterSystemNotification(res)));
     }
 
     protected convertDateFromClient(notification: Notification): Notification {
@@ -76,6 +89,27 @@ export class NotificationService {
             });
         }
         return res;
+    }
+
+    protected filterUserAndGroupNotifications(res: EntityArrayResponseType): Notification[] {
+        let notifications: Notification[] = [];
+        if (res.body) {
+            notifications = res.body.filter((notification: Notification) => {
+                return [NotificationType.GROUP, NotificationType.SINGLE].includes(notification.notificationType);
+            });
+        }
+        return notifications;
+    }
+
+    protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification {
+        let systemNotification: SystemNotification;
+        if (res.body) {
+            const receivedSystemNotifications = res.body.filter(el => el.notificationType === NotificationType.SYSTEM);
+            if (receivedSystemNotifications && receivedSystemNotifications.length > 0) {
+                systemNotification = receivedSystemNotifications[0] as SystemNotification;
+            }
+        }
+        return systemNotification;
     }
 
     subscribeUserNotifications(): Promise<any> {

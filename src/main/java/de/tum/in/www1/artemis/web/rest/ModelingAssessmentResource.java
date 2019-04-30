@@ -106,17 +106,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return forbidden();
         }
+        Result result = submission.getResult();
+        if (result == null) {
+            return notFound();
+        }
+
         // remove sensitive information for students
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             exercise.filterSensitiveInformation();
+            result.setAssessor(null);
         }
 
-        Result result = submission.getResult();
-        if (result != null) {
-            return ResponseEntity.ok(result);
-        } else {
-            return notFound();
-        }
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -152,7 +153,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
-    @Transactional
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
@@ -175,11 +175,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             }
             else {
-                modelingAssessmentService.submitManualAssessment(result, modelingExercise);
+                modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
                 if (compassService.isSupported(modelingExercise.getDiagramType())) {
                     compassService.addAssessment(exerciseId, submissionId, feedbacks);
                 }
             }
+        }
+        // remove information about the student for tutors to ensure double-blind assessment
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+            result.getParticipation().setStudent(null);
         }
         return ResponseEntity.ok(result);
     }

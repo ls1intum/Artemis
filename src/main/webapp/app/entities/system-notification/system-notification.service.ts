@@ -8,6 +8,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { NotificationService } from 'app/entities/notification';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
@@ -16,7 +17,7 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     public resourceUrl = SERVER_API_URL + 'api/system-notifications';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private router: Router, private http: HttpClient, private notificationService: NotificationService) {}
 
     create(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
@@ -43,10 +44,8 @@ export class SystemNotificationService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    getActiveNotification(): Observable<EntityResponseType> {
-        return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    getActiveNotification(): Observable<SystemNotification> {
+        return this.notificationService.getRecentSystemNotification();
     }
 
     protected convertDateFromClient(notification: SystemNotification): SystemNotification {
