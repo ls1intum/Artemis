@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
-import * as interact from 'interactjs';
+import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
 import { User } from 'app/core';
 import * as $ from 'jquery';

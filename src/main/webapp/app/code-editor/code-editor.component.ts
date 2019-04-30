@@ -18,7 +18,7 @@ import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import { textFileExtensions } from './text-files.json';
-import { Interactable } from 'interactjs';
+import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
@@ -51,15 +51,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
 
-    /**
-     * @constructor CodeEditorComponent
-     * @param {ActivatedRoute} route
-     * @param {ParticipationService} participationService
-     * @param {ParticipationDataProvider} participationDataProvider
-     * @param {RepositoryService} repositoryService
-     * @param {RepositoryFileService} repositoryFileService
-     * @param {LocalStorageService} localStorageService
-     */
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
