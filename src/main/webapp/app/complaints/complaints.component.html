@@ -35,7 +35,7 @@
         {{complaintResponse.reviewer.firstName}} {{ 'arTeMiSApp.complaint.hasReplied' | translate }}  {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br/>
     </p>
 
-    <textarea class="col-6" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true" style="height: 10vh;"></textarea>
+    <textarea class="col-6 px-1" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true" style="height: 10vh;"></textarea>
 
     <div class="row" *ngIf="!alreadySubmitted">
         <div class="col-6">
