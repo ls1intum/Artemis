@@ -17,6 +17,7 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
         this.accountService.getAuthenticationState().subscribe((user: User) => {
             if (user) {
                 // listen to connect / disconnect events
+                this.jhiWebsocketService.enableReconnect();
                 this.jhiWebsocketService.bind('connect', this.onConnect);
                 this.jhiWebsocketService.bind('disconnect', this.onDisconnect);
             }
