@@ -1,31 +1,36 @@
 <div class="assessment-container">
     <h3 class="top-container">
         <!--back button only used in tutor dashboard-->
-        <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-        <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
+        <div class="row-container mr-2" jhiTranslate="modelingAssessmentEditor.assessment">
+            <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-button-container row-container">
-            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
-                jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
+            <span
+                *ngIf="!isAuthorized"
+                class="text-danger ml-3"
+                style="font-size: 65%"
+                jhiTranslate="modelingAssessmentEditor.assessmentLocked"
+                [translateValues]="{ otherUser: result?.assessor?.firstName }"
+            >
                 Assessment locked by another user!
             </span>
-            <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
+            <button class="btn ml-2 btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
+            <button class="btn ml-2 btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated">
+            <button class="btn ml-2 btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
-            <button class="btn btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
+            <button class="btn ml-2 btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
                 <span jhiTranslate="modelingAssessmentEditor.button.resolveConflict">Resolve Conflict</span>
             </button>
-            <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
+            <button class="btn ml-2 btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>

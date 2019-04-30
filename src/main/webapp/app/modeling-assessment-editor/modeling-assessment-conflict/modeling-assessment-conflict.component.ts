@@ -19,7 +19,7 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
     mergedFeedbacks: Feedback[];
-    // currentFeedbacksCopy: Feedback[];
+    currentFeedbacksCopy: Feedback[];
     modelHighlightedElementIds: Set<string>;
     highlightColor: string;
     user: User;
@@ -49,11 +49,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts) {
-                this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
-                // this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
-                this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
-                this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
-                this.updateSelectedConflict();
+                this.initComponent();
                 this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
                 this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
             } else {
@@ -65,6 +61,14 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     ngAfterViewInit() {
         this.setSameWidthOnModelingAssessments();
+    }
+
+    initComponent() {
+        this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
+        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
+        this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
+        this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
+        this.updateSelectedConflict();
     }
 
     onNextConflict() {
@@ -83,6 +87,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.currentConflict.causingConflictingResult.modelElementId,
             this.currentConflict.causingConflictingResult.result.feedbacks,
         );
+        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.mergedFeedbacks));
         this.updateCurrentState();
     }
 
@@ -92,6 +97,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.conflictingResult.modelElementId,
             this.conflictingResult.result.feedbacks,
         );
+        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.mergedFeedbacks));
         this.updateCurrentState();
     }
 
@@ -116,7 +122,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSubmit() {
-        let escalatedConflicts: Conflict[] = [];
+        const escalatedConflicts: Conflict[] = [];
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
             if (this.conflictResolutionStates[i] == ConflictResolutionState.ESCALATED) {
                 escalatedConflicts.push(this.conflicts[i]);
@@ -128,7 +134,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                     this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
                 },
-                error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
+                error => {
+                    if (error.status === 409) {
+                        this.conflicts = error.error as Conflict[];
+                        this.conflicts.forEach((conflict: Conflict) => {
+                            this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
+                            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                        });
+                        this.initComponent();
+                        this.jhiAlertService.clear();
+                        this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
+                    } else {
+                        this.jhiAlertService.clear();
+                        this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
+                    }
+                },
             );
         });
     }
