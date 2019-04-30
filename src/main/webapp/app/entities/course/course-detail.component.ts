@@ -27,7 +27,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     load(courseId: number) {
         this.courseService.find(courseId).subscribe((courseResponse: HttpResponse<Course>) => {
-            this.course = courseResponse.body;
+            this.course = courseResponse.body!;
         });
     }
 

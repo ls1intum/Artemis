@@ -41,7 +41,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     protected loadExercises(): void {
         this.quizExerciseService.findForCourse(this.courseId).subscribe(
             (res: HttpResponse<QuizExercise[]>) => {
-                this.quizExercises = res.body;
+                this.quizExercises = res.body!;
                 // reconnect exercise with course
                 this.quizExercises.forEach(quizExercise => {
                     quizExercise.course = this.course;
@@ -143,7 +143,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     private loadOne(quizExerciseId: number) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
-            const exercise = res.body;
+            const exercise = res.body!;
             exercise.status = this.quizExerciseService.statusForQuiz(exercise);
             if (index === -1) {
                 this.quizExercises.push(exercise);
@@ -160,7 +160,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     exportQuizById(quizExerciseId: number, exportAll: boolean) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
-            const exercise = res.body;
+            const exercise = res.body!;
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
         });
     }

@@ -33,7 +33,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(id: number) {
         this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-            this.textExercise = textExerciseResponse.body;
+            this.textExercise = textExerciseResponse.body!;
 
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);

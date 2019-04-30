@@ -30,7 +30,7 @@ export class ModelingExercisePopupService {
 
             if (id) {
                 this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-                    const modelingExercise: ModelingExercise = modelingExerciseResponse.body;
+                    const modelingExercise: ModelingExercise = modelingExerciseResponse.body!;
                     this.ngbModalRef = this.modelingExerciseModalRef(component, modelingExercise);
                     resolve(this.ngbModalRef);
                 });
@@ -39,7 +39,7 @@ export class ModelingExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body;
+                            const course = res.body!;
                             // class diagram is the default value and can be changed by the user in the creation dialog
                             this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(DiagramType.ClassDiagram, course));
                             resolve(this.ngbModalRef);

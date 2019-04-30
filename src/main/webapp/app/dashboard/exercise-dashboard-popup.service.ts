@@ -35,13 +35,13 @@ export class ExerciseDashboardPopupService {
             if (id) {
                 if (exercisePopup) {
                     this.exerciseService.find(id).subscribe((res: HttpResponse<Exercise>) => {
-                        const exercise: Exercise = res.body;
+                        const exercise: Exercise = res.body!;
                         this.ngbModalRef = this.exerciseModalRef(component, exercise);
                         resolve(this.ngbModalRef);
                     });
                 } else {
                     this.participationService.find(id).subscribe(res => {
-                        const participation: Participation = res.body;
+                        const participation: Participation = res.body!;
                         this.ngbModalRef = this.resultModalRef(component, participation);
                         resolve(this.ngbModalRef);
                     });

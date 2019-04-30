@@ -27,7 +27,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(id: number) {
         this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-            this.fileUploadExercise = fileUploadExerciseResponse.body;
+            this.fileUploadExercise = fileUploadExerciseResponse.body!;
         });
     }
     previousState() {

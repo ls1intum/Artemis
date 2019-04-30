@@ -20,7 +20,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     loadAll() {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

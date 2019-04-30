@@ -42,7 +42,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

@@ -34,7 +34,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     protected loadExercises(): void {
         this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
+                this.textExercises = res.body!;
 
                 // reconnect exercise with course
                 this.textExercises.forEach(textExercise => {

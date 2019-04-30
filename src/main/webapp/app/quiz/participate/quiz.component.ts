@@ -243,7 +243,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     initShowSolution() {
         this.quizExerciseService.find(this.quizId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
-                this.quizExercise = res.body;
+                this.quizExercise = res.body!;
                 this.initQuiz();
                 this.showingResult = true;
             },

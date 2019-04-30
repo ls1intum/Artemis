@@ -27,7 +27,7 @@ export class QuizExercisePopupService {
                 resolve(this.ngbModalRef);
             } else if (id) {
                 this.quizExerciseService.find(id).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    const quizExercise: QuizExercise = quizExerciseResponse.body;
+                    const quizExercise: QuizExercise = quizExerciseResponse.body!;
                     this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
                     resolve(this.ngbModalRef);
                 });

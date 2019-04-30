@@ -30,7 +30,7 @@ export class ProgrammingExercisePopupService {
 
             if (id) {
                 this.programmingExerciseService.find(id).subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
-                    const programmingExercise: ProgrammingExercise = programmingExerciseResponse.body;
+                    const programmingExercise: ProgrammingExercise = programmingExerciseResponse.body!;
                     this.ngbModalRef = this.programmingExerciseModalRef(component, programmingExercise);
                     resolve(this.ngbModalRef);
                 });
@@ -39,7 +39,7 @@ export class ProgrammingExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body;
+                            const course = res.body!;
                             this.ngbModalRef = this.programmingExerciseModalRef(component, new ProgrammingExercise(course));
                             resolve(this.ngbModalRef);
                         });

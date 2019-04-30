@@ -66,7 +66,7 @@ export class ModelingSubmissionService {
     }
 
     private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
-        const jsonResponse: ModelingSubmission[] = res.body;
+        const jsonResponse: ModelingSubmission[] = res.body!;
         const body: ModelingSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

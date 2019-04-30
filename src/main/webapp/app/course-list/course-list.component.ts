@@ -43,7 +43,7 @@ export class CourseListComponent implements OnInit {
     loadAll() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
                 for (const course of this.courses) {
                     course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
                     course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
@@ -66,7 +66,7 @@ export class CourseListComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     showWelcomeAlert() {

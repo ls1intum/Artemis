@@ -21,7 +21,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     exerciseId: number;
     exampleSolution: UMLModel;
     isAtLeastInstructor = false;
-    formattedProblemStatement: string;
+    formattedProblemStatement: string | null;
 
     constructor(
         private exerciseService: ModelingExerciseService,
@@ -40,7 +40,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         this.modelingExercisePopupService.close();
 
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.exercise = exerciseResponse.body;
+            this.exercise = exerciseResponse.body!;
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
@@ -57,7 +57,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         this.exercise.sampleSolutionModel = JSON.stringify(this.exampleSolution);
         this.exerciseService.update(this.exercise).subscribe(
             (exerciseResponse: HttpResponse<ModelingExercise>) => {
-                this.exercise = exerciseResponse.body;
+                this.exercise = exerciseResponse.body!;
                 if (this.exercise.sampleSolutionModel) {
                     this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
                 }

@@ -39,7 +39,7 @@ export class LectureAttachmentsComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.attachmentService.findAllByLectureId(this.lecture.id).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-                this.attachments = attachmentsResponse.body;
+                this.attachments = attachmentsResponse.body!;
             });
         });
     }

@@ -97,7 +97,7 @@ export class AccountService {
         return this.fetch()
             .toPromise()
             .then(response => {
-                const user = response.body;
+                const user = response.body!;
                 if (user) {
                     this.userIdentity = user;
                     this.authenticated = true;

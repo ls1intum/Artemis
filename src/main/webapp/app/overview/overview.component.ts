@@ -28,7 +28,7 @@ export class OverviewComponent {
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
             },
             (response: string) => this.onError(response),
@@ -36,7 +36,7 @@ export class OverviewComponent {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     get nextRelevantExercise(): Exercise {

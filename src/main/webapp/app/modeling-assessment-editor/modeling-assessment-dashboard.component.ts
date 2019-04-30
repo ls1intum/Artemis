@@ -74,7 +74,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
-                this.course = res.body;
+                this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 if (res.body.type === this.MODELING) {

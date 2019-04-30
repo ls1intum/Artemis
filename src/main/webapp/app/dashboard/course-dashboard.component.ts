@@ -55,7 +55,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.findWithExercises(params['courseId']).subscribe(res => {
-                this.course = res.body;
+                this.course = res.body!;
                 this.exercises = this.course.exercises
                     .filter(exercise => {
                         return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());

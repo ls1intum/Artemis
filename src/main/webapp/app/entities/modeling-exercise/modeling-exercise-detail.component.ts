@@ -35,7 +35,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(id: number) {
         this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.modelingExercise = modelingExerciseResponse.body;
+            this.modelingExercise = modelingExerciseResponse.body!;
             this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.gradingInstructions);
         });

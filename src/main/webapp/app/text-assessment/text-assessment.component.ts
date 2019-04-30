@@ -33,7 +33,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
-    invalidError: string;
+    invalidError: string | null;
     isAuthorized = true;
     accountId = 0;
     busy = true;
@@ -42,9 +42,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     complaint: Complaint;
     notFound = false;
 
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
+    formattedGradingInstructions: string | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -187,7 +187,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
             },
@@ -208,7 +208,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
             },
@@ -219,7 +219,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.assessments = response.body.feedbacks || [];
+                this.assessments = response.body!.feedbacks || [];
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
@@ -305,6 +305,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

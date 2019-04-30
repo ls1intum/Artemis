@@ -62,7 +62,7 @@ export class TextSubmissionService {
     }
 
     private convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
-        const jsonResponse: TextSubmission[] = res.body;
+        const jsonResponse: TextSubmission[] = res.body!;
         const body: TextSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

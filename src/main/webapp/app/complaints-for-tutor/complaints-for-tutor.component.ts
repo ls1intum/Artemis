@@ -25,14 +25,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
-                this.complaintText = res.body.complaintText;
+                const body = res.body!;
+                this.complaintText = body.complaintText;
                 this.alreadySubmitted = true;
-                this.submittedDate = res.body.submittedTime;
+                this.submittedDate = body.submittedTime;
                 this.loading = false;
-                this.accepted = res.body.accepted;
+                this.accepted = body.accepted;
 
                 if (this.accepted) {
-                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
+                    this.complaintResponseService.findByComplaintId(body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
                 }
             },
             (err: HttpErrorResponse) => {
@@ -50,7 +51,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 response => {
                     this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponseCreated');
                     this.accepted = true;
-                    this.complaintResponse = response.body;
+                    this.complaintResponse = response.body!;
                 },
                 (err: HttpErrorResponse) => {
                     this.onError(err.message);
@@ -61,6 +62,6 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

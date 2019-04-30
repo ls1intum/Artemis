@@ -52,7 +52,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.resultService.getResultsForExercise(this.courseId, exerciseId, { withAssessors: true }).subscribe((res: HttpResponse<Result[]>) => {
-            const results = res.body;
+            const results = res.body!;
 
             for (const result of results) {
                 if (result.rated && result.assessor) {
@@ -89,6 +89,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }
