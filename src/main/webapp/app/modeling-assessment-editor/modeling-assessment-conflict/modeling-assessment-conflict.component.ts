@@ -116,13 +116,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSubmit() {
-        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-            result => {
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
-            },
-            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
-        );
+        let escalatedConflicts: Conflict[] = [];
+        for (let i = 0; i < this.conflictResolutionStates.length; i++) {
+            if (this.conflictResolutionStates[i] == ConflictResolutionState.ESCALATED) {
+                escalatedConflicts.push(this.conflicts[i]);
+            }
+        }
+        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(value => {
+            this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
+                result => {
+                    this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                    this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
+                },
+                error => this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed'),
+            );
+        });
     }
 
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
