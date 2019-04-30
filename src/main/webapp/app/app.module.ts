@@ -38,7 +38,6 @@ import {
     ErrorComponent,
     FooterComponent,
     SystemNotificationComponent,
-    ConnectionNotificationComponent,
     JhiMainComponent,
     NavbarComponent,
     PageRibbonComponent,
@@ -67,6 +66,7 @@ import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solut
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 
 @NgModule({
     imports: [
@@ -122,6 +122,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
         ArTEMiSExampleModelingSubmissionModule,
         ArTEMiSExampleModelingSolutionModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
+        ArTEMiSConnectionNotificationModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -132,7 +133,6 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
         ActiveMenuDirective,
         FooterComponent,
         SystemNotificationComponent,
-        ConnectionNotificationComponent,
         NotificationContainerComponent,
         QuizExerciseExportComponent,
     ],
