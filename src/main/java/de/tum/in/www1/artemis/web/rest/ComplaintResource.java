@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -24,7 +22,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -42,22 +39,19 @@ public class ComplaintResource {
 
     private static final String ENTITY_NAME = "complaint";
 
-    private ComplaintRepository complaintRepository;
+    private static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
-    private ComplaintResponseRepository complaintResponseRepository;
+    private ComplaintRepository complaintRepository;
 
     private ResultRepository resultRepository;
 
-    private UserRepository userRepository;
-
     private AuthorizationCheckService authCheckService;
+
     private ExerciseService exerciseService;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.complaintRepository = complaintRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
     }
@@ -81,22 +75,21 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
-        Long resultId = complaint.getResult().getId();
-        String submissorName = principal.getName();
-        User originalSubmissor = userRepository.findUserByResultId(resultId);
+        // Do not trust user input
+        Result originalResult = resultRepository.findById(complaint.getResult().getId())
+            .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+        User originalSubmissor = originalResult.getParticipation().getStudent();
+        Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
-        if (!originalSubmissor.getLogin().equals(submissorName)) {
+        long numberOfUnacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
+        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
+            throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME, "toomanycomplaints");
+        }
+
+        if (!originalSubmissor.getLogin().equals(principal.getName())) {
             throw new BadRequestAlertException("You can create a complaint only about a result you submitted", ENTITY_NAME, "differentuser");
         }
 
-        // Do not trust user input
-        Optional<Result> originalResultOptional = resultRepository.findById(resultId);
-
-        if (!originalResultOptional.isPresent()) {
-            throw new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "noresult");
-        }
-
-        Result originalResult = originalResultOptional.get();
         originalResult.setHasComplaint(true);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
@@ -167,8 +160,7 @@ public class ComplaintResource {
             String submissorName = principal.getName();
             User assessor = complaint.getResult().getAssessor();
 
-            // TODO CZ: remove 'userIsComplaintReviewer' since we do not want to override the original Result when responding to a complaint
-            if (!assessor.getLogin().equals(submissorName) || userIsComplaintReviewer(submissorName, complaint.getId())) {
+            if (!assessor.getLogin().equals(submissorName)) {
                 // Remove data about the student
                 complaint.getResult().getParticipation().setStudent(null);
                 complaint.setStudent(null);
@@ -178,21 +170,5 @@ public class ComplaintResource {
         });
 
         return ResponseEntity.ok(responseComplaints);
-    }
-
-    /**
-     * Checks if there is a complaint response and if the given user is the reviewer of the corresponding complaint.
-     * This is used for returning complaints for a user. We want to return any complaint that does not belong to
-     * the user's own assessments OR that was reviewed by the user. The additional check for the reviewer is necessary
-     * because the assessor of an assessment changes when a user reviews a complaint and overrides the assessment.
-     * Therefore, the reviewed complaint would not be shown in the list of complaints for the reviewer anymore.
-     *
-     * @param username the name of the current user
-     * @param complaintId the id of the complaint
-     * @return true if the current user is the reviwer of the complaint, false otherwise
-     */
-    private boolean userIsComplaintReviewer(String username, Long complaintId) {
-        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
-        return optionalComplaintResponse.map(complaintResponse -> complaintResponse.getReviewer().getLogin().equals(username)).orElse(false);
     }
 }

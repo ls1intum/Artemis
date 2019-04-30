@@ -42,6 +42,17 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
+     * Count the number of unaccepted complaints of a student in a given course. Unaccepted means that they are
+     * either open/unhandled or rejected. We use this to limit the number of complaints for a student in a course.
+     *
+     * @param studentId the id of the student
+     * @param courseId the id of the course
+     * @return the number of unaccepted
+     */
+    @Query("SELECT count(c) FROM Complaint c  WHERE c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
+
+    /**
      * This magic method counts the number of complaints associated to an exercise id
      *
      * @param exerciseId - the id of the course we want to filter by

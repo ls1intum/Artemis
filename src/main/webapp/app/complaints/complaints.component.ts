@@ -22,6 +22,8 @@ export class ComplaintsComponent implements OnInit {
     handled: boolean;
     complaintResponse: ComplaintResponse;
 
+    readonly maxComplaintNumberPerStudent = 3;
+
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
@@ -59,7 +61,11 @@ export class ComplaintsComponent implements OnInit {
                 this.alreadySubmitted = true;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.message);
+                if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
+                    this.jhiAlertService.error(`Complaint limit reached. You cannot have more than ${this.maxComplaintNumberPerStudent} at the same time.`);
+                } else {
+                    this.onError(err.message);
+                }
             },
         );
     }
