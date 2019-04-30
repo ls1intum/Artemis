@@ -18,8 +18,8 @@ import { TextExercise, TextExercisePopupService } from 'app/entities/text-exerci
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { Interactable } from 'interactjs';
-import * as interact from 'interactjs';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-example-text-submission',

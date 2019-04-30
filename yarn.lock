@@ -421,6 +421,80 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.17"
 
+"@interactjs/actions@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/actions/-/actions-1.4.0.tgz#605dd64b3551101d52c39b6ad5f8622a3044497d"
+  integrity sha512-W2+V75n4GmIFIb9tmQGSEix0y7CbNG9IA3B4zsy3PCtMdjXT/fQiGajZSFfizgG4+rlv/MjhjaaeBmJA8vg/AQ==
+
+"@interactjs/auto-scroll@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/auto-scroll/-/auto-scroll-1.4.0.tgz#ee59205d875bfa8f194f43ff14156bfd9a0716ce"
+  integrity sha512-6/1oV9cY7xnWERNKcop0p4xdV8torBwN6vZqqXEXkymLiEhYoVCVQmVdETCM2tIGB8iW+EnxjjAdV/Vl6zE/Hg==
+
+"@interactjs/auto-start@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/auto-start/-/auto-start-1.4.0.tgz#de7496610f6c261d3eca11531e7e6ef833770db2"
+  integrity sha512-5lFp6RYtxWgT/vpkyRRqZkRgNwHjyquk8vg7jnlZGQFqKFB49p9cfWWQliQoASEFaFE1wwIQvU4EQBuw+vAraQ==
+
+"@interactjs/core@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/core/-/core-1.4.0.tgz#c18c8b372f4bb675be9d4bf9959435e3a5df0b8c"
+  integrity sha512-XyNzqHYd7LxIRBhsa+DY3OB4zowJIembn85G5TAc6YaOz/2NDSU01F4IjSBxNZUsom9PmbxQF6wBT7SODc03eQ==
+
+"@interactjs/dev-tools@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/dev-tools/-/dev-tools-1.4.0.tgz#9be6ff2e75d66617cede0f0f88bde19eb8dead08"
+  integrity sha512-VDGo+Dqp5U1dhQV036QcZnPZYrVSOQhUznx2FQKUApsirFeAl0w3DMWEBJn21K5JITpgXr9KxgV0BlJCD30KGA==
+  dependencies:
+    "@interactjs/utils" "1.4.0"
+
+"@interactjs/inertia@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/inertia/-/inertia-1.4.0.tgz#819c9e8b8900fb58b9d9f51ea7916ea5c07ba060"
+  integrity sha512-10SQ+Uv+iSGESQ6Eg/h23iLxmnvBMishc1moTN4cCDxtA4XTFHks9mr/A21uGCHi1TSiT3NILMJBYDBUg+LXIA==
+
+"@interactjs/interact@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/interact/-/interact-1.4.0.tgz#34eee1bcd4e6a37288d91a4293b96ad1f9c08e7e"
+  integrity sha512-2VGdGb3pT3HTW0qVxfyNwtgNlrqZ01GoMb9P/eajCUY0N0gY/6gseGPdWJ8y01Cs2zmeh15WkChDooFt2iMY+Q==
+
+"@interactjs/modifiers@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/modifiers/-/modifiers-1.4.0.tgz#7be50aec207f18af1080da069b3be2dff43ea52c"
+  integrity sha512-abyQj6sGQsce/VmwouIfJGmgu7RugcxLYBxGE7E8308FnW9jizD6+p8yl9Mr6LIGGriACjDlPYqmQqPd0tHTSA==
+
+"@interactjs/pointer-events@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/pointer-events/-/pointer-events-1.4.0.tgz#9479ae560e3a630c8dbf352ff7c26d4117c8e197"
+  integrity sha512-7tYh1Hf1wF4TP+LPK3OPjADLCR6upPd1rHREQPG/6thritjNDX5MdrK07YLFGnqCLX2aONHyv5Cganlu8MWBJg==
+
+"@interactjs/reflow@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/reflow/-/reflow-1.4.0.tgz#8831d0bd08ec15e946ebd89d0221c2bd8eedc37b"
+  integrity sha512-PHFpxcbIT75IXt2QBG0U7MaC9iiZ83HmRN5fGd3hF/Fq29dim4K3ap3ABAlf+PDH2PVQqyU2XZ1D/3c1ovJU7Q==
+
+"@interactjs/types@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/types/-/types-1.4.0.tgz#b85526f2817aff1c2654f4185edcc7a4b63eefc0"
+  integrity sha512-a0oIZCzlfDspTXQRD2Yg8UOjtDnQ7uzQkKVJjtCZF6kMw8guiUdWQ6uD9vOuBDr8XdeF8+OGVxyxmOA0kI2dlQ==
+  dependencies:
+    "@interactjs/actions" "1.4.0"
+    "@interactjs/auto-scroll" "1.4.0"
+    "@interactjs/auto-start" "1.4.0"
+    "@interactjs/core" "1.4.0"
+    "@interactjs/dev-tools" "1.4.0"
+    "@interactjs/inertia" "1.4.0"
+    "@interactjs/interact" "1.4.0"
+    "@interactjs/modifiers" "1.4.0"
+    "@interactjs/pointer-events" "1.4.0"
+    "@interactjs/reflow" "1.4.0"
+    "@interactjs/utils" "1.4.0"
+
+"@interactjs/utils@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@interactjs/utils/-/utils-1.4.0.tgz#612ca4b3e78af04ac8c3eaab14535806047386ca"
+  integrity sha512-b/0nLTyZAAGa9Ga4patXS0OunfiGGZfv0DbRzE84ZL965g3FVsNOagLWCSBCDuKWtihcUdd9ePrnepGYfYKn5Q==
+
 "@jest/console@^24.7.1":
   version "24.7.1"
   resolved "https://registry.yarnpkg.com/@jest/console/-/console-24.7.1.tgz#32a9e42535a97aedfe037e725bd67e954b459545"
@@ -901,10 +975,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-11.13.2.tgz#dc85dde46aa8740bb4aed54b8104250f8f849503"
   integrity sha512-HOtU5KqROKT7qX/itKHuTtt5fV0iXbheQvrgbLNXFJQBY/eh+VS5vmmTAVlo3qIGMsypm0G4N1t2AXjy1ZicaQ==
 
-"@types/node@11.13.7":
-  version "11.13.7"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.13.7.tgz#85dbb71c510442d00c0631f99dae957ce44fd104"
-  integrity sha512-suFHr6hcA9mp8vFrZTgrmqW2ZU3mbWsryQtQlY/QvwTISCw7nw/j+bCQPPohqmskhmqa5wLNuMHTTsc+xf1MQg==
+"@types/node@11.13.8":
+  version "11.13.8"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.13.8.tgz#e5d71173c95533be9842b2c798978f095f912aab"
+  integrity sha512-szA3x/3miL90ZJxUCzx9haNbK5/zmPieGraZEe4WI+3srN0eGLiT22NXeMHmyhNEopn+IrxqMc7wdVwvPl8meg==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -1305,10 +1379,10 @@ angular2-template-loader@0.6.2:
   dependencies:
     loader-utils "^0.2.15"
 
-angulartics2@7.5.1:
-  version "7.5.1"
-  resolved "https://registry.yarnpkg.com/angulartics2/-/angulartics2-7.5.1.tgz#0a16e2985443eeae08cf1ad7903ef027b82432a0"
-  integrity sha512-UPo/leYQaxLd6Ma+cfj5Wh9eDJnxs1qie1L9QLu35S8FPqAtcSkLrNVuPDuK8DCxJ15DnJeNIsqit/iXt8Pyqg==
+angulartics2@7.5.2:
+  version "7.5.2"
+  resolved "https://registry.yarnpkg.com/angulartics2/-/angulartics2-7.5.2.tgz#58ea8eca811581350f5067ddedecd9f070d82598"
+  integrity sha512-gfQ/kRtrKD0fLOGZsWlcD8obIWTAJGSdiVRp6lH+LxLD8shKnl1/StWlUJeOioUkU0ps4QGRb0tCSlCdnI5DAw==
   dependencies:
     tslib "^1.9.0"
 
@@ -6001,10 +6075,12 @@ insight@0.10.1:
     tough-cookie "^2.0.0"
     uuid "^3.0.0"
 
-interactjs@1.3.4:
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/interactjs/-/interactjs-1.3.4.tgz#9d5aa886f8fa03ea2f6c711e688792e3d3bde1ff"
-  integrity sha512-AQ2CdPEyHqiEEQ1FFgMBj79UEsU1+rUwSXuhOkflvB65p4iECft28SN/PvhD/Y9OtNge8aH1qTibjAi+RXQMqQ==
+interactjs@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/interactjs/-/interactjs-1.4.0.tgz#7484aa1fef8fcc0303b04af18993824973f9af52"
+  integrity sha512-yN0uBJIAI5LN645FBpZs8y0wCI5SHLt5o4Q4oMLg79mKuD5CbLI4Bx9vk4UUAbfYqXJwhze2tQQJQrTTqYQ2EQ==
+  dependencies:
+    "@interactjs/types" "1.4.0"
 
 internal-ip@^3.0.1:
   version "3.0.1"
@@ -8301,7 +8377,7 @@ mute-stream@0.0.7:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
 
-nan@^2.10.0, nan@^2.9.2:
+nan@^2.10.0, nan@^2.13.2, nan@^2.9.2:
   version "2.13.2"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.13.2.tgz#f51dc7ae66ba7d5d55e1e6d4d8092e802c9aefe7"
   integrity sha512-TghvYc72wlMGMVMluVo9WRJc0mB8KxxF/gZ4YYFy7V2ZQX9l7rgbPg7vjS9mt6U5HXODVFVI2bOduCzwOMv/lw==
@@ -8608,6 +8684,29 @@ node-sass@4.11.0:
     meow "^3.7.0"
     mkdirp "^0.5.1"
     nan "^2.10.0"
+    node-gyp "^3.8.0"
+    npmlog "^4.0.0"
+    request "^2.88.0"
+    sass-graph "^2.2.4"
+    stdout-stream "^1.4.0"
+    "true-case-path" "^1.0.2"
+
+node-sass@4.12.0:
+  version "4.12.0"
+  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.12.0.tgz#0914f531932380114a30cc5fa4fa63233a25f017"
+  integrity sha512-A1Iv4oN+Iel6EPv77/HddXErL2a+gZ4uBeZUy+a8O35CFYTXhgA8MgLCWBtwpGZdCvTvQ9d+bQxX/QC36GDPpQ==
+  dependencies:
+    async-foreach "^0.1.3"
+    chalk "^1.1.1"
+    cross-spawn "^3.0.0"
+    gaze "^1.0.0"
+    get-stdin "^4.0.1"
+    glob "^7.0.3"
+    in-publish "^2.0.0"
+    lodash "^4.17.11"
+    meow "^3.7.0"
+    mkdirp "^0.5.1"
+    nan "^2.13.2"
     node-gyp "^3.8.0"
     npmlog "^4.0.0"
     request "^2.88.0"
@@ -12310,10 +12409,10 @@ ts-jest@24.0.2, ts-jest@^24.0.0:
     semver "^5.5"
     yargs-parser "10.x"
 
-ts-loader@5.4.3:
-  version "5.4.3"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-5.4.3.tgz#837f7f397799a665fc1774303c9fd0930d1c5947"
-  integrity sha512-pHwZFkZioL7Yi2su0bhW2/djxZ+0iGat1cxlAif4Eg9j5znVYuWGtW0YYY/5w8W+IzLcAlD5KwJDrs5unUKIRA==
+ts-loader@5.4.4:
+  version "5.4.4"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-5.4.4.tgz#2b2c11e0bc917db27b2de7011ad1a9d6413c5ab1"
+  integrity sha512-haLwWMts/tCruBFbLUWOR9hZezZ89TMW3EntrAEtYARDnPZSQt6dPA5tN3fvlsmUIYXVWDHO5SUhw8ndAomVlw==
   dependencies:
     chalk "^2.3.0"
     enhanced-resolve "^4.0.0"

@@ -6,12 +6,12 @@ import { RepositoryService } from '../../entities/repository/repository.service'
 import { CodeEditorComponent } from '../code-editor.component';
 import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
 import * as $ from 'jquery';
-import * as interact from 'interactjs';
-import { Interactable } from 'interactjs';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
