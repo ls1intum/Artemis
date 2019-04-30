@@ -57,7 +57,7 @@ export class JhiWebsocketService implements OnDestroy {
                 waitUntilReconnectAttempt = 1;
             }
             setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
-            // console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
+            console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
         }
     }
 
