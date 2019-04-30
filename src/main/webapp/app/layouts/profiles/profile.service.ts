@@ -20,7 +20,7 @@ export class ProfileService {
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
-                        const data = res.body;
+                        const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');

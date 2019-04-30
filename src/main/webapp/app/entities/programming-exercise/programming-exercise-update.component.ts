@@ -48,7 +48,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (params['courseId']) {
                 const courseId = params['courseId'];
                 this.courseService.find(courseId).subscribe(res => {
-                    const course = res.body;
+                    const course = res.body!;
                     this.programmingExercise.course = course;
                     this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
                     this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
@@ -62,7 +62,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

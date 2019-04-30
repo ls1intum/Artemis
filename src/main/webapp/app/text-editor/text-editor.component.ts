@@ -95,7 +95,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
             response => {
                 if (response) {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
                     this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
 
@@ -122,7 +122,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
             this.submission.submitted = true;
             this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
 
                     if (this.isActive) {

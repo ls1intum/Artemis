@@ -32,7 +32,7 @@ export class QuizSubmissionService {
     }
 
     private convertArrayResponse(res: HttpResponse<QuizSubmission[]>): HttpResponse<QuizSubmission[]> {
-        const jsonResponse: QuizSubmission[] = res.body;
+        const jsonResponse: QuizSubmission[] = res.body!;
         const body: QuizSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

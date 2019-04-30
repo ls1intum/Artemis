@@ -71,7 +71,7 @@ export class NotificationContainerComponent implements OnInit {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
             res.body.lastNotificationRead = moment();
             setTimeout(() => {
-                this.currentUser = res.body;
+                this.currentUser = res.body!;
                 this.updateNotifications();
             }, 1500);
         });

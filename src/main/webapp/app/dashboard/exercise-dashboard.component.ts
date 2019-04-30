@@ -58,10 +58,10 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
-                this.course = res.body;
+                this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
+                this.exercise = res.body!;
                 this.getResults();
             });
         });
@@ -81,7 +81,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
             .subscribe((res: HttpResponse<Result[]>) => {
-                const tempResults: Result[] = res.body;
+                const tempResults: Result[] = res.body!;
                 tempResults.forEach(result => {
                     result.participation.results = [result];
                     result.participation.exercise = this.exercise;

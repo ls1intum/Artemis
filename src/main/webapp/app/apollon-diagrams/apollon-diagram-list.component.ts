@@ -31,7 +31,7 @@ export class ApollonDiagramListComponent implements OnInit {
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
             response => {
-                this.apollonDiagrams = response.body;
+                this.apollonDiagrams = response.body!;
             },
             response => {
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.home.error.loading');

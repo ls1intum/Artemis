@@ -45,7 +45,7 @@ export class QuizQuestionStatisticService {
     }
 
     private convertArrayResponse(res: HttpResponse<QuizQuestionStatistic[]>): HttpResponse<QuizQuestionStatistic[]> {
-        const jsonResponse: QuizQuestionStatistic[] = res.body;
+        const jsonResponse: QuizQuestionStatistic[] = res.body!;
         const body: QuizQuestionStatistic[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

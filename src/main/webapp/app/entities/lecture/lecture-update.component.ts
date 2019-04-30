@@ -33,7 +33,7 @@ export class LectureUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
-                this.lecture.course = response.body;
+                this.lecture.course = response.body!;
             });
         });
     }

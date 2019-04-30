@@ -35,7 +35,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
                     throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
                 }
 
-                return <TextExercise>exerciseResponse.body;
+                return <TextExercise>exerciseResponse.body!;
             })
             .subscribe(exercise => {
                 this.exercise = exercise;

@@ -185,7 +185,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
@@ -198,7 +198,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
                 submission => {
-                    this.submission = submission.body;
+                    this.submission = submission.body!;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
@@ -232,7 +232,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.submission.submitted = true;
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
                     // Compass has already calculated a result

@@ -30,7 +30,7 @@ export class TextExercisePopupService {
 
             if (id) {
                 this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-                    const textExercise: TextExercise = textExerciseResponse.body;
+                    const textExercise: TextExercise = textExerciseResponse.body!;
                     this.ngbModalRef = this.textExerciseModalRef(component, textExercise);
                     resolve(this.ngbModalRef);
                 });
@@ -39,7 +39,7 @@ export class TextExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body;
+                            const course = res.body!;
                             this.ngbModalRef = this.textExerciseModalRef(component, new TextExercise(course));
                             resolve(this.ngbModalRef);
                         });

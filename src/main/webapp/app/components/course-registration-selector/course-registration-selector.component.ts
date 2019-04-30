@@ -30,7 +30,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     trackCourseById(index: number, item: Course) {

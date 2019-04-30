@@ -128,7 +128,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         /** Query the courseService for the participationId given by the params */
         if (courseId) {
             this.courseService.find(courseId).subscribe((response: HttpResponse<Course>) => {
-                this.course = response.body;
+                this.course = response.body!;
                 // Make sure to call init if we didn't receive an id => new quiz-exercise
                 if (!quizId) {
                     this.init();
@@ -137,7 +137,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
-                this.quizExercise = response.body;
+                this.quizExercise = response.body!;
                 this.init();
             });
         }
@@ -331,7 +331,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // If courses are not populated, then populate list of courses,
         if (this.courses.length === 0) {
             this.courseRepository.query().subscribe((res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
@@ -359,10 +359,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExerciseService.findForCourse(selectedCourse.id).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body;
+                    const quizExercises = quizExercisesResponse.body!;
                     for (const quizExercise of quizExercises) {
                         this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body;
+                            const quizExerciseResponse = response.body!;
                             if (quizExerciseResponse.quizQuestions != null && quizExerciseResponse.quizQuestions.length > 0) {
                                 for (const question of quizExerciseResponse.quizQuestions) {
                                     question.exercise = quizExercise;

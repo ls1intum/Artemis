@@ -40,7 +40,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     ngOnInit(): void {
         this.isSaving = false;
         this.quizExerciseService.find(this.quizExercise.id).subscribe(res => {
-            this.backUpQuiz = res.body;
+            this.backUpQuiz = res.body!;
             this.loadQuizSuccess(this.quizExercise);
         });
     }

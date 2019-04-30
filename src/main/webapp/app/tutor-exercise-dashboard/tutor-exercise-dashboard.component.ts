@@ -101,7 +101,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
+                this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
 
@@ -208,7 +208,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
                 (response: HttpResponse<TextSubmission>) => {
-                    this.unassessedSubmission = response.body;
+                    this.unassessedSubmission = response.body!;
                 },
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
@@ -236,7 +236,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.tutorParticipation = res.body;
+            this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status;
             this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
@@ -247,7 +247,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     calculateStatus(submission: Submission) {

@@ -23,7 +23,7 @@ export class ParticipationPopupService {
 
             if (id) {
                 this.participationService.find(id).subscribe((participationResponse: HttpResponse<Participation>) => {
-                    const participation: Participation = participationResponse.body;
+                    const participation: Participation = participationResponse.body!;
                     this.ngbModalRef = this.participationModalRef(component, participation);
                     resolve(this.ngbModalRef);
                 });

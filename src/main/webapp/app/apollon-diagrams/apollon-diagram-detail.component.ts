@@ -47,7 +47,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
             this.apollonDiagramService.find(id).subscribe(
                 response => {
-                    const diagram = response.body;
+                    const diagram = response.body!;
 
                     this.apollonDiagram = diagram;
 

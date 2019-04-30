@@ -50,7 +50,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     loadAll() {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
-                this.course = res.body;
+                this.course = res.body!;
                 this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
@@ -112,7 +112,7 @@ export class TutorCourseDashboardComponent implements OnInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     back() {

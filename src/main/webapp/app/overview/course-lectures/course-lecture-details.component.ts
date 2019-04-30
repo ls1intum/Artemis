@@ -41,7 +41,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.subscription = this.route.params.subscribe(params => {
             if (!this.lecture) {
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                    this.lecture = lectureResponse.body;
+                    this.lecture = lectureResponse.body!;
                 });
             }
         });

@@ -30,13 +30,13 @@ export class ExercisePopupService {
                 this.exerciseService.find(id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                     if (lti) {
                         this.exerciseLtiConfigurationService.find(id).subscribe((ltiConfigurationResponse: HttpResponse<any>) => {
-                            const exercise: Exercise = exerciseResponse.body;
-                            const ltiConfiguration: LtiConfiguration = ltiConfigurationResponse.body;
+                            const exercise: Exercise = exerciseResponse.body!;
+                            const ltiConfiguration: LtiConfiguration = ltiConfigurationResponse.body!;
                             this.ngbModalRef = this.exerciseModalRef(component, exercise, ltiConfiguration);
                             resolve(this.ngbModalRef);
                         });
                     } else {
-                        const exercise: Exercise = exerciseResponse.body;
+                        const exercise: Exercise = exerciseResponse.body!;
                         this.ngbModalRef = this.exerciseModalRef(component, exercise, null);
                         resolve(this.ngbModalRef);
                     }

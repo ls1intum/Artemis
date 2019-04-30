@@ -67,6 +67,6 @@ export class ComplaintsComponent implements OnInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

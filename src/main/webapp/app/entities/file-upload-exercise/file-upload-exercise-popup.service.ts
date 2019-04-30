@@ -30,7 +30,7 @@ export class FileUploadExercisePopupService {
 
             if (id) {
                 this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-                    const fileUploadExercise: FileUploadExercise = fileUploadExerciseResponse.body;
+                    const fileUploadExercise: FileUploadExercise = fileUploadExerciseResponse.body!;
                     this.ngbModalRef = this.fileUploadExerciseModalRef(component, fileUploadExercise);
                     resolve(this.ngbModalRef);
                 });
@@ -39,7 +39,7 @@ export class FileUploadExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body;
+                            const course = res.body!;
                             this.ngbModalRef = this.fileUploadExerciseModalRef(component, new FileUploadExercise(course));
                             resolve(this.ngbModalRef);
                         });

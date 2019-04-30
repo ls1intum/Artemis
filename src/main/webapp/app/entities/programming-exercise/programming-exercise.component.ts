@@ -32,7 +32,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     protected loadExercises(): void {
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
+                this.programmingExercises = res.body!;
                 // reconnect exercise with course
                 this.programmingExercises.forEach(programmingExercise => {
                     programmingExercise.course = this.course;
