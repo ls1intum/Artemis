@@ -74,7 +74,7 @@ public class ModelAssessmentConflictService {
         modelAssessmentConflictRepository.deleteAll(existingConflicts);
     }
 
-    public void loadSubmissionsAndFeedbacksAndAssessorOfCausingResults(List<ModelAssessmentConflict> conflicts) {
+    public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
         conflicts.forEach(conflict -> {
             conflict.getCausingConflictingResult()
                     .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
@@ -118,7 +118,7 @@ public class ModelAssessmentConflictService {
     }
 
     /**
-     * Adds for each modelElementId mapping, that does not have a corresponding conflict object, a new ModelAssessmentConflict object to the existingConflicts
+     * Adds for each modelElementId mapping, that does not have a existing corresponding conflict object, a new ModelAssessmentConflict object to the existingConflicts
      * 
      * @param causingResult           Result that caused the conflicts in newConflictingFeedbacks
      * @param existingConflicts       conflicts with causingResult that curently exist in the database
@@ -138,7 +138,7 @@ public class ModelAssessmentConflictService {
     }
 
     /**
-     * resolves conflicts which no longer have conflicting feedbacks and updates the resultsInConflicts of conflicts that still have feedbacks they are in conflict with
+     * resolves conflicts which no longer have conflicting feedbacks and updates the resultsInConflicts of the conflicts, that still have feedbacks they are in conflict with
      * 
      * @param existingConflicts       all conflicts of one causing result that curently exist in the database
      * @param newConflictingFeedbacks mapping of modelElementIds from submission of the causing result to feedbacks of other results that are in conflict with the assessment of the
