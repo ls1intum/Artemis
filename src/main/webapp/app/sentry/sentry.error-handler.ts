@@ -4,7 +4,7 @@ import { VERSION } from 'app/app.constants';
 import { ProfileInfo, ProfileService } from 'app/layouts';
 
 @Injectable()
-export class SentryErrorHandler implements ErrorHandler {
+export class SentryErrorHandler extends ErrorHandler {
     private static get environment(): string {
         switch (window.location.host) {
             case 'artemis.ase.in.tum.de':
@@ -33,6 +33,7 @@ export class SentryErrorHandler implements ErrorHandler {
     }
 
     constructor(private profileService: ProfileService) {
+        super(true);
         // noinspection JSIgnoredPromiseFromCall
         this.initSentry();
     }
@@ -40,10 +41,10 @@ export class SentryErrorHandler implements ErrorHandler {
     handleError(error: any): void {
         // We do not send to Sentry HttpError in the range 400-499
         if (error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
-            throw error;
+            super.handleError(error);
         }
 
         captureException(error.originalError || error);
-        throw error;
+        super.handleError(error);
     }
 }
