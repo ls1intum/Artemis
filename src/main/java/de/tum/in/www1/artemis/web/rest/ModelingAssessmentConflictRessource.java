@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -12,7 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
+import de.tum.in.www1.artemis.service.ModelingExerciseService;
 
 @Controller
 @RequestMapping("/api")
@@ -53,6 +57,22 @@ public class ModelingAssessmentConflictRessource {
         else {
             return ResponseEntity.ok(conflictService.escalateConflict(conflictId));
         }
+    }
+
+    @PutMapping("/model-assessment-conflicts/escalate")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity escalateConflict(@RequestBody List<ModelAssessmentConflict> conflicts) {
+        for (ModelAssessmentConflict conflict : conflicts) {
+            Exercise exercise = conflictService.getExerciseOfConflict(conflict.getId());
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                return forbidden();
+            }
+        }
+        List<ModelAssessmentConflict> escalatedConflicts = new ArrayList<>(conflicts.size());
+        for (ModelAssessmentConflict conflict : conflicts) {
+            escalatedConflicts.add(conflictService.escalateConflict(conflict.getId()));
+        }
+        return ResponseEntity.ok(escalatedConflicts);
     }
 
 }

@@ -193,7 +193,7 @@ public class CompassService {
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
-        List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getConflictsForResultWithState(result, EscalationState.UNHANDLED);
+        List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getUnresolvedConflictsForResult(result);
         conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
         conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
         conflictService.saveConflicts(existingUnresolvedConflicts);
@@ -201,9 +201,8 @@ public class CompassService {
             return Collections.EMPTY_LIST;
         }
         else {
-            // existingUnresolvedConflicts.forEach(conflict -> conflict.getCausingConflictingResult().getResult().getSubmission());
-            return existingUnresolvedConflicts.stream().filter(conflict -> !conflict.isResolved()).map(conflictingResultService::filterDoubleConflictingResults)
-                    .collect(Collectors.toList());
+            return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED))
+                    .map(conflictingResultService::filterDoubleConflictingResults).collect(Collectors.toList());
         }
     }
 

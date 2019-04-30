@@ -44,12 +44,6 @@ class ConflictSimulation extends Simulation {
         "Authorization" -> "${access_token}"
     )
 
-    def removeLineBreaks (body:String):String = {
-//        println("Länge von Array: " + body.split("\n").length)
-//        var result = body.replaceAll(Properties.lineSeparator,"")
-        return body.split("|").mkString("");
-    }
-
     val firstModel = scenario("Submit and assess 1. Model")
         .exec(http("First unauthenticated request")
             .get("/api/account")

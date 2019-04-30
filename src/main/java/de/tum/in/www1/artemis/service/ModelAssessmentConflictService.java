@@ -53,15 +53,6 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
-    public void loadSubmissionsAndFeedbacksAndAssessorOfCausingResults(List<ModelAssessmentConflict> conflicts) {
-        conflicts.forEach(conflict -> {
-            conflict.getCausingConflictingResult()
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
-            conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult
-                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
-        });
-    }
-
     public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
         List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
         return conflicts;
@@ -77,10 +68,19 @@ public class ModelAssessmentConflictService {
         return existingConflicts.stream().filter(conflict -> conflict.getState().equals(state)).collect(Collectors.toList());
     }
 
-    public void deleteAllConflicts(Participation participation) {
+    public void deleteAllConflictsForParticipation(Participation participation) {
         List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
                 .filter(conflict -> conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())).collect(Collectors.toList());
         modelAssessmentConflictRepository.deleteAll(existingConflicts);
+    }
+
+    public void loadSubmissionsAndFeedbacksAndAssessorOfCausingResults(List<ModelAssessmentConflict> conflicts) {
+        conflicts.forEach(conflict -> {
+            conflict.getCausingConflictingResult()
+                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflict.getCausingConflictingResult().getResult().getId()).get());
+            conflict.getResultsInConflict().forEach(conflictingResult -> conflictingResult
+                    .setResult(resultRepository.findByIdWithEagerSubmissionAndFeedbacksAndAssessor(conflictingResult.getResult().getId()).get()));
+        });
     }
 
     @Transactional
@@ -117,6 +117,14 @@ public class ModelAssessmentConflictService {
         return storedConflict;
     }
 
+    /**
+     * Adds for each modelElementId mapping, that does not have a corresponding conflict object, a new ModelAssessmentConflict object to the existingConflicts
+     * 
+     * @param causingResult           Result that caused the conflicts in newConflictingFeedbacks
+     * @param existingConflicts       conflicts with causingResult that curently exist in the database
+     * @param newConflictingFeedbacks mapping of modelElementIds from submission of causingResult to feedbacks of other results that are in conflict with the assessment of
+     *                                causingResult
+     */
     @Transactional
     public void addMissingConflicts(Result causingResult, List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         newConflictingFeedbacks.keySet().forEach(modelElementId -> {
@@ -129,6 +137,13 @@ public class ModelAssessmentConflictService {
         });
     }
 
+    /**
+     * resolves conflicts which no longer have conflicting feedbacks and updates the resultsInConflicts of conflicts that still have feedbacks they are in conflict with
+     * 
+     * @param existingConflicts       all conflicts of one causing result that curently exist in the database
+     * @param newConflictingFeedbacks mapping of modelElementIds from submission of the causing result to feedbacks of other results that are in conflict with the assessment of the
+     *                                causing result
+     */
     @Transactional
     public void updateExistingConflicts(List<ModelAssessmentConflict> existingConflicts, Map<String, List<Feedback>> newConflictingFeedbacks) {
         existingConflicts.forEach(conflict -> {
