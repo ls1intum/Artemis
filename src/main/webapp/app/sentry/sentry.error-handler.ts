@@ -33,7 +33,7 @@ export class SentryErrorHandler extends ErrorHandler {
     }
 
     constructor(private profileService: ProfileService) {
-        super(true);
+        super();
         // noinspection JSIgnoredPromiseFromCall
         this.initSentry();
     }
