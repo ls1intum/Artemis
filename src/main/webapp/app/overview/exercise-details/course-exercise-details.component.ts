@@ -5,11 +5,9 @@ import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } fr
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Result, ResultWebsocketService } from 'app/entities/result';
+import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService } from 'app/core';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { distinctUntilChanged } from 'rxjs/operators';
 import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
@@ -36,7 +34,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     combinedParticipation: Participation;
-    private resultSubscription: Subscription;
 
     formattedProblemStatement: string;
 
@@ -49,10 +46,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
+        private participationWebsocketService: ParticipationWebsocketService,
+        private participationService: ParticipationService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdown,
-        private resultWebsocketService: ResultWebsocketService,
     ) {}
 
     ngOnInit() {
@@ -74,7 +71,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exercise = exerciseResponse.body;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.exercise.participations = cachedParticipations;
-                this.setExerciseStatusBadge();
                 this.mergeParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
@@ -83,7 +79,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-                this.setExerciseStatusBadge();
                 this.mergeParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();

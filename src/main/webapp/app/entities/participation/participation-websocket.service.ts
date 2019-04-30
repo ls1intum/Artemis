@@ -62,9 +62,8 @@ export class ParticipationWebsocketService {
      *
      * @param exerciseId ID of the exercise that the participations belong to.
      * @return array of Participations
-     * @private
      */
-    private getAllParticipationsForExercise(exerciseId: number): Participation[] {
+    getAllParticipationsForExercise(exerciseId: number): Participation[] {
         return [...this.cachedParticipations.values()].filter(participation => {
             return participation.exercise.id === exerciseId;
         });
@@ -130,7 +129,6 @@ export class ParticipationWebsocketService {
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationObservable = this.jhiWebsocketService.receive(participationResultTopic);
             participationObservable.subscribe((participationMessage: Participation) => {
-                debugger;
                 this.cachedParticipations.set(participationMessage.id, participationMessage);
                 this.participationObservable.next(participationMessage);
             });
