@@ -42,6 +42,7 @@ export class SentryErrorHandler extends ErrorHandler {
         // We do not send to Sentry HttpError in the range 400-499
         if (error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
             super.handleError(error);
+            return;
         }
 
         captureException(error.originalError || error);
