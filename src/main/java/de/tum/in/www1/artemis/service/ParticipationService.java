@@ -648,7 +648,7 @@ public class ParticipationService {
             }
         }
         else if (participation.getExercise() instanceof ModelingExercise) {
-            conflictService.deleteAllConflicts(participation);
+            conflictService.deleteAllConflictsForParticipation(participation);
         }
 
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
