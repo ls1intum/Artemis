@@ -43,7 +43,7 @@
                 *ngIf="currentConflict"
                 [diagramType]="modelingExercise.diagramType"
                 [model]="model"
-                [feedbacks]="mergedFeedbacks"
+                [feedbacks]="currentFeedbacksCopy"
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
