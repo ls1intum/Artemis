@@ -13,6 +13,7 @@ import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -34,6 +35,7 @@ export class TextExerciseDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {}
 
     ngOnInit() {
@@ -69,6 +71,17 @@ export class TextExerciseDialogComponent implements OnInit {
         } else {
             this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }
+    }
+
+    deleteExampleSubmission(id: number, index: number) {
+        this.exampleSubmissionService.delete(id).subscribe(
+            () => {
+                this.textExercise.exampleSubmissions.splice(index, 1);
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {

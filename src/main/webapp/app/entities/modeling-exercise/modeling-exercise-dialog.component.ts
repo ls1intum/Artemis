@@ -13,6 +13,7 @@ import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -34,6 +35,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
+        private exampleSubmissionService: ExampleSubmissionService,
     ) {}
 
     ngOnInit() {
@@ -68,6 +70,17 @@ export class ModelingExerciseDialogComponent implements OnInit {
         } else {
             this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
         }
+    }
+
+    deleteExampleSubmission(id: number, index: number) {
+        this.exampleSubmissionService.delete(id).subscribe(
+            () => {
+                this.modelingExercise.exampleSubmissions.splice(index, 1);
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {

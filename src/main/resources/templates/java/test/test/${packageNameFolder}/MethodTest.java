@@ -116,21 +116,11 @@ public class MethodTest extends StructuralTest {
             String expectedMethodInformation = "the expected method '" + expectedName + "' of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.",
-                nameIsRight);
-
-            assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.",
-                parametersAreRight);
-
-            assertTrue("Problem: the access modifiers of " + expectedMethodInformation + " are not implemented as expected.",
-                modifiersAreRight);
-
-            assertTrue("Problem: the return type of " + expectedMethodInformation + " is not implemented as expected.",
-                returnTypeIsRight);
-
-            assertTrue(
-                "Problem: the method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.",
-                nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight);
+            assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.", nameIsRight);
+            assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.", parametersAreRight);
+            assertTrue("Problem: the modifiers (access type, abstract, etc.) of " + expectedMethodInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the return type of " + expectedMethodInformation + " is not implemented as expected.", returnTypeIsRight);
+            assertTrue("Problem: the method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.", nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight);
         }
     }
 

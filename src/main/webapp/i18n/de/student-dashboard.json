@@ -12,6 +12,7 @@
                 "signUpForCourse": "Für den ausgewählten Kurs anmelden",
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "courseLoading": "Kurse werden geladen...",
                 "pleaseSelectCourse": "# Wähle einen Kurs aus"
             }
         },

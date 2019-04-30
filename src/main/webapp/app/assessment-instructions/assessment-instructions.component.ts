@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import * as interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -39,7 +39,7 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', event => {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });

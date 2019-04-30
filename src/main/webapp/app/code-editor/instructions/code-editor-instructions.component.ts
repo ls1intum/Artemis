@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import * as interact from 'interactjs';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
@@ -22,7 +23,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
-    interactResizable: interact.Interactable;
+    interactResizable: Interactable;
     noInstructionsAvailable = false;
 
     @Input()
