@@ -7,7 +7,7 @@ import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
 
 const RESULTS_WEBSOCKET = 'results_';
-const PARTICIPATION_WEBSOCKET = 'participation_';
+const EXERCISE_WEBSOCKET = 'exercise_';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService {
@@ -46,7 +46,11 @@ export class ParticipationWebsocketService {
         }
         participation.exercise = participation.exercise || exercise;
         this.cachedParticipations.set(participation.id, participation);
-        this.checkWebsocketConnection(participation);
+        this.checkWebsocketConnection(participation, participation.exercise);
+    }
+
+    addExerciseForNewParticipation(exerciseId: number) {
+        this.checkWebsocketConnectionForNewParticipations(exerciseId);
     }
 
     /**
@@ -74,16 +78,16 @@ export class ParticipationWebsocketService {
      *
      * @param id ID of the participation that should not be tracked anymore
      */
-    removeParticipation(id: number) {
+    removeParticipation(id: number, exerciseId?: number) {
         this.cachedParticipations.delete(id);
         // removing results observable
         const participationResultTopic = this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${id}`);
         this.jhiWebsocketService.unsubscribe(participationResultTopic);
         this.openWebsocketConnections.delete(`${RESULTS_WEBSOCKET}${id}`);
-        // removing participation observable
-        const participationTopic = this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${id}`);
+        // removing exercise observable
+        const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`);
         this.jhiWebsocketService.unsubscribe(participationTopic);
-        this.openWebsocketConnections.delete(`${PARTICIPATION_WEBSOCKET}${id}`);
+        this.openWebsocketConnections.delete(`${EXERCISE_WEBSOCKET}${exerciseId}`);
     }
 
     /**
@@ -92,9 +96,9 @@ export class ParticipationWebsocketService {
      * @param participation Participation object that has to be checked
      * @private
      */
-    private checkWebsocketConnection(participation: Participation) {
+    private checkWebsocketConnection(participation: Participation, exercise: Exercise) {
         this.checkWebsocketConnectionForNewResults(participation);
-        this.checkWebsocketConnectionForNewParticipations(participation);
+        this.checkWebsocketConnectionForNewParticipations(exercise.id);
     }
 
     /**
@@ -123,16 +127,17 @@ export class ParticipationWebsocketService {
      * @param participation Participation object that has to be checked
      * @private
      */
-    private checkWebsocketConnectionForNewParticipations(participation: Participation) {
-        if (!this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${participation.id}`)) {
-            const participationResultTopic = `/user/topic/quizExercise/${participation.exercise.id}/participation`;
+    private checkWebsocketConnectionForNewParticipations(exerciseId: number) {
+        if (!this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`)) {
+            const participationResultTopic = `/user/topic/quizExercise/${exerciseId}/participation`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationObservable = this.jhiWebsocketService.receive(participationResultTopic);
             participationObservable.subscribe((participationMessage: Participation) => {
                 this.cachedParticipations.set(participationMessage.id, participationMessage);
+                this.addParticipation(participationMessage);
                 this.participationObservable.next(participationMessage);
             });
-            this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${participation.id}`, participationResultTopic);
+            this.openWebsocketConnections.set(`${EXERCISE_WEBSOCKET}${exerciseId}`, participationResultTopic);
         }
     }
 

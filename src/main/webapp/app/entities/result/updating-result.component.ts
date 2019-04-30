@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
 import * as moment from 'moment';
@@ -80,13 +80,11 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                 this.result.participation = this.participation;
             }
 
-            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
-            }
+            this.subscribeForProgramingExercise(exercise);
         }
     }
 
-    subscribeForProgramingExercise(exercise: ProgrammingExercise) {
+    subscribeForProgramingExercise(exercise: Exercise) {
         this.accountService.identity().then(user => {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
             if (
@@ -100,17 +98,6 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                         newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                         this.handleNewResult(newResult);
                     }
-                });
-                // unsubscribe old submissions if a subscription exists
-                // subscribe for new submissions (e.g. when code was pushed and is currently built)
-                if (this.websocketChannelSubmissions) {
-                    this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
-                }
-                this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
-                this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
-                this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
-                    // TODO handle this case properly, e.g. by animating a progress bar in the result view
-                    console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
                 });
             }
         });
