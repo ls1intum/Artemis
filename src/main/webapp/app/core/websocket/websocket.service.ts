@@ -77,9 +77,9 @@ export class JhiWebsocketService implements OnDestroy {
             url += '?access_token=' + authToken;
         }
         const socket = new SockJS(url);
-        this.stompClient = Stomp.over(socket, { debug: false });
+        this.stompClient = Stomp.over(socket, { debug: true });
         // deactivate websocket debugging
-        this.stompClient.debug = function(str) {};
+        // this.stompClient.debug = function(str) {};
         const headers = <Stomp.ConnectionHeaders>{};
         headers['X-CSRFToken'] = this.csrfService.getCSRF('csrftoken');
 
