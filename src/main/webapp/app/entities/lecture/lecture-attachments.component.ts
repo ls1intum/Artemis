@@ -31,6 +31,7 @@ export class LectureAttachmentsComponent implements OnInit {
     attachmentBackup: Attachment;
     attachmentFile: any;
     isUploadingAttachment: boolean;
+    isDownloadingAttachment = false;
     notificationText: string;
 
     constructor(
@@ -129,6 +130,7 @@ export class LectureAttachmentsComponent implements OnInit {
     }
 
     downloadAttachment(downloadUrl: string) {
+        this.isDownloadingAttachment = true;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
             const blob = new Blob([response.body], { type: response.headers.get('content-type') });
             const url = window.URL.createObjectURL(blob);
@@ -138,6 +140,9 @@ export class LectureAttachmentsComponent implements OnInit {
             document.body.appendChild(link); // Required for FF
             link.click();
             window.URL.revokeObjectURL(url);
+            this.isDownloadingAttachment = false;
+        }, error => {
+            this.isDownloadingAttachment = false;
         });
     }
 

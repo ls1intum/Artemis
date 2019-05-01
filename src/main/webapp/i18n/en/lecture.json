@@ -31,6 +31,7 @@
                 "version": "Version",
                 "uploading": "Uploading...",
                 "isBeingEdited": "Is currently being edited...",
+                "isDownloading": "Is downloading...",
                 "attachments": "Attachments",
                 "newAttachment": "New Attachment",
                 "editAttachment": "Edit Attachment",
