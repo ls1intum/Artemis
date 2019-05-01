@@ -35,7 +35,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.currentUserCallback(user);
+            this.currentUserCallback(user!);
         });
         this.registerAuthenticationSuccess();
     }
@@ -43,7 +43,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     registerAuthenticationSuccess() {
         this.eventManager.subscribe('authenticationSuccess', (message: string) => {
             this.accountService.identity().then(user => {
-                this.currentUserCallback(user);
+                this.currentUserCallback(user!);
             });
         });
     }

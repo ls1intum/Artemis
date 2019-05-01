@@ -4,10 +4,10 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
-import { ProfileService } from '../profiles/profile.service';
-import { AccountService, JhiLanguageHelper, LoginService, User } from '../../core';
+import { ProfileService } from 'app/layouts';
+import { AccountService, JhiLanguageHelper, LoginService, User } from 'app/core';
 
-import { VERSION } from '../../app.constants';
+import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 
 @Component({
@@ -21,7 +21,7 @@ export class NavbarComponent implements OnInit {
     languages: string[];
     modalRef: NgbModalRef;
     version: string;
-    currAccount: User;
+    currAccount: User | null;
 
     constructor(
         private loginService: LoginService,
@@ -79,6 +79,7 @@ export class NavbarComponent implements OnInit {
         this.currAccount = null;
         this.collapseNavbar();
         this.loginService.logout();
+        // noinspection JSIgnoredPromiseFromCall
         this.router.navigate(['']);
     }
 

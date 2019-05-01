@@ -31,14 +31,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private subscription: Subscription;
     participation: Participation;
     modelingExercise: ModelingExercise;
-    result: Result;
+    result: Result | null;
 
     selectedEntities: string[];
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
-    assessmentResult: Result;
+    assessmentResult: Result | null;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
@@ -52,7 +52,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     websocketChannel: string;
 
-    problemStatement: string;
+    problemStatement: string | null;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -123,7 +123,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     subscribeToWebsocket(): void {
-        if (!this.submission && !this.submission.id) {
+        if (this.submission === null) {
             return;
         }
         this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
@@ -301,7 +301,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
-                totalScore += feedback.credits;
+                totalScore += feedback.credits!;
             }
             this.totalScore = totalScore;
         }

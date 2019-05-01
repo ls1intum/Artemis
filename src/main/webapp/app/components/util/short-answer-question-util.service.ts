@@ -470,9 +470,7 @@ export class ShortAnswerQuestionUtil {
      * @param artemisMarkdown
      * @returns {string[][]}
      */
-    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): string[][] {
-        const textPartsInHTML = textParts.map(textPart => textPart.map(element => (element = artemisMarkdown.htmlForMarkdown(element))));
-
-        return textPartsInHTML;
+    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
+        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element)));
     }
 }

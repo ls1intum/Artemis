@@ -16,7 +16,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     model: UMLModel;
     modelHighlightedElementIds: Set<string>;
     conflictIndex = 0;
-    user: User;
+    user: User | null;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
@@ -53,7 +53,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     setSameWidthOnModelingAssessments() {
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
-        $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+        $('.resizable').css('width', ((conflictEditorWidth || 0) - (instructionsWidth || 0)) / 2 + 15);
     }
 
     private updateSelectedConflict() {

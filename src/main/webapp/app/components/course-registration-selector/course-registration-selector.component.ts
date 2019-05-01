@@ -15,7 +15,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     @Input() courses: Course[];
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
-    public courseToRegister: Course = null;
+    public courseToRegister: Course | null;
     public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
@@ -40,8 +40,9 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     loadAndFilterCourses() {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
-                (registerRes: HttpResponse<Course[]>) => {
-                    this.coursesToSelect = registerRes.body.filter(course => {
+                registerRes => {
+                    let coursesToRegister = registerRes.body as Course[];
+                    this.coursesToSelect = coursesToRegister.filter(course => {
                         return !this.courses.find(el => el.id === course.id);
                     });
                     resolve();

@@ -4,8 +4,7 @@ import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
 import { JhiLanguageHelper } from 'app/core';
-import { ProfileService } from '../profiles/profile.service';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileService, ProfileInfo } from 'app/layouts';
 
 @Component({
     selector: 'jhi-main',
@@ -48,6 +47,7 @@ export class JhiMainComponent implements OnInit {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
             }
             if (event instanceof NavigationError && event.error.status === 404) {
+                // noinspection JSIgnoredPromiseFromCall
                 this.router.navigate(['/404']);
             }
         });

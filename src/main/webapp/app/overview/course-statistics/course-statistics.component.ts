@@ -30,7 +30,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseExercises: Exercise[];
     private paramSubscription: Subscription;
     private translationSubscription: Subscription;
-    course: Course;
+    course: Course | null;
 
     // absolute score
     totalScore = 0;
@@ -154,7 +154,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSubscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -162,16 +162,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         if (this.course === undefined) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body);
+                this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.courseExercises = this.course.exercises;
+                this.courseExercises = this.course!.exercises;
                 this.calculateMaxScores();
                 this.calculateAbsoluteScores();
                 this.calculateRelativeScores();
                 this.groupExercisesByType();
             });
         } else {
-            this.courseExercises = this.course.exercises;
+            this.courseExercises = this.course!.exercises;
             this.calculateMaxScores();
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
@@ -210,7 +210,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     groupExercisesByType() {
-        const exercises = this.course.exercises;
+        const exercises = this.course!.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
         exercises.forEach(exercise => {
@@ -267,7 +267,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             return 0;
         }
         if (result.resultString && result.resultString.indexOf('failed') !== -1) {
-            return null;
+            // TODO: Is this right?
+            return 0;
         }
         if (result.resultString.indexOf('of') === -1) {
             if (result.resultString.indexOf('points') === -1) {
@@ -347,7 +348,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (exerciseType !== undefined && scoreType !== undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
             const scores = this.calculateScores(filterFunction);
-            return scores.get(scoreType);
+            return scores.get(scoreType)!;
         } else {
             return NaN;
         }
@@ -355,6 +356,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     calculateTotalScoreForTheCourse(scoreType: string): number {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
-        return scores.get(scoreType);
+        return scores.get(scoreType)!;
     }
 }

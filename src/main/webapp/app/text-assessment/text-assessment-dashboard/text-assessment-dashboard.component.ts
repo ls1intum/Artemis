@@ -31,7 +31,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         this.exerciseService
             .find(exerciseId)
             .map(exerciseResponse => {
-                if (exerciseResponse.body.type !== ExerciseType.TEXT) {
+                if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
                     throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
                 }
 
@@ -47,7 +47,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         this.textSubmissionService
             .getTextSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
             .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body.map((submission: TextSubmission) => {
+                response.body!.map((submission: TextSubmission) => {
                     if (submission.result) {
                         // reconnect some associations
                         submission.result.submission = submission;

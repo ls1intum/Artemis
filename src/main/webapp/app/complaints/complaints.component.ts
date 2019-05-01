@@ -18,7 +18,6 @@ export class ComplaintsComponent implements OnInit {
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
-    accepted: boolean;
     complaintResponse: ComplaintResponse;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
@@ -26,12 +25,15 @@ export class ComplaintsComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
-                this.complaintText = res.body.complaintText;
+                let complaint = res.body as Complaint;
+                this.complaintText = complaint.complaintText;
                 this.alreadySubmitted = true;
-                this.submittedDate = res.body.submittedTime;
+                this.submittedDate = complaint.submittedTime;
 
-                if (res.body.accepted) {
-                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
+                if (complaint.accepted) {
+                    this.complaintResponseService
+                        .findByComplaintId(complaint.id)
+                        .subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body as ComplaintResponse));
                 }
             },
             (err: HttpErrorResponse) => {
@@ -52,7 +54,8 @@ export class ComplaintsComponent implements OnInit {
         this.complaintService.create(complaint).subscribe(
             res => {
                 this.jhiAlertService.success('arTeMiSApp.complaint.submitted');
-                this.submittedDate = res.body.submittedTime;
+                let complaint = res.body as Complaint;
+                this.submittedDate = complaint.submittedTime;
                 this.alreadySubmitted = true;
             },
             (err: HttpErrorResponse) => {

@@ -19,12 +19,12 @@ import { Feedback } from 'app/entities/feedback';
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
-    submission: ModelingSubmission;
-    model: UMLModel;
-    modelingExercise: ModelingExercise;
-    result: Result;
+    submission: ModelingSubmission | null;
+    model: UMLModel | null;
+    modelingExercise: ModelingExercise | null;
+    result: Result | null;
     localFeedbacks: Feedback[];
-    conflicts: Conflict[];
+    conflicts: Conflict[] | null;
     highlightedElementIds: Set<string>;
     ignoreConflicts = false;
 
@@ -51,7 +51,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -68,7 +68,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     checkAuthorization() {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAuthorized = this.result !== null && this.result.assessor !== null && this.result.assessor.id === this.userId;
     }
 
     ngOnDestroy() {}
@@ -90,7 +90,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
@@ -135,10 +135,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onError(): void {
-        this.submission = undefined;
-        this.modelingExercise = undefined;
-        this.result = undefined;
-        this.model = undefined;
+        this.submission = null;
+        this.modelingExercise = null;
+        this.result = null;
+        this.model = null;
         this.jhiAlertService.clear();
         this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
@@ -148,7 +148,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
             this.localFeedbacks = [];
         }
-        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
@@ -168,13 +168,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission!.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
-                result.participation.results = [result];
+                result.participation!.results = [result];
                 this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.conflicts = undefined;
+                this.conflicts = null;
                 this.ignoreConflicts = false;
             },
             (error: HttpErrorResponse) => {
@@ -202,7 +202,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     assessNextOptimal() {
         this.busy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
             (optimal: number[]) => {
                 this.busy = false;
                 if (optimal.length === 0) {
@@ -214,7 +214,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
                 }
             },
             () => {
@@ -227,7 +227,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private highlightConflictingElements() {
         this.highlightedElementIds = new Set<string>();
-        this.conflicts.forEach((conflict: Conflict) => {
+        this.conflicts!.forEach((conflict: Conflict) => {
             this.highlightedElementIds.add(conflict.modelElementId);
         });
     }
@@ -237,16 +237,16 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
      * Otherwise, we would get a JSON error when trying to send the submission to the server.
      */
     private removeCircularDependencies() {
-        this.submission.result.participation = null;
-        this.submission.result.submission = null;
+        this.submission!.result.participation = null;
+        this.submission!.result.submission = null;
     }
 
     private validateFeedback() {
-        if (!this.result.feedbacks) {
+        if (!this.result!.feedbacks) {
             this.assessmentsAreValid = false;
             return;
         }
-        for (const feedback of this.result.feedbacks) {
+        for (const feedback of this.result!.feedbacks) {
             if (feedback.credits == null) {
                 this.assessmentsAreValid = false;
                 return;

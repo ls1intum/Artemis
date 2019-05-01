@@ -7,8 +7,8 @@ import { Account, AccountService, JhiLanguageHelper } from '../../core';
     templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
-    error: string;
-    success: string;
+    error: string | null;
+    success: string | null;
     settingsAccount: Account;
     languages: string[];
 

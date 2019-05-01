@@ -38,7 +38,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /** Dependencies as defined by the Editor component */
     participation: Participation;
-    selectedFile: string;
+    selectedFile?: string;
     paramSub: Subscription;
     repositoryFiles: string[];
     unsavedFiles: string[] = [];
@@ -127,7 +127,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     // Filter Readme file that was historically in the student's assignment repo
                     .filter(value => !value.includes('README.md'))
                     // Remove binary files as they can't be displayed in an editor
-                    .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
+                    .filter(filename => textFileExtensions.includes(filename.split('.').pop()!)),
             ),
             catchError((error: HttpErrorResponse) => {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);

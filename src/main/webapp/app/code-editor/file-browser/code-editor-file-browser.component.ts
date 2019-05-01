@@ -38,7 +38,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @ViewChild('treeview')
     treeview: TreeviewComponent;
 
-    folder: string;
+    folder: string | null;
     filesTreeViewItem: TreeviewItem[];
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/

@@ -59,15 +59,15 @@ export class CourseExerciseRowComponent implements OnInit {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
-    getUrgentClass(date: Moment): string {
+    getUrgentClass(date: Moment): string | null {
         if (!date) {
-            return;
+            return null;
         }
         const remainingDays = date.diff(moment(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         } else {
-            return;
+            return null;
         }
     }
 
