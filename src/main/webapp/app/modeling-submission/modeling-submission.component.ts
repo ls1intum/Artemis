@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -54,12 +55,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     problemStatement: string;
     showComplaintForm = false;
+    hasComplaint = false; // indicates if there is a complaint for the result of the submission
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
+        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
@@ -108,6 +111,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
+                            });
+                            this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                                this.hasComplaint = !!res.body;
                             });
                         }
                         this.setAutoSaveTimer();

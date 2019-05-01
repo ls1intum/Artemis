@@ -119,12 +119,12 @@
         </div>
     </div>
 
-    <div class="row mt-2 ml-0" *ngIf="result && result.completionDate">
+    <div class="row mt-2 ml-0" *ngIf="result && result.completionDate && !hasComplaint">
         <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
         <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}</button>
     </div>
 </div>
 
-<div *ngIf="showComplaintForm">
+<div *ngIf="showComplaintForm || hasComplaint">
     <jhi-complaint-form class="row" [resultId]="result.id"></jhi-complaint-form>
 </div>
