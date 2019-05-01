@@ -145,11 +145,11 @@ public class AttachmentResource {
         String relatedEntity = null;
         if (attachment.getLecture() != null) {
             course = attachment.getLecture().getCourse();
-            relatedEntity = "lecture with id " + attachment.getLecture().getId();
+            relatedEntity = "lecture " + attachment.getLecture().getTitle();
         }
         else if (attachment.getExercise() != null) {
             course = attachment.getExercise().getCourse();
-            relatedEntity = "exercise with id " + attachment.getExercise().getId();
+            relatedEntity = "exercise " + attachment.getExercise().getTitle();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
