@@ -28,6 +28,9 @@ export class ComplaintsForTutorComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
+                if (!res.body) {
+                    return;
+                }
                 this.complaint = res.body;
                 this.complaintText = this.complaint.complaintText;
                 this.handled = this.complaint.accepted !== undefined;
@@ -39,10 +42,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 }
             },
             (err: HttpErrorResponse) => {
-                // We can ignore 404, it simply means that there isn't a complain (yet!) associate with this result
-                if (err.status !== 404) {
-                    this.onError(err.message);
-                }
+                this.onError(err.message);
             },
         );
     }
