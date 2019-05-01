@@ -1,26 +1,34 @@
 {
     "arTeMiSApp": {
         "complaint": {
-            "complaints": "Complaints",
-            "description": "You can submit a complaint if you feel like the assessment hasn't been fair: you will have the chance to describe what do you think is wrong, and why the submission should be reevaluated. The reevaluation will be performed by a different tutor.",
+            "title": "Complaint",
+            "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",
+            "description": "You can submit up to {{ maxComplaintNumber }} complaints in total.",
             "moreFeedback": "More feedback",
             "moreFeedbackDescription": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
             "moreFeedbackButton": "Request more feedback",
-            "beDescriptive": "Please try to be as descriptive as possible, including which parts of the submission you think we need to re-evaluate. If you don't have any complaint, but you think the feedback is not clear enough, just press the relative button.",
-            "beDescriptive_temp": "Please try to be as descriptive as possible, including which parts of the submission you think we need to re-evaluate.",
-            "alreadySubmitted": "You have already submitted a complaint: ",
+            "beDescriptive": "Please describe in detail why the assessment is wrong. Your complaint will then be evaluated by a second reviewer.",
+            "alreadySubmitted": "You have already submitted a complaint on",
             "submit": "Submit a complaint",
             "created": "Your complaint has been submitted!",
-            "moreInfo": "Submit complaint or ask for more feedback",
-            "moreInfo_temp": "Submit a complaint",
-            "hasReplied": "has replied to your complaint on",
-            "hint": "You find the complaint at the end of the page",
-            "updateAssessment": "Update Assessment",
-            "rejectComplaint": "Reject Complaint",
+            "moreInfo": "Complain or ask for more feedback",
+            "moreInfo_temp": "Complain",
+            "responseExists": "Response to your complaint of",
+            "hint": "Scroll down to review the complaint",
             "accepted": "Accepted",
             "acceptedLong": "Complaint was accepted",
             "rejected": "Rejected",
-            "rejectedLong": "Complaint was rejected"
+            "rejectedLong": "Complaint was rejected",
+            "tooManyComplaints": "Complaint limit reached. You cannot have more than {{ maxComplaintNumber }} open or rejected complaints at the same time.",
+            "complaintAlreadyHandled": "The complaint has been resolved",
+            "complaintResponse": {
+                "title": "Complaint's response",
+                "created": "Response to complaint has been submitted",
+                "updateAssessment": "Update assessment",
+                "updateAssessmentTooltip": "Send complaint response and update assessment",
+                "rejectComplaint": "Reject complaint",
+                "rejectComplaintTooltip": "Send complaint response and reject complaint"
+            }
         }
     }
 }

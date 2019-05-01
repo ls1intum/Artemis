@@ -16,9 +16,9 @@
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
-            "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen.",
-            "submissionLocked": "Einreichung gesperrt",
-            "studentSubmission": "Studentische Einreichung",
+            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Abgabe bevor Sie eine neue öffnen.",
+            "submissionLocked": "Abgabe gesperrt",
+            "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "detail": {
                 "scoreFor": "Bewertung für",
@@ -33,7 +33,7 @@
             },
             "dashboard": {
                 "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\"",
-                "empty": "Keine Einreichungen für diese Aufgabe!",
+                "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
@@ -48,14 +48,9 @@
                 "minutes": "Minuten",
                 "actions": {
                     "open": "Bewertung öffnen",
-                    "assess": "Einreichung bewerten"
+                    "assess": "Abgabe bewerten"
                 }
             },
-            "complaint": "Reklamation",
-            "complaintAlreadyHandled": "Die Reklamation wurde bereits geprüft und beantwortet von",
-            "complaintResponse": "Antwort der Reklamation",
-            "submitComplaintResponse": "Die Antwort der Reklamation einreichen",
-            "complaintResponseCreated": "Ihre Antwort auf die Beschwerde wurde eingereicht",
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück."
         }
     }

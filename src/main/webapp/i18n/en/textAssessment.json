@@ -51,11 +51,6 @@
                     "assess": "Assess Submission"
                 }
             },
-            "complaint": "Complaint",
-            "complaintAlreadyHandled": "The complaint has been already reviewed and replied by",
-            "complaintResponse": "Complaint's response",
-            "submitComplaintResponse": "Submit complaint's response",
-            "complaintResponseCreated": "Response to complaint has been submitted",
             "notFound": "We haven't found any new text submission without an assessment, please go back."
         }
     }

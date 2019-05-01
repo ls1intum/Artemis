@@ -1,26 +1,34 @@
 {
     "arTeMiSApp": {
         "complaint": {
-            "complaints": "Beschwerden",
-            "description": "Sie können eine Beschwerde einreichen, wenn Sie das Gefühl haben, dass die Bewertung nicht fair war: Sie haben die Möglichkeit zu beschreiben, was Ihrer Meinung nach falsch ist und warum die Einreichung neu bewertet werden sollte. Die Neubewertung wird von einem anderen Tutor durchgeführt.",
+            "title": "Beschwerde",
+            "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn Ihre Beschwerde angenommen wird, wird sie nicht auf Ihre Gesamtzahl der Beschwerden angerechnet.",
+            "description": "Sie können insgesamt bis zu {{ maxComplaintNumber }} Beschwerden einreichen.",
             "moreFeedback": "Mehr Feedback",
             "moreFeedbackDescription": "Wenn etwas nicht klar genug ist oder Sie weitere Erklärungen benötigen, bitten Sie den Tutor, Ihnen mehr Feedback zu geben.",
             "moreFeedbackButton": "Mehr Feedback anfordern",
-            "beDescriptive": "Bitte versuchen Sie, so beschreibend wie möglich zu sein, einschließlich der Teile der Einreichung, von denen Sie denken, dass wir sie neu bewerten müssen. Wenn Sie keine Beschwerden haben, aber der Eindruck besteht, dass das Feedback nicht klar genug ist, drücken Sie einfach die entsprechende Taste.",
-            "beDescriptive_temp": "Bitte versuchen Sie, so beschreibend wie möglich zu sein, einschließlich der Teile der Einreichung, von denen Sie denken, dass wir sie neu bewerten müssen.",
-            "alreadySubmitted": "Sie haben bereits eine Beschwerde eingereicht:",
+            "beDescriptive": "Bitte beschreiben Sie ausführlich, warum die Bewertung falsch ist. Ihre Beschwerde wird dann von einem zweiten Tutor überprüft.",
+            "alreadySubmitted": "Sie haben eine Beschwerde eingereicht am",
             "submit": "Eine Beschwerde einreichen",
             "created": "Ihre Beschwerde wurde eingereicht!",
-            "moreInfo": "Reichen Sie eine Beschwerde ein oder bitten Sie um mehr Feedback.",
+            "moreInfo": "Beschwerde einreichen oder mehr Feedback anfordern",
             "moreInfo_temp": "Beschwerde einreichen",
-            "hasReplied": "hat auf Ihre Beschwerde geantwortet:",
-            "hint": "Sie finden die Beschwerde am Ende der Seite",
-            "updateAssessment": "Bewertung aktualisieren",
-            "rejectComplaint": "Beschwerde zurückweisen",
+            "responseExists": "Antwort auf ihre Beschwerde vom ",
+            "hint": "Scrollen Sie nach unten um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
             "acceptedLong": "Beschwerde wurde angenommen",
             "rejected": "Abgelehnt",
-            "rejectedLong": "Beschwerde wurde abgelehnt"
+            "rejectedLong": "Beschwerde wurde abgelehnt",
+            "tooManyComplaints": "Maximale Anzahl an Beschwerden erreicht. Sie können nicht mehr als {{ maxComplaintNumber }} offene oder abgelehnte Beschwerden gleichzeitig haben.",
+            "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
+            "complaintResponse": {
+                "title": "Antwort auf die Beschwerde",
+                "created": "Ihre Antwort auf die Beschwerde wurde eingereicht",
+                "updateAssessment": "Bewertung aktualisieren",
+                "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
+                "rejectComplaint": "Beschwerde zurückweisen",
+                "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
+            }
         }
     }
 }

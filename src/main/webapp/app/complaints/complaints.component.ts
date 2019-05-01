@@ -56,13 +56,12 @@ export class ComplaintsComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
-                this.jhiAlertService.success('arTeMiSApp.complaint.created');
                 this.submittedDate = res.body.submittedTime;
                 this.alreadySubmitted = true;
             },
             (err: HttpErrorResponse) => {
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error(`Complaint limit reached. You cannot have more than ${this.maxComplaintNumberPerStudent} at the same time.`);
+                    this.jhiAlertService.error('arTeMiSApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
                 } else {
                     this.onError(err.message);
                 }

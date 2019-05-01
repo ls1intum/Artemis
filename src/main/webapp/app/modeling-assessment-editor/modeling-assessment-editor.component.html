@@ -2,9 +2,8 @@
     <h2 class="top-container">
         <!--back button only used in tutor dashboard-->
         <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-        <div class="row-container">
-            <span *ngIf="!includeComplaint" jhiTranslate="modelingAssessmentEditor.assessment">Assessment</span>
-            <span *ngIf="includeComplaint" jhiTranslate="modelingAssessmentEditor.reviewComplaint">Review Complaint</span>
+        <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
+            Assessment
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
@@ -53,6 +52,9 @@
     </div>
 </div>
 <div class="mt-3" *ngIf="includeComplaint && result && result.id">
+    <h2 class="row-container" jhiTranslate="modelingAssessmentEditor.reviewComplaint">
+        Review Complaint
+    </h2>
     <jhi-complaints-for-tutor-form [resultId]="result.id" (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"></jhi-complaints-for-tutor-form>
 </div>
 
