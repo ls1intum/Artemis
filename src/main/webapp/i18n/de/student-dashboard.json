@@ -65,6 +65,7 @@
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
+                "totalPresentationScore": "Deine gesamtes Präsentationsergebnisw: {{ number }}",
                 "exerciseCount": "Teilgenommen an {{ number }} Übungen",
                 "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",

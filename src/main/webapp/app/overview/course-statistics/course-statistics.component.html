@@ -2,7 +2,7 @@
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'arTeMiSApp.courseOverview.statistics.totalScore' | translate }}</h2>
-            <div class="chart-container">
+            <div class="chart-container" style="margin-bottom: 20px">
                 <div class="chart-text">
                     <h2 class="text-center">{{ totalRelativeScore }} %</h2>
                     <h4 class="text-center">{{ totalScore }} Pts</h4>
@@ -18,6 +18,9 @@
                     [labels]="doughnutChartLabels"
                     [chartType]="doughnutChartType"
                 ></canvas>
+            </div>
+            <div>
+                <h2 class="text-center">{{ 'arTeMiSApp.courseOverview.statistics.totalPresentationScore' | translate: { number: this.totalPresentationScore } }}</h2>
             </div>
         </div>
         <div class="col-12 col-md-8">
