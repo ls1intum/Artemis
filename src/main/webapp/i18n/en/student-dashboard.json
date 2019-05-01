@@ -69,6 +69,7 @@
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
+                "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course."
             },
             "lectureList": {

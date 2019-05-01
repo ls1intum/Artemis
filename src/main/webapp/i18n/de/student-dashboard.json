@@ -69,6 +69,7 @@
                 "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",
                 "relativeScore": "Relative Punktzahl: {{ number }}%",
+                "presentationScore": "Präsentationsergebnis: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
             },
             "lectureList": {
