@@ -142,18 +142,21 @@ public class AttachmentResource {
         }
         Attachment attachment = optionalAttachment.get();
         Course course = null;
+        String relatedEntity = null;
         if (attachment.getLecture() != null) {
             course = attachment.getLecture().getCourse();
+            relatedEntity = "lecture with id " + attachment.getLecture().getId();
         }
         else if (attachment.getExercise() != null) {
             course = attachment.getExercise().getCourse();
+            relatedEntity = "exercise with id " + attachment.getExercise().getId();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
         Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
         if (hasCourseInstructorAccess) {
-            log.debug("REST request to delete Attachment : {}", id);
+            log.info(user.getLogin() + " deleted attachment with id " + id+ " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }

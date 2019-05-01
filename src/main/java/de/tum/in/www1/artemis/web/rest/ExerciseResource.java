@@ -358,14 +358,14 @@ public class ExerciseResource {
     @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Course and current Studen : {}", exerciseId);
-
         User student = userService.getUserWithGroupsAndAuthorities();
+        log.info(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
+
         Exercise exercise = exerciseService.findOne(exerciseId);
+        // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
             return forbidden();
         }
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
 
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
@@ -381,6 +381,7 @@ public class ExerciseResource {
             }
 
             // remove sensitive information for students
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
             if (isStudent) {
                 exercise.filterSensitiveInformation();
             }
