@@ -1,0 +1,43 @@
+<div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_INSTRUCTOR']" class="d-flex mb-3">
+    <div ngbDropdown class="d-inline-block mr-2">
+        <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1" class="p-0">
+            <button
+                [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id"
+                (click)="selectTemplateParticipation()"
+                class="btn w-100"
+                [class.btn-primary]="selectedRepository === 'TEMPLATE'"
+                jhiTranslate="arTeMiSApp.editor.repoSelect.templateRepo"
+            >
+                Template Repository
+            </button>
+            <button
+                [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
+                (click)="selectSolutionParticipation()"
+                class="btn w-100"
+                [class.btn-primary]="selectedRepository === 'SOLUTION'"
+                jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo"
+            >
+                Solution Repository
+            </button>
+            <button
+                [disabled]="!exercise || !exercise.assignmentParticipation"
+                (click)="selectAssignmentParticipation()"
+                class="btn w-100"
+                [class.btn-primary]="selectedRepository === 'ASSIGNMENT'"
+                jhiTranslate="arTeMiSApp.editor.repoSelect.assignmentRepo"
+            >
+                Assignment Participation
+            </button>
+        </div>
+    </div>
+    <div>
+        <button (click)="createAssignmentParticipation()" [disabled]="exercise && !exercise.assignmentParticipation" class="btn btn-primary mr-2">
+            <fa-icon icon="plus" class="text-white mr-2"></fa-icon><span>Create assignment participation</span>
+        </button>
+        <button (click)="resetAssignmentParticipation()" [disabled]="exercise && exercise.assignmentParticipation" class="btn btn-danger">
+            <fa-icon icon="times" class="text-white mr-2"></fa-icon><span>Reset assignment participation</span>
+        </button>
+    </div>
+</div>
+<jhi-code-editor [(participation)]="selectedParticipation" [exercise]="exercise"></jhi-code-editor>

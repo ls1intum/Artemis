@@ -7,6 +7,8 @@ import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorComponent } from './code-editor.component';
+import { CodeEditorInstructorComponent } from './code-editor-instructor.component';
+import { CodeEditorStudentComponent } from './code-editor-student.component';
 import { CodeEditorService } from './code-editor.service';
 import { RepositoryService } from '../entities/repository';
 import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
@@ -41,6 +43,8 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     declarations: [
         CodeEditorComponent,
+        CodeEditorInstructorComponent,
+        CodeEditorStudentComponent,
         CodeEditorAceComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorFileBrowserCreateComponent,
@@ -51,10 +55,12 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
     ],
-    exports: [CodeEditorComponent],
+    exports: [CodeEditorComponent, CodeEditorInstructorComponent, CodeEditorStudentComponent],
     entryComponents: [
         HomeComponent,
         CodeEditorComponent,
+        CodeEditorInstructorComponent,
+        CodeEditorStudentComponent,
         JhiMainComponent,
         CodeEditorFileBrowserCreateComponent,
         CodeEditorFileBrowserDeleteComponent,

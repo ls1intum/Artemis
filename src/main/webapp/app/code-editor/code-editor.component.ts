@@ -1,18 +1,16 @@
 import * as $ from 'jquery';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
-import { CourseService, CourseExerciseService } from '../entities/course';
-import { Participation, ParticipationService } from '../entities/participation';
-import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
+import { CourseService } from '../entities/course';
+import { Participation, hasParticipationChanged } from '../entities/participation';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
@@ -20,28 +18,29 @@ import { WindowRef } from '../core/websocket/window.service';
 import { textFileExtensions } from './text-files.json';
 import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
-import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ExerciseDataProvider } from './exercise-data-provider';
 
 @Component({
-    selector: 'jhi-editor',
+    selector: 'jhi-code-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
-export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class CodeEditorComponent implements OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
+    isInitial = true;
     /** Dependencies as defined by the Editor component */
-    exercise: ProgrammingExercise;
-    participation: Participation;
+    participationValue: Participation;
+    @Output()
+    participationChange = new EventEmitter<Participation>();
+    @Input()
+    readonly exercise: ProgrammingExercise;
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
@@ -55,14 +54,17 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
 
+    @Input()
+    get participation() {
+        return this.participationValue;
+    }
+
+    set participation(participation: Participation) {
+        this.participationValue = participation;
+        this.participationChange.emit(participation);
+    }
+
     constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private participationService: ParticipationService,
-        private exerciseService: ExerciseService,
-        private participationDataProvider: ParticipationDataProvider,
-        private exerciseDataProvider: ExerciseDataProvider,
-        private courseExerciseService: CourseExerciseService,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
         private resultService: ResultService,
@@ -77,44 +79,34 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * If we are able to find the participation with the id specified in the route params in our data storage,
      * we use it in order to spare any additional REST calls
      */
-    ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe(params => {
-            const exerciseId = Number(params['exerciseId']);
-            const participationId = Number(params['participationId']);
-            // First: Load participation, which is needed for all successive calls
-            this.loadExercise(exerciseId)
-                .pipe(
-                    tap(exercise => {
-                        this.exercise = exercise as ProgrammingExercise;
-                        this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-                    }),
-                    switchMap(() => this.loadParticipation(participationId || this.exercise.templateParticipation.id)),
-                    tap(participation => (this.participation = participation)),
-                    // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
-                    switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
-                    // Load the participation with its result and result details, so that sub components don't try to also load the details
-                    flatMap(participation =>
-                        this.loadLatestResult(participation).pipe(
-                            switchMap(result =>
-                                result
-                                    ? this.loadResultDetails(result).pipe(
-                                          rxMap(feedback => {
-                                              if (feedback) {
-                                                  participation.results[0].feedbacks = feedback;
-                                              }
-                                              return participation;
-                                          }),
-                                      )
-                                    : Observable.of(participation),
-                            ),
+    ngOnChanges(changes: SimpleChanges): void {
+        if (hasParticipationChanged(changes)) {
+            this.isInitial = true;
+        }
+        if (this.isInitial && this.participation && this.exercise) {
+            this.isInitial = false;
+            Observable.of(this.participation)
+                .flatMap(participation =>
+                    this.loadLatestResult(this.participation).pipe(
+                        switchMap(result =>
+                            result
+                                ? this.loadResultDetails(result).pipe(
+                                      rxMap(feedback => {
+                                          if (feedback) {
+                                              participation.results[0].feedbacks = feedback;
+                                          }
+                                          return participation;
+                                      }),
+                                  )
+                                : Observable.of(participation),
                         ),
+                        tap(participationWithResults => (this.participation = participationWithResults)),
+                        switchMap(() => this.checkIfRepositoryIsClean()),
+                        tap(commitState => (this.commitState = commitState)),
+                        switchMap(() => this.loadFiles()),
+                        tap(files => (this.repositoryFiles = files)),
+                        tap(() => this.loadSession()),
                     ),
-                    tap(participation => (this.participation = participation)),
-                    switchMap(() => this.checkIfRepositoryIsClean()),
-                    tap(commitState => (this.commitState = commitState)),
-                    switchMap(() => this.loadFiles()),
-                    tap(files => (this.repositoryFiles = files)),
-                    tap(() => this.loadSession()),
                 )
                 .subscribe(
                     () => {},
@@ -123,53 +115,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.onError(err);
                     },
                 );
-        });
-    }
-
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
-        if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
-    loadExercise(exerciseId: number) {
-        if (this.exerciseDataProvider.exerciseDataStorage && this.exerciseDataProvider.exerciseDataStorage.id === exerciseId) {
-            return Observable.of(this.exerciseDataProvider.exerciseDataStorage);
-        } else {
-            return this.exerciseService.find(exerciseId).pipe(rxMap(({ body }) => body));
-        }
-    }
-
-    createAssignmentParticipation() {
-        return this.courseExerciseService
-            .startExercise(this.exercise.course.id, this.exercise.id)
-            .pipe(
-                tap(participation => {
-                    this.exercise.assignmentParticipation = participation;
-                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-                    this.selectParticipation(this.exercise.assignmentParticipation.id);
-                }),
-            )
-            .subscribe();
-    }
-
-    selectParticipation(participationId: number) {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/${participationId}`);
-    }
-
-    selectAssignmentParticipation() {
-        if (this.exercise.assignmentParticipation) {
-            this.selectParticipation(this.exercise.assignmentParticipation.id);
-        } else {
-            this.participationService
-                .findParticipation(this.exercise.id, this.exercise.course.id)
-                .pipe(
-                    tap(({ body: assignmentParticipation }) => (this.exercise.assignmentParticipation = assignmentParticipation)),
-                    tap(() => this.selectParticipation(this.exercise.assignmentParticipation.id)),
-                )
-                .subscribe();
         }
     }
 
@@ -193,17 +138,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
-    /**
-     * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
-     * @param participationId
-     */
-    private loadParticipation(participationId: number): Observable<Participation | null> {
-        return this.participationService.findWithLatestResult(participationId).pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => res && res.body),
-        );
-    }
-
     loadLatestResult(participation: Participation): Observable<Result | null> {
         if (participation && participation.results) {
             return Observable.of(participation.results.length ? participation.results[0] : null);
@@ -223,13 +157,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             catchError(() => Observable.of(null)),
             rxMap(res => res && res.body),
         );
-    }
-
-    /**
-     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
-     */
-    canDeactivate() {
-        return !this.unsavedFiles || !this.unsavedFiles.length;
     }
 
     /**
@@ -430,14 +357,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.editor.saveChangedFiles();
         }
     }
-
     /**
-     * @function ngOnDestroy
-     * @desc Framework function which is executed when the component is destroyed.
-     * Used for component cleanup, close open sockets, connections, subscriptions...
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
-    ngOnDestroy() {
-        /** Unsubscribe onDestroy to avoid performance issues due to a high number of open subscriptions */
-        this.paramSub.unsubscribe();
+    hasUnsavedChanges() {
+        return !this.unsavedFiles || !this.unsavedFiles.length;
     }
 }
