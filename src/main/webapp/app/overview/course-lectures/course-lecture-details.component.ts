@@ -16,6 +16,7 @@ import { Attachment } from 'app/entities/attachment';
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public lecture: Lecture;
+    public isDownloading = false;
 
     constructor(
         private $location: Location,
@@ -72,8 +73,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
-            const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+        this.isDownloading = true;
+        this.httpClient.get(downloadUrl, {observe: 'response', responseType: 'blob'}).subscribe(response => {
+            const blob = new Blob([response.body], {type: response.headers.get('content-type')});
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.setAttribute('href', url);
@@ -81,6 +83,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             document.body.appendChild(link); // Required for FF
             link.click();
             window.URL.revokeObjectURL(url);
+            this.isDownloading = false;
+        }, error => {
+            this.isDownloading = false;
         });
     }
 }
