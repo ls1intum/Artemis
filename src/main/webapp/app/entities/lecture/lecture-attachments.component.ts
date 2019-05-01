@@ -128,8 +128,8 @@ export class LectureAttachmentsComponent implements OnInit {
         return item.id;
     }
 
-    downloadAttachment(url: string) {
-        this.httpClient.get(url, { observe: 'response', responseType: 'blob' }).subscribe(response => {
+    downloadAttachment(downloadUrl: string) {
+        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
             const blob = new Blob([response.body], { type: response.headers.get('content-type') });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
