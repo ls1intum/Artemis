@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiWebsocketService } from 'app/core';
+import { AuthServerProvider, JhiWebsocketService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
 import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
@@ -21,6 +21,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private $location: Location,
         private jhiWebsocketService: JhiWebsocketService,
         private lectureService: LectureService,
+        private authServerProvider: AuthServerProvider,
         private route: ActivatedRoute,
         private router: Router,
     ) {
@@ -67,5 +68,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         return attachment.link.split('.').pop();
+    }
+
+    downloadAttachment(url: string) {
+        window.open(`${url}?access_token=${this.authServerProvider.getToken()}`);
     }
 }
