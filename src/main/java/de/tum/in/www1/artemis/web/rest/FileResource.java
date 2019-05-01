@@ -230,7 +230,7 @@ public class FileResource {
             return forbidden();
         }
         try {
-            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + filename);
+            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
@@ -241,7 +241,7 @@ public class FileResource {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDisposition(contentDisposition);
 
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).body(resource);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
         }
         catch (IOException e) {
             e.printStackTrace();

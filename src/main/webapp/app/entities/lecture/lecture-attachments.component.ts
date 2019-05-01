@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpClient } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -33,7 +33,12 @@ export class LectureAttachmentsComponent implements OnInit {
     isUploadingAttachment: boolean;
     notificationText: string;
 
-    constructor(protected activatedRoute: ActivatedRoute, private attachmentService: AttachmentService, private fileUploaderService: FileUploaderService) {}
+    constructor(
+        protected activatedRoute: ActivatedRoute,
+        private attachmentService: AttachmentService,
+        private httpClient: HttpClient,
+        private fileUploaderService: FileUploaderService,
+    ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {
@@ -121,6 +126,19 @@ export class LectureAttachmentsComponent implements OnInit {
 
     trackId(index: number, item: Attachment) {
         return item.id;
+    }
+
+    downloadAttachment(url: string) {
+        this.httpClient.get(url, { observe: 'response', responseType: 'blob' }).subscribe(response => {
+            const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', response.headers.get('filename'));
+            document.body.appendChild(link); // Required for FF
+            link.click();
+            window.URL.revokeObjectURL(url);
+        });
     }
 
     /**

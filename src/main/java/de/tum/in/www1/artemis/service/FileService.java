@@ -128,7 +128,8 @@ public class FileService {
             return Constants.COURSE_ICON_FILEPATH + filename;
         }
         if (publicPath.contains("files/attachments/lecture")) {
-            return Constants.LECTURE_ATTACHMENT_FILEPATH + filename;
+            String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
+            return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
 
         // path is unknown => cannot convert
@@ -190,7 +191,7 @@ public class FileService {
         if (targetFolder.equals(Constants.COURSE_ICON_FILEPATH)) {
             filenameBase = "CourseIcon_";
         }
-        if (targetFolder.equals(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+        if (targetFolder.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
             filenameBase = "LectureAttachment_";
         }
 
