@@ -17,8 +17,8 @@ export const enum QuizQuestionType {
 
 export interface MarkDownElement {
     text: string;
-    hint: string;
-    explanation: string;
+    hint: string | null;
+    explanation: string | null;
 }
 
 export abstract class QuizQuestion implements BaseEntity, MarkDownElement {

@@ -104,7 +104,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                             exercise.participations != null && exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !== undefined,
                     );
                     if (filteredExercise) {
-                        const participation: Participation = filteredExercise.participations.find(currentParticipation => currentParticipation.id === participationId);
+                        const participation = filteredExercise.participations.find(currentParticipation => currentParticipation.id === participationId);
                         // Just make sure we have indeed found the desired participation
                         if (participation && participation.id === participationId) {
                             this.participationDataProvider.participationStorage = participation;

@@ -51,9 +51,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSolutionModel: UMLModel;
     complaints: Complaint[];
 
-    formattedGradingInstructions: string;
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
+    formattedGradingInstructions: string | null;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
@@ -74,7 +74,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    private tutor: User;
+    private tutor: User | null;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -142,15 +142,16 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.complaintService
             .getForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForTutorDashboard>) => {
-                this.numberOfSubmissions = res.body.numberOfSubmissions;
-                this.numberOfAssessments = res.body.numberOfAssessments;
-                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
-                this.numberOfComplaints = res.body.numberOfComplaints;
-                this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
+                let stats = res.body as StatsForTutorDashboard;
+                this.numberOfSubmissions = stats.numberOfSubmissions;
+                this.numberOfAssessments = stats.numberOfAssessments;
+                this.numberOfTutorAssessments = stats.numberOfTutorAssessments;
+                this.numberOfComplaints = stats.numberOfComplaints;
+                this.numberOfTutorComplaints = stats.numberOfTutorComplaints;
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
@@ -167,7 +168,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             this.textSubmissionService
                 .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
                 .map((response: HttpResponse<TextSubmission[]>) =>
-                    response.body.map((submission: TextSubmission) => {
+                    response.body!.map((submission: TextSubmission) => {
                         if (submission.result) {
                             // reconnect some associations
                             submission.result.submission = submission;
@@ -185,7 +186,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             this.modelingSubmissionService
                 .getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
                 .map((response: HttpResponse<ModelingSubmission[]>) =>
-                    response.body.map((submission: ModelingSubmission) => {
+                    response.body!.map((submission: ModelingSubmission) => {
                         if (submission.result) {
                             // reconnect some associations
                             submission.result.submission = submission;

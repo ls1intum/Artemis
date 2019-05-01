@@ -9,11 +9,11 @@ import { map } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
-    private profileInfo: BehaviorSubject<ProfileInfo>;
+    private profileInfo: BehaviorSubject<ProfileInfo | null>;
 
     constructor(private http: HttpClient) {}
 
-    getProfileInfo(): BehaviorSubject<ProfileInfo> {
+    getProfileInfo(): BehaviorSubject<ProfileInfo | null> {
         if (!this.profileInfo) {
             this.profileInfo = new BehaviorSubject(null);
             this.http

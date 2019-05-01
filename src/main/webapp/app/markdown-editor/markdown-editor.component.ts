@@ -50,7 +50,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
-    @Output() html = new EventEmitter<string>();
+    @Output() html = new EventEmitter<string | null>();
 
     /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
@@ -80,7 +80,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() domainCommands: DomainCommand[];
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
-    @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();
+    @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -88,7 +88,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() showPreviewButton = true;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
-    previewTextAsHtml: string;
+    previewTextAsHtml: string | null;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
@@ -231,7 +231,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
             /** create empty array which
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
-            const commandTextsMappedToCommandIdentifiers = new Array<[string, DomainCommand]>();
+            const commandTextsMappedToCommandIdentifiers: [string, (DomainCommand | null)][] = [];
             /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
@@ -280,7 +280,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param text {string} from the parse function
      * @return array of the text with the domainCommand identifier
      */
-    private parseLineForDomainCommand = (text: string): [string, DomainCommand] => {
+    private parseLineForDomainCommand = (text: string): [string, (DomainCommand | null)] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [
                 domainCommand.getOpeningIdentifier(),

@@ -11,14 +11,14 @@ import * as Stomp from 'webstomp-client';
 
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements OnDestroy {
-    stompClient: Stomp.Client;
+    stompClient: Stomp.Client | null;
     subscribers: { [key: string]: Stomp.Subscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
     myListeners: { [key: string]: Observable<any> } = {};
     listenerObservers: { [key: string]: Observer<any> } = {};
     alreadyConnectedOnce = false;
-    private subscription: Subscription;
+    private subscription: Subscription | null;
     shouldReconnect = false;
     connectListeners: { (): void }[] = [];
     disconnectListeners: { (): void }[] = [];
@@ -97,7 +97,7 @@ export class JhiWebsocketService implements OnDestroy {
                     if (Object.keys(this.myListeners).length !== 0) {
                         for (const channel in this.myListeners) {
                             if (this.myListeners.hasOwnProperty(channel)) {
-                                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                                this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
                                     this.listenerObservers[channel].next(JSON.parse(data.body));
                                 });
                             }

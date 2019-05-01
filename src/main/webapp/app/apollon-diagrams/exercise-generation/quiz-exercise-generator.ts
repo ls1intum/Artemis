@@ -48,6 +48,9 @@ export async function generateDragAndDropQuizExercise(
     // Create Drag Items and Drop Locations
     for (const elementId of interactiveElements) {
         const element = elements.find(elem => elem.id === elementId);
+        if (element == null) {
+            continue;
+        }
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
         dragItems.set(element.id, dragItem);
         dropLocations.set(element.id, dropLocation);

@@ -29,7 +29,8 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
         } else {
             this.isLoading = true;
             this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
-                this.feedbackList = res.body.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
+                let body = res.body as Feedback[];
+                this.feedbackList = body.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
                 this.isLoading = false;
             });
         }

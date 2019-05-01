@@ -1,8 +1,7 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
-import { AccountService } from '../';
-import { StateStorageService } from './state-storage.service';
+import { AccountService, StateStorageService } from '../';
 import { LocalStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })
@@ -11,7 +10,7 @@ export class UserRouteAccessService implements CanActivate {
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         // save the jwt token from get parameter for lti launch requests
-        if (route.routeConfig.path === 'courses/:courseId/exercise/:exerciseId' && route.queryParams['jwt']) {
+        if (route.routeConfig!.path === 'courses/:courseId/exercise/:exerciseId' && route.queryParams['jwt']) {
             const jwt = route.queryParams['jwt'];
             this.localStorage.store('authenticationToken', jwt);
         }

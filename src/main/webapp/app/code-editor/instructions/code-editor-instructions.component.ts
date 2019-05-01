@@ -5,8 +5,7 @@ import interact from 'interactjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorService } from '../code-editor.service';
+import { CodeEditorComponent, CodeEditorService } from '../';
 import { Participation } from '../../entities/participation';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { ResultService } from '../../entities/result';

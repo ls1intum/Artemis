@@ -48,9 +48,9 @@ export class CourseListComponent implements OnInit {
                     course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
                     course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
                     const scores = this.courseScoreCalculationService.calculateTotalScores(course.exercises);
-                    course.absoluteScore = scores.get(ABSOLUTE_SCORE);
-                    course.relativeScore = scores.get(RELATIVE_SCORE);
-                    course.maxScore = scores.get(MAX_SCORE);
+                    course.absoluteScore = scores.get(ABSOLUTE_SCORE)!;
+                    course.relativeScore = scores.get(RELATIVE_SCORE)!;
+                    course.maxScore = scores.get(MAX_SCORE)!;
                 }
                 this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {

@@ -12,7 +12,7 @@ import { Course } from '../../entities/course';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-    private userIdentity: User;
+    private userIdentity: User | null;
     private authenticated = false;
     private authenticationState = new Subject<any>();
 
@@ -31,14 +31,14 @@ export class AccountService {
         return this.http.post(SERVER_API_URL + 'api/account', account, { observe: 'response' });
     }
 
-    authenticate(identity: User) {
+    authenticate(identity: User | null) {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
         this.authenticationState.next(this.userIdentity);
     }
 
     syncGroups(identity: User) {
-        this.userIdentity.groups = identity.groups;
+        this.userIdentity!.groups = identity.groups;
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -66,7 +66,8 @@ export class AccountService {
 
         return this.identity().then(
             id => {
-                return Promise.resolve(id.authorities && id.authorities.includes(authority));
+                const authorities = id!.authorities!;
+                return Promise.resolve(authorities && authorities.includes(authority));
             },
             () => {
                 return Promise.resolve(false);
@@ -82,9 +83,9 @@ export class AccountService {
         return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
     }
 
-    identity(force?: boolean): Promise<User> {
+    identity(force?: boolean): Promise<User | null> {
         if (force === true) {
-            this.userIdentity = undefined;
+            this.userIdentity = null;
         }
 
         // check and see if we have retrieved the userIdentity data from the server.
@@ -145,7 +146,7 @@ export class AccountService {
         return this.authenticationState.asObservable();
     }
 
-    getImageUrl(): string {
-        return this.isIdentityResolved() ? this.userIdentity.imageUrl : null;
+    getImageUrl(): string | null {
+        return this.isIdentityResolved() ? this.userIdentity!.imageUrl : null;
     }
 }
