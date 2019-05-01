@@ -20,6 +20,13 @@
                 "deleteTitle": "Datei löschen",
                 "deleteFileConfirm": "Sind Sie sicher, dass Sie die Datei <strong>{{filename}}</strong> löschen wollen?",
                 "delete": "Datei löschen"
+            },
+            "repoSelect": {
+                "assignmentRepo": "Assignment Repository",
+                "createAssignmentRepo": "Assignment Repository erstellen",
+                "resetAssignmentRepo": "Assignment Repository zurücksetzen",
+                "templateRepo": "Template Repository",
+                "solutionRepo": "Solution Repository"
             }
         }
     }

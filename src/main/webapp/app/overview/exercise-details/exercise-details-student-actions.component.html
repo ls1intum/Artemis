@@ -171,7 +171,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
-            routerLink="/code-editor/{{ exercise.participations[0].id }}"
+            routerLink="/code-editor/{{ exercise.id }}/{{ exercise.participations[0].id }}"
         ></button>
         <button
             jhi-exercise-action-button

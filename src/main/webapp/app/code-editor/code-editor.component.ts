@@ -1,5 +1,5 @@
 import * as $ from 'jquery';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,7 +10,7 @@ import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operator
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
-import { CourseService } from '../entities/course';
+import { CourseService, CourseExerciseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
@@ -27,6 +27,9 @@ import { Observable, throwError } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseService } from 'app/entities/exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ExerciseDataProvider } from './exercise-data-provider';
 
 @Component({
     selector: 'jhi-editor',
@@ -37,6 +40,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
     /** Dependencies as defined by the Editor component */
+    exercise: ProgrammingExercise;
     participation: Participation;
     selectedFile: string;
     paramSub: Subscription;
@@ -53,8 +57,12 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
         private participationService: ParticipationService,
+        private exerciseService: ExerciseService,
         private participationDataProvider: ParticipationDataProvider,
+        private exerciseDataProvider: ExerciseDataProvider,
+        private courseExerciseService: CourseExerciseService,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
         private resultService: ResultService,
@@ -71,26 +79,36 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
+            const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             // First: Load participation, which is needed for all successive calls
-            this.loadParticipation(participationId)
+            this.loadExercise(exerciseId)
                 .pipe(
+                    tap(exercise => {
+                        this.exercise = exercise as ProgrammingExercise;
+                        this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    }),
+                    switchMap(() => this.loadParticipation(participationId || this.exercise.templateParticipation.id)),
+                    tap(participation => (this.participation = participation)),
                     // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
                     switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
                     // Load the participation with its result and result details, so that sub components don't try to also load the details
-                    flatMap(participation => {
-                        const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
-                        return latestResult
-                            ? this.loadResultDetails(latestResult).pipe(
-                                  rxMap(feedback => {
-                                      if (feedback) {
-                                          participation.results[0].feedbacks = feedback;
-                                      }
-                                      return participation;
-                                  }),
-                              )
-                            : Observable.of(participation);
-                    }),
+                    flatMap(participation =>
+                        this.loadLatestResult(participation).pipe(
+                            switchMap(result =>
+                                result
+                                    ? this.loadResultDetails(result).pipe(
+                                          rxMap(feedback => {
+                                              if (feedback) {
+                                                  participation.results[0].feedbacks = feedback;
+                                              }
+                                              return participation;
+                                          }),
+                                      )
+                                    : Observable.of(participation),
+                            ),
+                        ),
+                    ),
                     tap(participation => (this.participation = participation)),
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
@@ -113,6 +131,45 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
+        }
+    }
+
+    loadExercise(exerciseId: number) {
+        if (this.exerciseDataProvider.exerciseDataStorage && this.exerciseDataProvider.exerciseDataStorage.id === exerciseId) {
+            return Observable.of(this.exerciseDataProvider.exerciseDataStorage);
+        } else {
+            return this.exerciseService.find(exerciseId).pipe(rxMap(({ body }) => body));
+        }
+    }
+
+    createAssignmentParticipation() {
+        return this.courseExerciseService
+            .startExercise(this.exercise.course.id, this.exercise.id)
+            .pipe(
+                tap(participation => {
+                    this.exercise.assignmentParticipation = participation;
+                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    this.selectParticipation(this.exercise.assignmentParticipation.id);
+                }),
+            )
+            .subscribe();
+    }
+
+    selectParticipation(participationId: number) {
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/${participationId}`);
+    }
+
+    selectAssignmentParticipation() {
+        if (this.exercise.assignmentParticipation) {
+            this.selectParticipation(this.exercise.assignmentParticipation.id);
+        } else {
+            this.participationService
+                .findParticipation(this.exercise.id, this.exercise.course.id)
+                .pipe(
+                    tap(({ body: assignmentParticipation }) => (this.exercise.assignmentParticipation = assignmentParticipation)),
+                    tap(() => this.selectParticipation(this.exercise.assignmentParticipation.id)),
+                )
+                .subscribe();
         }
     }
 
@@ -141,15 +198,19 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param participationId
      */
     private loadParticipation(participationId: number): Observable<Participation | null> {
-        if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
-            // We found a matching participation in the data provider, so we can avoid doing a REST call
-            return Observable.of(this.participationDataProvider.participationStorage);
-        } else {
-            return this.participationService.findWithLatestResult(participationId).pipe(
-                catchError(() => Observable.of(null)),
-                rxMap(res => res && res.body),
-            );
+        return this.participationService.findWithLatestResult(participationId).pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => res && res.body),
+        );
+    }
+
+    loadLatestResult(participation: Participation): Observable<Result | null> {
+        if (participation && participation.results) {
+            return Observable.of(participation.results.length ? participation.results[0] : null);
         }
+        return this.resultService
+            .findResultsForParticipation(this.exercise.course.id, this.exercise.id, participation.id)
+            .pipe(rxMap(({ body: results }) => (results.length ? results.reduce((acc, result) => (result > acc ? result : acc)) : null)));
     }
 
     /**

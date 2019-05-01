@@ -10,6 +10,7 @@ export const enum ProgrammingLanguage {
 export class ProgrammingExercise extends Exercise {
     public templateParticipation: Participation;
     public solutionParticipation: Participation;
+    public assignmentParticipation: Participation;
     public testRepositoryUrl: string;
     public publishBuildPlanUrl = false; // default value
     public allowOnlineEditor = false; // default value
