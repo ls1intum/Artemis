@@ -5,6 +5,7 @@ import { ExerciseType } from 'app/entities/exercise';
 
 export enum NotificationType {
     SYSTEM = 'system',
+    CONNECTION = 'connection',
     GROUP = 'group',
     SINGLE = 'single',
 }
