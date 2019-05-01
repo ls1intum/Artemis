@@ -58,7 +58,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
             if (didExerciseChange || didCourseChange) {
-                debugger
                 this.loadExercise();
             }
         });
