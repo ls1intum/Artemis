@@ -31,7 +31,7 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
 
     /**
      * Only update on connect if there is not already an active connection.
-     * This alert is temporary and disappears after 10 seconds.
+     * This alert is temporary and disappears after 5 seconds.
      **/
 
     onConnect = () => {
@@ -42,7 +42,7 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
             setTimeout(() => {
                 this.notification.type = ConnectionNotificationType.CONNECTED;
                 this.updateAlert();
-            }, 10000);
+            }, 5000);
         }
         this.connected = true;
     };
