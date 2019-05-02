@@ -9,7 +9,7 @@ import { CourseService } from '../course';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private datePipe: DatePipe,
@@ -23,8 +23,7 @@ export class ProgrammingExercisePopupService {
 
     open(component: Component, id?: number | any, courseId?: number): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 

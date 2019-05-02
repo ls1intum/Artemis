@@ -8,7 +8,7 @@ import { LtiConfiguration } from 'app/entities/lti-configuration';
 
 @Injectable({ providedIn: 'root' })
 export class ExercisePopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private modalService: NgbModal,
@@ -21,8 +21,7 @@ export class ExercisePopupService {
 
     open(component: Component, id?: number | any, lti?: boolean | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 
@@ -45,7 +44,7 @@ export class ExercisePopupService {
         });
     }
 
-    exerciseModalRef(component: Component, exercise: Exercise, ltiConfiguration: LtiConfiguration): NgbModalRef {
+    exerciseModalRef(component: Component, exercise: Exercise, ltiConfiguration: LtiConfiguration | null): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = exercise;
         modalRef.componentInstance.ltiConfiguration = ltiConfiguration;

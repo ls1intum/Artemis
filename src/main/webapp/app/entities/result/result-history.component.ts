@@ -36,7 +36,8 @@ export class ResultHistoryComponent {
             return 0;
         }
         if (result.resultString && result.resultString.indexOf('failed') !== -1) {
-            return null;
+            // TODO: Check if returning 0 is ok
+            return 0;
         }
         if (result.resultString.indexOf('of') === -1) {
             if (result.resultString.indexOf('points') === -1) {

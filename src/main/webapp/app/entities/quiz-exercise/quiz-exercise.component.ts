@@ -72,7 +72,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     quizIsOver(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart) {
-            const plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, 'seconds');
+            const plannedEndMoment = moment(quizExercise.releaseDate!).add(quizExercise.duration, 'seconds');
             return plannedEndMoment.isBefore(moment());
             // the quiz is over
         }

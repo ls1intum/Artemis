@@ -16,8 +16,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-    problemStatement: string;
-    gradingInstructions: string;
+    problemStatement: string | null;
+    gradingInstructions: string | null;
 
     constructor(
         private eventManager: JhiEventManager,

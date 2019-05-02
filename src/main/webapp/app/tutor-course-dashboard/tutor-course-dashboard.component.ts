@@ -44,7 +44,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        this.accountService.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then(user => (this.tutor = user!));
     }
 
     loadAll() {
@@ -70,10 +70,11 @@ export class TutorCourseDashboardComponent implements OnInit {
 
         this.courseService.getStatsForTutors(this.courseId).subscribe(
             (res: HttpResponse<StatsForTutorDashboard>) => {
-                this.numberOfSubmissions = res.body.numberOfSubmissions;
-                this.numberOfAssessments = res.body.numberOfAssessments;
-                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
-                this.numberOfComplaints = res.body.numberOfComplaints;
+                const status = res.body!;
+                this.numberOfSubmissions = status.numberOfSubmissions;
+                this.numberOfAssessments = status.numberOfAssessments;
+                this.numberOfTutorAssessments = status.numberOfTutorAssessments;
+                this.numberOfComplaints = status.numberOfComplaints;
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);

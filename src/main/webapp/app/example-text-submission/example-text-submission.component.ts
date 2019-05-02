@@ -173,10 +173,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
             this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
         });
 
         if (this.isNewSubmission) {
@@ -308,9 +308,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback();
+        const assessment = new Feedback(null, null, 0, null);
         assessment.reference = assessmentText;
-        assessment.credits = 0;
         this.assessments.push(assessment);
         this.checkScoreBoundaries();
     }
@@ -340,7 +339,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }
@@ -360,7 +359,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     async back() {
-        const courseId = this.exercise.course.id;
+        const courseId = this.exercise.course!.id;
 
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);

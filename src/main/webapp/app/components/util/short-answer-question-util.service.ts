@@ -15,7 +15,7 @@ export class ShortAnswerQuestionUtil {
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
      * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
      */
-    solveShortAnswer(question: ShortAnswerQuestion, mappings: ShortAnswerMapping[]): ShortAnswerMapping[] {
+    solveShortAnswer(question: ShortAnswerQuestion, mappings: ShortAnswerMapping[] | null): ShortAnswerMapping[] {
         if (!question.correctMappings) {
             return [];
         }
@@ -234,7 +234,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     isSameSpot(a: ShortAnswerSpot, b: ShortAnswerSpot): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 
     /**
@@ -245,7 +245,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     isSameSolution(a: ShortAnswerSolution, b: ShortAnswerSolution): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 
     /**

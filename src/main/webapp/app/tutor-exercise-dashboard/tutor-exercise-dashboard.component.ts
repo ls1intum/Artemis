@@ -103,7 +103,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
 
                 if (this.exercise.type === this.ExerciseType_TEXT) {
                     this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
@@ -146,7 +146,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForTutorDashboard>) => {
-                let stats = res.body as StatsForTutorDashboard;
+                const stats = res.body!;
                 this.numberOfSubmissions = stats.numberOfSubmissions;
                 this.numberOfAssessments = stats.numberOfAssessments;
                 this.numberOfTutorAssessments = stats.numberOfTutorAssessments;
@@ -294,6 +294,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
             queryParams.showBackButton = true;
         }
+        // TODO: Make sure route is set
         this.router.navigate([route], { queryParams });
     }
 

@@ -6,7 +6,7 @@ import { User } from 'app/core';
 export class StudentQuestionAnswer implements BaseEntity {
     public id: number;
     public answerText: string;
-    public answerDate: Moment;
+    public answerDate: Moment | null;
     public verified = false; // default value
     public author: User;
     public question: StudentQuestion;

@@ -57,7 +57,7 @@ export class TextSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = this.convertItemFromServer(res.body);
+        const body: TextSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 

@@ -3,7 +3,7 @@ import { differenceWith as _differenceWith } from 'lodash';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
 import { TextChange } from './text-change.model';
 
-type sessionObj = [string, { code: string; unsavedChanges: boolean; errors: AnnotationArray }];
+type sessionObj = [string, { code?: string; unsavedChanges: boolean; errors: AnnotationArray | null }];
 
 /**
  * Wrapper class for managing editor file sessions.
@@ -33,7 +33,7 @@ export class EditorFileSession {
     }
 
     public updateErrorPositions(fileName: string, change: TextChange) {
-        this.fileSession = this.fileSession.map(([f, session]): sessionObj => [f, f === fileName ? { ...session, errors: session.errors.update(change) } : session]);
+        this.fileSession = this.fileSession.map(([f, session]): sessionObj => [f, f === fileName ? { ...session, errors: session.errors!.update(change) } : session]);
     }
 
     public setCode(fileName: string, code: string) {

@@ -65,7 +65,7 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, null);
+        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 
     trackCourseById(index: number, item: Course) {

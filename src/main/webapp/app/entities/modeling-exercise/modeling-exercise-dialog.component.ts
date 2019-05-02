@@ -47,9 +47,9 @@ export class ModelingExerciseDialogComponent implements OnInit {
             (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course.id).subscribe(
+        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -84,7 +84,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: ModelingExercise) {

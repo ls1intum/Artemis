@@ -81,7 +81,7 @@ export class ResultService {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-                result.participation = this.convertParticipationDateFromServer(result.participation);
+                result.participation = this.convertParticipationDateFromServer(result.participation!);
             });
         }
         return res;
@@ -90,7 +90,7 @@ export class ResultService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation!);
         }
         return res;
     }

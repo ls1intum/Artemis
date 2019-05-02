@@ -166,7 +166,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback();
+        const assessment = new Feedback(null, null, 0, null);
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.assessments.push(assessment);
@@ -239,7 +239,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.exercise = <TextExercise>this.participation.exercise;
 
         this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
@@ -273,7 +273,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }

@@ -64,24 +64,26 @@ export class ExerciseService {
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInDays, 'day')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInHours, 'hours')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
