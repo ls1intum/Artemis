@@ -238,11 +238,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     groupedExercises[index].scores.data.push(participationScore);
                     groupedExercises[index].missedScores.data.push(missedScore);
                     groupedExercises[index].names.push(exercise.title);
-                    groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
-                    if (exercise.maxScore) {
-                        groupedExercises[index].missedScores.tooltips.push(
-                            `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
-                        );
+                    if (this.absoluteResult(participationResult)) {
+                        groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
+                        if (exercise.maxScore) {
+                            groupedExercises[index].missedScores.tooltips.push(
+                                `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
+                            );
+                        }
+                    } else {
+                        if (participationScore > 50) {
+                            groupedExercises[index].scores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
+                        } else {
+                            groupedExercises[index].missedScores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
+                        }
                     }
                 }
             });
