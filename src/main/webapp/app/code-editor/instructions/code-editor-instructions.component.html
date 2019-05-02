@@ -3,8 +3,10 @@
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <fa-icon *ngIf="editableInstructions && !unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
+            <fa-icon *ngIf="editableInstructions && unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
-            <button *ngIf="editableInstructions" (click)="saveInstructions($event)" class="btn btn-sm btn-light">
+            <button *ngIf="editableInstructions" [disabled]="savingInstructions || !unsavedChanges" (click)="saveInstructions($event)" class="btn btn-sm btn-light">
                 <fa-icon *ngIf="!savingInstructions" icon="save" class="mr-2"></fa-icon>
                 <fa-icon *ngIf="savingInstructions" icon="circle-notch" [spin]="true" class="mr-2"></fa-icon>
                 <span jhiTranslate="entity.action.save"></span>
@@ -14,6 +16,7 @@
     <jhi-programming-exercise-instructions
         *ngIf="!editableInstructions; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
+        [problemStatement]="problemStatement"
         [exercise]="participation.exercise"
         [participation]="participation"
         [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
@@ -21,7 +24,7 @@
     >
     </jhi-programming-exercise-instructions>
     <ng-template #markdownEditorInstructions>
-        <jhi-markdown-editor [enableResize]="true" [(markdown)]="problemStatement" [selectedTab]="EditorTab.PREVIEW">
+        <jhi-markdown-editor [enableResize]="true" [markdown]="problemStatement" (markdownChange)="onProblemStatementEditorUpdate($event)" [selectedTab]="EditorTab.PREVIEW">
             <jhi-programming-exercise-instructions
                 #preview
                 [exercise]="exercise"

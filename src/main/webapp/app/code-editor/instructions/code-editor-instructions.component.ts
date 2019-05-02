@@ -41,6 +41,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
 
     // Only relevant if instructions are editable
     savingInstructions = false;
+    unsavedChanges = false;
 
     constructor(
         private parent: CodeEditorComponent,
@@ -88,6 +89,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         }
     }
 
+    onProblemStatementEditorUpdate(newProblemStatement: string) {
+        if (newProblemStatement !== this.problemStatement) {
+            this.unsavedChanges = true;
+            this.problemStatement = newProblemStatement;
+        }
+    }
+
     saveInstructions($event: any) {
         $event.stopPropagation();
         const exercise = { ...this.exercise, problemStatement: this.problemStatement };
@@ -97,6 +105,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
             .pipe(
                 tap(() => {
                     this.savingInstructions = false;
+                    this.unsavedChanges = false;
                     this.exercise = exercise;
                 }),
             )

@@ -2,10 +2,9 @@ import { ComponentCanDeactivate } from 'app/shared';
 import { HostListener, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subscription } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { CodeEditorComponent } from './';
-import { ParticipationDataProvider } from 'app/course-list';
 import { ParticipationService, Participation } from 'app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
 
@@ -13,12 +12,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
     paramSub: Subscription;
 
-    constructor(
-        protected participationService: ParticipationService,
-        private participationDataProvider: ParticipationDataProvider,
-        private translateService: TranslateService,
-        protected route: ActivatedRoute,
-    ) {}
+    constructor(protected participationService: ParticipationService, private translateService: TranslateService, protected route: ActivatedRoute) {}
 
     /**
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
@@ -40,15 +34,10 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * @param participationId
      */
     protected loadParticipation(participationId: number): Observable<Participation | null> {
-        if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === participationId) {
-            return Observable.of(this.participationDataProvider.participationStorage);
-        } else {
-            return this.participationService.findWithLatestResult(participationId).pipe(
-                catchError(() => Observable.of(null)),
-                map(res => res && res.body),
-                tap(participation => (this.participationDataProvider.participationStorage = participation)),
-            );
-        }
+        return this.participationService.findWithLatestResult(participationId).pipe(
+            catchError(() => Observable.of(null)),
+            map(res => res && res.body),
+        );
     }
 
     ngOnDestroy() {

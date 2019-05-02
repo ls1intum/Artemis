@@ -3,7 +3,6 @@ import { tap } from 'rxjs/operators';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ParticipationDataProvider } from 'app/course-list';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -13,8 +12,8 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class CodeEditorStudentComponent extends CodeEditorContainer implements OnInit {
     participation: Participation;
-    constructor(participationService: ParticipationService, translateService: TranslateService, participationDataProvider: ParticipationDataProvider, route: ActivatedRoute) {
-        super(participationService, participationDataProvider, translateService, route);
+    constructor(participationService: ParticipationService, translateService: TranslateService, route: ActivatedRoute) {
+        super(participationService, translateService, route);
     }
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {

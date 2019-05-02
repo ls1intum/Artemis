@@ -60,8 +60,9 @@
             </jhi-code-editor-ace>
         </div>
 
-        <div *ngIf="exercise" class="editor-sidebar-right">
-            <jhi-code-editor-instructions [participation]="participation" [exercise]="exercise" [editableInstructions]="editableInstructions"> </jhi-code-editor-instructions>
+        <div *ngIf="participation?.exercise" class="editor-sidebar-right">
+            <jhi-code-editor-instructions [participation]="participation" [exercise]="participation.exercise" [editableInstructions]="editableInstructions">
+            </jhi-code-editor-instructions>
         </div>
     </div>
 

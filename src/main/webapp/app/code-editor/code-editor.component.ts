@@ -39,8 +39,6 @@ export class CodeEditorComponent implements OnChanges {
     @Output()
     participationChange = new EventEmitter<Participation>();
     @Input()
-    readonly exercise: ProgrammingExercise;
-    @Input()
     readonly editableInstructions = false;
     selectedFile: string;
     paramSub: Subscription;
@@ -84,8 +82,18 @@ export class CodeEditorComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
             this.isInitial = true;
+            // Reset all variables
+            this.selectedFile = undefined;
+            this.repositoryFiles = undefined;
+            this.unsavedFiles = [];
+            this.errorFiles = [];
+            this.buildLogErrors = undefined;
+            this.session = undefined;
+            this.editorState = EditorState.CLEAN;
+            this.commitState = CommitState.UNDEFINED;
+            this.isBuilding = false;
         }
-        if (this.isInitial && this.participation && this.exercise) {
+        if (this.isInitial && this.participation) {
             this.isInitial = false;
             Observable.of(this.participation)
                 .flatMap(participation =>
@@ -145,7 +153,7 @@ export class CodeEditorComponent implements OnChanges {
             return Observable.of(participation.results.length ? participation.results[0] : null);
         }
         return this.resultService
-            .findResultsForParticipation(this.exercise.course.id, this.exercise.id, participation.id)
+            .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, participation.id)
             .pipe(rxMap(({ body: results }) => (results.length ? results.reduce((acc, result) => (result > acc ? result : acc)) : null)));
     }
 

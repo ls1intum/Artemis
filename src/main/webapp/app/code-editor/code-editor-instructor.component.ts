@@ -3,12 +3,10 @@ import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseDataProvider } from './exercise-data-provider';
 import { ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
-import { ParticipationDataProvider } from 'app/course-list';
 import { CodeEditorContainer } from './code-editor-container.component';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -43,15 +41,13 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
 
     constructor(
         private router: Router,
-        private exerciseDataProvider: ExerciseDataProvider,
         private exerciseService: ExerciseService,
         private courseExerciseService: CourseExerciseService,
         participationService: ParticipationService,
         translateService: TranslateService,
-        participationDataProvider: ParticipationDataProvider,
         route: ActivatedRoute,
     ) {
-        super(participationService, participationDataProvider, translateService, route);
+        super(participationService, translateService, route);
     }
 
     /**
@@ -80,14 +76,20 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
                             return this.loadParticipation(exercise.templateParticipation.id);
                         }
                     }),
-                    tap(participation => (this.selectedParticipation = participation)),
+                    tap(participation => {
+                        const newParticipation = { ...participation, exercise: this.exercise };
+                        this.selectedParticipation = newParticipation;
+                    }),
                     switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
                     switchMap(() => {
-                        if (!this.exercise.assignmentParticipation) {
+                        if (!this.exercise.participations || !this.exercise.participations.length) {
                             return this.loadAssignmentParticipation();
                         } else {
                             return Observable.of(null);
                         }
+                    }),
+                    tap(participation => {
+                        this.exercise.participations = participation ? [participation] : [];
                     }),
                 )
                 .subscribe();
@@ -99,19 +101,14 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
      * @param exerciseId
      */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        if (this.exerciseDataProvider.exerciseDataStorage && this.exerciseDataProvider.exerciseDataStorage.id === exerciseId) {
-            return Observable.of(this.exerciseDataProvider.exerciseDataStorage);
-        } else {
-            this.loadingState = LOADING_STATE.LOADING_EXERCISE;
-            return this.exerciseService.find(exerciseId).pipe(
-                catchError(() => Observable.of(null)),
-                map(({ body }) => body),
-                tap(exercise => {
-                    this.exerciseDataProvider.exerciseDataStorage = exercise as ProgrammingExercise;
-                    this.loadingState = LOADING_STATE.NOT_LOADING;
-                }),
-            ) as Observable<ProgrammingExercise>;
-        }
+        this.loadingState = LOADING_STATE.LOADING_EXERCISE;
+        return this.exerciseService.find(exerciseId).pipe(
+            catchError(() => Observable.of(null)),
+            map(({ body }) => body),
+            tap(exercise => {
+                this.loadingState = LOADING_STATE.NOT_LOADING;
+            }),
+        ) as Observable<ProgrammingExercise>;
     }
 
     /**
@@ -121,10 +118,6 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
         return this.participationService.findParticipation(this.exercise.course.id, this.exercise.id).pipe(
             catchError(() => Observable.of(null)),
             map(({ body }) => body),
-            tap(participation => {
-                this.exercise.assignmentParticipation = participation;
-                this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-            }),
             catchError(() => {
                 return Observable.of(null);
             }),
@@ -151,7 +144,7 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
 
     selectAssignmentParticipation() {
         this.selectedRepository = REPOSITORY.ASSIGNMENT;
-        this.selectParticipation(this.exercise.assignmentParticipation.id);
+        this.selectParticipation(this.exercise.participations[0].id);
     }
 
     /**
@@ -163,9 +156,7 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
             .startExercise(this.exercise.course.id, this.exercise.id)
             .pipe(
                 tap(participation => {
-                    this.loadingState = LOADING_STATE.NOT_LOADING;
-                    this.exercise.assignmentParticipation = participation;
-                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    this.exercise.participations = [participation];
                     this.loadingState = LOADING_STATE.NOT_LOADING;
                 }),
             )
@@ -178,14 +169,13 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
     resetAssignmentParticipation() {
         this.loadingState = LOADING_STATE.RESETTING_ASSIGNMENT_REPO;
         this.participationService
-            .delete(this.exercise.assignmentParticipation.id)
+            .delete(this.exercise.participations[0].id)
             .pipe(
                 tap(() => {
                     if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
                         this.selectTemplateParticipation();
                     }
-                    this.exercise.assignmentParticipation = undefined;
-                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    this.exercise.participations = [];
                     this.loadingState = LOADING_STATE.NOT_LOADING;
                 }),
             )

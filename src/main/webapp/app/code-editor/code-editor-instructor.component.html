@@ -22,7 +22,13 @@
                     Solution Repository
                 </button>
                 <button
-                    [disabled]="loadingState === 'CREATING_ASSIGNMENT_REPO' || loadingState === 'RESETTING_ASSIGNMENT_REPO' || !exercise || !exercise.assignmentParticipation"
+                    [disabled]="
+                        loadingState === 'CREATING_ASSIGNMENT_REPO' ||
+                        loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
+                        !exercise ||
+                        !exercise.participations ||
+                        !exercise.participations.length
+                    "
                     (click)="selectAssignmentParticipation()"
                     ngbDropdownItem
                     [style.background-color]="selectedRepository === 'ASSIGNMENT' ? '#3e8acc' : 'transparent'"
@@ -35,17 +41,29 @@
         <div>
             <button
                 (click)="createAssignmentParticipation()"
-                [disabled]="loadingState === 'CREATING_ASSIGNMENT_REPO' || loadingState === 'RESETTING_ASSIGNMENT_REPO' || (exercise && exercise.assignmentParticipation)"
+                [disabled]="
+                    loadingState === 'CREATING_ASSIGNMENT_REPO' ||
+                    loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
+                    (exercise && exercise.participations && exercise.participations.length)
+                "
                 class="btn btn-primary mr-2"
             >
-                <fa-icon icon="plus" class="text-white mr-2"></fa-icon><span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
+                <fa-icon *ngIf="loadingState !== 'CREATING_ASSIGNMENT_REPO'" icon="plus" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState === 'CREATING_ASSIGNMENT_REPO'" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
+                <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
                 (click)="resetAssignmentParticipation()"
-                [disabled]="loadingState === 'CREATING_ASSIGNMENT_REPO' || loadingState === 'RESETTING_ASSIGNMENT_REPO' || (exercise && !exercise.assignmentParticipation)"
+                [disabled]="
+                    loadingState === 'CREATING_ASSIGNMENT_REPO' ||
+                    loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
+                    (exercise && (!exercise.participations || !exercise.participations.length))
+                "
                 class="btn btn-danger"
             >
-                <fa-icon icon="times" class="text-white mr-2"></fa-icon><span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                <fa-icon *ngIf="loadingState !== 'RESETTING_ASSIGNMENT_REPO'" icon="times" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState === 'RESETTING_ASSIGNMENT_REPO'" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
+                <span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
             </button>
         </div>
     </div>
@@ -53,4 +71,4 @@
         <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Exercise</span></div>
     </ng-template>
 </div>
-<jhi-code-editor [(participation)]="selectedParticipation" [exercise]="exercise" [editableInstructions]="true"></jhi-code-editor>
+<jhi-code-editor [(participation)]="selectedParticipation" [editableInstructions]="true"></jhi-code-editor>
