@@ -35,6 +35,10 @@ export class ComplaintService {
             .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
     }
 
+    getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
+        return this.http.get<number>(`${this.resourceUrl}/allowed/${courseId}`);
+    }
+
     updateComplaint(complaint: Complaint) {
         const copy = this.convertDateFromClient(complaint);
         return this.http.put<Complaint>(`${this.resourceUrl}/${complaint.id}`, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));

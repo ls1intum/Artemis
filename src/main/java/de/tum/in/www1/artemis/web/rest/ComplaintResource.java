@@ -11,6 +11,7 @@ import java.util.Optional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -49,11 +50,16 @@ public class ComplaintResource {
 
     private ExerciseService exerciseService;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+    private UserService userService;
+
+    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository,
+                             AuthorizationCheckService authCheckService, ExerciseService exerciseService,
+                             UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.userService = userService;
     }
 
     /**
@@ -134,6 +140,23 @@ public class ComplaintResource {
             return ResponseEntity.ok(complaint.get());
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Get /complaints/not-accepted/:id get the number of complaints that a student is still allowed to submit in the
+     * given course. It is determined by the max. complaint limit and the current number of open or rejected complaints
+     * of the student in the course.
+     *
+     * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
+     */
+    // TODO CZ: adjust url? adjust/remove endpoint?
+    @GetMapping("/complaints/allowed/{courseId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
+        long unacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
+        return ResponseEntity.ok(Math.max( MAX_COMPLAINT_NUMBER_PER_STUDENT - unacceptedComplaints, 0));
     }
 
     /**
