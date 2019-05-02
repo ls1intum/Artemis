@@ -34,8 +34,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 export class CodeEditorComponent implements OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
-    /** Dependencies as defined by the Editor component */
-    participationValue: Participation;
     @Output()
     participationChange = new EventEmitter<Participation>();
     @Input()
@@ -54,11 +52,12 @@ export class CodeEditorComponent implements OnChanges {
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
 
+    /** Dependencies as defined by the Editor component */
+    participationValue: Participation;
     @Input()
     get participation() {
         return this.participationValue;
     }
-
     set participation(participation: Participation) {
         this.participationValue = participation;
         this.participationChange.emit(participation);

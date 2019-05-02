@@ -107,9 +107,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** Resizable constants **/
     @Input()
+    defaultHeight = MarkdownEditorHeight.SMALL;
+    @Input()
     enableResize = false;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input()
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
@@ -164,7 +167,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if (this.enableResize) {
             this.setupResizable();
         }
-        this.tabs.select(this.selectedTab);
+        // Set the selected tab, wait a tick to not conflict with the rendering process
+        setTimeout(() => this.tabs.select(this.selectedTab), 0);
     }
 
     /**
@@ -187,7 +191,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
