@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -192,6 +193,11 @@ public class ModelingSubmissionResource {
         }
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
         }
 
         ModelingSubmission modelingSubmission;
