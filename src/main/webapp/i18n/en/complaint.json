@@ -13,6 +13,7 @@
             "created": "Your complaint has been submitted!",
             "moreInfo": "Complain or ask for more feedback",
             "moreInfo_temp": "Complain",
+            "complaintNotAllowedTooltip": "Currently not allowed: complaint limit reached or assessment is older than one week",
             "responseExists": "Response to your complaint of",
             "hint": "Scroll down to review the complaint",
             "accepted": "Accepted",

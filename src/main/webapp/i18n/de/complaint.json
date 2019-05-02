@@ -13,6 +13,7 @@
             "created": "Ihre Beschwerde wurde eingereicht!",
             "moreInfo": "Beschwerde einreichen oder mehr Feedback anfordern",
             "moreInfo_temp": "Beschwerde einreichen",
+            "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Bewertung ist älter als eine Woche",
             "responseExists": "Antwort auf ihre Beschwerde vom ",
             "hint": "Scrollen Sie nach unten um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
