@@ -7,11 +7,11 @@
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
-            <span *ngIf="!isAuthorized  && !includeComplaint" class="text-danger ml-3" style="font-size: 65%"
+            <span *ngIf="!isAuthorized  && !hasComplaint" class="text-danger ml-3" style="font-size: 65%"
                   jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
                 Assessment locked by another user!
             </span>
-            <span *ngIf="result?.assessor?.id === userId && !includeComplaint" class="text-danger ml-3" style="font-size: 65%"
+            <span *ngIf="result?.assessor?.id === userId && !hasComplaint" class="text-danger ml-3" style="font-size: 65%"
                   jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
                 You have the lock for this assessment
             </span>
@@ -26,16 +26,16 @@
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
                 <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
             </div>
-            <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated || includeComplaint">
+            <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated || hasComplaint">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
-            <button class="btn btn-success" *ngIf="!includeComplaint" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
+            <button class="btn btn-success" *ngIf="!hasComplaint" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
         </div>
     </h2>
-    <div class="alert alert-info" *ngIf="includeComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
+    <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
     <div class="editor-container">
@@ -51,7 +51,7 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
-<div class="mt-3" *ngIf="includeComplaint && result && result.id">
+<div class="mt-3" *ngIf="hasComplaint && result && result.id">
     <h2 class="row-container" jhiTranslate="modelingAssessmentEditor.reviewComplaint">
         Review Complaint
     </h2>

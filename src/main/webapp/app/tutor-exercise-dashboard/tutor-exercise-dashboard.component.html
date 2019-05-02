@@ -247,13 +247,13 @@
                         </td>
                         <td>
                             <button *ngIf="complaint.accepted === undefined; else continueButton" class="btn btn-success btn-sm"
-                                (click)="openAssessmentEditor(complaint.result.submission.id, false, true)"
+                                (click)="openAssessmentEditor(complaint.result.submission.id, false)"
                             >
                                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                 {{ 'arTeMiSApp.tutorExerciseDashboard.evaluateComplaint' | translate }}
                             </button>
                             <ng-template #continueButton>
-                                <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint.result.submission.id, false, true)">
+                                <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint.result.submission.id, false)">
                                     <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                     {{ 'arTeMiSApp.tutorExerciseDashboard.showComplaint' | translate }}
                                 </button>

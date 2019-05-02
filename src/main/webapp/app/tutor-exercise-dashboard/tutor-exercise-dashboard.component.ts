@@ -275,7 +275,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditor(submissionId: number, isNewAssessment = false, includeComplaint = false) {
+    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
@@ -293,7 +293,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
             queryParams.showBackButton = true;
         }
-        queryParams.includeComplaint = includeComplaint;
         this.router.navigate([route], { queryParams });
     }
 

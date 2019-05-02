@@ -35,7 +35,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAuthorized = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
-    includeComplaint: boolean;
+    hasComplaint: boolean;
     canOverride = false;
 
     constructor(
@@ -69,7 +69,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         });
         this.route.queryParams.subscribe(params => {
             this.showBackButton = params['showBackButton'] === 'true';
-            this.includeComplaint = params['includeComplaint'] === 'true';
         });
     }
 
@@ -111,6 +110,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
+        this.hasComplaint = this.result.hasComplaint;
         this.localFeedbacks = this.result.feedbacks;
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);

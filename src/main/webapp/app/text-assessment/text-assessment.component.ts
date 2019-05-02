@@ -38,7 +38,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     accountId = 0;
     busy = true;
     showResult = true;
-    includeComplaint = false;
+    hasComplaint = false;
     complaint: Complaint;
     notFound = false;
 
@@ -75,9 +75,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionValue = this.route.snapshot.paramMap.get('submissionId');
-        this.route.queryParams.subscribe(params => {
-            this.includeComplaint = params['includeComplaint'] === 'true';
-        });
 
         if (submissionValue === 'new') {
             this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
@@ -245,6 +242,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
+        this.hasComplaint = this.result.hasComplaint;
 
         this.assessments = this.result.feedbacks || [];
         this.busy = false;
