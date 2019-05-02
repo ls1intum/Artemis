@@ -43,6 +43,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdown: Remarkable;
 
     @Input()
+    public problemStatement: string;
+    @Input()
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
@@ -110,7 +112,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         }
                     }),
                     filter(problemStatement => !!problemStatement),
-                    tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
+                    tap(problemStatement => (this.problemStatement = problemStatement)),
                     switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
                     map(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
@@ -120,7 +122,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
-        } else if (problemStatementHasChanged(changes)) {
+        } else if (changes.problemStatement && changes.problemStatement.previousValue !== this.problemStatement) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.updateMarkdown();
@@ -165,7 +167,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.plantUMLs = {};
-        this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+        this.renderedMarkdown = this.markdown.render(this.problemStatement);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
@@ -215,8 +217,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
     loadInstructions(): Observable<string> {
-        if (this.exercise.problemStatement) {
-            return Observable.of(this.exercise.problemStatement);
+        if (this.problemStatement) {
+            return Observable.of(this.problemStatement);
         } else {
             let participationId: number;
             if (this.showTemplatePartipation && this.exercise.templateParticipation) {

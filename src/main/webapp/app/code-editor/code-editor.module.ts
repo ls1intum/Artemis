@@ -28,6 +28,7 @@ import { CodeEditorStatusComponent } from './status/code-editor-status.component
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -36,6 +37,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSSharedModule,
         AceEditorModule,
         ArTEMiSResultModule,
+        ArTEMiSMarkdownEditorModule,
         MomentModule,
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),

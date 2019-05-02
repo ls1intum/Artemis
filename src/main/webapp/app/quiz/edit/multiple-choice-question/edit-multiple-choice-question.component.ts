@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetect
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { MarkdownEditorComponent, EditorTab } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CorrectOptionCommand, ExplanationCommand, IncorrectOptionCommand, DomainCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
@@ -34,7 +34,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean {
-        return this.markdownEditor.previewMode;
+        return this.markdownEditor.selectedTab === EditorTab.PREVIEW;
     }
     showMultipleChoiceQuestionPreview = true;
 

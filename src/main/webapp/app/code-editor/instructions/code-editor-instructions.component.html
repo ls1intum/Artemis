@@ -4,16 +4,34 @@
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
+            <button *ngIf="editableInstructions" (click)="saveInstructions($event)" class="btn btn-sm btn-light">
+                <fa-icon *ngIf="!savingInstructions" icon="save" class="mr-2"></fa-icon>
+                <fa-icon *ngIf="savingInstructions" icon="circle-notch" [spin]="true" class="mr-2"></fa-icon>
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
         </h3>
     </div>
     <jhi-programming-exercise-instructions
+        *ngIf="!editableInstructions; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
-        [exercise]="participation?.exercise"
+        [exercise]="participation.exercise"
         [participation]="participation"
         [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
         [ngStyle]="{ overflow: 'inherit' }"
     >
     </jhi-programming-exercise-instructions>
+    <ng-template #markdownEditorInstructions>
+        <jhi-markdown-editor [enableResize]="true" [(markdown)]="problemStatement" [selectedTab]="EditorTab.PREVIEW">
+            <jhi-programming-exercise-instructions
+                #preview
+                [exercise]="exercise"
+                [problemStatement]="problemStatement"
+                [participation]="participation"
+                [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
+                [ngStyle]="{ overflow: 'inherit' }"
+            ></jhi-programming-exercise-instructions>
+        </jhi-markdown-editor>
+    </ng-template>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>

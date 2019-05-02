@@ -34,13 +34,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 export class CodeEditorComponent implements OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
 
-    isInitial = true;
     /** Dependencies as defined by the Editor component */
     participationValue: Participation;
     @Output()
     participationChange = new EventEmitter<Participation>();
     @Input()
     readonly exercise: ProgrammingExercise;
+    @Input()
+    readonly editableInstructions = false;
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
@@ -50,6 +51,7 @@ export class CodeEditorComponent implements OnChanges {
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Code Editor State Booleans **/
+    isInitial = true;
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
     isBuilding = false;

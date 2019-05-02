@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, OnChanges, Component, Input, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { tap } from 'rxjs/operators';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
@@ -11,14 +12,19 @@ import { Participation } from '../../entities/participation';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
+import { hasExerciseChanged } from 'app/entities/exercise';
+import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { EditorTab } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit {
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
+    EditorTab = EditorTab;
     haveDetailsBeenLoaded = false;
+    problemStatement: string;
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
@@ -28,8 +34,20 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
 
     @Input()
     participation: Participation;
+    @Input()
+    exercise: ProgrammingExercise;
+    @Input()
+    editableInstructions = false;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
+    // Only relevant if instructions are editable
+    savingInstructions = false;
+
+    constructor(
+        private parent: CodeEditorComponent,
+        private $window: WindowRef,
+        public artemisMarkdown: ArtemisMarkdown,
+        private programmingExerciseService: ProgrammingExerciseService,
+    ) {}
 
     /**
      * @function ngAfterViewInit
@@ -62,6 +80,27 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
                 // Update element width
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (hasExerciseChanged(changes)) {
+            this.problemStatement = this.exercise.problemStatement;
+        }
+    }
+
+    saveInstructions($event: any) {
+        $event.stopPropagation();
+        const exercise = { ...this.exercise, problemStatement: this.problemStatement };
+        this.savingInstructions = true;
+        this.programmingExerciseService
+            .update(exercise)
+            .pipe(
+                tap(() => {
+                    this.savingInstructions = false;
+                    this.exercise = exercise;
+                }),
+            )
+            .subscribe();
     }
 
     /**

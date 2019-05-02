@@ -24,11 +24,17 @@ import {
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
+import { NgbTabset } from '@ng-bootstrap/ng-bootstrap';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
+}
+
+export enum EditorTab {
+    EDIT = 'editor_edit',
+    PREVIEW = 'editor_preview',
 }
 
 @Component({
@@ -46,9 +52,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
         mode: 'markdown',
     };
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild('tabs') tabs: NgbTabset;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() markdown: string;
+    @Input()
+    markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
 
@@ -91,7 +99,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     previewTextAsHtml: string;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
-    previewMode = false;
+    @Input() selectedTab = EditorTab.EDIT;
 
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
@@ -156,6 +164,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if (this.enableResize) {
             this.setupResizable();
         }
+        this.tabs.select(this.selectedTab);
     }
 
     /**
@@ -301,9 +310,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Toggle the preview in the template and parse the text
      */
     togglePreview(event: any): void {
-        this.previewMode = !this.previewMode;
+        this.selectedTab = event.activeId;
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
-        if (event.activeId === 'editor_edit') {
+        if (event.activeId === EditorTab.EDIT) {
             this.parse();
         }
     }
