@@ -169,7 +169,7 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
     resetAssignmentParticipation() {
         this.loadingState = LOADING_STATE.RESETTING_ASSIGNMENT_REPO;
         this.participationService
-            .delete(this.exercise.participations[0].id)
+            .delete(this.exercise.participations[0].id, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 tap(() => {
                     if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
