@@ -18,16 +18,28 @@ enum REPOSITORY {
     SOLUTION = 'SOLUTION',
 }
 
+enum LOADING_STATE {
+    NOT_LOADING = 'NOT_LOADING',
+    LOADING_EXERCISE = 'LOADING_EXERCISE',
+    CREATING_ASSIGNMENT_REPO = 'CREATING_ASSIGNMENT_REPO',
+    RESETTING_ASSIGNMENT_REPO = 'RESETTING_ASSIGNMENT_REPO',
+}
+
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor.component.html',
     providers: [],
 })
 export class CodeEditorInstructorComponent extends CodeEditorContainer implements OnInit {
+    REPOSITORY = REPOSITORY;
+    LOADING_STATE = LOADING_STATE;
+
     exercise: ProgrammingExercise;
     selectedParticipation: Participation;
     selectedRepository: REPOSITORY;
     paramSub: Subscription;
+
+    loadingState = LOADING_STATE.NOT_LOADING;
 
     constructor(
         private router: Router,
@@ -42,6 +54,10 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
         super(participationService, participationDataProvider, translateService, route);
     }
 
+    /**
+     * On init load the exercise and the selected participation.
+     * Checks what kind of participation is selected (template, solution, assignment) to show this information in the ui.
+     */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const exerciseId = Number(params['exerciseId']);
@@ -68,15 +84,7 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
                     switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
                     switchMap(() => {
                         if (!this.exercise.assignmentParticipation) {
-                            return this.participationService.findParticipation(this.exercise.course.id, this.exercise.id).pipe(
-                                tap(({ body: participation }) => {
-                                    this.exercise.assignmentParticipation = participation;
-                                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-                                }),
-                                catchError(() => {
-                                    return Observable.of(null);
-                                }),
-                            );
+                            return this.loadAssignmentParticipation();
                         } else {
                             return Observable.of(null);
                         }
@@ -86,45 +94,47 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
         });
     }
 
+    /**
+     * Try to recover the exercise from exercise storage, otherwise load the exercise from server.
+     * @param exerciseId
+     */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         if (this.exerciseDataProvider.exerciseDataStorage && this.exerciseDataProvider.exerciseDataStorage.id === exerciseId) {
             return Observable.of(this.exerciseDataProvider.exerciseDataStorage);
         } else {
+            this.loadingState = LOADING_STATE.LOADING_EXERCISE;
             return this.exerciseService.find(exerciseId).pipe(
+                catchError(() => Observable.of(null)),
                 map(({ body }) => body),
-                tap(exercise => (this.exerciseDataProvider.exerciseDataStorage = exercise as ProgrammingExercise)),
+                tap(exercise => {
+                    this.exerciseDataProvider.exerciseDataStorage = exercise as ProgrammingExercise;
+                    this.loadingState = LOADING_STATE.NOT_LOADING;
+                }),
             ) as Observable<ProgrammingExercise>;
         }
     }
 
-    createAssignmentParticipation() {
-        this.courseExerciseService
-            .startExercise(this.exercise.course.id, this.exercise.id)
-            .pipe(
-                tap(participation => {
-                    this.exercise.assignmentParticipation = participation;
-                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-                    this.selectParticipation(this.exercise.assignmentParticipation.id);
-                }),
-            )
-            .subscribe();
+    /**
+     * Load the assignment participation and assign it to the exercise.
+     */
+    loadAssignmentParticipation() {
+        return this.participationService.findParticipation(this.exercise.course.id, this.exercise.id).pipe(
+            catchError(() => Observable.of(null)),
+            map(({ body }) => body),
+            tap(participation => {
+                this.exercise.assignmentParticipation = participation;
+                this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+            }),
+            catchError(() => {
+                return Observable.of(null);
+            }),
+        );
     }
 
-    resetAssignmentParticipation() {
-        this.participationService
-            .delete(this.exercise.assignmentParticipation.id)
-            .pipe(
-                tap(() => {
-                    if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
-                        this.selectTemplateParticipation();
-                    }
-                    this.exercise.assignmentParticipation = undefined;
-                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
-                }),
-            )
-            .subscribe();
-    }
-
+    /**
+     * Navigate to selected participation. This triggers the paramSub to load the corresponding data / update the ui.
+     * @param participationId
+     */
     selectParticipation(participationId: number) {
         this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${participationId}`);
     }
@@ -136,21 +146,49 @@ export class CodeEditorInstructorComponent extends CodeEditorContainer implement
 
     selectTemplateParticipation() {
         this.selectedRepository = REPOSITORY.TEMPLATE;
-        this.selectParticipation(this.exercise.solutionParticipation.id);
+        this.selectParticipation(this.exercise.templateParticipation.id);
     }
 
     selectAssignmentParticipation() {
         this.selectedRepository = REPOSITORY.ASSIGNMENT;
-        if (this.exercise.assignmentParticipation) {
-            this.selectParticipation(this.exercise.assignmentParticipation.id);
-        } else {
-            this.participationService
-                .findParticipation(this.exercise.id, this.exercise.course.id)
-                .pipe(
-                    tap(({ body: assignmentParticipation }) => (this.exercise.assignmentParticipation = assignmentParticipation)),
-                    tap(() => this.selectParticipation(this.exercise.assignmentParticipation.id)),
-                )
-                .subscribe();
-        }
+        this.selectParticipation(this.exercise.assignmentParticipation.id);
+    }
+
+    /**
+     * Creates an assignment participation for this user for this exercise.
+     */
+    createAssignmentParticipation() {
+        this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
+        this.courseExerciseService
+            .startExercise(this.exercise.course.id, this.exercise.id)
+            .pipe(
+                tap(participation => {
+                    this.loadingState = LOADING_STATE.NOT_LOADING;
+                    this.exercise.assignmentParticipation = participation;
+                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    this.loadingState = LOADING_STATE.NOT_LOADING;
+                }),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Resets (deletes) the assignment participation for this user for this exercise.
+     */
+    resetAssignmentParticipation() {
+        this.loadingState = LOADING_STATE.RESETTING_ASSIGNMENT_REPO;
+        this.participationService
+            .delete(this.exercise.assignmentParticipation.id)
+            .pipe(
+                tap(() => {
+                    if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
+                        this.selectTemplateParticipation();
+                    }
+                    this.exercise.assignmentParticipation = undefined;
+                    this.exerciseDataProvider.exerciseDataStorage = this.exercise;
+                    this.loadingState = LOADING_STATE.NOT_LOADING;
+                }),
+            )
+            .subscribe();
     }
 }

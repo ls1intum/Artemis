@@ -26,7 +26,8 @@
                 "createAssignmentRepo": "Assignment Repository erstellen",
                 "resetAssignmentRepo": "Assignment Repository zurücksetzen",
                 "templateRepo": "Template Repository",
-                "solutionRepo": "Solution Repository"
+                "solutionRepo": "Solution Repository",
+                "loadingExercise": "Aufgabe wird geladen"
             }
         }
     }
