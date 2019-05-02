@@ -25,6 +25,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
                 this.connected = null;
                 this.alert = null;
                 this.notification.type = null;
+                this.jhiWebsocketService.disableReconnect();
+                this.jhiWebsocketService.unbind('connect', this.onConnect);
+                this.jhiWebsocketService.unbind('disconnect', this.onDisconnect);
             }
         });
     }
