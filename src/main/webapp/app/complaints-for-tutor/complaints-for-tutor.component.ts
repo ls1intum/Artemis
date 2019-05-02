@@ -13,6 +13,7 @@ import { Complaint } from 'app/entities/complaint';
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() resultId: number;
+    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond (i.e. that he is not the assessor)
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
@@ -48,26 +49,27 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     respondToComplaint(acceptComplaint: boolean): void {
-        if (this.complaintResponse.responseText.length > 0) {
-            this.handled = true;
-            this.complaint.accepted = acceptComplaint;
-            this.complaintResponse.complaint = this.complaint;
-            if (acceptComplaint) {
-                // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
-                // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-                this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
-            } else {
-                // If the complaint was rejected, just the complaint response is created.
-                this.complaintResponseService.create(this.complaintResponse).subscribe(
-                    response => {
-                        this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponse.created');
-                        this.complaintResponse = response.body;
-                    },
-                    (err: HttpErrorResponse) => {
-                        this.onError(err.message);
-                    },
-                );
-            }
+        if (this.complaintResponse.responseText.length <= 0 || !this.isAllowedToRespond) {
+            return;
+        }
+        this.handled = true;
+        this.complaint.accepted = acceptComplaint;
+        this.complaintResponse.complaint = this.complaint;
+        if (acceptComplaint) {
+            // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
+            // The complaint is sent along with the assessment update by the parent to avoid additional requests.
+            this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
+        } else {
+            // If the complaint was rejected, just the complaint response is created.
+            this.complaintResponseService.create(this.complaintResponse).subscribe(
+                response => {
+                    this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponse.created');
+                    this.complaintResponse = response.body;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err.message);
+                },
+            );
         }
     }
 

@@ -55,7 +55,11 @@
     <h2 class="row-container" jhiTranslate="modelingAssessmentEditor.reviewComplaint">
         Review Complaint
     </h2>
-    <jhi-complaints-for-tutor-form [resultId]="result.id" (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"></jhi-complaints-for-tutor-form>
+    <jhi-complaints-for-tutor-form
+        [resultId]="result.id"
+        [isAllowedToRespond]="result.assessor.id !== userId"
+        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)">
+    </jhi-complaints-for-tutor-form>
 </div>
 
 <ng-template #conflictResolution>
