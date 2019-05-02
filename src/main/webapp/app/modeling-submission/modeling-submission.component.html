@@ -120,9 +120,13 @@
     </div>
 
     <div class="row mt-2 ml-0" *ngIf="result && result.completionDate && !hasComplaint">
-        <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
-        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm" [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
-                title="{{ (numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek) ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}" style="cursor: not-allowed">
+        <button class="btn btn-primary"
+                [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+                (click)="showComplaintForm = !showComplaintForm"
+                [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+                title="{{ (numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek) ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+        >
+            <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
             {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}
         </button>
     </div>
