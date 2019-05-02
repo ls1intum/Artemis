@@ -9,7 +9,14 @@
         <div class="navbar-collapse editor-top-right">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
-                    <jhi-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult()" [hidden]="isBuilding"> </jhi-result>
+                    <jhi-result
+                        [participation]="participation"
+                        [isBuilding]="isBuilding"
+                        [result]="participation && participation.results ? participation.results[0] : null"
+                        (newResult)="updateLatestResult()"
+                        [hidden]="isBuilding"
+                    >
+                    </jhi-result>
                 </li>
             </ul>
         </div>
