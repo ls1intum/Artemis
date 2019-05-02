@@ -196,7 +196,7 @@ public class ModelingSubmissionResource {
         }
 
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
             return notFound();
         }
 

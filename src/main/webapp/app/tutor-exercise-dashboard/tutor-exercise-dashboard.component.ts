@@ -137,7 +137,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.getSubmissions();
 
                 // We don't want to assess submissions before the exercise due date
-                if (this.exercise.dueDate.isBefore(Date.now())) {
+                if (!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) {
                     this.getSubmissionWithoutAssessment();
                 }
             },
