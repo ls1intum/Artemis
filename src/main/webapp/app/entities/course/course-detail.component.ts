@@ -41,7 +41,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 }
             },
             (error: HttpErrorResponse) => {
-                const errorMessage = error.headers.get('X-arTeMiSApp-message');
+                const errorMessage = error.headers.get('X-arTeMiSApp-message')!;
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;

@@ -24,7 +24,7 @@ export class CourseUpdateComponent implements OnInit {
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile: Blob | File;
+    courseImageFile: Blob | File | null;
     courseImageFileName: string;
     isUploadingCourseImage: boolean;
 
@@ -110,7 +110,7 @@ export class CourseUpdateComponent implements OnInit {
      * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
      */
     uploadCourseImage(): void {
-        const file = this.courseImageFile;
+        const file = this.courseImageFile!;
 
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -130,7 +130,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-arTeMiSApp-alert');
+        const errorMessage = error.headers.get('X-arTeMiSApp-alert')!;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;

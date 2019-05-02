@@ -10,7 +10,6 @@ import { Result } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
@@ -25,11 +24,8 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     isActive: boolean;
     isSaving: boolean;
     answer: string;
-    isExampleSubmission = false;
-    showComplaintForm = false;
-    formattedProblemStatement: string;
+    formattedProblemStatement: string | null;
 
-    public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
 
     constructor(
@@ -50,7 +46,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('arTeMiSApp.textExercise.error', null, null);
+            return this.jhiAlertService.error('arTeMiSApp.textExercise.error', null, undefined);
         }
 
         this.textService.get(participationId).subscribe(
@@ -58,12 +54,12 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
 
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement!);
 
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results) {
-                        this.result = data.results.find(r => r.submission.id === this.submission.id);
+                        this.result = data.results.find(r => r.submission!.id === this.submission.id)!;
                     }
 
                     if (this.submission && this.submission.text) {
@@ -140,7 +136,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message, null, undefined);
     }
 
     previous() {

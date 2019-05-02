@@ -56,7 +56,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: FileUploadExercise) {

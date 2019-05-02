@@ -7,7 +7,7 @@ import { QuizExerciseService } from './quiz-exercise.service';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExercisePopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(private modalService: NgbModal, private router: Router, private quizExerciseService: QuizExerciseService) {
         this.ngbModalRef = null;
@@ -15,8 +15,7 @@ export class QuizExercisePopupService {
 
     open(component: Component, id?: string | object | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 
@@ -47,7 +46,7 @@ export class QuizExercisePopupService {
         modalRef.result.then(
             result => {
                 if (result === 're-evaluate') {
-                    this.router.navigate(['/course/' + quizExercise.course.id + '/quiz-exercise']);
+                    this.router.navigate(['/course/' + quizExercise.course!.id + '/quiz-exercise']);
                 } else {
                     this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                     this.ngbModalRef = null;

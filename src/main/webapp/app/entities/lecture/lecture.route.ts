@@ -20,7 +20,7 @@ export class LectureResolve implements Resolve<Lecture> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
-                map((lecture: HttpResponse<Lecture>) => lecture.body),
+                map((lecture: HttpResponse<Lecture>) => lecture.body!),
             );
         }
         return of(new Lecture());

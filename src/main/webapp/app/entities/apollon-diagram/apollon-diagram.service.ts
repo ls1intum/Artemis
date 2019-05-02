@@ -40,7 +40,7 @@ export class ApollonDiagramService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ApollonDiagram = this.convertItemFromServer(res.body);
+        const body: ApollonDiagram = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 

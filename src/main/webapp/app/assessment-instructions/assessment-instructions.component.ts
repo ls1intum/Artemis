@@ -18,7 +18,7 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
-        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+        this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
         this.formattedGradingCriteria = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
     }
 

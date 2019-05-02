@@ -137,6 +137,7 @@ export class JhiWebsocketService implements OnDestroy {
         if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
             this.myListeners[channel] = this.createListener(channel);
         }
+        // TODO: Fix access of myListeners[undefined]
         return this.myListeners[channel];
     }
 
@@ -166,6 +167,7 @@ export class JhiWebsocketService implements OnDestroy {
             if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
                 this.myListeners[channel] = this.createListener(channel);
             }
+            // TODO: Fix access of myListeners[undefined]
             this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
                 const res = JSON.parse(data.body);
                 if (!res.error) {
@@ -180,6 +182,7 @@ export class JhiWebsocketService implements OnDestroy {
     }
 
     unsubscribe(channel?: string) {
+        // TODO: Fix access of myListeners[undefined]
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
         }

@@ -44,8 +44,8 @@ export class ExampleModelingSolutionComponent implements OnInit {
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
         });
     }
 
@@ -71,7 +71,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     }
 
     async back() {
-        const courseId = this.exercise.course.id;
+        const courseId = this.exercise.course!.id;
         await this.router.navigate([`/course/${courseId}/`]);
         this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
     }

@@ -27,7 +27,7 @@ export class QuizSubmissionService {
     }
 
     private convertResponse<T>(res: HttpResponse<T>): HttpResponse<T> {
-        const body: T = this.convertItemFromServer(res.body);
+        const body: T = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 

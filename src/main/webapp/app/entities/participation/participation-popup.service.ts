@@ -8,7 +8,7 @@ import { ParticipationService } from './participation.service';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationPopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(private datePipe: DatePipe, private modalService: NgbModal, private router: Router, private participationService: ParticipationService) {
         this.ngbModalRef = null;
@@ -16,8 +16,7 @@ export class ParticipationPopupService {
 
     open(component: Component, id?: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 

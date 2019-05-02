@@ -25,12 +25,11 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
     ngOnInit(): void {
         this.filterTests = this.tests.split(',');
         if (this.result.feedbacks && this.result.feedbacks.length > 0) {
-            this.feedbackList = this.result.feedbacks.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
+            this.feedbackList = this.result.feedbacks.filter(detail => this.filterTests.indexOf(detail.text!) !== -1);
         } else {
             this.isLoading = true;
             this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
-                let body = res.body as Feedback[];
-                this.feedbackList = body.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
+                this.feedbackList = res.body!.filter(detail => this.filterTests.indexOf(detail.text!) !== -1);
                 this.isLoading = false;
             });
         }

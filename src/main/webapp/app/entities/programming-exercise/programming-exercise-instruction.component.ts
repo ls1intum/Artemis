@@ -29,6 +29,7 @@ import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+import { HttpResponse } from '@angular/common/http';
 
 type Step = {
     title: string;
@@ -146,7 +147,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    loadInitialResult(): Observable<Result> {
+    loadInitialResult(): Observable<Result | null> {
         if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
@@ -165,7 +166,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.plantUMLs = {};
-        this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+        this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement!);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
@@ -179,11 +180,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
+        return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
             catchError(() => Observable.of(null)),
-            map((latestResult: { body: Result[] }) => {
+            map((latestResult: HttpResponse<Result[]>) => {
                 if (latestResult && latestResult.body && latestResult.body.length) {
-                    return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                    return latestResult.body!.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
                 } else {
                     return null;
                 }
@@ -214,7 +215,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions(): Observable<string> {
+    loadInstructions(): Observable<string | null> {
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
@@ -257,7 +258,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 } else {
                     tests = event.target.parentElement.getAttribute('data-tests');
                 }
-                this.showDetailsForTests(this.latestResult, tests);
+                this.showDetailsForTests(this.latestResult!, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
@@ -276,7 +277,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             componentRef.instance.ngOnChanges({});
             this.appRef.attachView(componentRef.hostView);
             const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-            const iconContainer = document.getElementById(`step-icon-${i}`);
+            const iconContainer = document.getElementById(`step-icon-${i}`)!;
             iconContainer.innerHTML = '';
             iconContainer.append(domElem);
         });
@@ -292,7 +293,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 plantUmlSrcAttribute => {
                     // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
                     if (document.getElementById('plantUml' + id)) {
-                        document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                        document.getElementById('plantUml' + id)!.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
                     }
                 },
                 err => {

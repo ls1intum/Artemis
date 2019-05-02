@@ -14,7 +14,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     private differ: any;
 
     constructor(differs: IterableDiffers) {
-        this.differ = differs.find([]).create(null);
+        this.differ = differs.find([]).create(undefined);
     }
 
     get submissionTextWithHtmlLinebreaks(): string {

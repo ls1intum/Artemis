@@ -56,7 +56,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
     template: '',
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
+    protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 

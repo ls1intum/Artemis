@@ -84,7 +84,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
+                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement!);
                         /**
                          * set diagramType to class diagram if exercise is null
                          */

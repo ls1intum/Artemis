@@ -10,13 +10,8 @@ export class DragAndDropMapping implements BaseEntity {
     public dragItemIndex: number;
     public dropLocationIndex: number;
     public invalid = false; // default value
-    public dragItem: DragItem;
-    public dropLocation: DropLocation;
     public submittedAnswer: DragAndDropSubmittedAnswer;
     public question: DragAndDropQuestion;
 
-    constructor(dragItem?: DragItem, dropLocation?: DropLocation) {
-        this.dragItem = dragItem;
-        this.dropLocation = dropLocation;
-    }
+    constructor(public dragItem: DragItem | null, public dropLocation: DropLocation | null) {}
 }

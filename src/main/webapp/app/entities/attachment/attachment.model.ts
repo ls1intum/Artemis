@@ -12,9 +12,9 @@ export class Attachment implements BaseEntity {
     id: number;
     name: string;
     link: string;
-    releaseDate: Moment;
+    releaseDate: Moment | null;
     version: number;
-    uploadDate: Moment;
+    uploadDate: Moment | null;
     attachmentType: AttachmentType;
     lecture: Lecture;
     exercise: Exercise;
