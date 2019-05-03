@@ -168,7 +168,7 @@
                 "git add"
             ],
             "*.java": [
-                "./linting.sh",
+                "bash ./linting.sh",
                 "git add"
             ]
         }
