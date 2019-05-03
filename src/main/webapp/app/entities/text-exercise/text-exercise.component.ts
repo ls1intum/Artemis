@@ -46,7 +46,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         );
     }
 
-    convertMarkdownToHtml(text: string): string {
+    convertMarkdownToHtml(text: string): string | null {
         return this.artemisMarkdown.htmlForMarkdown(text);
     }
 

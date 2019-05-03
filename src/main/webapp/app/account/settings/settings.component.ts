@@ -16,7 +16,7 @@ export class SettingsComponent implements OnInit {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.settingsAccount = this.copyAccount(user);
+            this.settingsAccount = this.copyAccount(user!);
         });
         this.languageHelper.getAll().then(languages => {
             this.languages = languages;
@@ -29,10 +29,10 @@ export class SettingsComponent implements OnInit {
                 this.error = null;
                 this.success = 'OK';
                 this.accountService.identity(true).then(user => {
-                    this.settingsAccount = this.copyAccount(user);
+                    this.settingsAccount = this.copyAccount(user!);
                 });
                 this.languageService.getCurrent().then(current => {
-                    if (this.settingsAccount.langKey !== current) {
+                    if (this.settingsAccount.langKey !== null && this.settingsAccount.langKey !== current) {
                         this.languageService.changeLanguage(this.settingsAccount.langKey);
                     }
                 });

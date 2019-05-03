@@ -43,7 +43,7 @@ export class FileUploadExercisePopupService {
                             resolve(this.ngbModalRef);
                         });
                     } else {
-                        this.ngbModalRef = this.fileUploadExerciseModalRef(component, new FileUploadExercise(null));
+                        this.ngbModalRef = this.fileUploadExerciseModalRef(component, new FileUploadExercise());
                         resolve(this.ngbModalRef);
                     }
                 }, 0);

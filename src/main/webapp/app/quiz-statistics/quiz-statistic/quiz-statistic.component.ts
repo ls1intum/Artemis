@@ -78,7 +78,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
         duration: 500,
         onComplete: (chartElement: ChartElement) => {
             const chart = chartElement.chart;
-            const ctx = chart.ctx;
+            const ctx = chart.ctx!;
             const fontSize = 12;
             const fontStyle = 'normal';
             const fontFamily = 'Arial';
@@ -184,7 +184,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuizSuccess(res.body);
+                    this.loadQuizSuccess(res.body!);
                 });
             }
 
@@ -196,17 +196,17 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                        this.loadQuizSuccess(res.body);
+                        this.loadQuizSuccess(res.body!);
                     });
                 }
             });
 
             // add Axes-labels based on selected language
             this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
             this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
     }

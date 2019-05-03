@@ -24,7 +24,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
     ) {
-        const navigation = this.router.getCurrentNavigation();
+        const navigation = this.router.getCurrentNavigation()!;
         if (navigation.extras.state) {
             const stateLecture = navigation.extras.state.lecture as Lecture;
             if (stateLecture && stateLecture.startDate) {
