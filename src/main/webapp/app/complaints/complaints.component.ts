@@ -15,6 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 })
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
+    @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
@@ -58,6 +59,7 @@ export class ComplaintsComponent implements OnInit {
             res => {
                 this.submittedDate = res.body.submittedTime;
                 this.alreadySubmitted = true;
+                this.allowedComplaints--;
             },
             (err: HttpErrorResponse) => {
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {

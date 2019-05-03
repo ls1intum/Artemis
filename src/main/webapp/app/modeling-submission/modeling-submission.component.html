@@ -133,5 +133,5 @@
 </div>
 
 <div *ngIf="showComplaintForm || hasComplaint">
-    <jhi-complaint-form class="row" [resultId]="result.id"></jhi-complaint-form>
+    <jhi-complaint-form class="row" [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
 </div>

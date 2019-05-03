@@ -4,7 +4,8 @@
         <div class="col-12">
             <h3>{{ 'arTeMiSApp.complaint.title' | translate }}</h3>
             <p>
-                <span jhiTranslate="arTeMiSApp.complaint.description" [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent }"></span>
+                <span *ngIf="allowedComplaints === undefined" jhiTranslate="arTeMiSApp.complaint.description" [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent }"></span>
+                <span *ngIf="allowedComplaints >= 0" jhiTranslate="arTeMiSApp.complaint.descriptionExtended" [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent, allowedComplaints: allowedComplaints }"></span>
                 <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.complaint.info' | translate }}" style="color:#ffc107;"></fa-icon>
             </p>
         </div>

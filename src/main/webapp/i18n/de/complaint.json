@@ -3,7 +3,8 @@
         "complaint": {
             "title": "Beschwerde",
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn Ihre Beschwerde angenommen wird, wird sie nicht auf Ihre Gesamtzahl der Beschwerden angerechnet.",
-            "description": "Sie können insgesamt bis zu {{ maxComplaintNumber }} Beschwerden einreichen.",
+            "description": "Sie können insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen.",
+            "descriptionExtended": "Jeder Student darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Sie können noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden einreichen.",
             "moreFeedback": "Mehr Feedback",
             "moreFeedbackDescription": "Wenn etwas nicht klar genug ist oder Sie weitere Erklärungen benötigen, bitten Sie den Tutor, Ihnen mehr Feedback zu geben.",
             "moreFeedbackButton": "Mehr Feedback anfordern",
