@@ -166,10 +166,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @returns {String} the duration as String
      */
     durationString(): string {
-        if (this.duration.seconds <= 0) {
+        if (this.duration.seconds! <= 0) {
             return this.duration.minutes + ':00';
         }
-        if (this.duration.seconds < 10) {
+        if (this.duration.seconds! < 10) {
             return this.duration.minutes + ':0' + this.duration.seconds;
         }
         return this.duration.minutes + ':' + this.duration.seconds;

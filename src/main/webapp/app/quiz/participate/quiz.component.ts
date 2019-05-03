@@ -202,7 +202,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         // load the quiz (and existing submission if quiz has started)
         this.participationService.findParticipation(1, this.quizId).subscribe(
             (response: HttpResponse<Participation>) => {
-                this.applyParticipationFull(response.body);
+                this.applyParticipationFull(response.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -218,7 +218,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     initPracticeMode() {
         this.quizExerciseService.findForStudent(this.quizId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
-                if (res.body.isOpenForPractice) {
+                if (res.body && res.body.isOpenForPractice) {
                     this.startQuizPreviewOrPractice(res.body);
                 } else {
                     alert('Error: This quiz is not open for practice!');
@@ -234,7 +234,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     initPreview() {
         this.quizExerciseService.find(this.quizId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
-                this.startQuizPreviewOrPractice(res.body);
+                this.startQuizPreviewOrPractice(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -590,7 +590,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
             // update timeDifference
             this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
-            this.timeDifference = moment(this.quizExercise.dueDate).diff(this.quizExercise.adjustedDueDate, 'seconds');
+            this.timeDifference = moment(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
 
             // check if quiz hasn't ended
             if (!this.quizExercise.ended) {
@@ -618,7 +618,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
             if (this.quizExercise.isPlannedToStart) {
                 // synchronize time with server
-                this.quizExercise.releaseDate = moment(this.quizExercise.releaseDate);
+                this.quizExercise.releaseDate = moment(this.quizExercise.releaseDate!);
                 this.quizExercise.adjustedReleaseDate = moment().add(this.quizExercise.timeUntilPlannedStart, 'seconds');
             }
         }
@@ -662,9 +662,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                     const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
                     const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
-                    mcClientQuestion.answerOptions.forEach(function(clientAnswerOption) {
+                    const answerOptions = mcClientQuestion.answerOptions!;
+                    answerOptions.forEach(function(clientAnswerOption) {
                         // find updated answerOption
-                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions.find(function(option) {
+                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find(function(option) {
                             return clientAnswerOption.id === option.id;
                         });
                         if (fullAnswerOptionFromServer) {
@@ -741,7 +742,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             quizExercise.quizQuestions.forEach(question => {
                 if (question.randomizeOrder) {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                        this.shuffle((question as MultipleChoiceQuestion).answerOptions);
+                        this.shuffle((question as MultipleChoiceQuestion).answerOptions!);
                     } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                         this.shuffle((question as DragAndDropQuestion).dragItems);
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
@@ -886,7 +887,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     if (!this.submission.id) {
                         this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
                             (response: HttpErrorResponse) => this.onSubmitError(response.message),
                         );
@@ -896,7 +897,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     if (!this.submission.id) {
                         this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
                             (response: HttpErrorResponse) => this.onSubmitError(response.message),
                         );
@@ -929,7 +930,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = result.participation.exercise as QuizExercise;
+        const quizExercise = result.participation!.exercise as QuizExercise;
         this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
         this.showResult(result);
@@ -950,7 +951,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex).scrollIntoView({
+        document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
     }

@@ -17,8 +17,8 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     @Input() lecture: Lecture;
     studentQuestions: StudentQuestion[];
     isEditMode: boolean;
-    studentQuestionText: string;
-    selectedStudentQuestion: StudentQuestion;
+    studentQuestionText: string | null;
+    selectedStudentQuestion: StudentQuestion | null;
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
 
@@ -32,7 +32,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
             this.studentQuestionService.query({ exercise: this.exercise.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body!;
             });
-            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+            this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
         } else {
             this.studentQuestionService.query({ lecture: this.lecture.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body!;
@@ -72,8 +72,8 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         }
         studentQuestion.creationDate = moment();
         this.studentQuestionService.create(studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
-            this.studentQuestions.push(studentQuestionResponse.body);
-            this.studentQuestionText = undefined;
+            this.studentQuestions.push(studentQuestionResponse.body!);
+            this.studentQuestionText = null;
             this.isEditMode = false;
         });
     }

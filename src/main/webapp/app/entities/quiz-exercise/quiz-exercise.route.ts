@@ -23,7 +23,7 @@ export class QuizExerciseResolve implements Resolve<QuizExercise> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
-            return this.service.find(id).pipe(map((quizExercise: HttpResponse<QuizExercise>) => quizExercise.body));
+            return this.service.find(id).pipe(map((quizExercise: HttpResponse<QuizExercise>) => quizExercise.body!));
         }
         return of(new QuizExercise());
     }

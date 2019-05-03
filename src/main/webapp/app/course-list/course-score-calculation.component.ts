@@ -14,7 +14,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
     private subscription: Subscription;
-    course: Course;
+    course: Course | null;
 
     // absolute score
     totalScore = 0;
@@ -53,14 +53,14 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.courseExercises = this.course.exercises;
+                this.courseExercises = this.course!.exercises;
                 this.calculateAbsoluteScores();
                 this.calculateRelativeScores();
                 this.calculateMaxScores();
                 this.handleEISTCourse2018();
             });
         } else {
-            this.courseExercises = this.course.exercises;
+            this.courseExercises = this.course!.exercises;
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
             this.calculateMaxScores();

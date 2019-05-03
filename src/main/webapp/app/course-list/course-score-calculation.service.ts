@@ -28,7 +28,7 @@ export class CourseScoreCalculationService {
                 maxScore = maxScore + exercise.maxScore;
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation !== null) {
-                    const result = this.getResultForParticipation(participation, exercise.dueDate);
+                    const result = this.getResultForParticipation(participation, exercise.dueDate!);
                     if (result !== null) {
                         let score = result.score;
                         if (score === null) {

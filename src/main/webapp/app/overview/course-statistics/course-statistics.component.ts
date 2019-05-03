@@ -231,7 +231,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 };
             }
             exercise.participations.forEach(participation => {
-                const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate);
+                const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                 if (participationResult) {
                     const participationScore = participationResult.score;
                     const missedScore = 100 - participationScore;

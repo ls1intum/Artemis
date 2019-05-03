@@ -49,9 +49,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     backupQuestion: DragAndDropQuestion;
 
     dragItemPicture: string;
-    backgroundFile: Blob | File;
+    backgroundFile: Blob | File | null;
     backgroundFileName: string;
-    dragItemFile: Blob | File;
+    dragItemFile: Blob | File | null;
     dragItemFileName: string;
 
     dropAllowed = false;
@@ -73,7 +73,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * Keep track of the currently dragged drop location
      * @type {DropLocation}
      */
-    currentDropLocation: DropLocation;
+    currentDropLocation: DropLocation | null;
 
     /**
      * Keep track of the current mouse location
@@ -168,7 +168,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
      */
     uploadBackground(): void {
-        const file = this.backgroundFile;
+        const file = this.backgroundFile!;
 
         this.isUploadingBackgroundFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -198,9 +198,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         // Update mouse x and y value
         const event: MouseEvent = e || window.event; // Moz || IE
         const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-        const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
-        const backgroundWidth = jQueryBackgroundElement.width();
-        const backgroundHeight = jQueryBackgroundElement.height();
+        const jQueryBackgroundOffset = jQueryBackgroundElement.offset()!;
+        const backgroundWidth = jQueryBackgroundElement.width()!;
+        const backgroundHeight = jQueryBackgroundElement.height()!;
         if (event.pageX) {
             // Moz
             this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
@@ -218,29 +218,29 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                 case DragState.CREATE:
                 case DragState.RESIZE_BOTH:
                     // Update current drop location's position and size
-                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
                 case DragState.MOVE:
                     // update current drop location's position
-                    this.currentDropLocation.posX = Math.round(
-                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentDropLocation.width),
+                    this.currentDropLocation!.posX = Math.round(
+                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentDropLocation!.width),
                     );
-                    this.currentDropLocation.posY = Math.round(
-                        Math.min(Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight), 200 - this.currentDropLocation.height),
+                    this.currentDropLocation!.posY = Math.round(
+                        Math.min(Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight), 200 - this.currentDropLocation!.height),
                     );
                     break;
                 case DragState.RESIZE_X:
                     // Update current drop location's position and size (only x-axis)
-                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation!.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
                     break;
                 case DragState.RESIZE_Y:
                     // update current drop location's position and size (only y-axis)
-                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation!.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
             }
         }
@@ -255,11 +255,11 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             switch (this.draggingState) {
                 case DragState.CREATE:
                     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-                    const backgroundWidth = jQueryBackgroundElement.width();
-                    const backgroundHeight = jQueryBackgroundElement.height();
-                    if ((this.currentDropLocation.width / 200) * backgroundWidth < 14 && (this.currentDropLocation.height / 200) * backgroundHeight < 14) {
+                    const backgroundWidth = jQueryBackgroundElement.width()!;
+                    const backgroundHeight = jQueryBackgroundElement.height()!;
+                    if ((this.currentDropLocation!.width / 200) * backgroundWidth < 14 && (this.currentDropLocation!.height / 200) * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
-                        this.deleteDropLocation(this.currentDropLocation);
+                        this.deleteDropLocation(this.currentDropLocation!);
                     } else {
                         // Notify parent of new drop location
                         this.questionUpdated.emit();
@@ -316,8 +316,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
             const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-            const backgroundWidth = jQueryBackgroundElement.width();
-            const backgroundHeight = jQueryBackgroundElement.height();
+            const backgroundWidth = jQueryBackgroundElement.width()!;
+            const backgroundHeight = jQueryBackgroundElement.height()!;
 
             const dropLocationX = (dropLocation.posX / 200) * backgroundWidth;
             const dropLocationY = (dropLocation.posY / 200) * backgroundHeight;
@@ -438,7 +438,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Add a Picture Drag Item with the selected file as its picture to the question
      */
     uploadDragItem(): void {
-        const file = this.dragItemFile;
+        const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -470,7 +470,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Upload a Picture for Drag Item Change with the selected file as its picture
      */
     uploadPictureForDragItemChange(): void {
-        const file = this.dragItemFile;
+        const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -522,14 +522,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (
             !this.question.correctMappings.some(
                 existingMapping =>
-                    this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation) &&
-                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem),
+                    this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation!, dropLocation) &&
+                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem!, dragItem),
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
-            const dndMapping = new DragAndDropMapping();
-            dndMapping.dropLocation = dropLocation;
-            dndMapping.dragItem = dragItem;
+            const dndMapping = new DragAndDropMapping(dragItem, dropLocation);
             this.question.correctMappings.push(dndMapping);
 
             // Notify parent of changes
@@ -551,12 +549,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             this.question.correctMappings.some(function(correctMapping) {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation);
+                        return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation!);
                     })
                 ) {
-                    visitedDropLocations.push(correctMapping.dropLocation);
+                    visitedDropLocations.push(correctMapping.dropLocation!);
                 }
-                return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation, mapping.dropLocation);
+                return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation!, mapping.dropLocation!);
             })
         ) {
             return visitedDropLocations.length;
@@ -575,7 +573,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
+        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
     }
 
     /**
@@ -590,7 +588,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         }
         return (
             this.question.correctMappings
-                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
+                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -605,7 +603,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
     }
 
     /**
@@ -617,7 +615,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem));
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem));
     }
 
     /**
@@ -672,7 +670,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
     changeToPictureDragItem(dragItem: DragItem): void {
-        const file = this.dragItemFile;
+        const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -745,7 +743,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     resetDropLocation(dropLocation: DropLocation): void {
         // Find matching DropLocation in backupQuestion
-        const backupDropLocation = this.backupQuestion.dropLocations.find(currentDL => currentDL.id === dropLocation.id);
+        const backupDropLocation = this.backupQuestion.dropLocations.find(currentDL => currentDL.id === dropLocation.id)!;
         // Find current index of our DropLocation
         const dropLocationIndex = this.question.dropLocations.indexOf(dropLocation);
         // Remove current DropLocation at given index and insert the backup at the same position
@@ -760,7 +758,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     resetDragItem(dragItem: DragItem): void {
         // Find matching DragItem in backupQuestion
-        const backupDragItem = this.backupQuestion.dragItems.find(currentDI => currentDI.id === dragItem.id);
+        const backupDragItem = this.backupQuestion.dragItems.find(currentDI => currentDI.id === dragItem.id)!;
         // Find current index of our DragItem
         const dragItemIndex = this.question.dragItems.indexOf(dragItem);
         // Remove current DragItem at given index and insert the backup at the same position

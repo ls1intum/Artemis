@@ -29,9 +29,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isAnswerMode: boolean;
     isEditMode: boolean;
     isQuestionAuthor: boolean;
-    selectedQuestionAnswer: StudentQuestionAnswer;
-    questionAnswerText: string;
-    studentQuestionText: string;
+    selectedQuestionAnswer: StudentQuestionAnswer | null;
+    questionAnswerText: string | null;
+    studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
@@ -45,8 +45,8 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     sortQuestionAnswers() {
         this.sortedQuestionAnswers = this.studentQuestion.answers.sort((a, b) => {
-            const aValue = moment(a.answerDate).valueOf();
-            const bValue = moment(b.answerDate).valueOf();
+            const aValue = moment(a.answerDate!).valueOf();
+            const bValue = moment(b.answerDate!).valueOf();
 
             return aValue - bValue;
         });
@@ -68,7 +68,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     saveQuestion() {
         this.studentQuestion.questionText = this.studentQuestionText;
         this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
-            this.studentQuestionText = undefined;
+            this.studentQuestionText = null;
             this.isEditMode = false;
         });
     }
@@ -90,18 +90,18 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.answerDate = moment();
         this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
-            this.studentQuestion.answers.push(studentQuestionResponse.body);
+            this.studentQuestion.answers.push(studentQuestionResponse.body!);
             this.sortQuestionAnswers();
-            this.questionAnswerText = undefined;
+            this.questionAnswerText = null;
             this.isAnswerMode = false;
         });
     }
 
     saveAnswer() {
-        this.selectedQuestionAnswer.answerText = this.questionAnswerText;
-        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
-            this.questionAnswerText = undefined;
-            this.selectedQuestionAnswer = undefined;
+        this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
+        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+            this.questionAnswerText = null;
+            this.selectedQuestionAnswer = null;
             this.isAnswerMode = false;
         });
     }
