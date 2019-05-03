@@ -150,7 +150,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
-            this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+            this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text!);
             this.generateShortAnswerStructure();
             this.generateLettersForSolutions();
 
@@ -162,7 +162,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     generateShortAnswerStructure() {
-        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
     }
 

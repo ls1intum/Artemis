@@ -48,8 +48,8 @@ export class AuditsComponent implements OnInit {
     onChangeDate() {
         this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe(res => {
             this.audits = res.body!;
-            this.links = this.parseLinks.parse(res.headers.get('link'));
-            this.totalItems = +res.headers.get('X-Total-Count');
+            this.links = this.parseLinks.parse(res.headers.get('link')!);
+            this.totalItems = +res.headers.get('X-Total-Count')!;
         });
     }
 
@@ -63,7 +63,7 @@ export class AuditsComponent implements OnInit {
             fromDate = new Date(fromDate.getFullYear(), fromDate.getMonth() - 1, fromDate.getDate());
         }
 
-        this.fromDate = this.datePipe.transform(fromDate, dateFormat);
+        this.fromDate = this.datePipe.transform(fromDate, dateFormat)!;
     }
 
     today() {
@@ -72,7 +72,7 @@ export class AuditsComponent implements OnInit {
         const today: Date = new Date();
         today.setDate(today.getDate() + 1);
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        this.toDate = this.datePipe.transform(date, dateFormat);
+        this.toDate = this.datePipe.transform(date, dateFormat)!;
     }
 
     private sortAudits(audits: Audit[]) {

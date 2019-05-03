@@ -20,7 +20,7 @@ export class PasswordComponent implements OnInit {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.user = user;
+            this.user = user!;
         });
     }
 

@@ -61,10 +61,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
                     })
                     .sort((e1: Exercise, e2: Exercise) => {
-                        if (e1.dueDate > e2.dueDate) {
+                        if (e1.dueDate! > e2.dueDate!) {
                             return 1;
                         }
-                        if (e1.dueDate < e2.dueDate) {
+                        if (e1.dueDate! < e2.dueDate!) {
                             return -1;
                         }
                         if (e1.title > e2.title) {

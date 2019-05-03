@@ -15,9 +15,9 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     textExercise: TextExercise;
 
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
+    formattedGradingInstructions: string | null;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -36,7 +36,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.textExercise = textExerciseResponse.body!;
 
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement!);
             this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.textExercise.sampleSolution);
         });
     }
