@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { Exercise } from 'app/entities/exercise';
 import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
 import { AccountService, User } from 'app/core';
@@ -12,7 +12,7 @@ import { Lecture } from 'app/entities/lecture';
     templateUrl: './student-questions.component.html',
     styleUrls: ['./student-questions.scss'],
 })
-export class StudentQuestionsComponent implements OnInit, OnDestroy {
+export class StudentQuestionsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
     studentQuestions: StudentQuestion[];
@@ -21,6 +21,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     selectedStudentQuestion: StudentQuestion;
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
+    loadedEntity: string;
 
     constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService) {}
 
@@ -28,16 +29,28 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
+        this.loadQuestions();
+    }
+
+    private loadQuestions() {
         if (this.exercise) {
+            this.loadedEntity = `exercise-${this.exercise.id}`;
             this.studentQuestionService.query({ exercise: this.exercise.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body;
             });
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
         } else {
+            this.loadedEntity = `lecture-${this.lecture.id}`;
             this.studentQuestionService.query({ lecture: this.lecture.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body;
             });
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course);
+        }
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if ((this.exercise && this.loadedEntity !== `exercise-${this.exercise.id}`) || (this.lecture && this.loadedEntity !== `lecture-${this.lecture.id}`)) {
+            this.loadQuestions();
         }
     }
 
