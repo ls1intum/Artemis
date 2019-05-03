@@ -125,5 +125,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
         if ($event.target && $event.target.name === 'username') {
             this.username = $event.target.value;
         }
+        if ($event.target && $event.target.name === 'password') {
+            this.password = $event.target.value;
+        }
     }
 }
