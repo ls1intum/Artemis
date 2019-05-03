@@ -166,7 +166,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback(null, null, 0, null);
+        const assessment = new Feedback();
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.assessments.push(assessment);
