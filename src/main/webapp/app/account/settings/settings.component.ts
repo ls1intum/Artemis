@@ -44,7 +44,16 @@ export class SettingsComponent implements OnInit {
         );
     }
 
-    copyAccount(account: Account) {
-        return new Account(account.activated, account.authorities, account.email, account.firstName, account.langKey, account.lastName, account.login, account.imageUrl);
+    copyAccount(account: Account): Account {
+        return new Account(
+            account.activated || undefined,
+            account.authorities || undefined,
+            account.email || undefined,
+            account.firstName || undefined,
+            account.langKey || undefined,
+            account.lastName || undefined,
+            account.login || undefined,
+            account.imageUrl || undefined,
+        );
     }
 }
