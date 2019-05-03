@@ -6,6 +6,9 @@ type BuildLogEntry = {
     log: string;
 };
 
+// flag(error, warning),filePath,fileName,line,row,error
+type ParsedLogEntry = [string, string, string, string, string, string];
+
 /**
  * Wrapper class for build log output.
  */
@@ -19,17 +22,19 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
     extractErrors() {
         return (
             this
+                // Filter empty logs
+                .filter(({ log }) => !!log)
                 // Parse build logs
-                .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
+                .map(({ log, time }) => ({ log: log.match(this.errorLogRegex), time }))
                 // Remove entries that could not be parsed, are too short or not errors
-                .filter(({ log }) => !!log && log.length === 6 && log[1] === 'ERROR')
+                .filter(({ log }: { log: ParsedLogEntry | null; time: string }) => log && log.length === 6 && log[1] === 'ERROR')
                 // Map buildLogEntries into annotation format
-                .map(({ log: [, , fileName, row, column, text], time }) => ({
+                .map(({ log: [, , fileName, row, column, text], time }: { log: ParsedLogEntry; time: string }) => ({
                     type: 'error',
                     fileName,
                     row: Math.max(parseInt(row, 10) - 1, 0),
                     column: Math.max(parseInt(column, 10) - 1, 0),
-                    text: safeUnescape(text),
+                    text: safeUnescape(text) || '',
                     ts: Date.parse(time),
                 }))
                 // Group annotations by filename

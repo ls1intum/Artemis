@@ -177,7 +177,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 distinctUntilChanged(),
             )
             .subscribe(
-                res => {
+                (res: [string, string]) => {
                     this.storeSession();
 
                     const { errorFiles, savedFiles } = Object.entries(res).reduce(
