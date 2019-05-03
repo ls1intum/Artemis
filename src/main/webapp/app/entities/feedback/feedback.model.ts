@@ -9,20 +9,25 @@ export const enum FeedbackType {
 
 export class Feedback implements BaseEntity {
     public id: number;
-    public detailText: string;
-    public reference: string;
-    public type: FeedbackType;
-    public result: Result;
-    public positive: boolean;
+    public text: string | null;
+    public detailText: string | null;
+    public reference: string | null;
+    public credits: number;
+    public type: FeedbackType | null;
+    public result: Result | null;
+    public positive: boolean | null;
 
-    constructor(
-        // helper attributes for modeling exercise assessments stored in Feedback
-        public referenceId: string | null,
-        public referenceType: ElementType | null,
+    // helper attributes for modeling exercise assessments stored in Feedback
+    public referenceType: ElementType | null;
+    public referenceId: string | null;
 
-        public credits: number | null,
-        public text: string | null,
-    ) {
-        this.reference = referenceType + ':' + referenceId;
+    constructor(credits: number, text?: string, referenceId?: string, referenceType?: ElementType) {
+        this.referenceId = referenceId || null;
+        this.referenceType = referenceType || null;
+        this.credits = credits;
+        this.text = text || null;
+        if (referenceType && referenceId) {
+            this.reference = referenceType + ':' + referenceId;
+        }
     }
 }

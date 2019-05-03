@@ -308,7 +308,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     public addAssessment(assessmentText: string): void {
-        const assessment = new Feedback(null, null, 0, null);
+        const assessment = new Feedback();
         assessment.reference = assessmentText;
         this.assessments.push(assessment);
         this.checkScoreBoundaries();

@@ -68,7 +68,7 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
     }
 
     pushFeedback() {
-        this.feedbacks.push(new Feedback(null, null, 0, null));
+        this.feedbacks.push(new Feedback());
     }
 
     popFeedback() {
