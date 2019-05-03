@@ -39,7 +39,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        let exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.loadExercise(exerciseId);
     }
 
