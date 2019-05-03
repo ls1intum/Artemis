@@ -142,7 +142,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Else -> show build logs.
      * @param result
      */
-    toggleBuildLogs(result: Result) {
+    toggleBuildLogs(result: Result | null) {
         if (
             !result ||
             ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
