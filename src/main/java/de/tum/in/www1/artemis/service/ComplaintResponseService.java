@@ -1,5 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.User;
@@ -8,19 +15,11 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.web.rest.SubmissionResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.time.ZonedDateTime;
-import java.util.Optional;
 
 /**
- * REST controller for managing complaints.
+ * Service for managing complaints.
  */
-@RestController
-@RequestMapping("/api")
+@Service
 public class ComplaintResponseService {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
@@ -36,7 +35,7 @@ public class ComplaintResponseService {
     private AuthorizationCheckService authorizationCheckService;
 
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService,
-                                    AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userService = userService;

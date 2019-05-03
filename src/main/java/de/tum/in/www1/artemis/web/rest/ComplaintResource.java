@@ -95,9 +95,11 @@ public class ComplaintResource {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
-
+        if (originalResult.getCompletionDate().isBefore(ZonedDateTime.now().minusWeeks(1))) {
+            throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
+        }
         if (!originalSubmissor.getLogin().equals(principal.getName())) {
-            throw new BadRequestAlertException("You can create a complaint only about a result you submitted", ENTITY_NAME, "differentuser");
+            throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
 
         originalResult.setHasComplaint(true);

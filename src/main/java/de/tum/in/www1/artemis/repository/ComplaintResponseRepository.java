@@ -26,5 +26,5 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation
      */
-    void deleteByComplaint_Result_Participation_Id(Long exerciseId);
+    void deleteByComplaint_Result_Participation_Id(Long participationId);
 }
