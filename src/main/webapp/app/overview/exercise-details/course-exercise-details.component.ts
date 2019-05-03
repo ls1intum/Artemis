@@ -34,7 +34,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exerciseCategories: ExerciseCategory[];
     private resultSubscription: Subscription;
 
-    formattedProblemStatement: string;
+    formattedProblemStatement: string | null;
 
     getIcon = getIcon;
 
@@ -69,13 +69,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
             this.exercise = exercise;
-            this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
+            this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
             this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
-                    const aValue = moment(a.completionDate).valueOf();
-                    const bValue = moment(b.completionDate).valueOf();
+                    const aValue = moment(a.completionDate!).valueOf();
+                    const bValue = moment(b.completionDate!).valueOf();
                     return aValue - bValue;
                 });
                 const sortedResultLength = this.sortedResults.length;
@@ -134,20 +134,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseIsOver(): boolean {
-        return moment(this.exercise.dueDate).isBefore(moment());
+        return moment(this.exercise.dueDate!).isBefore(moment());
     }
 
     get hasMoreResults(): boolean {
         return this.sortedResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
-    get exerciseRouterLink(): string {
+    get exerciseRouterLink(): string | null {
         if (this.exercise.type === ExerciseType.MODELING) {
             return `/course/${this.courseId}/exercise/${this.exercise.id}/assessment`;
         } else if (this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
         } else {
-            return;
+            return null;
         }
     }
 
@@ -156,11 +156,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return hasParticipations && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
     }
 
-    get currentResult(): Result {
+    get currentResult(): Result | null {
         if (!this.exercise.participations || !this.exercise.participations[0].results) {
             return null;
         }
         const results = this.exercise.participations[0].results;
-        return results.filter(el => el.rated).pop();
+        return results.filter(el => el.rated).pop()!;
     }
 }

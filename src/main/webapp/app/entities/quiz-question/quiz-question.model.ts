@@ -16,7 +16,7 @@ export const enum QuizQuestionType {
 }
 
 export interface MarkDownElement {
-    text: string;
+    text: string | null;
     hint: string | null;
     explanation: string | null;
 }
@@ -24,9 +24,9 @@ export interface MarkDownElement {
 export abstract class QuizQuestion implements BaseEntity, MarkDownElement {
     public id: number;
     public title: string;
-    public text: string;
-    public hint: string;
-    public explanation: string;
+    public text: string | null;
+    public hint: string | null;
+    public explanation: string | null;
     public score: number;
     public scoringType: ScoringType;
     public randomizeOrder = true; // default value

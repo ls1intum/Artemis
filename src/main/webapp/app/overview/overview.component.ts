@@ -39,8 +39,8 @@ export class OverviewComponent {
         this.jhiAlertService.error(error, null, undefined);
     }
 
-    get nextRelevantExercise(): Exercise {
-        let relevantExercise: Exercise = null;
+    get nextRelevantExercise(): Exercise | null {
+        let relevantExercise: Exercise | null = null;
         if (this.courses) {
             this.courses.forEach(course => {
                 const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
@@ -48,7 +48,7 @@ export class OverviewComponent {
                     if (!relevantExercise) {
                         relevantExercise = relevantExerciseForCourse;
                         this.nextRelevantCourse = course;
-                    } else if (relevantExerciseForCourse.dueDate.isBefore(relevantExercise.dueDate)) {
+                    } else if (relevantExerciseForCourse.dueDate!.isBefore(relevantExercise.dueDate!)) {
                         relevantExercise = relevantExerciseForCourse;
                         this.nextRelevantCourse = course;
                     }

@@ -25,7 +25,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            this.isTumStudent = !!user.login.match(TUM_REGEX);
+            this.isTumStudent = !!user!.login!.match(TUM_REGEX);
         });
     }
 
@@ -41,8 +41,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
                 registerRes => {
-                    let coursesToRegister = registerRes.body as Course[];
-                    this.coursesToSelect = coursesToRegister.filter(course => {
+                    this.coursesToSelect = registerRes.body!.filter(course => {
                         return !this.courses.find(el => el.id === course.id);
                     });
                     resolve();

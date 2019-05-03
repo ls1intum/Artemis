@@ -58,7 +58,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     optionsWithID: string[] = [];
 
     /** For visual mode **/
-    textParts: string[][];
+    textParts: (string | null)[][];
 
     backupQuestion: ShortAnswerQuestion;
 
@@ -79,7 +79,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
          * Note: As the spot tag ( e.g. [-spot 1] ) has in between a whitespace we use regex to not take whitespaces as a separator in between
          * these [ ] brackets.
          * **/
-        const textForEachLine = this.question.text.split(/\n+/g);
+        const textForEachLine = this.question.text!.split(/\n+/g);
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
 
         /** Assign status booleans and strings **/
@@ -373,7 +373,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
-        const wrapperDiv = document.getElementById('test');
+        const wrapperDiv = document.getElementById('test')!;
         const child = window.getSelection().baseNode;
 
         if (!wrapperDiv.contains(child)) {
@@ -384,7 +384,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = window
             .getSelection()
-            .focusNode.parentNode.parentElement.id.split('-')
+            .focusNode.parentNode!.parentElement!.id.split('-')
             .slice(1);
 
         if (selectedTextRowColumn.length === 0) {
@@ -394,7 +394,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // get the right range for text with markdown
         const range = window.getSelection().getRangeAt(0);
         const preCaretRange = range.cloneRange();
-        const element = window.getSelection().focusNode.parentNode.parentElement.firstElementChild;
+        const element = window.getSelection().focusNode.parentNode!.parentElement!.firstElementChild!;
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);
 
@@ -421,8 +421,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
         editor.setValue(this.generateMarkdown());
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
         this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
@@ -585,8 +585,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
         this.showVisualMode = !this.showVisualMode;
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
         this.questionEditor.getEditor().setValue(this.generateMarkdown());
         this.questionEditor.getEditor().clearSelection();
@@ -628,7 +628,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.text = this.backupQuestion.text;
         this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-        const textForEachLine = this.question.text.split(/\n+/g);
+        const textForEachLine = this.question.text!.split(/\n+/g);
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
@@ -656,7 +656,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     resetSpot(spot: ShortAnswerSpot): void {
         // Find matching spot in backupQuestion
-        const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id);
+        const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id)!;
         // Find current index of our spot
         const spotIndex = this.question.spots.indexOf(spot);
         // Remove current spot at given index and insert the backup at the same position
@@ -674,7 +674,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.deleteMappingsForSpot(spotToDelete);
 
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-        const textForEachLine = this.question.text.split(/\n+/g);
+        const textForEachLine = this.question.text!.split(/\n+/g);
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
 
         this.textParts = this.textParts.map(part => part.filter(text => text !== '[-spot ' + spotToDelete.spotNr + ']'));

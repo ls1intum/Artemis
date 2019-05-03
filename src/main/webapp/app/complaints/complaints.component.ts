@@ -25,10 +25,10 @@ export class ComplaintsComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
-                let complaint = res.body as Complaint;
+                const complaint = res.body!;
                 this.complaintText = complaint.complaintText;
                 this.alreadySubmitted = true;
-                this.submittedDate = complaint.submittedTime;
+                this.submittedDate = complaint.submittedTime!;
 
                 if (complaint.accepted) {
                     this.complaintResponseService
@@ -54,8 +54,7 @@ export class ComplaintsComponent implements OnInit {
         this.complaintService.create(complaint).subscribe(
             res => {
                 this.jhiAlertService.success('arTeMiSApp.complaint.submitted');
-                let complaint = res.body as Complaint;
-                this.submittedDate = complaint.submittedTime;
+                this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
             },
             (err: HttpErrorResponse) => {

@@ -7,7 +7,7 @@ import { StudentQuestionAnswer } from 'app/entities/student-question-answer';
 
 export class StudentQuestion implements BaseEntity {
     public id: number;
-    public questionText: string;
+    public questionText: string | null;
     public creationDate: Moment | null;
     public visibleForStudents = true; // default value
     public answers: StudentQuestionAnswer[];

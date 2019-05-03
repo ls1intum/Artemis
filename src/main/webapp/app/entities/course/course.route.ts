@@ -21,7 +21,7 @@ export class CourseResolve implements Resolve<Course> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
-                map((course: HttpResponse<Course>) => course.body),
+                map((course: HttpResponse<Course>) => course.body!),
             );
         }
         return of(new Course());

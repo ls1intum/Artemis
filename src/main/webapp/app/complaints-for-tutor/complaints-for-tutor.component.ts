@@ -28,7 +28,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 const body = res.body!;
                 this.complaintText = body.complaintText;
                 this.alreadySubmitted = true;
-                this.submittedDate = body.submittedTime;
+                this.submittedDate = body.submittedTime!;
                 this.loading = false;
                 this.accepted = body.accepted;
 

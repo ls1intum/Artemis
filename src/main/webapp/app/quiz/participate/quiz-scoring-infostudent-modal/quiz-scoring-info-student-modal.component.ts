@@ -91,8 +91,9 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     private countMultipleChoice() {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
-        this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
-        this.correctMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
+        const answerOptions = mcmQuestion.answerOptions!;
+        this.multipleChoiceAnswerOptions = answerOptions.length;
+        this.correctMultipleChoiceAnswers = answerOptions.filter(option => option.isCorrect).length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.multipleChoiceMapping.filter(option => option.isCorrect).length;
         this.multipleChoiceWrongAnswerChosen = this.multipleChoiceMapping.filter(option => !option.isCorrect).length;
         this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
