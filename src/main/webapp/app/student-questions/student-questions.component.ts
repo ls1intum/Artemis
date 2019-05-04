@@ -28,6 +28,10 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
+        this.loadQuestions();
+    }
+
+    private loadQuestions() {
         if (this.exercise) {
             this.studentQuestionService.query({ exercise: this.exercise.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body;
