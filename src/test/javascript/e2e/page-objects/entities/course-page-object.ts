@@ -29,6 +29,8 @@ export class CoursePage {
 export class NewCoursePage {
     save = element(by.id('save-entity'));
     cancel = element(by.id('cancel-save'));
+    browse = element(by.id('courseImageInput'));
+    upload = element(by.className('icon-upload'));
     title = element(by.id('field_title'));
     shortName = element(by.id('field_shortName'));
     studentGroupName = element(by.id('field_studentGroupName'));
@@ -41,6 +43,17 @@ export class NewCoursePage {
 
     async setShortName(shortName: string) {
         await this.shortName.sendKeys(shortName);
+    }
+
+    async browseCourseIcon() {
+        let path = require('path');
+        let fileToUpload = '../entities/tum-logo.png';
+        let absolutePath = path.resolve(__dirname, fileToUpload);
+        await this.browse.sendKeys(absolutePath);
+    }
+
+    async uploadCourseIcon() {
+        this.upload.click();
     }
 
     async setStudentGroupName(studentGroupName: string) {
