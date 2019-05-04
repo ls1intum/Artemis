@@ -61,9 +61,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.loadExercise();
             }
         });
-        if (this.exercise === undefined) {
-            this.loadExercise();
-        }
     }
 
     loadExercise() {
