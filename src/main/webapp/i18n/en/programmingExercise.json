@@ -59,9 +59,12 @@
             "saveFiles": "Save",
             "errors": {
                 "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
+                "exerciseNotFound": "Exercise could not be found.",
                 "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
                 "noPermissions": "You don't have the necessary permissions.",
-                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor."
+                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor.",
+                "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
+                "participationCouldNotBeCreated": "Participation could not be created."
             }
         }
     }

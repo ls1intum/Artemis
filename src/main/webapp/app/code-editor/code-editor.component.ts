@@ -24,7 +24,6 @@ import { Observable } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-code-editor',

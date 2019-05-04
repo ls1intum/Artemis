@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap, flatMap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -18,9 +18,9 @@ enum REPOSITORY {
 
 enum LOADING_STATE {
     NOT_LOADING = 'NOT_LOADING',
-    LOADING_EXERCISE = 'LOADING_EXERCISE',
+    INITIALIZING = 'INITIALIZING',
     CREATING_ASSIGNMENT_REPO = 'CREATING_ASSIGNMENT_REPO',
-    RESETTING_ASSIGNMENT_REPO = 'RESETTING_ASSIGNMENT_REPO',
+    DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
 @Component({
@@ -58,41 +58,64 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         this.paramSub = this.route.params.subscribe(params => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
+            this.loadingState = LOADING_STATE.INITIALIZING;
             this.loadExercise(exerciseId)
                 .pipe(
+                    catchError(() => throwError('exerciseNotFound')),
                     tap(exercise => (this.exercise = exercise)),
-                    switchMap(exercise => {
-                        if (participationId) {
-                            if (participationId === this.exercise.templateParticipation.id) {
-                                this.selectedRepository = REPOSITORY.TEMPLATE;
-                            } else if (participationId === this.exercise.solutionParticipation.id) {
-                                this.selectedRepository = REPOSITORY.SOLUTION;
-                            } else {
-                                this.selectedRepository = REPOSITORY.ASSIGNMENT;
-                            }
-                            return this.loadParticipation(participationId);
-                        } else {
-                            this.selectedRepository = REPOSITORY.TEMPLATE;
-                            return this.loadParticipation(exercise.templateParticipation.id);
-                        }
-                    }),
-                    tap(participation => {
-                        const newParticipation = { ...participation, exercise: this.exercise };
-                        this.selectedParticipation = newParticipation;
-                    }),
-                    switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
+                    // Load template participation with results
+                    switchMap(() =>
+                        !this.exercise.templateParticipation.results
+                            ? this.loadParticipation(this.exercise.templateParticipation.id).pipe(
+                                  switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
+                                  map(participation => ({ ...participation, exercise: this.exercise })),
+                                  tap(participation => (this.exercise.templateParticipation = participation)),
+                              )
+                            : Observable.of(null),
+                    ),
+                    // Load solution participation with results
+                    switchMap(() =>
+                        !this.exercise.solutionParticipation.results
+                            ? this.loadParticipation(this.exercise.solutionParticipation.id).pipe(
+                                  switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
+                                  map(participation => ({ ...participation, exercise: this.exercise })),
+                                  tap(participation => (this.exercise.solutionParticipation = participation)),
+                              )
+                            : Observable.of(null),
+                    ),
+                    // Load assignment participation with results (if exists)
                     switchMap(() => {
-                        if (!this.exercise.participations || !this.exercise.participations.length) {
-                            return this.loadAssignmentParticipation();
-                        } else {
-                            return Observable.of(null);
-                        }
+                        return this.loadAssignmentParticipation().pipe(
+                            tap(participation => {
+                                if (participation) {
+                                    const newParticipation = { ...participation, exercise: this.exercise };
+                                    this.exercise.participations = [newParticipation];
+                                } else {
+                                    this.exercise.participations = [];
+                                }
+                            }),
+                        );
                     }),
-                    tap(participation => {
-                        this.exercise.participations = participation ? [participation] : [];
+                    // Set selected participation
+                    tap(() => {
+                        if (!participationId || participationId === this.exercise.templateParticipation.id) {
+                            this.selectedRepository = REPOSITORY.TEMPLATE;
+                            this.selectedParticipation = this.exercise.templateParticipation;
+                        } else if (participationId === this.exercise.solutionParticipation.id) {
+                            this.selectedRepository = REPOSITORY.SOLUTION;
+                            this.selectedParticipation = this.exercise.solutionParticipation;
+                        } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
+                            this.selectedRepository = REPOSITORY.ASSIGNMENT;
+                            this.selectedParticipation = this.exercise.participations[0];
+                        }
                     }),
                 )
-                .subscribe();
+                .subscribe(
+                    () => {
+                        this.loadingState = LOADING_STATE.NOT_LOADING;
+                    },
+                    err => this.editor.onError(err),
+                );
         });
     }
 
@@ -101,14 +124,12 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      * @param exerciseId
      */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        this.loadingState = LOADING_STATE.LOADING_EXERCISE;
-        return this.exerciseService.find(exerciseId).pipe(
-            catchError(() => Observable.of(null)),
-            map(({ body }) => body),
-            tap(exercise => {
-                this.loadingState = LOADING_STATE.NOT_LOADING;
-            }),
-        ) as Observable<ProgrammingExercise>;
+        return !this.exercise
+            ? this.exerciseService.find(exerciseId).pipe(
+                  catchError(() => Observable.of(null)),
+                  map(({ body }) => body),
+              )
+            : Observable.of(this.exercise);
     }
 
     /**
@@ -117,6 +138,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     loadAssignmentParticipation() {
         return this.participationService.findParticipation(this.exercise.course.id, this.exercise.id).pipe(
             catchError(() => Observable.of(null)),
+            map(({ body }) => body),
+            switchMap(participation => this.participationService.findWithLatestResult(participation.id)),
             map(({ body }) => body),
             catchError(() => {
                 return Observable.of(null);
@@ -152,33 +175,34 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      */
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
-        this.courseExerciseService
+        return this.courseExerciseService
             .startExercise(this.exercise.course.id, this.exercise.id)
             .pipe(
+                catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {
                     this.exercise.participations = [participation];
                     this.loadingState = LOADING_STATE.NOT_LOADING;
                 }),
             )
-            .subscribe();
+            .subscribe(() => {}, err => this.editor.onError(err));
     }
 
     /**
-     * Resets (deletes) the assignment participation for this user for this exercise.
+     * Resets the assignment participation for this user for this exercise.
      */
     resetAssignmentParticipation() {
-        this.loadingState = LOADING_STATE.RESETTING_ASSIGNMENT_REPO;
+        this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
+        if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
+            this.selectTemplateParticipation();
+        }
+        const assignmentParticipationId = this.exercise.participations[0].id;
+        this.exercise.participations = [];
         this.participationService
-            .delete(this.exercise.participations[0].id, { deleteBuildPlan: true, deleteRepository: true })
+            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
-                tap(() => {
-                    if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
-                        this.selectTemplateParticipation();
-                    }
-                    this.exercise.participations = [];
-                    this.loadingState = LOADING_STATE.NOT_LOADING;
-                }),
+                catchError(() => throwError('participationCouldNotBeDeleted')),
+                tap(() => this.createAssignmentParticipation()),
             )
-            .subscribe();
+            .subscribe(() => {}, err => this.editor.onError(err));
     }
 }

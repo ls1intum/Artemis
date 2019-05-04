@@ -59,9 +59,12 @@
             "saveFiles": "Speichern",
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "exerciseNotFound": "Übung konnte nicht gefunden werden.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
-                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor."
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
+                "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden"
             }
         }
     }

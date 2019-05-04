@@ -56,7 +56,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorActionsComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
+    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent],
     providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

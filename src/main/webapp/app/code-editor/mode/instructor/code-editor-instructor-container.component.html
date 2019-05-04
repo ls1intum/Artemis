@@ -1,5 +1,6 @@
 <div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_INSTRUCTOR']" class="card mb-3">
-    <div *ngIf="loadingState !== 'LOADING_EXERCISE'; else loadingExercise" class="card-body d-flex p-2">
+    <div *ngIf="loadingState !== 'INITIALIZING'; else loadingExercise" class="card-body d-flex p-2">
+        <!-- repository select -->
         <div ngbDropdown class="d-inline-block mr-2">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
@@ -38,14 +39,12 @@
                 </button>
             </div>
         </div>
-        <div>
+        <!-- action buttons -->
+        <div class="mr-2">
             <button
+                *ngIf="!exercise.participations || !exercise.participations.length"
                 (click)="createAssignmentParticipation()"
-                [disabled]="
-                    loadingState === 'CREATING_ASSIGNMENT_REPO' ||
-                    loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
-                    (exercise && exercise.participations && exercise.participations.length)
-                "
+                [disabled]="loadingState !== 'NOT_LOADING'"
                 class="btn btn-primary mr-2"
             >
                 <fa-icon *ngIf="loadingState !== 'CREATING_ASSIGNMENT_REPO'" icon="plus" class="text-white mr-2"></fa-icon>
@@ -53,22 +52,65 @@
                 <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
+                *ngIf="exercise.participations && exercise.participations.length"
                 (click)="resetAssignmentParticipation()"
-                [disabled]="
-                    loadingState === 'CREATING_ASSIGNMENT_REPO' ||
-                    loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
-                    (exercise && (!exercise.participations || !exercise.participations.length))
-                "
+                [disabled]="loadingState !== 'NOT_LOADING'"
                 class="btn btn-danger"
             >
-                <fa-icon *ngIf="loadingState !== 'RESETTING_ASSIGNMENT_REPO'" icon="times" class="text-white mr-2"></fa-icon>
-                <fa-icon *ngIf="loadingState === 'RESETTING_ASSIGNMENT_REPO'" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState !== 'DELETING_ASSIGNMENT_REPO' && loadingState !== 'CREATING_ASSIGNMENT_REPO'" icon="times" class="text-white mr-2"></fa-icon>
+                <fa-icon
+                    *ngIf="loadingState === 'DELETING_ASSIGNMENT_REPO' || loadingState === 'CREATING_ASSIGNMENT_REPO'"
+                    icon="circle-notch"
+                    [spin]="true"
+                    class="text-white mr-2"
+                ></fa-icon>
                 <span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
             </button>
         </div>
+        <!-- status -->
+        <div class="d-flex ml-auto">
+            <div
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge"
+                [class.badge-success]="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].successful"
+                [class.badge-warning]="this.exercise.solutionParticipation.results && !this.exercise.solutionParticipation.results[0].successful"
+                [class.badge-info]="!this.exercise?.solutionParticipation?.results"
+            >
+                <fa-icon *ngIf="!this.exercise?.solutionParticipation?.results" icon="question-circle" class="mr-2"></fa-icon>
+                <fa-icon
+                    *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].successful"
+                    icon="check-circle"
+                    class="mr-2"
+                ></fa-icon>
+                <fa-icon
+                    *ngIf="this.exercise.solutionParticipation.results && !this.exercise.solutionParticipation.results[0].successful"
+                    icon="exclamation-triangle"
+                    class="mr-2"
+                ></fa-icon>
+                <span>Solution Repository Status</span>
+            </div>
+            <div
+                class="instructor-bar__badge d-flex align-items-center badge"
+                [class.badge-success]="this.exercise.templateParticipation.results && !this.exercise.templateParticipation.results[0].successful"
+                [class.badge-warning]="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].successful"
+                [class.badge-info]="!this.exercise?.templateParticipation?.results"
+            >
+                <fa-icon *ngIf="!this.exercise?.templateParticipation?.results" icon="question-circle" class="mr-2"></fa-icon>
+                <fa-icon
+                    *ngIf="this.exercise.templateParticipation.results && !this.exercise.templateParticipation.results[0].successful"
+                    icon="check-circle"
+                    class="mr-2"
+                ></fa-icon>
+                <fa-icon
+                    *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].successful"
+                    icon="exclamation-triangle"
+                    class="mr-2"
+                ></fa-icon>
+                <span>Template Repository Status</span>
+            </div>
+        </div>
     </div>
     <ng-template #loadingExercise>
-        <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Exercise</span></div>
+        <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span></div>
     </ng-template>
 </div>
-<jhi-code-editor [(participation)]="selectedParticipation" [editableInstructions]="true"></jhi-code-editor>
+<jhi-code-editor *ngIf="selectedParticipation" [(participation)]="selectedParticipation" [editableInstructions]="true"></jhi-code-editor>
