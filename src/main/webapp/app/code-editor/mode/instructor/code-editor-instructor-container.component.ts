@@ -7,7 +7,7 @@ import { ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
-import { CodeEditorContainer } from './code-editor-container.component';
+import { CodeEditorContainer } from '../base/code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 
 enum REPOSITORY {
@@ -25,10 +25,10 @@ enum LOADING_STATE {
 
 @Component({
     selector: 'jhi-code-editor-instructor',
-    templateUrl: './code-editor-instructor.component.html',
+    templateUrl: './code-editor-instructor-container.component.html',
     providers: [],
 })
-export class CodeEditorInstructorComponent extends CodeEditorContainer implements OnInit {
+export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 

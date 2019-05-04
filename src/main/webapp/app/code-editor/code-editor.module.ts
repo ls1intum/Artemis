@@ -7,15 +7,13 @@ import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorComponent } from './code-editor.component';
-import { CodeEditorInstructorComponent } from './code-editor-instructor.component';
-import { CodeEditorStudentComponent } from './code-editor-student.component';
+import { CodeEditorInstructorContainerComponent } from './mode/instructor/code-editor-instructor-container.component';
+import { CodeEditorStudentContainerComponent } from './mode/student/code-editor-student-container.component';
 import { CodeEditorService } from './code-editor.service';
 import { RepositoryService } from '../entities/repository';
-import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
-import { HomeComponent } from '../home';
+import { ArTEMiSResultModule, ResultService } from '../entities/result';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
 import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
@@ -45,8 +43,8 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     declarations: [
         CodeEditorComponent,
-        CodeEditorInstructorComponent,
-        CodeEditorStudentComponent,
+        CodeEditorInstructorContainerComponent,
+        CodeEditorStudentContainerComponent,
         CodeEditorAceComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorFileBrowserCreateComponent,
@@ -57,20 +55,8 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
     ],
-    exports: [CodeEditorComponent, CodeEditorInstructorComponent, CodeEditorStudentComponent],
-    entryComponents: [
-        HomeComponent,
-        CodeEditorComponent,
-        CodeEditorInstructorComponent,
-        CodeEditorStudentComponent,
-        JhiMainComponent,
-        CodeEditorFileBrowserCreateComponent,
-        CodeEditorFileBrowserDeleteComponent,
-        EditorInstructionsResultDetailComponent,
-        ResultComponent,
-        CodeEditorStatusComponent,
-        CodeEditorActionsComponent,
-    ],
+    exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
+    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

@@ -2,13 +2,13 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
 import { PendingChangesGuard } from 'app/shared';
-import { CodeEditorInstructorComponent } from './code-editor-instructor.component';
-import { CodeEditorStudentComponent } from './code-editor-student.component';
+import { CodeEditorInstructorContainerComponent } from './mode/instructor/code-editor-instructor-container.component';
+import { CodeEditorStudentContainerComponent } from './mode/student/code-editor-student-container.component';
 
 export const codeEditorRoute: Routes = [
     {
         path: 'code-editor/:participationId',
-        component: CodeEditorStudentComponent,
+        component: CodeEditorStudentContainerComponent,
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'arTeMiSApp.editor.home.title',
@@ -21,7 +21,7 @@ export const codeEditorRoute: Routes = [
     },
     {
         path: 'code-editor-admin/:exerciseId',
-        component: CodeEditorInstructorComponent,
+        component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
             pageTitle: 'arTeMiSApp.editor.home.title',
@@ -34,7 +34,7 @@ export const codeEditorRoute: Routes = [
     },
     {
         path: 'code-editor-admin/:exerciseId/:participationId',
-        component: CodeEditorInstructorComponent,
+        component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
             pageTitle: 'arTeMiSApp.editor.home.title',
