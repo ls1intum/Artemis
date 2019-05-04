@@ -87,7 +87,8 @@
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
                 "date": "Datum",
                 "notReleased": "Nicht freigegeben",
-                "version": "Version"
+                "version": "Version",
+                "isDownloading": "Wird heruntergeladen..."
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",
