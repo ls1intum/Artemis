@@ -37,6 +37,7 @@ import {
     faKeyboard,
     faProjectDiagram,
     faFileUpload,
+    faFilePowerpoint,
     faThLarge,
     faAngleUp,
     faSortAmountUp,
@@ -167,6 +168,7 @@ library.add(faCheckDouble);
 library.add(faKeyboard);
 library.add(faProjectDiagram);
 library.add(faFileUpload);
+library.add(faFilePowerpoint);
 library.add(faFont);
 library.add(faThLarge);
 library.add(faAngleUp);
