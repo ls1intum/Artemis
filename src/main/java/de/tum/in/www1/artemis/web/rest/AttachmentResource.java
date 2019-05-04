@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +19,7 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.service.AttachmentService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -47,13 +45,19 @@ public class AttachmentResource {
 
     private final UserService userService;
 
+    private final FileService fileService;
+
+    private final CacheManager cacheManager;
+
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            CourseService courseService, UserService userService) {
+            CourseService courseService, UserService userService, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
         this.courseService = courseService;
         this.userService = userService;
+        this.fileService = fileService;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -71,6 +75,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Attachment result = attachmentRepository.save(attachment);
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);
     }
@@ -92,6 +97,7 @@ public class AttachmentResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Attachment result = attachmentRepository.save(attachment);
+        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -146,6 +152,7 @@ public class AttachmentResource {
         if (attachment.getLecture() != null) {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
+            this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
         }
         else if (attachment.getExercise() != null) {
             course = attachment.getExercise().getCourse();
@@ -156,7 +163,7 @@ public class AttachmentResource {
         }
         Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
         if (hasCourseInstructorAccess) {
-            log.info(user.getLogin() + " deleted attachment with id " + id+ " for " + relatedEntity, id);
+            log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }

@@ -110,7 +110,7 @@ public class FileService {
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    private String actualPathForPublicPath(String publicPath) {
+    public String actualPathForPublicPath(String publicPath) {
         // first extract the filename from the url
         String filename = publicPath.substring(publicPath.lastIndexOf("/") + 1);
 
