@@ -359,7 +359,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
-        log.info(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
+        log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
