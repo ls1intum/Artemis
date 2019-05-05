@@ -65,6 +65,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
+        this.exercise = null;
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
