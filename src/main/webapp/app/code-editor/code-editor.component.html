@@ -33,15 +33,14 @@
         <div class="editor-sidebar-left">
             <jhi-code-editor-file-browser
                 [participation]="participation"
-                [fileName]="selectedFile"
-                [repositoryFiles]="repositoryFiles"
+                [(selectedFile)]="selectedFile"
                 [unsavedFiles]="unsavedFiles"
                 [errorFiles]="errorFiles"
                 [editorState]="editorState"
                 [commitState]="commitState"
-                (selectedFile)="updateSelectedFile($event)"
-                (createdFile)="updateRepositoryCommitStatus($event)"
-                (deletedFile)="updateRepositoryCommitStatus($event)"
+                [isLoadingFiles]="isLoadingFiles"
+                (onFileChange)="onFileChange($event)"
+                (onFilesLoaded)="onFilesLoaded($event)"
             >
             </jhi-code-editor-file-browser>
         </div>
@@ -50,11 +49,13 @@
             <jhi-code-editor-ace
                 [participation]="participation"
                 [selectedFile]="selectedFile"
-                [repositoryFiles]="repositoryFiles"
-                [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
+                [(buildLogErrors)]="buildLogErrors"
                 [editorState]="editorState"
+                [fileChange]="fileChange"
+                [unsavedFiles]="unsavedFiles"
                 (onEditorStateChange)="setEditorState($event)"
-                (onUnsavedFilesChange)="setUnsavedFiles($event)"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onFileContentChange)="onFileContentChange($event)"
                 (onError)="onError($event)"
             >
             </jhi-code-editor-ace>
@@ -67,6 +68,7 @@
     </div>
 
     <div class="editor-bottom">
-        <jhi-code-editor-build-output [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)"> </jhi-code-editor-build-output>
+        <jhi-code-editor-build-output *ngIf="repositoryFiles" [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
+        </jhi-code-editor-build-output>
     </div>
 </div>
