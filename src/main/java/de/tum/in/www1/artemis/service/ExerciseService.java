@@ -315,6 +315,7 @@ public class ExerciseService {
         for (Participation participation : exercise.getParticipations()) {
             try {
                 if (participation.getRepositoryUrl() == null || participation.getStudent() == null || !studentIds.contains(participation.getStudent().getLogin())) {
+                    // participation is not relevant for zip archive.
                     continue;
                 }
 
