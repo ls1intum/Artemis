@@ -21,10 +21,10 @@ export class Feedback implements BaseEntity {
     public referenceType: ElementType | null;
     public referenceId: string | null;
 
-    constructor(credits: number, text?: string, referenceId?: string, referenceType?: ElementType) {
+    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: ElementType) {
         this.referenceId = referenceId || null;
         this.referenceType = referenceType || null;
-        this.credits = credits;
+        this.credits = credits || 0;
         this.text = text || null;
         if (referenceType && referenceId) {
             this.reference = referenceType + ':' + referenceId;
