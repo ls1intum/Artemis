@@ -281,6 +281,11 @@ public class GitService {
      * @param exercise   ProgrammingExercise associated with this repo.
      */
     public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
+        if (exercise.getReleaseDate() == null || exercise.getDueDate() == null) {
+            // No dates set on exercise
+            return;
+        }
+
         try {
             Git git = new Git(repository);
 
