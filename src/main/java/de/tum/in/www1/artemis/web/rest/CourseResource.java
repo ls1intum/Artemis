@@ -500,6 +500,10 @@ public class CourseResource {
             exerciseService.delete(exercise, false, false);
         }
 
+        for (Lecture lecture : course.getLectures()) {
+            lectureService.delete(lecture);
+        }
+
         List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
         for (GroupNotification notification : notifications) {
             notificationService.deleteNotification(notification);
