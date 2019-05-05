@@ -65,11 +65,10 @@ export class LectureAttachmentsComponent implements OnInit {
 
     saveAttachment() {
         if (!this.attachmentToBeCreated) {
-            // TODO: Fix this Null Pointer, maybe call addAttachment()?
-            this.attachmentToBeCreated.version = 0;
+            return this.addAttachment();
         }
-        this.attachmentToBeCreated.version++;
-        this.attachmentToBeCreated.uploadDate = moment();
+        this.attachmentToBeCreated!.version++;
+        this.attachmentToBeCreated!.uploadDate = moment();
 
         if (this.attachmentToBeCreated!.id) {
             const requestOptions = {} as any;
@@ -132,19 +131,24 @@ export class LectureAttachmentsComponent implements OnInit {
 
     downloadAttachment(downloadUrl: string) {
         this.isDownloadingAttachment = true;
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
-            const blob = new Blob([response.body], { type: response.headers.get('content-type') });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', response.headers.get('filename'));
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            window.URL.revokeObjectURL(url);
-            this.isDownloadingAttachment = false;
-        }, error => {
-            this.isDownloadingAttachment = false;
-        });
+        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
+            response => {
+                if (response.body) {
+                    const blob = new Blob([response.body], { type: response.headers.get('content-type') || 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', response.headers.get('filename') || 'undefined.pdf');
+                    document.body.appendChild(link); // Required for FF
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                }
+                this.isDownloadingAttachment = false;
+            },
+            error => {
+                this.isDownloadingAttachment = false;
+            },
+        );
     }
 
     /**

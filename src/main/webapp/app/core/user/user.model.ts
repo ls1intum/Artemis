@@ -29,7 +29,16 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
     ) {
-        super(activated || null, authorities || null, email || null, firstName || null, langKey || null, lastName || null, login || null, imageUrl || null);
+        super(
+            activated || undefined,
+            authorities || undefined,
+            email || undefined,
+            firstName || undefined,
+            langKey || undefined,
+            lastName || undefined,
+            login || undefined,
+            imageUrl || undefined,
+        );
         this.id = id ? id : null;
         this.groups = groups ? groups : null;
         this.createdBy = createdBy ? createdBy : null;

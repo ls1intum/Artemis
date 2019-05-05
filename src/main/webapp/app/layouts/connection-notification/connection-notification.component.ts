@@ -9,7 +9,7 @@ import { AccountService, JhiWebsocketService, User } from 'app/core';
 export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     notification = new ConnectionNotification();
     alert: { class: string; icon: string; text: string } | null = null;
-    connected: boolean;
+    connected: boolean | null;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 

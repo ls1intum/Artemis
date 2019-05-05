@@ -74,18 +74,23 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     downloadAttachment(downloadUrl: string) {
         this.isDownloading = true;
-        this.httpClient.get(downloadUrl, {observe: 'response', responseType: 'blob'}).subscribe(response => {
-            const blob = new Blob([response.body], {type: response.headers.get('content-type')});
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', response.headers.get('filename'));
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            window.URL.revokeObjectURL(url);
-            this.isDownloading = false;
-        }, error => {
-            this.isDownloading = false;
-        });
+        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
+            response => {
+                if (response.body) {
+                    const blob = new Blob([response.body], { type: response.headers.get('content-type') || 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', response.headers.get('filename') || 'undefined.pdf');
+                    document.body.appendChild(link); // Required for FF
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                }
+                this.isDownloading = false;
+            },
+            error => {
+                this.isDownloading = false;
+            },
+        );
     }
 }
