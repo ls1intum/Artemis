@@ -100,7 +100,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
 
     saveInstructions($event: any) {
         $event.stopPropagation();
-        const exercise = { ...this.exercise, problemStatement: this.problemStatement };
+        // Remove all participations from the exercise of the participations to avoid nested json exception
+        const { participations: ps, solutionParticipation: sp, templateParticipation: tp, ...exerciseWithoutParticipations } = this.exercise;
+        const participations = this.exercise.participations.map(participation => ({ ...participation, exercise: exerciseWithoutParticipations as ProgrammingExercise }));
+        const templateParticipation = { ...this.exercise.templateParticipation, exercise: exerciseWithoutParticipations as ProgrammingExercise };
+        const solutionParticipation = { ...this.exercise.solutionParticipation, exercise: exerciseWithoutParticipations as ProgrammingExercise };
+
+        const exercise = { ...this.exercise, participations, templateParticipation, solutionParticipation, problemStatement: this.problemStatement };
         this.savingInstructions = true;
         this.programmingExerciseService
             .update(exercise)
