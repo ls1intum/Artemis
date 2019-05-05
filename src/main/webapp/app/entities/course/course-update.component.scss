@@ -1,0 +1,36 @@
+.color-preview {
+    cursor: pointer;
+}
+.headline {
+    align-items: center;
+    display: flex;
+    width: 100%;
+
+    .no-image {
+        background: #dddddd url('../../../content/images/image-placeholder.png') no-repeat center;
+        background-size: 60%;
+        border-radius: 50%;
+        height: 100px;
+        width: 100px;
+        margin-right: 20px;
+
+        img {
+            height: 50px;
+            width: auto;
+        }
+    }
+
+    jhi-secured-image {
+        padding-right: 20px;
+
+        ::ng-deep img {
+            border-radius: 50%;
+            height: 100px;
+            width: auto;
+        }
+    }
+}
+
+image-cropper {
+    padding: 0 0 10px 0 !important;
+}

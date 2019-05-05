@@ -216,6 +216,12 @@ public class ParticipationResource {
         if (participation.getId() == null) {
             return createParticipation(participation);
         }
+        if (participation.getPresentationScore() > 1) {
+            participation.setPresentationScore(1);
+        }
+        if (participation.getPresentationScore() < 0) {
+            participation.setPresentationScore(0);
+        }
         Participation result = participationService.save(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }

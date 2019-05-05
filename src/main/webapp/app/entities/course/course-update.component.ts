@@ -4,6 +4,8 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs';
+import { ImageCroppedEvent } from 'ngx-image-cropper';
+import { base64StringToBlob } from 'blob-util';
 
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 
@@ -16,7 +18,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styles: ['.color-preview { cursor: pointer; }'],
+    styleUrls: ['./course-update.component.scss'],
 })
 export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
@@ -27,6 +29,9 @@ export class CourseUpdateComponent implements OnInit {
     courseImageFile: Blob | File;
     courseImageFileName: string;
     isUploadingCourseImage: boolean;
+    imageChangedEvent: any = '';
+    croppedImage: any = '';
+    showCropper = false;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
 
@@ -61,6 +66,7 @@ export class CourseUpdateComponent implements OnInit {
             courseIcon: new FormControl(this.course.courseIcon),
         });
         this.courseImageFileName = this.course.courseIcon;
+        this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
     }
 
     previousState() {
@@ -94,10 +100,11 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * @function setBackgroundFile
+     * @function set course icon
      * @param $event {object} Event object which contains the uploaded file
      */
     setCourseImage($event: any): void {
+        this.imageChangedEvent = $event;
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.courseImageFile = fileList[0];
@@ -106,11 +113,33 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * @param $event
+     */
+    imageCropped($event: ImageCroppedEvent) {
+        this.croppedImage = $event.base64;
+    }
+
+    imageLoaded() {
+        this.showCropper = true;
+    }
+
+    cropperReady() {
+        console.log('Cropper ready');
+    }
+
+    loadImageFailed() {
+        console.log('Load failed');
+    }
+
+    /**
      * @function uploadBackground
      * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
      */
     uploadCourseImage(): void {
-        const file = this.courseImageFile;
+        const contentType = 'image/*';
+        const b64Data = this.croppedImage.replace('data:image/png;base64,', '');
+        const file = base64StringToBlob(b64Data, contentType);
+        file['name'] = this.courseImageFileName;
 
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
@@ -127,6 +156,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.courseImageFileName = this.course.courseIcon;
             },
         );
+        this.showCropper = false;
     }
 
     private onSaveError(error: HttpErrorResponse) {
