@@ -27,7 +27,13 @@
                 "resetAssignmentRepo": "Reset Assignment Repository",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
-                "loadingExercise": "Loading Exercise"
+                "loadingExercise": "Loading Exercise",
+                "solutionWarning": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue in the Solution Repository.",
+                "solutionSuccess": "The Solution Repository fulfills all test cases.",
+                "solutionInfo": "No result found for the Solution Repository.",
+                "templateWarning": "The Template Repository does already fulfill one or more test cases. This could indicate an issue in the Template Repository.",
+                "templateSuccess": "The Template Repository fulfills no test case.",
+                "templateInfo": "No result found for the Template Repository."
             }
         }
     }

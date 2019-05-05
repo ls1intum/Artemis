@@ -25,7 +25,7 @@
                 <button
                     [disabled]="
                         loadingState === 'CREATING_ASSIGNMENT_REPO' ||
-                        loadingState === 'RESETTING_ASSIGNMENT_REPO' ||
+                        loadingState === 'DELETING_ASSIGNMENT_REPO' ||
                         !exercise ||
                         !exercise.participations ||
                         !exercise.participations.length
@@ -69,43 +69,69 @@
         </div>
         <!-- status -->
         <div class="d-flex ml-auto">
+            <!-- solution state ok -->
             <div
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge"
-                [class.badge-success]="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].successful"
-                [class.badge-warning]="this.exercise.solutionParticipation.results && !this.exercise.solutionParticipation.results[0].successful"
-                [class.badge-info]="!this.exercise?.solutionParticipation?.results"
+                *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].score === 100"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-success"
             >
-                <fa-icon *ngIf="!this.exercise?.solutionParticipation?.results" icon="question-circle" class="mr-2"></fa-icon>
-                <fa-icon
-                    *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].successful"
-                    icon="check-circle"
-                    class="mr-2"
-                ></fa-icon>
-                <fa-icon
-                    *ngIf="this.exercise.solutionParticipation.results && !this.exercise.solutionParticipation.results[0].successful"
-                    icon="exclamation-triangle"
-                    class="mr-2"
-                ></fa-icon>
-                <span>Solution Repository Status</span>
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionSuccess' | translate }}">
+                    <fa-icon icon="check-circle" class="mr-2"></fa-icon>
+                    <span>Solution Repository Status</span>
+                </span>
             </div>
+            <!-- solution state warning -->
             <div
-                class="instructor-bar__badge d-flex align-items-center badge"
-                [class.badge-success]="this.exercise.templateParticipation.results && !this.exercise.templateParticipation.results[0].successful"
-                [class.badge-warning]="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].successful"
-                [class.badge-info]="!this.exercise?.templateParticipation?.results"
+                *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].score !== 100"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-warning"
             >
-                <fa-icon *ngIf="!this.exercise?.templateParticipation?.results" icon="question-circle" class="mr-2"></fa-icon>
-                <fa-icon
-                    *ngIf="this.exercise.templateParticipation.results && !this.exercise.templateParticipation.results[0].successful"
-                    icon="check-circle"
-                    class="mr-2"
-                ></fa-icon>
-                <fa-icon
-                    *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].successful"
-                    icon="exclamation-triangle"
-                    class="mr-2"
-                ></fa-icon>
-                <span>Template Repository Status</span>
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionWarning' | translate }}">
+                    <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>
+                    <span>Solution Repository Status</span>
+                </span>
+            </div>
+            <!-- solution state info -->
+            <div
+                *ngIf="!this.exercise?.solutionParticipation?.results"
+                icon="question-circle"
+                class="mr-2"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-info"
+            >
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionInfo' | translate }}">
+                    <fa-icon></fa-icon>
+                    <span>Solution Repository Status</span>
+                </span>
+            </div>
+            <!-- template state ok -->
+            <div
+                *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].score === 0"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-success"
+            >
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateSuccess' | translate }}">
+                    <fa-icon icon="check-circle" class="mr-2"></fa-icon>
+                    <span>Template Repository Status</span>
+                </span>
+            </div>
+            <!-- template state warning -->
+            <div
+                *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].score > 0"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-warning"
+            >
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateWarning' | translate }}">
+                    <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>
+                    <span>Template Repository Status</span>
+                </span>
+            </div>
+            <!-- template state info -->
+            <div
+                *ngIf="!this.exercise?.templateParticipation?.results"
+                icon="question-circle"
+                class="mr-2"
+                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-info"
+            >
+                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateInfo' | translate }}">
+                    <fa-icon></fa-icon>
+                    <span>Template Repository Status</span>
+                </span>
             </div>
         </div>
     </div>

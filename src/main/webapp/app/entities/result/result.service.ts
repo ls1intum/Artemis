@@ -42,7 +42,6 @@ export class ResultService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    // TODO: implement get latest result for participation
     findResultsForParticipation(courseId: number, exerciseId: number, participationId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

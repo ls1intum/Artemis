@@ -56,7 +56,7 @@
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">Preview in Editor</a>
+                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.id }}</a>
                     </td>
                     <td>
                         <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.title }}</a>

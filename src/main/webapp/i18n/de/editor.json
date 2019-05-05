@@ -27,7 +27,13 @@
                 "resetAssignmentRepo": "Assignment Repository zurücksetzen",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
-                "loadingExercise": "Aufgabe wird geladen"
+                "loadingExercise": "Aufgabe wird geladen",
+                "solutionWarning": "Das Solution Repository erfüllt einen oder mehreren Testfälle nicht. Das könnte auf ein Problem im Solution Repository hinweisen.",
+                "solutionSuccess": "Das Solution Repository erfüllt alle Testfälle",
+                "solutionInfo": "Kein Ergebnis verfügbar.",
+                "templateWarning": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem im Template Repository hinweisen.",
+                "templateSuccess": "Das Template Repository erfüllt keinen Testfall.",
+                "templateInfo": "Kein Ergebnis verfügbar."
             }
         }
     }
