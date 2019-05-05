@@ -118,14 +118,9 @@ public class AttributeTest extends StructuralTest {
 
             String expectedAttributeInformation = "the expected attribute '" + expectedName + "' of the class '" + expectedClassName + "'";
 
-            assertTrue("Problem: the name of " + expectedAttributeInformation + " is not implemented as expected.",
-                nameIsRight);
-
-            assertTrue("Problem: the type of " + expectedAttributeInformation + " is not implemented as expected.",
-                typeIsRight);
-
-            assertTrue("Problem: the access modifiers of " + expectedAttributeInformation + " are not implemented as expected.",
-                modifiersAreRight);
+            assertTrue("Problem: the name of " + expectedAttributeInformation + " is not implemented as expected.", nameIsRight);
+            assertTrue("Problem: the type of " + expectedAttributeInformation + " is not implemented as expected.", typeIsRight);
+            assertTrue("Problem: the modifiers (access type, abstract, etc.) of " + expectedAttributeInformation + " are not implemented as expected.", modifiersAreRight);
         }
     }
 

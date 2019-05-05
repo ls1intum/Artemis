@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.eclipse.jgit.lib.BaseRepositoryBuilder;
-
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.HashMap;
+
+import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
 /**
  * Created by Josias Montag on 14.10.16.
@@ -12,8 +12,10 @@ import java.util.Collection;
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
     private Participation participation;
+
     private Path localPath;
-    private Collection<File> files;
+
+    private HashMap<File, FileType> files;
 
     public Repository(File gitDir) throws IOException {
         super(gitDir);
@@ -28,8 +30,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * Check if the file is allowed in this repository.
-     * This checks if the path of the file is a subdirectory of the repository directory.
+     * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory.
      *
      * @param file
      * @return
@@ -44,7 +45,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
         return isValidFile(file.getParentFile());
     }
-
 
     public Participation getParticipation() {
         return participation;
@@ -62,11 +62,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         this.localPath = localPath;
     }
 
-    public Collection<File> getFiles() {
+    public HashMap<File, FileType> getContent() {
         return files;
     }
 
-    public void setFiles(Collection<File> files) {
+    public void setFiles(HashMap<File, FileType> files) {
         this.files = files;
     }
 }

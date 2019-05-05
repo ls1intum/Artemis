@@ -31,6 +31,7 @@
                 "version": "Version",
                 "uploading": "Lade hoch...",
                 "isBeingEdited": "Wird gerade bearbeitet...",
+                "isDownloading": "Wird heruntergeladen...",
                 "attachments": "Anhänge",
                 "newAttachment": "Neuer Anhang",
                 "editAttachment": "Anhang bearbeiten",

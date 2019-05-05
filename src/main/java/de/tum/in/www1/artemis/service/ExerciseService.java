@@ -314,7 +314,7 @@ public class ExerciseService {
         }
         for (Participation participation : exercise.getParticipations()) {
             try {
-                if (participation.getRepositoryUrl() == null || !studentIds.contains(participation.getStudent().getLogin())) {
+                if (participation.getRepositoryUrl() == null || participation.getStudent() == null || !studentIds.contains(participation.getStudent().getLogin())) {
                     continue;
                 }
 
@@ -333,11 +333,13 @@ public class ExerciseService {
                     // --> we are free to delete
                     log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
                     gitService.get().deleteLocalRepository(participation);
-                } else {
+                }
+                else {
                     // finish with clean state
                     gitService.get().resetToOriginMaster(repo);
                 }
-            } catch (IOException | GitException | InterruptedException ex) {
+            }
+            catch (IOException | GitException | InterruptedException ex) {
                 log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
         }
@@ -348,8 +350,7 @@ public class ExerciseService {
         try {
             // create a large zip file with all zipped repos and provide it for download
             log.debug("Create zip file for all repositories");
-            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
+            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + studentIds.hashCode() + ".zip");
             createZipFile(zipFilePath, zippedRepoFiles);
             scheduleForDeletion(zipFilePath, 10);
 

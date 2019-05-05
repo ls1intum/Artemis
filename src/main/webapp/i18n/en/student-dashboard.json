@@ -65,10 +65,12 @@
             },
             "statistics": {
                 "totalScore": "Your total score",
+                "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "exerciseCount": "Participated in {{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
+                "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course."
             },
             "lectureList": {
@@ -85,7 +87,8 @@
                 "noAttachments": "There are no attachments available for this lecture.",
                 "date": "Date",
                 "notReleased": "Not released",
-                "version": "Version"
+                "version": "Version",
+                "isDownloading": "Is downloading..."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

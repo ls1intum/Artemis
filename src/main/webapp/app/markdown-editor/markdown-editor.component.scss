@@ -1,0 +1,20 @@
+.markdown-editor {
+    touch-action: none;
+    &__small {
+        min-height: 200px;
+        .markdown-editor__content {
+            min-height: 200px;
+        }
+    }
+    &__medium {
+        min-height: 500px;
+        .markdown-editor__content {
+            min-height: 500px;
+        }
+    }
+    .markdown-editor__content {
+        width: 100%;
+        overflow: auto;
+        margin-top: 5px;
+    }
+}

@@ -61,12 +61,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.loadExercise();
             }
         });
-        if (this.exercise === undefined) {
-            this.loadExercise();
-        }
     }
 
     loadExercise() {
+        this.exercise = null;
         this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);

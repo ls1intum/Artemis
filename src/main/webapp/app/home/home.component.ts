@@ -121,4 +121,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
     requestResetPassword() {
         this.router.navigate(['/reset', 'request']);
     }
+    inputChange($event: any) {
+        if ($event.target && $event.target.name === 'username') {
+            this.username = $event.target.value;
+        }
+        if ($event.target && $event.target.name === 'password') {
+            this.password = $event.target.value;
+        }
+    }
 }

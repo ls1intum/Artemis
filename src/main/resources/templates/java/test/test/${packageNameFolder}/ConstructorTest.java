@@ -107,14 +107,9 @@ public class ConstructorTest extends StructuralTest {
             String expectedConstructorInformation = "the expected constructor of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.",
-                parametersAreRight);
-
-            assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.",
-                modifiersAreRight);
-
-            assertTrue("Problem: the constructor of the class " + expectedClassName + " is not implemented as expected.",
-                parametersAreRight && modifiersAreRight);
+            assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.", parametersAreRight);
+            assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the constructor of the class " + expectedClassName + " is not implemented as expected.", parametersAreRight && modifiersAreRight);
         }
     }
 
