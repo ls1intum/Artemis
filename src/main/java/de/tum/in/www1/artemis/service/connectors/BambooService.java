@@ -600,7 +600,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
         } catch (Exception e) {
-            log.error("Could not get feedback from jobs " + e));
+            log.error("Could not get feedback from jobs " + e);
         }
 
         return result.getFeedbacks();
