@@ -286,7 +286,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         const queryParams: any = {};
-        let route: string;
+        let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
             submission = 'new';
@@ -298,7 +298,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
             queryParams.showBackButton = true;
         }
-        // TODO: Make sure route is set
         this.router.navigate([route], { queryParams });
     }
 
