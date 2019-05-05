@@ -2,15 +2,13 @@ package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -26,8 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
@@ -46,88 +45,49 @@ public class RepositoryResource {
 
     private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
-    private final ExerciseService exerciseService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<GitService> gitService;
-    private final Optional<VersionControlService> versionControlService;
     private final UserService userService;
 
-    public RepositoryResource(UserService userService,
-                              ParticipationService participationService,
-                              AuthorizationCheckService authCheckService,
-                              ExerciseService exerciseService,
-                              Optional<GitService> gitService,
-                              Optional<ContinuousIntegrationService> continuousIntegrationService,
-                              Optional<VersionControlService> versionControlService) {
+    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+                              Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.exerciseService = exerciseService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
     }
 
     /**
-     * GET /repository/{exerciseId}/files: List all file names of the repository
+     * GET /repository/{participationId}/files: Map of all file and folders of the repository.
+     * Each entry states if it is a file or a folder.
      *
-     * @param exerciseId Exercise ID
-     * @return
-     * @throws IOException
-     */
-    @GetMapping(value = "/repository/{exerciseId}/test-files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getTestFiles(@PathVariable Long exerciseId) throws IOException, InterruptedException {
-        log.debug("REST request to test files for Exercise : {exerciseId}", exerciseId);
-
-        try {
-            ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
-            String projectKey = exercise.getProjectKey();
-
-            String testRepoName = projectKey.toLowerCase() + "-tests";
-            URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
-
-            Repository repository = gitService.get().getOrCheckoutRepository(exerciseRepoUrl);
-            Iterator<File> itr = gitService.get().listFiles(repository).iterator();
-
-            Collection<String> fileList = new LinkedList<>();
-
-            while (itr.hasNext()) {
-                fileList.add(itr.next().toString());
-            }
-
-            return new ResponseEntity<>(fileList, HttpStatus.OK);
-        } catch(EntityNotFoundException ex) {
-            return notFound();
-        }
-    }
-
-    /**
-     * GET /repository/{exerciseId}/files: List all file names of the repository
-     *
-     * @param exerciseId Participation ID
+     * @param participationId Participation ID
      * @return
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Collection<String>> failureResponse = checkParticipation(participation);
+        ResponseEntity<HashMap<String, FileType>> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator<File> itr = gitService.get().listFiles(repository).iterator();
+        Iterator itr = gitService.get().listFiles(repository).entrySet().iterator();
 
-        Collection<String> fileList = new LinkedList<>();
+        HashMap<String, FileType> fileList = new HashMap<>();
 
         while (itr.hasNext()) {
-            fileList.add(itr.next().toString());
+            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
+            fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
         return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
+
 
     /**
      * GET /repository/{participationId}/file: Get the content of a file
@@ -196,7 +156,6 @@ public class RepositoryResource {
         if(!repository.isValidFile(file)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        file.getParentFile().mkdirs();
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -206,10 +165,66 @@ public class RepositoryResource {
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file
+     * POST /repository/{participationId}/folder: Create new folder
      *
      * @param participationId Participation ID
      * @param filename
+     * @param request
+     * @return
+     * @throws IOException
+     */
+    @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+        log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
+
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
+        // We need to add an empty keep file so that the folder can be added to the git repository
+        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
+        InputStream inputStream = request.getInputStream();
+        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setFiles(null); // invalidate cache
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("folder", folderName)).build();
+    }
+
+    /**
+     * Change the name of a file.
+     * @param participationId id of the participation the git repository belongs to.
+     * @param fileMove defines current and new path in git repository.
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> renameFolder(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
+        if(!file.isPresent()) { return notFound(); }
+        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
+
+        boolean isRenamed = file.get().renameTo(newFile);
+        if (!isRenamed) {
+            return notFound();
+        }
+
+        repository.setFiles(null); // invalidate cache
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
+    }
+
+    /**
+     * DELETE /repository/{participationId}/file: Delete the file or the folder specified.
+     * If the path is a folder, all files in it will be deleted, too.
+     * @param participationId Participation ID
+     * @param filename path of file or folder to delete.
      * @return
      * @throws IOException
      */
@@ -225,7 +240,11 @@ public class RepositoryResource {
         Optional<File> file = gitService.get().getFileByName(repository, filename);
         if(!file.isPresent()) { return notFound(); }
 
-        Files.delete(file.get().toPath());
+        if (file.get().isFile()) {
+            Files.delete(file.get().toPath());
+        } else {
+            FileUtils.deleteDirectory(file.get());
+        }
         repository.setFiles(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
     }

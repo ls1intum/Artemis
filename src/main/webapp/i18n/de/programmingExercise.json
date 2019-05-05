@@ -36,36 +36,6 @@
             "problemStatement": {
                 "taskCommand": "[task] Aufgabe"
             }
-        },
-        "editor": {
-            "title": "Code Editor für Übung:",
-            "instructions": "Aufgabenstellung &nbsp;",
-            "unsavedChanges": "Nicht gespeicherte Änderungen vorhanden.",
-            "savingChanges": "Änderungen werden gespeichert.",
-            "savingFile": "Datei wird gespeichert.",
-            "changesSaved": "Alle Änderungen gespeichert.",
-            "failedToSave": "Änderungen konnten nicht gespeichert werden.",
-            "changesUndefined": "Frage Absende-Status an.",
-            "changesError": "Absende-Status konnte nicht angefragt werden.",
-            "changesSubmitted": "Alle Änderungen abgesendet.",
-            "unsubmittedChanges": "Nicht abgesendete Änderungen vorhanden.",
-            "submittingChanges": "Änderungen werden abgesendet.",
-            "preparingForSubmit": "Absendung wird vorbereitet.",
-            "submit": "Absenden",
-            "buildOutput": "Build Ergebnisse",
-            "building": "Building...",
-            "buildFailed": "Build gescheitert",
-            "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
-            "selectFile": "Wähle eine Datei aus, um zu beginnen!",
-            "downloadBuildResult": "Build Ergebnis herunterladen",
-            "saving": "Speichert",
-            "saveFiles": "Speichern",
-            "errors": {
-                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
-                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor."
-            }
         }
     }
 }

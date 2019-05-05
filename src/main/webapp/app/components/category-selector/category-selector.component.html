@@ -11,7 +11,6 @@
     [secondaryPlaceholder]="'arTeMiSApp.exercise.tagPlaceholder' | translate"
     [clearOnBlur]="true"
     (onAdd)="onItemAdded($event)"
-    (onBlur)="onBlur($event)"
     (onRemove)="onItemRemove($event)"
 >
     <tag-input-dropdown [focusFirstElement]="true" identifyBy="category" displayBy="category" [zIndex]="10000" [autocompleteItems]="uniqueCategories"></tag-input-dropdown>

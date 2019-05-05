@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 
-import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
+import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, PRESENTATION_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
@@ -43,6 +43,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     // max score
     totalMaxScore = 0;
     totalMaxScores = {};
+
+    // presentation score
+    totalPresentationScore = 0;
+    presentationScores = {};
 
     groupedExercises: Exercise[][] = [];
     doughnutChartColors = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
@@ -168,6 +172,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 this.calculateMaxScores();
                 this.calculateAbsoluteScores();
                 this.calculateRelativeScores();
+                this.calculatePresentationScores();
                 this.groupExercisesByType();
             });
         } else {
@@ -175,6 +180,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             this.calculateMaxScores();
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
+            this.calculatePresentationScores();
             this.groupExercisesByType();
         }
 
@@ -225,6 +231,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     relativeScore: 0,
                     totalMaxScore: 0,
                     absoluteScore: 0,
+                    presentationScore: 0,
                     names: [],
                     scores: { data: [], label: 'Score', tooltips: [] },
                     missedScores: { data: [], label: 'Missed score', tooltips: [] },
@@ -238,17 +245,26 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     groupedExercises[index].scores.data.push(participationScore);
                     groupedExercises[index].missedScores.data.push(missedScore);
                     groupedExercises[index].names.push(exercise.title);
-                    groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
-                    if (exercise.maxScore) {
-                        groupedExercises[index].missedScores.tooltips.push(
-                            `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
-                        );
+                    if (this.absoluteResult(participationResult) !== null) {
+                        groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
+                        if (exercise.maxScore) {
+                            groupedExercises[index].missedScores.tooltips.push(
+                                `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
+                            );
+                        }
+                    } else {
+                        if (participationScore > 50) {
+                            groupedExercises[index].scores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
+                        } else {
+                            groupedExercises[index].missedScores.tooltips.push(`${participationResult.resultString} (${participationScore}%)`);
+                        }
                     }
                 }
             });
             groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
             groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
             groupedExercises[index].absoluteScore = this.absoluteScores[exercise.type];
+            groupedExercises[index].presentationScore = this.presentationScores[exercise.type];
             groupedExercises[index].values = [groupedExercises[index].scores, groupedExercises[index].missedScores];
         });
         this.groupedExercises = groupedExercises;
@@ -325,6 +341,22 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScores = relativeScores;
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
+    }
+
+    calculatePresentationScores(): void {
+        const quizzesPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, PRESENTATION_SCORE);
+        const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
+        const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
+        const textExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, PRESENTATION_SCORE);
+        const fileUploadExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, PRESENTATION_SCORE);
+        const presentationScores = {};
+        presentationScores[ExerciseType.QUIZ] = quizzesPresentationScore;
+        presentationScores[ExerciseType.PROGRAMMING] = programmingExercisePresentationScore;
+        presentationScores[ExerciseType.MODELING] = modelingExercisePresentationScore;
+        presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
+        presentationScores[ExerciseType.FILE_UPLOAD] = fileUploadExercisePresentationScore;
+        this.presentationScores = presentationScores;
+        this.totalPresentationScore = this.calculateTotalScoreForTheCourse(PRESENTATION_SCORE);
     }
 
     calculateScores(filterFunction: (courseExercise: Exercise) => boolean) {
