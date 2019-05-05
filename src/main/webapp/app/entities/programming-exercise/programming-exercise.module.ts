@@ -12,6 +12,7 @@ import {
     ProgrammingExerciseDialogComponent,
     ProgrammingExercisePopupComponent,
     ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseEditableInstructionComponent,
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
@@ -48,6 +49,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseEditableInstructionComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -58,7 +60,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeletePopupComponent,
         FaIconComponent,
     ],
-    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],
+    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent, ProgrammingExerciseEditableInstructionComponent],
     providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

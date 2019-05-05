@@ -10,6 +10,7 @@ import {
     SafeUrlPipe,
     JhiDynamicTranslateDirective,
     KeysPipe,
+    TypeCheckPipe,
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
@@ -19,7 +20,17 @@ import { ExerciseTypePipe } from 'app/entities/exercise';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent, ExerciseTypePipe, KeysPipe],
+    declarations: [
+        HasAnyAuthorityDirective,
+        SafeHtmlPipe,
+        SafeUrlPipe,
+        RemoveKeysPipe,
+        JhiDynamicTranslateDirective,
+        SecuredImageComponent,
+        ExerciseTypePipe,
+        KeysPipe,
+        TypeCheckPipe,
+    ],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
     exports: [
@@ -33,6 +44,7 @@ import { ExerciseTypePipe } from 'app/entities/exercise';
         SecuredImageComponent,
         ExerciseTypePipe,
         KeysPipe,
+        TypeCheckPipe,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

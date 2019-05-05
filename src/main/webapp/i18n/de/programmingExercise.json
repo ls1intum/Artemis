@@ -34,7 +34,8 @@
             "solutionResult": "Ergebnis Lösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "problemStatement": {
-                "taskCommand": "[task] Aufgabe"
+                "taskCommand": "[task] Aufgabe",
+                "testCaseCommand": "Testfall einfügen"
             }
         }
     }

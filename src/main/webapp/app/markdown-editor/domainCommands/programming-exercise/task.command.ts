@@ -1,7 +1,7 @@
-import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 
-export class TaskCommand extends DomainCommand {
+export class TaskCommand extends DomainTagCommand {
     public static readonly identifier = '[task]';
     public static readonly taskPlaceholder = 'Task Short Description';
     public static readonly testCasePlaceholder = 'testCaseName';

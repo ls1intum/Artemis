@@ -19,16 +19,16 @@ import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
-import { CodeEditorService } from '../../code-editor/code-editor.service';
-import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
-import { Feedback } from '../feedback';
-import { Result, ResultService, ResultWebsocketService } from '../result';
-import { ProgrammingExercise } from './programming-exercise.model';
-import { RepositoryFileService } from '../repository';
-import { Participation, hasParticipationChanged } from '../participation';
+import { CodeEditorService } from 'app/code-editor/code-editor.service';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
+import { Feedback } from 'app/entities/feedback';
+import { Result, ResultService, ResultWebsocketService } from 'app/entities/result';
+import { ProgrammingExercise } from '../programming-exercise.model';
+import { RepositoryFileService } from 'app/entities/repository';
+import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
 type Step = {
     title: string;
@@ -46,18 +46,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
-    // If true, shows the participation of the exercise's template, instead of the assignment participation
-    @Input()
-    private showTemplatePartipation = false;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
+    @Output()
+    public resultChange = new EventEmitter<Result>();
 
     private resultSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResult: Result | null;
+    public latestResultValue: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
@@ -125,6 +124,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.updateMarkdown();
         }
+    }
+
+    set latestResult(result: Result) {
+        this.latestResultValue = result;
+        this.resultChange.emit(result);
+    }
+    get latestResult() {
+        return this.latestResultValue;
     }
 
     /**
@@ -218,16 +225,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            let participationId: number;
-            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
-                participationId = this.exercise.templateParticipation.id;
-            } else if (this.participation) {
-                participationId = this.participation.id;
-            } else {
-                // in this case, no participation is available
+            if (!this.participation.id) {
                 return Observable.of(null);
             }
-            return this.repositoryFileService.get(participationId, 'README.md').pipe(
+            return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),

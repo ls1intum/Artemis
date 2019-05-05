@@ -34,7 +34,8 @@
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
             "problemStatement": {
-                "taskCommand": "[task] Task"
+                "taskCommand": "[task] Task",
+                "testCaseCommand": "Insert Test Case"
             }
         }
     }

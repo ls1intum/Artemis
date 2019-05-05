@@ -11,7 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
-import { TaskCommand } from 'app/markdown-editor/domainCommands/task.command';
+import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { RepositoryFileService } from '../repository';
 
 @Component({
@@ -86,7 +86,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
-            this.repositoryFiles.getTestFiles(this.programmingExercise.id).subscribe(console.log);
         }
     }
 
