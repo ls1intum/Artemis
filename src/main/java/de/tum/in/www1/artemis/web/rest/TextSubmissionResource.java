@@ -54,8 +54,8 @@ public class TextSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+                                  CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
+                                  AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -156,7 +156,7 @@ public class TextSubmissionResource {
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
+                .body(null);
         }
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -175,7 +175,7 @@ public class TextSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+                                                                      @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
