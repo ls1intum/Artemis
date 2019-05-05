@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
@@ -8,7 +8,7 @@ import { AnswerOption } from '../../../entities/answer-option';
     templateUrl: './multiple-choice-question.component.html',
     providers: [ArtemisMarkdown],
 })
-export class MultipleChoiceQuestionComponent implements OnChanges {
+export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -16,7 +16,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         this._question = question;
         this.watchCollection();
     }
-    get question() {
+    get question(): MultipleChoiceQuestion {
         return this._question;
     }
     @Input()
@@ -40,8 +40,6 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     rendered: MultipleChoiceQuestion;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
-
-    ngOnChanges(changes: SimpleChanges): void {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
@@ -78,9 +76,9 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         }
     }
 
-    isAnswerOptionSelected(answerOption: AnswerOption) {
+    isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            !!this.selectedAnswerOptions &&
+            this.selectedAnswerOptions != null &&
             this.selectedAnswerOptions.findIndex(function(selected) {
                 return selected.id === answerOption.id;
             }) !== -1
