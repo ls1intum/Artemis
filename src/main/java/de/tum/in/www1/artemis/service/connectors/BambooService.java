@@ -594,7 +594,7 @@ public class BambooService implements ContinuousIntegrationService {
                     createAutomaticFeedback(result, methodName, true, null);
                 }
 
-                if (!failedTests.isEmpty() || !succuessfulTests.isEmpty()) {
+                if (!failedTests.isEmpty()) {
                     result.setHasFeedback(true);
                 }
             }
