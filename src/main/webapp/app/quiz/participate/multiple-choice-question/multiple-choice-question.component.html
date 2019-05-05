@@ -43,7 +43,7 @@
     </div>
     <div class="answer-options" *ngIf="!showResult">
         <div
-            *ngFor="let answerOption of question.answerOptions; let i = index"
+            *ngFor="let answerOption of question.answerOptions!; let i = index"
             id="answer-option-{{ i }}"
             class="answer-option"
             [ngClass]="{ 'click-disabled': clickDisabled }"
@@ -74,19 +74,19 @@
             <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
             <th class="selection" *ngIf="!forceSampleSolution">{{ 'arTeMiSApp.multipleChoiceQuestion.you' | translate }}</th>
         </tr>
-        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}">
+        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions!; let i = index" id="answer-option-{{i}}">
             <td class="content">
-                <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
+                <div class="text" [innerHTML]="rendered.answerOptions![i].text"></div>
                 <div class="hint">
                     <ng-template #renderedAnswerOptionsHint2>
-                        <div [innerHTML]="rendered.answerOptions[i].hint"></div>
+                        <div [innerHTML]="rendered.answerOptions![i].hint"></div>
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
                         <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
                     </span>
                     <ng-template #renderedAnswerOptionsExplanation>
-                        <div [innerHTML]="rendered.answerOptions[i].explanation"></div>
+                        <div [innerHTML]="rendered.answerOptions![i].explanation"></div>
                     </ng-template>
                     <span
                         class="label label-primary"
