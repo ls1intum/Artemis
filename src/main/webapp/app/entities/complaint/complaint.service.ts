@@ -36,7 +36,7 @@ export class ComplaintService {
     }
 
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/allowed/${courseId}`);
+        return this.http.get<number>(SERVER_API_URL + `api/${courseId}/allowed-complaints`);
     }
 
     updateComplaint(complaint: Complaint) {
