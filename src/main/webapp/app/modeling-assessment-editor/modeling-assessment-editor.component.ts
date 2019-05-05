@@ -195,6 +195,18 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
+    onCancelAssessment() {
+        let confirmSubmit = window.confirm(
+            'Are you sure you want to cancel the assessment? Your current assessment progress will be deleted ' +
+                'and the submission will be available for assessment to other tutors again.',
+        );
+        if (confirmSubmit) {
+            this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
+                // TODO CZ: implement
+            });
+        }
+    }
+
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.localFeedbacks = feedbacks;
         this.validateFeedback();

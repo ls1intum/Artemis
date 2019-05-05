@@ -1,5 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -10,14 +19,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -28,8 +29,7 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
+    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository) {
         super(resultRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -94,6 +94,14 @@ public class ModelingAssessmentService extends AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(result);
+    }
+
+    // TODO CZ: move to AssessmentService to be also available for text exercises?
+    @Transactional
+    public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
+        // TODO CZ: delete result / release soft lock
+        resultRepository.deleteById(modelingSubmission.getResult().getId());
+        // TODO CZ: tell compass: remove submission/model from 'alreadyAssessedModels' (and maybe add to modelsWaitingForAssessment?)
     }
 
     /**

@@ -12,13 +12,18 @@
                   jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
                 Assessment locked by another user!
             </span>
-            <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
-                <fa-icon icon="save"></fa-icon>
-                <span jhiTranslate="entity.action.save">Save</span>
-            </button>
-            <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
-                <span jhiTranslate="entity.action.submit">Submit</span>
-            </button>
+            <div *ngIf="!result?.rated">
+                <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
+                    <fa-icon icon="save"></fa-icon>
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </button>
+                <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
+                    <span jhiTranslate="entity.action.submit">Submit</span>
+                </button>
+                <button class="btn btn-danger" (click)="onCancelAssessment()" [disabled]="!isAuthorized">
+                    <span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+            </div>
             <div *ngIf="conflicts && conflicts.length > 0" class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
                 <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>

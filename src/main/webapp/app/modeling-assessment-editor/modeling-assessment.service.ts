@@ -53,6 +53,10 @@ export class ModelingAssessmentService {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }
 
+    cancelAssessment(submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
     /**
      * Iterates over all feedback elements of a response and converts the reference field of the feedback into
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
