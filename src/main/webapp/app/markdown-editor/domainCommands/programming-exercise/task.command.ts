@@ -14,7 +14,7 @@ export class TaskCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = `\n1. ${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        this.insertText(text);
     }
 
     /**
