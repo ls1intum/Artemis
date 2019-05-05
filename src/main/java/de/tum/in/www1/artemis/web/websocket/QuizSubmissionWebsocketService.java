@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.websocket;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,15 +47,18 @@ public class QuizSubmissionWebsocketService {
         String username = principal.getName();
 
         // check if submission is still allowed
-        QuizExercise quizExercise = quizExerciseService.findOne(exerciseId);
-        if (!quizExercise.isSubmissionAllowed()) {
+        Optional<QuizExercise> quizExercise = quizExerciseService.findById(exerciseId);
+        if (!quizExercise.isPresent()) {
+            return;
+        }
+        if (!quizExercise.get().isSubmissionAllowed()) {
             // TODO: notify user that submission was not saved because quiz is not active over payload and handle this case in the client
             messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
             return;
         }
 
         // check if user already submitted for this quiz
-        Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
+        Participation participation = participationService.participationForQuizWithResult(quizExercise.get(), username);
         if (!participation.getResults().isEmpty()) {
             // NOTE: At this point, there can only be one Result because we already checked
             // if the quiz is active, so there is no way the student could have already practiced

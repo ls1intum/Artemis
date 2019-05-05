@@ -60,7 +60,7 @@ public class LectureService {
     }
 
     public void delete(Lecture lecture) {
-        lectureRepository.deleteById(lecture.getId());
+        lectureRepository.delete(lecture);
     }
 
 }
