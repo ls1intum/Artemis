@@ -270,13 +270,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.groupedExercises = groupedExercises;
     }
 
-    absoluteResult(result: Result): number {
+    absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;
         }
         if (result.resultString && result.resultString.indexOf('failed') !== -1) {
-            // TODO: Is this right?
-            return 0;
+            return null;
         }
         if (result.resultString.indexOf('of') === -1) {
             if (result.resultString.indexOf('points') === -1) {
