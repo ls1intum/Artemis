@@ -268,7 +268,7 @@ public class ExerciseService {
             }
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
-        exerciseRepository.deleteById(exercise.getId());
+        exerciseRepository.delete(exercise);
     }
 
     /**
