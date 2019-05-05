@@ -50,7 +50,6 @@ export class ProgrammingExerciseEditableInstructionComponent {
     }
 
     setTestCasesFromResults(result: Result) {
-        console.log(result);
         this.testCaseCommand.setValues(result.feedbacks.map(({ text }) => text));
     }
 }
