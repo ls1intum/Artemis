@@ -454,7 +454,7 @@ public class BambooService implements ContinuousIntegrationService {
             result.setBuildArtifact((Boolean) buildMap.get("artifact"));
             result.setParticipation(participation);
 
-            addFeedbackToResultNew(result, (List<Object>) buildMap.get("failedJobs"));
+            addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
 
             // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
@@ -534,7 +534,7 @@ public class BambooService implements ContinuousIntegrationService {
                     errorMessageString += ((String) error.get("message")).split("\\n", 2)[0] + "\n";
                 }
 
-                createAutomaticFeedback(result, methodName, errorMessageString);
+                createAutomaticFeedback(result, methodName, false, errorMessageString);
             }
         } catch (Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
@@ -543,12 +543,12 @@ public class BambooService implements ContinuousIntegrationService {
         return result.getFeedbacks();
     }
 
-    private void createAutomaticFeedback(Result result, String methodName, String errorMessageString) {
+    private void createAutomaticFeedback(Result result, String methodName, boolean positive, String errorMessageString) {
         Feedback feedback = new Feedback();
         feedback.setText(methodName);
         feedback.setDetailText(errorMessageString);
         feedback.setType(FeedbackType.AUTOMATIC);
-        feedback.setPositive(false);
+        feedback.setPositive(positive);
         feedback = feedbackRepository.save(feedback);
         result.addFeedback(feedback);
     }
@@ -557,23 +557,19 @@ public class BambooService implements ContinuousIntegrationService {
      * Converts build result details into feedback and stores it in the result object
      *
      * @param result     the result for which the feedback should be added
-     * @param failedJobs the failedJobs list of the requestBody
+     * @param jobs the jobs list of the requestBody
      * @return a list of feedbacks itemsstored in a result
      */
-    public List<Feedback> addFeedbackToResultNew(Result result, List<Object> failedJobs) {
-        if (failedJobs == null) {
+    public List<Feedback> addFeedbackToResultNew(Result result, List<Object> jobs) {
+        if (jobs == null) {
             return null;
         }
 
         try {
-            List<Map<String, Object>> castedfailedJobs = (List<Map<String, Object>>) (Object) failedJobs; // TODO: check if this works correctly
+            List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs; // TODO: check if this works correctly
 
-            for (Map<String, Object> failedJob : castedfailedJobs) {
-                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) failedJob.get("failedTests");
-                if (!failedTests.isEmpty()) {
-                    result.setHasFeedback(true);
-                }
-
+            for (Map<String, Object> job : castedJobs) {
+                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) job.get("failedTests");
                 for (Map<String, Object> failedTest : failedTests) {
                     String className = (String) failedTest.get("className");
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
@@ -587,12 +583,24 @@ public class BambooService implements ContinuousIntegrationService {
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
-                    createAutomaticFeedback(result, methodName, errorMessageString);
+                    createAutomaticFeedback(result, methodName, false, errorMessageString);
+                }
+
+                List<Map<String, Object>> succuessfulTests = (List<Map<String, Object>>) job.get("successfulTests");
+                for (Map<String, Object> succuessfulTest : succuessfulTests) {
+                    String className = (String) succuessfulTest.get("className");
+                    String methodName = (String) succuessfulTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
+
+                    createAutomaticFeedback(result, methodName, true, null);
+                }
+
+                if (!failedTests.isEmpty() || !succuessfulTests.isEmpty()) {
+                    result.setHasFeedback(true);
                 }
             }
 
         } catch (Exception e) {
-            log.error("Could not get feedback from failedJobs " + e);
+            log.error("Could not get feedback from jobs " + e));
         }
 
         return result.getFeedbacks();

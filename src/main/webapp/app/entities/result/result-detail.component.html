@@ -7,9 +7,11 @@
         <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
     <div [hidden]="isLoading" *ngFor="let feedback of feedbackList; last as isLast">
-        <p *ngIf="feedback.type === 'AUTOMATIC'">
-            Error in &nbsp;<code-error>{{ feedback.text }}</code-error
-            >:
+        <p *ngIf="feedback.type === 'AUTOMATIC' && !feedback.positive">
+            Error in &nbsp;<code-error>{{ feedback.text }}</code-error>:
+        </p>
+        <p *ngIf="feedback.type === 'AUTOMATIC' && feedback.positive">
+            Test passed &nbsp;<code-success>{{ feedback.text }}</code-success>:
         </p>
         <p *ngIf="feedback.type === 'MANUAL' && !feedback.positive">
             <code-error>Feedback &nbsp;{{ feedback.text }}:</code-error>
