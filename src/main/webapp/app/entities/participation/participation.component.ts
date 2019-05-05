@@ -47,6 +47,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         });
     }
+
     ngOnInit() {
         this.loadAll();
         this.registerChangeInParticipations();
@@ -59,8 +60,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     trackId(index: number, item: Participation) {
         return item.id;
     }
+
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
+    }
+
+    addPresentation(participation: Participation) {
+        participation.presentationScore = 1;
+        this.participationService.update(participation).subscribe(
+            () => {},
+            () => {
+                this.jhiAlertService.error('arTeMiSApp.participation.addPresentation.error');
+            },
+        );
     }
 
     private onError(error: HttpErrorResponse) {
