@@ -33,10 +33,10 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 // @formatter:off
-@Import(SecurityProblemSupport.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter implements InitializingBean {
+@Import(SecurityProblemSupport.class)
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -60,25 +60,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter implemen
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        try {
-            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
-        }
-        catch (Exception e) {
-            throw new BeanInitializationException("Security configuration failed", e);
-        }
-    }
-
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
-
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

@@ -1,5 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
-
 buildscript {
     repositories {
         mavenLocal()
@@ -45,7 +43,6 @@ apply plugin: 'propdeps'
 apply plugin: "com.github.ben-manes.versions"
 
 apply from: "gradle/docker.gradle"
-//apply from: "gradle/sonar.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: 'gradle/liquibase.gradle'
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
@@ -100,29 +97,6 @@ war {
 
 springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
-}
-
-if (OperatingSystem.current().isWindows()) {
-    // https://stackoverflow.com/questions/40037487/the-filename-or-extension-is-too-long-error-using-gradle
-    task classpathJar(type: Jar) {
-        dependsOn configurations.runtime
-        appendix = 'classpath'
-
-        doFirst {
-            manifest {
-                attributes 'Class-Path': configurations.runtime.files.collect {
-                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/').replaceAll(' ', '%20')
-                }.join(' ')
-            }
-        }
-    }
-
-    bootRun {
-        dependsOn classpathJar
-        doFirst {
-            classpath = files("$buildDir/classes/java/main", "$buildDir/resources/main", classpathJar.archivePath)
-        }
-    }
 }
 
 test {
@@ -278,7 +252,7 @@ task executeTests (type: Exec) {
 }
 
 wrapper {
-    gradleVersion = '5.4'
+    gradleVersion = '5.4.1'
 }
 
 if (project.hasProperty('nodeInstall')) {
@@ -290,5 +264,5 @@ if (project.hasProperty('nodeInstall')) {
     }
 }
 
-//compileJava.dependsOn processResources
-//processResources.dependsOn bootBuildInfo
+compileJava.dependsOn processResources
+processResources.dependsOn bootBuildInfo

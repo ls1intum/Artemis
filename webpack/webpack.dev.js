@@ -36,7 +36,8 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
         stats: options.stats,
         watchOptions: {
             ignored: /node_modules/
-        }
+        },
+        https: options.tls
     },
     entry: {
         polyfills: './src/main/webapp/app/polyfills',
@@ -109,10 +110,11 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
         new FriendlyErrorsWebpackPlugin(),
         new ForkTsCheckerWebpackPlugin(),
         new BrowserSyncPlugin({
+            https: options.tls,
             host: 'localhost',
             port: 9000,
             proxy: {
-                target: 'http://localhost:9060',
+                target: `http${options.tls ? 's' : ''}://localhost:9060`,
                 ws: true,
                 proxyOptions: {
                     changeOrigin: false  //pass the Host header to the backend unchanged  https://github.com/Browsersync/browser-sync/issues/430
