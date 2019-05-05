@@ -50,8 +50,9 @@ export class TextResultComponent {
     }
 
     private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock {
-        const indexOfReference = this.submissionText.indexOf(feedback.reference);
-        return new TextResultBlock(feedback.reference, indexOfReference, feedback);
+        const reference = feedback.reference!;
+        const indexOfReference = this.submissionText.indexOf(reference);
+        return new TextResultBlock(reference, indexOfReference, feedback);
     }
 
     public repeatForEachCredit(textResultBlock: TextResultBlock): number[] {

@@ -168,6 +168,6 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     get shortName() {
-        return this.courseForm.get('shortName');
+        return this.courseForm.get('shortName')!;
     }
 }
