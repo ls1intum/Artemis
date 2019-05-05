@@ -11,6 +11,7 @@ import { Moment } from 'moment';
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
 export const MAX_SCORE = 'maxScore';
+export const PRESENTATION_SCORE = 'presentationScore';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
@@ -23,6 +24,7 @@ export class CourseScoreCalculationService {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
+        let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null) {
                 maxScore = maxScore + exercise.maxScore;
@@ -36,6 +38,7 @@ export class CourseScoreCalculationService {
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
                     }
+                    presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
                 }
             }
         }
@@ -46,6 +49,7 @@ export class CourseScoreCalculationService {
             scores.set(RELATIVE_SCORE, 0);
         }
         scores.set(MAX_SCORE, maxScore);
+        scores.set(PRESENTATION_SCORE, presentationScore);
         return scores;
     }
 

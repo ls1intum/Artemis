@@ -15,6 +15,10 @@
             "cleanupBuildPlan": {
                 "question": "Are you sure you want to delete the build plan of the participation of {{ student }}?"
             },
+            "addPresentation": {
+                "label": "Add presentation",
+                "error": "Could not add presentation. Please try again."
+            },
             "detail": {
                 "title": "Participation"
             },
