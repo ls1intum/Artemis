@@ -26,7 +26,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseId: number;
     public courseId: number;
     private subscription: Subscription;
-    public exercise: Exercise;
+    public exercise: Exercise | null;
     public showMoreResults = false;
     public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[] = [];
@@ -114,11 +114,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     handleNewResult(result: Result) {
-        const participation = this.exercise.participations[0];
-        if (participation) {
-            const results = participation.results;
-            if (!results.some(el => el.id === result.id)) {
-                participation.results.push(result);
+        if (this.exercise) {
+            const participation = this.exercise.participations[0];
+            if (participation) {
+                const results = participation.results;
+                if (!results.some(el => el.id === result.id)) {
+                    participation.results.push(result);
+                }
             }
         }
     }
@@ -132,7 +134,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseIsOver(): boolean {
-        return moment(this.exercise.dueDate!).isBefore(moment());
+        return this.exercise ? moment(this.exercise!.dueDate!).isBefore(moment()) : true;
     }
 
     get hasMoreResults(): boolean {
@@ -140,22 +142,22 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseRouterLink(): string | null {
-        if (this.exercise.type === ExerciseType.MODELING) {
-            return `/course/${this.courseId}/exercise/${this.exercise.id}/assessment`;
-        } else if (this.exercise.type === ExerciseType.TEXT) {
+        if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
+            return `/course/${this.courseId}/exercise/${this.exercise!.id}/assessment`;
+        } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
         } else {
             return null;
         }
     }
 
-    get hasResults(): boolean {
-        const hasParticipations = this.exercise.participations && this.exercise.participations[0];
-        return hasParticipations && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
+    get hasResults(): boolean | null {
+        const hasParticipations = !!this.exercise && this.exercise.participations && this.exercise.participations[0];
+        return hasParticipations && this.exercise && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
     }
 
     get currentResult(): Result | null {
-        if (!this.exercise.participations || !this.exercise.participations[0].results) {
+        if (!this.exercise || !this.exercise.participations || !this.exercise.participations[0].results) {
             return null;
         }
         const results = this.exercise.participations[0].results;

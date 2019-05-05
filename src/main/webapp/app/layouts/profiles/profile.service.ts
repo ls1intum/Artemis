@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

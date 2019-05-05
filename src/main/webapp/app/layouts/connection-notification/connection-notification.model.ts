@@ -9,7 +9,7 @@ export const enum ConnectionNotificationType {
 
 export class ConnectionNotification extends Notification {
     public expireDate: Moment;
-    public type: ConnectionNotificationType;
+    public type: ConnectionNotificationType | null;
 
     constructor() {
         super(NotificationType.CONNECTION);

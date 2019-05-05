@@ -133,11 +133,10 @@ export class JhiWebsocketService implements OnDestroy {
         this.alreadyConnectedOnce = false;
     }
 
-    receive(channel?: string): Observable<any> {
+    receive(channel: string): Observable<any> {
         if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
             this.myListeners[channel] = this.createListener(channel);
         }
-        // TODO: Fix access of myListeners[undefined]
         return this.myListeners[channel];
     }
 
@@ -162,13 +161,12 @@ export class JhiWebsocketService implements OnDestroy {
         }
     }
 
-    subscribe(channel?: string) {
+    subscribe(channel: string) {
         this.connection.then(() => {
             if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
                 this.myListeners[channel] = this.createListener(channel);
             }
-            // TODO: Fix access of myListeners[undefined]
-            this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+            this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
                 const res = JSON.parse(data.body);
                 if (!res.error) {
                     this.listenerObservers[channel].next(JSON.parse(data.body));
@@ -181,8 +179,7 @@ export class JhiWebsocketService implements OnDestroy {
         });
     }
 
-    unsubscribe(channel?: string) {
-        // TODO: Fix access of myListeners[undefined]
+    unsubscribe(channel: string) {
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
         }
