@@ -6,7 +6,7 @@
     <div *ngSwitchCase="true" class="text-muted" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
-    <div [hidden]="isLoading" *ngFor="let feedback of (feedbackList | callback: filterFeedback); last as isLast">
+    <div [hidden]="isLoading" *ngFor="let feedback of (feedbackList | filterfeedbacks); last as isLast">
         <p *ngIf="feedback.type === 'AUTOMATIC' && !feedback.positive">
             Error in &nbsp;<code-error>{{ feedback.text }}</code-error>:
         </p>
