@@ -48,7 +48,7 @@ public class LectureResource {
     private final UserService userService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+                           AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseService = courseService;
@@ -76,7 +76,7 @@ public class LectureResource {
         }
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+            .body(result);
     }
 
     /**
@@ -84,7 +84,7 @@ public class LectureResource {
      *
      * @param lecture the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
-     *         Server Error) if the lecture couldn't be updated
+     * Server Error) if the lecture couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
@@ -119,7 +119,7 @@ public class LectureResource {
         }
         Course course = lecture.get().getCourse();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
-                && !authCheckService.isAdmin()) {
+            && !authCheckService.isAdmin()) {
             return forbidden();
         }
         lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));

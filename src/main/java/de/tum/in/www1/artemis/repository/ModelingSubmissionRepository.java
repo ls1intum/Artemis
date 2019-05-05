@@ -30,7 +30,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     Optional<ModelingSubmission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**
-     * @param courseId  the course we are interested in
+     * @param courseId the course we are interested in
      * @param submitted boolean to check if an exercise has been submitted or not
      * @return number of submissions belonging to courseId with submitted status
      */

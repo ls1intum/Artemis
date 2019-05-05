@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -29,7 +30,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -86,11 +86,10 @@ public class CourseResource {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+                          TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+                          ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -193,19 +192,19 @@ public class CourseResource {
         if (course.getInstructorGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
-                        "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
+                    "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName()
-                        + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
+                    + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException(
-                        "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
+                    "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
         }
     }
@@ -223,11 +222,11 @@ public class CourseResource {
         log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
-                    .body(null);
+                .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
-                    .body(null);
+                .body(null);
         }
         artemisAuthenticationProvider.get().registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
@@ -245,7 +244,7 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
+            || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
         return userCourses.collect(Collectors.toList());
     }
 
@@ -303,7 +302,7 @@ public class CourseResource {
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+            + principal.getName());
         return courses;
     }
 
@@ -330,12 +329,12 @@ public class CourseResource {
 
         for (Exercise exercise : exercises) {
             TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                .findFirst().orElseGet(() -> {
+                    TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                    emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
 
-                        return emptyTutorParticipation;
-                    });
+                    return emptyTutorParticipation;
+                });
 
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
@@ -429,7 +428,7 @@ public class CourseResource {
         }
 
         Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
-                .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
 
         course.setExercises(interestingExercises);
 
@@ -437,7 +436,7 @@ public class CourseResource {
 
         for (Exercise exercise : interestingExercises) {
             Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
-                    .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
 
             exercise.setParticipations(participationsForExercise);
         }

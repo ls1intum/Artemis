@@ -10,7 +10,7 @@ import * as moment from 'moment';
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
     styles: [
-        `
+            `
             .edit-overlay {
                 position: absolute;
                 left: 0;
@@ -131,22 +131,19 @@ export class LectureAttachmentsComponent implements OnInit {
 
     downloadAttachment(downloadUrl: string) {
         this.isDownloadingAttachment = true;
-        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
-            response => {
-                const blob = new Blob([response.body], { type: response.headers.get('content-type') });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename'));
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-                this.isDownloadingAttachment = false;
-            },
-            error => {
-                this.isDownloadingAttachment = false;
-            },
-        );
+        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
+            const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', response.headers.get('filename'));
+            document.body.appendChild(link); // Required for FF
+            link.click();
+            window.URL.revokeObjectURL(url);
+            this.isDownloadingAttachment = false;
+        }, error => {
+            this.isDownloadingAttachment = false;
+        });
     }
 
     /**
