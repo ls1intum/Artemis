@@ -12,6 +12,7 @@
                 "signUpForCourse": "Für den ausgewählten Kurs anmelden",
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "courseLoading": "Kurse werden geladen...",
                 "pleaseSelectCourse": "# Wähle einen Kurs aus"
             }
         },
@@ -64,10 +65,12 @@
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
-                "exerciseCount": "Anzahl an Aufgaben: {{ number }}",
+                "totalPresentationScore": "Deine gesamtes Präsentationsergebnisw: {{ number }}",
+                "exerciseCount": "Teilgenommen an {{ number }} Übungen",
                 "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
                 "maxScore": "Maximale Punktzahl: {{ number }} Pts",
                 "relativeScore": "Relative Punktzahl: {{ number }}%",
+                "presentationScore": "Präsentationsergebnis: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
             },
             "lectureList": {
@@ -75,14 +78,17 @@
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
                 "isLecture": "Das ist eine Vorlesung",
-                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs."
+                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs.",
+                "sortLectures": "Vorlesungen sortieren"
             },
             "lectureDetails": {
                 "description": "Beschreibung",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
-                "lectureDate": "Datum:",
-                "notReleased": "Nicht freigegeben"
+                "date": "Datum",
+                "notReleased": "Nicht freigegeben",
+                "version": "Version",
+                "isDownloading": "Wird heruntergeladen..."
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",

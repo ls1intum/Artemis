@@ -270,15 +270,15 @@ public class QuizScheduleService {
             for (long quizId : participationHashMap.keySet()) {
 
                 // get the Quiz without the statistics and questions from the database
-                QuizExercise quizExercise = quizExerciseService.findOne(quizId);
+                Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizId);
                 // check if quiz has been deleted
-                if (quizExercise == null) {
+                if (!quizExercise.isPresent()) {
                     participationHashMap.remove(quizId);
                     continue;
                 }
 
                 // check if the quiz has ended
-                if (quizExercise.isEnded()) {
+                if (quizExercise.get().isEnded()) {
                     // send the participation with containing result and quiz back to the users via websocket
                     // and remove the participation from the ParticipationHashMap
                     int counter = 0;
@@ -291,7 +291,7 @@ public class QuizScheduleService {
                         counter++;
                     }
                     if (counter > 0) {
-                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.get().getTitle());
                     }
                 }
             }

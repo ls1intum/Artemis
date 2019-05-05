@@ -39,14 +39,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
-            this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(res => {
-                this.participations = res.body;
-            });
-            this.exerciseService.find(params['exerciseId']).subscribe(res => {
-                this.exercise = res.body;
+            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+                this.exercise = exerciseResponse.body;
+                this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(participationsResponse => {
+                    this.participations = participationsResponse.body;
+                });
             });
         });
     }
+
     ngOnInit() {
         this.loadAll();
         this.registerChangeInParticipations();
@@ -59,8 +60,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     trackId(index: number, item: Participation) {
         return item.id;
     }
+
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
+    }
+
+    addPresentation(participation: Participation) {
+        participation.presentationScore = 1;
+        this.participationService.update(participation).subscribe(
+            () => {},
+            () => {
+                this.jhiAlertService.error('arTeMiSApp.participation.addPresentation.error');
+            },
+        );
     }
 
     private onError(error: HttpErrorResponse) {

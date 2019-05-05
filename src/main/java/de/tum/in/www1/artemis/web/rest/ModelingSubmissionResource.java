@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -60,8 +61,8 @@ public class ModelingSubmissionResource {
     private final UserService userService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-            ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService,
-            CompassService compassService, ExerciseService exerciseService, UserService userService) {
+                                      ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService,
+                                      CompassService compassService, ExerciseService exerciseService, UserService userService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -125,11 +126,11 @@ public class ModelingSubmissionResource {
 
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
+        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+                                                                              @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -138,11 +139,22 @@ public class ModelingSubmissionResource {
 
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
-            return ResponseEntity.ok().body(modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId()));
+            List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise));
         }
 
         List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(clearStudentInformation(submissions, exercise));
+    }
+
+    /**
+     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
+     */
+    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            submissions.forEach(submission -> submission.getParticipation().setStudent(null));
+        }
+        return submissions;
     }
 
     /**
@@ -185,6 +197,11 @@ public class ModelingSubmissionResource {
         }
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
         }
 
         ModelingSubmission modelingSubmission;
@@ -244,6 +261,13 @@ public class ModelingSubmissionResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before
+     * sending an exercise to the client for a student.
+     *
+     * IMPORTANT:   Do not call this method from a transactional context as this would remove the sensitive information
+     *              also from the entity in the database without explicitly saving it.
+     */
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client
         if (modelingSubmission.getParticipation() != null) {
@@ -251,9 +275,13 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null && exercise instanceof ModelingExercise && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                // make sure the solution is not sent to the client for students
-                ((ModelingExercise) exercise).filterSensitiveInformation();
+            if (exercise != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                // make sure that sensitive information is not sent to the client for students
+                exercise.filterSensitiveInformation();
+            }
+            // remove information about the student from the submission for tutors to ensure a double-blind assessment
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                modelingSubmission.getParticipation().setStudent(null);
             }
         }
     }

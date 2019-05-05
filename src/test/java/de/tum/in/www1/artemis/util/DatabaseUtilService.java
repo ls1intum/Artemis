@@ -196,7 +196,7 @@ public class DatabaseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment);
-        result = modelingAssessmentService.submitManualAssessment(result, exercise);
+        result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         return result;
     }
 

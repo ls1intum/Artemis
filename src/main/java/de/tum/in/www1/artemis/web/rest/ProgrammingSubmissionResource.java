@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -13,6 +17,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
+
+import java.util.Collection;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -58,14 +64,53 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs ArTEMiS about changed test cases for the "id" programmingExercise.
-     *
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs ArTEMiS about changed test cases for the "id" programmingExercise. e
+     * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
+        // This fixes an issue with the Spring Security Context Holder: https://jira.spring.io/browse/DATAJPA-1357
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = new Authentication() {
+            @Override
+            public Collection<? extends GrantedAuthority> getAuthorities() {
+                return null;
+            }
+
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getDetails() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return null;
+            }
+
+            @Override
+            public boolean isAuthenticated() {
+                return true;
+            }
+
+            @Override
+            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+        };
+        context.setAuthentication(authentication);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
         if (!(exercise instanceof ProgrammingExercise)) {

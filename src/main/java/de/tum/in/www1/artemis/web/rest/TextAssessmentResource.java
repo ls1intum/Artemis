@@ -182,6 +182,11 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
+        // If the user is not at least a tutor for this exercise, return error
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+            return forbidden();
+        }
+
         Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
         Result result = databaseResult.orElseGet(() -> {
             Result newResult = new Result();

@@ -399,7 +399,7 @@ public class ResultResource {
     @Transactional
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> result = resultRepository.findById(resultId);
+        Optional<Result> result = resultRepository.findByIdWithEagerFeedbacks(resultId);
         if (!result.isPresent()) {
             return notFound();
         }

@@ -6,15 +6,27 @@ import { RouterModule } from '@angular/router';
 import { ArTEMiSSharedModule } from '../shared';
 import { instructorExerciseDashboardRoute } from './instructor-exercise-dashboard.route';
 import { InstructorExerciseDashboardComponent } from './instructor-exercise-dashboard.component';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ChartsModule } from 'ng2-charts';
 import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
+import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
 
 const ENTITY_STATES = instructorExerciseDashboardRoute;
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArTEMiSInstructorCourseStatsDashboardModule],
+    imports: [
+        BrowserModule,
+        ArTEMiSSharedModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ChartsModule,
+        ArTEMiSInstructorCourseStatsDashboardModule,
+        ArTEMiSHeaderExercisePageWithDetailsModule,
+        ArTEMiSSidePanelModule,
+    ],
     declarations: [InstructorExerciseDashboardComponent],
     entryComponents: [],
     providers: [],

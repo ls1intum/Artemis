@@ -9,6 +9,8 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import {
     faAngleDown,
     faAngleRight,
+    faAngleDoubleDown,
+    faAngleDoubleUp,
     faArchive,
     faArrowLeft,
     faArrowRight,
@@ -33,10 +35,12 @@ import {
     faCloud,
     faCodeBranch,
     faDownload,
+    faEdit,
     faCheckDouble,
     faKeyboard,
     faProjectDiagram,
     faFileUpload,
+    faFilePowerpoint,
     faThLarge,
     faAngleUp,
     faSortAmountUp,
@@ -117,6 +121,7 @@ import {
     faSave as farSave,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
+    faDotCircle as farDotCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 // Imports all fontawesome core and solid icons
@@ -166,6 +171,7 @@ library.add(faCheckDouble);
 library.add(faKeyboard);
 library.add(faProjectDiagram);
 library.add(faFileUpload);
+library.add(faFilePowerpoint);
 library.add(faFont);
 library.add(faThLarge);
 library.add(faAngleUp);
@@ -187,6 +193,7 @@ library.add(faGraduationCap);
 library.add(faChartPie);
 library.add(faExternalLinkAlt);
 library.add(faSignal);
+library.add(faEdit);
 library.add(faChevronUp);
 library.add(faChevronDown);
 library.add(faChevronLeft);
@@ -217,6 +224,7 @@ library.add(faListOl);
 library.add(faImage);
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
+library.add(farDotCircle);
 library.add(farTimeCircle);
 library.add(farListAlt);
 library.add(farFileImage);
@@ -229,4 +237,6 @@ library.add(farCircle);
 library.add(farSave);
 library.add(faGripLinesVertical);
 library.add(faPaperclip);
+library.add(faAngleDoubleDown);
+library.add(faAngleDoubleUp);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

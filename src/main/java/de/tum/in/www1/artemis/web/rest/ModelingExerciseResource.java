@@ -270,10 +270,8 @@ public class ModelingExerciseResource {
                         .body(null);
             }
 
-            // make sure the solution is not sent to the client
-            modelingExercise.setSampleSolutionExplanation(null);
-            modelingExercise.setSampleSolutionModel(null);
-
+            // make sure sensitive information are not sent to the client
+            modelingExercise.filterSensitiveInformation();
         }
         else {
             return ResponseEntity.badRequest().headers(

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -11,10 +13,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -35,15 +41,21 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
+    private final CourseService courseService;
+
+    private final UserService userService;
+
     GroupNotificationService groupNotificationService;
 
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, CourseService courseService, UserService userService) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.courseService = courseService;
+        this.userService = userService;
     }
 
     /**
@@ -116,8 +128,34 @@ public class StudentQuestionAnswerResource {
     @DeleteMapping("/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
-        log.debug("REST request to delete StudentQuestionAnswer : {}", id);
-        studentQuestionAnswerRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
+        if (!optionalStudentQuestionAnswer.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
+        Course course = null;
+        String entity = "";
+        if (studentQuestionAnswer.getQuestion().getLecture() != null) {
+            course = studentQuestionAnswer.getQuestion().getLecture().getCourse();
+            entity = "lecture with id: " + studentQuestionAnswer.getQuestion().getLecture().getId();
+        }
+        else if (studentQuestionAnswer.getQuestion().getExercise() != null) {
+            course = studentQuestionAnswer.getQuestion().getExercise().getCourse();
+            entity = "exercise with id: " + studentQuestionAnswer.getQuestion().getExercise().getId();
+        }
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
+        Boolean isUserAuthor = user.getId() == studentQuestionAnswer.getAuthor().getId();
+        if (hasCourseTAAccess || isUserAuthor) {
+            log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
+            studentQuestionAnswerRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        }
+        else {
+            return forbidden();
+        }
     }
 }

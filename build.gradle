@@ -82,7 +82,7 @@ spotless {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.0'
+version = '3.0.3'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {

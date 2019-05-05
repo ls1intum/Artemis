@@ -15,10 +15,15 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.IllegalTodoFileModification;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.RebaseTodoLine;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
@@ -26,9 +31,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.exception.GitException;
 
 @Service
@@ -190,6 +194,31 @@ public class GitService {
     }
 
     /**
+     * Resets local repository to ref
+     *
+     * @param repo
+     * @param ref  the ref to reset to, e.g. "origin/master"
+     * @throws GitAPIException
+     */
+    public void reset(Repository repo, String ref) throws GitAPIException {
+        Git git = new Git(repo);
+        git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
+        git.close();
+    }
+
+    /**
+     * git fetch
+     *
+     * @param repo
+     * @throws GitAPIException
+     */
+    public void fetchAll(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        git.close();
+    }
+
+    /**
      * Pulls from remote repository.
      *
      * @param repo Local Repository Object.
@@ -211,26 +240,147 @@ public class GitService {
     }
 
     /**
+     * Hard reset local repository to origin/master.
+     *
+     * @param repo Local Repository Object.
+     */
+    public void resetToOriginMaster(Repository repo) {
+        try {
+            fetchAll(repo);
+            reset(repo, "origin/master");
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Get last commit hash from master
+     *
+     * @param repoUrl
+     * @return
+     * @throws GitAPIException
+     */
+    private ObjectId getLatestHash(URL repoUrl) throws GitAPIException {
+        // Get refs of repo without cloning it locally
+        Collection<Ref> refs = Git.lsRemoteRepository().setRemote(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+                .call();
+        for (Ref ref : refs) {
+            // We are looking for the latest commit hash of the master branch
+            if (ref.getName().equalsIgnoreCase("refs/heads/master")) {
+                return ref.getObjectId();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Stager Task #3: Filter late submissions Filter all commits after exercise due date
+     *
+     * @param repository Local Repository Object.
+     * @param exercise   ProgrammingExercise associated with this repo.
+     */
+    public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
+        if (exercise.getReleaseDate() == null || exercise.getDueDate() == null) {
+            // No dates set on exercise
+            return;
+        }
+
+        try {
+            Git git = new Git(repository);
+
+            // Get last commit before deadline
+            Date since = Date.from(exercise.getReleaseDate().toInstant());
+            Date until = Date.from(exercise.getDueDate().toInstant());
+            RevFilter between = CommitTimeRevFilter.between(since, until);
+            Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
+            RevCommit latestCommitBeforeDeadline = commits.iterator().next();
+
+            git.close();
+
+            reset(repository, latestCommitBeforeDeadline.getId().getName());
+
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Stager Task #6: Combine commits Combine/Squash all commits after last instructor commit
+     *
+     * @param repository Local Repository Object.
+     * @param exercise   ProgrammingExercise associated with this repo.
+     */
+    public void squashAfterInstructor(Repository repository, ProgrammingExercise exercise) {
+        try {
+            Git studentGit = new Git(repository);
+            // Get last commit hash from template repo
+            ObjectId latestHash = getLatestHash(exercise.getTemplateRepositoryUrlAsUrl());
+
+            // flush cache of files
+            repository.setFiles(null);
+
+            // checkout own local "stager" branch
+            studentGit.checkout().setCreateBranch(true).setName("stager").call();
+
+            // merge commits into one commit
+            RebaseResult result = studentGit.rebase().setUpstream(latestHash).runInteractively(new RebaseCommand.InteractiveHandler() {
+
+                @Override
+                public void prepareSteps(List<RebaseTodoLine> steps) {
+                    try {
+                        // flag all commits to "squash"
+                        for (RebaseTodoLine step : steps) {
+                            step.setAction(RebaseTodoLine.Action.SQUASH);
+                        }
+                        // flag latest commit to "pick"
+                        steps.get(0).setAction(RebaseTodoLine.Action.PICK);
+                    }
+                    catch (IllegalTodoFileModification illegalTodoFileModification) {
+                        log.error("Cannot modify commits in " + repository.getLocalPath() + " due to the following exception: " + illegalTodoFileModification);
+                    }
+                }
+
+                @Override
+                public String modifyCommitMessage(String oldCommitMsg) {
+                    // reuse old commit messages
+                    return oldCommitMsg;
+                }
+            }).call();
+
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
+
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * List all files in the repository
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    public Collection<File> listFiles(Repository repo) {
+    public HashMap<File, FileType> listFiles(Repository repo) {
         // Check if list of files is already cached
-        if (repo.getFiles() == null) {
-            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
-            Collection<File> files = new LinkedList<>();
+        if (repo.getContent() == null) {
+            Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            HashMap<File, FileType> files = new HashMap<>();
 
             while (itr.hasNext()) {
-                files.add(new File(itr.next(), repo));
+                File nextFile = new File(itr.next(), repo);
+                files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
             }
 
             // Cache the list of files
             // Avoid expensive rescanning
             repo.setFiles(files);
         }
-        return repo.getFiles();
+        return repo.getContent();
     }
 
     /**
@@ -245,7 +395,7 @@ public class GitService {
         // Makes sure the requested file is part of the scanned list of files.
         // Ensures that it is not possible to do bad things like filename="../../passwd"
 
-        for (File file : listFiles(repo)) {
+        for (File file : listFiles(repo).keySet()) {
             if (file.toString().equals(filename)) {
                 return Optional.of(file);
             }

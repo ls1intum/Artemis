@@ -13,7 +13,7 @@ import { RepositoryService } from '../entities/repository/repository.service';
 import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { JhiLanguageHelper } from 'app/core';

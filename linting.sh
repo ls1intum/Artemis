@@ -1,11 +1,16 @@
 #!/bin/sh
-function join_by {
+join_by () {
   local IFS="$1";
   shift;
   echo "$*";
 }
-PROJECT_DIR=$pwd
 
 FILES=$(join_by "," "$@")
 
-./gradlew spotlessApply -PspotlessFiles=${FILES//$PROJECT_DIR/}
+if [[ "$OSTYPE" == "msys" ]]; then
+  # replace backslashes with double backslashes in Windows file paths when
+  # using MinGW (msys = lightweight shell and GNU utilities compiled for Windows (part of MinGW)
+  FILES=$(echo $FILES | sed 's/\\/\\\\/g')
+fi
+
+./gradlew spotlessApply -PspotlessFiles="${FILES}"

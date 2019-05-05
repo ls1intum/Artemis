@@ -25,7 +25,7 @@ import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
-import { DifferencePipe, MomentModule } from 'angular2-moment';
+import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { ArTEMiSCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
@@ -66,6 +66,7 @@ import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solut
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 
 @NgModule({
     imports: [
@@ -121,6 +122,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
         ArTEMiSExampleModelingSubmissionModule,
         ArTEMiSExampleModelingSolutionModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
+        ArTEMiSConnectionNotificationModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

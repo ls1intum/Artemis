@@ -3,18 +3,20 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
-    private profileInfo: Promise<ProfileInfo>;
+    private profileInfo: BehaviorSubject<ProfileInfo>;
 
     constructor(private http: HttpClient) {}
 
-    getProfileInfo(): Promise<ProfileInfo> {
+    getProfileInfo(): BehaviorSubject<ProfileInfo> {
         if (!this.profileInfo) {
-            this.profileInfo = this.http
+            this.profileInfo = new BehaviorSubject(null);
+            this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
@@ -33,8 +35,11 @@ export class ProfileService {
                         return profileInfo;
                     }),
                 )
-                .toPromise();
+                .subscribe((profileInfo: ProfileInfo) => {
+                    this.profileInfo.next(profileInfo);
+                });
         }
+
         return this.profileInfo;
     }
 }

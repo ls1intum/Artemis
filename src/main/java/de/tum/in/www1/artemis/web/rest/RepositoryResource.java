@@ -1,18 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
-
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +20,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * Created by Josias Montag on 14.10.16.
@@ -66,28 +67,29 @@ public class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/files: List all file names of the repository
+     * GET /repository/{participationId}/files: Map of all file and folders of the repository.
+     * Each entry states if it is a file or a folder.
      *
      * @param participationId Participation ID
      * @return
      * @throws IOException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Collection<String>> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
+        ResponseEntity<HashMap<String, FileType>> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator<File> itr = gitService.get().listFiles(repository).iterator();
+        Iterator itr = gitService.get().listFiles(repository).entrySet().iterator();
 
-        Collection<String> fileList = new LinkedList<>();
+        HashMap<String, FileType> fileList = new HashMap<>();
 
         while (itr.hasNext()) {
-            fileList.add(itr.next().toString());
+            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
+            fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
         return new ResponseEntity<>(fileList, HttpStatus.OK);
@@ -149,6 +151,9 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
             throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
+        if (filename.contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
@@ -165,7 +170,6 @@ public class RepositoryResource {
         if (!repository.isValidFile(file)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        file.getParentFile().mkdirs();
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -175,10 +179,73 @@ public class RepositoryResource {
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file
+     * POST /repository/{participationId}/folder: Create new folder
      *
      * @param participationId Participation ID
-     * @param filename
+     * @param folderName
+     * @param request
+     * @return
+     * @throws IOException
+     */
+    @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+        log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
+        if (folderName.contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
+        // We need to add an empty keep file so that the folder can be added to the git repository
+        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
+        InputStream inputStream = request.getInputStream();
+        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        repository.setFiles(null); // invalidate cache
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, "folder", folderName)).build();
+    }
+
+    /**
+     * Change the name of a file.
+     * @param participationId id of the participation the git repository belongs to.
+     * @param fileMove defines current and new path in git repository.
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> renameFolder(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+        if (fileMove.getNewFilename().contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null) return failureResponse;
+
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
+        if(!file.isPresent()) { return notFound(); }
+        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
+
+        boolean isRenamed = file.get().renameTo(newFile);
+        if (!isRenamed) {
+            return notFound();
+        }
+
+        repository.setFiles(null); // invalidate cache
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "file", fileMove.getNewFilename())).build();
+    }
+
+    /**
+     * DELETE /repository/{participationId}/file: Delete the file or the folder specified.
+     * If the path is a folder, all files in it will be deleted, too.
+     * @param participationId Participation ID
+     * @param filename path of file or folder to delete.
      * @return
      * @throws IOException
      */
@@ -197,7 +264,11 @@ public class RepositoryResource {
             return notFound();
         }
 
-        Files.delete(file.get().toPath());
+        if (file.get().isFile()) {
+            Files.delete(file.get().toPath());
+        } else {
+            FileUtils.deleteDirectory(file.get());
+        }
         repository.setFiles(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "file", filename)).build();
     }

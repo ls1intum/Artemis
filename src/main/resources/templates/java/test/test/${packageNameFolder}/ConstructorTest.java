@@ -76,8 +76,14 @@ public class ConstructorTest extends StructuralTest {
     private void checkConstructors(Class<?> observedClass, JSONArray expectedConstructors) {
         for (int i = 0; i < expectedConstructors.length(); i++) {
             JSONObject expectedConstructor = expectedConstructors.getJSONObject(i);
-            JSONArray expectedParameters = expectedConstructor.getJSONArray("parameters");
-            JSONArray expectedModifiers = expectedConstructor.getJSONArray("modifiers");
+            JSONArray expectedParameters = new JSONArray();
+            if (expectedConstructor.has("parameters")) {
+                expectedParameters = expectedConstructor.getJSONArray("parameters");
+            }
+            JSONArray expectedModifiers = new JSONArray();
+            if (expectedConstructor.has("modifiers")) {
+                expectedModifiers = expectedConstructor.getJSONArray("modifiers");
+            }
 
             boolean parametersAreRight = false;
             boolean modifiersAreRight = false;
@@ -101,14 +107,9 @@ public class ConstructorTest extends StructuralTest {
             String expectedConstructorInformation = "the expected constructor of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.",
-                parametersAreRight);
-
-            assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.",
-                modifiersAreRight);
-
-            assertTrue("Problem: the constructor of the class " + expectedClassName + " is not implemented as expected.",
-                parametersAreRight && modifiersAreRight);
+            assertTrue("Problem: the parameters of " + expectedConstructorInformation + " are not implemented as expected.", parametersAreRight);
+            assertTrue("Problem: the access modifiers of " + expectedConstructorInformation + " are not implemented as expected.", modifiersAreRight);
+            assertTrue("Problem: the constructor of the class " + expectedClassName + " is not implemented as expected.", parametersAreRight && modifiersAreRight);
         }
     }
 

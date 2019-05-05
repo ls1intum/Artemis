@@ -71,12 +71,18 @@ public class FileService {
             }
             else {
                 // delete old file
-                File oldFile = new File(actualPathForPublicPath(oldFilePath));
-                if (!oldFile.delete()) {
-                    log.warn("Could not delete file: {}", oldFile);
+                try {
+                    File oldFile = new File(actualPathForPublicPath(oldFilePath));
+
+                    if (!oldFile.delete()) {
+                        log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file: {}", oldFile);
+                    }
+                    else {
+                        log.debug("Deleted Orphaned File: {}", oldFile);
+                    }
                 }
-                else {
-                    log.debug("Deleted Orphaned File: {}", oldFile);
+                catch (Exception ex) {
+                    log.warn("FileService.manageFilesForUpdatedFilePath: Could not delete old file '{}' due to exception {}", oldFilePath, ex.getMessage());
                 }
             }
         }
@@ -104,7 +110,7 @@ public class FileService {
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    private String actualPathForPublicPath(String publicPath) {
+    public String actualPathForPublicPath(String publicPath) {
         // first extract the filename from the url
         String filename = publicPath.substring(publicPath.lastIndexOf("/") + 1);
 
@@ -122,7 +128,8 @@ public class FileService {
             return Constants.COURSE_ICON_FILEPATH + filename;
         }
         if (publicPath.contains("files/attachments/lecture")) {
-            return Constants.LECTURE_ATTACHMENT_FILEPATH + filename;
+            String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
+            return Constants.LECTURE_ATTACHMENT_FILEPATH + lectureId + filename;
         }
 
         // path is unknown => cannot convert
@@ -184,7 +191,7 @@ public class FileService {
         if (targetFolder.equals(Constants.COURSE_ICON_FILEPATH)) {
             filenameBase = "CourseIcon_";
         }
-        if (targetFolder.equals(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
+        if (targetFolder.contains(Constants.LECTURE_ATTACHMENT_FILEPATH)) {
             filenameBase = "LectureAttachment_";
         }
 

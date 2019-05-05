@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpClient } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -10,7 +10,7 @@ import * as moment from 'moment';
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
     styles: [
-        `
+            `
             .edit-overlay {
                 position: absolute;
                 left: 0;
@@ -31,9 +31,15 @@ export class LectureAttachmentsComponent implements OnInit {
     attachmentBackup: Attachment;
     attachmentFile: any;
     isUploadingAttachment: boolean;
+    isDownloadingAttachment = false;
     notificationText: string;
 
-    constructor(protected activatedRoute: ActivatedRoute, private attachmentService: AttachmentService, private fileUploaderService: FileUploaderService) {}
+    constructor(
+        protected activatedRoute: ActivatedRoute,
+        private attachmentService: AttachmentService,
+        private httpClient: HttpClient,
+        private fileUploaderService: FileUploaderService,
+    ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {
@@ -62,6 +68,8 @@ export class LectureAttachmentsComponent implements OnInit {
             this.attachmentToBeCreated.version = 0;
         }
         this.attachmentToBeCreated.version++;
+        this.attachmentToBeCreated.uploadDate = moment();
+
         if (this.attachmentToBeCreated.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
@@ -70,6 +78,9 @@ export class LectureAttachmentsComponent implements OnInit {
             this.attachmentService.update(this.attachmentToBeCreated, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
+                this.attachments = this.attachments.map(el => {
+                    return el.id === attachmentRes.body.id ? attachmentRes.body : el;
+                });
             });
         } else {
             this.attachmentService.create(this.attachmentToBeCreated).subscribe((attachmentRes: HttpResponse<Attachment>) => {
@@ -116,6 +127,23 @@ export class LectureAttachmentsComponent implements OnInit {
 
     trackId(index: number, item: Attachment) {
         return item.id;
+    }
+
+    downloadAttachment(downloadUrl: string) {
+        this.isDownloadingAttachment = true;
+        this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(response => {
+            const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', response.headers.get('filename'));
+            document.body.appendChild(link); // Required for FF
+            link.click();
+            window.URL.revokeObjectURL(url);
+            this.isDownloadingAttachment = false;
+        }, error => {
+            this.isDownloadingAttachment = false;
+        });
     }
 
     /**

@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from '../entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ResultDetailComponent, ResultService } from 'app/entities/result';
-import { DifferencePipe } from 'angular2-moment';
+import { DifferencePipe } from 'ngx-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
 import { HttpResponse } from '@angular/common/http';

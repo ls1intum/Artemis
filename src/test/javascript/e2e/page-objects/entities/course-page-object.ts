@@ -9,7 +9,7 @@ export class CoursePage {
         await this.createNewCourse.click();
     }
 
-    async navigateIntoLastCourseQuizzes() {
+    async navigateIntoLastCourseExercises() {
         const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         const courseId = await rows
             .last()
@@ -18,15 +18,9 @@ export class CoursePage {
 
         await browser.sleep(1000);
 
-        const exerciseDropdownButton = element(by.id(`exercises-button-${courseId}`));
-        expect(exerciseDropdownButton.isPresent());
-        await exerciseDropdownButton.click();
-
-        await browser.sleep(1000);
-
-        const quizExerciseButton = element(by.id(`quiz-exercises-button-${courseId}`));
-        expect(quizExerciseButton.isPresent());
-        await quizExerciseButton.click();
+        const exercisesButton = element(by.id(`exercises-button-${courseId}`));
+        expect(exercisesButton.isPresent());
+        await exercisesButton.click();
 
         return courseId;
     }
@@ -35,6 +29,8 @@ export class CoursePage {
 export class NewCoursePage {
     save = element(by.id('save-entity'));
     cancel = element(by.id('cancel-save'));
+    browse = element(by.id('courseImageInput'));
+    upload = element(by.className('icon-upload'));
     title = element(by.id('field_title'));
     shortName = element(by.id('field_shortName'));
     studentGroupName = element(by.id('field_studentGroupName'));
@@ -47,6 +43,17 @@ export class NewCoursePage {
 
     async setShortName(shortName: string) {
         await this.shortName.sendKeys(shortName);
+    }
+
+    async browseCourseIcon() {
+        let path = require('path');
+        let fileToUpload = '../entities/tum-logo.png';
+        let absolutePath = path.resolve(__dirname, fileToUpload);
+        await this.browse.sendKeys(absolutePath);
+    }
+
+    async uploadCourseIcon() {
+        this.upload.click();
     }
 
     async setStudentGroupName(studentGroupName: string) {

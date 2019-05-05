@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -13,10 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.StudentQuestionService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -39,13 +45,19 @@ public class StudentQuestionResource {
 
     private final StudentQuestionService studentQuestionService;
 
+    private final CourseService courseService;
+
+    private final UserService userService;
+
     GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService,
-            StudentQuestionService studentQuestionService) {
+            StudentQuestionService studentQuestionService, CourseService courseService, UserService userService) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
+        this.courseService = courseService;
+        this.userService = userService;
     }
 
     /**
@@ -136,8 +148,34 @@ public class StudentQuestionResource {
     @DeleteMapping("/student-questions/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long id) {
-        log.debug("REST request to delete StudentQuestion : {}", id);
-        studentQuestionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(id);
+        if (!optionalStudentQuestion.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        StudentQuestion studentQuestion = optionalStudentQuestion.get();
+        Course course = null;
+        String entity = "";
+        if (studentQuestion.getLecture() != null) {
+            course = studentQuestion.getLecture().getCourse();
+            entity = "lecture with id: " + studentQuestion.getLecture().getId();
+        }
+        else if (studentQuestion.getExercise() != null) {
+            course = studentQuestion.getExercise().getCourse();
+            entity = "exercise with id: " + studentQuestion.getExercise().getId();
+        }
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
+        Boolean isUserAuthor = user.getId() == studentQuestion.getAuthor().getId();
+        if (hasCourseTAAccess || isUserAuthor) {
+            log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
+            studentQuestionRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        }
+        else {
+            return forbidden();
+        }
     }
 }

@@ -154,6 +154,8 @@ public class ParticipationResource {
         }
 
         Participation participation = participationService.startExercise(exercise, principal.getName());
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
     }
 
@@ -180,6 +182,8 @@ public class ParticipationResource {
                     .body(participation);
         }
         log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
     }
 
@@ -215,6 +219,12 @@ public class ParticipationResource {
         }
         if (participation.getId() == null) {
             return createParticipation(participation);
+        }
+        if (participation.getPresentationScore() > 1) {
+            participation.setPresentationScore(1);
+        }
+        if (participation.getPresentationScore() < 0) {
+            participation.setPresentationScore(0);
         }
         Participation result = participationService.save(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);

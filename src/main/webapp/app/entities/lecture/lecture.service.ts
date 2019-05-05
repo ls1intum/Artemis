@@ -54,6 +54,10 @@ export class LectureService {
             startDate: lecture.startDate != null && lecture.startDate.isValid() ? lecture.startDate.toJSON() : null,
             endDate: lecture.endDate != null && lecture.endDate.isValid() ? lecture.endDate.toJSON() : null,
         });
+        if (copy.course) {
+            delete copy.course.exercises;
+            delete copy.course.lectures;
+        }
         return copy;
     }
 

@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +22,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 /**
  * REST controller for managing TextSubmission.
@@ -56,8 +56,8 @@ public class TextSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+                                  CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
+                                  AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -129,10 +129,9 @@ public class TextSubmissionResource {
             textSubmission.getParticipation().setSubmissions(null);
             textSubmission.getParticipation().setResults(null);
 
-            if (textSubmission.getParticipation().getExercise() != null && textSubmission.getParticipation().getExercise() instanceof TextExercise) {
-                // make sure the solution is not sent to the client
-                TextExercise textExerciseForClient = (TextExercise) textSubmission.getParticipation().getExercise();
-                textExerciseForClient.setSampleSolution(null);
+            if (textSubmission.getParticipation().getExercise() != null) {
+                // make sure sensitive information are not sent to the client
+                textSubmission.getParticipation().getExercise().filterSensitiveInformation();
             }
         }
     }
@@ -180,7 +179,7 @@ public class TextSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+                                                                      @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -216,6 +215,12 @@ public class TextSubmissionResource {
         if (!(exercise instanceof TextExercise)) {
             return badRequest();
         }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);

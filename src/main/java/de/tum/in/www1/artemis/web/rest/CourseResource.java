@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,10 +31,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -82,19 +79,21 @@ public class CourseResource {
 
     private final LectureService lectureService;
 
-    private final SubmissionRepository submissionRepository;
-
     private final ComplaintRepository complaintRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final NotificationService notificationService;
 
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService) {
+                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+                          TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+                          ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -103,7 +102,6 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
-        this.submissionRepository = submissionRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.textAssessmentService = textAssessmentService;
@@ -111,6 +109,8 @@ public class CourseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
+        this.textSubmissionRepository = textSubmissionRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -197,19 +197,19 @@ public class CourseResource {
         if (course.getInstructorGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
-                        "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
+                    "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName()
-                        + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
+                    + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
             if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException(
-                        "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
+                    "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
         }
     }
@@ -251,7 +251,7 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
+            || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
         return userCourses.collect(Collectors.toList());
     }
 
@@ -278,33 +278,38 @@ public class CourseResource {
     public List<Course> getAllCoursesForDashboard(Principal principal) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
-        log.info("/courses/for-dashboard.start");
+        log.debug("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
-        log.info("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user
         // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
-        log.info("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
 
         long exerciseCount = 0;
         for (Course course : courses) {
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                // remove sensitive information from the exercise for students
+                if (isStudent) {
+                    exercise.filterSensitiveInformation();
+                }
                 exerciseCount++;
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+            + principal.getName());
         return courses;
     }
 
@@ -331,12 +336,12 @@ public class CourseResource {
 
         for (Exercise exercise : exercises) {
             TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                .findFirst().orElseGet(() -> {
+                    TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                    emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
 
-                        return emptyTutorParticipation;
-                    });
+                    return emptyTutorParticipation;
+                });
 
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
@@ -365,7 +370,8 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = submissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
         long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
@@ -429,7 +435,7 @@ public class CourseResource {
         }
 
         Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
-                .collect(Collectors.toSet());
+            .collect(Collectors.toSet());
 
         course.setExercises(interestingExercises);
 
@@ -437,7 +443,7 @@ public class CourseResource {
 
         for (Exercise exercise : interestingExercises) {
             Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
-                    .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
 
             exercise.setParticipations(participationsForExercise);
         }
@@ -501,6 +507,10 @@ public class CourseResource {
             exerciseService.delete(exercise, false, false);
         }
 
+        for (Lecture lecture : course.getLectures()) {
+            lectureService.delete(lecture);
+        }
+
         List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);
         for (GroupNotification notification : notifications) {
             notificationService.deleteNotification(notification);
@@ -525,6 +535,7 @@ public class CourseResource {
 
         User student = userService.getUser();
         Course course = courseService.findOne(courseId);
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, student);
 
         List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
 
@@ -533,8 +544,11 @@ public class CourseResource {
 
             exercise.setParticipations(new HashSet<>());
 
-            // Removing not needed properties
+            // Removing not needed properties and sensitive information for students
             exercise.setCourse(null);
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
+            }
 
             for (Participation participation : participations) {
                 // Removing not needed properties
@@ -544,7 +558,6 @@ public class CourseResource {
                 exercise.addParticipation(participation);
             }
             course.addExercises(exercise);
-
         }
 
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");

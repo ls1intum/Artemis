@@ -12,14 +12,13 @@ import { RepositoryService } from '../entities/repository';
 import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import { CodeEditorFileBrowserComponent } from './file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build-output.component';
-import { CodeEditorFileBrowserCreateComponent } from './file-browser/code-editor-file-browser-create';
 import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { CodeEditorStatusComponent } from './status/code-editor-status.component';
@@ -43,7 +42,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorComponent,
         CodeEditorAceComponent,
         CodeEditorFileBrowserComponent,
-        CodeEditorFileBrowserCreateComponent,
         CodeEditorFileBrowserDeleteComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
@@ -56,7 +54,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         HomeComponent,
         CodeEditorComponent,
         JhiMainComponent,
-        CodeEditorFileBrowserCreateComponent,
         CodeEditorFileBrowserDeleteComponent,
         EditorInstructionsResultDetailComponent,
         ResultComponent,

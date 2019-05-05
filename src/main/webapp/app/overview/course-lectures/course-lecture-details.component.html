@@ -9,7 +9,7 @@
                 </h3>
                 <h4>
                 <span class="mr-2" *ngIf="lecture.startDate && lecture.endDate">
-                    {{ 'arTeMiSApp.courseOverview.lectureDetails.lectureDate' | translate }} {{ (lecture.startDate | date: 'dd.MM.yy HH:mm')}}
+                    {{ 'arTeMiSApp.courseOverview.lectureDetails.date' | translate }} {{ (lecture.startDate | date: 'dd.MM.yy HH:mm')}}
                     - {{ (lecture.endDate | date: 'HH:mm') }}
                 </span>
                 </h4>
@@ -37,11 +37,24 @@
             </div>
             <div class="row mb-2" *ngIf="lecture.attachments">
                 <ul>
-                    <li *ngFor="let attachment of lecture.attachments">
-                        <a href="{{ attachment.link }}" target="_blank">
-                            {{ attachment.name }} <span class="badge badge-warning" *ngIf="attachmentNotReleased(attachment)">{{"arTeMiSApp.courseOverview.lectureDetails.notReleased" | translate}}</span>
-                        </a>
-
+                    <li class="mb-3" *ngFor="let attachment of lecture.attachments">
+                        <h5 class="mb-1">
+                            <a class="text-primary" (click)="downloadAttachment(attachment.link)"  *ngIf="!isDownloading">
+                                {{ attachment.name }}
+                            </a>
+                            <a class="text-primary"  *ngIf="isDownloading">
+                                <fa-icon icon="spinner" [spin]="true"></fa-icon> {{"arTeMiSApp.courseOverview.lectureDetails.isDownloading" | translate}}
+                            </a>
+                            <span class="ml-1 badge badge-info">
+                                {{attachmentExtension(attachment) | uppercase}}
+                            </span>
+                            <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
+                                {{"arTeMiSApp.courseOverview.lectureDetails.notReleased" | translate}}
+                            </span>
+                        </h5>
+                        <h6 class="text-black-50 mb-0 lecture-attachment-details">
+                            ({{"arTeMiSApp.courseOverview.lectureDetails.version" | translate}}: {{attachment.version}} - {{"arTeMiSApp.courseOverview.lectureDetails.date" | translate}}: {{attachment.uploadDate | date: 'dd.MM.yy HH:mm' }})
+                        </h6>
                     </li>
                 </ul>
             </div>
