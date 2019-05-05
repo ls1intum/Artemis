@@ -4,7 +4,8 @@ import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
 import { JhiLanguageHelper } from 'app/core';
-import { ProfileService, ProfileInfo } from 'app/layouts';
+import { ProfileService } from '../profiles/profile.service';
+import { ProfileInfo } from 'app/layouts';
 
 @Component({
     selector: 'jhi-main',
