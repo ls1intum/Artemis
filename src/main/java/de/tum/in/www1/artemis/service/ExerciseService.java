@@ -311,7 +311,7 @@ public class ExerciseService {
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 try {
-                    if (participation.getRepositoryUrl() != null && studentIds.contains(participation.getStudent().getLogin())) {
+                    if (participation.getRepositoryUrl() != null && participation.getStudent() != null && studentIds.contains(participation.getStudent().getLogin())) {
                         boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
 
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
