@@ -55,11 +55,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     problemStatement: string;
     showComplaintForm = false;
-    hasComplaint: boolean; // indicates if there is a complaint for the result of the submission
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling
-    // the complain button
+    // indicates if there is a complaint for the result of the submission
+    hasComplaint: boolean;
+    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
+    // indicates if the result is older than one week. if it is, the complain button is disabled.
     resultOlderThanOneWeek: boolean;
 
     constructor(
