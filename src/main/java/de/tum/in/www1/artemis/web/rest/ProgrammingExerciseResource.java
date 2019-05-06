@@ -379,7 +379,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:id : get the "id" programmingExercise.
+     * GET /programming-exercises-with-participations/:id : get the "id" programmingExercise.
      *
      * @param id the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
@@ -392,6 +392,7 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
 
+            // Map latest result for solutionParticipation
             Result latestSolutionResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getSolutionParticipation());
             Set<Result> solutionResults = new HashSet<>();
             if (latestSolutionResult != null) {
@@ -399,6 +400,7 @@ public class ProgrammingExerciseResource {
             }
             programmingExercise.getSolutionParticipation().setResults(solutionResults);
 
+            // Map latest result for templateParticipation
             Result latestTemplateResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getTemplateParticipation());
             Set<Result> templateResults = new HashSet<>();
             if (latestTemplateResult != null) {
@@ -406,9 +408,11 @@ public class ProgrammingExerciseResource {
             }
             programmingExercise.getTemplateParticipation().setResults(templateResults);
 
+            // Make sure to not return the template/solution participation in the participations array
             Optional<Participation> participation = programmingExercise.getParticipations()
                 .stream().filter(p -> p.getStudent() != null).findFirst();
 
+            // Map latest result for assignmentParticipation
             if (participation.isPresent()) {
                 Result latestResult = programmingExercise.
                     findLatestRatedResultWithCompletionDate(participation.get());
