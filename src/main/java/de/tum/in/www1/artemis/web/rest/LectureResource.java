@@ -171,7 +171,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         log.debug("REST request to delete Lecture : {}", id);
-        lectureRepository.deleteById(id);
+        lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }
