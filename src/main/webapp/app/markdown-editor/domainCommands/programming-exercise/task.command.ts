@@ -10,7 +10,7 @@ export class TaskCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
+     * @desc add a new task. doesn't use the closing identifier for legacy reasons.
      */
     execute(): void {
         const text = `\n${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;

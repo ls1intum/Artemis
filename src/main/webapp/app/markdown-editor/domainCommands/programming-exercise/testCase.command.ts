@@ -6,7 +6,7 @@ export class TestCaseCommand extends MultiOptionCommand {
 
     /**
      * @function execute
-     * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
+     * @desc insert selected testCase value into text
      */
     execute(value: string): void {
         const text = `(${value})`;
