@@ -8,6 +8,7 @@ import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { TranslateService } from '@ngx-translate/core';
+import { SubmittedAnswer } from 'app/entities/submitted-answer';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -29,6 +30,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     @Input() multipleChoiceMapping = new Array<AnswerOption>();
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
     @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
+    @Input() multipleChoiceSubmittedAnswer: SubmittedAnswer[];
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
@@ -39,6 +41,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     inTotalSelectedRightOptions: number; // Amount of correct and wrong options assigned correctly
     inTotalSelectedWrongOptions: number; // Amount of correct and wrong options assigned wrongly
     differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
+    mcmQuestionSubmitted: MultipleChoiceQuestion;
 
     /* Drag and Drop Counting Variables*/
     dragAndDropZones: number; // Amount of drag and drop Zones
@@ -64,6 +67,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 
     ngOnInit() {
+        this.submittedAnswerCorrectValues();
         this.checkForSingleOrPluralPoints();
         switch (this.question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
@@ -86,13 +90,26 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     }
 
     /**
+     * checks for the correct answeroptions based on the submittedAnswer
+     */
+    private submittedAnswerCorrectValues() {
+        for (let type of this.multipleChoiceSubmittedAnswer) {
+            if (type.quizQuestion.id === this.question.id) {
+                if (type.quizQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                    this.mcmQuestionSubmitted = type.quizQuestion as MultipleChoiceQuestion;
+                }
+            }
+        }
+    }
+
+    /**
      * counts the variables for Multiple Choice Questions
      */
     private countMultipleChoice() {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
-        this.correctMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
+        this.correctMultipleChoiceAnswers = this.mcmQuestionSubmitted.answerOptions.filter(option => option.isCorrect).length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.multipleChoiceMapping.filter(option => option.isCorrect).length;
         this.multipleChoiceWrongAnswerChosen = this.multipleChoiceMapping.filter(option => !option.isCorrect).length;
         this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;

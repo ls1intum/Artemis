@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
+import { SubmittedAnswer } from 'app/entities/submitted-answer';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -33,6 +34,8 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     forceSampleSolution: boolean;
     @Input()
     fnOnSelection: any;
+    @Input()
+    submittedAnswer: SubmittedAnswer[];
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
