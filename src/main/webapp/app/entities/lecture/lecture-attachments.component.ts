@@ -10,7 +10,7 @@ import * as moment from 'moment';
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
     styles: [
-        `
+            `
             .edit-overlay {
                 position: absolute;
                 left: 0;

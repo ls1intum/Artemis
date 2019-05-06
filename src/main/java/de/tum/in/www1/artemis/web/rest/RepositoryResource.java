@@ -141,6 +141,9 @@ public class RepositoryResource {
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
+        if (filename.contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
@@ -168,7 +171,7 @@ public class RepositoryResource {
      * POST /repository/{participationId}/folder: Create new folder
      *
      * @param participationId Participation ID
-     * @param filename
+     * @param folderName
      * @param request
      * @return
      * @throws IOException
@@ -176,6 +179,9 @@ public class RepositoryResource {
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
+        if (folderName.contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
@@ -202,6 +208,10 @@ public class RepositoryResource {
      */
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> renameFolder(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+        if (fileMove.getNewFilename().contains("../")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
         if (failureResponse != null) return failureResponse;
