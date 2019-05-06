@@ -7,29 +7,29 @@
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
-            <span *ngIf="!isAuthorized  && !hasComplaint" class="text-danger ml-3" style="font-size: 65%"
+            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
                   jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
                 Assessment locked by another user!
             </span>
-            <span *ngIf="result?.assessor?.id === userId && !hasComplaint" class="text-danger ml-3" style="font-size: 65%"
+            <span *ngIf="isAuthorized" class="text-danger ml-3" style="font-size: 65%"
                   jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
                 You have the lock for this assessment
             </span>
-            <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
+            <button class="btn btn-primary" *ngIf="!result?.rated" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
+            <button class="btn btn-success" *ngIf="!result?.rated" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
             <div *ngIf="conflicts && conflicts.length > 0" class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
                 <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
             </div>
-            <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated || hasComplaint">
+            <button class="btn btn-danger" *ngIf="result?.rated && (isAtLeastInstructor || isAuthorized)" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
-            <button class="btn btn-success" *ngIf="!hasComplaint" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
+            <button class="btn btn-success" *ngIf="result?.rated && isAuthorized" [disabled]="busy" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
@@ -51,7 +51,7 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
-<div class="mt-3" *ngIf="hasComplaint && result && result.id">
+<div class="mt-3" *ngIf="hasComplaint && result?.id">
     <h2 class="row-container" jhiTranslate="modelingAssessmentEditor.reviewComplaint">
         Review Complaint
     </h2>
