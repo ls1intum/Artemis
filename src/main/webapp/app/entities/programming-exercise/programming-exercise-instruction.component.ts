@@ -541,7 +541,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 const label =
                     testCaseState === TestCaseState.SUCCESS
                         ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
-                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests });
+                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
                 return [testCaseState, label];
             }
         } else {
