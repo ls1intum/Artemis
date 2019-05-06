@@ -5,9 +5,8 @@ import { Observable } from 'rxjs';
 import { catchError, map as rxMap, tap } from 'rxjs/operators';
 import { sortBy as _sortBy } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { WindowRef } from 'app/core';
-import { CodeEditorComponent, CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -20,11 +19,9 @@ import { HttpErrorResponse } from '@angular/common/http';
     templateUrl: './code-editor-file-browser.component.html',
     providers: [NgbModal, RepositoryFileService, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export abstract class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     public FileType = FileType;
 
-    @Input()
-    participation: Participation;
     @Input()
     unsavedFiles: string[];
     @Input()
@@ -76,7 +73,12 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, private repositoryFileService: RepositoryFileService, public modalService: NgbModal) {}
+    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal) {}
+
+    abstract loadFiles: () => Observable<{ [fileName: string]: FileType }>;
+    abstract renameFile: (filePath: string, fileName: string) => Observable<void>;
+    abstract createFile: (fileName: string) => Observable<void>;
+    abstract createFolder: (folderName: string) => Observable<void>;
 
     /**
      * @function ngAfterViewInit
@@ -116,14 +118,40 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (hasParticipationChanged(changes)) {
-            this.isInitial = true;
-        }
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked.
         if (this.commitState !== CommitState.UNDEFINED && this.isInitial) {
             this.isInitial = false;
-            this.loadFiles().subscribe();
+            this.loadFiles()
+                .pipe(
+                    rxMap(files =>
+                        compose(
+                            fromPairs,
+                            // Filter root folder
+                            filter(([value]) => value),
+                            // Filter Readme file that was historically in the student's assignment repo
+                            filter(([value]) => !value.includes('README.md')),
+                            // Remove binary files as they can't be displayed in an editor
+                            filter(([filename]) => {
+                                const fileSplit = filename.split('.');
+                                // Either the file has no ending or the file ending is allowed
+                                return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
+                            }),
+                            toPairs,
+                        )(files),
+                    ),
+                    catchError((error: HttpErrorResponse) => {
+                        console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                        return Observable.of({});
+                    }),
+                    tap(files => {
+                        this.isLoadingFiles = false;
+                        this.repositoryFiles = files;
+                        this.setupTreeview();
+                        this.onFilesLoaded.emit(Object.keys(files));
+                    }),
+                )
+                .subscribe();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;
             this.setupTreeview();
@@ -138,42 +166,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     set selectedFile(file: string) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
-    }
-
-    /**
-     * Load files from the participants repository.
-     * Files that are not relevant for the conduction of the exercise are removed from result.
-     */
-    private loadFiles() {
-        this.isLoadingFiles = true;
-        return this.repositoryFileService.query(this.participation.id).pipe(
-            rxMap(files =>
-                compose(
-                    fromPairs,
-                    // Filter root folder
-                    filter(([value]) => value),
-                    // Filter Readme file that was historically in the student's assignment repo
-                    filter(([value]) => !value.includes('README.md')),
-                    // Remove binary files as they can't be displayed in an editor
-                    filter(([filename]) => {
-                        const fileSplit = filename.split('.');
-                        // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
-                    }),
-                    toPairs,
-                )(files),
-            ),
-            catchError((error: HttpErrorResponse) => {
-                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                return Observable.of({});
-            }),
-            tap(files => {
-                this.isLoadingFiles = false;
-                this.repositoryFiles = files;
-                this.setupTreeview();
-                this.onFilesLoaded.emit(Object.keys(files));
-            }),
-        );
     }
 
     emitFileChange(fileChange: FileChange) {
@@ -366,21 +358,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     /**
-     * @function openDeleteFileModal
-     * @desc Opens a popup to delete the selected repository file
-     */
-    openDeleteFileModal($event: any, fileName: string, fileType: FileType) {
-        $event.stopPropagation();
-        if (fileName) {
-            const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
-            modalRef.componentInstance.participation = this.participation;
-            modalRef.componentInstance.parent = this;
-            modalRef.componentInstance.fileNameToDelete = fileName;
-            modalRef.componentInstance.fileType = fileType;
-        }
-    }
-
-    /**
      * Rename the file (if new fileName is different than old fileName and new fileName is not empty)
      * and emit the changes to the parent.
      * After rename the rename state is exited.
@@ -407,7 +384,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         }
 
         if (event.target.value !== fileName) {
-            this.repositoryFileService.rename(this.participation.id, filePath, event.target.value).subscribe(
+            this.renameFile(filePath, event.target.value).subscribe(
                 () => {
                     this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                     this.renamingFile = null;
@@ -457,7 +434,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         const [folderPath, fileType] = this.creatingFile;
         const file = folderPath ? `${folderPath}/${event.target.value}` : event.target.value;
         if (fileType === FileType.FILE) {
-            this.repositoryFileService.createFile(this.participation.id, file).subscribe(
+            this.createFile(file).subscribe(
                 () => {
                     this.emitFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = null;
@@ -465,7 +442,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 () => this.parent.onError('fileOperationFailed'),
             );
         } else {
-            this.repositoryFileService.createFolder(this.participation.id, file).subscribe(
+            this.createFolder(file).subscribe(
                 () => {
                     this.emitFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = null;

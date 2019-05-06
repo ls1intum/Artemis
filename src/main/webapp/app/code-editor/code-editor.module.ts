@@ -17,9 +17,8 @@ import { MomentModule } from 'ngx-moment';
 import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
-import { CodeEditorFileBrowserComponent } from './file-browser/code-editor-file-browser.component';
+import { CodeEditorFileBrowserParticipationComponent } from './file-browser/code-editor-file-browser-participation.component';
 import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build-output.component';
-import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { CodeEditorStatusComponent } from './status/code-editor-status.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
@@ -44,9 +43,8 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
+        CodeEditorFileBrowserParticipationComponent,
         CodeEditorAceComponent,
-        CodeEditorFileBrowserComponent,
-        CodeEditorFileBrowserDeleteComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
         EditorInstructionsResultDetailComponent,
@@ -54,7 +52,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorActionsComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent],
+    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

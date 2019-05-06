@@ -5,6 +5,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { SERVER_API_URL } from '../../app.constants';
+import { FileType } from '../ace-editor/file-change.model';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
@@ -35,8 +36,8 @@ export class RepositoryFileService {
 
     constructor(private http: HttpClient) {}
 
-    query(participationId: number): Observable<{ [fileName: string]: boolean }> {
-        return this.http.get<{ [fileName: string]: boolean }>(`${this.resourceUrl}/${participationId}/files`);
+    query(participationId: number): Observable<{ [fileName: string]: FileType }> {
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.resourceUrl}/${participationId}/files`);
     }
 
     get(participationId: number, fileName: string): Observable<any> {

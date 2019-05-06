@@ -31,7 +31,7 @@
 
     <div class="editor-main">
         <div class="editor-sidebar-left">
-            <jhi-code-editor-file-browser
+            <jhi-code-editor-file-browser-participation
                 [participation]="participation"
                 [(selectedFile)]="selectedFile"
                 [unsavedFiles]="unsavedFiles"
@@ -42,7 +42,7 @@
                 (onFileChange)="onFileChange($event)"
                 (onFilesLoaded)="onFilesLoaded($event)"
             >
-            </jhi-code-editor-file-browser>
+            </jhi-code-editor-file-browser-participation>
         </div>
 
         <div class="editor-center">
