@@ -51,7 +51,9 @@
                     "assess": "Abgabe bewerten"
                 }
             },
-            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück."
+            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück.",
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
         }
     }
 }

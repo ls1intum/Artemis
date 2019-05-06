@@ -325,7 +325,24 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        // TODO: implement assessment update
+        this.checkScoreBoundaries();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
+            response => {
+                this.result = response.body;
+                this.updateParticipationWithResult();
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('arTeMiSApp.textAssessment.updateAfterComplaintFailed');
+            },
+        );
     }
 
     private onError(error: string) {
