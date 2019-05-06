@@ -526,7 +526,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const failedTests = tests.filter(testName => {
                 const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
-                return feedback ? !feedback.positive : true;
+                // If there is no feedback item, we assume that the test was successful (legacy check)
+                return feedback ? !feedback.positive : false;
             });
 
             // Exercise is done if none of the tests failed
