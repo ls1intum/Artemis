@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
@@ -318,6 +319,12 @@ public class GitService {
             // Get last commit hash from template repo
             ObjectId latestHash = getLatestHash(exercise.getTemplateRepositoryUrlAsUrl());
 
+            if (latestHash == null) {
+                // Template Repository is somehow empty. Should never happen
+                log.info("Cannot find a commit in the template repo for:" + repository.getLocalPath());
+                return;
+            }
+
             // flush cache of files
             repository.setFiles(null);
 
@@ -354,7 +361,7 @@ public class GitService {
             repository.close();
 
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
         }
     }
