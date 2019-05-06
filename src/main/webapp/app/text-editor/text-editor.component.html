@@ -56,7 +56,7 @@
         </ng-template>
     </div>
 
-    <div class="row" *ngIf="result && result.completionDate && !hasComplaint">
+    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint">
         <button class="btn btn-primary"
                 [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
                 (click)="showComplaintForm = !showComplaintForm"
