@@ -2,7 +2,7 @@
     "arTeMiSApp": {
         "complaintResponse": {
             "title": "Antwort auf die Beschwerde",
-            "created": "Ihre Antwort auf die Beschwerde wurde eingereicht",
+            "created": "Deine Antwort auf die Beschwerde wurde eingereicht",
             "updateAssessment": "Bewertung aktualisieren",
             "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
             "rejectComplaint": "Beschwerde zurückweisen",

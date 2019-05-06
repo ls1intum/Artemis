@@ -2,13 +2,13 @@
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
         "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
-        "assessmentLockedCurrentUser": "Diese Bewertung ist von Ihnen gesperrt",
+        "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe bewerten"
         },
         "messages": {
-            "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen.",
+            "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
             "noModel": "Kein Modell für Abgabe gefunden.",
             "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",

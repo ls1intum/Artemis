@@ -10,9 +10,9 @@
             "pageHeader": "Tutor Übungs-Dashboard für die Übung",
             "yourStatus": "Dein Status",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
-            "needToReadGradingInstructions": "Sie müssen die Bewertungsanweisungen lesen, bevor Sie mit der Bewertung beginnen.",
+            "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
-            "startYourParticipation": "Beginnen Sie Ihre Teilnahme an der Übung.",
+            "startYourParticipation": "Beginne deine Teilnahme an der Übung.",
             "gradingInstructions": "Bewertungsanweisungen",
             "problemStatement": "Aufgabenstellung",
             "exampleSolution": "Beispiel Lösung",
@@ -41,12 +41,12 @@
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerde.",
             "evaluateComplaint": "Auswertung der Beschwerde.",
-            "showComplaint": "Zeigen Sie die Beschwerde an.",
+            "showComplaint": "Beschwerde anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
             "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
-            "numberOfAssessedSubmissions": "Bewertete Einreichungen",
-            "numberOfSubmissionsAssessedByYou": "Von Ihnen bewertete Einreichungen"
+            "numberOfAssessedSubmissions": "Bewertete Abgaben",
+            "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben"
         }
     }
 }

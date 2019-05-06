@@ -1,7 +1,7 @@
 {
     "arTeMiSApp": {
         "textAssessment": {
-            "loading": "Bitte warten Sie, bis ArTEMiS die Einreichung findet!",
+            "loading": "Bitte warte, bis ArTEMiS die Abgabe findet!",
             "heading": {
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
                 "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
@@ -16,7 +16,7 @@
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
-            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Abgabe bevor Sie eine neue öffnen.",
+            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnen.",
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
@@ -51,7 +51,7 @@
                     "assess": "Abgabe bewerten"
                 }
             },
-            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück.",
+            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
         }
