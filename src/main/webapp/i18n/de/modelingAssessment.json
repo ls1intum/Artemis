@@ -1,9 +1,8 @@
 {
     "modelingAssessment": {
         "points": "Punkte",
-        "conflicts": "Konflikte",
-        "assessor": "Bewertet von: {{firstName}} {{lastName}}",
+        "assessmentOf": "Bewertung von {{firstName}} {{lastName}}",
         "noModel": "Kein Modell zum Darstellen gefunden.",
-        "messages": {}
+        "countOfConflictingAssessments": "{{count}} tutors assessed different then you."
     }
 }

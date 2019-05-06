@@ -14,7 +14,7 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
     templateUrl: './modeling-assessment-conflict.component.html',
-    styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor.component.scss'],
+    styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor/modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
@@ -22,7 +22,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     currentFeedbacksCopy: Feedback[];
     modelHighlightedElementIds: Set<string>;
     highlightColor: string;
-    user: User;
+    // user: User;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
@@ -45,18 +45,24 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     ) {}
 
     ngOnInit() {
+        this.jhiAlertService.clear();
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
-            this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
+            this.conflicts = this.modelingAssessmentService.popLocalConflicts(this.submissionId);
             if (this.conflicts) {
                 this.initComponent();
-                this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
-                this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
             } else {
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
+                this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(
+                    conflicts => {
+                        this.conflicts = conflicts;
+                        this.initComponent();
+                    },
+                    error => {
+                        this.jhiAlertService.error('modelingAssessmentConflict.messages.noConflicts');
+                    },
+                );
             }
         });
-        this.accountService.identity().then(value => (this.user = value));
     }
 
     ngAfterViewInit() {
@@ -64,11 +70,17 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     initComponent() {
+        this.jhiAlertService.clear();
         this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
         this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
-        this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
-        this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
+        this.initResolutionStates();
+        this.updateOverallResolutionState();
+        if (!this.conflictsAllHandled) {
+            this.jhiAlertService.info('modelingAssessmentConflict.messages.conflictResolutionInstructions');
+        }
         this.updateSelectedConflict();
+        this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
+        this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
     }
 
     onNextConflict() {
@@ -171,6 +183,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
     }
 
+    private initResolutionStates() {
+        this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
+        for (let i = 0; i < this.conflicts.length; i++) {
+            const currentConflict: Conflict = this.conflicts[i];
+            const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
+            const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
+            const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
+            if (mergedFeedback.credits !== conflictingFeedback.credits) {
+                this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.UNHANDLED;
+            } else {
+                this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
+            }
+        }
+    }
+
     private updateSelectedConflict() {
         this.currentConflict = this.conflicts[this.conflictIndex];
         this.conflictingResult = this.currentConflict.resultsInConflict[0];
@@ -193,7 +220,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
         }
         this.updateHighlightColor();
-        this.updateOverallResolutioState();
+        this.updateOverallResolutionState();
     }
 
     private updateHighlightColor() {
@@ -211,7 +238,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
     }
 
-    private updateOverallResolutioState() {
+    private updateOverallResolutionState() {
         for (const state of this.conflictResolutionStates) {
             if (state === ConflictResolutionState.UNHANDLED) {
                 this.conflictsAllHandled = false;
@@ -219,10 +246,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             }
         }
         if (!this.conflictsAllHandled) {
-            this.jhiAlertService.success('modelingAssessmentEditor.messages.conflictsResolved');
+            this.jhiAlertService.success('modelingAssessmentConflict.messages.conflictsResolved');
         }
         this.conflictsAllHandled = true;
     }
-
-    private updateCenteredElement() {}
 }

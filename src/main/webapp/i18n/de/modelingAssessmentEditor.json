@@ -2,16 +2,10 @@
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
         "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
-        "conflicts": "Konflikt",
-        "ownAssessmentTitle": "Deine aktuelle Bewertung",
-        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewerted von",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe bewerten",
-            "resolveConflict": "Konflikte behandeln",
-            "applyChanges": "Änderungen übernehmen",
-            "keepYours": "Beibehalten",
-            "acceptTheirs": "Übernehmen"
+            "resolveConflict": "Konflikte behandeln"
         },
         "messages": {
             "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen.",
@@ -22,9 +16,7 @@
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
-            "noConflicts": "Konflikte konnten nicht geladen werden",
-            "conflictsResolved": "Es wurden alle Konflikte bearbeitet."
+            "resultDismissed": "Deine Bewertung wurde verworfen! ein anderer Tutor hat diese Abgabe bereits bewertet."
         }
     }
 }

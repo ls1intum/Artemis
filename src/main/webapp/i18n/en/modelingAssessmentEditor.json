@@ -2,16 +2,10 @@
     "modelingAssessmentEditor": {
         "assessment": "Assessment",
         "assessmentLocked": "Assessment locked by: {{otherUser}}",
-        "conflicts": "Conflict",
-        "ownAssessmentTitle": "Your current assessment",
-        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments. Assessed by",
         "button": {
             "overrideAssessment": "Override Assessment",
             "nextSubmission": "Assess Next Submission",
-            "resolveConflict": "Resolve Conflicts",
-            "applyChanges": "Apply Changes",
-            "keepYours": "Keep Yours",
-            "acceptTheirs": "Take Over"
+            "resolveConflict": "Resolve Conflicts"
         },
         "messages": {
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
@@ -22,9 +16,7 @@
             "submitSuccessful": "Your assessment was submitted successfully!",
             "submitFailed": "Submitting your assessment failed!",
             "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
-            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
-            "noConflicts": "Conflicts could not be loaded",
-            "conflictsResolved": "All conflicts have been processed."
+            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
         }
     }
 }

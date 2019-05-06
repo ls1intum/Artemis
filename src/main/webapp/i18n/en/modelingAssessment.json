@@ -1,11 +1,8 @@
 {
     "modelingAssessment": {
         "points": "Points",
-        "assessor": "Assessor: {{firstName}} {{lastName}}",
-        "noModel": "No model found to display"
-    },
-    "messages": {
-        "noConflicts": "Conflicts could not be loaded",
-        "conflictsResolved": "All conflicts have been processed."
+        "assessmentOf": "Assessment of",
+        "noModel": "No model found to display",
+        "countOfConflictingAssessments": "{{count}} Tutoren haben anders als du bewertet."
     }
 }

@@ -1,0 +1,24 @@
+{
+    "modelingAssessmentConflict": {
+        "conflicts": "Konflikt",
+        "ownAssessmentTitle": "Deine aktuelle Bewertung",
+        "button": {
+            "keepYours": "Beibehalten",
+            "acceptTheirs": "Übernehmen"
+        },
+        "tooltip": {
+            "keepYours": "Deine Bewertung des markierten Elements wird beibehalten. Der Konflikt wird dabei an diejenigen Tutoren eskaliert, die das markierte Element anders als du bewertet haben.",
+            "acceptTheirs": "Du übernimmst die bereits bestehende Bewertung des markierten Elements. Der Konflikt wird dabei aufgelöst."
+        },
+        "messages": {
+            "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+            "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
+            "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+            "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
+            "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
+            "noConflicts": "Es wurden keine Konflikte zum Bearbeiten gefunden!",
+            "conflictsResolved": "Alle Konflikte wurden bearbeitet. Sende deine aktualisierte Bewertung ab, um die Konfliktbehandlung abzuschließen.",
+            "conflictResolutionInstructions": "Entscheide für jeden der vorhandenen Konflikte ob du deine Bewertung behalten oder die bereits vorhandene übernehmen möchtest."
+        }
+    }
+}
