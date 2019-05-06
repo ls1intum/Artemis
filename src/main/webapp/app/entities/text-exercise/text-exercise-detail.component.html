@@ -28,16 +28,14 @@
             </div>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd class="editor-outline-background">
-            <span [innerHTML]="formattedProblemStatement"></span>
+        <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement">
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
         <dd>
             <span>{{ textExercise.maxScore }}</span>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample Solution</span></dt>
-        <dd class="editor-outline-background">
-            <span [innerHTML]="formattedSampleSolution"></span>
+        <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution">
         </dd>
     </dl>
 
