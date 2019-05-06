@@ -118,6 +118,15 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
 
+        console.log(this.multipleChoiceAnswerOptions);
+        console.log(this.correctMultipleChoiceAnswers);
+        console.log(this.multipleChoiceCorrectAnswerCorrectlyChosen);
+        console.log(this.multipleChoiceWrongAnswerChosen);
+        console.log(this.forgottenMultipleChoiceRightAnswers);
+        console.log(this.inTotalSelectedRightOptions);
+        console.log(this.inTotalSelectedWrongOptions);
+        console.log(this.differenceMultipleChoice);
+
         if (this.inTotalSelectedRightOptions === 1) {
             this.rightOption = this.translateService.instant(translationBasePath + 'option');
         } else {
