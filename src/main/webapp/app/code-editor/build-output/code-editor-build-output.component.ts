@@ -131,9 +131,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
             this.buildLogs = new BuildLogEntryArray(...buildLogs);
-            if ($('.buildoutput')) {
-                setTimeout(() => $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight), 0);
-            }
             this.buildLogChange.emit(this.buildLogs);
         });
     }
