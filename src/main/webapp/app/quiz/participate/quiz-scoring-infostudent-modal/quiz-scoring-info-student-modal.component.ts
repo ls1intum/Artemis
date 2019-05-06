@@ -67,7 +67,6 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 
     ngOnInit() {
-        this.submittedAnswerCorrectValues();
         this.checkForSingleOrPluralPoints();
         switch (this.question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
@@ -106,6 +105,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      * counts the variables for Multiple Choice Questions
      */
     private countMultipleChoice() {
+        this.submittedAnswerCorrectValues();
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
