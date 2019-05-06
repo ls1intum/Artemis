@@ -131,7 +131,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
             this.buildLogs = new BuildLogEntryArray(...buildLogs);
-            $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
+            if ($('.buildoutput')) {
+                setTimeout(() => $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight), 0);
+            }
             this.buildLogChange.emit(this.buildLogs);
         });
     }
@@ -143,16 +145,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @param result
      */
     toggleBuildLogs(result: Result) {
-        if (
-            !result ||
-            ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
-        ) {
+        if (result && (!result.feedbacks || !result.feedbacks.length)) {
+            // If the build failed, find out why
+            this.getBuildLogs();
+        } else {
             this.buildLogs = new BuildLogEntryArray();
             // If there are no compile errors, send recent timestamp
             this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
-        } else {
-            // If the build failed, find out why
-            this.getBuildLogs();
         }
     }
 
