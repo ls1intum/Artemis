@@ -14,7 +14,7 @@ import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
-import { EditorTab, MarkdownEditorHeight } from 'app/markdown-editor';
+import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -22,7 +22,6 @@ import { EditorTab, MarkdownEditorHeight } from 'app/markdown-editor';
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
-    EditorTab = EditorTab;
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     haveDetailsBeenLoaded = false;

@@ -29,12 +29,7 @@
     >
     </jhi-programming-exercise-instructions>
     <ng-template #markdownEditorInstructions>
-        <jhi-markdown-editor
-            [markdown]="problemStatement"
-            [defaultHeight]="MarkdownEditorHeight.MEDIUM"
-            (markdownChange)="onProblemStatementEditorUpdate($event)"
-            [selectedTab]="EditorTab.PREVIEW"
-        >
+        <jhi-markdown-editor [markdown]="problemStatement" [defaultHeight]="MarkdownEditorHeight.MEDIUM" (markdownChange)="onProblemStatementEditorUpdate($event)">
             <jhi-programming-exercise-instructions
                 #preview
                 [exercise]="exercise"

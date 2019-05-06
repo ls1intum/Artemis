@@ -32,11 +32,6 @@ export enum MarkdownEditorHeight {
     LARGE = 1000,
 }
 
-export enum EditorTab {
-    EDIT = 'editor_edit',
-    PREVIEW = 'editor_preview',
-}
-
 @Component({
     selector: 'jhi-markdown-editor',
     providers: [ArtemisMarkdown],
@@ -99,7 +94,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     previewTextAsHtml: string;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
-    @Input() selectedTab = EditorTab.EDIT;
+    previewMode = false;
 
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
@@ -167,8 +162,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if (this.enableResize) {
             this.setupResizable();
         }
-        // Set the selected tab, wait a tick to not conflict with the rendering process
-        setTimeout(() => this.tabs.select(this.selectedTab), 0);
     }
 
     /**
@@ -313,9 +306,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Toggle the preview in the template and parse the text
      */
     togglePreview(event: any): void {
-        this.selectedTab = event.activeId;
+        this.previewMode = !this.previewMode;
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
-        if (event.activeId === EditorTab.EDIT) {
+        if (event.activeId === 'editor_edit') {
             this.parse();
         }
     }
