@@ -25,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -76,7 +75,7 @@ public class RepositoryResource {
         if (failureResponse != null) return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator itr = gitService.get().listFiles(repository).entrySet().iterator();
+        Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
 
         HashMap<String, FileType> fileList = new HashMap<>();
 
@@ -162,7 +161,7 @@ public class RepositoryResource {
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setFiles(null); // invalidate cache
+        repository.setContent(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
     }
@@ -193,7 +192,7 @@ public class RepositoryResource {
         File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setFiles(null); // invalidate cache
+        repository.setContent(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("folder", folderName)).build();
     }
@@ -226,7 +225,7 @@ public class RepositoryResource {
             return notFound();
         }
 
-        repository.setFiles(null); // invalidate cache
+        repository.setContent(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
     }
 
@@ -255,7 +254,7 @@ public class RepositoryResource {
         } else {
             FileUtils.deleteDirectory(file.get());
         }
-        repository.setFiles(null); // invalidate cache
+        repository.setContent(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
     }
 

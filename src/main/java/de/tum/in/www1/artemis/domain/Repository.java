@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by Josias Montag on 14.10.16.
@@ -15,7 +14,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Participation participation;
     private Path localPath;
-    private HashMap<File, FileType> files;
+    private HashMap<File, FileType> filesAndFolders;
+    private Collection<File> files;
 
     public Repository(File gitDir) throws IOException {
         super(gitDir);
@@ -65,10 +65,18 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     public HashMap<File, FileType> getContent() {
+        return filesAndFolders;
+    }
+
+    public void setContent(HashMap<File, FileType> filesAndFolders) {
+        this.filesAndFolders = filesAndFolders;
+    }
+
+    public Collection<File> getFiles() {
         return files;
     }
 
-    public void setFiles(HashMap<File, FileType> files) {
+    public void setFiles(Collection<File> files) {
         this.files = files;
     }
 }

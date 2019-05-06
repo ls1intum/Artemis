@@ -229,7 +229,7 @@ public class GitService {
         try {
             Git git = new Git(repo);
             // flush cache of files
-            repo.setFiles(null);
+            repo.setContent(null);
             return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         }
         catch (GitAPIException ex) {
@@ -319,7 +319,7 @@ public class GitService {
             ObjectId latestHash = getLatestHash(exercise.getTemplateRepositoryUrlAsUrl());
 
             // flush cache of files
-            repository.setFiles(null);
+            repository.setContent(null);
 
             // checkout own local "stager" branch
             studentGit.checkout().setCreateBranch(true).setName("stager").call();
@@ -360,12 +360,12 @@ public class GitService {
     }
 
     /**
-     * List all files in the repository
+     * List all files and folders in the repository
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    public HashMap<File, FileType> listFiles(Repository repo) {
+    public HashMap<File, FileType> listFilesAndFolders(Repository repo) {
         // Check if list of files is already cached
         if (repo.getContent() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
@@ -378,9 +378,32 @@ public class GitService {
 
             // Cache the list of files
             // Avoid expensive rescanning
-            repo.setFiles(files);
+            repo.setContent(files);
         }
         return repo.getContent();
+    }
+
+    /**
+     * List all files in the repository. In an empty git repo, this method returns 0.
+     *
+     * @param repo Local Repository Object.
+     * @return Collection of File objects
+     */
+    public Collection<File> listFiles(Repository repo) {
+        // Check if list of files is already cached
+        if (repo.getFiles() == null) {
+            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
+            Collection<File> files = new LinkedList<>();
+
+            while (itr.hasNext()) {
+                files.add(new File(itr.next(), repo));
+            }
+
+            // Cache the list of files
+            // Avoid expensive rescanning
+            repo.setFiles(files);
+        }
+        return repo.getFiles();
     }
 
     /**
@@ -395,7 +418,7 @@ public class GitService {
         // Makes sure the requested file is part of the scanned list of files.
         // Ensures that it is not possible to do bad things like filename="../../passwd"
 
-        for (File file : listFiles(repo).keySet()) {
+        for (File file : listFilesAndFolders(repo).keySet()) {
             if (file.toString().equals(filename)) {
                 return Optional.of(file);
             }
@@ -427,7 +450,7 @@ public class GitService {
         cachedRepositories.remove(repoPath);
         repo.close();
         FileUtils.deleteDirectory(repoPath.toFile());
-        repo.setFiles(null);
+        repo.setContent(null);
         log.debug("Deleted Repository at " + repoPath);
     }
 
