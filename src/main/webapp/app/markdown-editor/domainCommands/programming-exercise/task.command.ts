@@ -13,7 +13,7 @@ export class TaskCommand extends DomainTagCommand {
      * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
      */
     execute(): void {
-        const text = `\n1. ${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+        const text = `\n${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
         this.insertText(text);
     }
 

@@ -40,6 +40,7 @@
                         </button>
                         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                             <button *ngFor="let value of command.values" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
+                            <button *ngIf="!command.values.length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
                         </div>
                     </div>
                 </ng-container>
