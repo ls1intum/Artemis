@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -39,8 +40,6 @@ public class ComplaintResource {
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "complaint";
-
-    private static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
     private ComplaintRepository complaintRepository;
 
