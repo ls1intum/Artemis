@@ -36,7 +36,7 @@
         </div>
 
         <jhi-resizable-instructions
-            class="resizable-submission card" id="instructions"
+            class="resizable-submission card markdown-preview" id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
             [formattedProblemStatement]="formattedProblemStatement"
             [formattedGradingInstructions]="formattedGradingInstructions"
@@ -95,7 +95,7 @@
             </div>
 
             <jhi-resizable-instructions
-                class="resizable-assessment card mr-4" id="assessment-instructions"
+                class="resizable-assessment card mr-4 markdown-preview" id="assessment-instructions"
                 [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
                 *ngIf="!isAtLeastInstructor||readOnly||toComplete"
                 [formattedProblemStatement]="formattedProblemStatement"
