@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseService } from 'app/entities/exercise';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
 import { CodeEditorContainer } from '../base/code-editor-mode-container.component';
@@ -41,7 +41,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
 
     constructor(
         private router: Router,
-        private exerciseService: ExerciseService,
+        private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
         participationService: ParticipationService,
         translateService: TranslateService,
@@ -63,41 +63,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 this.loadExercise(exerciseId)
                     .pipe(
                         catchError(() => throwError('exerciseNotFound')),
-                        tap(exercise => (this.exercise = exercise)),
-                        // Load template participation with results
-                        switchMap(() =>
-                            !this.exercise.templateParticipation.results
-                                ? this.loadParticipation(this.exercise.templateParticipation.id).pipe(
-                                      switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
-                                      map(participation => ({ ...participation, exercise: this.exercise })),
-                                      tap(participation => (this.exercise.templateParticipation = participation)),
-                                  )
-                                : Observable.of(null),
-                        ),
-                        // Load solution participation with results
-                        switchMap(() =>
-                            !this.exercise.solutionParticipation.results
-                                ? this.loadParticipation(this.exercise.solutionParticipation.id).pipe(
-                                      switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
-                                      map(participation => ({ ...participation, exercise: this.exercise })),
-                                      tap(participation => (this.exercise.solutionParticipation = participation)),
-                                  )
-                                : Observable.of(null),
-                        ),
-                        // Load assignment participation with results (if exists)
-                        switchMap(() => {
-                            return !this.exercise.participations.length
-                                ? this.loadAssignmentParticipation().pipe(
-                                      tap(participation => {
-                                          if (participation) {
-                                              const newParticipation = { ...participation, exercise: this.exercise };
-                                              this.exercise.participations = [newParticipation];
-                                          } else {
-                                              this.exercise.participations = [];
-                                          }
-                                      }),
-                                  )
-                                : Observable.of(null);
+                        tap((exercise: ProgrammingExercise) => {
+                            exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
+                            exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
+                            exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
+                            this.exercise = exercise;
                         }),
                         // Set selected participation
                         tap(() => {
@@ -138,26 +108,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return !this.exercise
-            ? this.exerciseService.find(exerciseId).pipe(
+            ? this.exerciseService.findWithParticipations(exerciseId).pipe(
                   catchError(() => Observable.of(null)),
                   map(({ body }) => body),
               )
             : Observable.of(this.exercise);
-    }
-
-    /**
-     * Load the assignment participation and assign it to the exercise.
-     */
-    loadAssignmentParticipation() {
-        return this.participationService.findParticipation(this.exercise.course.id, this.exercise.id).pipe(
-            catchError(() => Observable.of(null)),
-            map(({ body }) => body),
-            switchMap(participation => this.participationService.findWithLatestResult(participation.id)),
-            map(({ body }) => body),
-            catchError(() => {
-                return Observable.of(null);
-            }),
-        );
     }
 
     /**

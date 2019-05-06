@@ -24,6 +24,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 
+    //Override to automatically fetch the templateParticipation and solutionParticipation
+    @Query("select distinct pe from ProgrammingExercise pe " +
+        "left join fetch pe.templateParticipation tp " +
+        "left join fetch pe.solutionParticipation sp " +
+        "left join fetch pe.participations pa " +
+        "left join fetch tp.results " +
+        "left join fetch sp.results " +
+        "left join fetch pa.results " +
+        "where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findWithAllParticipationsById(@Param("exerciseId") Long exerciseId);
+
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 

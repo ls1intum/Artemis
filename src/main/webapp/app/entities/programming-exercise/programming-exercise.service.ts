@@ -41,9 +41,21 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    updateProblemStatement(programmingExerciseId: number, problemStatement: string) {
+        return this.http
+            .patch<ProgrammingExercise>(`${this.resourceUrl}-problem`, { exerciseId: programmingExerciseId, problemStatement }, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
+    findWithParticipations(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 

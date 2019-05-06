@@ -2,16 +2,17 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.tum.in.www1.artemis.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +23,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -302,6 +299,41 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
+     *
+     * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or
+     *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PatchMapping("/programming-exercises-problem")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate) throws URISyntaxException {
+        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
+        // fetch course from database to make sure client didn't change groups
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+        if (errorResponse != null) {
+            return errorResponse;
+        }
+
+        programmingExercise.setProblemStatement(problemStatementUpdate.getProblemStatement());
+
+        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getTitle())).body(result);
+    }
+
+    /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -344,6 +376,64 @@ public class ProgrammingExerciseResource {
             }
         }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises/:id : get the "id" programmingExercise.
+     *
+     * @param id the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/programming-exercises-with-participations/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
+        log.debug("REST request to get ProgrammingExercise : {}", id);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id);
+        if (programmingExerciseOpt.isPresent()) {
+            ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+
+            Result latestSolutionResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getSolutionParticipation());
+            Set<Result> solutionResults = new HashSet<>();
+            if (latestSolutionResult != null) {
+                solutionResults.add(latestSolutionResult);
+            }
+            programmingExercise.getSolutionParticipation().setResults(solutionResults);
+
+            Result latestTemplateResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getTemplateParticipation());
+            Set<Result> templateResults = new HashSet<>();
+            if (latestTemplateResult != null) {
+                templateResults.add(latestTemplateResult);
+            }
+            programmingExercise.getTemplateParticipation().setResults(templateResults);
+
+            Optional<Participation> participation = programmingExercise.getParticipations()
+                .stream().filter(p -> p.getStudent() != null).findFirst();
+
+            if (participation.isPresent()) {
+                Result latestResult = programmingExercise.
+                    findLatestRatedResultWithCompletionDate(participation.get());
+                Set<Result> results = new HashSet<>();
+                if (latestResult != null) {
+                    results.add(latestResult);
+                }
+                participation.get().setResults(results);
+                Set<Participation> participations = new HashSet<>();
+                participations.add(participation.get());
+                programmingExercise.setParticipations(participations);
+            } else {
+                Set<Participation> participations = new HashSet<>();
+                programmingExercise.setParticipations(participations);
+            }
+
+            Course course = programmingExercise.getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+                return forbidden();
+            }
+            return ResponseEntity.ok(programmingExercise);
+        } else {
+            return notFound();
+        }
     }
 
     /**
