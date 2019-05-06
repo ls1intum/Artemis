@@ -1,7 +1,7 @@
 <div class="conflict-container">
     <h3 class="top-container">
         <div class="navigation-container row-container">
-            <span jhiTranslate="modelingAssessmentEditor.conflicts">Conflicts</span>
+            <span jhiTranslate="modelingAssessmentConflict.conflicts">Conflicts</span>
             <button class="btn btn-primary" (click)="onPrevConflict()">
                 <fa-icon icon="arrow-left"></fa-icon>
             </button>
@@ -23,22 +23,32 @@
     </h3>
 
     <div id="conflictEditor" class="conflict-editor">
+        <!--        <div class="modeling-assessment-editors">-->
         <div class="conflicting-assessment">
             <jhi-modeling-assessment
                 *ngIf="currentConflict"
                 [diagramType]="modelingExercise.diagramType"
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
-                title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{
-                    conflictingResult.result.assessor.firstName
-                }} {{ conflictingResult.result.assessor.lastName }}"
+                [resultsInConflict]="currentConflict.resultsInConflict"
                 [highlightedElementIds]="conflictingModelHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 [centeredElementId]="conflictingResult.modelElementId"
                 [readOnly]="true"
                 [resizeOptions]="{}"
             ></jhi-modeling-assessment>
-            <button class="btn btn-success" (click)="onAcceptOther()" jhiTranslate="modelingAssessmentEditor.button.acceptTheirs">accept theirs</button>
+            <div class="button-wrapper">
+                <button
+                    class="btn btn-success"
+                    ngbTooltip="{{ 'modelingAssessmentConflict.tooltip.acceptTheirs' | translate }}"
+                    openDelay="200"
+                    data-placement="auto"
+                    (click)="onAcceptOther()"
+                    jhiTranslate="modelingAssessmentConflict.button.acceptTheirs"
+                >
+                    accept theirs
+                </button>
+            </div>
         </div>
         <div class="assessment">
             <jhi-modeling-assessment
@@ -48,13 +58,26 @@
                 [feedbacks]="currentFeedbacksCopy"
                 [highlightedElementIds]="modelHighlightedElementIds"
                 [highlightColor]="highlightColor"
-                title="{{ 'modelingAssessmentEditor.ownAssessmentTitle' | translate }}"
+                title="{{ 'modelingAssessmentConflict.ownAssessmentTitle' | translate }}"
                 [centeredElementId]="currentConflict.causingConflictingResult.modelElementId"
                 (feedbackChanged)="onFeedbackChanged($event)"
                 [readOnly]="false"
             ></jhi-modeling-assessment>
-            <button class="btn btn-success" (click)="onKeepYours()" jhiTranslate="modelingAssessmentEditor.button.keepYours">keep yours</button>
+            <div class="button-wrapper">
+                <button
+                    class="btn btn-success"
+                    ngbTooltip="{{ 'modelingAssessmentConflict.tooltip.keepYours' | translate }}"
+                    openDelay="200"
+                    data-placement="auto"
+                    (click)="onKeepYours()"
+                    jhiTranslate="modelingAssessmentConflict.button.keepYours"
+                >
+                    keep yours
+                </button>
+            </div>
         </div>
+        <!--        </div>-->
+
         <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>
 </div>

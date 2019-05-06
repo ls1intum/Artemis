@@ -7,8 +7,8 @@ import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
+import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ComplaintResponse } from 'app/entities/complaint-response';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -25,8 +25,14 @@ export class ModelingAssessmentService {
         return this.localSubmissionConflictMap.set(submissionID, conflicts);
     }
 
-    getLocalConflicts(submissionID: number) {
-        return this.localSubmissionConflictMap.get(submissionID);
+    popLocalConflicts(submissionID: number) {
+        const conflicts = this.localSubmissionConflictMap.get(submissionID);
+        this.localSubmissionConflictMap.delete(submissionID);
+        return conflicts;
+    }
+
+    getConflicts(submissionID: number): Observable<Conflict[]> {
+        return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
     }
 
     escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
@@ -81,6 +87,14 @@ export class ModelingAssessmentService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    convertConflicts(conflicts: Conflict[]) {
+        conflicts.forEach((conflict: Conflict) => {
+            this.convertResult(conflict.causingConflictingResult.result);
+            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.convertResult(conflictingResult.result));
+        });
+        return conflicts;
     }
 
     /**

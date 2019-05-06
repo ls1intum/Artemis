@@ -18,23 +18,26 @@
         overflow: auto;
         .conflicting-assessment {
             position: relative;
-            button {
-                position: absolute;
-                bottom: 15px;
-                right: 30px;
-                z-index: 2;
+            .button-wrapper {
+                padding: 0 45px;
             }
         }
         .assessment {
             position: relative;
             flex: 1 1 auto;
             overflow: hidden;
-            button {
-                position: absolute;
-                bottom: 15px;
-                right: 15px;
-                z-index: 2;
+            .button-wrapper {
+                padding: 0 30px;
             }
         }
+    }
+}
+.button-wrapper {
+    position: absolute;
+    bottom: 20px;
+    right: 0;
+    z-index: 2;
+    button {
+        z-index: 3;
     }
 }

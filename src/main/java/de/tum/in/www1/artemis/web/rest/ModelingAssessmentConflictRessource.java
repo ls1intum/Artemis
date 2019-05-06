@@ -7,18 +7,20 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
 import de.tum.in.www1.artemis.service.ModelingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 @Controller
 @RequestMapping("/api")
@@ -56,6 +58,19 @@ public class ModelingAssessmentConflictRessource {
             return forbidden();
         }
         return ResponseEntity.ok(conflictService.getConflictsForExercise(exerciseId));
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+            @ApiResponse(code = 200, message = GET_CONFLICTS_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
+    @GetMapping("/modeling-submissions/{submissionId}/model-assessment-conflicts")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ModelAssessmentConflict>> getConflictsForSubmission(@PathVariable Long submissionId) {
+        // Exercise exercise = conflictService.getExerciseOfConflict(conflictId);
+        // if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        // return forbidden();
+        // }
+        return ResponseEntity.ok(conflictService.getConflictsForSubmission(submissionId));
     }
 
     @ResponseStatus(HttpStatus.OK)

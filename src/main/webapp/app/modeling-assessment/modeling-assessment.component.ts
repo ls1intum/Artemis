@@ -5,6 +5,7 @@ import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
 import { User } from 'app/core';
 import * as $ from 'jquery';
+import { ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -30,6 +31,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() readOnly = false;
     @Input() enablePopups = true;
     @Input() displayPoints = true;
+    @Input() resultsInConflict: ConflictingResult[];
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 

@@ -1,6 +1,12 @@
 <div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
     <div *ngIf="title || displayPoints" class="card-header bg-primary text-white">
         <span *ngIf="title">{{ title }}</span>
+        <span *ngIf="resultsInConflict && resultsInConflict.length === 1"
+            >{{ 'modelingAssessment.assessmentOf' | translate }} {{ resultsInConflict[0].result.assessor.firstName }} {{ resultsInConflict[0].result.assessor.lastName }}</span
+        >
+        <span *ngIf="resultsInConflict && resultsInConflict.length > 1">{{
+            'modelingAssessment.countOfConflictingAssessments' | translate: { count: resultsInConflict.length }
+        }}</span>
         <span class="flex-fill"></span>
         <jhi-score-display *ngIf="displayPoints" [score]="totalScore" [maxScore]="maxScore"></jhi-score-display>
     </div>
