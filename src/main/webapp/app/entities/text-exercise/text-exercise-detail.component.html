@@ -4,7 +4,7 @@
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details"></dl>
 
-    <dl class="row-md jh-entity-details">
+    <dl class="row-md jh-entity-details markdown-preview">
         <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{ textExercise.title }}</span>
@@ -29,7 +29,7 @@
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
         <dd>
-            <span>{{ textExercise.problemStatement }}</span>
+            <span [innerHTML]="textExercise.problemStatement"></span>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
         <dd>
@@ -37,7 +37,7 @@
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample Solution</span></dt>
         <dd>
-            <span>{{ textExercise.sampleSolution }}</span>
+            <span [innerHTML]="textExercise.sampleSolution"></span>
         </dd>
     </dl>
 
