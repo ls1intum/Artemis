@@ -12,12 +12,11 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 @Repository
 public interface ModelAssessmentConflictRepository extends JpaRepository<ModelAssessmentConflict, Long> {
 
+    @Query("select c from ModelAssessmentConflict c where c.causingConflictingResult.result.submission.id = :#{#submissionId}")
+    List<ModelAssessmentConflict> findAllConflictsByCausingSubmission(@Param("submissionId") Long submissionId);
+
     @Query("select c from ModelAssessmentConflict c where c.causingConflictingResult.result.id = :#{#result.id}")
     List<ModelAssessmentConflict> findAllConflictsByCausingResult(@Param("result") Result result);
-
-    // @Query("select c from ModelAssessmentConflict c left join fetch c.causingConflictingResult cR left join fetch cR.result cRR left join fetch cRR.feedbacks left join fetch
-    // cRR.submission where c.causingConflictingResult.result.id = :#{#result.id}")
-    // List<ModelAssessmentConflict> findAllConflictsByCausingResult(@Param("result") Result result);
 
     @Query("select  c from ModelAssessmentConflict c where c.causingConflictingResult.result.participation.exercise.id = :#{#exerciseId}")
     List<ModelAssessmentConflict> findAllConflictsOfExercise(@Param("exerciseId") Long exerciseId);

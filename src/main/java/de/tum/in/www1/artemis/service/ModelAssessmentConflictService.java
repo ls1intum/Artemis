@@ -53,6 +53,12 @@ public class ModelAssessmentConflictService {
         return modelAssessmentConflictRepository.findAllConflictsOfExercise(exerciseId);
     }
 
+    public List<ModelAssessmentConflict> getConflictsForSubmission(Long submissionId) {
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingSubmission(submissionId);
+        loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(existingConflicts);
+        return existingConflicts;
+    }
+
     public List<ModelAssessmentConflict> getConflictsForResult(Result result) {
         List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
         return conflicts;
@@ -164,7 +170,7 @@ public class ModelAssessmentConflictService {
             ConflictingResult conflictingResult = conflictingResultService.createConflictingResult(conflict, feedback);
             resultsInConflict.add(conflictingResult);
         });
-        ConflictingResult causingConflictingResult = conflictingResultService.createConflictingResult(conflict, causingModelElementId, causingResult);
+        ConflictingResult causingConflictingResult = conflictingResultService.createConflictingResult(causingModelElementId, causingResult);
         conflict.setCausingConflictingResult(causingConflictingResult);
         conflict.setResultsInConflict(resultsInConflict);
         conflict.setCreationDate(ZonedDateTime.now());
