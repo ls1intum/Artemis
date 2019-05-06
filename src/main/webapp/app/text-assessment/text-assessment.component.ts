@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -15,9 +15,10 @@ import { Feedback } from 'app/entities/feedback';
 import { Participation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { WindowRef } from 'app/core';
+import { AccountService, WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -35,12 +36,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     assessmentsAreValid: boolean;
     invalidError: string;
     isAuthorized = true;
-    accountId = 0;
+    isAtLeastInstructor = false;
     busy = true;
     showResult = true;
     hasComplaint = false;
     complaint: Complaint;
     notFound = false;
+    userId: number;
 
     formattedProblemStatement: string;
     formattedSampleSolution: string;
@@ -63,6 +65,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private route: ActivatedRoute,
         private resultService: ResultService,
         private assessmentsService: TextAssessmentsService,
+        private accountService: AccountService,
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
@@ -73,6 +76,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     public ngOnInit(): void {
         this.busy = true;
+
+        // Used to check if the assessor is the current user
+        this.accountService.identity().then(user => {
+            this.userId = user.id;
+        });
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionValue = this.route.snapshot.paramMap.get('submissionId');
 
@@ -247,6 +257,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.assessments = this.result.feedbacks || [];
         this.busy = false;
         this.checkScoreBoundaries();
+        this.checkAuthorization();
     }
 
     public previous(): void {
@@ -278,6 +289,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.invalidError = null;
     }
 
+    private checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+    }
+
     toggleCollapse($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
@@ -301,6 +316,16 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return baseKey + 'exampleAssessment';
         }
         return baseKey + 'assessment';
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        // TODO: implement assessment update
     }
 
     private onError(error: string) {
