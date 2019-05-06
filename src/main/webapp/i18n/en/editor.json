@@ -17,7 +17,7 @@
             "unsubmittedChanges": "There are unsubmitted changes.",
             "submittingChanges": "Submitting changes.",
             "preparingForSubmit": "Preparing for submit.",
-            "submit": "Submit",
+            "submit": "Compile and run",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building...",
             "buildFailed": "Build Failed",
