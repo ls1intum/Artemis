@@ -12,6 +12,7 @@ import { Observable, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -36,7 +37,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     private resultSubscription: Subscription;
 
     constructor(
-        private parent: CodeEditorComponent,
+        private parent: CodeEditorParticipationComponent,
         private $window: WindowRef,
         private repositoryService: RepositoryService,
         private resultService: ResultService,

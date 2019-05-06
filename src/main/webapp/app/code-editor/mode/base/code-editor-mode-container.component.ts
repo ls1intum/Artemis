@@ -7,9 +7,10 @@ import { catchError, map } from 'rxjs/operators';
 import { CodeEditorComponent } from '../..';
 import { ParticipationService, Participation } from 'src/main/webapp/app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
+import { CodeEditorParticipationComponent } from 'app/code-editor/code-editor-participation.component';
 
 export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
-    @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
+    @ViewChild(CodeEditorParticipationComponent) editor: CodeEditorParticipationComponent;
     paramSub: Subscription;
 
     constructor(protected participationService: ParticipationService, private translateService: TranslateService, protected route: ActivatedRoute) {}

@@ -1,6 +1,7 @@
 export * from './ace/code-editor-ace.component';
 export * from './build-output/code-editor-build-output.component';
 export * from './code-editor.component';
+export * from './code-editor-participation.component';
 export * from './mode/base/code-editor-mode-container.component';
 export * from './mode/instructor/code-editor-instructor-container.component';
 export * from './mode/student/code-editor-student-container.component';

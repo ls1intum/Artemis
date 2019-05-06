@@ -9,6 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-participation',
@@ -18,7 +19,7 @@ export class CodeEditorFileBrowserParticipationComponent extends CodeEditorFileB
     @Input()
     participation: Participation;
 
-    constructor(parent: CodeEditorComponent, $window: WindowRef, modalService: NgbModal, private repositoryFileService: RepositoryFileService) {
+    constructor(parent: CodeEditorParticipationComponent, $window: WindowRef, modalService: NgbModal, private repositoryFileService: RepositoryFileService) {
         super(parent, $window, modalService);
     }
 

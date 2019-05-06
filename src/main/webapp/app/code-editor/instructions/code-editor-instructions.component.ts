@@ -15,6 +15,7 @@ import { WindowRef } from '../../core/websocket/window.service';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -45,7 +46,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     unsavedChanges = false;
 
     constructor(
-        private parent: CodeEditorComponent,
+        private parent: CodeEditorParticipationComponent,
         private $window: WindowRef,
         public artemisMarkdown: ArtemisMarkdown,
         private programmingExerciseService: ProgrammingExerciseService,

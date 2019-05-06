@@ -25,7 +25,7 @@
             [commitState]="commitState"
             [isBuilding]="isBuilding"
             [onSave]="editor.saveChangedFiles.bind(editor)"
-            [onCommit]="commit.bind(this)"
+            [onCommit]="prepareCommit.bind(this)"
         ></jhi-code-editor-actions>
     </nav>
 

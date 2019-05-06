@@ -13,6 +13,7 @@ import interact from 'interactjs';
 import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
+import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -73,12 +74,12 @@ export abstract class CodeEditorFileBrowserComponent implements OnChanges, After
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal) {}
-
     abstract loadFiles: () => Observable<{ [fileName: string]: FileType }>;
     abstract renameFile: (filePath: string, fileName: string) => Observable<void>;
     abstract createFile: (fileName: string) => Observable<void>;
     abstract createFolder: (folderName: string) => Observable<void>;
+
+    constructor(private parent: CodeEditorParticipationComponent, private $window: WindowRef, public modalService: NgbModal) {}
 
     /**
      * @function ngAfterViewInit
