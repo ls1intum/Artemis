@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { SubmittedAnswer } from 'app/entities/submitted-answer';
 import { Result } from 'app/entities/result';
 import { QuizExercise, QuizExerciseComponent } from 'app/entities/quiz-exercise';
+import { QuizSubmission } from 'app/entities/quiz-submission';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -94,19 +95,23 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      * checks for the correct answeroptions based on the submittedAnswer
      */
     private submittedAnswerCorrectValues() {
-        console.log(this.multipleChoiceSubmittedAnswer);
-        console.log(this.multipleChoiceSubmittedAnswer.participation.exercise);
-
         if (this.multipleChoiceSubmittedAnswer.participation.exercise.type === 'quiz') {
             const question = this.multipleChoiceSubmittedAnswer.participation.exercise as QuizExercise;
 
-            for (let element of question.quizQuestions) {
+            for (const element of question.quizQuestions) {
                 if (element.id === question.id) {
                     const value = element as MultipleChoiceQuestion;
                     this.correctMultipleChoiceAnswers = value.answerOptions.filter(option => option.isCorrect).length;
                 }
             }
-            console.log(true);
+
+            const submitted = this.multipleChoiceSubmittedAnswer.submission as QuizSubmission;
+            const number = submitted.submittedAnswers.length;
+            for (let i = 0; i < number; i++) {
+                if (submitted.submittedAnswers[i].quizQuestion.id === question.id) {
+                    console.log(submitted.submittedAnswers[i]);
+                }
+            }
         }
     }
 
