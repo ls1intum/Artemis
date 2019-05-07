@@ -36,7 +36,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     @Input()
     fnOnSelection: any;
     @Input()
-    submittedAnswer: Result;
+    submittedResult: Result;
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
