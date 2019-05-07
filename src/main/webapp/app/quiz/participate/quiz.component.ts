@@ -305,7 +305,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         }
 
         if (!this.participationChannel) {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.quizExercise);
+            this.participationWebsocketService.addExerciseForNewParticipation(this.quizExercise.id);
             this.participationChannel = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
                 if (changedParticipation) {
                     if (this.waitingForQuizStart) {
