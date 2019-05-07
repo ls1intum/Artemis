@@ -9,6 +9,8 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import {
     faAngleDown,
     faAngleRight,
+    faAngleDoubleDown,
+    faAngleDoubleUp,
     faArchive,
     faArrowLeft,
     faArrowRight,
@@ -33,10 +35,12 @@ import {
     faCloud,
     faCodeBranch,
     faDownload,
+    faEdit,
     faCheckDouble,
     faKeyboard,
     faProjectDiagram,
     faFileUpload,
+    faFilePowerpoint,
     faThLarge,
     faAngleUp,
     faSortAmountUp,
@@ -167,6 +171,7 @@ library.add(faCheckDouble);
 library.add(faKeyboard);
 library.add(faProjectDiagram);
 library.add(faFileUpload);
+library.add(faFilePowerpoint);
 library.add(faFont);
 library.add(faThLarge);
 library.add(faAngleUp);
@@ -188,6 +193,7 @@ library.add(faGraduationCap);
 library.add(faChartPie);
 library.add(faExternalLinkAlt);
 library.add(faSignal);
+library.add(faEdit);
 library.add(faChevronUp);
 library.add(faChevronDown);
 library.add(faChevronLeft);
@@ -231,4 +237,6 @@ library.add(farCircle);
 library.add(farSave);
 library.add(faGripLinesVertical);
 library.add(faPaperclip);
+library.add(faAngleDoubleDown);
+library.add(faAngleDoubleUp);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

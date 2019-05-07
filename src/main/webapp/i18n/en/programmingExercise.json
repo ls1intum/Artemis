@@ -33,36 +33,6 @@
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle"
-        },
-        "editor": {
-            "title": "Code Editor for Exercise:",
-            "instructions": "&nbsp; Instructions &nbsp;",
-            "unsavedChanges": "There are unsaved changes.",
-            "savingChanges": "Saving changes.",
-            "savingFile": "Saving file.",
-            "changesSaved": "All changes saved.",
-            "failedToSave": "Failed to save file.",
-            "changesUndefined": "Fetching submission status.",
-            "changesError": "Submission status could not be retrieved.",
-            "changesSubmitted": "All changes submitted.",
-            "unsubmittedChanges": "There are unsubmitted changes.",
-            "submittingChanges": "Submitting changes.",
-            "preparingForSubmit": "Preparing for submit.",
-            "submit": "Submit",
-            "buildOutput": "&nbsp; Build Output",
-            "building": "Building...",
-            "buildFailed": "Build Failed",
-            "noBuildOutput": "No build results available",
-            "selectFile": "Select a file to get started!",
-            "downloadBuildResult": "Download Build Result",
-            "saving": "Saving",
-            "saveFiles": "Save",
-            "errors": {
-                "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
-                "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
-                "noPermissions": "You don't have the necessary permissions.",
-                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor."
-            }
         }
     }
 }

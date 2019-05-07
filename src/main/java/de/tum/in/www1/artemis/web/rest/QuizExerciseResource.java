@@ -127,13 +127,13 @@ public class QuizExerciseResource {
         }
 
         // check if quiz is has already started
-        QuizExercise originalQuiz = quizExerciseService.findOne(quizExercise.getId());
-        if (originalQuiz == null) {
+        Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
+        if (!originalQuiz.isPresent()) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise."))
                     .build();
         }
-        if (originalQuiz.isStarted()) {
+        if (originalQuiz.get().isStarted()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections."))
                     .body(null);
@@ -318,12 +318,12 @@ public class QuizExerciseResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
-        QuizExercise quizExercise = quizExerciseService.findOne(id);
-        if (quizExercise == null) {
+        Optional<QuizExercise> quizExercise = quizExerciseService.findById(id);
+        if (!quizExercise.isPresent()) {
             return ResponseEntity.notFound().build();
         }
 
-        Course course = quizExercise.getCourse();
+        Course course = quizExercise.get().getCourse();
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             return forbidden();
         }

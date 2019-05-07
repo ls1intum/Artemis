@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.config.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import io.github.jhipster.config.JHipsterProperties;
+import java.security.Principal;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -16,6 +17,7 @@ import org.springframework.messaging.converter.DefaultContentTypeResolver;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.MimeTypeUtils;
@@ -25,11 +27,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
-import java.security.Principal;
-import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
-//@EnableWebSocketMessageBroker
+// @EnableWebSocketMessageBroker
 public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
 
     private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
@@ -37,25 +41,34 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final JHipsterProperties jHipsterProperties;
+
     private final ObjectMapper objectMapper;
 
-    public WebsocketConfiguration(JHipsterProperties jHipsterProperties,
-                                  MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    private TaskScheduler messageBrokerTaskScheduler;
+
+    public WebsocketConfiguration(JHipsterProperties jHipsterProperties, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.jHipsterProperties = jHipsterProperties;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
+    @Autowired
+    public void setMessageBrokerTaskScheduler(TaskScheduler taskScheduler) {
+        this.messageBrokerTaskScheduler = taskScheduler;
+    }
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        config.enableSimpleBroker("/topic")
+            .setHeartbeatValue(new long[] { 10000, 20000 })
+            .setTaskScheduler(messageBrokerTaskScheduler);
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-//        String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
+        // String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
         registry.addEndpoint("/websocket/tracker")
             .setHandshakeHandler(defaultHandshakeHandler())
-            //Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService       : Origin check enabled but transport 'jsonp' does not support it.
+            // Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService : Origin check enabled but transport 'jsonp' does not support it.
             .setAllowedOrigins("*")
             .withSockJS()
             .setInterceptors(httpSessionHandshakeInterceptor());
@@ -103,6 +116,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private DefaultHandshakeHandler defaultHandshakeHandler() {
         return new DefaultHandshakeHandler() {
+
             @Override
             protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
