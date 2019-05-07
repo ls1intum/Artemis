@@ -11,6 +11,8 @@
             "acceptTheirs": "You are taking over the existing assessment of the highlighted element. By that the conflict is resolved."
         },
         "messages": {
+            "warning": "Warning",
+            "escalationWarning": "You are about to escalate {{escalatedConflictsCount}} conflicts to the affected {{tutorsEscalatingCount}} tutors. The following tutors are affected by your decision:",
             "saveSuccessful": "Your assessment was saved successfully!",
             "saveFailed": "Saving your assessment failed!",
             "submitSuccessful": "Your assessment was submitted successfully!",

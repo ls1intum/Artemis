@@ -1,9 +1,18 @@
 <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">You are about to escalate {{ escalatedConflictsCount }} conflicts to {{ tutorsEscalatingTo.length }} tutors:</h4>
+    <h4 class="modal-title" id="modal-basic-title" jhiTranslate="modelingAssessmentConflict.messages.warning">
+        Warning
+    </h4>
 </div>
 <div class="modal-body">
+    <h5>
+        {{
+            'modelingAssessmentConflict.messages.escalationWarning'
+                | translate: { escalatedConflictsCount: escalatedConflictsCount, tutorsEscalatingCount: tutorsEscalatingTo.length }
+        }}
+    </h5>
     <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Save click')">Continue</button>
+    <button type="button" class="btn btn-outline-danger" (click)="activeModal.dismiss('cancel')">Cancel</button>
+    <button type="button" class="btn btn-warning" ngbAutofocus (click)="activeModal.close('Save click')">Continue</button>
 </div>
