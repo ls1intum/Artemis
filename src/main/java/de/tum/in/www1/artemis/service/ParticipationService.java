@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +34,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -80,11 +80,10 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository,
-                                ResultRepository resultRepository, SubmissionRepository submissionRepository,
-                                ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-                                QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-                                Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -620,10 +619,12 @@ public class ParticipationService {
             }
         }
 
-        // For modeling and text exercises students can send complaints about their assessments and we need to remove
-        // the complaints and the according responses belonging to a participation before deleting the participation itself.
-        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
-        complaintRepository.deleteByResult_Participation_Id(id);
+        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+            // For modeling and text exercises students can send complaints about their assessments and we need to remove
+            // the complaints and the according responses belonging to a participation before deleting the participation itself.
+            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
+            complaintRepository.deleteByResult_Participation_Id(id);
+        }
 
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {
