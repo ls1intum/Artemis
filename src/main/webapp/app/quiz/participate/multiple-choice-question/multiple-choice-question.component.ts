@@ -3,6 +3,7 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { SubmittedAnswer } from 'app/entities/submitted-answer';
+import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -35,7 +36,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     @Input()
     fnOnSelection: any;
     @Input()
-    submittedAnswer: SubmittedAnswer[];
+    submittedAnswer: Result;
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();

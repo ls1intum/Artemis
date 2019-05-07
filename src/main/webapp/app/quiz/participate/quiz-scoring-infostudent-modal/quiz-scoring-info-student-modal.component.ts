@@ -9,6 +9,8 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { TranslateService } from '@ngx-translate/core';
 import { SubmittedAnswer } from 'app/entities/submitted-answer';
+import { Result } from 'app/entities/result';
+import { QuizExercise, QuizExerciseComponent } from 'app/entities/quiz-exercise';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -30,7 +32,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     @Input() multipleChoiceMapping = new Array<AnswerOption>();
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
     @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
-    @Input() multipleChoiceSubmittedAnswer: SubmittedAnswer[];
+    @Input() multipleChoiceSubmittedAnswer: Result;
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
@@ -92,12 +94,19 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      * checks for the correct answeroptions based on the submittedAnswer
      */
     private submittedAnswerCorrectValues() {
-        for (let type of this.multipleChoiceSubmittedAnswer) {
-            if (type.quizQuestion.id === this.question.id) {
-                if (type.quizQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    this.mcmQuestionSubmitted = type.quizQuestion as MultipleChoiceQuestion;
+        console.log(this.multipleChoiceSubmittedAnswer);
+        console.log(this.multipleChoiceSubmittedAnswer.participation.exercise);
+
+        if (this.multipleChoiceSubmittedAnswer.participation.exercise.type === 'quiz') {
+            const question = this.multipleChoiceSubmittedAnswer.participation.exercise as QuizExercise;
+
+            for (let element of question.quizQuestions) {
+                if (element.id === question.id) {
+                    const value = element as MultipleChoiceQuestion;
+                    this.correctMultipleChoiceAnswers = value.answerOptions.filter(option => option.isCorrect).length;
                 }
             }
+            console.log(true);
         }
     }
 
@@ -109,7 +118,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
-        this.correctMultipleChoiceAnswers = this.mcmQuestionSubmitted.answerOptions.filter(option => option.isCorrect).length;
+        //this.correctMultipleChoiceAnswers = this.mcmQuestionSubmitted.answerOptions.filter(option => option.isCorrect).length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.multipleChoiceMapping.filter(option => option.isCorrect).length;
         this.multipleChoiceWrongAnswerChosen = this.multipleChoiceMapping.filter(option => !option.isCorrect).length;
         this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
@@ -117,9 +126,6 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.multipleChoiceAnswerOptions - this.correctMultipleChoiceAnswers - this.multipleChoiceWrongAnswerChosen);
         this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
-
-        console.log(this.multipleChoiceMapping);
-        console.log(this.multipleChoiceSubmittedAnswer);
 
         console.log(this.multipleChoiceAnswerOptions);
         console.log(this.correctMultipleChoiceAnswers);
