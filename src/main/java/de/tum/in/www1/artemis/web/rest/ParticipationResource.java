@@ -306,7 +306,7 @@ public class ParticipationResource {
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
+        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false);
         long end = System.currentTimeMillis();
         log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);

@@ -486,7 +486,7 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults) {
         return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
 
                 // Filter out participations without Students
@@ -500,7 +500,7 @@ public class ParticipationService {
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
-                        if (result.isRated() == Boolean.FALSE) {
+                        if (!includeNotRatedResults && result.isRated() == Boolean.FALSE) {
                             // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
                             // TODO: for compatibility reasons, we include rated == null, in the future we can remove this
                             continue;
@@ -509,10 +509,9 @@ public class ParticipationService {
                             // we are only interested in results with completion date and with score
                             continue;
                         }
-                        if (participation.getExercise() instanceof QuizExercise) {
-                            // in quizzes we take all rated results, because we only have one! (independent of later checks)
-                        }
-                        else if (participation.getExercise().getDueDate() != null) {
+
+                        // in quizzes we take all rated results, because we only have one! (independent of later checks)
+                        if (!(participation.getExercise() instanceof QuizExercise) && participation.getExercise().getDueDate() != null) {
                             if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                                 if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
                                         && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
@@ -521,12 +520,10 @@ public class ParticipationService {
                                     continue;
                                 }
                             }
-                            else {
-                                // For all other exercises the result completion date is the same as the submission date
-                                if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                                    // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                                    continue;
-                                }
+                            // For all other exercises the result completion date is the same as the submission date
+                            else if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                                // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                                continue;
                             }
                         }
                         relevantResults.add(result);
