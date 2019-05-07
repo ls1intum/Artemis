@@ -32,4 +32,4 @@ jobs:
         language: node_js
         node_js: 11.13.0
         install: yarn install
-        script: yarn lint
+        script: yarn prettier:check
