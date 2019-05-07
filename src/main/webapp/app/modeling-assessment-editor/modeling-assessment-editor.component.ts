@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -35,6 +36,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAtLeastInstructor = false;
     showBackButton: boolean;
 
+    private cancelConfirmationText: string;
+
     constructor(
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
@@ -46,7 +49,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
-    ) {}
+        private translateService: TranslateService,
+    ) {
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+    }
 
     ngOnInit() {
         // Used to check if the assessor is the current user
@@ -199,7 +205,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
      * Cancel the current assessment and navigate back to the exercise dashboard.
      */
     onCancelAssessment() {
-        const confirmCancel = window.confirm('modelingAssessmentEditor.messages.confirmCancel');
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
                 // TODO CZ: add submissionId to 'skippedSubmissions' in local or session storage
