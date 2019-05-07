@@ -28,6 +28,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
     conflictingModelHighlightedElementIds: Set<string>;
+
     conflicts: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
@@ -49,7 +50,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.popLocalConflicts(this.submissionId);
-            if (this.conflicts) {
+            if (this.conflicts && this.conflicts.length > 0) {
                 this.initComponent();
             } else {
                 this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(

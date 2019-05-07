@@ -13,7 +13,6 @@ import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modelin
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
-import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
@@ -29,15 +28,8 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         FontAwesomeModule,
         ArTEMiSComplaintsForTutorModule,
     ],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
-    entryComponents: [
-        ResultComponent,
-        ResultDetailComponent,
-        ModelingAssessmentDashboardComponent,
-        JhiMainComponent,
-        ModelingAssessmentEditorComponent,
-        ModelingAssessmentConflictComponent,
-    ],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
+    entryComponents: [ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

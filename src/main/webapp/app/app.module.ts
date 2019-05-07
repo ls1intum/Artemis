@@ -69,6 +69,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { ArTEMiSModelingAssessmentConflictModule } from 'app/modeling-assessment-conflict';
 
 @NgModule({
     imports: [
@@ -111,6 +112,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
+        ArTEMiSModelingAssessmentConflictModule,
         ArTEMiSInstructorCourseStatsDashboardModule,
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
