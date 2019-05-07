@@ -215,7 +215,8 @@ public class FileResource {
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
@@ -223,12 +224,12 @@ public class FileResource {
             return ResponseEntity.badRequest().build();
         }
         Lecture lecture = optionalLecture.get();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = lecture.getCourse();
-        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
-                && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+//        User user = userService.getUserWithGroupsAndAuthorities();
+//        Course course = lecture.getCourse();
+//        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
+//                && !authCheckService.isAdmin()) {
+//            return forbidden();
+//        }
         try {
             byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
             if (file == null) {
@@ -243,8 +244,8 @@ public class FileResource {
 
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        catch (IOException ex) {
+            log.error("Lecture attachement download lef to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
 
