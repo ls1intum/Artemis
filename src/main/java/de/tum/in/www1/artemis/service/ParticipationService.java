@@ -486,8 +486,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
-        return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
+        List<Participation> participations = includeAssessors ? participationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
+                : participationRepository.findByCourseIdWithEagerResults(courseId);
+
+        return participations.stream()
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -500,7 +503,7 @@ public class ParticipationService {
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
-                        if (result.isRated() == Boolean.FALSE) {
+                        if (!includeNotRatedResults && result.isRated() == Boolean.FALSE) {
                             // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
                             // TODO: for compatibility reasons, we include rated == null, in the future we can remove this
                             continue;
@@ -521,12 +524,10 @@ public class ParticipationService {
                                     continue;
                                 }
                             }
-                            else {
-                                // For all other exercises the result completion date is the same as the submission date
-                                if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                                    // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                                    continue;
-                                }
+                            // For all other exercises the result completion date is the same as the submission date
+                            else if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                                // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                                continue;
                             }
                         }
                         relevantResults.add(result);
