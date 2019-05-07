@@ -154,9 +154,18 @@ export class ParticipationWebsocketService {
      */
     private addResultToParticipation(result: Result) {
         const correspondingParticipation = this.cachedParticipations.get(result.participation.id);
+        if (!correspondingParticipation.results) {
+            correspondingParticipation.results = [];
+        }
         correspondingParticipation.results.push(result);
         this.cachedParticipations.set(correspondingParticipation.id, correspondingParticipation);
-        this.participationObservable.next(correspondingParticipation);
+        if (this.participationObservable) {
+            this.participationObservable.next(correspondingParticipation);
+        }
+        const resultObservable = this.resultObservables.get(correspondingParticipation.id);
+        if (resultObservable) {
+            resultObservable.next(result);
+        }
     }
 
     /**

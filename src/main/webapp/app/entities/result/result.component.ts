@@ -96,7 +96,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation) {
+        if (changes.participation || changes.result) {
             this.ngOnInit();
         }
     }
