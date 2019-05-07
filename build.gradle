@@ -58,8 +58,8 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
-            exclude 'src/main/java/de/tum/in/www1/artemis/security/SecurityConfiguration.java'
         }
+        targetExclude 'src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java', 'src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java', 'out/**', 'src/main/resources/templates/**'
         importOrderFile 'artemis-spotless.importorder'
         removeUnusedImports()
         eclipse().configFile 'artemis-spotless-style.xml'
