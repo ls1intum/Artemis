@@ -108,7 +108,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateCurrentState();
     }
 
-    onAcceptOther() {
+    onTakeOver() {
         this.updateFeedbackInMergedFeedback(
             this.currentConflict.causingConflictingResult.modelElementId,
             this.conflictingResult.modelElementId,
@@ -170,21 +170,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
     }
 
-    private initResolutionStates() {
-        this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
-        for (let i = 0; i < this.conflicts.length; i++) {
-            const currentConflict: Conflict = this.conflicts[i];
-            const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
-            const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
-            const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
-            if (mergedFeedback.credits !== conflictingFeedback.credits) {
-                this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.UNHANDLED;
-            } else {
-                this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
-            }
-        }
-    }
-
     private submitAssessment() {
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
             result => {
@@ -237,7 +222,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     private updateHighlightColor() {
         switch (this.conflictResolutionStates[this.conflictIndex]) {
             case ConflictResolutionState.UNHANDLED:
-                // this.highlightColor = 'rgba(219, 53, 69, 0.6)';
                 this.highlightColor = 'rgba(0, 123, 255, 0.6)';
                 break;
             case ConflictResolutionState.ESCALATED:
@@ -249,6 +233,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
     }
 
+    private initResolutionStates() {
+        this.conflictResolutionStates = [];
+        for (let i = 0; i < this.conflicts.length; i++) {
+            const currentConflict: Conflict = this.conflicts[i];
+            const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
+            const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
+            const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
+            if (mergedFeedback.credits !== conflictingFeedback.credits) {
+                this.conflictResolutionStates.push(ConflictResolutionState.UNHANDLED);
+            } else {
+                this.conflictResolutionStates.push(ConflictResolutionState.RESOLVED);
+            }
+        }
+    }
+
     private updateOverallResolutionState() {
         for (const state of this.conflictResolutionStates) {
             if (state === ConflictResolutionState.UNHANDLED) {
@@ -256,10 +255,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 return;
             }
         }
-        if (!this.conflictsAllHandled) {
-            this.jhiAlertService.success('modelingAssessmentConflict.messages.conflictsResolved');
-        }
         this.conflictsAllHandled = true;
+        this.jhiAlertService.success('modelingAssessmentConflict.messages.conflictsResolved');
     }
 
     private getEscalatedConflicts(): Conflict[] {
