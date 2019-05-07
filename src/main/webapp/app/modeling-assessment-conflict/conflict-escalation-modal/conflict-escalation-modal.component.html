@@ -1,0 +1,9 @@
+<div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">You are about to escalate {{ escalatedConflictsCount }} conflicts to {{ tutorsEscalatingTo.length }} tutors:</h4>
+</div>
+<div class="modal-body">
+    <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Save click')">Continue</button>
+</div>

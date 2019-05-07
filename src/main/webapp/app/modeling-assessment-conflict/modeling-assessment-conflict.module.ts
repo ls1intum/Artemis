@@ -7,11 +7,12 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { RouterModule } from '@angular/router';
 import { modelingAssessmentConflictRoutes } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.route';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.component';
+import { ConflictEscalationModalComponent } from './conflict-escalation-modal/conflict-escalation-modal.component';
 
 const ENTITY_STATES = [...modelingAssessmentConflictRoutes];
 
 @NgModule({
-    declarations: [ModelingAssessmentConflictComponent],
+    declarations: [ModelingAssessmentConflictComponent, ConflictEscalationModalComponent],
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, AssessmentInstructionsModule, ModelingAssessmentModule],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
