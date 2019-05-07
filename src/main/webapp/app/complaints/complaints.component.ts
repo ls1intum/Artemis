@@ -23,7 +23,7 @@ export class ComplaintsComponent implements OnInit {
     handled: boolean;
     complaintResponse: ComplaintResponse;
 
-    readonly maxComplaintNumberPerStudent = 3;
+    readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
