@@ -658,10 +658,10 @@
     "@types/istanbul-lib-coverage" "^2.0.0"
     "@types/yargs" "^12.0.9"
 
-"@ls1intum/apollon@2.0.0-rc.5":
-  version "2.0.0-rc.5"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.5.tgz#b360ffb6512b7b4338577ef7669b81f0bd5b091e"
-  integrity sha512-b2HKS00BxwF4TMmTsdLe9lFInbbDxE0KOUwg7gBDw3bBrocIbzwh4+NHoiqS1sVtBI8yMpUfWR3n3gp80NDowQ==
+"@ls1intum/apollon@2.0.0-rc.6":
+  version "2.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.6.tgz#d4fb70bd63ae8e2d8c067f1a51e111d6da68a6bd"
+  integrity sha512-GhG88c/uMyoxLpuGd6Pw7haUS4blaTNKoERUyEFoz3lmejgZS/LSy+kwkYHoP2oizySqjBD9lPEWWE7tzb4E9Q==
   dependencies:
     pepjs "0.5.2"
     react "16.8.6"
