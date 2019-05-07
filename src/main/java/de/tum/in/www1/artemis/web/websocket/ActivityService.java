@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.web.websocket;
 
-import de.tum.in.www1.artemis.web.websocket.dto.ActivityDTO;
+import static de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration.IP_ADDRESS;
+
+import java.security.Principal;
+import java.time.Instant;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
@@ -12,10 +16,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.security.Principal;
-import java.time.Instant;
-
-import static de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration.IP_ADDRESS;
+import de.tum.in.www1.artemis.web.websocket.dto.ActivityDTO;
 
 @Controller
 public class ActivityService implements ApplicationListener<SessionDisconnectEvent> {

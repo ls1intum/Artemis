@@ -31,7 +31,7 @@
 <div class="p-4">
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
-            <p class="mb-3">
+            <p class="mb-3 markdown-preview">
                 <b><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>:</b> <span [innerHTML]="formattedProblemStatement"></span>
             </p>
         </div>
@@ -50,17 +50,26 @@
         <ng-template #hasFeedback>
             <div class="col mt-3">
                 <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
-                <br>
+                <br />
                 <jhi-text-result [result]="result"></jhi-text-result>
             </div>
         </ng-template>
     </div>
 
-<!--    <div class="row" *ngIf="result && result.completionDate">-->
-<!--        <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{ 'arTeMiSApp.complaint.moreInfo' | translate }}</button>-->
-<!--    </div>-->
+    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint">
+        <button
+            class="btn btn-primary"
+            [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+            (click)="showComplaintForm = !showComplaintForm"
+            [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+            title="{{ numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+        >
+            <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
+            {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}
+        </button>
+    </div>
 
-<!--    <div class="row" *ngIf="showComplaintForm">-->
-<!--        <jhi-complaint-form [resultId]="result.id" class="col-12"></jhi-complaint-form>-->
-<!--    </div>-->
+    <div class="row" *ngIf="showComplaintForm || hasComplaint">
+        <jhi-complaint-form [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints" class="col-12"></jhi-complaint-form>
+    </div>
 </div>

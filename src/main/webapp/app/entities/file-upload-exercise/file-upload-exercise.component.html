@@ -32,7 +32,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let fileUploadExercise of (fileUploadExercises | sortBy: predicate:reverse); trackBy: trackId">
+                <tr *ngFor="let fileUploadExercise of fileUploadExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course', fileUploadExercise.course.id, 'file-upload-exercise', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>

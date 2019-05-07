@@ -14,7 +14,7 @@
             "exercise": "Übung",
             "dueDate": "Abgabedatum",
             "assessmentDueDate": "Assessment Abgabedatum",
-            "complaints": "Reklamationen",
+            "complaints": "Beschwerden",
             "completedAssessments": "Komplette Assessments",
             "action": "Aktion",
             "exerciseDashboard": "Übungs-Dashboard",
@@ -23,7 +23,7 @@
                 "name": "Name",
                 "username": "Benutzername",
                 "numberOfAssessments": "Anzahl der Assessments",
-                "numberOfComplaints": "Anzahl der Reklamationen"
+                "numberOfComplaints": "Anzahl der Beschwerden"
             }
         }
     }

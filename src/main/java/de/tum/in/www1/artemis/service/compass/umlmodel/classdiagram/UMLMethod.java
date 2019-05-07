@@ -1,18 +1,22 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.util.List;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import java.util.List;
 
 public class UMLMethod extends UMLElement {
 
     public final static String UML_METHOD_TYPE = "ClassMethod";
 
     private UMLClass parentClass;
+
     private String completeName;
+
     private String name;
+
     private String returnType;
+
     private List<String> parameters;
 
     public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
@@ -71,5 +75,7 @@ public class UMLMethod extends UMLElement {
     }
 
     @Override
-    public String getType() { return UML_METHOD_TYPE; }
+    public String getType() {
+        return UML_METHOD_TYPE;
+    }
 }

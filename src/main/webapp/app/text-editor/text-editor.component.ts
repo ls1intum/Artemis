@@ -12,6 +12,7 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -27,6 +28,12 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     answer: string;
     isExampleSubmission = false;
     showComplaintForm = false;
+    // indicates if there is a complaint for the result of the submission
+    hasComplaint: boolean;
+    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
+    numberOfAllowedComplaints: number;
+    // indicates if the result is older than one week. if it is, the complain button is disabled
+    resultOlderThanOneWeek: boolean;
     formattedProblemStatement: string;
 
     public getColorForIndex = HighlightColors.forIndex;
@@ -38,6 +45,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
+        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
@@ -58,6 +66,12 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
 
+                if (this.textExercise.course) {
+                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.textExercise.course.id).subscribe((allowedComplaints: number) => {
+                        this.numberOfAllowedComplaints = allowedComplaints;
+                    });
+                }
+
                 this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
 
                 if (data.submissions && data.submissions.length > 0) {
@@ -68,6 +82,12 @@ export class TextEditorComponent implements OnInit, OnDestroy {
 
                     if (this.submission && this.submission.text) {
                         this.answer = this.submission.text;
+                    }
+                    if (this.result && this.result.completionDate) {
+                        this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                        this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                            this.hasComplaint = !!res.body;
+                        });
                     }
                 }
 

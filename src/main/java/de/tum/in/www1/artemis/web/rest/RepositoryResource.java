@@ -1,16 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+
+import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -20,37 +25,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Created by Josias Montag on 14.10.16.
  */
 @RestController
-@RequestMapping({"/api", "/api_basic"})
+@RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private final ParticipationService participationService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private final Optional<GitService> gitService;
+
     private final UserService userService;
 
-    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-                              Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -59,8 +64,7 @@ public class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/files: Map of all file and folders of the repository.
-     * Each entry states if it is a file or a folder.
+     * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *
      * @param participationId Participation ID
      * @return
@@ -72,7 +76,8 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<HashMap<String, FileType>> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
@@ -86,7 +91,6 @@ public class RepositoryResource {
 
         return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
-
 
     /**
      * GET /repository/{participationId}/file: Get the content of a file
@@ -102,15 +106,18 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<String> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if(!file.isPresent()) { return notFound(); }
+        if (!file.isPresent()) {
+            return notFound();
+        }
 
         InputStream inputStream = new FileInputStream(file.get());
 
-        byte[]out=org.apache.commons.io.IOUtils.toByteArray(inputStream);
+        byte[] out = org.apache.commons.io.IOUtils.toByteArray(inputStream);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
@@ -119,14 +126,14 @@ public class RepositoryResource {
 
     @Nullable
     private <X> ResponseEntity<X> checkParticipation(Participation participation) {
-        if (!userHasPermissions(participation)) return forbidden();
+        if (!userHasPermissions(participation))
+            return forbidden();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return notFound();
         }
         return null;
     }
-
 
     /**
      * POST /repository/{participationId}/file: Create new file
@@ -138,7 +145,8 @@ public class RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
+            throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
         if (filename.contains("../")) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -146,16 +154,17 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        if(gitService.get().getFileByName(repository, filename).isPresent()) {
+        if (gitService.get().getFileByName(repository, filename).isPresent()) {
             // File already existing. Conflict.
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
-        if(!repository.isValidFile(file)) {
+        if (!repository.isValidFile(file)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
@@ -176,7 +185,8 @@ public class RepositoryResource {
      * @throws IOException
      */
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
+            throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
         if (folderName.contains("../")) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -184,7 +194,8 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
@@ -199,8 +210,9 @@ public class RepositoryResource {
 
     /**
      * Change the name of a file.
+     * 
      * @param participationId id of the participation the git repository belongs to.
-     * @param fileMove defines current and new path in git repository.
+     * @param fileMove        defines current and new path in git repository.
      * @return
      * @throws IOException
      * @throws InterruptedException
@@ -213,11 +225,14 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
-        if(!file.isPresent()) { return notFound(); }
+        if (!file.isPresent()) {
+            return notFound();
+        }
         File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
 
         boolean isRenamed = file.get().renameTo(newFile);
@@ -230,28 +245,32 @@ public class RepositoryResource {
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file or the folder specified.
-     * If the path is a folder, all files in it will be deleted, too.
+     * DELETE /repository/{participationId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
+     * 
      * @param participationId Participation ID
-     * @param filename path of file or folder to delete.
+     * @param filename        path of file or folder to delete.
      * @return
      * @throws IOException
      */
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file")  String filename) throws IOException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if(!file.isPresent()) { return notFound(); }
+        if (!file.isPresent()) {
+            return notFound();
+        }
 
         if (file.get().isFile()) {
             Files.delete(file.get().toPath());
-        } else {
+        }
+        else {
             FileUtils.deleteDirectory(file.get());
         }
         repository.setContent(null); // invalidate cache
@@ -271,7 +290,8 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         gitService.get().pull(repository);
@@ -292,14 +312,14 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         gitService.get().stageAllChanges(repository);
         gitService.get().commitAndPush(repository, "Changes by Online Editor");
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
 
     /**
      * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
@@ -315,13 +335,14 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<RepositoryStatusDTO> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         RepositoryStatusDTO status = new RepositoryStatusDTO();
         status.isClean = gitService.get().isClean(repository);
 
-        if(status.isClean) {
+        if (status.isClean) {
             gitService.get().pull(repository);
         }
 
@@ -329,7 +350,7 @@ public class RepositoryResource {
     }
 
     /**
-     * GET  /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
+     * GET /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
      *
      * @param participationId the participationId of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
@@ -340,7 +361,8 @@ public class RepositoryResource {
 
         Participation participation = participationService.findOne(participationId);
         ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
+        if (failureResponse != null)
+            return failureResponse;
 
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
         return new ResponseEntity<>(logs, HttpStatus.OK);
@@ -348,13 +370,11 @@ public class RepositoryResource {
 
     private boolean userHasPermissions(Participation participation) {
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            //if the user is not the owner of the participation, the user can only see it in case he is
-            //a teaching assistant or an instructor of the course, or in case he is admin
+            // if the user is not the owner of the participation, the user can only see it in case he is
+            // a teaching assistant or an instructor of the course, or in case he is admin
             User user = userService.getUserWithGroupsAndAuthorities();
             Course course = participation.getExercise().getCourse();
-            return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                authCheckService.isInstructorInCourse(course, user) ||
-                authCheckService.isAdmin();
+            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
         }
         return true;
     }
