@@ -37,14 +37,18 @@ public class ModelAssessmentConflictService {
 
     private final ResultRepository resultRepository;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
+            ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
         this.conflictingResultRepository = conflictingResultRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     public ModelAssessmentConflict findOne(Long conflictId) {
@@ -123,7 +127,9 @@ public class ModelAssessmentConflictService {
         }
         switch (storedConflict.getState()) {
         case UNHANDLED:
-            // TODO Notify tutors
+            Set<Result> distinctResultsInConflict = new HashSet<>();
+            storedConflict.getResultsInConflict().forEach(conflictingResult -> distinctResultsInConflict.add(conflictingResult.getResult()));
+            distinctResultsInConflict.forEach(result -> singleUserNotificationService.notifyTutorAboutNewConflictForResult(result));
             storedConflict.setState(EscalationState.ESCALATED_TO_TUTORS_IN_CONFLICT);
             break;
         case ESCALATED_TO_TUTORS_IN_CONFLICT:
