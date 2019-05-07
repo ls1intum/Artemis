@@ -10,15 +10,14 @@ import { SortByModule } from 'app/components/pipes';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
-import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSResultModule, AssessmentInstructionsModule, ModelingAssessmentModule],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
-    entryComponents: [ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
+    entryComponents: [ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

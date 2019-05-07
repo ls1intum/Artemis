@@ -9,7 +9,7 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import { Feedback } from 'app/entities/feedback';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
@@ -179,11 +179,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
-                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
+                    this.conflicts = this.modelingAssessmentService.convertConflicts(error.error as Conflict[]);
                     this.highlightConflictingElements();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');

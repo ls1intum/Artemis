@@ -61,16 +61,12 @@ public class ModelingAssessmentConflictRessource {
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON),
             @ApiResponse(code = 200, message = GET_CONFLICTS_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @GetMapping("/modeling-submissions/{submissionId}/model-assessment-conflicts")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelAssessmentConflict>> getConflictsForSubmission(@PathVariable Long submissionId) {
-        // Exercise exercise = conflictService.getExerciseOfConflict(conflictId);
-        // if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-        // return forbidden();
-        // }
-        return ResponseEntity.ok(conflictService.getConflictsForSubmission(submissionId));
+        return ResponseEntity.ok(conflictService.getConflictsForCurrentUserForSubmission(submissionId));
     }
 
     @ResponseStatus(HttpStatus.OK)

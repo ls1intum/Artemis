@@ -66,6 +66,7 @@ import { ArTEMiSExampleModelingSolutionModule } from 'app/example-modeling-solut
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { ArTEMiSModelingAssessmentConflictModule } from 'app/modeling-assessment-conflict';
 
 @NgModule({
     imports: [
@@ -107,6 +108,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
+        ArTEMiSModelingAssessmentConflictModule,
         ArTEMiSInstructorCourseStatsDashboardModule,
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
