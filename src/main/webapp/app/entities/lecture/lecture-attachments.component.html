@@ -59,8 +59,8 @@
                                 </td>
                                 <td>{{ attachment.name }}</td>
                                 <td>{{ attachment.attachmentType }}</td>
-                                <td *ngIf="!isDownloadingAttachment"><a class="text-primary" (click)="downloadAttachment(attachment.link)">{{ (attachmentFileName(attachment.link))}}</a></td>
-                                <td *ngIf="isDownloadingAttachment"><fa-icon icon="spinner" [spin]="true"></fa-icon> {{"arTeMiSApp.courseOverview.lectureDetails.isDownloading" | translate}}</td>
+                                <td *ngIf="isDownloadingAttachmentLink !== attachment.link"><a class="text-primary" (click)="downloadAttachment(attachment.link)">{{ (attachmentFileName(attachment.link))}}</a></td>
+                                <td *ngIf="isDownloadingAttachmentLink === attachment.link"><fa-icon icon="spinner" [spin]="true"></fa-icon> {{"arTeMiSApp.courseOverview.lectureDetails.isDownloading" | translate}}</td>
                                 <td>{{ attachment.releaseDate | date: 'dd.MM.yy HH:mm' }}</td>
                                 <td>{{ attachment.uploadDate | date: 'dd.MM.yy HH:mm' }}</td>
                                 <td>
