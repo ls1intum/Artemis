@@ -39,10 +39,10 @@
                 <ul>
                     <li class="mb-3" *ngFor="let attachment of lecture.attachments">
                         <h5 class="mb-1">
-                            <a class="text-primary" (click)="downloadAttachment(attachment.link)"  *ngIf="!isDownloading">
+                            <a class="text-primary" (click)="downloadAttachment(attachment.link)"  *ngIf="isDownloadingLink !== attachment.link">
                                 {{ attachment.name }}
                             </a>
-                            <a class="text-primary"  *ngIf="isDownloading">
+                            <a class="text-primary"  *ngIf="isDownloadingLink === attachment.link">
                                 <fa-icon icon="spinner" [spin]="true"></fa-icon> {{"arTeMiSApp.courseOverview.lectureDetails.isDownloading" | translate}}
                             </a>
                             <span class="ml-1 badge badge-info">
