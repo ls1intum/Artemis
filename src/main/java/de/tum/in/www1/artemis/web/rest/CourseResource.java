@@ -434,7 +434,7 @@ public class CourseResource {
 
         course.setExercises(interestingExercises);
 
-        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true);
+        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true, true);
 
         for (Exercise exercise : interestingExercises) {
             Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))

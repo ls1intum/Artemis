@@ -486,8 +486,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults) {
-        return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
+        List<Participation> participations = includeAssessors ? participationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
+                : participationRepository.findByCourseIdWithEagerResults(courseId);
+
+        return participations.stream()
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -510,8 +513,10 @@ public class ParticipationService {
                             continue;
                         }
 
-                        // in quizzes we take all rated results, because we only have one! (independent of later checks)
-                        if (!(participation.getExercise() instanceof QuizExercise) && participation.getExercise().getDueDate() != null) {
+                        if (participation.getExercise() instanceof QuizExercise) {
+                            // in quizzes we take all rated results, because we only have one! (independent of later checks)
+                        }
+                        else if (participation.getExercise().getDueDate() != null) {
                             if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                                 if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
                                         && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
