@@ -17,7 +17,9 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -29,10 +31,14 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository) {
-        super(resultRepository);
+    private final CompassService compassService;
+
+    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository,
+            ParticipationRepository participationRepository, CompassService compassService) {
+        super(resultRepository, participationRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.compassService = compassService;
     }
 
     /**
@@ -96,12 +102,16 @@ public class ModelingAssessmentService extends AssessmentService {
         return resultRepository.save(result);
     }
 
-    // TODO CZ: move to AssessmentService to be also available for text exercises?
-    @Transactional
+    /**
+     * Cancel an assessment of a given modeling submission for the current user, i.e. delete the corresponding result / release the lock and tell Compass that the submission is
+     * available for assessment again.
+     *
+     * @param modelingSubmission the modeling submission for which the current assessment should be canceled
+     */
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
-        // TODO CZ: delete result / release soft lock
-        resultRepository.deleteById(modelingSubmission.getResult().getId());
-        // TODO CZ: tell compass: remove submission/model from 'alreadyAssessedModels' (and maybe add to modelsWaitingForAssessment?)
+        super.cancelAssessmentOfSubmission(modelingSubmission);
+        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+        compassService.markModelAsUnassessed(modelingExercise, modelingSubmission.getId());
     }
 
     /**

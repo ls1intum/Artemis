@@ -44,6 +44,7 @@ export class ModelingSubmissionService {
     }
 
     getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
+        // TODO CZ: retrieve 'skippedSubmissions' from local or session storage and add as query parameter
         let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';

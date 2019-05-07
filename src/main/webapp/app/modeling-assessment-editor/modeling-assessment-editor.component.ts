@@ -195,14 +195,15 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
     onCancelAssessment() {
-        let confirmSubmit = window.confirm(
-            'Are you sure you want to cancel the assessment? Your current assessment progress will be deleted ' +
-                'and the submission will be available for assessment to other tutors again.',
-        );
-        if (confirmSubmit) {
+        const confirmCancel = window.confirm('modelingAssessmentEditor.messages.confirmCancel');
+        if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
-                // TODO CZ: implement
+                // TODO CZ: add submissionId to 'skippedSubmissions' in local or session storage
+                this.goToExerciseDashboard();
             });
         }
     }

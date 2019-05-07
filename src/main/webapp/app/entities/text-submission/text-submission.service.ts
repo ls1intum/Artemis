@@ -49,6 +49,7 @@ export class TextSubmissionService {
     }
 
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<HttpResponse<TextSubmission>> {
+        // TODO CZ: retrieve 'skippedSubmissions' from local or session storage and add as query parameter
         return this.http
             .get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`, {
                 observe: 'response',

@@ -206,7 +206,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndParticipationResults(submissionId);
         if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
             // you cannot cancel the assessment of other tutors
             return forbidden();
