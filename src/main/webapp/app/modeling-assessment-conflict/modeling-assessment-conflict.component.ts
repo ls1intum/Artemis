@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
@@ -10,6 +10,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Feedback } from 'app/entities/feedback';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConflictEscalationModalComponent } from 'app/modeling-assessment-conflict/conflict-escalation-modal/conflict-escalation-modal.component';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -36,6 +38,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     modelingExercise: ModelingExercise;
     submissionId: number;
 
+    @ViewChild('escalationModal') escalationModal: ElementRef;
     constructor(
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
@@ -43,6 +46,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -141,6 +145,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 escalatedConflicts.push(this.conflicts[i]);
             }
         }
+        const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.tutorsEscalatingTo = [];
+        modalRef.componentInstance.escalatedConflictsCount = 0;
         this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(value => {
             this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
                 result => {
