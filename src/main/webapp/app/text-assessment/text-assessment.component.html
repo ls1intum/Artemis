@@ -17,7 +17,7 @@
             <button
                 class="btn btn-primary ml-3"
                 (click)="save()"
-                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || !isAuthorized"
+                [disabled]="!assessmentsAreValid || !isAuthorized"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.save"
             >
@@ -26,7 +26,7 @@
             <button
                 class="btn btn-success ml-3"
                 (click)="submit()"
-                [disabled]="!assessments || assessments.length === 0 || !assessmentsAreValid || !isAuthorized || !result.id"
+                [disabled]="!assessmentsAreValid || !isAuthorized || !result.id"
                 *ngIf="!result || !result.completionDate"
                 jhiTranslate="arTeMiSApp.textAssessment.submit"
             >
@@ -35,7 +35,7 @@
             <button
                 class="btn btn-danger ml-3"
                 (click)="submit()"
-                [disabled]="!assessments || !assessmentsAreValid"
+                [disabled]="!assessmentsAreValid"
                 *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
                 jhiTranslate="arTeMiSApp.textAssessment.override"
             >
@@ -74,7 +74,11 @@
                 Student submission
             </div>
             <div class="card-body">
-                <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments" (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
+                <jhi-text-assessment-editor
+                    [submissionText]="submission?.text"
+                    [assessments]="referencedFeedback"
+                    (assessedText)="addAssessment($event)"
+                ></jhi-text-assessment-editor>
             </div>
         </div>
 
@@ -95,23 +99,32 @@
     <div class="col-12 resizing-bar-bottom"><span></span></div>
 </div>
 
-<div class="col-12 mt-3" *ngIf="!busy && !notFound">
-    <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
-    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary text-center" role="alert">
-        <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
-        <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
-    </div>
-    <div class="row">
-        <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
-            <jhi-text-assessment-detail
-                [(assessment)]="assessments[i]"
-                (assessmentChange)="checkScoreBoundaries()"
-                [highlightColor]="getColorForIndex(i)"
-                (deleteAssessment)="deleteAssessment($event)"
-            ></jhi-text-assessment-detail>
+<ng-container *ngIf="!busy && !notFound">
+    <div class="row col-12 mt-3">
+        <div class="col-12">
+            <h4 jhiTranslate="arTeMiSApp.textAssessment.detail.feedback">Feedback</h4>
+        </div>
+        <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
+        <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="alert alert-secondary text-center" role="alert">
+            <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+            <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
+        </div>
+        <div class="row">
+            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-4">
+                <jhi-text-assessment-detail
+                    [(assessment)]="referencedFeedback[i]"
+                    (assessmentChange)="checkScoreBoundaries()"
+                    [highlightColor]="getColorForIndex(i)"
+                    (deleteAssessment)="deleteAssessment($event)"
+                ></jhi-text-assessment-detail>
+            </div>
         </div>
     </div>
-</div>
+    <div class="row">
+        <h4 class="col-12" jhiTranslate="arTeMiSApp.textAssessment.generalFeedback">General Feedback</h4>
+        <textarea class="col-lg-8 ml-3 form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="checkScoreBoundaries()"></textarea>
+    </div>
+</ng-container>
 
 <div class="mt-3" *ngIf="hasComplaint && result?.id">
     <h2 jhiTranslate="modelingAssessmentEditor.reviewComplaint">

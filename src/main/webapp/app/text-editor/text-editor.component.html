@@ -48,10 +48,16 @@
         </div>
 
         <ng-template #hasFeedback>
-            <div class="col mt-3">
+            <div class="col-md-12 col-lg-10">
                 <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
                 <br />
                 <jhi-text-result [result]="result"></jhi-text-result>
+            </div>
+
+            <div class="col-md-12 col-lg-10 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.textAssessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedback.detailText }}
             </div>
         </ng-template>
     </div>

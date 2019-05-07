@@ -20,6 +20,7 @@
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
+            "generalFeedback": "Allgemeines Feedback",
             "detail": {
                 "scoreFor": "Bewertung für",
                 "feedback": "Feedback",

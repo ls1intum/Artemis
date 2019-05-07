@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -54,9 +55,10 @@ public class TextAssessmentService extends AssessmentService {
      * @param textExercise   the text exercise the assessment belongs to
      * @param textAssessment the assessments as a list
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) {
+    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
         Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
@@ -70,9 +72,16 @@ public class TextAssessmentService extends AssessmentService {
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+        final long count = textAssessment.stream().filter(feedback -> feedback.getReference() == null).count();
+
+        if (count > 1) {
+            throw new BadRequestAlertException("Cannot have more than one general Feedback per Exercise", "textAssessment", "moreThanOneGeneralFeedback");
+        }
+
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
 

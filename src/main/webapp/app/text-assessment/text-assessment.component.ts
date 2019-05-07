@@ -30,7 +30,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     participation: Participation;
     submission: TextSubmission;
     result: Result;
-    assessments: Feedback[] = [];
+    generalFeedback: Feedback;
+    referencedFeedback: Feedback[];
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -70,8 +71,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
     ) {
-        this.assessments = [];
+        this.generalFeedback = new Feedback();
+        this.referencedFeedback = [];
         this.assessmentsAreValid = false;
+    }
+
+    get assessments(): Feedback[] {
+        return [this.generalFeedback, ...this.referencedFeedback];
     }
 
     public ngOnInit(): void {
@@ -178,12 +184,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const assessment = new Feedback();
         assessment.reference = assessmentText;
         assessment.credits = 0;
-        this.assessments.push(assessment);
+        this.referencedFeedback.push(assessment);
         this.checkScoreBoundaries();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.assessments = this.assessments.filter(elem => elem !== assessmentToDelete);
+        this.referencedFeedback = this.referencedFeedback.filter(elem => elem !== assessmentToDelete);
         this.checkScoreBoundaries();
     }
 
@@ -228,7 +234,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.assessments = response.body.feedbacks || [];
+                this.referencedFeedback = response.body.feedbacks || [];
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
@@ -252,12 +258,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
-        this.hasComplaint = this.result.hasComplaint;
 
-        this.assessments = this.result.feedbacks || [];
+        const feedbacks = this.result.feedbacks || [];
+        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
+        this.generalFeedback = feedbacks[generalFeedbackIndex] || new Feedback();
+        feedbacks.splice(generalFeedbackIndex, 1);
+        this.referencedFeedback = feedbacks;
         this.busy = false;
         this.checkScoreBoundaries();
-        this.checkAuthorization();
     }
 
     public previous(): void {
@@ -270,7 +278,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * because a score is not a number/empty.
      */
     public checkScoreBoundaries() {
-        if (!this.assessments || this.assessments.length === 0) {
+        if (
+            !this.assessments ||
+            !this.generalFeedback ||
+            !this.referencedFeedback ||
+            this.assessments.length === 0 ||
+            (this.generalFeedback.detailText.length === 0 && this.referencedFeedback.length === 0)
+        ) {
             this.totalScore = 0;
             this.assessmentsAreValid = true;
             return;
