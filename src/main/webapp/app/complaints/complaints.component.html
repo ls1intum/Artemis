@@ -1,34 +1,54 @@
 <div class="col-12 mt-4">
+    <jhi-alert></jhi-alert>
     <div class="row">
-        <div class="col-6">
-            <h3>{{ 'arTeMiSApp.complaint.complaints' | translate }}</h3>
-            <p>{{ 'arTeMiSApp.complaint.description' | translate }}</p>
+        <div class="col-12">
+            <h3>{{ 'arTeMiSApp.complaint.title' | translate }}</h3>
+            <p>
+                <span *ngIf="allowedComplaints === undefined" jhiTranslate="arTeMiSApp.complaint.description" [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent }"></span>
+                <span *ngIf="allowedComplaints >= 0" jhiTranslate="arTeMiSApp.complaint.descriptionExtended" [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent, allowedComplaints: allowedComplaints }"></span>
+                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.complaint.info' | translate }}" style="color:#ffc107;"></fa-icon>
+            </p>
         </div>
 
-        <div class="col-6">
-            <h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>
-            <p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>
-            <button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>
-        </div>
+        <!--TODO: uncomment again when the 'request more feedback' feature is implemented-->
+        <!--<div class="col-6">-->
+            <!--<h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>-->
+            <!--<p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>-->
+            <!--<button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>-->
+        <!--</div>-->
     </div>
 
-    <p *ngIf="!alreadySubmitted" class="mt-4">
-        {{ 'arTeMiSApp.complaint.beDescriptive' | translate }}
-    </p>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <p *ngIf="!alreadySubmitted">
+                {{ 'arTeMiSApp.complaint.beDescriptive' | translate }}
+            </p>
 
-    <p *ngIf="alreadySubmitted" class="mt-4">{{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}.</p>
+            <p *ngIf="alreadySubmitted" class="mt-4">
+                {{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}:
+                <span *ngIf="handled && accepted" class="text-light bg-success">
+                    &nbsp;{{ 'arTeMiSApp.complaint.acceptedLong' | translate}}&nbsp;
+                </span>
+                <span *ngIf="handled && !accepted" class="text-light bg-danger">
+                    &nbsp;{{ 'arTeMiSApp.complaint.rejectedLong' | translate}}&nbsp;
+                </span>
+            </p>
 
-    <textarea class="col-6" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 10vh;"></textarea>
+            <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
 
-    <p class="col-12" *ngIf="complaintResponse" class="mt-4">
-        {{complaintResponse.reviewer.firstName}} {{ 'arTeMiSApp.complaint.hasReplied' | translate }}  {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br/>
-    </p>
+            <div class="row" *ngIf="!alreadySubmitted">
+                <div class="col-6">
+                    <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'arTeMiSApp.complaint.submit' | translate }}</button>
+                </div>
+            </div>
+        </div>
 
-    <textarea class="col-6" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true" style="height: 10vh;"></textarea>
+        <div class="col-12 col-md-6">
+            <p class="col-12" *ngIf="complaintResponse" class="mt-4">
+                {{ 'arTeMiSApp.complaint.responseExists' | translate }}  {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br/>
+            </p>
 
-    <div class="row" *ngIf="!alreadySubmitted">
-        <div class="col-6">
-            <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'arTeMiSApp.complaint.submit' | translate }}</button>
+            <textarea class="col-12 px-1" rows="4" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true"></textarea>
         </div>
     </div>
 </div>

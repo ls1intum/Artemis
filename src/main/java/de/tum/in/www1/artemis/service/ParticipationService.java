@@ -34,6 +34,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -64,6 +66,10 @@ public class ParticipationService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
+
     private final QuizSubmissionService quizSubmissionService;
 
     private final UserService userService;
@@ -75,12 +81,15 @@ public class ParticipationService {
     private final Optional<VersionControlService> versionControlService;
 
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
+            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
         this.gitService = gitService;
@@ -610,6 +619,14 @@ public class ParticipationService {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
         }
+
+        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+            // For modeling and text exercises students can send complaints about their assessments and we need to remove
+            // the complaints and the according responses belonging to a participation before deleting the participation itself.
+            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
+            complaintRepository.deleteByResult_Participation_Id(id);
+        }
+
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());

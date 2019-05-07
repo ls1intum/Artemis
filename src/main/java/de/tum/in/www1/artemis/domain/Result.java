@@ -13,6 +13,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -328,6 +329,17 @@ public class Result implements Serializable {
 
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
+    }
+
+    public void setNewFeedback(List<Feedback> feedbacks) {
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
+        // will also be deleted in the database because of the 'orphanRemoval = true' flag.
+        getFeedbacks().clear();
+        for (Feedback feedback : feedbacks) {
+            feedback.setPositive(feedback.getCredits() >= 0);
+            feedback.setType(FeedbackType.MANUAL);
+            addFeedback(feedback);
+        }
     }
 
     public Participation getParticipation() {

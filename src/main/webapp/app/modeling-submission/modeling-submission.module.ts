@@ -9,12 +9,21 @@ import { JhiLanguageHelper } from 'app/core';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ArTEMiSComplaintsModule } from 'app/complaints';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 
 // TODO CZ: do we need all these imports?
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, AceEditorModule, ArTEMiSModelingEditorModule, ModelingAssessmentModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArTEMiSResultModule,
+        AceEditorModule,
+        ArTEMiSModelingEditorModule,
+        ModelingAssessmentModule,
+        ArTEMiSComplaintsModule,
+    ],
     declarations: [ModelingSubmissionComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
