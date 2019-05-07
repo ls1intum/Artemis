@@ -93,7 +93,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     }
 
     /**
-     * checks for the correct answeroptions based on the submittedAnswer
+     * checks for the correct answerOptions based on the submittedAnswer
      */
     private submittedAnswerCorrectValues() {
         if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
