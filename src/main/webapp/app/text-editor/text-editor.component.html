@@ -50,18 +50,19 @@
         <ng-template #hasFeedback>
             <div class="col mt-3">
                 <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
-                <br>
+                <br />
                 <jhi-text-result [result]="result"></jhi-text-result>
             </div>
         </ng-template>
     </div>
 
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint">
-        <button class="btn btn-primary"
-                [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
-                (click)="showComplaintForm = !showComplaintForm"
-                [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
-                title="{{ (numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek) ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+        <button
+            class="btn btn-primary"
+            [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+            (click)="showComplaintForm = !showComplaintForm"
+            [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+            title="{{ numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
             <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
             {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}

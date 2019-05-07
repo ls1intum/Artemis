@@ -1,36 +1,37 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import com.google.common.base.CaseFormat;
-import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
+import com.google.common.base.CaseFormat;
+
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+
 public class UMLClass extends UMLElement {
 
     public enum UMLClassType {
-        CLASS,
-        ABSTRACT_CLASS,
-        ENUMERATION,
-        INTERFACE;
+        CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE;
 
         public static List<String> getTypesAsList() {
-            return Arrays.stream(UMLClassType.values())
-                .map(umlClassType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlClassType.name()))
-                .collect(Collectors.toList());
+            return Arrays.stream(UMLClassType.values()).map(umlClassType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlClassType.name()))
+                    .collect(Collectors.toList());
         }
     }
 
     private String name;
+
     private UMLClassType type;
 
     @Nullable
     private UMLPackage umlPackage;
+
     private List<UMLAttribute> attributes;
+
     private List<UMLMethod> methods;
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
@@ -57,7 +58,7 @@ public class UMLClass extends UMLElement {
         UMLClass otherClass = (UMLClass) other;
 
         similarity += NameSimilarity.nameContainsSimilarity(name, otherClass.name) * CompassConfiguration.CLASS_NAME_WEIGHT;
-        //TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
+        // TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
         if (this.type == otherClass.type) {
             similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
         }
@@ -191,7 +192,6 @@ public class UMLClass extends UMLElement {
 
         return null;
     }
-
 
     public List<UMLAttribute> getAttributes() {
         return attributes;

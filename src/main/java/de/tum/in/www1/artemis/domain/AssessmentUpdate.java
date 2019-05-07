@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.util.List;
 
 /**
- * A helper object that aggregates a feedback list and a complaint response which is used to update an assessment after
- * a complaint.
+ * A helper object that aggregates a feedback list and a complaint response which is used to update an assessment after a complaint.
  */
 public class AssessmentUpdate {
 

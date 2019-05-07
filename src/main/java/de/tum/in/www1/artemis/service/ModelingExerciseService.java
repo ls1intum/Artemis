@@ -27,8 +27,7 @@ public class ModelingExerciseService {
 
     private final ParticipationService participationService;
 
-    public ModelingExerciseService(ParticipationService participationService,
-                                   ModelingExerciseRepository modelingExerciseRepository) {
+    public ModelingExerciseService(ParticipationService participationService, ModelingExerciseRepository modelingExerciseRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.participationService = participationService;
     }

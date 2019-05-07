@@ -5,13 +5,13 @@ import java.util.List;
 public class Score {
 
     private double points;
-    private double confidence;
-    private List<String> comments;
 
+    private double confidence;
+
+    private List<String> comments;
 
     public Score() {
     }
-
 
     public Score(double points, List<String> comments, double confidence) {
         this.points = points;

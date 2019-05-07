@@ -6,7 +6,7 @@
 
     <div class="col-12 col-lg-7">
         <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
-            Example Solution for Modeling Exercise {{exercise?.title}}
+            Example Solution for Modeling Exercise {{ exercise?.title }}
         </h2>
     </div>
 
@@ -18,16 +18,17 @@
     </div>
 
     <div class="col-12">
-        <p *ngIf="formattedProblemStatement" class="my-3" jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
-           [translateValues]="{ problemStatement: formattedProblemStatement }">
-            <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br/>
+        <p
+            *ngIf="formattedProblemStatement"
+            class="my-3"
+            jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
+            [translateValues]="{ problemStatement: formattedProblemStatement }"
+        >
+            <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br />
         </p>
     </div>
 
     <div class="col-12 editor-container">
-        <jhi-modeling-editor
-            [umlModel]="exampleSolution"
-            [diagramType]="exercise.diagramType"
-        ></jhi-modeling-editor>
+        <jhi-modeling-editor [umlModel]="exampleSolution" [diagramType]="exercise.diagramType"></jhi-modeling-editor>
     </div>
 </div>
