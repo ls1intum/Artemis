@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -40,7 +40,7 @@ public class ComplaintResponseResource {
     private AuthorizationCheckService authorizationCheckService;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-                                     AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.authorizationCheckService = authorizationCheckService;

@@ -11,8 +11,7 @@
 
         <div class="col-4 text-right">
             <h5 class="text-white">
-                <strong>{{ 'arTeMiSApp.exercise.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }}
-                / {{ exercise?.maxScore }}
+                <strong>{{ 'arTeMiSApp.exercise.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }} / {{ exercise?.maxScore }}
             </h5>
 
             <button
@@ -52,8 +51,7 @@
 
 <div class="row justify-content-end mt-4">
     <div class="col text-right">
-        <span *ngIf="result && participation && showResult"><jhi-result
-            [participation]="participation"></jhi-result></span>
+        <span *ngIf="result && participation && showResult"><jhi-result [participation]="participation"></jhi-result></span>
         <h6 *ngIf="result && result.assessor" style="color:red">
             {{ 'arTeMiSApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
             <span *ngIf="isAuthorized">- {{ 'arTeMiSApp.textAssessment.submissionLocked' | translate }}</span>
@@ -62,8 +60,7 @@
 </div>
 
 <h2>
-    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span
-        jhiTranslate="arTeMiSApp.textAssessment.loading"></span></span>
+    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.textAssessment.loading"></span></span>
 </h2>
 
 <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
@@ -77,13 +74,13 @@
                 Student submission
             </div>
             <div class="card-body">
-                <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments"
-                                            (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
+                <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments" (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
             </div>
         </div>
 
         <jhi-resizable-instructions
-            class="resizable-submission card" id="instructions"
+            class="resizable-submission card"
+            id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
             [formattedProblemStatement]="formattedProblemStatement"
             [formattedGradingInstructions]="formattedGradingInstructions"
@@ -101,10 +98,8 @@
 <div class="col-12 mt-3" *ngIf="!busy && !notFound">
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
     <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary text-center" role="alert">
-        <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess
-            and click the "Assess" button.</p>
-        <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks"
-           (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
+        <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+        <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
     </div>
     <div class="row">
         <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
@@ -122,9 +117,6 @@
     <h2 jhiTranslate="modelingAssessmentEditor.reviewComplaint">
         Review Complaint
     </h2>
-    <jhi-complaints-for-tutor-form
-        [resultId]="result.id"
-        [isAllowedToRespond]="!isAuthorized"
-        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)">
+    <jhi-complaints-for-tutor-form [resultId]="result.id" [isAllowedToRespond]="!isAuthorized" (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)">
     </jhi-complaints-for-tutor-form>
 </div>

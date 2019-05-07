@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A StudentQuestionAnswer.
@@ -19,7 +20,7 @@ import java.util.Objects;
 public class StudentQuestionAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -90,7 +91,6 @@ public class StudentQuestionAnswer implements Serializable {
         this.verified = verified;
     }
 
-
     public User getAuthor() {
         return author;
     }
@@ -140,11 +140,7 @@ public class StudentQuestionAnswer implements Serializable {
 
     @Override
     public String toString() {
-        return "StudentQuestionAnswer{" +
-            "id=" + getId() +
-            ", answerText='" + getAnswerText() + "'" +
-            ", answerDate='" + getAnswerDate() + "'" +
-            ", verified='" + isVerified() + "'" +
-            "}";
+        return "StudentQuestionAnswer{" + "id=" + getId() + ", answerText='" + getAnswerText() + "'" + ", answerDate='" + getAnswerDate() + "'" + ", verified='" + isVerified()
+                + "'" + "}";
     }
 }

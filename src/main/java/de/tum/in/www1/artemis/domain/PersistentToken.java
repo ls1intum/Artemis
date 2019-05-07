@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.time.LocalDate;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Persistent tokens are used by Spring Security to automatically log in users.
@@ -34,14 +35,13 @@ public class PersistentToken implements Serializable {
     @Column(name = "token_date")
     private LocalDate tokenDate;
 
-    //an IPV6 address max length is 39 characters
+    // an IPV6 address max length is 39 characters
     @Size(min = 0, max = 39)
     @Column(name = "ip_address", length = 39)
     private String ipAddress;
 
     @Column(name = "user_agent")
     private String userAgent;
-
 
     @JsonIgnore
     @ManyToOne
@@ -86,7 +86,8 @@ public class PersistentToken implements Serializable {
     public void setUserAgent(String userAgent) {
         if (userAgent.length() >= MAX_USER_AGENT_LEN) {
             this.userAgent = userAgent.substring(0, MAX_USER_AGENT_LEN - 1);
-        } else {
+        }
+        else {
             this.userAgent = userAgent;
         }
     }
@@ -120,12 +121,7 @@ public class PersistentToken implements Serializable {
 
     @Override
     public String toString() {
-        return "PersistentToken{" +
-            "series='" + series + '\'' +
-            ", tokenValue='" + tokenValue + '\'' +
-            ", tokenDate=" + tokenDate +
-            ", ipAddress='" + ipAddress + '\'' +
-            ", userAgent='" + userAgent + '\'' +
-            "}";
+        return "PersistentToken{" + "series='" + series + '\'' + ", tokenValue='" + tokenValue + '\'' + ", tokenDate=" + tokenDate + ", ipAddress='" + ipAddress + '\''
+                + ", userAgent='" + userAgent + '\'' + "}";
     }
 }

@@ -7,12 +7,16 @@
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
-            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
-                  jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
+            <span
+                *ngIf="!isAuthorized"
+                class="text-danger ml-3"
+                style="font-size: 65%"
+                jhiTranslate="modelingAssessmentEditor.assessmentLocked"
+                [translateValues]="{ otherUser: result?.assessor?.firstName }"
+            >
                 Assessment locked by another user!
             </span>
-            <span *ngIf="isAuthorized" class="text-danger ml-3" style="font-size: 65%"
-                  jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
+            <span *ngIf="isAuthorized" class="text-danger ml-3" style="font-size: 65%" jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
                 You have the lock for this assessment
             </span>
             <button class="btn btn-primary" *ngIf="!result?.rated" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
@@ -26,7 +30,12 @@
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
                 <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
             </div>
-            <button class="btn btn-danger" *ngIf="result?.rated && (isAtLeastInstructor || isAuthorized)" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor">
+            <button
+                class="btn btn-danger"
+                *ngIf="result?.rated && (isAtLeastInstructor || isAuthorized)"
+                (click)="onSubmitAssessment()"
+                [disabled]="!assessmentsAreValid || !isAtLeastInstructor"
+            >
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
             <button class="btn btn-success" *ngIf="result?.rated && isAuthorized" [disabled]="busy" (click)="assessNextOptimal()">
@@ -58,7 +67,8 @@
     <jhi-complaints-for-tutor-form
         [resultId]="result.id"
         [isAllowedToRespond]="result.assessor.id !== userId"
-        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)">
+        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    >
     </jhi-complaints-for-tutor-form>
 </div>
 
