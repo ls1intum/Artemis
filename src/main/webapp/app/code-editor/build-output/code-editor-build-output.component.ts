@@ -3,7 +3,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
-import { CodeEditorComponent } from '../code-editor.component';
 import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
 import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
@@ -12,7 +11,7 @@ import { Observable, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
+import { CodeEditorBuildableComponent } from '../code-editor-buildable.component';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -37,7 +36,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     private resultSubscription: Subscription;
 
     constructor(
-        private parent: CodeEditorParticipationComponent,
+        private parent: CodeEditorBuildableComponent,
         private $window: WindowRef,
         private repositoryService: RepositoryService,
         private resultService: ResultService,

@@ -1,4 +1,4 @@
-import { RepositoryFileService } from 'app/entities/repository';
+import { IRepositoryFileService } from 'app/code-editor/code-editor-repository.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
@@ -6,23 +6,28 @@ import { catchError, map as rxMap, tap } from 'rxjs/operators';
 import { sortBy as _sortBy } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
-import { CodeEditorComponent, CommitState, EditorState } from 'app/code-editor';
+import { CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
+import { CodeEditorComponent } from '../code-editor.component';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
-    providers: [NgbModal, RepositoryFileService, WindowRef],
+    providers: [NgbModal, WindowRef],
 })
-export abstract class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     public FileType = FileType;
 
+    @Input()
+    fileService: IRepositoryFileService<any>;
+
+    @Input()
+    isInitial = true;
     @Input()
     unsavedFiles: string[];
     @Input()
@@ -57,8 +62,6 @@ export abstract class CodeEditorFileBrowserComponent implements OnChanges, After
     renamingFile: [string, string, FileType] | null = null;
     creatingFile: [string, FileType] | null = null;
 
-    isInitial = true;
-
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
     treeviewConfig = TreeviewConfig.create({
         hasAllCheckBox: false,
@@ -74,12 +77,7 @@ export abstract class CodeEditorFileBrowserComponent implements OnChanges, After
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    abstract loadFiles: () => Observable<{ [fileName: string]: FileType }>;
-    abstract renameFile: (filePath: string, fileName: string) => Observable<void>;
-    abstract createFile: (fileName: string) => Observable<void>;
-    abstract createFolder: (folderName: string) => Observable<void>;
-
-    constructor(private parent: CodeEditorParticipationComponent, private $window: WindowRef, public modalService: NgbModal) {}
+    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal) {}
 
     /**
      * @function ngAfterViewInit
@@ -473,4 +471,25 @@ export abstract class CodeEditorFileBrowserComponent implements OnChanges, After
         event.stopPropagation();
         this.creatingFile = null;
     }
+
+    /**
+     * Load files from the participants repository.
+     * Files that are not relevant for the conduction of the exercise are removed from result.
+     */
+    loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
+        this.isLoadingFiles = true;
+        return this.fileService.getRepositoryContent();
+    };
+
+    renameFile = (filePath: string, fileName: string): Observable<void> => {
+        return this.fileService.renameFile(filePath, fileName);
+    };
+
+    createFile = (fileName: string): Observable<void> => {
+        return this.fileService.createFile(fileName);
+    };
+
+    createFolder = (folderName: string): Observable<void> => {
+        return this.fileService.createFolder(folderName);
+    };
 }

@@ -9,18 +9,16 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { CodeEditorComponent } from '../code-editor.component';
 import { CodeEditorService } from '../code-editor.service';
 import { Participation } from '../../entities/participation';
-import { RepositoryService } from '../../entities/repository/repository.service';
 import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
-import { CodeEditorParticipationComponent } from '../code-editor-participation.component';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
+    providers: [JhiAlertService, WindowRef, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
     MarkdownEditorHeight = MarkdownEditorHeight;
@@ -46,7 +44,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     unsavedChanges = false;
 
     constructor(
-        private parent: CodeEditorParticipationComponent,
+        private parent: CodeEditorComponent,
         private $window: WindowRef,
         public artemisMarkdown: ArtemisMarkdown,
         private programmingExerciseService: ProgrammingExerciseService,

@@ -2,15 +2,14 @@ import { ComponentCanDeactivate } from 'src/main/webapp/app/shared';
 import { HostListener, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
-import { CodeEditorComponent } from '../..';
+import { CodeEditorComponent } from '../';
 import { ParticipationService, Participation } from 'src/main/webapp/app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
-import { CodeEditorParticipationComponent } from 'app/code-editor/code-editor-participation.component';
 
 export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
-    @ViewChild(CodeEditorParticipationComponent) editor: CodeEditorParticipationComponent;
+    @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
     paramSub: Subscription;
 
     constructor(protected participationService: ParticipationService, private translateService: TranslateService, protected route: ActivatedRoute) {}
@@ -28,17 +27,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
-    }
-
-    /**
-     * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
-     * @param participationId
-     */
-    protected loadParticipation(participationId: number): Observable<Participation | null> {
-        return this.participationService.findWithLatestResult(participationId).pipe(
-            catchError(() => Observable.of(null)),
-            map(res => res && res.body),
-        );
     }
 
     ngOnDestroy() {

@@ -12,7 +12,6 @@ import { BuildLogEntryArray } from 'app/entities/build-log';
 
 import { CourseService } from '../entities/course';
 import { Participation, hasParticipationChanged } from '../entities/participation';
-import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
@@ -28,11 +27,11 @@ import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileT
 import { CodeEditorComponent } from './code-editor.component';
 
 @Component({
-    selector: 'jhi-code-editor-participation',
+    selector: 'jhi-code-editor-buildable',
     templateUrl: './code-editor.component.html',
-    providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
+    providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorParticipationComponent extends CodeEditorComponent implements OnChanges {
+export class CodeEditorBuildableComponent extends CodeEditorComponent {
     participationValue: Participation;
     @Output()
     participationChange = new EventEmitter<Participation>();
@@ -50,49 +49,18 @@ export class CodeEditorParticipationComponent extends CodeEditorComponent implem
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     isBuilding = false;
 
-    constructor(
-        jhiAlertService: JhiAlertService,
-        private repositoryService: RepositoryService,
-        private resultService: ResultService,
-        private localStorageService: LocalStorageService,
-    ) {
+    constructor(jhiAlertService: JhiAlertService, private localStorageService: LocalStorageService) {
         super(jhiAlertService);
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (hasParticipationChanged(changes)) {
-            this.isInitial = true;
-        }
-        super.ngOnChanges(changes);
-    }
-
-    init = (): Observable<void> => {
+    resetVariables = (): Observable<void> => {
         // Initialize variables;
-        return super.init().pipe(
+        return super.resetVariables().pipe(
             tap(() => {
                 this.errorFiles = [];
                 this.buildLogErrors = undefined;
                 this.session = undefined;
                 this.isBuilding = false;
-
-                return Observable.of(this.participation).flatMap(participation =>
-                    this.loadLatestResult(this.participation).pipe(
-                        switchMap(result =>
-                            result
-                                ? this.loadResultDetails(result).pipe(
-                                      rxMap(feedback => {
-                                          if (feedback) {
-                                              participation.results[0].feedbacks = feedback;
-                                          }
-                                          return participation;
-                                      }),
-                                  )
-                                : Observable.of(participation),
-                        ),
-                        tap(participationWithResults => (this.participation = participationWithResults)),
-                        switchMap(() => Observable.of() as Observable<void>),
-                    ),
-                );
             }),
         );
     };
@@ -149,42 +117,6 @@ export class CodeEditorParticipationComponent extends CodeEditorComponent implem
             this.onError('saveFailed');
         }
         this.storeSession();
-    }
-
-    /**
-     * @function checkIfRepositoryIsClean
-     * @desc Calls the repository service to see if the repository has uncommitted changes
-     */
-    checkIfRepositoryIsClean = (): Observable<CommitState> => {
-        return this.repositoryService.isClean(this.participation.id).pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
-        );
-    };
-
-    commit = () => {
-        return this.repositoryService.commit(this.participation.id).pipe(tap(() => (this.isBuilding = true)));
-    };
-
-    loadLatestResult(participation: Participation): Observable<Result | null> {
-        if (participation && participation.results) {
-            return Observable.of(participation.results.length ? participation.results[0] : null);
-        }
-        return this.resultService
-            .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, participation.id)
-            .pipe(rxMap(({ body: results }) => (results.length ? results.reduce((acc, result) => (result > acc ? result : acc)) : null)));
-    }
-
-    /**
-     * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) and attach them to the result.
-     * Mutates the input parameter result.
-     */
-    loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => res && res.body),
-        );
     }
 
     /**
@@ -245,4 +177,8 @@ export class CodeEditorParticipationComponent extends CodeEditorComponent implem
     storeSession() {
         this.localStorageService.store('sessions', JSON.stringify({ [this.participation.id]: this.buildLogErrors }));
     }
+
+    commit = () => {
+        return super.commit().pipe(tap(() => (this.isBuilding = true)));
+    };
 }

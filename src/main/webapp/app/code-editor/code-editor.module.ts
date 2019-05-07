@@ -6,18 +6,17 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorParticipationComponent } from './code-editor-participation.component';
-import { CodeEditorInstructorContainerComponent } from './mode/instructor/code-editor-instructor-container.component';
-import { CodeEditorStudentContainerComponent } from './mode/student/code-editor-student-container.component';
+import { CodeEditorBuildableComponent } from './code-editor-buildable.component';
+import { CodeEditorInstructorContainerComponent } from './mode/code-editor-instructor-container.component';
+import { CodeEditorStudentContainerComponent } from './mode/code-editor-student-container.component';
 import { CodeEditorService } from './code-editor.service';
-import { RepositoryService } from '../entities/repository';
-import { ArTEMiSResultModule, ResultService } from '../entities/result';
+import { ArTEMiSResultModule, ResultService } from 'app/entities/result';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'ngx-moment';
 import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
-import { CodeEditorFileBrowserParticipationComponent } from './file-browser/code-editor-file-browser-participation.component';
+import { CodeEditorFileBrowserComponent } from './file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build-output.component';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { CodeEditorStatusComponent } from './status/code-editor-status.component';
@@ -41,10 +40,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         RouterModule.forChild(ENTITY_STATES),
     ],
     declarations: [
-        CodeEditorParticipationComponent,
+        CodeEditorComponent,
+        CodeEditorBuildableComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
-        CodeEditorFileBrowserParticipationComponent,
+        CodeEditorFileBrowserComponent,
         CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
@@ -54,7 +54,7 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [JhiAlertService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSCodeEditorModule {

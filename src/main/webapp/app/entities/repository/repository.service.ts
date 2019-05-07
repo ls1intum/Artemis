@@ -1,11 +1,16 @@
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, Subscription } from 'rxjs';
+import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { SERVER_API_URL } from '../../app.constants';
 import { FileType } from '../ace-editor/file-change.model';
+import { Participation } from '../participation';
+import { ProgrammingExercise } from '../programming-exercise';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {

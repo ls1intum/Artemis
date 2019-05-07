@@ -1,19 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseService } from 'app/entities/exercise';
+import { catchError, map, tap } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
-import { CodeEditorContainer } from '../base/code-editor-mode-container.component';
+import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
+import {
+    DomainService,
+    RepositoryFileParticipationService,
+    RepositoryParticipationService,
+    TestRepositoryFileService,
+    TestRepositoryService,
+} from '../code-editor-repository.service';
+import { CodeEditorBuildableComponent } from 'app/code-editor/code-editor-buildable.component';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
     TEMPLATE = 'TEMPLATE',
     SOLUTION = 'SOLUTION',
+    TEST = 'TEST',
 }
 
 enum LOADING_STATE {
@@ -29,25 +37,36 @@ enum LOADING_STATE {
     providers: [],
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
+    @ViewChild(CodeEditorBuildableComponent) buildableEditor: CodeEditorBuildableComponent;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
     exercise: ProgrammingExercise;
-    selectedParticipation: Participation;
+    selectedParticipationValue: Participation;
     selectedRepository: REPOSITORY;
     paramSub: Subscription;
 
     loadingState = LOADING_STATE.NOT_LOADING;
 
     constructor(
-        private router: Router,
         private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private domainParticipationService: DomainService<Participation>,
+        private domainExerciseService: DomainService<ProgrammingExercise>,
+        public repositoryParticipationService: RepositoryParticipationService,
+        public repositoryFileParticipationService: RepositoryFileParticipationService,
+        public testRepositoryFileService: TestRepositoryFileService,
+        public testRepositoryService: TestRepositoryService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
     ) {
         super(participationService, translateService, route);
+    }
+
+    set selectedParticipation(participation: Participation) {
+        this.selectedParticipationValue = participation;
+        this.domainParticipationService.setDomain(participation);
     }
 
     /**
@@ -60,9 +79,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             const participationId = Number(params['participationId']);
             if (!this.exercise || this.exercise.id !== exerciseId) {
                 this.loadingState = LOADING_STATE.INITIALIZING;
+                // TODO: Fetch exercise test repo
                 this.loadExercise(exerciseId)
                     .pipe(
                         catchError(() => throwError('exerciseNotFound')),
+                        tap((exercise: ProgrammingExercise) => this.domainExerciseService.setDomain(exercise)),
                         tap((exercise: ProgrammingExercise) => {
                             exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
                             exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
@@ -115,27 +136,24 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             : Observable.of(this.exercise);
     }
 
-    /**
-     * Navigate to selected participation. This triggers the paramSub to load the corresponding data / update the ui.
-     * @param participationId
-     */
-    selectParticipation(participationId: number) {
-        this.router.navigateByUrl(`/code-editor-admin/${this.exercise.id}/${participationId}`);
-    }
-
     selectSolutionParticipation() {
         this.selectedRepository = REPOSITORY.SOLUTION;
-        this.selectParticipation(this.exercise.solutionParticipation.id);
+        this.selectedParticipation = this.exercise.solutionParticipation;
     }
 
     selectTemplateParticipation() {
         this.selectedRepository = REPOSITORY.TEMPLATE;
-        this.selectParticipation(this.exercise.templateParticipation.id);
+        this.selectedParticipation = this.exercise.templateParticipation;
     }
 
     selectAssignmentParticipation() {
         this.selectedRepository = REPOSITORY.ASSIGNMENT;
-        this.selectParticipation(this.exercise.participations[0].id);
+        this.selectedParticipation = this.exercise.participations[0];
+    }
+
+    selectTestRepository() {
+        this.selectedRepository = REPOSITORY.TEST;
+        this.selectedParticipation = null;
     }
 
     /**

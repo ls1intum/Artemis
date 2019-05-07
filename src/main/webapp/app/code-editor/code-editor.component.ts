@@ -1,38 +1,35 @@
 import * as $ from 'jquery';
-import { Component, EventEmitter, Input, Output, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { ContentChild, Component, ElementRef, Input, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
 import { difference as _difference } from 'lodash';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-
-import { BuildLogEntryArray } from 'app/entities/build-log';
-
 import { CourseService } from '../entities/course';
-import { Participation, hasParticipationChanged } from '../entities/participation';
-import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
-
 import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable } from 'rxjs';
-import { ResultService, Result } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
-import { TranslateService } from '@ngx-translate/core';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { IRepositoryService, IRepositoryFileService } from './code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor',
     templateUrl: './code-editor.component.html',
-    providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
+    providers: [JhiAlertService, WindowRef, CourseService],
 })
-export abstract class CodeEditorComponent implements OnChanges {
+export class CodeEditorComponent implements OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
+    @ContentChild('editor-sidebar-right') editorSidebarRight: ElementRef;
+    @ContentChild('editor-bottom-area') editorBottomArea: ElementRef;
+
+    @Input()
+    repositoryService: IRepositoryService<any>;
+    @Input()
+    fileService: IRepositoryFileService<any>;
+    @Input()
+    isInitial = true;
 
     @Input()
     readonly editableInstructions = false;
@@ -43,19 +40,15 @@ export abstract class CodeEditorComponent implements OnChanges {
     fileChange: FileChange;
 
     /** Code Editor State Booleans **/
-    isInitial = true;
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
     isLoadingFiles = true;
 
-    abstract isReady: () => boolean;
-    abstract checkIfRepositoryIsClean: () => Observable<CommitState>;
-    abstract commit: () => Observable<void>;
-    abstract afterInit: () => void = () => {};
+    afterInit: () => void = () => {};
 
     constructor(private jhiAlertService: JhiAlertService) {}
 
-    init = (): Observable<void> => {
+    resetVariables = (): Observable<void> => {
         // Reset all variables
         this.selectedFile = undefined;
         this.repositoryFiles = undefined;
@@ -71,8 +64,8 @@ export abstract class CodeEditorComponent implements OnChanges {
      * we use it in order to spare any additional REST calls
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (this.isInitial && this.isReady()) {
-            this.init()
+        if (this.isInitial) {
+            this.resetVariables()
                 .pipe(
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
@@ -87,6 +80,17 @@ export abstract class CodeEditorComponent implements OnChanges {
                 );
         }
     }
+
+    /**
+     * @function checkIfRepositoryIsClean
+     * @desc Calls the repository service to see if the repository has uncommitted changes
+     */
+    checkIfRepositoryIsClean = (): Observable<CommitState> => {
+        return this.repositoryService.isClean().pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        );
+    };
 
     /**
      * Set the editor state.
@@ -257,6 +261,11 @@ export abstract class CodeEditorComponent implements OnChanges {
             this.editor.saveChangedFiles();
         }
     }
+
+    commit = () => {
+        return this.repositoryService.commit();
+    };
+
     /**
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
