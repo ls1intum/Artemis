@@ -257,11 +257,6 @@ public class ModelingSubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
-    public ModelingSubmission findOneWithEagerResultAndParticipationResults(Long id) {
-        return modelingSubmissionRepository.findByIdWithEagerResultAndParticipationResults(id)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
-    }
-
     /**
      * Check if Compass could create an automatic assessment (i.e. Result). If an automatic assessment could be found, the corresponding Result and ModelingSubmission entities are
      * updated accordingly. This method is called after Compass is notified about a new model which triggers the automatic assessment attempt.

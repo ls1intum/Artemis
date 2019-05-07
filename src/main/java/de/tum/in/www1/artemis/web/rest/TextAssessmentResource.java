@@ -87,6 +87,13 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
