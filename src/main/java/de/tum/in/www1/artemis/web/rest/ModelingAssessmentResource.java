@@ -207,6 +207,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndParticipationResults(submissionId);
+        if (modelingSubmission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
         if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
             // you cannot cancel the assessment of other tutors
             return forbidden();

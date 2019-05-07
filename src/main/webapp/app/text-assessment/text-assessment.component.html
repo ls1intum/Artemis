@@ -4,7 +4,7 @@
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
+                <fa-icon [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
                 <span [jhiTranslate]="headingTranslationKey" [translateValues]="{ exerciseTitle: exercise?.title }">(Example) Assessment Editor for Text Exercise</span>
             </h2>
         </div>
@@ -32,6 +32,15 @@
                 jhiTranslate="arTeMiSApp.textAssessment.submit"
             >
                 Submit Assessment
+            </button>
+            <button
+                class="btn btn-danger ml-3"
+                (click)="cancelAssessment()"
+                [disabled]="!isAuthorized"
+                *ngIf="result && !result.completionDate"
+                jhiTranslate="arTeMiSApp.textAssessment.cancel"
+            >
+                Cancel Assessment
             </button>
             <button
                 class="btn btn-danger ml-3"

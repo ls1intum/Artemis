@@ -208,7 +208,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
-                // TODO CZ: add submissionId to 'skippedSubmissions' in local or session storage
                 this.goToExerciseDashboard();
             });
         }

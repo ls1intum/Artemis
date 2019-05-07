@@ -42,7 +42,6 @@ export class ModelingAssessmentService {
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {
-        // TODO CZ: retrieve 'skippedSubmissions' from local or session storage and add as query parameter
         return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
     }
 

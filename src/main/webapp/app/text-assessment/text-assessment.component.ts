@@ -18,6 +18,7 @@ import interact from 'interactjs';
 import { WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -53,6 +54,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     interactResizable: Interactable;
     interactResizableTop: Interactable;
 
+    private cancelConfirmationText: string;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
@@ -66,9 +69,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
+        private translateService: TranslateService,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
+        translateService.get('arTeMiSApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     public ngOnInit(): void {
@@ -216,6 +221,18 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         );
     }
 
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
+    cancelAssessment() {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => {
+                this.goToExerciseDashboard();
+            });
+        }
+    }
+
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
@@ -249,8 +266,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkScoreBoundaries();
     }
 
-    public previous(): void {
-        this.location.back();
+    goToExerciseDashboard() {
+        if (this.exercise && this.exercise.course) {
+            this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
     }
 
     /**
