@@ -40,8 +40,4 @@ export class ResultDetailComponent implements OnInit {
         });
         this.isLoading = false;
     }
-
-    filterFeedback(feedback: Feedback) {
-        return !(feedback.type === 'AUTOMATIC' && feedback.positive);
-    }
 }

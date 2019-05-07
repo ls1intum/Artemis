@@ -16,11 +16,11 @@ import { FileService } from './http/file.service';
 import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 import { SecuredImageComponent } from 'app/components/util/secured-image.component';
 import { ExerciseTypePipe } from 'app/entities/exercise';
-import { FilterFeedbacksPipe } from 'app/shared/pipes/filterfeedbacks.pipe';
+import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-positive-automatic-feedback.pipe';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent, ExerciseTypePipe, KeysPipe, FilterFeedbacksPipe],
+    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent, ExerciseTypePipe, KeysPipe, RemovePositiveAutomaticFeedbackPipe],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
     exports: [
@@ -34,7 +34,7 @@ import { FilterFeedbacksPipe } from 'app/shared/pipes/filterfeedbacks.pipe';
         SecuredImageComponent,
         ExerciseTypePipe,
         KeysPipe,
-        FilterFeedbacksPipe,
+        RemovePositiveAutomaticFeedbackPipe,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
