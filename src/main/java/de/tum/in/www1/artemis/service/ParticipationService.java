@@ -512,7 +512,6 @@ public class ParticipationService {
                             // we are only interested in results with completion date and with score
                             continue;
                         }
-
                         if (participation.getExercise() instanceof QuizExercise) {
                             // in quizzes we take all rated results, because we only have one! (independent of later checks)
                         }
