@@ -14,6 +14,7 @@ const ENTITY_STATES = [...modelingAssessmentConflictRoutes];
 @NgModule({
     declarations: [ModelingAssessmentConflictComponent, ConflictEscalationModalComponent],
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, AssessmentInstructionsModule, ModelingAssessmentModule],
+    entryComponents: [ConflictEscalationModalComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSModelingAssessmentConflictModule {}

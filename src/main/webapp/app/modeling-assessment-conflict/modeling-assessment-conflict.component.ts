@@ -81,7 +81,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.initResolutionStates();
         this.updateOverallResolutionState();
         if (!this.conflictsAllHandled) {
-            this.jhiAlertService.info('modelingAssessmentConflict.messages.conflictResolutionInstructions');
+            this.jhiAlertService.addAlert({ type: 'info', msg: 'modelingAssessmentConflict.messages.conflictResolutionInstructions', timeout: 15000 }, []);
         }
         this.updateSelectedConflict();
         this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
@@ -139,38 +139,17 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSubmit() {
-        const escalatedConflicts: Conflict[] = [];
-        for (let i = 0; i < this.conflictResolutionStates.length; i++) {
-            if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
-                escalatedConflicts.push(this.conflicts[i]);
-            }
+        const escalatedConflicts: Conflict[] = this.getEscalatedConflicts();
+        if (escalatedConflicts.length > 0) {
+            const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
+            modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
+            modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
+            modalRef.result.then(value => {
+                this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submitAssessment());
+            });
+        } else {
+            this.submitAssessment();
         }
-        const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.tutorsEscalatingTo = [];
-        modalRef.componentInstance.escalatedConflictsCount = 0;
-        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(value => {
-            this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-                result => {
-                    this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                    this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
-                },
-                error => {
-                    if (error.status === 409) {
-                        this.conflicts = error.error as Conflict[];
-                        this.conflicts.forEach((conflict: Conflict) => {
-                            this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
-                            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                        });
-                        this.initComponent();
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                    } else {
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
-                    }
-                },
-            );
-        });
     }
 
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
@@ -204,6 +183,30 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
             }
         }
+    }
+
+    private submitAssessment() {
+        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
+            result => {
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
+            },
+            error => {
+                if (error.status === 409) {
+                    this.conflicts = error.error as Conflict[];
+                    this.conflicts.forEach((conflict: Conflict) => {
+                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
+                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                    });
+                    this.initComponent();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
+                } else {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
+                }
+            },
+        );
     }
 
     private updateSelectedConflict() {
@@ -257,5 +260,25 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.jhiAlertService.success('modelingAssessmentConflict.messages.conflictsResolved');
         }
         this.conflictsAllHandled = true;
+    }
+
+    private getEscalatedConflicts(): Conflict[] {
+        const escalatedConflicts: Conflict[] = [];
+        for (let i = 0; i < this.conflictResolutionStates.length; i++) {
+            if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
+                escalatedConflicts.push(this.conflicts[i]);
+            }
+        }
+        return escalatedConflicts;
+    }
+
+    private getDistinctTutorsEscalatingTo(escalatedConflicts: Conflict[]): User[] {
+        const distinctTutors: Map<number, User> = new Map<number, User>();
+        escalatedConflicts.forEach((conflict: Conflict) => {
+            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) =>
+                distinctTutors.set(conflictingResult.result.assessor.id, conflictingResult.result.assessor),
+            );
+        });
+        return Array.from(distinctTutors.values());
     }
 }

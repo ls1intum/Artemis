@@ -11,6 +11,8 @@
             "acceptTheirs": "Du übernimmst die bereits bestehende Bewertung des markierten Elements. Der Konflikt wird dabei aufgelöst."
         },
         "messages": {
+            "warning": "Hinweis",
+            "escalationWarning": "Du bist dabei {{escalatedConflictsCount}} Konflikte an die betroffenen {{tutorsEscalatingCount}} Tutoren zu eskalieren. Folgende Tutoren sind von deiner Entscheidung betroffen:",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
