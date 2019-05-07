@@ -10,9 +10,6 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
-import { DomainCommand } from 'app/markdown-editor/domainCommands';
-import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
-import { RepositoryFileService } from '../repository';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -32,7 +29,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     courses: Course[];
-    domainCommands: DomainCommand[] = [new TaskCommand()];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -40,7 +36,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
-        private repositoryFiles: RepositoryFileService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
