@@ -34,11 +34,11 @@ public class ConflictingResultService {
         return conflictingResult;
     }
 
-    public ConflictingResult createConflictingResult(ModelAssessmentConflict conflict, String modelElementID, Result result) {
+    public ConflictingResult createConflictingResult(String modelElementID, Result result) {
         ConflictingResult conflictingResult = new ConflictingResult();
         conflictingResult.setModelElementId(modelElementID);
         conflictingResult.setResult(result);
-        conflictingResult.setConflict(conflict);
+        // conflictingResult.setConflict(conflict);
         return conflictingResult;
     }
 
@@ -59,9 +59,7 @@ public class ConflictingResultService {
         conflict.getResultsInConflict().clear();
         Set<String> newFeedbacksElementIds = new HashSet<>();
         newFeedbacks.forEach(feedback -> newFeedbacksElementIds.add(feedback.getReferenceElementId()));
-        existingConflictingResultsCopy.stream()
-                .filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId())
-                        || conflictingResult.getId().equals(conflict.getCausingConflictingResult().getId()))// TODO remove foreign key fix
+        existingConflictingResultsCopy.stream().filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId()))// TODO remove foreign key fix
                 .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
     }
 
