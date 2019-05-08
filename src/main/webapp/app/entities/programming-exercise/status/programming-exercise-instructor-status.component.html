@@ -1,10 +1,12 @@
 <fa-icon
+    id="instructor-status-template"
     icon="exclamation-triangle"
     class="text-warning"
     *ngIf="participationType === 'TEMPLATE' && result && result.score > 0"
     title="{{ 'arTeMiSApp.programmingExercise.status.templateFulfillsTest' | translate }}"
 ></fa-icon>
 <fa-icon
+    id="instructor-status-solution"
     icon="exclamation-triangle"
     class="text-warning"
     *ngIf="participationType === 'SOLUTION' && result && !result.successful"

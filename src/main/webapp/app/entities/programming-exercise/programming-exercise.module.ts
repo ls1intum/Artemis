@@ -58,6 +58,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseInstructorStatusComponent,
         FaIconComponent,
     ],
     exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],
