@@ -9,7 +9,7 @@
         <div class="navbar-collapse editor-top-right">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
-                    <jhi-updating-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult($event)" [hidden]="isBuilding">
+                    <jhi-updating-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult()" [hidden]="isBuilding">
                     </jhi-updating-result>
                 </li>
             </ul>
@@ -61,7 +61,7 @@
     </div>
 
     <div class="editor-bottom">
-        <jhi-code-editor-build-output *ngIf="repositoryFiles" [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
+        <jhi-code-editor-build-output *ngIf="repositoryFiles" [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs()">
         </jhi-code-editor-build-output>
     </div>
 </div>
