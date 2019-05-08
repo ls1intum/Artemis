@@ -65,27 +65,30 @@
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.maxScore }}</td>
-                    <td>
-                        <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"
-                            ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
-                        >
-                        <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.templateParticipation.results && programmingExercise.templateParticipation.results.length"
-                            [participationType]="'TEMPLATE'"
-                            [result]="programmingExercise.templateParticipation.results[0]"
-                        ></jhi-programming-exercise-instructor-status>
-                        <br />
-                        <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"
-                            ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
-                        >
-                        <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.solutionParticipation.results && programmingExercise.solutionParticipation.results.length"
-                            [participationType]="'SOLUTION'"
-                            [result]="programmingExercise.solutionParticipation.results[0]"
-                        ></jhi-programming-exercise-instructor-status>
-                        <br />
-                        <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span
-                        ><br />
+                    <td class="d-flex flex-column">
+                        <div class="d-flex justify-content-between">
+                            <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"
+                                ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
+                            >
+                            <jhi-programming-exercise-instructor-status
+                                *ngIf="programmingExercise.templateParticipation.results && programmingExercise.templateParticipation.results.length"
+                                [participationType]="'TEMPLATE'"
+                                [result]="programmingExercise.templateParticipation.results[0]"
+                            ></jhi-programming-exercise-instructor-status>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"
+                                ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
+                            >
+                            <jhi-programming-exercise-instructor-status
+                                *ngIf="programmingExercise.solutionParticipation.results && programmingExercise.solutionParticipation.results.length"
+                                [participationType]="'SOLUTION'"
+                                [result]="programmingExercise.solutionParticipation.results[0]"
+                            ></jhi-programming-exercise-instructor-status>
+                        </div>
+                        <div>
+                            <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
+                        </div>
                     </td>
                     <td>
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
