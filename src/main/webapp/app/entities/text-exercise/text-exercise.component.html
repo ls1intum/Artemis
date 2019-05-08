@@ -29,8 +29,8 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
-                <tr *ngFor="let textExercise of (textExercises | sortBy: predicate:reverse); trackBy: trackId">
+            <tbody class="markdown-preview">
+                <tr *ngFor="let textExercise of textExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course', textExercise.course.id, 'text-exercise', textExercise.id]">{{ textExercise.id }}</a>
                     </td>

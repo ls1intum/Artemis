@@ -18,6 +18,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     Optional<Complaint> findByResult_Id(Long resultId);
 
+    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
+    Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
+
     /**
      * This magic method counts the number of complaints associated to a course id and to the results assessed by a specific user, identified by a tutor id
      *
@@ -39,6 +42,17 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
+     * Count the number of unaccepted complaints of a student in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
+     * of complaints for a student in a course.
+     *
+     * @param studentId the id of the student
+     * @param courseId  the id of the course
+     * @return the number of unaccepted
+     */
+    @Query("SELECT count(c) FROM Complaint c  WHERE c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
+
+    /**
      * This magic method counts the number of complaints associated to an exercise id
      *
      * @param exerciseId - the id of the course we want to filter by
@@ -50,8 +64,13 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id
      *
      * @param exerciseId - the id of the exercise we want to filter by
-     * @param tutorId  - the id of the tutor we are interested in
+     * @param tutorId    - the id of the tutor we are interested in
      * @return number of complaints associated to exercise exerciseId and tutor tutorId
      */
     long countByResult_Participation_Exercise_IdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
+
+    /**
+     * Delete all complaints that belong to submission results of a given participation
+     */
+    void deleteByResult_Participation_Id(Long participationId);
 }

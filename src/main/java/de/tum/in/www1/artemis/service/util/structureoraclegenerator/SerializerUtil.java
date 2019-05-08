@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
+import java.util.List;
+import java.util.Set;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.thoughtworks.qdox.model.JavaField;
@@ -7,17 +10,15 @@ import com.thoughtworks.qdox.model.JavaMember;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
 
-import java.util.List;
-import java.util.Set;
-
 /**
- * This class contains helper methods for serializing information on structural elements that we deal with repeatedly
- * throughout the other serializers in order to avoid code repetition.
+ * This class contains helper methods for serializing information on structural elements that we deal with repeatedly throughout the other serializers in order to avoid code
+ * repetition.
  */
 public class SerializerUtil {
 
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.
+     * 
      * @param modifiers A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the modifiers.
      */
@@ -37,7 +38,7 @@ public class SerializerUtil {
                 modifiers.add("final");
             }
         }
-        for(String modifier : modifiers) {
+        for (String modifier : modifiers) {
             modifiersArray.add(modifier);
         }
         return modifiersArray;
@@ -45,12 +46,13 @@ public class SerializerUtil {
 
     /**
      * This method is used to serialize the string representations of each parameter into a JSON array.
+     * 
      * @param parameters A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the parameter types.
      */
     public static JsonArray serializeParameters(List<JavaParameter> parameters) {
         JsonArray parametersArray = new JsonArray();
-        for(JavaParameter parameter : parameters) {
+        for (JavaParameter parameter : parameters) {
             parametersArray.add(parameter.getType().getValue());
         }
 
@@ -67,7 +69,7 @@ public class SerializerUtil {
     public static JsonObject createJsonObject(String name, Set<String> modifiers, JavaMember javaMember) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("name", name);
-        if(!modifiers.isEmpty()) {
+        if (!modifiers.isEmpty()) {
             jsonObject.add("modifiers", serializeModifiers(modifiers, javaMember));
         }
         return jsonObject;

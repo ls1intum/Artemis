@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import net.sourceforge.plantuml.SourceStringReader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -13,15 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
 /**
  * Created by Josias Montag on 14.12.16.
  */
 
 @RestController
-@RequestMapping({"/api", "/api_basic"})
+@RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class PlantUmlResource {
 

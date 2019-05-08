@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -34,6 +35,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAuthorized = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
+    hasComplaint: boolean;
+    canOverride = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -64,16 +67,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.showBackButton = !!this.route.snapshot.queryParamMap.get('showBackButton');
-    }
-
-    checkAuthorization() {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        this.route.queryParams.subscribe(params => {
+            this.showBackButton = params['showBackButton'] === 'true';
+        });
     }
 
     ngOnDestroy() {}
 
-    loadSubmission(submissionId: number): void {
+    private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -84,7 +85,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    loadOptimalSubmission(exerciseId: number): void {
+    private loadOptimalSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -105,10 +106,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    handleReceivedSubmission(submission: ModelingSubmission): void {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
+        this.hasComplaint = this.result.hasComplaint;
         this.localFeedbacks = this.result.feedbacks;
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
@@ -132,6 +134,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         this.checkAuthorization();
         this.validateFeedback();
+    }
+
+    private checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     onError(): void {
@@ -191,6 +197,30 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
                 }
+            },
+        );
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.removeCircularDependencies();
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, complaintResponse, this.submission.id).subscribe(
+            (result: Result) => {
+                this.result = result;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
     }

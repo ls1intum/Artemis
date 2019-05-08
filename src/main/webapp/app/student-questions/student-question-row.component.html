@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="row">
             <div class="col overflow-parent">
-                <h5 class="overflow-ellipsis">Q: {{studentQuestion.questionText}}</h5>
+                <h5 class="overflow-ellipsis">Q: {{ studentQuestion.questionText }}</h5>
             </div>
             <div class="col-auto">
                 <fa-icon [icon]="'angle-down'"></fa-icon>
@@ -10,12 +10,11 @@
         </div>
         <div class="row">
             <div class="col-auto">
-                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerCount" | translate: {count: studentQuestion.answers.length} }}</p>
+                <p>{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers.length } }}</p>
             </div>
             <div class="col-auto">
                 <h5>
-                    <span class="badge badge-light"
-                          *ngIf="isQuestionAuthor">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.yourQuestion" | translate}}</span>
+                    <span class="badge badge-light" *ngIf="isQuestionAuthor">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.yourQuestion' | translate }}</span>
                 </h5>
             </div>
         </div>
@@ -26,25 +25,27 @@
         <div *ngIf="!isEditMode">
             <div class="row clickable" (click)="isExpanded = !isExpanded">
                 <div class="col mb-2">
-                    <h5>Q: {{studentQuestion.questionText}}</h5>
+                    <h5>Q: {{ studentQuestion.questionText }}</h5>
                     <h6 class="text-black-50 question-subtitle">
-                        {{studentQuestion.author.firstName}} {{studentQuestion.author.lastName}}
-                        - {{studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}
+                        {{ studentQuestion.author.firstName }} {{ studentQuestion.author.lastName }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}
                     </h6>
                 </div>
                 <div class="col-auto">
-                    <fa-icon class="mr-1"
-                             *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
-                             [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate)"
-                             container="body"
-                             [icon]="'pencil-alt'"
-                             (click)="$event.stopPropagation();toggleQuestionEditMode()"></fa-icon>
-                    <jhi-confirm-icon *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
-                                      (click)="$event.stopPropagation();"
-                                      (confirmEvent)="deleteQuestion()"
-                                      [ngClass]="'mr-1'"
-                                      [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate)"
-                                      [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate)"
+                    <fa-icon
+                        class="mr-1"
+                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        [ngbTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                        container="body"
+                        [icon]="'pencil-alt'"
+                        (click)="$event.stopPropagation(); toggleQuestionEditMode()"
+                    ></fa-icon>
+                    <jhi-confirm-icon
+                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        (click)="$event.stopPropagation()"
+                        (confirmEvent)="deleteQuestion()"
+                        [ngClass]="'mr-1'"
+                        [initialTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
+                        [confirmTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
                     ></jhi-confirm-icon>
                     <fa-icon [icon]="'angle-up'"></fa-icon>
                 </div>
@@ -54,85 +55,75 @@
             <div class="row mb-1 mt-2">
                 <div class="col-12">
                     <div class="form-group">
-                        <label
-                            class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.newQuestionLabel" | translate}}</label>
+                        <label class="form-control-label">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
                         <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
                     </div>
                 </div>
                 <div class="col-12 d-flex justify-content-between">
-                    <button class="btn btn-outline-primary"
-                            (click)="toggleQuestionEditMode()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                    <button class="btn btn-primary"
-                            (click)="saveQuestion()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion" | translate}}</button>
+                    <button class="btn btn-outline-primary" (click)="toggleQuestionEditMode()">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
+                    <button class="btn btn-primary" (click)="saveQuestion()">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.saveQuestion' | translate }}</button>
                 </div>
             </div>
         </div>
         <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
             <div class="col">
-                <div
-                    *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
+                <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
                     <div class="col-12">
                         <div class="form-group">
-                            <label
-                                class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel" | translate}}</label>
+                            <label class="form-control-label">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
                             <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
                         </div>
                     </div>
                     <div class="col-12 d-flex justify-content-between mb-2">
-                        <button class="btn btn-outline-primary"
-                                (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                        <button class="btn btn-primary"
-                                (click)="saveAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer" | translate}}</button>
+                        <button class="btn btn-outline-primary" (click)="toggleAnswerMode(null)">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
+                        <button class="btn btn-primary" (click)="saveAnswer()">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
                     </div>
                 </div>
-                <div *ngIf="!selectedQuestionAnswer || (selectedQuestionAnswer.id !== questionAnswer.id)">
-                    A: {{questionAnswer.answerText}}
-                </div>
-                <div class="text-black-50 mb-1 question-subtitle"
-                   *ngIf="!selectedQuestionAnswer || (selectedQuestionAnswer.id !== questionAnswer.id)">
-                    {{questionAnswer.author.firstName}} {{questionAnswer.author.lastName}}
-                    - {{questionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
+                <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">A: {{ questionAnswer.answerText }}</div>
+                <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">
+                    {{ questionAnswer.author.firstName }} {{ questionAnswer.author.lastName }} - {{ questionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
                 </div>
             </div>
-            <div class="col-auto"
-                 *ngIf="isAtLeastTutorInCourse || (questionAnswer.author.id === user.id && (!selectedQuestionAnswer || (selectedQuestionAnswer.id !== questionAnswer.id)))">
-                <fa-icon class="mr-1 clickable"
-                         [ngbTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.editAnswer' | translate)"
-                         container="body"
-                         [icon]="'pencil-alt'"
-                         (click)="$event.stopPropagation();toggleAnswerMode(questionAnswer)"></fa-icon>
-                <jhi-confirm-icon (click)="$event.stopPropagation();"
-                                  (confirmEvent)="deleteAnswer(questionAnswer)"
-                                  [ngClass]="'mr-1 clickable'"
-                                  [initialTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate)"
-                                  [confirmTooltip]="('arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate)"
+            <div
+                class="col-auto"
+                *ngIf="isAtLeastTutorInCourse || (questionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id))"
+            >
+                <fa-icon
+                    class="mr-1 clickable"
+                    [ngbTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                    container="body"
+                    [icon]="'pencil-alt'"
+                    (click)="$event.stopPropagation(); toggleAnswerMode(questionAnswer)"
+                ></fa-icon>
+                <jhi-confirm-icon
+                    (click)="$event.stopPropagation()"
+                    (confirmEvent)="deleteAnswer(questionAnswer)"
+                    [ngClass]="'mr-1 clickable'"
+                    [initialTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
+                    [confirmTooltip]="'arTeMiSApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
                 ></jhi-confirm-icon>
             </div>
         </div>
         <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
             <div class="col">
-                <p>{{"arTeMiSApp.courseOverview.exerciseDetails.faq.noAnswers" | translate}}</p>
+                <p>{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.noAnswers' | translate }}</p>
             </div>
         </div>
         <div class="row mb-3" *ngIf="!isAnswerMode">
             <div class="col">
-                <button class="btn btn-primary"
-                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow" | translate}}</button>
+                <button class="btn btn-primary" (click)="toggleAnswerMode(null)">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}</button>
             </div>
         </div>
         <div *ngIf="isAnswerMode && !selectedQuestionAnswer">
             <div class="col-12 mb-2">
                 <div class="form-group">
-                    <label
-                        class="form-control-label">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel" | translate}}</label>
+                    <label class="form-control-label">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
                     <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
-                <button class="btn btn-outline-primary"
-                        (click)="toggleAnswerMode(null)">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.cancel" | translate}}</button>
-                <button class="btn btn-primary"
-                        (click)="addAnswer()">{{"arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer" | translate}}</button>
+                <button class="btn btn-outline-primary" (click)="toggleAnswerMode(null)">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
+                <button class="btn btn-primary" (click)="addAnswer()">{{ 'arTeMiSApp.courseOverview.exerciseDetails.faq.addAnswer' | translate }}</button>
             </div>
         </div>
     </div>

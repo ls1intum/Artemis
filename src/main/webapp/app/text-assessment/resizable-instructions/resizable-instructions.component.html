@@ -13,21 +13,21 @@
     <div class="card-body">
         <div *ngIf="formattedProblemStatement">
             <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
-            <p [innerHTML]="formattedProblemStatement"></p>
+            <p class="markdown-preview" [innerHTML]="formattedProblemStatement"></p>
 
             <hr />
         </div>
 
         <div *ngIf="formattedSampleSolution">
             <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
-            <p [innerHTML]="formattedSampleSolution"></p>
+            <p class="markdown-preview" [innerHTML]="formattedSampleSolution"></p>
 
             <hr />
         </div>
 
         <div *ngIf="formattedGradingInstructions">
             <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
-            <p [innerHTML]="formattedGradingInstructions"></p>
+            <p class="markdown-preview" [innerHTML]="formattedGradingInstructions"></p>
         </div>
     </div>
 </div>

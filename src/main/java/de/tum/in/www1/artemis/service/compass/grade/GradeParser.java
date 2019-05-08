@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.compass.grade;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class GradeParser {
 
@@ -32,8 +32,7 @@ public class GradeParser {
             JsonObject jsonAssessment = o.getAsJsonObject();
 
             String jsonElementID = jsonAssessment.get(JSONMapping.assessmentElementID).getAsString();
-            String comment = jsonAssessment.has(JSONMapping.assessmentComment) ?
-                jsonAssessment.get(JSONMapping.assessmentComment).getAsString() : "";
+            String comment = jsonAssessment.has(JSONMapping.assessmentComment) ? jsonAssessment.get(JSONMapping.assessmentComment).getAsString() : "";
             double score = jsonAssessment.get(JSONMapping.assessmentPoints).getAsDouble();
 
             commentMapping.put(jsonElementID, comment);

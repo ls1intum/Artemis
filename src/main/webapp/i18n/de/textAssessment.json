@@ -1,7 +1,7 @@
 {
     "arTeMiSApp": {
         "textAssessment": {
-            "loading": "Bitte warten Sie, bis ArTEMiS die Einreichung findet!",
+            "loading": "Bitte warte, bis ArTEMiS die Abgabe findet!",
             "heading": {
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
                 "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
@@ -16,9 +16,9 @@
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
-            "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen.",
-            "submissionLocked": "Einreichung gesperrt",
-            "studentSubmission": "Studentische Einreichung",
+            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnen.",
+            "submissionLocked": "Abgabe gesperrt",
+            "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "detail": {
                 "scoreFor": "Bewertung für",
@@ -33,7 +33,7 @@
             },
             "dashboard": {
                 "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\"",
-                "empty": "Keine Einreichungen für diese Aufgabe!",
+                "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
@@ -48,14 +48,12 @@
                 "minutes": "Minuten",
                 "actions": {
                     "open": "Bewertung öffnen",
-                    "assess": "Einreichung bewerten"
+                    "assess": "Abgabe bewerten"
                 }
             },
-            "complaint": "Reklamation",
-            "complaintAlreadyAccepted": "Die Reklamation wurde bereits geprüft und beantwortet von",
-            "complaintResponse": "Antwort der Reklamation",
-            "submitComplaintResponse": "Die Antwort der Reklamation einreichen",
-            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehen Sie zurück."
+            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
         }
     }
 }

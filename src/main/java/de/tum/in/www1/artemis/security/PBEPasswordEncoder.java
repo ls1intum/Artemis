@@ -5,10 +5,7 @@ import org.jasypt.exceptions.EncryptionInitializationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * Created by Josias Montag on 23.09.16.
- *
- * PBEPasswordEncoder for Spring 4, based on org.jasypt.spring.security3.PBEPasswordEncoder;
- *
+ * Created by Josias Montag on 23.09.16. PBEPasswordEncoder for Spring 4, based on org.jasypt.spring.security3.PBEPasswordEncoder;
  */
 public class PBEPasswordEncoder implements PasswordEncoder {
 
@@ -40,16 +37,9 @@ public class PBEPasswordEncoder implements PasswordEncoder {
         return decPassword.equals(rawPassword.toString());
     }
 
-
     private synchronized void checkInitialization() {
         if (this.pbeStringEncryptor == null) {
-            throw new EncryptionInitializationException(
-                "PBE Password encoder not initialized: PBE " +
-                    "string encryptor is null");
+            throw new EncryptionInitializationException("PBE Password encoder not initialized: PBE " + "string encryptor is null");
         }
     }
 }
-
-
-
-

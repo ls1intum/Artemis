@@ -16,7 +16,7 @@ import { Attachment } from 'app/entities/attachment';
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public lecture: Lecture;
-    public isDownloading = false;
+    public isDownloadingLink: string;
 
     constructor(
         private $location: Location,
@@ -74,7 +74,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.isDownloading = true;
+        this.isDownloadingLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {
                 const blob = new Blob([response.body], { type: response.headers.get('content-type') });
@@ -85,10 +85,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 document.body.appendChild(link); // Required for FF
                 link.click();
                 window.URL.revokeObjectURL(url);
-                this.isDownloading = false;
+                this.isDownloadingLink = null;
             },
             error => {
-                this.isDownloading = false;
+                this.isDownloadingLink = null;
             },
         );
     }
