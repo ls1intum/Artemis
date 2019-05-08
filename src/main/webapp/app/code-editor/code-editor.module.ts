@@ -10,6 +10,13 @@ import { CodeEditorBuildableComponent } from './code-editor-buildable.component'
 import { CodeEditorInstructorContainerComponent } from './mode/code-editor-instructor-container.component';
 import { CodeEditorStudentContainerComponent } from './mode/code-editor-student-container.component';
 import { CodeEditorService } from './code-editor.service';
+import {
+    DomainService,
+    RepositoryFileParticipationService,
+    RepositoryParticipationService,
+    TestRepositoryFileService,
+    TestRepositoryService,
+} from './code-editor-repository.service';
 import { ArTEMiSResultModule, ResultService } from 'app/entities/result';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'ngx-moment';
@@ -54,7 +61,18 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    providers: [JhiAlertService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [
+        JhiAlertService,
+        ResultService,
+        ParticipationService,
+        CodeEditorService,
+        DomainService,
+        RepositoryFileParticipationService,
+        RepositoryParticipationService,
+        TestRepositoryFileService,
+        TestRepositoryService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService },
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSCodeEditorModule {

@@ -17,6 +17,11 @@ export class DomainService<T> {
     protected domain: T;
     private subject = new Subject<T>();
     private domainChange = this.subject.pipe(share());
+
+    // constructor(private httpClient: HttpClient) {
+    //     console.log('test');
+    // }
+
     public setDomain(domain: T) {
         this.domain = domain;
         this.subject.next(domain);
@@ -58,7 +63,7 @@ export abstract class IRepositoryFileService<T> extends DomainDependent<T> {
     abstract renameFile: (filePath: string, newFileName: string) => Observable<void>;
     abstract deleteFile: (filePath: string) => Observable<void>;
 
-    constructor(domainChangeService: DomainService<T>, protected http: HttpClient) {
+    constructor(domainChangeService: DomainService<T>) {
         super(domainChangeService);
     }
 }
@@ -67,10 +72,6 @@ export abstract class IRepositoryService<T> extends DomainDependent<T> {
     abstract isClean: () => Observable<{ isClean: boolean }>;
     abstract commit: () => Observable<void>;
     abstract pull: () => Observable<void>;
-
-    constructor(domainChangeService: DomainService<T>, protected http: HttpClient) {
-        super(domainChangeService);
-    }
 }
 
 export interface IRepositoryBuildableService {
@@ -81,6 +82,10 @@ export interface IRepositoryBuildableService {
 export class RepositoryParticipationService extends IRepositoryService<Participation> implements IRepositoryBuildableService {
     private resourceUrlBase = `${SERVER_API_URL}/api/repository`;
     private resourceUrl: string;
+
+    constructor(private domainChangeService: DomainService<Participation>, protected http: HttpClient) {
+        super(domainChangeService);
+    }
 
     setDomain(participation: Participation) {
         super.setDomain(participation);
@@ -108,6 +113,10 @@ export class RepositoryParticipationService extends IRepositoryService<Participa
 export class RepositoryFileParticipationService extends IRepositoryFileService<Participation> {
     private resourceUrlBase = `${SERVER_API_URL}/api/repository`;
     private resourceUrl: string;
+
+    constructor(private domainChangeService: DomainService<Participation>, protected http: HttpClient) {
+        super(domainChangeService);
+    }
 
     setDomain(participation: Participation) {
         super.setDomain(participation);
@@ -150,6 +159,10 @@ export class TestRepositoryService extends IRepositoryService<ProgrammingExercis
     private resourceUrlBase = `${SERVER_API_URL}/api/test-repository`;
     private resourceUrl: string;
 
+    constructor(private domainChangeService: DomainService<ProgrammingExercise>, protected http: HttpClient) {
+        super(domainChangeService);
+    }
+
     setDomain(exercise: ProgrammingExercise) {
         super.setDomain(exercise);
         this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
@@ -172,6 +185,10 @@ export class TestRepositoryService extends IRepositoryService<ProgrammingExercis
 export class TestRepositoryFileService extends IRepositoryFileService<ProgrammingExercise> {
     private resourceUrlBase = `${SERVER_API_URL}/api/test-repository`;
     private resourceUrl: string;
+
+    constructor(private domainChangeService: DomainService<ProgrammingExercise>, protected http: HttpClient) {
+        super(domainChangeService);
+    }
 
     setDomain(exercise: ProgrammingExercise) {
         super.setDomain(exercise);

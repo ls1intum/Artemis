@@ -1,5 +1,5 @@
 import * as $ from 'jquery';
-import { ContentChild, Component, ElementRef, Input, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
+import { ContentChild, Component, ElementRef, Input, OnInit, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { difference as _difference } from 'lodash';
@@ -12,14 +12,14 @@ import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable } from 'rxjs';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
-import { IRepositoryService, IRepositoryFileService } from './code-editor-repository.service';
+import { IRepositoryService, IRepositoryFileService, DomainService } from './code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorComponent implements OnChanges {
+export class CodeEditorComponent implements OnInit, OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
     @ContentChild('editor-sidebar-right') editorSidebarRight: ElementRef;
     @ContentChild('editor-bottom-area') editorBottomArea: ElementRef;
@@ -46,16 +46,36 @@ export class CodeEditorComponent implements OnChanges {
 
     afterInit: () => void = () => {};
 
-    constructor(private jhiAlertService: JhiAlertService) {}
+    constructor(private jhiAlertService: JhiAlertService, private domainService: DomainService<any>) {}
 
-    resetVariables = (): Observable<void> => {
+    resetVariables(): Observable<void> {
         // Reset all variables
         this.selectedFile = undefined;
         this.repositoryFiles = undefined;
         this.unsavedFiles = [];
         this.isInitial = false;
         return Observable.of() as Observable<void>;
-    };
+    }
+
+    ngOnInit() {
+        this.domainService.subscribeDomainChange().pipe(
+            tap(() => {
+                this.resetVariables()
+                    .pipe(
+                        switchMap(() => this.checkIfRepositoryIsClean()),
+                        tap(commitState => (this.commitState = commitState)),
+                        tap(() => this.afterInit()),
+                    )
+                    .subscribe(
+                        () => {},
+                        err => {
+                            this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                            this.onError(err);
+                        },
+                    );
+            }),
+        );
+    }
 
     /**
      * @function ngOnChanges
@@ -64,21 +84,8 @@ export class CodeEditorComponent implements OnChanges {
      * we use it in order to spare any additional REST calls
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (this.isInitial) {
-            this.resetVariables()
-                .pipe(
-                    switchMap(() => this.checkIfRepositoryIsClean()),
-                    tap(commitState => (this.commitState = commitState)),
-                    tap(() => this.afterInit()),
-                )
-                .subscribe(
-                    () => {},
-                    err => {
-                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
-                        this.onError(err);
-                    },
-                );
-        }
+        // if (this.isInitial) {
+        // }
     }
 
     /**

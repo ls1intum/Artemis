@@ -25,6 +25,7 @@ import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorComponent } from './code-editor.component';
+import { DomainService } from './code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor-buildable',
@@ -49,11 +50,11 @@ export class CodeEditorBuildableComponent extends CodeEditorComponent {
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     isBuilding = false;
 
-    constructor(jhiAlertService: JhiAlertService, private localStorageService: LocalStorageService) {
-        super(jhiAlertService);
+    constructor(jhiAlertService: JhiAlertService, domainService: DomainService<any>, private localStorageService: LocalStorageService) {
+        super(jhiAlertService, domainService);
     }
 
-    resetVariables = (): Observable<void> => {
+    resetVariables(): Observable<void> {
         // Initialize variables;
         return super.resetVariables().pipe(
             tap(() => {
@@ -63,7 +64,7 @@ export class CodeEditorBuildableComponent extends CodeEditorComponent {
                 this.isBuilding = false;
             }),
         );
-    };
+    }
 
     afterInit = () => {
         this.loadSession();

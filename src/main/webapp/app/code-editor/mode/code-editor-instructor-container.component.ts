@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -16,6 +17,7 @@ import {
     TestRepositoryService,
 } from '../code-editor-repository.service';
 import { CodeEditorBuildableComponent } from 'app/code-editor/code-editor-buildable.component';
+import { CodeEditorComponent } from '../code-editor.component';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -34,7 +36,15 @@ enum LOADING_STATE {
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-container.component.html',
-    providers: [],
+    providers: [
+        CodeEditorComponent,
+        DomainService,
+        RepositoryFileParticipationService,
+        RepositoryParticipationService,
+        TestRepositoryFileService,
+        TestRepositoryService,
+        HttpClient,
+    ],
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
     @ViewChild(CodeEditorBuildableComponent) buildableEditor: CodeEditorBuildableComponent;

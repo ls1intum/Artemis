@@ -5,9 +5,9 @@
     [repositoryFileService]="repositoryFileParticipationService"
     [repositoryService]="repositoryParticipationService"
 >
-    <jhi-code-editor-instructions #editor-sidebar-right [participation]="selectedParticipation" [exercise]="exercise" [editableInstructions]="true"> </jhi-code-editor-instructions>
+    <jhi-code-editor-instructions #editorSidebarRight [participation]="selectedParticipation" [exercise]="exercise" [editableInstructions]="true"> </jhi-code-editor-instructions>
     <jhi-code-editor-build-output
-        #editor-bottom-area
+        #editorBottomArea
         [participation]="participation"
         [isBuilding]="buildableEditor.isBuilding"
         (buildLogChange)="buildableEditor.updateLatestBuildLogs($event)"
