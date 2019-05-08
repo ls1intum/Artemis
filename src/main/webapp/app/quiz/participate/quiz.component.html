@@ -24,6 +24,7 @@
             [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
             [showResult]="showingResult"
             [submittedResult]="result"
+            [submittedQuizExercise]="quizExercise"
             [forceSampleSolution]="mode === 'solution'"
             [questionIndex]="i + 1"
             [score]="questionScores[question.id]"

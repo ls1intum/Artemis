@@ -47,6 +47,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
     checkForCorrectAnswers = new Array<AnswerOption>();
     checkForWrongAnswers = new Array<AnswerOption>();
+    @Input() submittedQuizExercise: QuizExercise;
 
     /* Drag and Drop Counting Variables*/
     dragAndDropZones: number; // Amount of drag and drop Zones
@@ -98,6 +99,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private submittedAnswerCorrectValues() {
         console.log(this.multipleChoiceSubmittedResult);
+        console.log(this.submittedQuizExercise);
 
         if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
             const quizExercise = this.multipleChoiceSubmittedResult.participation.exercise as QuizExercise;
