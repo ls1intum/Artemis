@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -48,9 +49,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultRepository resultRepository;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
             TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
-            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService) {
+            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
@@ -60,6 +63,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
@@ -81,6 +85,7 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
+        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         return ResponseEntity.ok(result);
     }
 
