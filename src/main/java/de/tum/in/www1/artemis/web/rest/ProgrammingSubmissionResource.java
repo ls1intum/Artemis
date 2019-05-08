@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Collection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,8 +18,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
-
-import java.util.Collection;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -71,6 +71,7 @@ public class ProgrammingSubmissionResource {
         // This fixes an issue with the Spring Security Context Holder: https://jira.spring.io/browse/DATAJPA-1357
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = new Authentication() {
+
             @Override
             public Collection<? extends GrantedAuthority> getAuthorities() {
                 return null;

@@ -72,7 +72,7 @@
                 <div class="col-8">{{ 'arTeMiSApp.courseOverview.exerciseList.details.totalExercises' | translate }}</div>
                 <div class="col-4">{{ course.exercises.length }}</div>
             </div>
-            <div class="row mb-1" *ngFor="let exerciseCount of (exerciseCountMap | keyvalue)">
+            <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
                 <div class="col-8">{{ 'arTeMiSApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | translate }}</div>
                 <div class="col-4">{{ exerciseCount.value }}</div>
             </div>

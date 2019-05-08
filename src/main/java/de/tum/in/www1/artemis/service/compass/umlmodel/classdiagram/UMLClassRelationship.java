@@ -1,67 +1,63 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import com.google.common.base.CaseFormat;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.base.CaseFormat;
+
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLClassRelationship extends UMLElement {
 
     public enum UMLRelationType {
         // class diagram relations
-        CLASS_BIDIRECTIONAL,
-        CLASS_UNIDIRECTIONAL,
-        CLASS_INHERITANCE,
-        CLASS_REALIZATION,
-        CLASS_DEPENDENCY,
-        CLASS_AGGREGATION,
-        CLASS_COMPOSITION;
+        CLASS_BIDIRECTIONAL, CLASS_UNIDIRECTIONAL, CLASS_INHERITANCE, CLASS_REALIZATION, CLASS_DEPENDENCY, CLASS_AGGREGATION, CLASS_COMPOSITION;
 
         public static List<String> getTypesAsList() {
-            return Arrays.stream(UMLRelationType.values())
-                .map(umlRelationType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationType.name()))
-                .collect(Collectors.toList());
+            return Arrays.stream(UMLRelationType.values()).map(umlRelationType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationType.name()))
+                    .collect(Collectors.toList());
         }
 
         public String toSymbol() {
             switch (this) {
-                case CLASS_DEPENDENCY:
-                    return " ╌╌> ";
-                case CLASS_AGGREGATION:
-                    return " --◇ ";
-                case CLASS_INHERITANCE:
-                    return " --▷ ";
-                case CLASS_REALIZATION:
-                    return " ╌╌▷ ";
-                case CLASS_COMPOSITION:
-                    return " --◆ ";
-                case CLASS_UNIDIRECTIONAL:
-                    return " --> ";
-                case CLASS_BIDIRECTIONAL:
-                    return " <-> ";
-                default:
-                    return " --- ";
+            case CLASS_DEPENDENCY:
+                return " ╌╌> ";
+            case CLASS_AGGREGATION:
+                return " --◇ ";
+            case CLASS_INHERITANCE:
+                return " --▷ ";
+            case CLASS_REALIZATION:
+                return " ╌╌▷ ";
+            case CLASS_COMPOSITION:
+                return " --◆ ";
+            case CLASS_UNIDIRECTIONAL:
+                return " --> ";
+            case CLASS_BIDIRECTIONAL:
+                return " <-> ";
+            default:
+                return " --- ";
             }
         }
     }
 
     private UMLClass source;
+
     private UMLClass target;
 
     private String sourceRole;
+
     private String targetRole;
 
     private String sourceMultiplicity;
+
     private String targetMultiplicity;
 
     private UMLRelationType type;
 
-    public UMLClassRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
-                                String sourceMultiplicity, String targetMultiplicity) {
+    public UMLClassRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole, String sourceMultiplicity,
+            String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;

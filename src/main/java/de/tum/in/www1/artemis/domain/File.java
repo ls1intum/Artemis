@@ -12,7 +12,6 @@ public class File extends java.io.File {
         this.repository = repository;
     }
 
-
     public Repository getRepository() {
         return repository;
     }
@@ -23,6 +22,6 @@ public class File extends java.io.File {
 
     @Override
     public String toString() {
-        return super.toString().replaceFirst(repository.getLocalPath().toString(),"").replaceAll("^/+", "");
+        return super.toString().replaceFirst(repository.getLocalPath().toString(), "").replaceAll("^/+", "");
     }
 }

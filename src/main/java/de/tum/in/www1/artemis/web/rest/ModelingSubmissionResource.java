@@ -185,7 +185,7 @@ public class ModelingSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-                                                                                     @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -203,9 +203,9 @@ public class ModelingSubmissionResource {
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
-        } else {
-            Optional<ModelingSubmission> optionalModelingSubmission =
-                modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
+        }
+        else {
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutResult((ModelingExercise) exercise);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }
@@ -235,15 +235,14 @@ public class ModelingSubmissionResource {
         }
         else {
             // if diagram type is not supported get any (not optimal) submission that is not assessed
-            Optional<ModelingSubmission> optionalModelingSubmission =
-                participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-                // map to latest submission
-                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
-            if (!optionalModelingSubmission.isPresent())
-            {
+            Optional<ModelingSubmission> optionalModelingSubmission = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId())
+                    .stream()
+                    // map to latest submission
+                    .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+            if (!optionalModelingSubmission.isPresent()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
-            return ResponseEntity.ok(new Long[] {optionalModelingSubmission.get().getId()});
+            return ResponseEntity.ok(new Long[] { optionalModelingSubmission.get().getId() });
         }
     }
 
@@ -259,11 +258,8 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before
-     * sending an exercise to the client for a student.
-     *
-     * IMPORTANT:   Do not call this method from a transactional context as this would remove the sensitive information
-     *              also from the entity in the database without explicitly saving it.
+     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before sending an exercise to the client for a student. IMPORTANT: Do not call
+     * this method from a transactional context as this would remove the sensitive information also from the entity in the database without explicitly saving it.
      */
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client

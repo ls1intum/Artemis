@@ -1,18 +1,20 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.Weekday;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.Weekday;
 
 /**
  * A TutorGroup.
@@ -24,7 +26,7 @@ import java.util.Set;
 public class TutorGroup implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -55,9 +57,7 @@ public class TutorGroup implements Serializable {
 
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "tutor_group_students",
-               joinColumns = @JoinColumn(name = "tutor_group_id", referencedColumnName = "id"),
-               inverseJoinColumns = @JoinColumn(name = "students_id", referencedColumnName = "id"))
+    @JoinTable(name = "tutor_group_students", joinColumns = @JoinColumn(name = "tutor_group_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "students_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();
 
     @ManyToOne
@@ -223,14 +223,7 @@ public class TutorGroup implements Serializable {
 
     @Override
     public String toString() {
-        return "TutorGroup{" +
-            "id=" + getId() +
-            ", name='" + getName() + "'" +
-            ", capacity=" + getCapacity() +
-            ", weekday='" + getWeekday() + "'" +
-            ", timeSlot='" + getTimeSlot() + "'" +
-            ", language='" + getLanguage() + "'" +
-            ", room='" + getRoom() + "'" +
-            "}";
+        return "TutorGroup{" + "id=" + getId() + ", name='" + getName() + "'" + ", capacity=" + getCapacity() + ", weekday='" + getWeekday() + "'" + ", timeSlot='" + getTimeSlot()
+                + "'" + ", language='" + getLanguage() + "'" + ", room='" + getRoom() + "'" + "}";
     }
 }

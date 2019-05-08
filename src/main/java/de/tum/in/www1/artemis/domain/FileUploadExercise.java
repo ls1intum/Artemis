@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * A FileUploadExercise.
  */
 
 @Entity
-@DiscriminatorValue(value="F")
+@DiscriminatorValue(value = "F")
 public class FileUploadExercise extends Exercise implements Serializable {
 
     @Column(name = "filePattern")
@@ -54,8 +55,6 @@ public class FileUploadExercise extends Exercise implements Serializable {
 
     @Override
     public String toString() {
-        return "FileUploadExercise{" +
-            "id=" + getId() +
-            "}";
+        return "FileUploadExercise{" + "id=" + getId() + "}";
     }
 }

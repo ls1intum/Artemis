@@ -79,7 +79,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
-        this.markdown = new Remarkable();
+        // Enabled for color picker of markdown editor that inserts spans into the markdown
+        this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);

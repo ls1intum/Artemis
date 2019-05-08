@@ -74,7 +74,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of (results | sortBy: predicate:reverse); let i = index">
+                <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of results | sortBy: predicate:reverse; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
                     <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>

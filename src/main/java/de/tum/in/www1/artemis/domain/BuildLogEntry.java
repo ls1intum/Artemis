@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 public class BuildLogEntry {
 
     private ZonedDateTime time;
+
     private String log;
 
     public BuildLogEntry(ZonedDateTime time, String log) {
