@@ -12,7 +12,6 @@ import { Result } from 'app/entities/result';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { QuizSubmission } from 'app/entities/quiz-submission';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer';
-import { QuizComponent } from 'app/quiz/participate';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -35,6 +34,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
     @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
     @Input() multipleChoiceSubmittedResult: Result;
+    @Input() submittedQuizExercise: QuizExercise;
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
@@ -47,7 +47,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
     checkForCorrectAnswers = new Array<AnswerOption>();
     checkForWrongAnswers = new Array<AnswerOption>();
-    @Input() submittedQuizExercise: QuizExercise;
 
     /* Drag and Drop Counting Variables*/
     dragAndDropZones: number; // Amount of drag and drop Zones
@@ -98,11 +97,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      * checks for the correct answerOptions based on the submittedAnswer
      */
     private submittedAnswerCorrectValues() {
-        console.log(this.multipleChoiceSubmittedResult);
-        console.log(this.submittedQuizExercise.quizQuestions);
-
         let answerOptionsOfQuestion = new Array<AnswerOption>();
-
         for (const question of this.submittedQuizExercise.quizQuestions) {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
             if (mcQuizQuestion.id === this.question.id) {
@@ -110,19 +105,6 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
                 this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions.filter(option => option.isCorrect).length;
             }
         }
-
-        /** if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
-            const quizExercise = this.multipleChoiceSubmittedResult.participation.exercise as QuizExercise;
-
-            let answerOptionsOfQuestion = new Array<AnswerOption>();
-
-            for (const quizQuestion of quizExercise.quizQuestions) {
-                if (quizQuestion.id === this.question.id) {
-                    const mcQuizQuestion = quizQuestion as MultipleChoiceQuestion;
-                    answerOptionsOfQuestion = mcQuizQuestion.answerOptions;
-                    this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions.filter(option => option.isCorrect).length;
-                }
-            } **/
 
         const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
         const submittedAnswerLength = submittedQuizSubmission.submittedAnswers.length;
