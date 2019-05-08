@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import org.zalando.problem.AbstractThrowableProblem;
+import static org.zalando.problem.Status.BAD_REQUEST;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.zalando.problem.Status.BAD_REQUEST;
+import org.zalando.problem.AbstractThrowableProblem;
 
 /**
- * Custom, parameterized exception, which can be translated on the client side.
- * For example:
+ * Custom, parameterized exception, which can be translated on the client side. For example:
  *
  * <pre>
  * throw new CustomParameterizedException(&quot;myCustomError&quot;, &quot;hello&quot;, &quot;world&quot;);

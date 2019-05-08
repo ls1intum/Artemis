@@ -2,21 +2,25 @@
     "modelingAssessmentEditor": {
         "assessment": "Bewertung",
         "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
+        "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe bewerten"
         },
         "messages": {
-            "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen.",
+            "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
             "noModel": "Kein Modell für Abgabe gefunden.",
             "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
-            "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
+            "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
-            "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
+            "submitFailed": "Absenden deiner Bewertung ist fehlgeschlagen!",
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
+            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung."
-        }
+        },
+        "reviewComplaint": "Beschwerde überprüfen"
     }
 }

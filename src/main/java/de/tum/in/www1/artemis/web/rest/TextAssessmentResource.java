@@ -87,6 +87,16 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        checkTextExerciseForRequest(textExercise);
+        Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+        return ResponseEntity.ok(result);
+    }
+
     /**
      * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.

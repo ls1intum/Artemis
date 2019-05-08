@@ -1,7 +1,4 @@
-<jhi-header-exercise-page-with-details
-    [exercise]="exercise"
-    [onBackClick]="back.bind(this)"
->
+<jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="back.bind(this)">
     <span pagetitle>{{ 'arTeMiSApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
@@ -18,11 +15,11 @@
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfAssessments }} ({{totalAssessmentPercentage}}%)</div>
+                        <div class="col-4">{{ stats.numberOfAssessments }} ({{ totalAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{100 - totalAssessmentPercentage}}%)</div>
+                        <div class="col-4">{{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>

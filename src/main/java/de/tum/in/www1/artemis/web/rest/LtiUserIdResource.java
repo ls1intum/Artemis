@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.LtiUserId;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.LtiUserId;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing LtiUserId.
@@ -31,7 +32,7 @@ public class LtiUserIdResource {
     }
 
     /**
-     * POST  /lti-user-ids : Create a new ltiUserId.
+     * POST /lti-user-ids : Create a new ltiUserId.
      *
      * @param ltiUserId the ltiUserId to create
      * @return the ResponseEntity with status 201 (Created) and with body the new ltiUserId, or with status 400 (Bad Request) if the ltiUserId has already an ID
@@ -44,18 +45,16 @@ public class LtiUserIdResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new ltiUserId cannot already have an ID")).body(null);
         }
         LtiUserId result = ltiUserIdRepository.save(ltiUserId);
-        return ResponseEntity.created(new URI("/api/lti-user-ids/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        return ResponseEntity.created(new URI("/api/lti-user-ids/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     /**
-     * PUT  /lti-user-ids : Updates an existing ltiUserId.
+     * PUT /lti-user-ids : Updates an existing ltiUserId.
      *
      * @param ltiUserId the ltiUserId to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated ltiUserId,
-     * or with status 400 (Bad Request) if the ltiUserId is not valid,
-     * or with status 500 (Internal Server Error) if the ltiUserId couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ltiUserId, or with status 400 (Bad Request) if the ltiUserId is not valid, or with status 500
+     *         (Internal Server Error) if the ltiUserId couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lti-user-ids")
@@ -65,13 +64,11 @@ public class LtiUserIdResource {
             return createLtiUserId(ltiUserId);
         }
         LtiUserId result = ltiUserIdRepository.save(ltiUserId);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, ltiUserId.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, ltiUserId.getId().toString())).body(result);
     }
 
     /**
-     * GET  /lti-user-ids/:id : get the "id" ltiUserId.
+     * GET /lti-user-ids/:id : get the "id" ltiUserId.
      *
      * @param id the id of the ltiUserId to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the ltiUserId, or with status 404 (Not Found)
@@ -84,7 +81,7 @@ public class LtiUserIdResource {
     }
 
     /**
-     * DELETE  /lti-user-ids/:id : delete the "id" ltiUserId.
+     * DELETE /lti-user-ids/:id : delete the "id" ltiUserId.
      *
      * @param id the id of the ltiUserId to delete
      * @return the ResponseEntity with status 200 (OK)

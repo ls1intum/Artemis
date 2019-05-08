@@ -1,20 +1,20 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.TutorGroup;
-import de.tum.in.www1.artemis.repository.TutorGroupRepository;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.TutorGroup;
+import de.tum.in.www1.artemis.repository.TutorGroupRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing TutorGroup.
@@ -34,7 +34,7 @@ public class TutorGroupResource {
     }
 
     /**
-     * POST  /tutor-groups : Create a new tutorGroup.
+     * POST /tutor-groups : Create a new tutorGroup.
      *
      * @param tutorGroup the tutorGroup to create
      * @return the ResponseEntity with status 201 (Created) and with body the new tutorGroup, or with status 400 (Bad Request) if the tutorGroup has already an ID
@@ -48,18 +48,16 @@ public class TutorGroupResource {
             throw new BadRequestAlertException("A new tutorGroup cannot already have an ID", ENTITY_NAME, "idexists");
         }
         TutorGroup result = tutorGroupRepository.save(tutorGroup);
-        return ResponseEntity.created(new URI("/api/tutor-groups/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        return ResponseEntity.created(new URI("/api/tutor-groups/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     /**
-     * PUT  /tutor-groups : Updates an existing tutorGroup.
+     * PUT /tutor-groups : Updates an existing tutorGroup.
      *
      * @param tutorGroup the tutorGroup to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorGroup,
-     * or with status 400 (Bad Request) if the tutorGroup is not valid,
-     * or with status 500 (Internal Server Error) if the tutorGroup couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorGroup, or with status 400 (Bad Request) if the tutorGroup is not valid, or with status 500
+     *         (Internal Server Error) if the tutorGroup couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/tutor-groups")
@@ -70,13 +68,11 @@ public class TutorGroupResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         TutorGroup result = tutorGroupRepository.save(tutorGroup);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, tutorGroup.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, tutorGroup.getId().toString())).body(result);
     }
 
     /**
-     * GET  /tutor-groups/:id : get the "id" tutorGroup.
+     * GET /tutor-groups/:id : get the "id" tutorGroup.
      *
      * @param id the id of the tutorGroup to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the tutorGroup, or with status 404 (Not Found)
@@ -90,7 +86,7 @@ public class TutorGroupResource {
     }
 
     /**
-     * DELETE  /tutor-groups/:id : delete the "id" tutorGroup.
+     * DELETE /tutor-groups/:id : delete the "id" tutorGroup.
      *
      * @param id the id of the tutorGroup to delete
      * @return the ResponseEntity with status 200 (OK)

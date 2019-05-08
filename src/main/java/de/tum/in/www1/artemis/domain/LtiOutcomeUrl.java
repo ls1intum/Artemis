@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A LtiOutcomeUrl.
@@ -82,7 +83,7 @@ public class LtiOutcomeUrl implements Serializable {
             return false;
         }
         LtiOutcomeUrl ltiOutcomeUrl = (LtiOutcomeUrl) o;
-        if(ltiOutcomeUrl.id == null || id == null) {
+        if (ltiOutcomeUrl.id == null || id == null) {
             return false;
         }
         return Objects.equals(id, ltiOutcomeUrl.id);
@@ -95,10 +96,6 @@ public class LtiOutcomeUrl implements Serializable {
 
     @Override
     public String toString() {
-        return "LtiOutcomeUrl{" +
-            "id=" + id +
-            ", url='" + url + "'" +
-            ", sourcedId='" + sourcedId + "'" +
-            '}';
+        return "LtiOutcomeUrl{" + "id=" + id + ", url='" + url + "'" + ", sourcedId='" + sourcedId + "'" + '}';
     }
 }

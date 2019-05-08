@@ -7,6 +7,7 @@ import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -30,6 +31,15 @@ export class ModelingAssessmentService {
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
+    }
+
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
+        const assessmentUpdate = {
+            feedbacks,
+            complaintResponse,
+        };
+        return this.http.post<Result>(url, assessmentUpdate).map(res => this.convertResult(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {

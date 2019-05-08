@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.LtiUserId;
-import de.tum.in.www1.artemis.domain.User;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
+import de.tum.in.www1.artemis.domain.LtiUserId;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Spring Data JPA repository for the LtiUserId entity.

@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
-import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
@@ -17,7 +14,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import de.tum.in.www1.artemis.security.jwt.JWTFilter;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
+import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
  * Controller to authenticate users.
@@ -51,7 +53,8 @@ public class UserJWTController {
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
             return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
-        } catch (CaptchaRequiredException ex) {
+        }
+        catch (CaptchaRequiredException ex) {
             log.warn("CAPTCHA required in JIRA during login for user " + loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-arTeMiSApp-error", ex.getMessage()).build();
         }

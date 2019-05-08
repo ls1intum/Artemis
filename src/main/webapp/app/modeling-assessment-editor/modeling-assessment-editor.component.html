@@ -2,15 +2,22 @@
     <h2 class="top-container">
         <!--back button only used in tutor dashboard-->
         <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-        <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
+        <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
-            <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
-            <span *ngIf="!isAuthorized" class="text-danger ml-3" style="font-size: 65%"
-                  jhiTranslate="modelingAssessmentEditor.assessmentLocked" [translateValues]="{ otherUser: result?.assessor?.firstName }">
+            <span
+                *ngIf="!isAuthorized"
+                class="text-danger ml-3"
+                style="font-size: 65%"
+                jhiTranslate="modelingAssessmentEditor.assessmentLocked"
+                [translateValues]="{ otherUser: result?.assessor?.firstName }"
+            >
                 Assessment locked by another user!
+            </span>
+            <span *ngIf="isAuthorized" class="text-danger ml-3" style="font-size: 65%" jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
+                You have the lock for this assessment
             </span>
             <div *ngIf="!result?.rated">
                 <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
@@ -28,15 +35,23 @@
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
                 <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
             </div>
-            <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated">
+            <button
+                class="btn btn-danger"
+                *ngIf="result?.rated && (isAtLeastInstructor || isAuthorized)"
+                (click)="onSubmitAssessment()"
+                [disabled]="!assessmentsAreValid || !isAtLeastInstructor"
+            >
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
-            <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
+            <button class="btn btn-success" *ngIf="result?.rated && isAuthorized" [disabled]="busy" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
         </div>
     </h2>
+    <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
+        You find the complaint at the end of the page
+    </div>
     <div class="editor-container">
         <jhi-modeling-assessment
             *ngIf="submission"
@@ -50,6 +65,18 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
+<div class="mt-3" *ngIf="hasComplaint && result?.id">
+    <h2 class="row-container" jhiTranslate="modelingAssessmentEditor.reviewComplaint">
+        Review Complaint
+    </h2>
+    <jhi-complaints-for-tutor-form
+        [resultId]="result.id"
+        [isAllowedToRespond]="result.assessor.id !== userId"
+        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    >
+    </jhi-complaints-for-tutor-form>
+</div>
+
 <ng-template #conflictResolution>
     <jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
 </ng-template>
