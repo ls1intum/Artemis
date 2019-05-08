@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz-question';
 import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
@@ -12,13 +12,14 @@ import { Result } from 'app/entities/result';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { QuizSubmission } from 'app/entities/quiz-submission';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer';
+import { QuizComponent } from 'app/quiz/participate';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styles: [],
 })
-export class QuizScoringInfoStudentModalComponent implements OnInit {
+export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -70,7 +71,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
 
     constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 
-    ngOnInit() {
+    ngAfterViewInit() {
         this.checkForSingleOrPluralPoints();
         switch (this.question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
@@ -96,6 +97,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      * checks for the correct answerOptions based on the submittedAnswer
      */
     private submittedAnswerCorrectValues() {
+        console.log(this.multipleChoiceSubmittedResult);
+
         if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
             const quizExercise = this.multipleChoiceSubmittedResult.participation.exercise as QuizExercise;
 
