@@ -72,6 +72,7 @@
                         <jhi-result [participation]="programmingExercise.templateParticipation"></jhi-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.templateParticipation.results.length"
+                            class="repository-status-icon"
                             [participationType]="'TEMPLATE'"
                             [result]="programmingExercise.templateParticipation.results[0]"
                         ></jhi-programming-exercise-instructor-status>
@@ -83,6 +84,7 @@
                         <jhi-result [participation]="programmingExercise.solutionParticipation"></jhi-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.solutionParticipation.results.length"
+                            class="repository-status-icon"
                             [participationType]="'SOLUTION'"
                             [result]="programmingExercise.solutionParticipation.results[0]"
                         ></jhi-programming-exercise-instructor-status>

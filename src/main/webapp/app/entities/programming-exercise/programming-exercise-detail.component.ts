@@ -9,6 +9,7 @@ import { JhiAlertService } from 'ng-jhipster';
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
+    styleUrls: ['./programming-exercise-detail.component.scss'],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
