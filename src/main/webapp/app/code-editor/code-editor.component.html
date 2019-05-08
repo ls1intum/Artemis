@@ -49,8 +49,12 @@
 
         <!-- Instructions -->
         <div *ngIf="participation?.exercise" class="editor-sidebar-right">
-            <ng-template #editorSidebarRight></ng-template>
+            <!-- <ng-template #editorSidebarRight></ng-template> -->
             <jhi-code-editor-instructions [participation]="exercise.templateParticipation" [exercise]="exercise" [editableInstructions]="true"></jhi-code-editor-instructions>
+        </div>
+        <div *ngIf="buildable" class="editor-bottom">
+            <jhi-code-editor-build-output [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
+            </jhi-code-editor-build-output>
         </div>
     </div>
 </div>

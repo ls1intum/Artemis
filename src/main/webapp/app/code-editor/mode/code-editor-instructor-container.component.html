@@ -139,21 +139,11 @@
         <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span></div>
     </ng-template>
 </div>
-<!-- Participation based repository is selected -->
-<jhi-code-editor-buildable
-    *ngIf="selectedRepository !== 'TEST'"
-    [editableInstructions]="true"
-    [participation]="selectedParticipation"
-    [fileService]="repositoryFileParticipationService"
-    [repositoryService]="repositoryParticipationService"
->
-</jhi-code-editor-buildable>
-<!-- Test repository selected -->
 <jhi-code-editor
-    *ngIf="selectedRepository === 'TEST'"
+    #editor
+    [buildable]="selectedRepository !== 'TEST'"
     [editableInstructions]="true"
-    [exercise]="exercise"
-    [fileService]="repositoryFileTestService"
-    [repositoryService]="repositoryTestService"
->
-</jhi-code-editor>
+    [fileService]="selectedRepository === 'TEST' ? testRepositoryFileService : repositoryFileParticipationService"
+    [repositoryService]="selectedRepository === 'TEST' : testRepositoryService : repositoryParticipationService"
+    [sessionService]="selectedRepository === 'TEST' : codeEditorTestSessionService : codeEditorSessionService "
+></jhi-code-editor>

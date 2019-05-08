@@ -6,7 +6,6 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorBuildableComponent } from './code-editor-buildable.component';
 import { CodeEditorInstructorContainerComponent } from './mode/code-editor-instructor-container.component';
 import { CodeEditorStudentContainerComponent } from './mode/code-editor-student-container.component';
 import { CodeEditorService } from './code-editor.service';
@@ -48,7 +47,6 @@ const ENTITY_STATES = [...codeEditorRoute];
     ],
     declarations: [
         CodeEditorComponent,
-        CodeEditorBuildableComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserComponent,

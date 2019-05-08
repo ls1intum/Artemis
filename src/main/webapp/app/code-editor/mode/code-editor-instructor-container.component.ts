@@ -16,8 +16,8 @@ import {
     TestRepositoryFileService,
     TestRepositoryService,
 } from '../code-editor-repository.service';
-import { CodeEditorBuildableComponent } from 'app/code-editor/code-editor-buildable.component';
 import { CodeEditorComponent } from '../code-editor.component';
+import { CodeEditorParticipationSessionService, CodeEditorTestSessionService } from '../code-editor-session.service';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -43,12 +43,13 @@ enum LOADING_STATE {
         RepositoryParticipationService,
         TestRepositoryFileService,
         TestRepositoryService,
+        CodeEditorParticipationSessionService,
+        CodeEditorTestSessionService,
         HttpClient,
     ],
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
     @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
-    @ViewChild(CodeEditorBuildableComponent) buildableEditor: CodeEditorComponent;
 
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -65,12 +66,15 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     constructor(
         private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
+        // TODO: Instead of having 2 services, this should only be one
         private domainParticipationService: DomainService<Participation>,
         private domainExerciseService: DomainService<ProgrammingExercise>,
         public repositoryParticipationService: RepositoryParticipationService,
         public repositoryFileParticipationService: RepositoryFileParticipationService,
         public testRepositoryFileService: TestRepositoryFileService,
         public testRepositoryService: TestRepositoryService,
+        public codeEditorSessionService: CodeEditorParticipationSessionService,
+        public codeEditorTestSessionService: CodeEditorTestSessionService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -86,8 +90,6 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     hasUnsavedChanges = () => {
         if (this.editor) {
             return this.editor.hasUnsavedChanges();
-        } else if (this.buildableEditor) {
-            return this.buildableEditor.hasUnsavedChanges();
         } else {
             return false;
         }

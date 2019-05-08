@@ -30,7 +30,7 @@ export class DomainService<T> {
     }
 }
 
-abstract class DomainDependent<T> implements OnDestroy {
+export abstract class DomainDependent<T> implements OnDestroy {
     protected domain: T;
     private domainChangeSubscription: Subscription;
 
@@ -124,6 +124,7 @@ export class RepositoryFileParticipationService extends IRepositoryFileService<P
     setDomain(participation: Participation) {
         super.setDomain(participation);
         if (this.domain) {
+            // TODO: Implement websocket requests
             this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
             this.updateFilesChannel = `/topic/repository/${this.domain.id}/files`;
         } else {

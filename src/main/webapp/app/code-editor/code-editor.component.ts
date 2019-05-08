@@ -3,7 +3,9 @@ import { ContentChild, Component, ElementRef, Input, OnInit, OnChanges, ViewChil
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { difference as _difference } from 'lodash';
+import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+
 import { CourseService } from '../entities/course';
 import { WindowRef } from '../core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
@@ -14,13 +16,16 @@ import { Observable, Subject } from 'rxjs';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { IRepositoryService, IRepositoryFileService, DomainService } from './code-editor-repository.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { AnnotationArray, Session } from '../entities/ace-editor';
+import { BuildLogEntryArray } from 'app/entities/build-log';
+import { CodeEditorSessionService } from './code-editor-session.service';
 
 @Component({
     selector: 'jhi-code-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorComponent<T> implements OnInit, OnChanges {
+export class CodeEditorComponent implements OnInit {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
     @ContentChild('editor-sidebar-right') editorSidebarRight: ElementRef;
     @ContentChild('editor-bottom-area') editorBottomArea: ElementRef;
@@ -31,7 +36,11 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
     repositoryService: IRepositoryService<any>;
     @Input()
     fileService: IRepositoryFileService<any>;
+    @Input()
+    sessionService: CodeEditorSessionService<any>;
 
+    @Input()
+    readonly buildable = true;
     @Input()
     readonly editableInstructions = false;
     selectedFile: string;
@@ -40,51 +49,39 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
     unsavedFiles: string[] = [];
     fileChange: FileChange;
 
+    errorFiles: string[] = [];
+    session: Session;
+    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+    isBuilding = false;
+
     /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
     isLoadingFiles = true;
 
-    domain: T;
-    domainChange = new Subject<T>();
-
-    afterInit: () => void = () => {};
-
     constructor(private jhiAlertService: JhiAlertService, private domainService: DomainService<any>) {}
-
-    resetVariables(): Observable<void> {
-        // Reset all variables
-        this.selectedFile = undefined;
-        this.repositoryFiles = undefined;
-        this.unsavedFiles = [];
-        return Observable.of() as Observable<void>;
-    }
 
     ngOnInit() {
         this.domainService
             .subscribeDomainChange()
             .pipe(
-                tap(domain => {
-                    this.domain = domain;
+                tap(() => {
                     // Reset all variables
                     this.selectedFile = undefined;
                     this.repositoryFiles = undefined;
                     this.unsavedFiles = [];
-                    // this.resetVariables()
-                    //     .pipe(
+                    this.errorFiles = [];
+                    this.session = undefined;
+                    this.buildLogErrors = undefined;
+                    this.isBuilding = false;
                     this.checkIfRepositoryIsClean()
                         .pipe(
                             tap(commitState => (this.commitState = commitState)),
-                            tap(() => this.afterInit()),
-                            tap(() => {
-                                console.log('test');
-                                this.domainChange.next(this.domain);
-                            }),
+                            tap(() => this.loadSession()),
                         )
                         .subscribe(
                             () => {},
                             err => {
-                                console.log('test');
                                 this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
                                 this.onError(err);
                             },
@@ -94,29 +91,29 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
             .subscribe();
     }
 
-    // /**
-    //  * @function ngOnChanges
-    //  * @desc Fetches the participation and the repository files for the provided participationId in params
-    //  * If we are able to find the participation with the id specified in the route params in our data storage,
-    //  * we use it in order to spare any additional REST calls
-    //  */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (this.isInitial) {
-            this.resetVariables()
-                .pipe(
-                    switchMap(() => this.checkIfRepositoryIsClean()),
-                    tap(commitState => (this.commitState = commitState)),
-                    tap(() => this.afterInit()),
-                )
-                .subscribe(
-                    () => {},
-                    err => {
-                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
-                        this.onError(err);
-                    },
-                );
-        }
-    }
+    // // /**
+    // //  * @function ngOnChanges
+    // //  * @desc Fetches the participation and the repository files for the provided participationId in params
+    // //  * If we are able to find the participation with the id specified in the route params in our data storage,
+    // //  * we use it in order to spare any additional REST calls
+    // //  */
+    // ngOnChanges(changes: SimpleChanges): void {
+    //     if (this.isInitial) {
+    //         this.resetVariables()
+    //             .pipe(
+    //                 switchMap(() => this.checkIfRepositoryIsClean()),
+    //                 tap(commitState => (this.commitState = commitState)),
+    //                 tap(() => this.afterInit()),
+    //             )
+    //             .subscribe(
+    //                 () => {},
+    //                 err => {
+    //                     this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+    //                     this.onError(err);
+    //                 },
+    //             );
+    //     }
+    // }
 
     /**
      * @function checkIfRepositoryIsClean
@@ -157,7 +154,7 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState === CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
-            this.commit();
+            this.prepareCommit();
         } else if (!this.unsavedFiles.length) {
             this.editorState = EditorState.CLEAN;
         } else {
@@ -171,7 +168,7 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
      * Also all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    onFileChange<T extends FileChange>([files, fileChange]: [string[], T]) {
+    onFileChange<F extends FileChange>([files, fileChange]: [string[], F]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         this.repositoryFiles = files;
         if (fileChange instanceof CreateFileChange) {
@@ -197,6 +194,34 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
             if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
                 this.selectedFile = undefined;
             }
+        }
+        if (fileChange instanceof RenameFileChange) {
+            const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
+            const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
+            this.errorFiles = [...this.errorFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedErrorFiles];
+            const renamedErrors = compose(
+                fromPairs,
+                map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            const filteredErrors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.oldFileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
+            // If the renamed file has errors, we also need to update the session in localStorage
+            if (this.errorFiles.includes(fileChange.newFileName)) {
+                this.storeSession();
+            }
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.errorFiles = this.errorFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            const errors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors, timestamp: this.buildLogErrors.timestamp };
         }
         this.fileChange = fileChange;
         if (this.unsavedFiles.length && this.editorState === EditorState.CLEAN) {
@@ -252,6 +277,43 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
 
         const unsavedFiles = _difference(this.unsavedFiles, savedFiles);
         this.setUnsavedFiles(unsavedFiles);
+
+        const { errorFiles } = Object.entries(files).reduce(
+            (acc, [fileName, error]: [string, string | null]) => (error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : acc),
+            { errorFiles: [] },
+        );
+        if (errorFiles.length) {
+            this.onError('saveFailed');
+        }
+        this.storeSession();
+    }
+
+    /**
+     * @function updateLatestResult
+     * @desc Callback function for when a new result is received from the result component
+     */
+    updateLatestResult() {
+        this.isBuilding = false;
+    }
+
+    /**
+     * Check if the received build logs are recent and format them for use in the ace-editor
+     * @param buildLogs
+     */
+    updateLatestBuildLogs(buildLogs: BuildLogEntryArray) {
+        // The build logs come asynchronously while the view of other components are rendered.
+        // To avoid ExpressionChangedAfterItHasBeenCheckedError, we wait a tick so the view can update.
+        setTimeout(() => {
+            const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+            if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
+                this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+                this.errorFiles = Object.keys(this.buildLogErrors.errors);
+                // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
+                if (this.session) {
+                    this.storeSession();
+                }
+            }
+        }, 0);
     }
 
     /**
@@ -285,23 +347,46 @@ export class CodeEditorComponent<T> implements OnInit, OnChanges {
         // If there are unsaved changes, save them before trying to commit again.
         if (!this.unsavedFiles.length) {
             this.commitState = CommitState.COMMITTING;
-            this.commit().subscribe(
-                () => {
-                    this.commitState = CommitState.CLEAN;
-                },
-                err => {
-                    console.log('Error during commit ocurred!', err);
-                },
-            );
+            // TODO: Only set building if buildable
+            this.repositoryService
+                .commit()
+                .pipe(tap(() => (this.isBuilding = true)))
+                .subscribe(
+                    () => {
+                        this.commitState = CommitState.CLEAN;
+                    },
+                    err => {
+                        console.log('Error during commit ocurred!', err);
+                    },
+                );
         } else {
             this.commitState = CommitState.WANTS_TO_COMMIT;
             this.editor.saveChangedFiles();
         }
     }
 
-    commit = () => {
-        return this.repositoryService.commit();
-    };
+    /**
+     * @function loadSession
+     * @desc Gets the user's session data from localStorage to load editor settings
+     */
+    loadSession() {
+        this.session = this.sessionService.loadSession();
+        if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
+            // TODO: Do we even need 2 variables?
+            this.buildLogErrors = this.session;
+            this.errorFiles = Object.keys(this.buildLogErrors.errors);
+        } else if (this.buildLogErrors) {
+            // TODO: Why to store a session in this case?
+            this.storeSession();
+        }
+    }
+
+    /**
+     * Store the build log error data in the localStorage of the browser (synchronous action).
+     */
+    storeSession() {
+        this.sessionService.storeSession(this.buildLogErrors);
+    }
 
     /**
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
