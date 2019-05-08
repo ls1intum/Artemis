@@ -20,7 +20,17 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe, JhiDynamicTranslateDirective, SecuredImageComponent, ExerciseTypePipe, KeysPipe, RemovePositiveAutomaticFeedbackPipe],
+    declarations: [
+        HasAnyAuthorityDirective,
+        SafeHtmlPipe,
+        SafeUrlPipe,
+        RemoveKeysPipe,
+        JhiDynamicTranslateDirective,
+        SecuredImageComponent,
+        ExerciseTypePipe,
+        KeysPipe,
+        RemovePositiveAutomaticFeedbackPipe,
+    ],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
     exports: [
