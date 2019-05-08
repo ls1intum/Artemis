@@ -9,7 +9,8 @@ import { ParticipationService, Participation } from 'src/main/webapp/app/entitie
 import { ActivatedRoute } from '@angular/router';
 
 export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
-    @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
+    abstract hasUnsavedChanges: () => boolean;
+
     paramSub: Subscription;
 
     constructor(protected participationService: ParticipationService, private translateService: TranslateService, protected route: ActivatedRoute) {}
@@ -18,7 +19,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
     canDeactivate() {
-        return this.editor.hasUnsavedChanges();
+        return this.hasUnsavedChanges();
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes

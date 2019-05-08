@@ -8,7 +8,31 @@
             <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title"> </span>
             <span>{{ participation?.exercise.title }}</span>
         </div>
-        <ng-template #editorNavbar> </ng-template>
+        <ng-template #editorNavbar>
+            <!-- Result -->
+            <div class="navbar-collapse editor-top-right">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown pointer">
+                        <jhi-result
+                            [participation]="participation"
+                            [isBuilding]="isBuilding"
+                            [result]="participation && participation.results ? participation.results[0] : null"
+                            (newResult)="updateLatestResult()"
+                            [hidden]="isBuilding"
+                        >
+                        </jhi-result>
+                    </li>
+                </ul>
+            </div>
+            <!-- Actions -->
+            <jhi-code-editor-actions
+                [editorState]="editorState"
+                [commitState]="commitState"
+                [isBuilding]="isBuilding"
+                [onSave]="editor.saveChangedFiles.bind(editor)"
+                [onCommit]="prepareCommit.bind(this)"
+            ></jhi-code-editor-actions>
+        </ng-template>
     </nav>
 
     <div class="editor-main">
@@ -49,8 +73,14 @@
 
         <!-- Instructions -->
         <div *ngIf="participation?.exercise" class="editor-sidebar-right">
-            <ng-template #editorSidebarRight></ng-template>
-            <jhi-code-editor-instructions [participation]="exercise.templateParticipation" [exercise]="exercise" [editableInstructions]="true"></jhi-code-editor-instructions>
+            <!-- <ng-template #editorSidebarRight></ng-template> -->
+            <jhi-code-editor-instructions [participation]="participation" [exercise]="exercise" [editableInstructions]="editableInstructions"> </jhi-code-editor-instructions>
         </div>
+    </div>
+
+    <div class="editor-bottom">
+        <!-- <ng-template #editorBottomArea></ng-template> -->
+        <jhi-code-editor-build-output #editorBottomArea [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
+        </jhi-code-editor-build-output>
     </div>
 </div>

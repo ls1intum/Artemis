@@ -1,5 +1,5 @@
-import { IRepositoryFileService } from 'app/code-editor/code-editor-repository.service';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { IRepositoryFileService, DomainService } from 'app/code-editor/code-editor-repository.service';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs';
 import { catchError, map as rxMap, tap } from 'rxjs/operators';
@@ -20,8 +20,11 @@ import { CodeEditorComponent } from '../code-editor.component';
     templateUrl: './code-editor-file-browser.component.html',
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
     public FileType = FileType;
+
+    @Input()
+    domainChange: Observable<void>;
 
     @Input()
     fileService: IRepositoryFileService<any>;
@@ -77,7 +80,42 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal) {}
+    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal, private domainService: DomainService<any>) {}
+
+    ngOnInit() {
+        this.domainChange.subscribe(() => {
+            this.loadFiles()
+                .pipe(
+                    rxMap(files =>
+                        compose(
+                            fromPairs,
+                            // Filter root folder
+                            filter(([value]) => value),
+                            // Filter Readme file that was historically in the student's assignment repo
+                            filter(([value]) => !value.includes('README.md')),
+                            // Remove binary files as they can't be displayed in an editor
+                            filter(([filename]) => {
+                                const fileSplit = filename.split('.');
+                                // Either the file has no ending or the file ending is allowed
+                                return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
+                            }),
+                            toPairs,
+                        )(files),
+                    ),
+                    catchError((error: HttpErrorResponse) => {
+                        console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                        return Observable.of({});
+                    }),
+                    tap(files => {
+                        this.isLoadingFiles = false;
+                        this.repositoryFiles = files;
+                        this.setupTreeview();
+                        this.onFilesLoaded.emit(Object.keys(files));
+                    }),
+                )
+                .subscribe();
+        });
+    }
 
     /**
      * @function ngAfterViewInit
@@ -119,39 +157,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     ngOnChanges(changes: SimpleChanges): void {
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked.
-        if (this.commitState !== CommitState.UNDEFINED && this.isInitial) {
-            this.isInitial = false;
-            this.loadFiles()
-                .pipe(
-                    rxMap(files =>
-                        compose(
-                            fromPairs,
-                            // Filter root folder
-                            filter(([value]) => value),
-                            // Filter Readme file that was historically in the student's assignment repo
-                            filter(([value]) => !value.includes('README.md')),
-                            // Remove binary files as they can't be displayed in an editor
-                            filter(([filename]) => {
-                                const fileSplit = filename.split('.');
-                                // Either the file has no ending or the file ending is allowed
-                                return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
-                            }),
-                            toPairs,
-                        )(files),
-                    ),
-                    catchError((error: HttpErrorResponse) => {
-                        console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                        return Observable.of({});
-                    }),
-                    tap(files => {
-                        this.isLoadingFiles = false;
-                        this.repositoryFiles = files;
-                        this.setupTreeview();
-                        this.onFilesLoaded.emit(Object.keys(files));
-                    }),
-                )
-                .subscribe();
-        } else if (changes.selectedFile && changes.selectedFile.currentValue) {
+        if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;
             this.setupTreeview();
         }

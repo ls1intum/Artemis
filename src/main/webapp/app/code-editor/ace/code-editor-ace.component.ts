@@ -24,6 +24,7 @@ import { JhiWebsocketService } from '../../core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { RenameFileChange, DeleteFileChange, FileChange } from 'app/entities/ace-editor/file-change.model';
+import { IRepositoryFileService } from '../code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -43,7 +44,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     annotationChange: Subscription;
 
     @Input()
-    participation: Participation;
+    fileService: IRepositoryFileService<any>;
     @Input()
     selectedFile: string;
     @Input()
@@ -71,12 +72,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     updateUnsavedFilesChannel: string;
     receiveFileUpdatesChannel: string;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private repositoryFileService: RepositoryFileService,
-        private localStorageService: LocalStorageService,
-        public modalService: NgbModal,
-    ) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private localStorageService: LocalStorageService, public modalService: NgbModal) {}
 
     @Input()
     get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timeStamp: number } {
@@ -227,7 +223,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     loadFile(fileName: string) {
         this.isLoading = true;
         /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService.get(this.participation.id, fileName).subscribe(
+        this.fileService.getFile(fileName).subscribe(
             fileObj => {
                 this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
                 this.isLoading = false;

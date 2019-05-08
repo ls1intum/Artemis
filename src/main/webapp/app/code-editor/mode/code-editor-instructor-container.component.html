@@ -141,23 +141,19 @@
 </div>
 <!-- Participation based repository is selected -->
 <jhi-code-editor-buildable
-    #buildableEditor
     *ngIf="selectedRepository !== 'TEST'"
+    [editableInstructions]="true"
     [participation]="selectedParticipation"
-    [repositoryFileService]="repositoryFileParticipationService"
+    [fileService]="repositoryFileParticipationService"
     [repositoryService]="repositoryParticipationService"
 >
-    <jhi-code-editor-instructions #editorSidebarRight [participation]="selectedParticipation" [exercise]="exercise" [editableInstructions]="true"> </jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        #editorBottomArea
-        [participation]="participation"
-        [isBuilding]="buildableEditor.isBuilding"
-        (buildLogChange)="buildableEditor.updateLatestBuildLogs($event)"
-    >
-    </jhi-code-editor-build-output>
 </jhi-code-editor-buildable>
 <!-- Test repository selected -->
-<jhi-code-editor *ngIf="selectedRepository === 'TEST'" [repositoryFileService]="repositoryFileTestService" [repositoryService]="repositoryTestService">
-    <jhi-code-editor-instructions #editorSidebarRight [participation]="exercise.templateParticipation" [exercise]="exercise" [editableInstructions]="true">
-    </jhi-code-editor-instructions>
+<jhi-code-editor
+    *ngIf="selectedRepository === 'TEST'"
+    [editableInstructions]="true"
+    [exercise]="exercise"
+    [fileService]="repositoryFileTestService"
+    [repositoryService]="repositoryTestService"
+>
 </jhi-code-editor>

@@ -1,7 +1,7 @@
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, BehaviorSubject } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { tap } from 'rxjs/operators';
@@ -15,12 +15,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 @Injectable({ providedIn: 'root' })
 export class DomainService<T> {
     protected domain: T;
-    private subject = new Subject<T>();
+    private subject = new BehaviorSubject<T>(null);
     private domainChange = this.subject.pipe(share());
-
-    // constructor(private httpClient: HttpClient) {
-    //     console.log('test');
-    // }
 
     public setDomain(domain: T) {
         this.domain = domain;
@@ -60,6 +56,7 @@ export abstract class IRepositoryFileService<T> extends DomainDependent<T> {
     abstract createFile: (fileName: string) => Observable<void>;
     abstract createFolder: (folderName: string) => Observable<void>;
     abstract updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    abstract updateFiles: (fileName: string, fileContent: string) => Observable<string[]>;
     abstract renameFile: (filePath: string, newFileName: string) => Observable<void>;
     abstract deleteFile: (filePath: string) => Observable<void>;
 
@@ -89,7 +86,11 @@ export class RepositoryParticipationService extends IRepositoryService<Participa
 
     setDomain(participation: Participation) {
         super.setDomain(participation);
-        this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        if (this.domain) {
+            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        } else {
+            this.resourceUrl = null;
+        }
     }
 
     isClean = () => {
@@ -114,13 +115,21 @@ export class RepositoryFileParticipationService extends IRepositoryFileService<P
     private resourceUrlBase = `${SERVER_API_URL}/api/repository`;
     private resourceUrl: string;
 
+    private updateFilesChannel: string;
+
     constructor(private domainChangeService: DomainService<Participation>, protected http: HttpClient) {
         super(domainChangeService);
     }
 
     setDomain(participation: Participation) {
         super.setDomain(participation);
-        this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        if (this.domain) {
+            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+            this.updateFilesChannel = `/topic/repository/${this.domain.id}/files`;
+        } else {
+            this.resourceUrl = null;
+            this.updateFilesChannel = null;
+        }
     }
 
     getRepositoryContent = () => {
@@ -145,6 +154,8 @@ export class RepositoryFileParticipationService extends IRepositoryFileService<P
         });
     };
 
+    updateFiles = [];
+
     renameFile = (currentFilePath: string, newFilename: string) => {
         return this.http.post<void>(`${this.resourceUrl}/rename-file`, { currentFilePath, newFilename });
     };
@@ -165,7 +176,11 @@ export class TestRepositoryService extends IRepositoryService<ProgrammingExercis
 
     setDomain(exercise: ProgrammingExercise) {
         super.setDomain(exercise);
-        this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        if (this.domain) {
+            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        } else {
+            this.resourceUrl = null;
+        }
     }
 
     isClean = () => {
@@ -192,7 +207,11 @@ export class TestRepositoryFileService extends IRepositoryFileService<Programmin
 
     setDomain(exercise: ProgrammingExercise) {
         super.setDomain(exercise);
-        this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        if (this.domain) {
+            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
+        } else {
+            this.resourceUrl = null;
+        }
     }
 
     getRepositoryContent = () => {

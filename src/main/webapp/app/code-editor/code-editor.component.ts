@@ -10,26 +10,27 @@ import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { IRepositoryService, IRepositoryFileService, DomainService } from './code-editor-repository.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-code-editor',
     templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorComponent implements OnInit, OnChanges {
+export class CodeEditorComponent<T> implements OnInit, OnChanges {
     @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
     @ContentChild('editor-sidebar-right') editorSidebarRight: ElementRef;
     @ContentChild('editor-bottom-area') editorBottomArea: ElementRef;
 
     @Input()
+    exercise: ProgrammingExercise;
+    @Input()
     repositoryService: IRepositoryService<any>;
     @Input()
     fileService: IRepositoryFileService<any>;
-    @Input()
-    isInitial = true;
 
     @Input()
     readonly editableInstructions = false;
@@ -44,6 +45,9 @@ export class CodeEditorComponent implements OnInit, OnChanges {
     commitState = CommitState.UNDEFINED;
     isLoadingFiles = true;
 
+    domain: T;
+    domainChange = new Subject<T>();
+
     afterInit: () => void = () => {};
 
     constructor(private jhiAlertService: JhiAlertService, private domainService: DomainService<any>) {}
@@ -53,39 +57,65 @@ export class CodeEditorComponent implements OnInit, OnChanges {
         this.selectedFile = undefined;
         this.repositoryFiles = undefined;
         this.unsavedFiles = [];
-        this.isInitial = false;
         return Observable.of() as Observable<void>;
     }
 
     ngOnInit() {
-        this.domainService.subscribeDomainChange().pipe(
-            tap(() => {
-                this.resetVariables()
-                    .pipe(
-                        switchMap(() => this.checkIfRepositoryIsClean()),
-                        tap(commitState => (this.commitState = commitState)),
-                        tap(() => this.afterInit()),
-                    )
-                    .subscribe(
-                        () => {},
-                        err => {
-                            this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
-                            this.onError(err);
-                        },
-                    );
-            }),
-        );
+        this.domainService
+            .subscribeDomainChange()
+            .pipe(
+                tap(domain => {
+                    this.domain = domain;
+                    // Reset all variables
+                    this.selectedFile = undefined;
+                    this.repositoryFiles = undefined;
+                    this.unsavedFiles = [];
+                    // this.resetVariables()
+                    //     .pipe(
+                    this.checkIfRepositoryIsClean()
+                        .pipe(
+                            tap(commitState => (this.commitState = commitState)),
+                            tap(() => this.afterInit()),
+                            tap(() => {
+                                console.log('test');
+                                this.domainChange.next(this.domain);
+                            }),
+                        )
+                        .subscribe(
+                            () => {},
+                            err => {
+                                console.log('test');
+                                this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                                this.onError(err);
+                            },
+                        );
+                }),
+            )
+            .subscribe();
     }
 
-    /**
-     * @function ngOnChanges
-     * @desc Fetches the participation and the repository files for the provided participationId in params
-     * If we are able to find the participation with the id specified in the route params in our data storage,
-     * we use it in order to spare any additional REST calls
-     */
+    // /**
+    //  * @function ngOnChanges
+    //  * @desc Fetches the participation and the repository files for the provided participationId in params
+    //  * If we are able to find the participation with the id specified in the route params in our data storage,
+    //  * we use it in order to spare any additional REST calls
+    //  */
     ngOnChanges(changes: SimpleChanges): void {
-        // if (this.isInitial) {
-        // }
+        if (this.isInitial) {
+            this.resetVariables()
+                .pipe(
+                    switchMap(() => this.checkIfRepositoryIsClean()),
+                    tap(commitState => (this.commitState = commitState)),
+                    tap(() => this.afterInit()),
+                )
+                .subscribe(
+                    () => {},
+                    err => {
+                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                        this.onError(err);
+                    },
+                );
+        }
     }
 
     /**

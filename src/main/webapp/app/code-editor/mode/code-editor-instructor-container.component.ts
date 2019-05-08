@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map, tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
@@ -47,7 +47,9 @@ enum LOADING_STATE {
     ],
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
-    @ViewChild(CodeEditorBuildableComponent) buildableEditor: CodeEditorBuildableComponent;
+    @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
+    @ViewChild(CodeEditorBuildableComponent) buildableEditor: CodeEditorComponent;
+
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
@@ -57,6 +59,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     paramSub: Subscription;
 
     loadingState = LOADING_STATE.NOT_LOADING;
+
+    domainHasChanged = new Subject<void>();
 
     constructor(
         private exerciseService: ProgrammingExerciseService,
@@ -79,6 +83,16 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         this.domainParticipationService.setDomain(participation);
     }
 
+    hasUnsavedChanges = () => {
+        if (this.editor) {
+            return this.editor.hasUnsavedChanges();
+        } else if (this.buildableEditor) {
+            return this.buildableEditor.hasUnsavedChanges();
+        } else {
+            return false;
+        }
+    };
+
     /**
      * On init load the exercise and the selected participation.
      * Checks what kind of participation is selected (template, solution, assignment) to show this information in the ui.
@@ -86,7 +100,6 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const exerciseId = Number(params['exerciseId']);
-            const participationId = Number(params['participationId']);
             if (!this.exercise || this.exercise.id !== exerciseId) {
                 this.loadingState = LOADING_STATE.INITIALIZING;
                 // TODO: Fetch exercise test repo
@@ -102,7 +115,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         }),
                         // Set selected participation
                         tap(() => {
-                            this.setSelectedParticipation(participationId);
+                            this.setSelectedParticipation(null);
                         }),
                     )
                     .subscribe(
@@ -112,7 +125,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         err => this.editor.onError(err),
                     );
             } else {
-                this.setSelectedParticipation(participationId);
+                this.setSelectedParticipation(null);
             }
         });
     }

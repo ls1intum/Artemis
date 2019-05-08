@@ -29,10 +29,10 @@ import { DomainService } from './code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor-buildable',
-    templateUrl: './code-editor.component.html',
+    templateUrl: './code-editor-buildable.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorBuildableComponent extends CodeEditorComponent {
+export class CodeEditorBuildableComponent<T> extends CodeEditorComponent {
     participationValue: Participation;
     @Output()
     participationChange = new EventEmitter<Participation>();
@@ -54,17 +54,18 @@ export class CodeEditorBuildableComponent extends CodeEditorComponent {
         super(jhiAlertService, domainService);
     }
 
-    resetVariables(): Observable<void> {
-        // Initialize variables;
-        return super.resetVariables().pipe(
-            tap(() => {
-                this.errorFiles = [];
-                this.buildLogErrors = undefined;
-                this.session = undefined;
-                this.isBuilding = false;
-            }),
-        );
-    }
+    // TODO: Not working
+    // resetVariables(): Observable<void> {
+    //     // Initialize variables;
+    //     return super.resetVariables().pipe(
+    //         tap(() => {
+    //             this.errorFiles = [];
+    //             this.buildLogErrors = undefined;
+    //             this.session = undefined;
+    //             this.isBuilding = false;
+    //         }),
+    //     );
+    // }
 
     afterInit = () => {
         this.loadSession();
@@ -76,8 +77,6 @@ export class CodeEditorBuildableComponent extends CodeEditorComponent {
 
     onFileChange<T extends FileChange>([files, fileChange]: [string[], T]) {
         super.onFileChange([files, fileChange]);
-        this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        this.repositoryFiles = files;
         if (fileChange instanceof RenameFileChange) {
             const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
             const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
@@ -154,7 +153,7 @@ export class CodeEditorBuildableComponent extends CodeEditorComponent {
      */
     loadSession() {
         const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
-        this.session = sessions[this.participation.id];
+        this.session = sessions[this.domain.id];
         if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
             this.buildLogErrors = {
                 errors: compose(
