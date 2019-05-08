@@ -61,7 +61,7 @@
     </div>
 
     <div class="editor-bottom">
-        <jhi-code-editor-build-output *ngIf="repositoryFiles" [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs()">
+        <jhi-code-editor-build-output *ngIf="repositoryFiles" [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
         </jhi-code-editor-build-output>
     </div>
 </div>
