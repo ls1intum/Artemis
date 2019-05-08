@@ -6,6 +6,7 @@ import { ParticipationType } from 'app/entities/programming-exercise';
 import { ArTEMiSTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 const expect = chai.expect;
 
@@ -15,7 +16,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructorStatusComponent],
         })
             .compileComponents()
