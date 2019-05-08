@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.web.websocket;
 import java.io.Serializable;
 
 /**
- * POJO for managing websocket error objects.
- * error is the expected key that the client uses to decide if the request failed.
+ * POJO for managing websocket error objects. error is the expected key that the client uses to decide if the request failed.
  */
 public class WebsocketError implements Serializable {
+
     protected String error;
 
     public WebsocketError(String error) {

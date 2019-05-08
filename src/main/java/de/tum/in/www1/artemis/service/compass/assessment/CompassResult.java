@@ -1,25 +1,30 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class CompassResult implements Grade {
 
     private final Logger log = LoggerFactory.getLogger(Grade.class);
 
     private Map<UMLElement, Score> elementScoreMapping;
+
     private Map<String, String> jsonIdCommentsMapping;
+
     private Map<String, Double> jsonIdPointsMapping;
 
     private double points;
+
     private double confidence;
+
     private double coverage;
 
     public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
@@ -32,7 +37,7 @@ public class CompassResult implements Grade {
         buildValues();
     }
 
-    private void buildValues () {
+    private void buildValues() {
         for (Score score : elementScoreMapping.values()) {
             if (score == null) {
                 confidence += 1;
@@ -49,7 +54,7 @@ public class CompassResult implements Grade {
     }
 
     private void buildMapping() {
-        for (Map.Entry<UMLElement, Score> entry: elementScoreMapping.entrySet()) {
+        for (Map.Entry<UMLElement, Score> entry : elementScoreMapping.entrySet()) {
             if (entry.getValue() == null) {
                 log.error("This should never ever happen but for some reason score in CompassResult buildMapping is null");
                 continue;
@@ -58,7 +63,7 @@ public class CompassResult implements Grade {
             StringBuilder elementComments = new StringBuilder();
             Iterator<String> iterator = entry.getValue().getComments().iterator();
 
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 elementComments.append(iterator.next());
 
                 if (iterator.hasNext()) {
@@ -74,10 +79,10 @@ public class CompassResult implements Grade {
      * Process a list of results to build a new result out of it
      *
      * @param compassResultList a list of results to be contained in the new result
-     * @param coverage the coverage is directly reused for the returned result
+     * @param coverage          the coverage is directly reused for the returned result
      * @return the calculated result
      */
-    public static CompassResult buildResultFromResultList (List<CompassResult> compassResultList, double coverage) {
+    public static CompassResult buildResultFromResultList(List<CompassResult> compassResultList, double coverage) {
         Map<UMLElement, Score> newScoreMapping = new HashMap<>();
 
         for (CompassResult compassResult : compassResultList) {
@@ -88,7 +93,6 @@ public class CompassResult implements Grade {
     }
 
     /**
-     *
      * @return number of elements for which a score exists
      */
     public int entitiesCovered() {
@@ -96,13 +100,19 @@ public class CompassResult implements Grade {
     }
 
     @Override
-    public double getPoints() { return points; }
+    public double getPoints() {
+        return points;
+    }
 
     @Override
-    public double getConfidence() { return confidence; }
+    public double getConfidence() {
+        return confidence;
+    }
 
     @Override
-    public double getCoverage () { return coverage; }
+    public double getCoverage() {
+        return coverage;
+    }
 
     @Override
     public Map<String, String> getJsonIdCommentsMapping() {

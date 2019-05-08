@@ -4,7 +4,7 @@
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details"></dl>
 
-    <dl class="row-md jh-entity-details">
+    <dl class="row-md jh-entity-details markdown-preview">
         <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{ textExercise.title }}</span>
@@ -28,17 +28,13 @@
             </div>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd>
-            <span>{{ textExercise.problemStatement }}</span>
-        </dd>
+        <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
         <dd>
             <span>{{ textExercise.maxScore }}</span>
         </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample Solution</span></dt>
-        <dd>
-            <span>{{ textExercise.sampleSolution }}</span>
-        </dd>
+        <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
     </dl>
 
     <button type="submit" (click)="previousState()" class="btn btn-info"><fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span></button>

@@ -16,7 +16,7 @@
                     </button>
                     <div class="dropdown-menu" ngbDropdownMenu>
                         <ng-container *ngFor="let command of headerCommands"
-                            ><button class="dropdown-item" type="button" (click)="command.execute()">{{ command.buttonTranslationString | translate }}</button></ng-container
+                            ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
                         >
                     </div>
                 </div>

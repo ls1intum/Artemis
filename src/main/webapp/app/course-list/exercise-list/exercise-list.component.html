@@ -18,7 +18,7 @@
                 </td>
             </tr>
 
-            <tr *ngFor="let exercise of (exercises | showExercise: showInactiveExercises)">
+            <tr *ngFor="let exercise of exercises | showExercise: showInactiveExercises">
                 <td>
                     <span>{{ exercise.title }}</span>
                     <a class="text-primary" *ngIf="exercise.isAtLeastInstructor">

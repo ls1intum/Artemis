@@ -74,7 +74,7 @@
             <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
             <th class="selection" *ngIf="!forceSampleSolution">{{ 'arTeMiSApp.multipleChoiceQuestion.you' | translate }}</th>
         </tr>
-        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}">
+        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}">
             <td class="content">
                 <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
                 <div class="hint">

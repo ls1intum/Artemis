@@ -1,23 +1,26 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -28,11 +31,20 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
-        super(resultRepository);
+    private final ComplaintResponseService complaintResponseService;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ObjectMapper objectMapper;
+
+    public ModelingAssessmentService(ResultRepository resultRepository, UserService userService, ModelingSubmissionRepository modelingSubmissionRepository,
+            ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ObjectMapper objectMapper) {
+        super(complaintResponseService, complaintRepository, resultRepository, objectMapper);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.complaintResponseService = complaintResponseService;
+        this.complaintRepository = complaintRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -69,20 +81,12 @@ public class ModelingAssessmentService extends AssessmentService {
             result = new Result();
         }
 
+        result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-
-        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
-        // will also be
-        // deleted in the database because of the 'orphanRemoval = true' flag.
-        result.getFeedbacks().clear();
-        for (Feedback feedback : modelingAssessment) {
-            feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
-            result.addFeedback(feedback);
-        }
+        result.setNewFeedback(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 
