@@ -99,9 +99,19 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private submittedAnswerCorrectValues() {
         console.log(this.multipleChoiceSubmittedResult);
-        console.log(this.submittedQuizExercise);
+        console.log(this.submittedQuizExercise.quizQuestions);
 
-        if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
+        let answerOptionsOfQuestion = new Array<AnswerOption>();
+
+        for (const question of this.submittedQuizExercise.quizQuestions) {
+            const mcQuizQuestion = question as MultipleChoiceQuestion;
+            if (mcQuizQuestion.id === this.question.id) {
+                answerOptionsOfQuestion = mcQuizQuestion.answerOptions;
+                this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions.filter(option => option.isCorrect).length;
+            }
+        }
+
+        /** if (this.multipleChoiceSubmittedResult.participation.exercise.type === 'quiz') {
             const quizExercise = this.multipleChoiceSubmittedResult.participation.exercise as QuizExercise;
 
             let answerOptionsOfQuestion = new Array<AnswerOption>();
@@ -112,24 +122,23 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
                     answerOptionsOfQuestion = mcQuizQuestion.answerOptions;
                     this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions.filter(option => option.isCorrect).length;
                 }
-            }
+            } **/
 
-            const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
-            const submittedAnswerLength = submittedQuizSubmission.submittedAnswers.length;
-            for (let i = 0; i < submittedAnswerLength; i++) {
-                if (submittedQuizSubmission.submittedAnswers[i].quizQuestion.id === this.question.id) {
-                    const multipleChoiceSubmittedAnswers = submittedQuizSubmission.submittedAnswers[i] as MultipleChoiceSubmittedAnswer;
-                    if (multipleChoiceSubmittedAnswers.selectedOptions === undefined) {
-                        this.checkForCorrectAnswers = [];
-                        this.checkForWrongAnswers = [];
-                    } else {
-                        for (const selectedOption of multipleChoiceSubmittedAnswers.selectedOptions) {
-                            for (const answerOptionElement of answerOptionsOfQuestion) {
-                                if (selectedOption.id === answerOptionElement.id && answerOptionElement.isCorrect) {
-                                    this.checkForCorrectAnswers.push(selectedOption);
-                                } else if (selectedOption.id === answerOptionElement.id && !answerOptionElement.isCorrect) {
-                                    this.checkForWrongAnswers.push(selectedOption);
-                                }
+        const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
+        const submittedAnswerLength = submittedQuizSubmission.submittedAnswers.length;
+        for (let i = 0; i < submittedAnswerLength; i++) {
+            if (submittedQuizSubmission.submittedAnswers[i].quizQuestion.id === this.question.id) {
+                const multipleChoiceSubmittedAnswers = submittedQuizSubmission.submittedAnswers[i] as MultipleChoiceSubmittedAnswer;
+                if (multipleChoiceSubmittedAnswers.selectedOptions === undefined) {
+                    this.checkForCorrectAnswers = [];
+                    this.checkForWrongAnswers = [];
+                } else {
+                    for (const selectedOption of multipleChoiceSubmittedAnswers.selectedOptions) {
+                        for (const answerOptionElement of answerOptionsOfQuestion) {
+                            if (selectedOption.id === answerOptionElement.id && answerOptionElement.isCorrect) {
+                                this.checkForCorrectAnswers.push(selectedOption);
+                            } else if (selectedOption.id === answerOptionElement.id && !answerOptionElement.isCorrect) {
+                                this.checkForWrongAnswers.push(selectedOption);
                             }
                         }
                     }
