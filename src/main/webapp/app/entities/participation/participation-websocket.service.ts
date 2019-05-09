@@ -77,6 +77,7 @@ export class ParticipationWebsocketService {
      * Removes all participation information locally from all cached data maps.
      *
      * @param id ID of the participation that should not be tracked anymore
+     * @param exerciseId optional the id an exercise that should not be tracked anymore
      */
     removeParticipation(id: number, exerciseId?: number) {
         this.cachedParticipations.delete(id);
@@ -85,9 +86,11 @@ export class ParticipationWebsocketService {
         this.jhiWebsocketService.unsubscribe(participationResultTopic);
         this.openWebsocketConnections.delete(`${RESULTS_WEBSOCKET}${id}`);
         // removing exercise observable
-        const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`);
-        this.jhiWebsocketService.unsubscribe(participationTopic);
-        this.openWebsocketConnections.delete(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+        if (exerciseId) {
+            const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+            this.jhiWebsocketService.unsubscribe(participationTopic);
+            this.openWebsocketConnections.delete(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+        }
     }
 
     /**
@@ -121,10 +124,10 @@ export class ParticipationWebsocketService {
     }
 
     /**
-     * Checks for the given participation if a websocket connection for new participations to the server already exists.
+     * Checks for the given exercise if a websocket connection for new participations to the server already exists.
      * If not a new one will be opened.
      *
-     * @param participation Participation object that has to be checked
+     * @param exerciseId
      * @private
      */
     private checkWebsocketConnectionForNewParticipations(exerciseId: number) {
