@@ -28,7 +28,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public exercise: Exercise;
     public showMoreResults = false;
-    public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
@@ -36,8 +35,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     combinedParticipation: Participation;
 
     formattedProblemStatement: string;
-
-    getIcon = getIcon;
 
     constructor(
         private $location: Location,

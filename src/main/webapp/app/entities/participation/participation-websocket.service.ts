@@ -157,7 +157,10 @@ export class ParticipationWebsocketService {
         if (!correspondingParticipation.results) {
             correspondingParticipation.results = [];
         }
-        correspondingParticipation.results.push(result);
+        correspondingParticipation.results = correspondingParticipation.results.map(el => (el.id === result.id ? result : el));
+        if (!correspondingParticipation.results.some(el => el.id === result.id)) {
+            correspondingParticipation.results.push(result);
+        }
         this.cachedParticipations.set(correspondingParticipation.id, correspondingParticipation);
         if (this.participationObservable) {
             this.participationObservable.next(correspondingParticipation);

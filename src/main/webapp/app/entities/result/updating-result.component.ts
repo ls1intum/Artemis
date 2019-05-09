@@ -36,6 +36,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() short = false;
     @Input() result: Result;
     @Input() showUngradedResults: boolean;
+    @Output() newResultReceived = new EventEmitter<boolean>();
 
     private resultUpdateListener: Subscription;
     websocketChannelSubmissions: string;
@@ -111,9 +112,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
         this.result = newResult;
         // Reconnect the new result with the existing participation
         this.result.participation = this.participation;
-        if (this.participation && this.participation.results) {
-            this.participation.results.push(this.result);
-        }
+        this.newResultReceived.emit(true);
     }
 
     ngOnChanges(changes: SimpleChanges) {
