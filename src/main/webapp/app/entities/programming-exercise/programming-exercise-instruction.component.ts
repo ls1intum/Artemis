@@ -1,31 +1,31 @@
 import {
+    ApplicationRef,
     Component,
+    ComponentFactoryResolver,
     ElementRef,
+    EmbeddedViewRef,
     EventEmitter,
+    Injector,
     Input,
-    Output,
+    OnChanges,
     OnDestroy,
+    Output,
     Renderer2,
     SimpleChanges,
-    Injector,
-    ComponentFactoryResolver,
-    ApplicationRef,
-    EmbeddedViewRef,
-    OnChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
-import { Result, ResultService, ResultWebsocketService } from '../result';
+import { Result, ResultService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
-import { Participation, hasParticipationChanged } from '../participation';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
@@ -69,7 +69,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
-        private resultWebsocketService: ResultWebsocketService,
+        private participationWebsocketService: ParticipationWebsocketService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -136,11 +136,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        return this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable.pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2)).subscribe(result => {
-                this.latestResult = result;
-                this.updateMarkdown();
-            });
+        return this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe(result => {
+            this.latestResult = result;
+            this.updateMarkdown();
         });
     }
 

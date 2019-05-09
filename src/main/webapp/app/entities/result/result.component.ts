@@ -3,13 +3,10 @@ import { Participation, ParticipationService } from 'app/entities/participation'
 import { Result, ResultDetailComponent, ResultService, ResultWebsocketService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
 import { AccountService, JhiWebsocketService } from 'app/core';
 
 @Component({
@@ -34,8 +31,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() result: Result;
     @Input() showUngradedResults: boolean;
 
-    private resultSubscription: Subscription;
-    websocketChannelSubmissions: string;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];

@@ -1,10 +1,10 @@
-import { hasParticipationChanged, Participation } from '../../entities/participation';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
-import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
@@ -40,7 +40,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         private $window: WindowRef,
         private repositoryService: RepositoryService,
         private resultService: ResultService,
-        private resultWebsocketService: ResultWebsocketService,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
     /**
@@ -103,9 +103,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable.subscribe(result => this.toggleBuildLogs(result));
-        });
+        this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe(result => this.toggleBuildLogs(result));
     }
 
     /**

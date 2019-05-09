@@ -1,15 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result, ResultDetailComponent, ResultService } from '.';
-import { ProgrammingSubmission } from '../programming-submission';
+import { Result, ResultService } from '.';
 import { AccountService, JhiWebsocketService } from '../../core';
 import { Subscription } from 'rxjs';
 import { RepositoryService } from 'app/entities/repository/repository.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,7 +53,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.result) {
             const exercise = this.participation.exercise;
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
+                this.subscribeForNewResults(exercise as ProgrammingExercise);
             }
         } else if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
@@ -81,17 +78,18 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                 this.result.participation = this.participation;
             }
 
-            this.subscribeForProgramingExercise(exercise);
+            this.subscribeForNewResults(exercise);
         }
     }
 
-    subscribeForProgramingExercise(exercise: Exercise) {
+    subscribeForNewResults(exercise: Exercise) {
         this.accountService.identity().then(user => {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            if (
-                (this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) ||
-                (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))
-            ) {
+            const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course);
+            const isSameUser = this.participation.student && user.id === this.participation.student.id;
+            const exerciseNotOver = exercise.dueDate == null || exercise.dueDate.isAfter(moment());
+
+            if ((isSameUser && exerciseNotOver) || isInstructorInCourse) {
                 this.participationWebsocketService.addParticipation(this.participation);
                 this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
                     if (newResult) {
