@@ -8,10 +8,12 @@ import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CodeEditorComponent } from '../code-editor.component';
+import { CodeEditorSessionService } from '../code-editor-session.service';
+import { AnnotationArray } from 'app/entities/ace-editor';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -19,7 +21,8 @@ import { CodeEditorComponent } from '../code-editor.component';
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
-    buildLogs = new BuildLogEntryArray();
+    rawBuildLogs = new BuildLogEntryArray();
+    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Resizable constants **/
     resizableMinHeight = 100;
@@ -31,7 +34,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     @Input()
     isBuilding: boolean;
     @Output()
-    buildLogChange = new EventEmitter<BuildLogEntryArray>();
+    buildLogChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timestamp: number }>();
 
     private resultSubscription: Subscription;
 
@@ -41,6 +44,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         private repositoryService: RepositoryService,
         private resultService: ResultService,
         private resultWebsocketService: ResultWebsocketService,
+        private sessionService: CodeEditorSessionService<any>,
     ) {}
 
     /**
@@ -129,11 +133,19 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @desc Gets the buildlogs for the current participation
      */
     getBuildLogs() {
-        this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
-            this.buildLogs = new BuildLogEntryArray(...buildLogs);
-            $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
-            this.buildLogChange.emit(this.buildLogs);
-        });
+        this.repositoryService
+            .buildlogs(this.participation.id)
+            .pipe(
+                tap(buildLogs => {
+                    const buildLogsFromServer = new BuildLogEntryArray(...buildLogs);
+                    const sessionBuildLogs = this.loadSession();
+                    this.rawBuildLogs = buildLogs;
+                    this.buildLogErrors = buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
+                    $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
+                    this.buildLogChange.emit(this.buildLogErrors);
+                }),
+            )
+            .subscribe(() => {});
     }
 
     /**
@@ -147,9 +159,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             !result ||
             ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
         ) {
-            this.buildLogs = new BuildLogEntryArray();
+            this.rawBuildLogs = new BuildLogEntryArray();
             // If there are no compile errors, send recent timestamp
-            this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
+            this.buildLogChange.emit({ timestamp: Date.now(), errors: {} });
         } else {
             // If the build failed, find out why
             this.getBuildLogs();
@@ -164,6 +176,21 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal, this.interactResizable, undefined, this.resizableMinHeight);
+    }
+
+    /**
+     * @function loadSession
+     * @desc Gets the user's session data from localStorage to load editor settings
+     */
+    loadSession() {
+        return this.sessionService.loadSession();
+    }
+
+    /**
+     * Store the build log error data in the localStorage of the browser (synchronous action).
+     */
+    storeSession() {
+        this.sessionService.storeSession(this.buildLogErrors);
     }
 
     ngOnDestroy() {

@@ -116,8 +116,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                             this.exercise = exercise;
                         }),
                         // Set selected participation
-                        tap(() => {
-                            this.setSelectedParticipation(null);
+                        tap(exercise => {
+                            this.setSelectedParticipation(exercise.templateParticipation.id);
                         }),
                     )
                     .subscribe(
@@ -127,7 +127,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         err => this.editor.onError(err),
                     );
             } else {
-                this.setSelectedParticipation(null);
+                this.setSelectedParticipation(exercise.templateParticipation.id);
             }
         });
     }

@@ -1,8 +1,8 @@
-import { IRepositoryFileService, DomainService } from 'app/code-editor/code-editor-repository.service';
+import { IRepositoryFileService, DomainService, IRepositoryService } from 'app/code-editor/code-editor-repository.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable } from 'rxjs';
-import { catchError, map as rxMap, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { sortBy as _sortBy } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
@@ -14,6 +14,7 @@ import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileCha
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CodeEditorComponent } from '../code-editor.component';
+import { CodeEditorContainer } from '../mode/code-editor-mode-container.component.js';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -24,13 +25,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     public FileType = FileType;
 
     @Input()
-    domainChange: Observable<void>;
-
-    @Input()
     fileService: IRepositoryFileService<any>;
-
     @Input()
-    isInitial = true;
+    repositoryService: IRepositoryService<any>;
+
     @Input()
     unsavedFiles: string[];
     @Input()
@@ -43,6 +41,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     isLoadingFiles: boolean;
     @Output()
     onFilesLoaded = new EventEmitter<string[]>();
+    @Output()
+    onRepositoryChecked = new EventEmitter<CommitState>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
@@ -80,41 +80,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public modalService: NgbModal, private domainService: DomainService<any>) {}
+    constructor(private parent: CodeEditorContainer, private $window: WindowRef, public modalService: NgbModal) {}
 
     ngOnInit() {
-        this.domainChange.subscribe(() => {
-            this.loadFiles()
-                .pipe(
-                    rxMap(files =>
-                        compose(
-                            fromPairs,
-                            // Filter root folder
-                            filter(([value]) => value),
-                            // Filter Readme file that was historically in the student's assignment repo
-                            filter(([value]) => !value.includes('README.md')),
-                            // Remove binary files as they can't be displayed in an editor
-                            filter(([filename]) => {
-                                const fileSplit = filename.split('.');
-                                // Either the file has no ending or the file ending is allowed
-                                return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
-                            }),
-                            toPairs,
-                        )(files),
-                    ),
-                    catchError((error: HttpErrorResponse) => {
-                        console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                        return Observable.of({});
-                    }),
-                    tap(files => {
-                        this.isLoadingFiles = false;
-                        this.repositoryFiles = files;
-                        this.setupTreeview();
-                        this.onFilesLoaded.emit(Object.keys(files));
-                    }),
-                )
-                .subscribe();
-        });
+        this.initializeComponent();
     }
 
     /**
@@ -155,13 +124,55 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+            this.initializeComponent();
+        }
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked.
-        if (changes.selectedFile && changes.selectedFile.currentValue) {
+        else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = null;
             this.setupTreeview();
         }
     }
+
+    initializeComponent = () => {
+        this.checkIfRepositoryIsClean()
+            .pipe(
+                tap(commitState => {
+                    if (commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
+                        this.parent.onError('couldNotBeRetrieved');
+                        throwError('couldNotBeRetrieved');
+                    }
+                }),
+                tap(commitState => {
+                    this.commitState = commitState;
+                    this.onRepositoryChecked.emit(this.commitState);
+                }),
+                switchMap(() => this.loadFiles()),
+                catchError((error: HttpErrorResponse) => {
+                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                    return Observable.of({});
+                }),
+                tap(files => {
+                    this.isLoadingFiles = false;
+                    this.repositoryFiles = files;
+                    this.setupTreeview();
+                    this.onFilesLoaded.emit(Object.keys(files));
+                }),
+            )
+            .subscribe(() => {}, err => {});
+    };
+
+    /**
+     * @function checkIfRepositoryIsClean
+     * @desc Calls the repository service to see if the repository has uncommitted changes
+     */
+    checkIfRepositoryIsClean = (): Observable<CommitState> => {
+        return this.repositoryService.isClean().pipe(
+            catchError(() => Observable.of(null)),
+            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        );
+    };
 
     @Input()
     get selectedFile() {
@@ -484,7 +495,24 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
         this.isLoadingFiles = true;
-        return this.fileService.getRepositoryContent();
+        return this.fileService.getRepositoryContent().pipe(
+            rxMap(files =>
+                compose(
+                    fromPairs,
+                    // Filter root folder
+                    filter(([value]) => value),
+                    // Filter Readme file that was historically in the student's assignment repo
+                    filter(([value]) => !value.includes('README.md')),
+                    // Remove binary files as they can't be displayed in an editor
+                    filter(([filename]) => {
+                        const fileSplit = filename.split('.');
+                        // Either the file has no ending or the file ending is allowed
+                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
+                    }),
+                    toPairs,
+                )(files),
+            ),
+        );
     };
 
     renameFile = (filePath: string, fileName: string): Observable<void> => {
