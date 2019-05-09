@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from 'app/entities/participation';
-import { Result, ResultDetailComponent, ResultService, ResultWebsocketService } from '.';
+import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
@@ -41,7 +41,6 @@ export class ResultComponent implements OnInit, OnChanges {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private resultWebsocketService: ResultWebsocketService,
         private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,

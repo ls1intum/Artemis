@@ -115,15 +115,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise.participations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
-            this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
-                if (changedParticipation) {
-                    this.exercise.participations.map(el => {
-                        return el.id === changedParticipation.id ? changedParticipation : el;
-                    });
-                    this.mergeParticipations();
-                }
-            });
+        } else {
+            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
         }
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+            if (changedParticipation) {
+                this.exercise.participations = this.exercise.participations.map(el => {
+                    return el.id === changedParticipation.id ? changedParticipation : el;
+                });
+                this.mergeParticipations();
+            }
+        });
     }
 
     backToCourse() {

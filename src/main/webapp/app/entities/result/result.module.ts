@@ -6,14 +6,13 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
-import { ResultWebsocketService } from './result-websocket.service';
 
 @NgModule({
     imports: [ArTEMiSSharedModule, MomentModule],
     declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
     entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],
-    providers: [ResultService, ResultWebsocketService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ResultService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSResultModule {
