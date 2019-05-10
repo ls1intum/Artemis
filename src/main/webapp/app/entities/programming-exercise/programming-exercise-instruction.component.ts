@@ -30,9 +30,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
 
+enum TestCaseState {
+    UNDEFINED = 'UNDEFINED',
+    SUCCESS = 'SUCCESS',
+    FAIL = 'FAIL',
+}
+
 type Step = {
     title: string;
-    done: boolean;
+    done: TestCaseState;
 };
 
 @Component({
@@ -272,8 +278,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps.forEach(({ done }, i) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
             componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done ? 'text-success' : 'text-danger'];
+            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
+            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
             componentRef.instance.ngOnChanges({});
             this.appRef.attachView(componentRef.hostView);
             const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -461,15 +467,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done) {
+        if (done === TestCaseState.SUCCESS) {
             text += '<span class="text-success bold">' + label + '</span>';
+        } else if (done === TestCaseState.FAIL) {
+            text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
         } else {
-            // bugfix: do not let the user click on 'No Results'
-            if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
-                text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
-            } else {
-                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
-            }
+            text += '<span class="text-danger bold">' + label + '</span>';
         }
         text += '<br>';
 
@@ -499,7 +502,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
             const [done] = this.statusForTests(tests);
-            return done ? 'green' : 'red';
+            return done === TestCaseState.SUCCESS ? 'green' : 'red';
         });
 
         this.plantUMLs[id] = plantUml;
@@ -512,43 +515,42 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    private statusForTests(tests: string[]): [boolean, string] {
+    private statusForTests(tests: string[]): [TestCaseState, string] {
         const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
-        let done = false;
-        let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
-            let failedTests = 0;
-            for (const test of tests) {
-                for (const result of this.latestResult.feedbacks) {
-                    if (result.text === test) {
-                        failedTests++;
-                    }
-                }
-            }
+        if (this.latestResult && this.latestResult.successful) {
+            // Case 1: Submission fulfills all test cases, no further checking needed.
+            const label = this.translateService.instant(translationBasePath + 'testPassing');
+            return [TestCaseState.SUCCESS, label];
+        } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
+            // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
+            const failedTests = tests.filter(testName => {
+                const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
+                // If there is no feedback item, we assume that the test was successful (legacy check)
+                return feedback ? !feedback.positive : false;
+            });
 
-            // Exercise is done if it was completed successfully or no tests have failed
-            done = (this.latestResult && this.latestResult.successful) || failedTests === 0;
+            // Exercise is done if none of the tests failed
+            const testCaseState = failedTests.length === 0 ? TestCaseState.SUCCESS : TestCaseState.FAIL;
             if (totalTests === 1) {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'testPassing');
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'testFailing');
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'testPassing')
+                        : this.translateService.instant(translationBasePath + 'testFailing');
+                return [testCaseState, label];
             } else {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests });
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests });
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
+                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
+                return [testCaseState, label];
             }
-        } else if (this.latestResult && this.latestResult.successful) {
-            done = true;
-            label = this.translateService.instant(translationBasePath + 'testPassing');
+        } else {
+            // Case 3: There are no results
+            const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
+            return [TestCaseState.UNDEFINED, label];
         }
-
-        return [done, label];
     }
 
     ngOnDestroy() {
