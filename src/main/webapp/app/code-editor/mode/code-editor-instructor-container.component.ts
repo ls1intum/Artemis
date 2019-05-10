@@ -1,23 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    DomainService,
-    RepositoryFileParticipationService,
-    RepositoryParticipationService,
-    TestRepositoryFileService,
-    TestRepositoryService,
-} from '../code-editor-repository.service';
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorParticipationSessionService, CodeEditorTestSessionService } from '../code-editor-session.service';
+import { DomainService, DomainType } from '../code-editor-repository.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -36,64 +29,32 @@ enum LOADING_STATE {
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-container.component.html',
-    providers: [
-        CodeEditorComponent,
-        DomainService,
-        RepositoryFileParticipationService,
-        RepositoryParticipationService,
-        TestRepositoryFileService,
-        TestRepositoryService,
-        CodeEditorParticipationSessionService,
-        CodeEditorTestSessionService,
-        HttpClient,
-    ],
 })
-export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit {
-    @ViewChild(CodeEditorComponent) editor: CodeEditorComponent;
-
+export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
     exercise: ProgrammingExercise;
-    selectedParticipationValue: Participation;
+    selectedParticipation: Participation;
     selectedRepository: REPOSITORY;
     paramSub: Subscription;
 
     loadingState = LOADING_STATE.NOT_LOADING;
+    domainChangeSubscription: Subscription;
 
     domainHasChanged = new Subject<void>();
 
     constructor(
         private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        // TODO: Instead of having 2 services, this should only be one
-        private domainParticipationService: DomainService<Participation>,
-        private domainExerciseService: DomainService<ProgrammingExercise>,
-        public repositoryParticipationService: RepositoryParticipationService,
-        public repositoryFileParticipationService: RepositoryFileParticipationService,
-        public testRepositoryFileService: TestRepositoryFileService,
-        public testRepositoryService: TestRepositoryService,
-        public codeEditorSessionService: CodeEditorParticipationSessionService,
-        public codeEditorTestSessionService: CodeEditorTestSessionService,
+        private domainService: DomainService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
+        jhiAlertService: JhiAlertService,
     ) {
-        super(participationService, translateService, route);
+        super(participationService, translateService, route, jhiAlertService);
     }
-
-    set selectedParticipation(participation: Participation) {
-        this.selectedParticipationValue = participation;
-        this.domainParticipationService.setDomain(participation);
-    }
-
-    hasUnsavedChanges = () => {
-        if (this.editor) {
-            return this.editor.hasUnsavedChanges();
-        } else {
-            return false;
-        }
-    };
 
     /**
      * On init load the exercise and the selected participation.
@@ -108,28 +69,46 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 this.loadExercise(exerciseId)
                     .pipe(
                         catchError(() => throwError('exerciseNotFound')),
-                        tap((exercise: ProgrammingExercise) => this.domainExerciseService.setDomain(exercise)),
                         tap((exercise: ProgrammingExercise) => {
                             exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
                             exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
                             exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
                             this.exercise = exercise;
+
+                            this.domainChangeSubscription = this.domainService
+                                .subscribeDomainChange()
+                                .pipe(
+                                    filter(participation => !!participation),
+                                    distinctUntilChanged(
+                                        ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 || domainValue1.id !== domainValue2.id,
+                                    ),
+                                    tap(([, participation]) => {
+                                        this.setSelectedParticipation(participation.id);
+                                    }),
+                                )
+                                .subscribe();
                         }),
                         // Set selected participation
-                        tap(exercise => {
-                            this.setSelectedParticipation(exercise.templateParticipation.id);
+                        tap(() => {
+                            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
                         }),
                     )
                     .subscribe(
                         () => {
                             this.loadingState = LOADING_STATE.NOT_LOADING;
                         },
-                        err => this.editor.onError(err),
+                        err => this.onError(err),
                     );
             } else {
-                this.setSelectedParticipation(exercise.templateParticipation.id);
+                this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
             }
         });
+    }
+
+    ngOnDestroy() {
+        if (this.domainChangeSubscription) {
+            this.domainChangeSubscription.unsubscribe();
+        }
     }
 
     /**
@@ -179,6 +158,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     selectTestRepository() {
         this.selectedRepository = REPOSITORY.TEST;
         this.selectedParticipation = null;
+        this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
     }
 
     /**
@@ -195,7 +175,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                     this.loadingState = LOADING_STATE.NOT_LOADING;
                 }),
             )
-            .subscribe(() => {}, err => this.editor.onError(err));
+            .subscribe(() => {}, err => this.onError(err));
     }
 
     /**
@@ -214,6 +194,6 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 catchError(() => throwError('participationCouldNotBeDeleted')),
                 tap(() => this.createAssignmentParticipation()),
             )
-            .subscribe(() => {}, err => this.editor.onError(err));
+            .subscribe(() => {}, err => this.onError(err));
     }
 }

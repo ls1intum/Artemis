@@ -1,29 +1,24 @@
-import { HostListener, OnDestroy, ViewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, Injectable, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { difference as _difference } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 
-import { ComponentCanDeactivate } from 'src/main/webapp/app/shared';
-import { ParticipationService } from 'src/main/webapp/app/entities/participation';
+import { ComponentCanDeactivate } from 'app/shared';
+import { ParticipationService } from 'app/entities/participation';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { AnnotationArray, Session, EditorState, CommitState } from 'app/entities/ace-editor';
-import { BuildLogEntryArray } from 'app/entities/build-log';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { JhiAlertService } from 'ng-jhipster';
 
 export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
-    @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
     paramSub: Subscription;
 
     selectedFile: string;
-    repositoryFiles: string[];
     unsavedFiles: string[] = [];
     fileChange: FileChange;
 
-    errorFiles: string[] = [];
     session: Session;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     isBuilding = false;
@@ -31,7 +26,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
-    isLoadingFiles = true;
 
     constructor(
         protected participationService: ParticipationService,
@@ -42,20 +36,16 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
 
     onDomainChange = () => {
         this.selectedFile = undefined;
-        this.repositoryFiles = undefined;
         this.unsavedFiles = [];
-        this.errorFiles = [];
         this.session = undefined;
         this.buildLogErrors = undefined;
         this.isBuilding = false;
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
-        this.isLoadingFiles = true;
     };
 
-    onRepsitoryChecked = (commitState: CommitState) => {
+    onRepositoryChecked = (commitState: CommitState) => {
         this.commitState = commitState;
-        this.loadSession();
     };
 
     /**
@@ -74,7 +64,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      */
     onFileChange<F extends FileChange>([files, fileChange]: [string[], F]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        this.repositoryFiles = files;
         if (fileChange instanceof CreateFileChange) {
             // Select newly created file
             if (fileChange.fileType === FileType.FILE) {
@@ -101,8 +90,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
         }
         if (fileChange instanceof RenameFileChange) {
             const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
-            const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
-            this.errorFiles = [...this.errorFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedErrorFiles];
             const renamedErrors = compose(
                 fromPairs,
                 map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
@@ -114,12 +101,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
                 toPairs,
             )(this.buildLogErrors.errors);
             this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
-            // If the renamed file has errors, we also need to update the session in localStorage
-            if (this.errorFiles.includes(fileChange.newFileName)) {
-                this.storeSession();
-            }
         } else if (fileChange instanceof DeleteFileChange) {
-            this.errorFiles = this.errorFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
             const errors = compose(
                 fromPairs,
                 filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
@@ -146,7 +128,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState === CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
-            this.prepareCommit();
         } else if (!this.unsavedFiles.length) {
             this.editorState = EditorState.CLEAN;
         } else {
@@ -159,24 +140,16 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: any) {
-        const { savedFiles } = Object.entries(files).reduce(
-            (acc, [fileName, error]: [string, string | null]) => (error ? acc : { ...acc, savedFiles: [fileName, ...acc.savedFiles] }),
-            { savedFiles: [] },
-        );
+    onSavedFiles(files: Array<[string, string | null]>) {
+        const savedFiles = files.filter(([, error]: [string, string | null]) => !error).map(([fileName]) => fileName);
+        const errorFiles = files.filter(([, error]: [string, string | null]) => error).map(([fileName]) => fileName);
 
         const unsavedFiles = _difference(this.unsavedFiles, savedFiles);
         this.setUnsavedFiles(unsavedFiles);
 
-        const { errorFiles } = Object.entries(files).reduce(
-            (acc, [fileName, error]: [string, string | null]) => (error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : acc),
-            { errorFiles: [] },
-        );
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        // TODO: Migrate to 2 way databinding with build-output component
-        this.storeSession();
     }
 
     /**
@@ -191,28 +164,8 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * Check if the received build logs are recent and format them for use in the ace-editor
      * @param buildLogs
      */
-    updateLatestBuildLogs(buildLogs) {
-        // The build logs come asynchronously while the view of other components are rendered.
-        // To avoid ExpressionChangedAfterItHasBeenCheckedError, we wait a tick so the view can update.
-        setTimeout(() => {
-            const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
-            if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
-                this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-                this.errorFiles = Object.keys(this.buildLogErrors.errors);
-                // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
-                if (this.session) {
-                    this.storeSession();
-                }
-            }
-        }, 0);
-    }
-
-    /**
-     * When the files are loaded set the repositoryFiles.
-     * @param files
-     */
-    onFilesLoaded(files: string[]) {
-        this.repositoryFiles = files;
+    updateLatestBuildLogs(buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number }) {
+        this.buildLogErrors = buildLogErrors;
     }
 
     /**
@@ -222,38 +175,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
         const unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
         this.setUnsavedFiles(unsavedFiles);
-    }
-
-    /**
-     * @function commit
-     * @desc Commits the current repository files.
-     * If there are unsaved changes, save them first before trying to commit again.
-     * @param $event
-     */
-    prepareCommit() {
-        // Avoid multiple commits at the same time.
-        if (this.commitState === CommitState.COMMITTING) {
-            return;
-        }
-        // If there are unsaved changes, save them before trying to commit again.
-        if (!this.unsavedFiles.length) {
-            this.commitState = CommitState.COMMITTING;
-            // TODO: Move into actions component
-            this.repositoryService
-                .commit()
-                .pipe(tap(() => (this.isBuilding = true)))
-                .subscribe(
-                    () => {
-                        this.commitState = CommitState.CLEAN;
-                    },
-                    (err: any) => {
-                        console.log('Error during commit ocurred!', err);
-                    },
-                );
-        } else {
-            this.commitState = CommitState.WANTS_TO_COMMIT;
-            this.editor.saveChangedFiles();
-        }
     }
 
     /**

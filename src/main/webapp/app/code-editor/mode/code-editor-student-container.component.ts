@@ -8,7 +8,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
-import { DomainService, RepositoryFileParticipationService, RepositoryParticipationService } from '../code-editor-repository.service';
+import { DomainService, DomainType } from '../code-editor-repository.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -18,15 +19,14 @@ import { DomainService, RepositoryFileParticipationService, RepositoryParticipat
 export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit {
     participation: Participation;
     constructor(
+        private resultService: ResultService,
+        private domainParticipationService: DomainService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        private resultService: ResultService,
-        private domainParticipationService: DomainService<Participation>,
-        public repositoryParticipationService: RepositoryParticipationService,
-        public repositoryFileParticipationService: RepositoryFileParticipationService,
+        jhiAlertService: JhiAlertService,
     ) {
-        super(participationService, translateService, route);
+        super(participationService, translateService, route, jhiAlertService);
     }
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
@@ -34,7 +34,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap(participationWithResults => (this.participation = participationWithResults)),
-                    tap(participation => this.domainParticipationService.setDomain(participation)),
+                    tap(participation => this.domainParticipationService.setDomain([DomainType.PARTICIPATION, participation])),
                 )
 
                 .subscribe();

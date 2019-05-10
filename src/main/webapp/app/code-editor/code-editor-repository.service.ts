@@ -1,46 +1,62 @@
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, Subscription, BehaviorSubject } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
-import { tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { SERVER_API_URL } from 'app/app.constants';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { JhiWebsocketService } from 'app/core';
+
+export enum DomainType {
+    PARTICIPATION = 'PARTICIPATION',
+    TEST_REPOSITORY = 'TEST_REPOSITORY',
+}
+
+export type DomainParticipationChange = [DomainType.PARTICIPATION, Participation];
+export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
+export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
 
 @Injectable({ providedIn: 'root' })
-export class DomainService<T> {
-    protected domain: T;
-    private subject = new BehaviorSubject<T>(null);
-    private domainChange = this.subject.pipe(share());
+export class DomainService {
+    protected domain: DomainChange;
+    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange>(null);
+    // private domainChange = this.subject.pipe(share());
 
-    public setDomain(domain: T) {
+    public setDomain(domain: DomainChange) {
         this.domain = domain;
         this.subject.next(domain);
     }
     public getDomain() {
         return this.domain;
     }
-    public subscribeDomainChange(): Observable<T> {
-        return this.domainChange as Observable<T>;
+    public subscribeDomainChange(): Observable<DomainChange> {
+        return this.subject;
+        // return this.domainChange as Observable<DomainChange>;
     }
 }
 
-export abstract class DomainDependent<T> implements OnDestroy {
-    protected domain: T;
+export abstract class DomainDependent implements OnDestroy {
+    protected domain: DomainChange;
     private domainChangeSubscription: Subscription;
 
-    constructor(private domainService: DomainService<T>) {
+    constructor(private domainService: DomainService) {
         this.domainChangeSubscription = this.domainService
             .subscribeDomainChange()
-            .pipe(tap(domain => this.setDomain(domain)))
+            .pipe(
+                filter(domain => !!domain),
+                tap(domain => {
+                    console.log({ domain });
+                    this.setDomain(domain);
+                }),
+            )
             .subscribe();
     }
-    protected setDomain(domain: T) {
+    protected setDomain(domain: any) {
         this.domain = domain;
     }
     ngOnDestroy() {
@@ -50,198 +66,147 @@ export abstract class DomainDependent<T> implements OnDestroy {
     }
 }
 
-export abstract class IRepositoryFileService<T> extends DomainDependent<T> {
-    abstract getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
-    abstract getFile: (fileName: string) => Observable<{ fileContent: string }>;
-    abstract createFile: (fileName: string) => Observable<void>;
-    abstract createFolder: (folderName: string) => Observable<void>;
-    abstract updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    abstract updateFiles: (fileName: string, fileContent: string) => Observable<string[]>;
-    abstract renameFile: (filePath: string, newFileName: string) => Observable<void>;
-    abstract deleteFile: (filePath: string) => Observable<void>;
+export abstract class DomainDependentEndpoint extends DomainDependent implements OnDestroy {
+    private restResourceUrlBase = `${SERVER_API_URL}/api`;
+    protected restResourceUrl: string;
+    private websocketResourceUrlBase = '/topic';
+    protected websocketResourceUrlSend: string;
+    protected websocketResourceUrlReceive: string;
 
-    constructor(domainChangeService: DomainService<T>) {
-        super(domainChangeService);
+    constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+        super(domainService);
+    }
+
+    setDomain(domain: DomainChange) {
+        super.setDomain(domain);
+        const [domainType, domainValue] = this.domain;
+        if (this.websocketResourceUrlSend) {
+            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
+        }
+        if (this.websocketResourceUrlReceive) {
+            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
+        }
+        switch (domainType) {
+            case DomainType.PARTICIPATION:
+                this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
+                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
+                this.websocketResourceUrlReceive = `user/${this.websocketResourceUrlSend}`;
+                break;
+            case DomainType.TEST_REPOSITORY:
+                this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
+                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/test-repository/${domainValue.id}`;
+                this.websocketResourceUrlReceive = `user/${this.websocketResourceUrlSend}`;
+                break;
+            default:
+                this.restResourceUrl = null;
+                this.websocketResourceUrlSend = null;
+                this.websocketResourceUrlReceive = null;
+        }
+    }
+
+    ngOnDestroy() {
+        super.ngOnDestroy();
+        if (this.websocketResourceUrlSend) {
+            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
+        }
+        if (this.websocketResourceUrlReceive) {
+            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
+        }
     }
 }
 
-export abstract class IRepositoryService<T> extends DomainDependent<T> {
-    abstract isClean: () => Observable<{ isClean: boolean }>;
-    abstract commit: () => Observable<void>;
-    abstract pull: () => Observable<void>;
+export interface IRepositoryFileService {
+    getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
+    getFile: (fileName: string) => Observable<{ fileContent: string }>;
+    createFile: (fileName: string) => Observable<void>;
+    createFolder: (folderName: string) => Observable<void>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    // TODO: Implement websocket call
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<Array<[string, string]>>;
+    renameFile: (filePath: string, newFileName: string) => Observable<void>;
+    deleteFile: (filePath: string) => Observable<void>;
 }
 
-export interface IRepositoryBuildableService {
+export interface IRepositoryService {
+    isClean: () => Observable<{ isClean: boolean }>;
+    commit: () => Observable<void>;
+    pull: () => Observable<void>;
+}
+
+export interface IBuildLogService {
     getBuildLogs: () => Observable<BuildLogEntryArray>;
 }
 
 @Injectable({ providedIn: 'root' })
-export class RepositoryParticipationService extends IRepositoryService<Participation> implements IRepositoryBuildableService {
-    private resourceUrlBase = `${SERVER_API_URL}/api/repository`;
-    private resourceUrl: string;
-
-    constructor(private domainChangeService: DomainService<Participation>, protected http: HttpClient) {
-        super(domainChangeService);
-    }
-
-    setDomain(participation: Participation) {
-        super.setDomain(participation);
-        if (this.domain) {
-            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
-        } else {
-            this.resourceUrl = null;
-        }
+export class CodeEditorRepositoryService extends DomainDependentEndpoint implements IRepositoryService {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+        super(http, jhiWebsocketService, domainService);
     }
 
     isClean = () => {
-        return this.http.get<any>(this.resourceUrl).map(data => ({ isClean: data.isClean }));
+        return this.http.get<any>(this.restResourceUrl).map(data => ({ isClean: data.isClean }));
     };
 
     commit = () => {
-        return this.http.post<void>(`${this.resourceUrl}/commit`, {});
+        return this.http.post<void>(`${this.restResourceUrl}/commit`, {});
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.resourceUrl}/pull`, {});
+        return this.http.get<void>(`${this.restResourceUrl}/pull`, {});
     };
+}
+
+@Injectable({ providedIn: 'root' })
+export class CodeEditorBuildLogService extends DomainDependentEndpoint implements IBuildLogService {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+        super(http, jhiWebsocketService, domainService);
+    }
 
     getBuildLogs = () => {
-        return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/buildlogs`);
+        return this.http.get<BuildLogEntryArray>(`${this.restResourceUrl}/buildlogs`);
     };
 }
 
 @Injectable({ providedIn: 'root' })
-export class RepositoryFileParticipationService extends IRepositoryFileService<Participation> {
-    private resourceUrlBase = `${SERVER_API_URL}/api/repository`;
-    private resourceUrl: string;
-
-    private updateFilesChannel: string;
-
-    constructor(private domainChangeService: DomainService<Participation>, protected http: HttpClient) {
-        super(domainChangeService);
-    }
-
-    setDomain(participation: Participation) {
-        super.setDomain(participation);
-        if (this.domain) {
-            // TODO: Implement websocket requests
-            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
-            this.updateFilesChannel = `/topic/repository/${this.domain.id}/files`;
-        } else {
-            this.resourceUrl = null;
-            this.updateFilesChannel = null;
-        }
+export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements IRepositoryFileService {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+        super(http, jhiWebsocketService, domainService);
     }
 
     getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.resourceUrl}/files`);
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`);
     };
 
     getFile = (fileName: string) => {
-        return this.http.get(`${this.resourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).map(data => ({ fileContent: data }));
+        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).map(data => ({ fileContent: data }));
     };
 
     createFile = (fileName: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) });
+        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) });
     };
 
     createFolder = (folderName: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) });
+        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) });
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
-        return this.http.put(`${this.resourceUrl}/file`, fileContent, {
+        return this.http.put(`${this.restResourceUrl}/file`, fileContent, {
             params: new HttpParams().set('file', fileName),
         });
     };
 
-    updateFiles = [];
-
-    renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/rename-file`, { currentFilePath, newFilename });
-    };
-
-    deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.resourceUrl}/file`, { params: new HttpParams().set('file', fileName) });
-    };
-}
-
-@Injectable({ providedIn: 'root' })
-export class TestRepositoryService extends IRepositoryService<ProgrammingExercise> {
-    private resourceUrlBase = `${SERVER_API_URL}/api/test-repository`;
-    private resourceUrl: string;
-
-    constructor(private domainChangeService: DomainService<ProgrammingExercise>, protected http: HttpClient) {
-        super(domainChangeService);
-    }
-
-    setDomain(exercise: ProgrammingExercise) {
-        super.setDomain(exercise);
-        if (this.domain) {
-            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
-        } else {
-            this.resourceUrl = null;
-        }
-    }
-
-    isClean = () => {
-        return this.http.get<any>(this.resourceUrl).map(data => ({ isClean: data.isClean }));
-    };
-
-    commit = () => {
-        return this.http.post<void>(`${this.resourceUrl}/commit`, {});
-    };
-
-    pull = () => {
-        return this.http.get<void>(`${this.resourceUrl}/pull`, {});
-    };
-}
-
-@Injectable({ providedIn: 'root' })
-export class TestRepositoryFileService extends IRepositoryFileService<ProgrammingExercise> {
-    private resourceUrlBase = `${SERVER_API_URL}/api/test-repository`;
-    private resourceUrl: string;
-
-    constructor(private domainChangeService: DomainService<ProgrammingExercise>, protected http: HttpClient) {
-        super(domainChangeService);
-    }
-
-    setDomain(exercise: ProgrammingExercise) {
-        super.setDomain(exercise);
-        if (this.domain) {
-            this.resourceUrl = `${this.resourceUrlBase}/${this.domain.id}`;
-        } else {
-            this.resourceUrl = null;
-        }
-    }
-
-    getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.resourceUrl}/files`);
-    };
-
-    getFile = (fileName: string) => {
-        return this.http.get(`${this.resourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).map(data => ({ fileContent: data }));
-    };
-
-    createFile = (fileName: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) });
-    };
-
-    createFolder = (folderName: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) });
-    };
-
-    updateFileContent = (fileName: string, fileContent: string) => {
-        return this.http.put(`${this.resourceUrl}/file`, fileContent, {
-            params: new HttpParams().set('file', fileName),
-        });
+    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
+        const subject = new Subject<Array<[string, string]>>();
+        this.jhiWebsocketService.send(this.websocketResourceUrlSend, fileUpdates);
+        this.jhiWebsocketService.receive(this.websocketResourceUrlReceive).subscribe(res => subject.next(res), err => subject.error(err));
+        return subject as Observable<Array<[string, string]>>;
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.resourceUrl}/rename-file`, { currentFilePath, newFilename });
+        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename });
     };
 
     deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.resourceUrl}/file`, { params: new HttpParams().set('file', fileName) });
+        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) });
     };
 }

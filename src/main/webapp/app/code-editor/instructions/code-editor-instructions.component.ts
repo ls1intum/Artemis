@@ -21,6 +21,14 @@ import { MarkdownEditorHeight } from 'app/markdown-editor';
     providers: [JhiAlertService, WindowRef, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
+    // TODO: Remove participation
+    @Input()
+    participation: Participation;
+    @Input()
+    exercise: ProgrammingExercise;
+    @Input()
+    editableInstructions = false;
+
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     haveDetailsBeenLoaded = false;
@@ -31,13 +39,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     minInstructionsWidth: number;
     interactResizable: Interactable;
     noInstructionsAvailable = false;
-
-    @Input()
-    participation: Participation;
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    editableInstructions = false;
 
     // Only relevant if instructions are editable
     savingInstructions = false;

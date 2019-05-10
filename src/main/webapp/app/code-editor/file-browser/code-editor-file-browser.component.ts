@@ -1,4 +1,4 @@
-import { IRepositoryFileService, DomainService, IRepositoryService } from 'app/code-editor/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/code-editor-repository.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, throwError } from 'rxjs';
@@ -13,8 +13,6 @@ import interact from 'interactjs';
 import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
 import { textFileExtensions } from '../text-files.json';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorContainer } from '../mode/code-editor-mode-container.component.js';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -22,13 +20,13 @@ import { CodeEditorContainer } from '../mode/code-editor-mode-container.componen
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
-    public FileType = FileType;
+    @ViewChild('treeview')
+    treeview: TreeviewComponent;
 
     @Input()
-    fileService: IRepositoryFileService<any>;
-    @Input()
-    repositoryService: IRepositoryService<any>;
-
+    get selectedFile() {
+        return this.selectedFileValue;
+    }
     @Input()
     unsavedFiles: string[];
     @Input()
@@ -37,20 +35,18 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     editorState: EditorState;
     @Input()
     commitState: CommitState;
-    @Input()
-    isLoadingFiles: boolean;
-    @Output()
-    onFilesLoaded = new EventEmitter<string[]>();
     @Output()
     onRepositoryChecked = new EventEmitter<CommitState>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
     selectedFileChange = new EventEmitter<string>();
+    @Output()
+    onError = new EventEmitter<string>();
 
-    @ViewChild('treeview')
-    treeview: TreeviewComponent;
+    public FileType = FileType;
 
+    isLoadingFiles: boolean;
     selectedFileValue: string;
     repositoryFiles: { [fileName: string]: FileType };
     folder: string;
@@ -80,7 +76,17 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    constructor(private parent: CodeEditorContainer, private $window: WindowRef, public modalService: NgbModal) {}
+    set selectedFile(file: string) {
+        this.selectedFileValue = file;
+        this.selectedFileChange.emit(this.selectedFile);
+    }
+
+    constructor(
+        private $window: WindowRef,
+        public modalService: NgbModal,
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private repositoryService: CodeEditorRepositoryService,
+    ) {}
 
     ngOnInit() {
         this.initializeComponent();
@@ -126,10 +132,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
             this.initializeComponent();
-        }
-        // We need to make sure to not trigger multiple requests on the git repo at the same time.
-        // This is why we first wait until the repository state was checked.
-        else if (changes.selectedFile && changes.selectedFile.currentValue) {
+        } else if (changes.selectedFile && changes.selectedFile.currentValue) {
+            // We need to make sure to not trigger multiple requests on the git repo at the same time.
+            // This is why we first wait until the repository state was checked.
             this.renamingFile = null;
             this.setupTreeview();
         }
@@ -140,7 +145,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             .pipe(
                 tap(commitState => {
                     if (commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                        this.parent.onError('couldNotBeRetrieved');
+                        this.onError.emit('couldNotBeRetrieved');
                         throwError('couldNotBeRetrieved');
                     }
                 }),
@@ -157,7 +162,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.isLoadingFiles = false;
                     this.repositoryFiles = files;
                     this.setupTreeview();
-                    this.onFilesLoaded.emit(Object.keys(files));
                 }),
             )
             .subscribe(() => {}, err => {});
@@ -173,16 +177,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
         );
     };
-
-    @Input()
-    get selectedFile() {
-        return this.selectedFileValue;
-    }
-
-    set selectedFile(file: string) {
-        this.selectedFileValue = file;
-        this.selectedFileChange.emit(this.selectedFile);
-    }
 
     emitFileChange(fileChange: FileChange) {
         if (fileChange instanceof CreateFileChange) {
@@ -370,6 +364,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
+        // TODO: Find better way to do this
         this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
     }
 
@@ -392,10 +387,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         newFilePath = newFilePath.join('/');
 
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
-            this.parent.onError('fileExists');
+            this.onError.emit('fileExists');
             return;
         } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
-            this.parent.onError('unsupportedFile');
+            this.onError.emit('unsupportedFile');
             return;
         }
 
@@ -405,7 +400,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                     this.renamingFile = null;
                 },
-                () => this.parent.onError('fileOperationFailed'),
+                () => this.onError.emit('fileOperationFailed'),
             );
         } else {
             this.renamingFile = null;
@@ -441,10 +436,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.creatingFile = null;
             return;
         } else if (Object.keys(this.repositoryFiles).includes(event.target.value)) {
-            this.parent.onError('fileExists');
+            this.onError.emit('fileExists');
             return;
         } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
-            this.parent.onError('unsupportedFile');
+            this.onError.emit('unsupportedFile');
             return;
         }
         const [folderPath, fileType] = this.creatingFile;
@@ -455,7 +450,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.emitFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = null;
                 },
-                () => this.parent.onError('fileOperationFailed'),
+                () => this.onError.emit('fileOperationFailed'),
             );
         } else {
             this.createFolder(file).subscribe(
@@ -463,7 +458,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     this.emitFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = null;
                 },
-                () => this.parent.onError('fileOperationFailed'),
+                () => this.onError.emit('fileOperationFailed'),
             );
         }
     }
@@ -495,7 +490,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
         this.isLoadingFiles = true;
-        return this.fileService.getRepositoryContent().pipe(
+        return this.repositoryFileService.getRepositoryContent().pipe(
             rxMap(files =>
                 compose(
                     fromPairs,
@@ -516,14 +511,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     };
 
     renameFile = (filePath: string, fileName: string): Observable<void> => {
-        return this.fileService.renameFile(filePath, fileName);
+        return this.repositoryFileService.renameFile(filePath, fileName);
     };
 
     createFile = (fileName: string): Observable<void> => {
-        return this.fileService.createFile(fileName);
+        return this.repositoryFileService.createFile(fileName);
     };
 
     createFolder = (folderName: string): Observable<void> => {
-        return this.fileService.createFolder(folderName);
+        return this.repositoryFileService.createFolder(folderName);
     };
 }

@@ -8,6 +8,7 @@ export * from './code-editor.module';
 export * from './code-editor.route';
 export * from './code-editor.service';
 export * from './code-editor-repository.service';
+export * from './code-editor-session.service';
 export * from './code-editor-config.service';
 export * from './instructions/code-editor-instructions.component';
 export * from './instructions/code-editor-instructions-result-detail';

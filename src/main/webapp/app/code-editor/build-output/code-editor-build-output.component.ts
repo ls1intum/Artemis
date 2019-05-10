@@ -8,43 +8,66 @@ import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CodeEditorComponent } from '../code-editor.component';
 import { CodeEditorSessionService } from '../code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
+import { CodeEditorBuildLogService } from '../code-editor-repository.service';
+
+export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorSessionService],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
+    @Input()
+    participation: Participation;
+    @Input()
+    get isBuilding() {
+        return this.isBuildingValue;
+    }
+    @Input()
+    get buildLogErrors() {
+        return this.buildLogErrorsValue;
+    }
+    @Output()
+    buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
+    @Output()
+    isBuildingChange = new EventEmitter<boolean>();
+
     rawBuildLogs = new BuildLogEntryArray();
-    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+    buildLogErrorsValue: BuildLogErrors;
+    isBuildingValue: boolean;
 
     /** Resizable constants **/
     resizableMinHeight = 100;
     resizableMaxHeight = 500;
     interactResizable: Interactable;
 
-    @Input()
-    participation: Participation;
-    @Input()
-    isBuilding: boolean;
-    @Output()
-    buildLogChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timestamp: number }>();
+    set buildLogErrors(buildLogErrors: BuildLogErrors) {
+        this.buildLogErrorsValue = buildLogErrors;
+        this.storeSession();
+        this.buildLogErrorsChange.emit(buildLogErrors);
+    }
+
+    set isBuilding(isBuilding: boolean) {
+        this.isBuildingValue = isBuilding;
+        this.isBuildingChange.emit(isBuilding);
+    }
 
     private resultSubscription: Subscription;
 
     constructor(
         private parent: CodeEditorComponent,
         private $window: WindowRef,
-        private repositoryService: RepositoryService,
+        private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
         private resultWebsocketService: ResultWebsocketService,
-        private sessionService: CodeEditorSessionService<any>,
+        private sessionService: CodeEditorSessionService,
     ) {}
 
     /**
@@ -95,7 +118,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results) {
             const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
-            this.toggleBuildLogs(latestResult);
+            this.fetchBuildResults(latestResult);
         }
     }
 
@@ -108,7 +131,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             this.resultSubscription.unsubscribe();
         }
         this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable.subscribe(result => this.toggleBuildLogs(result));
+            this.resultSubscription = observable
+                .pipe(
+                    tap(() => (this.isBuilding = false)),
+                    switchMap(result => this.fetchBuildResults(result)),
+                )
+                .subscribe();
         });
     }
 
@@ -133,19 +161,15 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @desc Gets the buildlogs for the current participation
      */
     getBuildLogs() {
-        this.repositoryService
-            .buildlogs(this.participation.id)
-            .pipe(
-                tap(buildLogs => {
-                    const buildLogsFromServer = new BuildLogEntryArray(...buildLogs);
-                    const sessionBuildLogs = this.loadSession();
-                    this.rawBuildLogs = buildLogs;
-                    this.buildLogErrors = buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
-                    $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
-                    this.buildLogChange.emit(this.buildLogErrors);
-                }),
-            )
-            .subscribe(() => {});
+        return this.buildLogService.getBuildLogs().pipe(
+            tap((buildLogs: BuildLogEntryArray) => {
+                const buildLogsFromServer = new BuildLogEntryArray(...buildLogs);
+                const sessionBuildLogs = this.loadSession();
+                this.rawBuildLogs = buildLogs;
+                this.buildLogErrors = buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
+                $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
+            }),
+        );
     }
 
     /**
@@ -154,17 +178,17 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Else -> show build logs.
      * @param result
      */
-    toggleBuildLogs(result: Result) {
+    fetchBuildResults(result: Result) {
         if (
             !result ||
             ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
         ) {
             this.rawBuildLogs = new BuildLogEntryArray();
-            // If there are no compile errors, send recent timestamp
-            this.buildLogChange.emit({ timestamp: Date.now(), errors: {} });
+            this.buildLogErrors = this.rawBuildLogs.extractErrors();
+            return Observable.of();
         } else {
             // If the build failed, find out why
-            this.getBuildLogs();
+            return this.getBuildLogs();
         }
     }
 

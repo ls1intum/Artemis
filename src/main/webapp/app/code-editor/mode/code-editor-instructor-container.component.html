@@ -139,11 +139,42 @@
         <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span></div>
     </ng-template>
 </div>
-<jhi-code-editor
-    #editor
-    [buildable]="selectedRepository !== 'TEST'"
-    [editableInstructions]="true"
-    [fileService]="selectedRepository === 'TEST' ? testRepositoryFileService : repositoryFileParticipationService"
-    [repositoryService]="selectedRepository === 'TEST' : testRepositoryService : repositoryParticipationService"
-    [sessionService]="selectedRepository === 'TEST' : codeEditorTestSessionService : codeEditorSessionService "
-></jhi-code-editor>
+<jhi-code-editor *ngIf="exercise" [exercise]="exercise">
+    <div #editorNavbar>
+        <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding"></jhi-result>
+        <jhi-code-editor-actions [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-actions>
+    </div>
+    <jhi-code-editor-file-browser
+        #editorSidebarLeft
+        [unsavedFiles]="unsavedFiles"
+        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+        [editorState]="editorState"
+        [commitState]="commitState"
+        [(selectedFile)]="selectedFile"
+        (onRepositoryChecked)="onRepositoryChecked($event)"
+        (onFileChange)="onFileChange($event)"
+    ></jhi-code-editor-file-browser>
+    <jhi-code-editor-ace
+        #editorCenter
+        [selectedFile]="selectedFile"
+        [fileChange]="fileChange"
+        [unsavedFiles]="unsavedFiles"
+        [(buildLogErrors)]="buildLogErrors"
+        (onFileContentChange)="onFileContentChange($event)"
+        (onEditorStateChange)="setEditorState($event)"
+        (onSavedFiles)="onSavedFiles($event)"
+    ></jhi-code-editor-ace>
+    <jhi-code-editor-instructions
+        #editorSidebarRight
+        [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
+        [exercise]="exercise"
+        [editableInstructions]="true"
+    ></jhi-code-editor-instructions>
+    <jhi-code-editor-build-output
+        #editorBottomArea
+        *ngIf="selectedRepository !== 'TEST'"
+        [participation]="selectedParticipation"
+        [(isBuilding)]="isBuilding"
+        [(buildLogErrors)]="buildLogErrors"
+    ></jhi-code-editor-build-output>
+</jhi-code-editor>

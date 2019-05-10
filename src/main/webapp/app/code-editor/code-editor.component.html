@@ -6,55 +6,28 @@
         <!-- Exercise title -->
         <div class="jh-logo-container float-left editor-top-left">
             <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title"> </span>
-            <span>{{ participation?.exercise.title }}</span>
+            <span>{{ exercise?.title }}</span>
         </div>
         <ng-template #editorNavbar> </ng-template>
     </nav>
 
     <div class="editor-main">
         <!-- File browser -->
-        <div #editorSidebarLeft class="editor-sidebar-left">
-            <jhi-code-editor-file-browser
-                [domainChange]="domainChange"
-                [fileService]="fileService"
-                [participation]="participation"
-                [(selectedFile)]="selectedFile"
-                [unsavedFiles]="unsavedFiles"
-                [errorFiles]="errorFiles"
-                [editorState]="editorState"
-                [commitState]="commitState"
-                [isLoadingFiles]="isLoadingFiles"
-                (onFileChange)="onFileChange($event)"
-                (onFilesLoaded)="onFilesLoaded($event)"
-            >
-            </jhi-code-editor-file-browser>
+        <div class="editor-sidebar-left">
+            <ng-template #editorSidebarLeft></ng-template>
         </div>
 
         <!-- Editor -->
-        <div #editorCenter class="editor-center">
-            <jhi-code-editor-ace
-                [participation]="participation"
-                [selectedFile]="selectedFile"
-                [(buildLogErrors)]="buildLogErrors"
-                [editorState]="editorState"
-                [fileChange]="fileChange"
-                [unsavedFiles]="unsavedFiles"
-                (onEditorStateChange)="setEditorState($event)"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onFileContentChange)="onFileContentChange($event)"
-                (onError)="onError($event)"
-            >
-            </jhi-code-editor-ace>
+        <div class="editor-center">
+            <ng-template #editorCenter></ng-template>
         </div>
 
         <!-- Instructions -->
-        <div *ngIf="participation?.exercise" class="editor-sidebar-right">
-            <!-- <ng-template #editorSidebarRight></ng-template> -->
-            <jhi-code-editor-instructions [participation]="exercise.templateParticipation" [exercise]="exercise" [editableInstructions]="true"></jhi-code-editor-instructions>
+        <div class="editor-sidebar-right">
+            <ng-template #editorSidebarRight></ng-template>
         </div>
-        <div *ngIf="buildable" class="editor-bottom">
-            <jhi-code-editor-build-output [participation]="participation" [isBuilding]="isBuilding" (buildLogChange)="updateLatestBuildLogs($event)">
-            </jhi-code-editor-build-output>
+        <div class="editor-bottom">
+            <ng-template #editorBottomArea></ng-template>
         </div>
     </div>
 </div>

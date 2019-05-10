@@ -25,9 +25,12 @@ import { CodeEditorSessionService } from './code-editor-session.service';
     providers: [JhiAlertService, WindowRef, CourseService],
 })
 export class CodeEditorComponent {
-    @ViewChild(CodeEditorAceComponent) editor: CodeEditorAceComponent;
-    @ContentChild('editor-sidebar-right') editorSidebarRight: ElementRef;
-    @ContentChild('editor-bottom-area') editorBottomArea: ElementRef;
+    @ContentChild('editorSidebarRight') editorSidebarRight: ElementRef;
+    @ContentChild('editorSidebarLeft') editorSidebarLeft: ElementRef;
+    @ContentChild('editorBottomArea') editorBottomArea: ElementRef;
+
+    @Input()
+    exercise: ProgrammingExercise;
 
     /**
      * @function toggleCollapse
