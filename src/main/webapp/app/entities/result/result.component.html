@@ -5,7 +5,7 @@
 <span *ngIf="!result || (!result.score && result.score !== 0)">
     <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.result.noResult">No results</span></span>
     <span class="text-primary" *ngIf="isBuilding"
-    ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="arTeMiSApp.editor.building">&nbsp;Building...</span></span
+        ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="arTeMiSApp.editor.building">&nbsp;Building...</span></span
     >
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
@@ -24,9 +24,7 @@
             &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.downloadBuildResult">Download Build Result</span></a
         >
     </span>
-    <span *ngIf="showBadge" class="badge" [ngClass]="{'badge-info': !result.rated, 'badge-success': result.rated}">
-        {{(result.rated ? 'arTeMiSApp.result.graded' : 'arTeMiSApp.result.notGraded')
-        | translate
-        | uppercase}}
+    <span *ngIf="showBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+        {{ (result.rated ? 'arTeMiSApp.result.graded' : 'arTeMiSApp.result.notGraded') | translate | uppercase }}
     </span>
 </ng-container>
