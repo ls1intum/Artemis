@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,10 +81,13 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            SimpMessageSendingOperations messagingTemplate) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -95,6 +99,7 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -133,6 +138,7 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
+            messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
