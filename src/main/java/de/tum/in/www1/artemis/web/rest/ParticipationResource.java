@@ -166,7 +166,6 @@ public class ParticipationResource {
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -174,13 +173,17 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
-            addLatestResultToParticipation(participation);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+            if (participation != null) {
+                addLatestResultToParticipation(participation);
+                participation.getExercise().filterSensitiveInformation();
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+            }
         }
-        log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
+        log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notProgrammingExercise",
+                "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
 
     /**
