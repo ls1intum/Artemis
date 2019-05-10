@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -84,6 +86,18 @@ abstract class AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(originalResult);
+    }
+
+    /**
+     * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
+     * 
+     * @param assessment the assessment to check
+     */
+    void checkGeneralFeedback(List<Feedback> assessment) {
+        final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
+        if (generalFeedbackCount > 1) {
+            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+        }
     }
 
     /**

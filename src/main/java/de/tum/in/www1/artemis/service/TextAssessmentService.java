@@ -76,11 +76,7 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
-        final long count = textAssessment.stream().filter(feedback -> feedback.getReference() == null).count();
-
-        if (count > 1) {
-            throw new BadRequestAlertException("Cannot have more than one general Feedback per Exercise", "textAssessment", "moreThanOneGeneralFeedback");
-        }
+        checkGeneralFeedback(textAssessment);
 
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
