@@ -69,7 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exercise = exerciseResponse.body;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.exercise.participations = cachedParticipations;
-                this.mergeParticipations();
+                this.mergeResultsAndSubmissionsForParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
@@ -77,7 +77,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-                this.mergeParticipations();
+                this.mergeResultsAndSubmissionsForParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
@@ -103,9 +103,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    mergeParticipations() {
+    mergeResultsAndSubmissionsForParticipations() {
         if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
-            this.combinedParticipation = this.participationService.mergeParticipations(this.exercise.participations);
+            this.combinedParticipation = this.participationService.mergeResultsAndSubmissionsForParticipations(this.exercise.participations);
             this.sortResults();
         }
     }
@@ -125,7 +125,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                           return el.id === changedParticipation.id ? changedParticipation : el;
                       })
                     : [changedParticipation];
-                this.mergeParticipations();
+                this.mergeResultsAndSubmissionsForParticipations();
             }
         });
     }

@@ -169,7 +169,7 @@ export class ParticipationService {
         return convertedSubmissions;
     }
 
-    mergeParticipations(participations: Participation[]): Participation {
+    mergeResultsAndSubmissionsForParticipations(participations: Participation[]): Participation {
         const combinedParticipation: Participation = new Participation();
         if (participations && participations.length > 0) {
             combinedParticipation.id = participations[0].id;

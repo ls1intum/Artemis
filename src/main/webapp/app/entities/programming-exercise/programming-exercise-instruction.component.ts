@@ -53,7 +53,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 
-    private resultSubscription: Subscription;
+    private participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -95,7 +95,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const exerciseHasChanged = hasExerciseChanged(changes);
         if (participationHasChanged) {
             this.isInitial = true;
-            this.setupResultWebsocket();
+            this.participationSubscription = this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
@@ -133,8 +133,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
     private async setupResultWebsocket() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (this.participationSubscription) {
+            this.participationSubscription.unsubscribe();
         }
         return this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe(result => {
             this.latestResult = result;
@@ -553,8 +553,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.listenerRemoveFunctions.forEach(f => f());
         this.listenerRemoveFunctions = [];
         this.steps = [];
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (this.participationSubscription) {
+            this.participationSubscription.unsubscribe();
         }
     }
 }
