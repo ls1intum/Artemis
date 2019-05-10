@@ -11,12 +11,14 @@ import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileT
 import { AnnotationArray, Session, EditorState, CommitState } from 'app/entities/ace-editor';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { JhiAlertService } from 'ng-jhipster';
+import { CodeEditorRepositoryFileService } from '../code-editor-repository.service';
 
 export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
     paramSub: Subscription;
 
     selectedFile: string;
     unsavedFiles: string[] = [];
+    fileContent: { [fileName: string]: string } = {};
     fileChange: FileChange;
 
     session: Session;
@@ -32,6 +34,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
         private translateService: TranslateService,
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
+        protected repositoryFileService: CodeEditorRepositoryFileService,
     ) {}
 
     onDomainChange = () => {
@@ -40,6 +43,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
         this.session = undefined;
         this.buildLogErrors = undefined;
         this.isBuilding = false;
+        this.fileContent = {};
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -118,6 +122,28 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     }
 
     /**
+     * @function saveFiles
+     * @desc Saves all files that have unsaved changes in the editor.
+     */
+    saveChangedFiles() {
+        if (this.unsavedFiles.length) {
+            this.editorState = EditorState.SAVING;
+            const unsavedFiles = Object.entries(this.fileContent)
+                .filter(([fileName]) => this.unsavedFiles.includes(fileName))
+                .map(([fileName, fileContent]) => ({ fileName, fileContent }));
+            this.repositoryFileService.updateFiles(unsavedFiles).subscribe(
+                res => {
+                    this.onSavedFiles(res);
+                },
+                err => {
+                    this.onError(err.error);
+                    this.editorState = EditorState.UNSAVED_CHANGES;
+                },
+            );
+        }
+    }
+
+    /**
      * Set unsaved files and check if this changes the commit state.
      * @param unsavedFiles
      */
@@ -172,8 +198,9 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * When the content of a file changes, set it as unsaved.
      * @param file
      */
-    onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
+    onFileContentChange({ file, fileContent }: { file: string; unsavedChanges: boolean; fileContent: string }) {
         const unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
+        this.fileContent = { ...this.fileContent, [file]: fileContent };
         this.setUnsavedFiles(unsavedFiles);
     }
 

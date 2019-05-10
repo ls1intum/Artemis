@@ -54,9 +54,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Output()
     onEditorStateChange = new EventEmitter<EditorState>();
     @Output()
-    onSavedFiles = new EventEmitter<Array<[string, string]>>();
-    @Output()
-    onFileContentChange = new EventEmitter<{ file: string; unsavedChanges: boolean }>();
+    onFileContentChange = new EventEmitter<{ file: string; unsavedChanges: boolean; fileContent: string }>();
     @Output()
     buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
     @Output()
@@ -196,25 +194,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * @function saveFiles
-     * @desc Saves all files that have unsaved changes in the editor.
-     */
-    saveChangedFiles() {
-        if (this.unsavedFiles.length) {
-            this.onEditorStateChange.emit(EditorState.SAVING);
-            this.repositoryFileService.updateFiles(this.unsavedFiles.map(fileName => ({ fileName, fileContent: this.fileSession[fileName].code }))).subscribe(
-                res => {
-                    this.onSavedFiles.emit(res);
-                },
-                err => {
-                    this.onError.emit(err.error);
-                    this.onEditorStateChange.emit(EditorState.UNSAVED_CHANGES);
-                },
-            );
-        }
-    }
-
-    /**
      * @function onFileTextChanged
      * @desc Callback function for text changes in the Ace Editor.
      * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.
@@ -235,7 +214,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 };
             }
             this.editorChangeLog = [];
-            this.onFileContentChange.emit({ file: this.selectedFile, unsavedChanges: true });
+            this.onFileContentChange.emit({ file: this.selectedFile, unsavedChanges: true, fileContent: code });
         }
     }
 

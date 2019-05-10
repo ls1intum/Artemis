@@ -88,10 +88,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         private repositoryService: CodeEditorRepositoryService,
     ) {}
 
-    ngOnInit() {
-        this.initializeComponent();
-    }
-
     /**
      * @function ngAfterViewInit
      * @desc After the view was initialized, we create an interact.js resizable object,
@@ -130,7 +126,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             // We need to make sure to not trigger multiple requests on the git repo at the same time.

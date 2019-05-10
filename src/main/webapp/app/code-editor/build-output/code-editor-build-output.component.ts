@@ -118,7 +118,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results) {
             const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
-            this.fetchBuildResults(latestResult);
+            Observable.of(latestResult)
+                .pipe(
+                    switchMap(result => this.loadAndAttachResultDetails(result)),
+                    tap(result => this.fetchBuildResults(result)),
+                )
+                .subscribe();
         }
     }
 
@@ -166,7 +171,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 const buildLogsFromServer = new BuildLogEntryArray(...buildLogs);
                 const sessionBuildLogs = this.loadSession();
                 this.rawBuildLogs = buildLogs;
-                this.buildLogErrors = buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
+                this.buildLogErrors = !sessionBuildLogs || buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
                 $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
             }),
         );

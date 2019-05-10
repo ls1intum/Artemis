@@ -11,8 +11,9 @@ export interface ICodeEditorSessionService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSessionService extends DomainDependent implements ICodeEditorSessionService {
-    constructor(private localStorageService: LocalStorageService, domainService: DomainService) {
+    constructor(protected localStorageService: LocalStorageService, domainService: DomainService) {
         super(domainService);
+        this.initDomainSubscription();
     }
 
     storeSession = (session: { errors: { [fileName: string]: AnnotationArray }; timestamp: number }) => {

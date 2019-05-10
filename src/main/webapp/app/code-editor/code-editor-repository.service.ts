@@ -42,23 +42,27 @@ export class DomainService {
 
 export abstract class DomainDependent implements OnDestroy {
     protected domain: DomainChange;
-    private domainChangeSubscription: Subscription;
+    protected domainChangeSubscription: Subscription;
 
-    constructor(private domainService: DomainService) {
+    constructor(private domainService: DomainService) {}
+
+    initDomainSubscription() {
         this.domainChangeSubscription = this.domainService
             .subscribeDomainChange()
             .pipe(
                 filter(domain => !!domain),
-                tap(domain => {
+                tap((domain: DomainChange) => {
                     console.log({ domain });
                     this.setDomain(domain);
                 }),
             )
             .subscribe();
     }
-    protected setDomain(domain: any) {
+
+    setDomain(domain: DomainChange) {
         this.domain = domain;
     }
+
     ngOnDestroy() {
         if (this.domainChangeSubscription) {
             this.domainChangeSubscription.unsubscribe();
@@ -75,6 +79,7 @@ export abstract class DomainDependentEndpoint extends DomainDependent implements
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
+        this.initDomainSubscription();
     }
 
     setDomain(domain: DomainChange) {
@@ -163,7 +168,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
     }
 
     getBuildLogs = () => {
-        return this.http.get<BuildLogEntryArray>(`${this.restResourceUrl}/buildlogs`);
+        return this.http.get<BuildLogEntryArray>(`${this.restResourceUrl}/buildlogs`, {});
     };
 }
 
@@ -197,8 +202,8 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
 
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         const subject = new Subject<Array<[string, string]>>();
-        this.jhiWebsocketService.send(this.websocketResourceUrlSend, fileUpdates);
-        this.jhiWebsocketService.receive(this.websocketResourceUrlReceive).subscribe(res => subject.next(res), err => subject.error(err));
+        this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
+        this.jhiWebsocketService.receive(`${this.websocketResourceUrlReceive}/files`).subscribe(res => subject.next(res), err => subject.error(err));
         return subject as Observable<Array<[string, string]>>;
     };
 

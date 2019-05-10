@@ -140,12 +140,17 @@
     </ng-template>
 </div>
 <jhi-code-editor *ngIf="exercise" [exercise]="exercise">
-    <div #editorNavbar>
-        <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding"></jhi-result>
-        <jhi-code-editor-actions [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-actions>
+    <div class="d-flex align-items-center ml-auto" editorNavbar>
+        <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding" class="mr-2"></jhi-result>
+        <jhi-code-editor-actions
+            [editorState]="editorState"
+            [(commitState)]="commitState"
+            [isBuilding]="isBuilding"
+            [onSave]="saveChangedFiles.bind(this)"
+        ></jhi-code-editor-actions>
     </div>
     <jhi-code-editor-file-browser
-        #editorSidebarLeft
+        editorSidebarLeft
         [unsavedFiles]="unsavedFiles"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
@@ -155,23 +160,22 @@
         (onFileChange)="onFileChange($event)"
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace
-        #editorCenter
+        editorCenter
         [selectedFile]="selectedFile"
         [fileChange]="fileChange"
         [unsavedFiles]="unsavedFiles"
         [(buildLogErrors)]="buildLogErrors"
         (onFileContentChange)="onFileContentChange($event)"
         (onEditorStateChange)="setEditorState($event)"
-        (onSavedFiles)="onSavedFiles($event)"
     ></jhi-code-editor-ace>
     <jhi-code-editor-instructions
-        #editorSidebarRight
+        editorSidebarRight
         [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
         [exercise]="exercise"
         [editableInstructions]="true"
     ></jhi-code-editor-instructions>
     <jhi-code-editor-build-output
-        #editorBottomArea
+        editorBottomArea
         *ngIf="selectedRepository !== 'TEST'"
         [participation]="selectedParticipation"
         [(isBuilding)]="isBuilding"

@@ -2,32 +2,32 @@
     <jhi-alert></jhi-alert>
     <jhi-alert-error></jhi-alert-error>
     <!-- Top bar -->
-    <nav class="navbar navbar-light navbar-expand-sm jh-navbar">
+    <nav class="navbar navbar-light navbar-expand-sm jh-navbar d-flex">
         <!-- Exercise title -->
         <div class="jh-logo-container float-left editor-top-left">
             <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title"> </span>
             <span>{{ exercise?.title }}</span>
         </div>
-        <ng-template #editorNavbar> </ng-template>
+        <ng-content select="[editorNavbar]"> </ng-content>
     </nav>
 
     <div class="editor-main">
         <!-- File browser -->
         <div class="editor-sidebar-left">
-            <ng-template #editorSidebarLeft></ng-template>
+            <ng-content select="[editorSidebarLeft]"></ng-content>
         </div>
 
         <!-- Editor -->
         <div class="editor-center">
-            <ng-template #editorCenter></ng-template>
+            <ng-content select="[editorCenter]"></ng-content>
         </div>
 
         <!-- Instructions -->
         <div class="editor-sidebar-right">
-            <ng-template #editorSidebarRight></ng-template>
+            <ng-content select="[editorSidebarRight]"></ng-content>
         </div>
-        <div class="editor-bottom">
-            <ng-template #editorBottomArea></ng-template>
-        </div>
+    </div>
+    <div class="editor-bottom">
+        <ng-content select="[editorBottomArea]"></ng-content>
     </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
@@ -9,8 +9,10 @@ import { CourseExerciseService } from 'app/entities/course';
 import { ParticipationService, Participation } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { DomainService, DomainType } from '../code-editor-repository.service';
+import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../code-editor-repository.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
+import { RepositoryFileService } from 'app/entities/repository';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -31,6 +33,7 @@ enum LOADING_STATE {
     templateUrl: './code-editor-instructor-container.component.html',
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
@@ -52,8 +55,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         translateService: TranslateService,
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
+        repositoryFileService: CodeEditorRepositoryFileService,
     ) {
-        super(participationService, translateService, route, jhiAlertService);
+        super(participationService, translateService, route, jhiAlertService, repositoryFileService);
     }
 
     /**
