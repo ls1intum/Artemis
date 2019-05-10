@@ -94,8 +94,8 @@ public class AutomaticSubmissionService {
             DecimalFormat df = new DecimalFormat("#.##");
             log.info("Checked {} submissions in {} seconds for automatic submit.", unsubmittedSubmissions.size(), df.format(elapsedTimeInSeconds));
         }
-        catch (Exception e) {
-            log.error("Exception in AutomaticSubmissionService:\n{}", e.getMessage());
+        catch (Exception ex) {
+            log.error("Exception in AutomaticSubmissionService:\n{}", ex.getMessage(), ex);
         }
     }
 

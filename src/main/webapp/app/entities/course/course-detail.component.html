@@ -2,11 +2,8 @@
     <div class="col-8">
         <div *ngIf="course">
             <div>
-                <jhi-secured-image
-                    *ngIf="course.courseIcon"
-                    [src]="course.courseIcon">
-                </jhi-secured-image>
-                <h2><span jhiTranslate="arTeMiSApp.course.detail.title">Course</span> {{course.id}}</h2>
+                <jhi-secured-image *ngIf="course.courseIcon" [src]="course.courseIcon"> </jhi-secured-image>
+                <h2><span jhiTranslate="arTeMiSApp.course.detail.title">Course</span> {{ course.id }}</h2>
             </div>
             <hr />
             <jhi-alert></jhi-alert>

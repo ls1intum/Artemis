@@ -1,10 +1,10 @@
 import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subscription } from 'rxjs/Subscription';
+import { difference as _difference } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
 
@@ -17,7 +17,6 @@ import { RepositoryFileService, RepositoryService } from '../entities/repository
 import { AnnotationArray, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
-import { textFileExtensions } from './text-files.json';
 import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { ComponentCanDeactivate } from 'app/shared';
@@ -27,6 +26,7 @@ import { Observable, throwError } from 'rxjs';
 import { ResultService, Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
+import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-editor',
@@ -45,18 +45,19 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     errorFiles: string[] = [];
     session: Session;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
+    fileChange: FileChange;
 
     /** Code Editor State Booleans **/
     editorState = EditorState.CLEAN;
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
+    isLoadingFiles = true;
 
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
-        private repositoryFileService: RepositoryFileService,
         private resultService: ResultService,
         private localStorageService: LocalStorageService,
         private jhiAlertService: JhiAlertService,
@@ -94,8 +95,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     tap(participation => (this.participation = participation)),
                     switchMap(() => this.checkIfRepositoryIsClean()),
                     tap(commitState => (this.commitState = commitState)),
-                    switchMap(() => this.loadFiles()),
-                    tap(files => (this.repositoryFiles = files)),
                     tap(() => this.loadSession()),
                 )
                 .subscribe(
@@ -114,26 +113,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
-    }
-
-    /**
-     * Load files from the participants repository.
-     * Files that are not relevant for the conduction of the exercise are removed from result.
-     */
-    private loadFiles(): Observable<string[]> {
-        return this.repositoryFileService.query(this.participation.id).pipe(
-            rxMap((files: string[]) =>
-                files
-                    // Filter Readme file that was historically in the student's assignment repo
-                    .filter(value => !value.includes('README.md'))
-                    // Remove binary files as they can't be displayed in an editor
-                    .filter(filename => textFileExtensions.includes(filename.split('.').pop())),
-            ),
-            catchError((error: HttpErrorResponse) => {
-                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                return Observable.of([]);
-            }),
-        );
     }
 
     /**
@@ -208,11 +187,10 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Set unsaved files and check if this changes the commit state.
-     * @param fileNames
+     * @param unsavedFiles
      */
-    setUnsavedFiles(fileNames: string[]) {
-        this.unsavedFiles = fileNames;
-
+    setUnsavedFiles(unsavedFiles: string[]) {
+        this.unsavedFiles = unsavedFiles;
         if (!this.unsavedFiles.length && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
             this.editorState = EditorState.CLEAN;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -229,7 +207,6 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     /**
      * @function updateLatestResult
      * @desc Callback function for when a new result is received from the result component
-     * @param $event Event object which contains the newly received result
      */
     updateLatestResult() {
         this.isBuilding = false;
@@ -240,49 +217,85 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param buildLogs
      */
     updateLatestBuildLogs(buildLogs: BuildLogEntryArray) {
-        const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
-        if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
-            this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
-            this.errorFiles = Object.keys(this.buildLogErrors.errors);
-            // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
-            if (this.session) {
+        // The build logs come asynchronously while the view of other components are rendered.
+        // To avoid ExpressionChangedAfterItHasBeenCheckedError, we wait a tick so the view can update.
+        setTimeout(() => {
+            const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+            if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
+                this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+                this.errorFiles = Object.keys(this.buildLogErrors.errors);
+                // Only store the buildLogErrors if the session was already loaded - might be that they are outdated
+                if (this.session) {
+                    this.storeSession();
+                }
+            }
+        }, 0);
+    }
+
+    /**
+     * @function onFileChange
+     * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
+     * Also all references to a file need to be updated in case of rename,
+     * in case of delete make sure to also remove all sub entities (files in folder).
+     */
+    onFileChange<T extends FileChange>([files, fileChange]: [string[], T]) {
+        this.commitState = CommitState.UNCOMMITTED_CHANGES;
+        this.repositoryFiles = files;
+        if (fileChange instanceof CreateFileChange) {
+            // Select newly created file
+            if (fileChange.fileType === FileType.FILE) {
+                this.selectedFile = fileChange.fileName;
+            }
+        } else if (fileChange instanceof RenameFileChange) {
+            const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
+            const renamedUnsavedFiles = this.unsavedFiles
+                .filter(file => file.startsWith(fileChange.oldFileName))
+                .map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
+            this.unsavedFiles = [...this.unsavedFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedUnsavedFiles];
+            const renamedErrorFiles = this.errorFiles.filter(file => file.startsWith(fileChange.oldFileName)).map(file => file.replace(oldFileNameRegex, fileChange.newFileName));
+            this.errorFiles = [...this.errorFiles.filter(file => !file.startsWith(fileChange.oldFileName)), ...renamedErrorFiles];
+            const renamedErrors = compose(
+                fromPairs,
+                map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            const filteredErrors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.oldFileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
+            this.fileChange = fileChange;
+            // If the renamed file has errors, we also need to update the session in localStorage
+            if (this.errorFiles.includes(fileChange.newFileName)) {
                 this.storeSession();
             }
+            // Also updated the name of the selectedFile
+            if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
+                this.selectedFile = fileChange.newFileName;
+            } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {
+                this.selectedFile = this.selectedFile.replace(oldFileNameRegex, fileChange.newFileName);
+            }
+        } else if (fileChange instanceof DeleteFileChange) {
+            this.fileChange = fileChange;
+            this.unsavedFiles = this.unsavedFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            this.errorFiles = this.errorFiles.filter(fileName => !fileName.startsWith(fileChange.fileName));
+            const errors = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
+                toPairs,
+            )(this.buildLogErrors.errors);
+            this.buildLogErrors = { errors, timestamp: this.buildLogErrors.timestamp };
+            // If the selected file or its containing folder was deleted, unselect it
+            if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
+                this.selectedFile = undefined;
+            }
         }
-    }
-
-    /**
-     * @function updateSelectedFile
-     * @desc Callback function for when a new file is selected within the file-browser component
-     * @param $event Event object which contains the new file name
-     */
-    updateSelectedFile($event: any) {
-        this.selectedFile = $event.fileName;
-    }
-
-    /**
-     * @function updateRepositoryCommitStatus
-     * @desc Callback function for when a file was created or deleted; updates the current repository files
-     */
-    updateRepositoryCommitStatus($event: any) {
-        this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        /** Query the repositoryFileService for updated files in the repository */
-        this.loadFiles()
-            .pipe(
-                tap(
-                    files => (this.repositoryFiles = files),
-                    tap(() => {
-                        if ($event.mode === 'create' && this.repositoryFiles.includes($event.file)) {
-                            // Select newly created file
-                            this.selectedFile = $event.file;
-                        } else if ($event.file === this.selectedFile && $event.mode === 'delete' && !this.repositoryFiles.includes($event.file)) {
-                            // If the selected file was deleted, unselect it
-                            this.selectedFile = undefined;
-                        }
-                    }),
-                ),
-            )
-            .subscribe();
+        if (this.unsavedFiles.length && this.editorState === EditorState.CLEAN) {
+            this.editorState = EditorState.UNSAVED_CHANGES;
+        } else if (!this.unsavedFiles.length && this.editorState === EditorState.UNSAVED_CHANGES) {
+            this.editorState = EditorState.CLEAN;
+        }
     }
 
     /**
@@ -302,6 +315,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 )(this.session.errors),
                 timestamp: this.session.timestamp,
             };
+
             this.errorFiles = Object.keys(this.buildLogErrors.errors);
         } else if (this.buildLogErrors) {
             this.storeSession();
@@ -339,6 +353,44 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             horizontal ? $card.height('35px') : $card.width('55px');
             interactResizable.resizable({ enabled: false });
         }
+    }
+
+    /**
+     * When files were saved, check which could be saved and set unsavedFiles to update the ui.
+     * Files that could not be saved will show an error in the header.
+     * @param files
+     */
+    onSavedFiles(files: any) {
+        const { errorFiles, savedFiles } = Object.entries(files).reduce(
+            (acc, [fileName, error]: [string, string | null]) =>
+                error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : { ...acc, savedFiles: [fileName, ...acc.savedFiles] },
+            { errorFiles: [], savedFiles: [] },
+        );
+
+        const unsavedFiles = _difference(this.unsavedFiles, savedFiles);
+        this.setUnsavedFiles(unsavedFiles);
+
+        if (errorFiles.length) {
+            this.onError('saveFailed');
+        }
+        this.storeSession();
+    }
+
+    /**
+     * When the files are loaded set the repositoryFiles.
+     * @param files
+     */
+    onFilesLoaded(files: string[]) {
+        this.repositoryFiles = files;
+    }
+
+    /**
+     * When the content of a file changes, set it as unsaved.
+     * @param file
+     */
+    onFileContentChange({ file }: { file: string; unsavedChanges: boolean }) {
+        const unsavedFiles = this.unsavedFiles.includes(file) ? this.unsavedFiles : [file, ...this.unsavedFiles];
+        this.setUnsavedFiles(unsavedFiles);
     }
 
     /**

@@ -87,7 +87,8 @@
                 "noAttachments": "There are no attachments available for this lecture.",
                 "date": "Date",
                 "notReleased": "Not released",
-                "version": "Version"
+                "version": "Version",
+                "isDownloading": "Is downloading..."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

@@ -39,15 +39,13 @@ export class CategorySelectorComponent implements OnChanges {
 
     onSelectedColor(selectedColor: string) {
         this.selectedCategory.color = selectedColor;
-    }
-
-    onBlur(categoryName: string) {
-        if (!categoryName) {
-            return;
-        }
-        this.onItemAdded({
-            category: categoryName,
-        } as ExerciseCategory);
+        this.exerciseCategories = this.exerciseCategories.map(el => {
+            if (el.category === this.selectedCategory.category) {
+                return this.selectedCategory;
+            }
+            return el;
+        });
+        this.selectedCategories.emit(this.exerciseCategories);
     }
 
     onItemAdded(exerciseCategory: ExerciseCategory) {

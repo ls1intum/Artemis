@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 
 public class AssessmentIndex {
 
@@ -16,7 +16,7 @@ public class AssessmentIndex {
 
     public Optional<Assessment> getAssessment(int elementID) {
         Assessment assessment = modelElementAssessmentMapping.get(elementID);
-        if(assessment == null){
+        if (assessment == null) {
             return Optional.empty();
         }
         return Optional.of(assessment);

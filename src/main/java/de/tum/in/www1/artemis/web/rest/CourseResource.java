@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -86,10 +86,11 @@ public class CourseResource {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-                          MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-                          TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-                          ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService,
+            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -412,13 +413,14 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations
+     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
+     * instructors for the instructor dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
@@ -432,7 +434,7 @@ public class CourseResource {
 
         course.setExercises(interestingExercises);
 
-        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId);
+        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true, true);
 
         for (Exercise exercise : interestingExercises) {
             Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
@@ -498,6 +500,10 @@ public class CourseResource {
         }
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
+        }
+
+        for (Lecture lecture : course.getLectures()) {
+            lectureService.delete(lecture);
         }
 
         List<GroupNotification> notifications = notificationService.findAllNotificationsForCourse(course);

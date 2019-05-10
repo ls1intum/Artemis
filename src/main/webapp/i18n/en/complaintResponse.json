@@ -1,0 +1,12 @@
+{
+    "arTeMiSApp": {
+        "complaintResponse": {
+            "title": "Complaint's response",
+            "created": "Response to complaint has been submitted",
+            "updateAssessment": "Update assessment",
+            "updateAssessmentTooltip": "Send complaint response and update assessment",
+            "rejectComplaint": "Reject complaint",
+            "rejectComplaintTooltip": "Send complaint response and reject complaint"
+        }
+    }
+}

@@ -1,25 +1,22 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
-import org.aspectj.weaver.ast.Not;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
 
 /**
  * A SystemNotification.
  */
 @Entity
-@DiscriminatorValue(value="S")
+@DiscriminatorValue(value = "S")
 public class SystemNotification extends Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Column(name = "expire_date")
     private ZonedDateTime expireDate;
 
@@ -77,10 +74,6 @@ public class SystemNotification extends Notification implements Serializable {
 
     @Override
     public String toString() {
-        return "SystemNotification{" +
-            "id=" + getId() +
-            ", expireDate='" + getExpireDate() + "'" +
-            ", type='" + getType() + "'" +
-            "}";
+        return "SystemNotification{" + "id=" + getId() + ", expireDate='" + getExpireDate() + "'" + ", type='" + getType() + "'" + "}";
     }
 }
