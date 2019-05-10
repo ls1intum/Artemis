@@ -13,6 +13,7 @@ import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../c
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { RepositoryFileService } from 'app/entities/repository';
+import { CodeEditorComponent } from '../code-editor.component';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -33,7 +34,9 @@ enum LOADING_STATE {
     templateUrl: './code-editor-instructor-container.component.html',
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorComponent) grid: CodeEditorComponent;
+    @ViewChild(CodeEditorAceComponent)
+    aceEditor: CodeEditorAceComponent;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 

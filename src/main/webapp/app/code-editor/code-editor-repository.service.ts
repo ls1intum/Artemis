@@ -95,12 +95,12 @@ export abstract class DomainDependentEndpoint extends DomainDependent implements
             case DomainType.PARTICIPATION:
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
                 this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `user/${this.websocketResourceUrlSend}`;
+                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
                 break;
             case DomainType.TEST_REPOSITORY:
                 this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
                 this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/test-repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `user/${this.websocketResourceUrlSend}`;
+                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
                 break;
             default:
                 this.restResourceUrl = null;
@@ -176,6 +176,11 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
 export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements IRepositoryFileService {
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(http, jhiWebsocketService, domainService);
+    }
+
+    setDomain(domain: DomainChange) {
+        super.setDomain(domain);
+        this.jhiWebsocketService.subscribe(`${this.websocketResourceUrlReceive}/files`);
     }
 
     getRepositoryContent = () => {

@@ -166,9 +166,13 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: Array<[string, string | null]>) {
-        const savedFiles = files.filter(([, error]: [string, string | null]) => !error).map(([fileName]) => fileName);
-        const errorFiles = files.filter(([, error]: [string, string | null]) => error).map(([fileName]) => fileName);
+    onSavedFiles(files: { [fileName: string]: string | null }) {
+        const savedFiles = Object.entries(files)
+            .filter(([, error]: [string, string | null]) => !error)
+            .map(([fileName]) => fileName);
+        const errorFiles = Object.entries(files)
+            .filter(([, error]: [string, string | null]) => error)
+            .map(([fileName]) => fileName);
 
         const unsavedFiles = _difference(this.unsavedFiles, savedFiles);
         this.setUnsavedFiles(unsavedFiles);

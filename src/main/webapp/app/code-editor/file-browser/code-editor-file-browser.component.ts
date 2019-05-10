@@ -19,7 +19,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     templateUrl: './code-editor-file-browser.component.html',
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     @ViewChild('treeview')
     treeview: TreeviewComponent;
 
@@ -35,6 +35,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     editorState: EditorState;
     @Input()
     commitState: CommitState;
+    @Input()
+    toggleCollapse: (event: any, horizontal: boolean, interactable: Interactable, resizableMinWidth: number) => void;
     @Output()
     onRepositoryChecked = new EventEmitter<CommitState>();
     @Output()
@@ -361,7 +363,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         // TODO: Find better way to do this
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
+        this.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
     }
 
     /**

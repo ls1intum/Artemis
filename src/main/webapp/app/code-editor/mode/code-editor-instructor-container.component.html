@@ -139,7 +139,7 @@
         <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span></div>
     </ng-template>
 </div>
-<jhi-code-editor *ngIf="exercise" [exercise]="exercise">
+<jhi-code-editor #grid *ngIf="exercise" [exercise]="exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding" class="mr-2"></jhi-result>
         <jhi-code-editor-actions
@@ -155,6 +155,7 @@
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
         [commitState]="commitState"
+        [toggleEditorCollapse]="grid.toggleEditorCollapse"
         [(selectedFile)]="selectedFile"
         (onRepositoryChecked)="onRepositoryChecked($event)"
         (onFileChange)="onFileChange($event)"
