@@ -56,7 +56,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     get feedback(): Feedback[] {
-        return [this.generalFeedback, ...this.referencedFeedback] || [];
+        if (!this.referencedFeedback) {
+            return [this.generalFeedback];
+        }
+        return [this.generalFeedback, ...this.referencedFeedback];
     }
 
     ngOnInit() {
@@ -280,7 +283,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             return;
         }
         for (const feedback of this.referencedFeedback) {
-            if (feedback.credits == null) {
+            if (feedback.credits == null || isNaN(feedback.credits)) {
                 this.assessmentsAreValid = false;
                 return;
             }
