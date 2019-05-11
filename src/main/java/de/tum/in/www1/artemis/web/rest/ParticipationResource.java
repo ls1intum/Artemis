@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -190,10 +189,9 @@ public class ParticipationResource {
      * @param participation
      */
     private void addLatestResultToParticipation(Participation participation) {
-        // unproxy results if necessary
-        if (!Hibernate.isInitialized(participation.getResults())) {
-            participation.setResults((Set<Result>) Hibernate.unproxy(participation.getResults()));
-        }
+        // Load results of participation as they are not contained in the current object
+        participation = participationService.findOneWithEagerResults(participation.getId());
+
         Result result = participation.findLatestResult();
         participation.setResults(Sets.newHashSet(result));
     }
