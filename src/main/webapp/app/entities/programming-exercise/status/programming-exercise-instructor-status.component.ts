@@ -7,6 +7,8 @@ import { ParticipationType } from '../programming-exercise-participation.model';
     templateUrl: './programming-exercise-instructor-status.component.html',
 })
 export class ProgrammingExerciseInstructorStatusComponent {
+    ParticipationType = ParticipationType;
+
     @Input()
     participationType: ParticipationType;
     @Input()
