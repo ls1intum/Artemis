@@ -11,9 +11,9 @@ const EXERCISE_WEBSOCKET = 'exercise_';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService {
-    cachedParticipations: Map<number, Participation> = new Map<number, Participation>();
-    openWebsocketConnections: Map<string, string> = new Map<string, string>();
-    resultObservables: Map<number, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();
+    cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
+    openWebsocketConnections: Map<string /* results_{id of participation} */, string /* url of websocket connection */> = new Map<string, string>();
+    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
@@ -97,6 +97,7 @@ export class ParticipationWebsocketService {
      * Checks for the given participation all necessary websocket connections to the server already exists.
      *
      * @param participation Participation object that has to be checked
+     * @param exercise Exercise object that new participations are assigned to
      * @private
      */
     private checkWebsocketConnection(participation: Participation, exercise: Exercise) {
@@ -132,7 +133,7 @@ export class ParticipationWebsocketService {
      */
     private checkWebsocketConnectionForNewParticipations(exerciseId: number) {
         if (!this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`)) {
-            const participationResultTopic = `/user/topic/quizExercise/${exerciseId}/participation`;
+            const participationResultTopic = `/user/topic/exercise/${exerciseId}/participation`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationObservable = this.jhiWebsocketService.receive(participationResultTopic);
             participationObservable.subscribe((participationMessage: Participation) => {

@@ -136,7 +136,7 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
-            messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exercise.getId() + "/participation", participation);
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected

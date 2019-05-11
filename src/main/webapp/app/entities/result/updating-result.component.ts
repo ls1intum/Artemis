@@ -93,7 +93,6 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                 this.participationWebsocketService.addParticipation(this.participation);
                 this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
                     if (newResult) {
-                        console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
                         newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                         this.handleNewResult(newResult);
                     }
