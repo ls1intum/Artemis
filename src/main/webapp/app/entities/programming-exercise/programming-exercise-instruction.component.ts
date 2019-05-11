@@ -27,7 +27,7 @@ import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
 
 enum TestCaseState {
@@ -59,7 +59,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 
-    private participationSubscription: Subscription;
+    private participationSubscription: BehaviorSubject<Result>;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -101,7 +101,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const exerciseHasChanged = hasExerciseChanged(changes);
         if (participationHasChanged) {
             this.isInitial = true;
-            this.participationSubscription = this.setupResultWebsocket();
+            this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
         if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
@@ -138,11 +138,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Set up the websocket for retrieving build results.
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
-    private async setupResultWebsocket() {
+    private setupResultWebsocket() {
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        return this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe(result => {
+        this.participationSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id);
+        this.participationSubscription.subscribe(result => {
             this.latestResult = result;
             this.updateMarkdown();
         });
