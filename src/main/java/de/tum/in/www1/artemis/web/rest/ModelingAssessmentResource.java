@@ -218,6 +218,30 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
+        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        if (modelingSubmission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
+            // you cannot cancel the assessment of other tutors
+            return forbidden();
+        }
+        modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
+        return ResponseEntity.ok().build();
+    }
+
     @Override
     String getEntityName() {
         return ENTITY_NAME;

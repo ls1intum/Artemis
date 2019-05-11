@@ -241,6 +241,11 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
+    @Override
+    public void markModelAsUnassessed(long modelSubmissionId) {
+        modelSelector.removeAlreadyAssessedModel(modelSubmissionId);
+    }
+
     // TODO adapt the parser to support different UML diagrams
     @Override
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
