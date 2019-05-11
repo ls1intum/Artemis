@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, Subject } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
@@ -10,10 +9,11 @@ import { ParticipationService, Participation } from 'app/entities/participation'
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../code-editor-repository.service';
+import { CommitState } from 'app/code-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
-import { RepositoryFileService } from 'app/entities/repository';
 import { CodeEditorComponent } from '../code-editor.component';
+import { CodeEditorSessionService } from '../code-editor-session.service';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -40,15 +40,13 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
+    paramSub: Subscription;
     exercise: ProgrammingExercise;
     selectedParticipation: Participation;
     selectedRepository: REPOSITORY;
-    paramSub: Subscription;
 
     loadingState = LOADING_STATE.NOT_LOADING;
     domainChangeSubscription: Subscription;
-
-    domainHasChanged = new Subject<void>();
 
     constructor(
         private exerciseService: ProgrammingExerciseService,
@@ -59,8 +57,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
         repositoryFileService: CodeEditorRepositoryFileService,
+        sessionService: CodeEditorSessionService,
     ) {
-        super(participationService, translateService, route, jhiAlertService, repositoryFileService);
+        super(participationService, translateService, route, jhiAlertService, repositoryFileService, sessionService);
     }
 
     /**
@@ -76,38 +75,41 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 this.loadExercise(exerciseId)
                     .pipe(
                         catchError(() => throwError('exerciseNotFound')),
-                        tap((exercise: ProgrammingExercise) => {
+                        map((exercise: ProgrammingExercise) => {
                             exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
                             exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
                             exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
-                            this.exercise = exercise;
-
-                            this.domainChangeSubscription = this.domainService
-                                .subscribeDomainChange()
-                                .pipe(
-                                    filter(participation => !!participation),
-                                    distinctUntilChanged(
-                                        ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 || domainValue1.id !== domainValue2.id,
-                                    ),
-                                    tap(([, participation]) => {
-                                        this.setSelectedParticipation(participation.id);
-                                    }),
-                                )
-                                .subscribe();
+                            return exercise;
                         }),
+                        tap(exercise => (this.exercise = exercise)),
                         // Set selected participation
                         tap(() => {
-                            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
+                            this.selectTemplateParticipation();
                         }),
                     )
                     .subscribe(
                         () => {
+                            if (!this.domainChangeSubscription) {
+                                this.domainChangeSubscription = this.domainService
+                                    .subscribeDomainChange()
+                                    .pipe(
+                                        filter(participation => !!participation),
+                                        distinctUntilChanged(
+                                            ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 && domainValue1.id !== domainValue2.id,
+                                        ),
+                                        tap(([, participation]) => {
+                                            this.commitState = CommitState.UNDEFINED;
+                                            this.setSelectedParticipation(participation.id);
+                                        }),
+                                    )
+                                    .subscribe();
+                            }
                             this.loadingState = LOADING_STATE.NOT_LOADING;
                         },
                         err => this.onError(err),
                     );
             } else {
-                this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
+                this.selectTemplateParticipation();
             }
         });
     }
@@ -115,6 +117,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     ngOnDestroy() {
         if (this.domainChangeSubscription) {
             this.domainChangeSubscription.unsubscribe();
+        }
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
         }
     }
 
@@ -139,27 +144,23 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      * @param exerciseId
      */
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        return !this.exercise
-            ? this.exerciseService.findWithParticipations(exerciseId).pipe(
-                  catchError(() => Observable.of(null)),
-                  map(({ body }) => body),
-              )
-            : Observable.of(this.exercise);
+        return !this.exercise ? this.exerciseService.findWithParticipations(exerciseId).pipe(map(({ body }) => body)) : Observable.of(this.exercise);
     }
 
     selectSolutionParticipation() {
         this.selectedRepository = REPOSITORY.SOLUTION;
-        this.selectedParticipation = this.exercise.solutionParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
     }
 
     selectTemplateParticipation() {
         this.selectedRepository = REPOSITORY.TEMPLATE;
-        this.selectedParticipation = this.exercise.templateParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
     }
 
     selectAssignmentParticipation() {
         this.selectedRepository = REPOSITORY.ASSIGNMENT;
         this.selectedParticipation = this.exercise.participations[0];
+        this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.participations[0]]);
     }
 
     selectTestRepository() {

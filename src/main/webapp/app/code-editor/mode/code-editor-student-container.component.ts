@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
@@ -8,37 +9,48 @@ import { ActivatedRoute } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
-import { DomainService, DomainType } from '../code-editor-repository.service';
+import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../code-editor-repository.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { CodeEditorSessionService } from '../code-editor-session.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
     providers: [],
 })
-export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit {
+export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+    paramSub: Subscription;
     participation: Participation;
+
     constructor(
         private resultService: ResultService,
-        private domainParticipationService: DomainService,
+        private domainService: DomainService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
+        repositoryFileService: CodeEditorRepositoryFileService,
+        sessionService: CodeEditorSessionService,
     ) {
-        super(participationService, translateService, route, jhiAlertService);
+        super(participationService, translateService, route, jhiAlertService, repositoryFileService, sessionService);
     }
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const participationId = Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
+                    tap(participation => this.domainService.setDomain([DomainType.PARTICIPATION, participation])),
                     tap(participationWithResults => (this.participation = participationWithResults)),
-                    tap(participation => this.domainParticipationService.setDomain([DomainType.PARTICIPATION, participation])),
                 )
 
                 .subscribe();
         });
+    }
+
+    ngOnDestroy() {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
     }
 
     /**

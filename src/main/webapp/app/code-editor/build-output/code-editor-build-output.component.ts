@@ -50,7 +50,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
 
     set buildLogErrors(buildLogErrors: BuildLogErrors) {
         this.buildLogErrorsValue = buildLogErrors;
-        this.storeSession();
         this.buildLogErrorsChange.emit(buildLogErrors);
     }
 
@@ -121,7 +120,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             Observable.of(latestResult)
                 .pipe(
                     switchMap(result => this.loadAndAttachResultDetails(result)),
-                    tap(result => this.fetchBuildResults(result)),
+                    switchMap(result => this.fetchBuildResults(result)),
                 )
                 .subscribe();
         }
@@ -172,7 +171,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 const sessionBuildLogs = this.loadSession();
                 this.rawBuildLogs = buildLogs;
                 this.buildLogErrors = !sessionBuildLogs || buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
-                $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
             }),
         );
     }
@@ -213,13 +211,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     loadSession() {
         return this.sessionService.loadSession();
-    }
-
-    /**
-     * Store the build log error data in the localStorage of the browser (synchronous action).
-     */
-    storeSession() {
-        this.sessionService.storeSession(this.buildLogErrors);
     }
 
     ngOnDestroy() {

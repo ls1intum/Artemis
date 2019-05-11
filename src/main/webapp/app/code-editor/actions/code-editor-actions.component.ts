@@ -17,19 +17,29 @@ export class CodeEditorActionsComponent implements OnChanges {
         return this.commitStateValue;
     }
     @Input()
-    isBuilding: boolean;
-    @Input()
-    readonly onSave: () => void;
+    get isBuilding() {
+        return this.isBuildingValue;
+    }
 
     @Output()
     commitStateChange = new EventEmitter<CommitState>();
+    @Output()
+    isBuildingChange = new EventEmitter<boolean>();
+    @Output()
+    onSave = new EventEmitter<void>();
+
+    commitStateValue: CommitState;
+    isBuildingValue: boolean;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
 
-    commitStateValue: CommitState;
+    set isBuilding(isBuilding: boolean) {
+        this.isBuildingValue = isBuilding;
+        this.isBuildingChange.emit(isBuilding);
+    }
 
     constructor(private repositoryService: CodeEditorRepositoryService) {}
 
@@ -53,7 +63,7 @@ export class CodeEditorActionsComponent implements OnChanges {
         // If there are unsaved changes, save them before trying to commit again.
         if (this.editorState === EditorState.UNSAVED_CHANGES) {
             this.commitState = CommitState.WANTS_TO_COMMIT;
-            this.onSave();
+            this.onSave.emit();
         } else {
             this.commitState = CommitState.COMMITTING;
             this.repositoryService

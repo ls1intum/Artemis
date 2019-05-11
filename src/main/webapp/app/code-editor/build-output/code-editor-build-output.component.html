@@ -11,7 +11,7 @@
         <p class="text-center" *ngIf="!isBuilding && !rawBuildLogs.length" jhiTranslate="arTeMiSApp.editor.noBuildOutput">No build results available</p>
 
         <dl class="buildoutput dl-horizontal" *ngIf="!isBuilding && rawBuildLogs.length">
-            <ng-container *ngFor="let logEntry of buildLogs">
+            <ng-container *ngFor="let logEntry of rawBuildLogs">
                 <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
                 <dd [innerHtml]="logEntry.log | safeHtml"></dd>
             </ng-container>

@@ -142,12 +142,7 @@
 <jhi-code-editor #grid *ngIf="exercise" [exercise]="exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding" class="mr-2"></jhi-result>
-        <jhi-code-editor-actions
-            [editorState]="editorState"
-            [(commitState)]="commitState"
-            [isBuilding]="isBuilding"
-            [onSave]="saveChangedFiles.bind(this)"
-        ></jhi-code-editor-actions>
+        <jhi-code-editor-actions [editorState]="editorState" [(commitState)]="commitState" [(isBuilding)]="isBuilding" (onSave)="saveChangedFiles()"></jhi-code-editor-actions>
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft

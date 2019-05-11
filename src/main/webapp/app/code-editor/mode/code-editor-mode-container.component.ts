@@ -12,10 +12,9 @@ import { AnnotationArray, Session, EditorState, CommitState } from 'app/entities
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorRepositoryFileService } from '../code-editor-repository.service';
+import { CodeEditorSessionService } from '../code-editor-session.service';
 
-export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeactivate {
-    paramSub: Subscription;
-
+export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     selectedFile: string;
     unsavedFiles: string[] = [];
     fileContent: { [fileName: string]: string } = {};
@@ -35,6 +34,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         protected repositoryFileService: CodeEditorRepositoryFileService,
+        protected sessionService: CodeEditorSessionService,
     ) {}
 
     onDomainChange = () => {
@@ -134,6 +134,7 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
             this.repositoryFileService.updateFiles(unsavedFiles).subscribe(
                 res => {
                     this.onSavedFiles(res);
+                    this.storeSession();
                 },
                 err => {
                     this.onError(err.error);
@@ -183,22 +184,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     }
 
     /**
-     * @function updateLatestResult
-     * @desc Callback function for when a new result is received from the result component
-     */
-    updateLatestResult() {
-        this.isBuilding = false;
-    }
-
-    /**
-     * Check if the received build logs are recent and format them for use in the ace-editor
-     * @param buildLogs
-     */
-    updateLatestBuildLogs(buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number }) {
-        this.buildLogErrors = buildLogErrors;
-    }
-
-    /**
      * When the content of a file changes, set it as unsaved.
      * @param file
      */
@@ -225,6 +210,13 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     }
 
     /**
+     * Store the build log error data in the localStorage of the browser (synchronous action).
+     */
+    storeSession() {
+        this.sessionService.storeSession(this.buildLogErrors);
+    }
+
+    /**
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
     canDeactivate() {
@@ -236,12 +228,6 @@ export abstract class CodeEditorContainer implements OnDestroy, ComponentCanDeac
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
         }
     }
 }

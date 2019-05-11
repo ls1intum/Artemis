@@ -26,9 +26,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     // Override to automatically fetch the templateParticipation and solutionParticipation
     // TODO: Implement max join
-    @Query("select distinct pe from ProgrammingExercise pe " + "left join fetch pe.templateParticipation tp " + "left join fetch pe.solutionParticipation sp "
-            + "left join fetch pe.participations pa " + "left join fetch tp.results " + "left join fetch sp.results " + "left join fetch pa.results "
-            + "where pe.id = :#{#exerciseId}")
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
+            + "left join fetch pe.participations pa left join fetch tp.results as tpr left join fetch sp.results as spr left join fetch pa.results as par "
+            + "where pe.id = :#{#exerciseId} " + "and (tpr.id = (select max(id) from tp.results) or tpr.id = null) "
+            + "and (spr.id = (select max(id) from sp.results) or spr.id = null) " + "and (par.id = (select max(id) from pa.results) or par.id = null) ")
     Optional<ProgrammingExercise> findWithAllParticipationsById(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
