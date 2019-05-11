@@ -35,12 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -73,6 +68,8 @@ public class ParticipationService {
 
     private final QuizSubmissionService quizSubmissionService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final UserService userService;
 
     private final Optional<GitService> gitService;
@@ -85,7 +82,7 @@ public class ParticipationService {
 
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
+            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             SimpMessageSendingOperations messagingTemplate) {
         this.participationRepository = participationRepository;
@@ -95,6 +92,7 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -261,8 +259,12 @@ public class ParticipationService {
      * @return resumed participation
      */
     public Participation resumeExercise(Exercise exercise, Participation participation) {
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        participation = copyBuildPlan(participation, programmingExercise);
+        // Reload programming exercise from database so that the template participation is available
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
+        if (!programmingExercise.isPresent()) {
+            return null;
+        }
+        participation = copyBuildPlan(participation, programmingExercise.get());
         participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {

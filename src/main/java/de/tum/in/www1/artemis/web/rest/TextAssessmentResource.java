@@ -45,6 +45,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextExerciseService textExerciseService;
 
+    private final TextSubmissionService textSubmissionService;
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final ResultRepository resultRepository;
@@ -53,7 +55,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
             TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
-            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
+            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
@@ -63,6 +66,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.textSubmissionService = textSubmissionService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -97,6 +101,32 @@ public class TextAssessmentResource extends AssessmentResource {
         Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        checkTextExerciseForRequest(textExercise);
+        TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
+        if (submission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        if (!userService.getUser().getId().equals(submission.getResult().getAssessor().getId())) {
+            // you cannot cancel the assessment of other tutors
+            return forbidden();
+        }
+        textAssessmentService.cancelAssessmentOfSubmission(submission);
+        return ResponseEntity.ok().build();
     }
 
     @Transactional

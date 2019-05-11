@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
 
     // Override to automatically fetch the templateParticipation and solutionParticipation
+    @Override
+    @NotNull
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 
