@@ -22,7 +22,7 @@ import {
     ColorPickerCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { DomainCommand, MultiOptionCommand } from 'app/markdown-editor/domainCommands';
+import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 
@@ -39,7 +39,7 @@ export enum MarkdownEditorHeight {
     styleUrls: ['./markdown-editor.component.scss'],
 })
 export class MarkdownEditorComponent implements AfterViewInit {
-    public MultiOptionCommand = MultiOptionCommand;
+    public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
     @ViewChild('aceEditor')

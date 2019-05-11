@@ -1,7 +1,6 @@
-import { MultiOptionCommand } from 'app/markdown-editor/domainCommands';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 
-export class TestCaseCommand extends MultiOptionCommand {
+export class TestCaseCommand extends DomainMultiOptionCommand {
     buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.testCaseCommand';
 
     /**

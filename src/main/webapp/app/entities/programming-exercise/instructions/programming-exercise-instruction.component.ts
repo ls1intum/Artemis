@@ -90,6 +90,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
+    get latestResult() {
+        return this.latestResultValue;
+    }
+
+    set latestResult(result: Result) {
+        this.latestResultValue = result;
+        this.resultChange.emit(result);
+    }
+
     /**
      * If the participation changes, the participation's instructions need to be loaded and the
      * subscription for the participation's result needs to be set up.
@@ -131,14 +140,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.updateMarkdown();
         }
-    }
-
-    set latestResult(result: Result) {
-        this.latestResultValue = result;
-        this.resultChange.emit(result);
-    }
-    get latestResult() {
-        return this.latestResultValue;
     }
 
     /**
