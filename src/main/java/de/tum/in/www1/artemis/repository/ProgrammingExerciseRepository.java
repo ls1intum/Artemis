@@ -18,7 +18,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
 
-    // Does a max join on the result table for each participation by result id (the newer the result id, the newer the result). This makes sure that we only receive the latest result for the template and the solution participation if they exist.
+    // Does a max join on the result table for each participation by result id (the newer the result id, the newer the result). This makes sure that we only receive the latest
+    // result for the template and the solution participation if they exist.
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp left join fetch tp.results as tpr left join fetch sp.results as spr where pe.course.id = :#{#courseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     List<ProgrammingExercise> findByCourseIdWithLatestResultForParticipations(@Param("courseId") Long courseId);
 
