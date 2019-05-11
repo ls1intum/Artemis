@@ -316,7 +316,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setParticipations(null);
