@@ -39,13 +39,8 @@ import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -84,9 +79,11 @@ public class ParticipationResource {
 
     private final ResultService resultService;
 
+    private final UserService userService;
+
     public ParticipationResource(ParticipationService participationService, CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            TextSubmissionService textSubmissionService, ResultService resultService) {
+            TextSubmissionService textSubmissionService, ResultService resultService, UserService userService) {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
@@ -96,6 +93,7 @@ public class ParticipationResource {
         this.versionControlService = versionControlService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
+        this.userService = userService;
     }
 
     /**
@@ -222,9 +220,17 @@ public class ParticipationResource {
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        if (participation.getPresentationScore() < 0) {
+        if (participation.getPresentationScore() < 0 || participation.getPresentationScore() == null) {
             participation.setPresentationScore(0);
         }
+
+        Participation currentParticipation = participationService.findOne(participation.getId());
+        if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
+            User user = userService.getUser();
+            log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with id "
+                    + participation.getExercise().getId());
+        }
+
         Participation result = participationService.save(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }
