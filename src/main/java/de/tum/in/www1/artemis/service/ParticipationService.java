@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -253,6 +254,10 @@ public class ParticipationService {
      * @return resumed participation
      */
     public Participation resumeExercise(Exercise exercise, Participation participation) {
+        // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
+        // as the VCS-server performs the request
+        SecurityUtils.setAuthorizationObject();
+
         // Reload programming exercise from database so that the template participation is available
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
         if (!programmingExercise.isPresent()) {
