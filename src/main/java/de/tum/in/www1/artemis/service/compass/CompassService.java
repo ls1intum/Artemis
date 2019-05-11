@@ -128,6 +128,20 @@ public class CompassService {
     }
 
     /**
+     * Mark a model as unassessed, i.e. indicating that it (still) needs to be assessed. By that it is not locked anymore and can be returned for assessment by Compass again.
+     *
+     * @param modelingExercise  the corresponding exercise
+     * @param modelSubmissionId the id of the model submission which should be marked as unassessed
+     */
+    // TODO CZ: test this when enabling Compass again
+    public void markModelAsUnassessed(ModelingExercise modelingExercise, long modelSubmissionId) {
+        if (!isSupported(modelingExercise.getDiagramType()) || !loadExerciseIfSuspended(modelingExercise.getId())) {
+            return;
+        }
+        compassCalculationEngines.get(modelingExercise.getId()).markModelAsUnassessed(modelSubmissionId);
+    }
+
+    /**
      * Empty the waiting list
      *
      * @param exerciseId the exerciseId
@@ -220,7 +234,7 @@ public class CompassService {
                 /*
                  * Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
                  */
-                if (!modelingExercise.getDiagramType().equals(DiagramType.ClassDiagram)) {
+                if (!isSupported(modelingExercise.getDiagramType())) {
                     return;
                 }
                 // Round compass grades to avoid machine precision errors, make the grades more

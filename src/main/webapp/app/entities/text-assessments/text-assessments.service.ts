@@ -39,6 +39,10 @@ export class TextAssessmentsService {
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, null);
+    }
+
     public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
     }

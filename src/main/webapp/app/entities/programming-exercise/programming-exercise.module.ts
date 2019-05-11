@@ -17,6 +17,7 @@ import {
     programmingExerciseRoute,
     ProgrammingExerciseService,
     ProgrammingExerciseUpdateComponent,
+    ProgrammingExerciseInstructorStatusComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -48,6 +49,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseInstructorStatusComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -56,6 +58,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseInstructorStatusComponent,
         FaIconComponent,
     ],
     exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],

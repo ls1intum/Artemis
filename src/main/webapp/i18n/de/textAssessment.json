@@ -18,7 +18,7 @@
             "invalidNeedScoreOrFeedback": "Jedes Feedback-Element muss mindestens eine Punktzahl oder ein Feedback enthalten.",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
-            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnen.",
+            "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnest.",
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
@@ -56,7 +56,9 @@
             },
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
-            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
+            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
+            "cancel": "Bewertung abbrechen",
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung."
         }
     }
 }
