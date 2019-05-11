@@ -1,4 +1,4 @@
-<div [ngClass]="{ 'submission-container': !submission?.submitted, 'assessment-result-container': submission?.submitted }">
+<div class="submission-container d-flex flex-column">
     <jhi-alert></jhi-alert>
     <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
         <div class="col-12 col-lg-8">
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <div class="row editor-container">
+    <div class="row flex-grow-1">
         <div *ngIf="submission?.submitted" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"

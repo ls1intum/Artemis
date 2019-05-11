@@ -9,12 +9,12 @@
                         data-placement="bottom"
                         title="{{ step.title }}"
                         class="btn btn-light btn-circle stepwizard-circle"
-                        [class.stepwizard-step--failed]="!step.done && latestResult?.feedbacks?.length"
-                        [class.stepwizard-step--no-result]="!step.done && !latestResult?.feedbacks?.length"
+                        [class.stepwizard-step--failed]="step.done === 'FAIL'"
+                        [class.stepwizard-step--no-result]="step.done === 'UNDEFINED'"
                         (click)="triggerTestStatusClick(i)"
                     >
-                        <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done"></fa-icon>
-                        <fa-icon icon="times" size="lg" class="text-danger" *ngIf="!step.done"></fa-icon>
+                        <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done === 'SUCCESS'"></fa-icon>
+                        <fa-icon icon="times" size="lg" class="text-danger" *ngIf="step.done !== 'SUCCESS'"></fa-icon>
                     </div>
                 </div>
             </div>
