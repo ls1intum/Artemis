@@ -14,6 +14,8 @@
             "override": "Bewertung überschreiben",
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
+            "invalidScoreMustBeNumber": "Das Score-Feld muss eine Zahl sein und darf nicht leer sein!",
+            "invalidNeedScoreOrFeedback": "Jedes Feedback-Element muss mindestens eine Punktzahl oder ein Feedback enthalten.",
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",
             "lock": "Diese Abgabe kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte diese Abgabe bevor du eine neue öffnen.",

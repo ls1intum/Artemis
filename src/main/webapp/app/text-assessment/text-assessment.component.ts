@@ -35,7 +35,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
-    invalidError: string;
+    invalidError: string | null;
     isAuthorized = true;
     isAtLeastInstructor = false;
     busy = true;
@@ -234,10 +234,21 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.referencedFeedback = response.body.feedbacks || [];
+                this.loadFeedbacks(response.body.feedbacks || []);
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
+    }
+
+    private loadFeedbacks(feedbacks: Feedback[]): void {
+        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
+        if (generalFeedbackIndex !== -1) {
+            this.generalFeedback = feedbacks[generalFeedbackIndex];
+            feedbacks.splice(generalFeedbackIndex, 1);
+        } else {
+            this.generalFeedback = new Feedback();
+        }
+        this.referencedFeedback = feedbacks;
     }
 
     private updateParticipationWithResult(): void {
@@ -259,11 +270,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.result = this.participation.results[0];
 
-        const feedbacks = this.result.feedbacks || [];
-        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
-        this.generalFeedback = feedbacks[generalFeedbackIndex] || new Feedback();
-        feedbacks.splice(generalFeedbackIndex, 1);
-        this.referencedFeedback = feedbacks;
+        this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
         this.checkScoreBoundaries();
     }
@@ -278,33 +285,29 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * because a score is not a number/empty.
      */
     public checkScoreBoundaries() {
-        if (
-            !this.assessments ||
-            !this.generalFeedback ||
-            !this.referencedFeedback ||
-            this.assessments.length === 0 ||
-            (this.generalFeedback.detailText.length === 0 && this.referencedFeedback.length === 0)
-        ) {
+        if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback.length === 0) {
             this.totalScore = 0;
-            this.assessmentsAreValid = true;
+            this.assessmentsAreValid = false;
+            this.invalidError = 'The score field must be a number and can not be empty!';
             return;
         }
 
-        const credits = this.assessments.map(assessment => assessment.credits);
+        const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
+            this.invalidError = 'arTeMiSApp.textAssessment.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
             return;
+        }
+
+        if (!this.referencedFeedback.every(f => f.credits !== 0 || f.detailText.length > 0)) {
+            this.invalidError = 'arTeMiSApp.textAssessment.invalidNeedScoreOrFeedback';
+            this.assessmentsAreValid = false;
         }
 
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
-    }
-
-    private checkAuthorization() {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     toggleCollapse($event: any) {
