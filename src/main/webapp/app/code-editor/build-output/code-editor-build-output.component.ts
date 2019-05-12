@@ -103,7 +103,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe(result => this.toggleBuildLogs(result));
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribe((result: Result) => this.toggleBuildLogs(result));
     }
 
     /**

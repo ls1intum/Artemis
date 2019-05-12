@@ -27,7 +27,7 @@ import { ProgrammingExercise } from './programming-exercise.model';
 import { RepositoryFileService } from '../repository';
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
 
 enum TestCaseState {
@@ -59,7 +59,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 
-    private participationSubscription: BehaviorSubject<Result>;
+    private participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -142,8 +142,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        this.participationSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id);
-        this.participationSubscription.subscribe(result => {
+        this.participationSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((result: Result) => {
             this.latestResult = result;
             this.updateMarkdown();
         });
