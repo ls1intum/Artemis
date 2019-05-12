@@ -32,4 +32,30 @@ export const codeEditorRoute: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
     },
+    {
+        path: 'code-editor-admin/:exerciseId/:participationId',
+        component: CodeEditorInstructorContainerComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'arTeMiSApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'code-editor-admin/:exerciseId/test',
+        component: CodeEditorInstructorContainerComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'arTeMiSApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
 ];

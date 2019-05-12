@@ -68,6 +68,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
+            // TODO: Implement routing to enable can deactivate guard.
             const exerciseId = Number(params['exerciseId']);
             if (!this.exercise || this.exercise.id !== exerciseId) {
                 this.loadingState = LOADING_STATE.INITIALIZING;
