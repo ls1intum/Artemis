@@ -18,12 +18,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -36,49 +34,45 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * Created by Josias Montag on 14.10.16.
  */
-@RestController
-@RequestMapping({ "/api", "/api_basic" })
-@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-public class RepositoryResource {
+public abstract class RepositoryResource {
 
-    private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+    protected final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    private final ParticipationService participationService;
+    protected final AuthorizationCheckService authCheckService;
 
-    private final AuthorizationCheckService authCheckService;
+    protected final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    protected final Optional<GitService> gitService;
 
-    private final Optional<GitService> gitService;
+    protected final UserService userService;
 
-    private final UserService userService;
+    protected final RepositoryService repositoryService;
 
-    private final RepositoryService repositoryService;
-
-    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService) {
         this.userService = userService;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
     }
 
+    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
+
+    abstract boolean hasPermissions(Long domainId);
+
     /**
      * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
-        log.debug("REST request to files for Participation : {}", participationId);
+    public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) throws IOException, InterruptedException {
+        log.debug("REST request to files for domainId : {}", domainId);
 
-        Participation participation = participationService.findOne(participationId);
         try {
-            Repository repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            Repository repository = getRepository(domainId);
             HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         }
@@ -95,14 +89,12 @@ public class RepositoryResource {
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<String> getFile(Long participationId, String filename) throws IOException, InterruptedException {
         log.debug("REST request to file {} for Participation : {}", filename, participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -127,15 +119,12 @@ public class RepositoryResource {
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFile(Long participationId, String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -167,15 +156,12 @@ public class RepositoryResource {
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
-            throws IOException, InterruptedException {
+    public ResponseEntity<Void> createFolder(Long participationId, String folderName, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -207,13 +193,11 @@ public class RepositoryResource {
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFile(Long participationId, FileMove fileMove) throws IOException, InterruptedException {
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -245,14 +229,12 @@ public class RepositoryResource {
      * @return
      * @throws IOException
      */
-    @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(Long participationId, String filename) throws IOException, InterruptedException {
         log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -276,14 +258,12 @@ public class RepositoryResource {
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> pullChanges(Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -301,14 +281,12 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
+    public ResponseEntity<Void> commitChanges(Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -331,14 +309,12 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long participationId) throws IOException, GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for Participation : {}", participationId);
 
-        Participation participation = participationService.findOne(participationId);
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            repository = getRepository(participationId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -346,24 +322,5 @@ public class RepositoryResource {
         RepositoryStatusDTO status = repositoryService.getStatus(repository);
 
         return new ResponseEntity<>(status, HttpStatus.OK);
-    }
-
-    /**
-     * GET /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
-     *
-     * @param participationId the participationId of the result to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
-        log.debug("REST request to get build log : {}", participationId);
-
-        Participation participation = participationService.findOne(participationId);
-        boolean hasPermissions = repositoryService.canAccessParticipation(participation);
-        if (!hasPermissions)
-            return forbidden();
-
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
-        return new ResponseEntity<>(logs, HttpStatus.OK);
     }
 }
