@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -30,21 +31,13 @@ public class TextAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
-    private final ComplaintResponseService complaintResponseService;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final ObjectMapper objectMapper;
-
-    public TextAssessmentService(FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ObjectMapper objectMapper) {
-        super(complaintResponseService, complaintRepository, resultRepository, objectMapper);
+    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
+            ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
+            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, objectMapper);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
-        this.complaintResponseService = complaintResponseService;
-        this.complaintRepository = complaintRepository;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -123,7 +116,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a courseId, return the number of assessments for that course
-     * 
+     *
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
@@ -133,7 +126,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
-     * 
+     *
      * @param courseId - the course we are interested in
      * @param tutorId  - the tutor we are interested in
      * @return a number of assessments for the course
@@ -144,7 +137,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given an exerciseId, return the number of assessments for that exerciseId
-     * 
+     *
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
@@ -154,7 +147,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor
-     * 
+     *
      * @param exerciseId - the exercise we are interested in
      * @param tutorId    - the tutor we are interested in
      * @return a number of assessments for the exercise

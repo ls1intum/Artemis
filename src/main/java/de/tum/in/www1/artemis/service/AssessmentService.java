@@ -13,27 +13,33 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 abstract class AssessmentService {
 
-    protected final ComplaintResponseService complaintResponseService;
+    private final ComplaintResponseService complaintResponseService;
 
-    protected final ComplaintRepository complaintRepository;
+    private final ComplaintRepository complaintRepository;
 
     protected final ResultRepository resultRepository;
 
-    protected final ObjectMapper objectMapper;
+    private final ParticipationRepository participationRepository;
+
+    private final ObjectMapper objectMapper;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ObjectMapper objectMapper) {
+            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
+        this.participationRepository = participationRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -46,11 +52,6 @@ abstract class AssessmentService {
         result.setResultString(totalScore, maxScore);
         resultRepository.save(result);
         return result;
-    }
-
-    private double calculateTotalScore(Double calculatedScore, Double maxScore) {
-        double totalScore = Math.max(0, calculatedScore);
-        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
 
     /**
@@ -89,8 +90,24 @@ abstract class AssessmentService {
     }
 
     /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submission the submission for which the current assessment should be canceled
+     */
+    @Transactional
+    public void cancelAssessmentOfSubmission(Submission submission) {
+        Participation participation = participationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
+                .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
+        Result result = submission.getResult();
+        participation.removeResult(result);
+        participationRepository.save(participation);
+        resultRepository.deleteById(result.getId());
+    }
+
+    /**
      * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
-     * 
+     *
      * @param assessment the assessment to check
      */
     void checkGeneralFeedback(List<Feedback> assessment) {
@@ -122,5 +139,10 @@ abstract class AssessmentService {
         resultCopy.setAssessmentType(originalResult.getAssessmentType());
         resultCopy.setHasComplaint(originalResult.getHasComplaint());
         return objectMapper.writeValueAsString(resultCopy);
+    }
+
+    private double calculateTotalScore(Double calculatedScore, Double maxScore) {
+        double totalScore = Math.max(0, calculatedScore);
+        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
 }

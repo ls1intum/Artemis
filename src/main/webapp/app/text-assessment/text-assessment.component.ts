@@ -19,6 +19,7 @@ import { AccountService, WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -35,7 +36,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
-    invalidError: string;
+    invalidError: string | null;
     isAuthorized = true;
     isAtLeastInstructor = false;
     busy = true;
@@ -56,6 +57,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     interactResizable: Interactable;
     interactResizableTop: Interactable;
 
+    private cancelConfirmationText: string;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
@@ -70,10 +73,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
+        private translateService: TranslateService,
     ) {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.assessmentsAreValid = false;
+        translateService.get('arTeMiSApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
@@ -185,16 +190,16 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.referencedFeedback.push(assessment);
-        this.checkScoreBoundaries();
+        this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
         this.referencedFeedback = this.referencedFeedback.filter(elem => elem !== assessmentToDelete);
-        this.checkScoreBoundaries();
+        this.validateAssessment();
     }
 
     public save(): void {
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;
@@ -215,7 +220,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return; // We need to have saved the result before
         }
 
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;
@@ -231,13 +236,36 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         );
     }
 
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
+    cancelAssessment() {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => {
+                this.goToExerciseDashboard();
+            });
+        }
+    }
+
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.referencedFeedback = response.body.feedbacks || [];
+                this.loadFeedbacks(response.body.feedbacks || []);
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
+    }
+
+    private loadFeedbacks(feedbacks: Feedback[]): void {
+        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
+        if (generalFeedbackIndex !== -1) {
+            this.generalFeedback = feedbacks[generalFeedbackIndex];
+            feedbacks.splice(generalFeedbackIndex, 1);
+        } else {
+            this.generalFeedback = new Feedback();
+        }
+        this.referencedFeedback = feedbacks;
     }
 
     private updateParticipationWithResult(): void {
@@ -258,42 +286,47 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
+        this.hasComplaint = this.result.hasComplaint;
 
-        const feedbacks = this.result.feedbacks || [];
-        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
-        this.generalFeedback = feedbacks[generalFeedbackIndex] || new Feedback();
-        feedbacks.splice(generalFeedbackIndex, 1);
-        this.referencedFeedback = feedbacks;
+        this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
-        this.checkScoreBoundaries();
+        this.validateAssessment();
+        this.checkAuthorization();
     }
 
-    public previous(): void {
-        this.location.back();
+    goToExerciseDashboard() {
+        if (this.exercise && this.exercise.course) {
+            this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
     }
 
     /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
+     * Checks if the assessment is valid:
+     *   - There must be at least one feedback referencing a text element or a general feedback.
+     *   - Each reference feedback must have either a score or a feedback text or both.
+     *   - The score must be a valid number.
+     *
+     * Additionally, the total score is calculated if the current assessment is valid.
      */
-    public checkScoreBoundaries() {
-        if (
-            !this.assessments ||
-            !this.generalFeedback ||
-            !this.referencedFeedback ||
-            this.assessments.length === 0 ||
-            (this.generalFeedback.detailText.length === 0 && this.referencedFeedback.length === 0)
-        ) {
+    public validateAssessment() {
+        if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
             this.totalScore = 0;
-            this.assessmentsAreValid = true;
+            this.assessmentsAreValid = false;
             return;
         }
 
-        const credits = this.assessments.map(assessment => assessment.credits);
+        const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
-            this.invalidError = 'The score field must be a number and can not be empty!';
+            this.invalidError = 'arTeMiSApp.textAssessment.invalidScoreMustBeNumber';
+            this.assessmentsAreValid = false;
+            return;
+        }
+
+        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText && f.detailText.length > 0))) {
+            this.invalidError = 'arTeMiSApp.textAssessment.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
             return;
         }
@@ -339,7 +372,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;

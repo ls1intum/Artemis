@@ -19,6 +19,10 @@
                 "label": "Add presentation",
                 "error": "Could not add presentation. Please try again."
             },
+            "removePresentation": {
+                "label": "Remove presentation",
+                "error": "Could not remove presentation. Please try again."
+            },
             "detail": {
                 "title": "Participation"
             },

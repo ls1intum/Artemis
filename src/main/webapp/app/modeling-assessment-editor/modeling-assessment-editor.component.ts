@@ -13,6 +13,7 @@ import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conf
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -39,6 +40,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     hasComplaint: boolean;
     canOverride = false;
 
+    private cancelConfirmationText: string;
+
     constructor(
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
@@ -50,7 +53,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
+        private translateService: TranslateService,
     ) {
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
     }
@@ -238,6 +243,18 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
+    }
+
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
+    onCancelAssessment() {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
+                this.goToExerciseDashboard();
+            });
+        }
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
