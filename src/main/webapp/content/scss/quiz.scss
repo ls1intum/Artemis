@@ -135,6 +135,23 @@
 
     .container {
         height: 100%;
+
+        .quiz-footer-content {
+            @media (min-width: 320px) and (max-width: 480px) {
+                .form-group {
+                    padding-top: 10px;
+                }
+            }
+
+            .form-group {
+                justify-content: center;
+
+                .dropup {
+                    text-align: center;
+                    width: 100%;
+                }
+            }
+        }
     }
 }
 
@@ -183,6 +200,10 @@
 
 .quiz-footer {
     height: 100px;
+
+    @media (min-width: 320px) and (max-width: 480px) {
+        height: 150px;
+    }
 }
 
 .edit-quiz-footer-content,
@@ -898,8 +919,12 @@
 .quiz-footer-content {
     #remaining-time {
         text-align: center;
-        position: absolute;
-        left: 42%;
+        width: 100%;
+
+        > div {
+            text-align: center;
+            width: 100%;
+        }
     }
 
     #remaining-time-value {
