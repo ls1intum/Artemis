@@ -121,6 +121,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     switchMap(result => this.loadAndAttachResultDetails(result)),
                     switchMap(result => this.fetchBuildResults(result)),
+                    tap(buildLogsFromServer => {
+                        const sessionBuildLogs = this.loadSession();
+                        this.buildLogErrors = !sessionBuildLogs || buildLogsFromServer.timestamp > sessionBuildLogs.timestamp ? buildLogsFromServer : sessionBuildLogs;
+                    }),
                 )
                 .subscribe();
         }
@@ -139,6 +143,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     tap(() => (this.isBuilding = false)),
                     switchMap(result => this.fetchBuildResults(result)),
+                    tap(buildLogErrors => (this.buildLogErrors = buildLogErrors)),
                 )
                 .subscribe();
         });
@@ -166,11 +171,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     getBuildLogs() {
         return this.buildLogService.getBuildLogs().pipe(
-            tap((buildLogs: BuildLogEntryArray) => {
-                const buildLogsFromServer = new BuildLogEntryArray(...buildLogs);
-                const sessionBuildLogs = this.loadSession();
-                this.rawBuildLogs = buildLogs;
-                this.buildLogErrors = !sessionBuildLogs || buildLogsFromServer[0].time > sessionBuildLogs.timestamp ? buildLogsFromServer.extractErrors() : sessionBuildLogs;
+            map((buildLogs: BuildLogEntryArray) => {
+                this.rawBuildLogs = new BuildLogEntryArray(...buildLogs);
+                return this.rawBuildLogs.extractErrors();
             }),
         );
     }
@@ -187,8 +190,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
         ) {
             this.rawBuildLogs = new BuildLogEntryArray();
-            this.buildLogErrors = this.rawBuildLogs.extractErrors();
-            return Observable.of();
+            const buildLogErrors = this.rawBuildLogs.extractErrors();
+            return Observable.of(buildLogErrors);
         } else {
             // If the build failed, find out why
             return this.getBuildLogs();

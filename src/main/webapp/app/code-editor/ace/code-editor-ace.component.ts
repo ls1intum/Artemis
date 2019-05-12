@@ -52,9 +52,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     readonly unsavedFiles: string[];
     @Output()
-    onEditorStateChange = new EventEmitter<EditorState>();
-    @Output()
-    onFileContentChange = new EventEmitter<{ file: string; unsavedChanges: boolean; fileContent: string }>();
+    onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
     buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
     @Output()
@@ -214,7 +212,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 };
             }
             this.editorChangeLog = [];
-            this.onFileContentChange.emit({ file: this.selectedFile, unsavedChanges: true, fileContent: code });
+            this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
         }
     }
 
