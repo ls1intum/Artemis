@@ -11,6 +11,7 @@ import { Moment } from 'moment';
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
 export const MAX_SCORE = 'maxScore';
+export const PRESENTATION_SCORE = 'presentationScore';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
@@ -23,6 +24,7 @@ export class CourseScoreCalculationService {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
+        let presentationScore = 0;
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null) {
                 maxScore = maxScore + exercise.maxScore;
@@ -36,6 +38,7 @@ export class CourseScoreCalculationService {
                         }
                         absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
                     }
+                    presentationScore += participation.presentationScore !== undefined ? participation.presentationScore : 0;
                 }
             }
         }
@@ -46,6 +49,7 @@ export class CourseScoreCalculationService {
             scores.set(RELATIVE_SCORE, 0);
         }
         scores.set(MAX_SCORE, maxScore);
+        scores.set(PRESENTATION_SCORE, presentationScore);
         return scores;
     }
 
@@ -89,7 +93,7 @@ export class CourseScoreCalculationService {
     }
 
     getResultForParticipation(participation: Participation, dueDate: Moment): Result {
-        if (participation === null || (participation.results === null && participation.results.length === 0)) {
+        if (participation === null) {
             return null;
         }
         const results: Result[] = participation.results;
@@ -107,6 +111,12 @@ export class CourseScoreCalculationService {
                 return chosenResult;
             }
 
+            const ratedResults = resultsArray.filter(el => el.rated);
+
+            if (ratedResults.length === 1) {
+                return ratedResults[0];
+            }
+
             // sorting in descending order to have the last result at the beginning
             resultsArray.sort(
                 (result1, result2): number => {
@@ -120,10 +130,11 @@ export class CourseScoreCalculationService {
                 },
             );
 
-            if (dueDate === null || dueDate >= resultsArray[0].completionDate) {
+            const gracePeriodInSeconds = 10;
+            if (dueDate === null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate) {
                 // find the first result that is before the due date
                 chosenResult = resultsArray[0];
-            } else if (dueDate < resultsArray[0].completionDate) {
+            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate) {
                 chosenResult = new Result();
                 chosenResult.score = 0;
             } else {

@@ -115,8 +115,11 @@ public class GroupNotificationService {
     }
 
     public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise) {
+        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            return;
+        }
         String title = "Exercise updated";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" got updated.";
+        String notificationText = "Exercise \"" + exercise.getTitle() + "\" was updated.";
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 

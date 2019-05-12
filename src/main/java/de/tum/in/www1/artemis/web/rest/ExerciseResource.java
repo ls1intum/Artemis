@@ -7,12 +7,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -24,9 +18,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -71,11 +69,12 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final TextSubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
-                            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper, TextSubmissionService textSubmissionService, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionRepository submissionRepository) {
+            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -111,6 +110,10 @@ public class ExerciseResource {
         }
 
         List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
+        // remove sensitive information for students
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            result.forEach(Exercise::filterSensitiveInformation);
+        }
 
         return ResponseEntity.ok(result);
     }
@@ -166,8 +169,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard
-     * of the exercise with the given id
+     * GET /exercises/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given id
      *
      * @param id the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
@@ -204,8 +206,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard
-     * of the exercise with the given id
+     * GET /exercises/:id/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard of the exercise with the given id
      *
      * @param id the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
@@ -357,10 +358,14 @@ public class ExerciseResource {
     @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Course and current Studen : {}", exerciseId);
+        User student = userService.getUserWithGroupsAndAuthorities();
+        log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
 
-        User student = userService.getUser();
         Exercise exercise = exerciseService.findOne(exerciseId);
+        // if exercise is not yet released to the students they should not have any access to it
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
+            return forbidden();
+        }
 
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
@@ -373,6 +378,12 @@ public class ExerciseResource {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);
+            }
+
+            // remove sensitive information for students
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+            if (isStudent) {
+                exercise.filterSensitiveInformation();
             }
         }
 

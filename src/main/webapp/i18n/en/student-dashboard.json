@@ -12,6 +12,7 @@
                 "signUpForCourse": "Sign up for selected course",
                 "cancel": "Cancel",
                 "noCourse": "No course available to register to",
+                "courseLoading": "Courses are loading...",
                 "pleaseSelectCourse": "# Select a course"
             }
         },
@@ -64,10 +65,12 @@
             },
             "statistics": {
                 "totalScore": "Your total score",
-                "exerciseCount": "Number of exercises: {{ number }}",
+                "totalPresentationScore": "Your total presentation score: {{ number }}",
+                "exerciseCount": "Participated in {{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
+                "presentationScore": "Presentation score: {{ number }}",
                 "noStatistics": "No statistics available for the course."
             },
             "lectureList": {
@@ -75,14 +78,17 @@
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
-                "noLectures": "No lectures available for the course."
+                "noLectures": "No lectures available for the course.",
+                "sortLectures": "Sort lectures"
             },
             "lectureDetails": {
                 "description": "Description",
                 "attachments": "Attachments",
                 "noAttachments": "There are no attachments available for this lecture.",
-                "lectureDate": "Date:",
-                "notReleased": "Not released"
+                "date": "Date",
+                "notReleased": "Not released",
+                "version": "Version",
+                "isDownloading": "Is downloading..."
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

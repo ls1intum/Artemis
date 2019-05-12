@@ -28,11 +28,17 @@ import { RepositoryFileService } from '../repository';
 import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+
+enum TestCaseState {
+    UNDEFINED = 'UNDEFINED',
+    SUCCESS = 'SUCCESS',
+    FAIL = 'FAIL',
+}
 
 type Step = {
     title: string;
-    done: boolean;
+    done: TestCaseState;
 };
 
 @Component({
@@ -59,6 +65,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public isLoading: boolean;
     public latestResult: Result | null;
     public steps: Array<Step> = [];
+    public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
@@ -76,7 +83,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
-        this.markdown = new Remarkable();
+        // Enabled for color picker of markdown editor that inserts spans into the markdown
+        this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
@@ -119,6 +127,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
+        } else if (problemStatementHasChanged(changes)) {
+            // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
+            // This is e.g. the case if the parent component uses an editor to update the problemStatement.
+            this.updateMarkdown();
         }
     }
 
@@ -159,9 +171,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     updateMarkdown() {
         this.steps = [];
+        this.plantUMLs = {};
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
         // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
         setTimeout(() => {
+            this.loadAndInsertPlantUmls();
             this.setUpClickListeners();
             this.setUpTaskIcons();
         }, 100);
@@ -211,7 +225,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+            let participationId: number;
+            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
+                participationId = this.exercise.templateParticipation.id;
+            } else if (this.participation) {
+                participationId = this.participation.id;
+            } else {
+                // in this case, no participation is available
+                return Observable.of(null);
+            }
             return this.repositoryFileService.get(participationId, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
@@ -256,8 +278,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps.forEach(({ done }, i) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
             componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done ? 'text-success' : 'text-danger'];
+            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
+            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
             componentRef.instance.ngOnChanges({});
             this.appRef.attachView(componentRef.hostView);
             const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -265,6 +287,26 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             iconContainer.innerHTML = '';
             iconContainer.append(domElem);
         });
+    }
+
+    /**
+     * PlantUMLs are rendered on the server, we provide their structure as a string.
+     * When parsing the file for plantUMLs we store their ids (= position in HTML) and structure in a dictionary, so that we can load them after the initial render.
+     */
+    public loadAndInsertPlantUmls() {
+        Object.entries(this.plantUMLs).forEach(([id, plantUml]) =>
+            this.editorService.getPlantUmlImage(plantUml).subscribe(
+                plantUmlSrcAttribute => {
+                    // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
+                    if (document.getElementById('plantUml' + id)) {
+                        document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                    }
+                },
+                err => {
+                    console.log('Error getting plantUmlImage', err);
+                },
+            ),
+        );
     }
 
     /**
@@ -425,15 +467,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done) {
+        if (done === TestCaseState.SUCCESS) {
             text += '<span class="text-success bold">' + label + '</span>';
+        } else if (done === TestCaseState.FAIL) {
+            text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
         } else {
-            // bugfix: do not let the user click on 'No Results'
-            if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
-                text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
-            } else {
-                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
-            }
+            text += '<span class="text-danger bold">' + label + '</span>';
         }
         text += '<br>';
 
@@ -463,24 +502,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
             const [done] = this.statusForTests(tests);
-            return done ? 'green' : 'red';
+            return done === TestCaseState.SUCCESS ? 'green' : 'red';
         });
 
-        /**
-         * Explanation: This call fetches the plantUml png as base64 string; the function returns and inserts an empty img tag with a placeholder
-         * When the promise is fulfilled, the src-attribute of the img element is being set with the returned value
-         */
-        this.editorService.getPlantUmlImage(plantUml).subscribe(
-            plantUmlSrcAttribute => {
-                // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
-                if (document.getElementById('plantUml' + id)) {
-                    document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
-                }
-            },
-            err => {
-                console.log('Error getting plantUmlImage', err);
-            },
-        );
+        this.plantUMLs[id] = plantUml;
 
         return "<img id='plantUml" + id + "' alt='plantUml'" + id + " '/>";
     }
@@ -490,43 +515,42 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    private statusForTests(tests: string[]): [boolean, string] {
+    private statusForTests(tests: string[]): [TestCaseState, string] {
         const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
-        let done = false;
-        let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
-            let failedTests = 0;
-            for (const test of tests) {
-                for (const result of this.latestResult.feedbacks) {
-                    if (result.text === test) {
-                        failedTests++;
-                    }
-                }
-            }
+        if (this.latestResult && this.latestResult.successful) {
+            // Case 1: Submission fulfills all test cases, no further checking needed.
+            const label = this.translateService.instant(translationBasePath + 'testPassing');
+            return [TestCaseState.SUCCESS, label];
+        } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
+            // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
+            const failedTests = tests.filter(testName => {
+                const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
+                // If there is no feedback item, we assume that the test was successful (legacy check)
+                return feedback ? !feedback.positive : false;
+            });
 
-            // Exercise is done if it was completed successfully or no tests have failed
-            done = (this.latestResult && this.latestResult.successful) || failedTests === 0;
+            // Exercise is done if none of the tests failed
+            const testCaseState = failedTests.length === 0 ? TestCaseState.SUCCESS : TestCaseState.FAIL;
             if (totalTests === 1) {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'testPassing');
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'testFailing');
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'testPassing')
+                        : this.translateService.instant(translationBasePath + 'testFailing');
+                return [testCaseState, label];
             } else {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests });
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests });
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
+                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
+                return [testCaseState, label];
             }
-        } else if (this.latestResult && this.latestResult.successful) {
-            done = true;
-            label = this.translateService.instant(translationBasePath + 'testPassing');
+        } else {
+            // Case 3: There are no results
+            const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
+            return [TestCaseState.UNDEFINED, label];
         }
-
-        return [done, label];
     }
 
     ngOnDestroy() {

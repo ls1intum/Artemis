@@ -57,6 +57,6 @@ export class FileUploaderService {
         formData.append('file', file, tempFilename);
         // Upload the file to backend. This will make a new file in the backend in the temp folder
         // and will return path of the file,
-        return await this.http.post<FileUploadResponse>('/api/fileUpload', formData).toPromise();
+        return await this.http.post<FileUploadResponse>(`/api/fileUpload?keepFileName=${false}`, formData).toPromise();
     }
 }

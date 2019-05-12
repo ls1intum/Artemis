@@ -70,7 +70,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
-            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            const dateValue = exercise.dueDate;
             this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
@@ -128,8 +128,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
         return exercises.sort((a, b) => {
-            const aValue = a.dueDate ? a.dueDate.valueOf() : a.releaseDate ? a.releaseDate.valueOf() : moment().valueOf();
-            const bValue = b.dueDate ? b.dueDate.valueOf() : a.releaseDate ? a.releaseDate.valueOf() : moment().valueOf();
+            const aValue = a.dueDate ? a.dueDate.valueOf() : moment().valueOf();
+            const bValue = b.dueDate ? b.dueDate.valueOf() : moment().valueOf();
 
             return selectedOrder * (aValue - bValue);
         });

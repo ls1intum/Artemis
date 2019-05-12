@@ -9,25 +9,39 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="id">
+                        <span jhiTranslate="global.field.id">ID</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="repositoryUrl">
-                        <span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <fa-icon icon="sort"></fa-icon>
+                        <span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="buildPlanId">
-                        <span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <fa-icon icon="sort"></fa-icon>
+                        <span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="initializationState">
-                        <span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span> <fa-icon icon="sort"></fa-icon>
+                        <span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="initializationDate">
-                        <span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span> <fa-icon icon="sort"></fa-icon>
+                        <span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.firstName"><span jhiTranslate="arTeMiSApp.participation.student">Student</span> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="student.firstName">
+                        <span jhiTranslate="arTeMiSApp.participation.student">Student</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="presentationScore">
+                        <span jhiTranslate="arTeMiSApp.participation.presentationScore">Presentation Score</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let participation of (participations | sortBy: predicate:reverse); trackBy: trackId">
+                <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <a routerLink="/participation/{{ participation.id }}">{{ participation.id }}</a>
                     </td>
@@ -45,6 +59,9 @@
                     <td>
                         <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
                     </td>
+                    <td>
+                        <span>{{ participation.presentationScore != null ? participation.presentationScore : 0 }}</span>
+                    </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button
@@ -59,7 +76,7 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="exercise.type === PROGRAMMING"
+                                *ngIf="exercise?.type === PROGRAMMING"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >
@@ -68,12 +85,20 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId != null"
+                                *ngIf="exercise?.type === PROGRAMMING && participation.buildPlanId != null"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan'] } }]"
                                 class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eraser'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
+                            </button>
+                            <button *ngIf="participation.presentationScore !== 1" (click)="addPresentation(participation)" class="btn btn-info btn-sm mr-1">
+                                <fa-icon icon="file-powerpoint"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.participation.addPresentation.label">Add presentation</span>
+                            </button>
+                            <button *ngIf="participation.presentationScore == 1" (click)="removePresentation(participation)" class="btn btn-danger btn-sm mr-1">
+                                <fa-icon icon="file-powerpoint"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
                         </div>
                     </td>

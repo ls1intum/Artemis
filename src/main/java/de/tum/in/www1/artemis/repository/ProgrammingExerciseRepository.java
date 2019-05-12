@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import java.util.List;
+import java.util.Optional;
+
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -20,7 +21,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.course.id = :#{#courseId}")
     List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    //Override to automatically fetch the templateParticipation and solutionParticipation
+    // Override to automatically fetch the templateParticipation and solutionParticipation
+    @Override
+    @NotNull
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 

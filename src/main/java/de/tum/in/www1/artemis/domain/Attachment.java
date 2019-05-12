@@ -77,8 +77,8 @@ public class Attachment implements Serializable {
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
-        if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        if (attachmentType == AttachmentType.FILE && getLecture() != null && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getLecture().getId().toString());
         }
         // save current path as old path (needed to know old path in onUpdate() and onDelete())
         prevLink = link;
@@ -86,9 +86,9 @@ public class Attachment implements Serializable {
 
     @PrePersist
     public void beforeCreate() {
-        if (attachmentType == AttachmentType.FILE) {
+        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file if necessary (id at this point will be null, so placeholder will be inserted)
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH, getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 
@@ -96,23 +96,23 @@ public class Attachment implements Serializable {
     public void afterCreate() {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
         if (attachmentType == AttachmentType.FILE && link != null && link.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
-            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+            link = link.replace(Constants.FILEPATH_ID_PLACHEOLDER, getLecture().getId().toString());
         }
     }
 
     @PreUpdate
     public void onUpdate() {
-        if (attachmentType == AttachmentType.FILE) {
+        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // move file and delete old file if necessary
-            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.COURSE_ICON_FILEPATH, getId(), true);
+            link = fileService.manageFilesForUpdatedFilePath(prevLink, link, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 
     @PostRemove
     public void onDelete() {
-        if (attachmentType == AttachmentType.FILE) {
+        if (attachmentType == AttachmentType.FILE && getLecture() != null) {
             // delete old file if necessary
-            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.COURSE_ICON_FILEPATH, getId(), true);
+            fileService.manageFilesForUpdatedFilePath(prevLink, null, Constants.LECTURE_ATTACHMENT_FILEPATH + getLecture().getId() + '/', getLecture().getId(), true);
         }
     }
 

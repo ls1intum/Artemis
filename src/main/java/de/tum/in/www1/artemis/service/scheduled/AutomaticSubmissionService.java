@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.util.ArrayList;
+import java.text.DecimalFormat;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,22 +51,24 @@ public class AutomaticSubmissionService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @Scheduled(cron = "0 0 1 * * *") // execute this every night at 1:00:00 am in the future
+    /**
+     * Check for every un-submitted modeling and text submissions if the corresponding exercise has finished (i.e. due date < now). - If yes, we set the submission to submitted =
+     * true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the corresponding participation to FINISHED. - If no,
+     * we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
+     */
+    @Scheduled(cron = "0 0 1 * * *")
     @Transactional
     public void run() {
         // global try-catch for error logging
         try {
-            // TODO get unsubmitted text and modeling submissions from SubmissionRepository with submitted = false (probably left join participation left join exercise)
-            List<Submission> unsubmittedSubmissions = new ArrayList<>();
+            // used for calculating the elapsed time
+            long start = System.nanoTime();
 
-            // update Participations if the submission was submitted or if the exercise has ended and save them to Database (DB Write)
+            List<Submission> unsubmittedSubmissions = submissionRepository.findAllUnsubmittedModelingAndTextSubmissions();
             for (Submission unsubmittedSubmission : unsubmittedSubmissions) {
 
                 Exercise exercise = unsubmittedSubmission.getParticipation().getExercise();
 
-                // if exercise has ended, all submissions will be processed => we can remove the inner HashMap for this exercise
-                // if exercise hasn't ended, some submissions (those that are not submitted) will stay in HashMap => keep inner HashMap
-                Map<String, Submission> submissions;
                 if (exercise.isEnded()) {
                     unsubmittedSubmission.setSubmitted(true);
                     unsubmittedSubmission.setType(SubmissionType.TIMEOUT);
@@ -76,21 +77,25 @@ public class AutomaticSubmissionService {
                 updateParticipation(unsubmittedSubmission);
 
                 submissionRepository.save(unsubmittedSubmission);
-                if (unsubmittedSubmission != null) {
-                    String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
-                    if (unsubmittedSubmission instanceof ModelingSubmission) {
-                        messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
-                    }
-                    if (unsubmittedSubmission instanceof TextSubmission) {
-                        messagingTemplate.convertAndSendToUser(username, "/topic/textSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
-                    }
+
+                String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
+                if (unsubmittedSubmission instanceof ModelingSubmission) {
+                    messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
+                }
+                if (unsubmittedSubmission instanceof TextSubmission) {
+                    messagingTemplate.convertAndSendToUser(username, "/topic/textSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
                 }
             }
 
-            // TODO add some logs how long this took and how many submissions have been processed
+            // used for calculating the elapsed time
+            long end = System.nanoTime();
+            // calculate elapsed time in seconds and create log message
+            double elapsedTimeInSeconds = (double) (end - start) / 1000000000.0;
+            DecimalFormat df = new DecimalFormat("#.##");
+            log.info("Checked {} submissions in {} seconds for automatic submit.", unsubmittedSubmissions.size(), df.format(elapsedTimeInSeconds));
         }
-        catch (Exception e) {
-            log.error("Exception in AutomaticSubmissionService:\n{}", e.getMessage());
+        catch (Exception ex) {
+            log.error("Exception in AutomaticSubmissionService:\n{}", ex.getMessage(), ex);
         }
     }
 
@@ -115,8 +120,8 @@ public class AutomaticSubmissionService {
                 modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
                 // check if compass could assess automatically
                 modelingSubmissionService.checkAutomaticResult(modelingSubmission, modelingExercise);
-                // set participation state to finished and persist it
             }
+            // set participation state to finished and persist it
             participation.setInitializationState(InitializationState.FINISHED);
             participationService.save(participation);
             // return modeling submission with model and optional result

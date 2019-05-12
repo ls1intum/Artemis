@@ -1,9 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Collection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -62,7 +68,46 @@ public class ProgrammingSubmissionResource {
     @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
-        // TODO: the following leads to an exception: org.springframework.dao.InvalidDataAccessApiUsageException: Authentication object cannot be null
+        // This fixes an issue with the Spring Security Context Holder: https://jira.spring.io/browse/DATAJPA-1357
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication authentication = new Authentication() {
+
+            @Override
+            public Collection<? extends GrantedAuthority> getAuthorities() {
+                return null;
+            }
+
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getDetails() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return null;
+            }
+
+            @Override
+            public boolean isAuthenticated() {
+                return true;
+            }
+
+            @Override
+            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+        };
+        context.setAuthentication(authentication);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
         if (!(exercise instanceof ProgrammingExercise)) {

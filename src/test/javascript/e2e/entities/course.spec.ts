@@ -4,7 +4,7 @@ import { CoursePage, NewCoursePage } from '../page-objects/entities/course-page-
 
 const expect = chai.expect;
 
-describe('course', () => {
+describe('course', function() {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
     let coursePage: CoursePage;
@@ -12,7 +12,7 @@ describe('course', () => {
 
     let courseName: string;
 
-    before(async () => {
+    before(async function() {
         await browser.get('/');
         navBarPage = new NavBarPage(true);
         signInPage = await navBarPage.getSignInPage();
@@ -22,24 +22,24 @@ describe('course', () => {
         await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);
     });
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         await navBarPage.clickOnCourseAdminMenu();
     });
 
-    it('should load course list', async () => {
+    it('should load course list', async function() {
         const expect1 = 'arTeMiSApp.course.home.title';
         const value1 = await element(by.id('course-page-heading')).getAttribute('jhiTranslate');
         expect(value1).to.eq(expect1);
     });
 
-    it('should not create new course with empty input', async () => {
+    it('should not create new course with empty input', async function() {
         await coursePage.clickOnCreateNewCourse();
 
         expect(await newCoursePage.save.getAttribute('disabled')).to.equal('true');
         await newCoursePage.clickCancel();
     });
 
-    it('should not create new course without groups', async () => {
+    it('should not create new course without groups', async function() {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
@@ -49,7 +49,19 @@ describe('course', () => {
         await newCoursePage.clickCancel();
     });
 
-    it('should allow to create new course without tutor group', async () => {
+    it('should be able to browse and upload a course icon', async function() {
+        await coursePage.clickOnCreateNewCourse();
+
+        await newCoursePage.setTitle(courseName);
+        await newCoursePage.setShortName(courseName);
+        await newCoursePage.browseCourseIcon();
+        await newCoursePage.uploadCourseIcon();
+
+        expect(await element(by.css('.headline jhi-secured-image img'))).to.not.be.undefined;
+        await newCoursePage.clickCancel();
+    });
+
+    it('should allow to create new course without tutor group', async function() {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
@@ -61,11 +73,13 @@ describe('course', () => {
         await newCoursePage.clickCancel();
     });
 
-    it('should save course with title, short title, student, tutor and instructor groups', async () => {
+    it('should save course with title, short title, coure icon, student, tutor and instructor groups', async function() {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
         await newCoursePage.setShortName(courseName);
+        await newCoursePage.browseCourseIcon();
+        await newCoursePage.uploadCourseIcon();
         await newCoursePage.setStudentGroupName('tumuser');
         await newCoursePage.setTutorGroupName('artemis-dev');
         await newCoursePage.setInstructorGroupName('ls1instructor');
@@ -76,7 +90,7 @@ describe('course', () => {
         browser.wait(ec.urlContains('/course'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
-    it('should show the created course in the list', async () => {
+    it('should show the created course in the list', async function() {
         const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         const lastTitle = await rows
             .last()
@@ -86,7 +100,7 @@ describe('course', () => {
         expect(lastTitle).contains(courseName);
     });
 
-    it('can be deleted', async () => {
+    it('can be deleted', async function() {
         let rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         const numberOfCourses = await rows.count();
         const deleteButton = rows.last().element(by.className('btn-danger'));
@@ -99,7 +113,7 @@ describe('course', () => {
         expect(await rows.count()).to.equal(numberOfCourses - 1);
     });
 
-    after(async () => {
+    after(async function() {
         await navBarPage.autoSignOut();
     });
 });

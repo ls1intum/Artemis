@@ -29,6 +29,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
+            id="student-quiz-start-{{ exercise.id }}"
             *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
             (click)="startExercise()"
         ></button>
@@ -128,7 +129,12 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    !exercise.participations[0].results
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -139,7 +145,12 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    exercise.participations[0].results
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
         </div>
@@ -272,7 +283,12 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                !exercise.participations[0].results
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -283,7 +299,9 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+            *ngIf="
+                exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
     </div>

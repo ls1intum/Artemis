@@ -2,14 +2,12 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -86,5 +84,23 @@ public class ExampleSubmissionService {
     public ExampleSubmission findOneBySubmissionId(Long submissionId) {
         return exampleSubmissionRepository.findBySubmissionId(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example submission for submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    public Optional<ExampleSubmission> getWithEagerExercise(Long exampleSubmissionId) {
+        return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
+    }
+
+    public void deleteById(long exampleSubmissionId) {
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerSubmissionAndEagerTutorParticipation(exampleSubmissionId);
+
+        if (optionalExampleSubmission.isPresent()) {
+            ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
+
+            Set<TutorParticipation> tutorParticipations = exampleSubmission.getTutorParticipations();
+            tutorParticipations.forEach(tutorParticipation -> tutorParticipation.removeTrainedExampleSubmissions(exampleSubmission));
+
+            submissionRepository.delete(exampleSubmission.getSubmission());
+            exampleSubmissionRepository.delete(exampleSubmission);
+        }
     }
 }

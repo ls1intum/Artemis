@@ -6,17 +6,13 @@
                 <ng-content select="[pagetitle]"></ng-content>
             </h3>
             <h4>
-                <span class="mr-2">
-                    {{ 'arTeMiSApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}
-                </span>
+                <span class="mr-2"> {{ 'arTeMiSApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
                 <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
                     {{ exercise.dueDate | amTimeAgo }}
                 </span>
             </h4>
             <h4 *ngIf="exercise.assessmentDueDate">
-                <span class="mr-2">
-                    {{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}
-                </span>
+                <span class="mr-2"> {{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
                 <span [ngClass]="exerciseStatusBadge" class="badge">
                     {{ exercise.assessmentDueDate | amTimeAgo }}
                 </span>
@@ -24,8 +20,7 @@
             <div class="d-md-flex" *ngIf="exercise.categories">
                 <h4 class="mr-1">{{ 'arTeMiSApp.courseOverview.exerciseDetails.categories' | translate }}</h4>
                 <h4 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white mr-1"
-                          [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
             </div>
         </div>

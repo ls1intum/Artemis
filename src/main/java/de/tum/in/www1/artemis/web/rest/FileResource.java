@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
@@ -17,16 +18,17 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.UserService;
 
 /**
  * REST controller for managing Course.
@@ -41,9 +43,19 @@ public class FileResource {
 
     private final ResourceLoader resourceLoader;
 
-    public FileResource(FileService fileService, ResourceLoader resourceLoader) {
+    private final UserService userService;
+
+    private final LectureRepository lectureRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
+            LectureRepository lectureRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
+        this.lectureRepository = lectureRepository;
     }
 
     /**
@@ -199,20 +211,38 @@ public class FileResource {
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    @PreAuthorize("permitAll()") //TODO: make sure this call is only allowed for students of the corresponding course in the future
+    // @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Resource> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+        Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
+        if (!optionalLecture.isPresent()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Lecture lecture = optionalLecture.get();
+        // User user = userService.getUserWithGroupsAndAuthorities();
+        // Course course = lecture.getCourse();
+        // if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course,
+        // user)
+        // && !authCheckService.isAdmin()) {
+        // return forbidden();
+        // }
         try {
-            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + filename);
+            byte[] file = fileService.getFileForPath(Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/' + filename);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
             ByteArrayResource resource = new ByteArrayResource(file);
 
-            return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/pdf")).body(resource);
+            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(contentDisposition);
+
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        catch (IOException ex) {
+            log.error("Lecture attachement download lef to the following exception", ex);
             return ResponseEntity.status(500).build();
         }
 

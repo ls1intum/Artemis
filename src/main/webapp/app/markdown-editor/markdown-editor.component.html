@@ -14,7 +14,7 @@
                     <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>{{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}</button>
                     <div class="dropdown-menu" ngbDropdownMenu>
                         <ng-container *ngFor="let command of headerCommands"
-                            ><button class="dropdown-item" (click)="command.execute()">{{ command.buttonTranslationString | translate }}</button></ng-container
+                            ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
                         >
                     </div>
                 </div>
@@ -32,15 +32,17 @@
                     </div>
                 </ng-container>
             </div>
-            <ace-editor
-                #aceEditor
-                [mode]="aceEditorOptions.mode"
-                [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
-                [(text)]="markdown"
-                (textChange)="markdownChange.emit($event)"
-                style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px"
-                class="form-control"
-            ></ace-editor>
+            <div class="card border-0 markdown-editor markdown-editor__small">
+                <ace-editor
+                    #aceEditor
+                    [mode]="aceEditorOptions.mode"
+                    [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
+                    [(text)]="markdown"
+                    (textChange)="markdownChange.emit($event)"
+                    class="form-control markdown-editor__content"
+                ></ace-editor>
+                <div *ngIf="enableResize" class="rg-bottom"><span></span></div>
+            </div>
         </ng-template>
     </ngb-tab>
     <!--End Editor-->

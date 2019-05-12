@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,10 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -127,10 +125,9 @@ public class TextSubmissionResource {
             textSubmission.getParticipation().setSubmissions(null);
             textSubmission.getParticipation().setResults(null);
 
-            if (textSubmission.getParticipation().getExercise() != null && textSubmission.getParticipation().getExercise() instanceof TextExercise) {
-                // make sure the solution is not sent to the client
-                TextExercise textExerciseForClient = (TextExercise) textSubmission.getParticipation().getExercise();
-                textExerciseForClient.setSampleSolution(null);
+            if (textSubmission.getParticipation().getExercise() != null) {
+                // make sure sensitive information are not sent to the client
+                textSubmission.getParticipation().getExercise().filterSensitiveInformation();
             }
         }
     }
@@ -212,6 +209,12 @@ public class TextSubmissionResource {
         if (!(exercise instanceof TextExercise)) {
             return badRequest();
         }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);

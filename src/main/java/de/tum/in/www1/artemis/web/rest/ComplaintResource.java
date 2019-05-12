@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -15,11 +18,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -39,12 +45,19 @@ public class ComplaintResource {
 
     private ResultRepository resultRepository;
 
-    private UserRepository userRepository;
+    private AuthorizationCheckService authCheckService;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository) {
+    private ExerciseService exerciseService;
+
+    private UserService userService;
+
+    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService,
+            ExerciseService exerciseService, UserService userService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
-        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
+        this.exerciseService = exerciseService;
+        this.userService = userService;
     }
 
     /**
@@ -66,22 +79,28 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
-        Long resultId = complaint.getResult().getId();
-        String submissorName = principal.getName();
-        User originalSubmissor = userRepository.findUserByResultId(resultId);
-
-        if (!originalSubmissor.getLogin().equals(submissorName)) {
-            throw new BadRequestAlertException("You can create a complaint only about a result you submitted", ENTITY_NAME, "differentuser");
+        if (complaintRepository.findByResult_Id(complaint.getResult().getId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
         }
 
         // Do not trust user input
-        Optional<Result> originalResultOptional = resultRepository.findById(resultId);
+        Result originalResult = resultRepository.findById(complaint.getResult().getId())
+                .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+        User originalSubmissor = originalResult.getParticipation().getStudent();
+        Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
-        if (!originalResultOptional.isPresent()) {
-            throw new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "noresult");
+        long numberOfUnacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
+        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
+            throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
+                    "toomanycomplaints");
+        }
+        if (originalResult.getCompletionDate().isBefore(ZonedDateTime.now().minusWeeks(1))) {
+            throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
+        }
+        if (!originalSubmissor.getLogin().equals(principal.getName())) {
+            throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
         }
 
-        Result originalResult = originalResultOptional.get();
         originalResult.setHasComplaint(true);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
@@ -114,14 +133,32 @@ public class ComplaintResource {
      * Get /complaints/result/:id get a complaint associated with the result "id"
      *
      * @param resultId the id of the result for which we want to find a linked complaint
-     * @return the ResponseEntity with status 200 (OK) and with body the complaint, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
     @GetMapping("/complaints/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         Optional<Complaint> complaint = complaintRepository.findByResult_Id(resultId);
-        return ResponseUtil.wrapOrNotFound(complaint);
+        if (complaint.isPresent()) {
+            return ResponseEntity.ok(complaint.get());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Get /:courseId/allowed-complaints get the number of complaints that a student is still allowed to submit in the given course. It is determined by the max. complaint limit
+     * and the current number of open or rejected complaints of the student in the course.
+     *
+     * @param courseId the id of the course for which we want to get the number of allowed complaints
+     * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
+     */
+    @GetMapping("/{courseId}/allowed-complaints")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
+        long unacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
+        return ResponseEntity.ok(Math.max(MAX_COMPLAINT_NUMBER_PER_STUDENT - unacceptedComplaints, 0));
     }
 
     /**
@@ -136,6 +173,11 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
         List<Complaint> responseComplaints = new ArrayList<>();
+
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
 
         Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
 

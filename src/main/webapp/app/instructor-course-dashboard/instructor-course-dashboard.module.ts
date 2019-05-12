@@ -7,7 +7,7 @@ import { ChartsModule } from 'ng2-charts';
 import { ArTEMiSSharedModule } from '../shared';
 import { instructorCourseDashboardRoute } from './instructor-course-dashboard.route';
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
-import { MomentModule } from 'angular2-moment';
+import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 

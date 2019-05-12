@@ -28,4 +28,11 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") Long submissionId);
+
+    /**
+     * @param courseId  the course we are interested in
+     * @param submitted boolean to check if an exercise has been submitted or not
+     * @return number of submissions belonging to courseId with submitted status
+     */
+    long countByParticipation_Exercise_Course_IdAndSubmitted(Long courseId, boolean submitted);
 }

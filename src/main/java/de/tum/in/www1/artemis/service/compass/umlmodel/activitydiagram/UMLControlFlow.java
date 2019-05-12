@@ -3,13 +3,14 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-
 public class UMLControlFlow extends UMLElement {
 
     public static final String UML_CONTROL_FLOW_TYPE = "ActivityControlFlow";
+
     private final String CONTROL_FLOW_SYMBOL = " --> ";
 
     private UMLActivity source;
+
     private UMLActivity target;
 
     public UMLControlFlow(UMLActivity source, UMLActivity target, String jsonElementID) {

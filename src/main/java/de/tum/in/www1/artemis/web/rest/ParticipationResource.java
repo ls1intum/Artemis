@@ -39,13 +39,8 @@ import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -84,9 +79,11 @@ public class ParticipationResource {
 
     private final ResultService resultService;
 
+    private final UserService userService;
+
     public ParticipationResource(ParticipationService participationService, CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            TextSubmissionService textSubmissionService, ResultService resultService) {
+            TextSubmissionService textSubmissionService, ResultService resultService, UserService userService) {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
@@ -96,6 +93,7 @@ public class ParticipationResource {
         this.versionControlService = versionControlService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
+        this.userService = userService;
     }
 
     /**
@@ -151,6 +149,8 @@ public class ParticipationResource {
         }
 
         Participation participation = participationService.startExercise(exercise, principal.getName());
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
     }
 
@@ -164,7 +164,6 @@ public class ParticipationResource {
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -172,11 +171,17 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
-            addLatestResultToParticipation(participation);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+            if (participation != null) {
+                addLatestResultToParticipation(participation);
+                participation.getExercise().filterSensitiveInformation();
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+            }
         }
-        log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
-        return ResponseEntity.ok().body(participation);
+        log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
+        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notProgrammingExercise",
+                "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
 
     /**
@@ -212,6 +217,20 @@ public class ParticipationResource {
         if (participation.getId() == null) {
             return createParticipation(participation);
         }
+        if (participation.getPresentationScore() > 1) {
+            participation.setPresentationScore(1);
+        }
+        if (participation.getPresentationScore() < 0 || participation.getPresentationScore() == null) {
+            participation.setPresentationScore(0);
+        }
+
+        Participation currentParticipation = participationService.findOne(participation.getId());
+        if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
+            User user = userService.getUser();
+            log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with id "
+                    + participation.getExercise().getId());
+        }
+
         Participation result = participationService.save(participation);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }
@@ -296,7 +315,7 @@ public class ParticipationResource {
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
+        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
         long end = System.currentTimeMillis();
         log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);
