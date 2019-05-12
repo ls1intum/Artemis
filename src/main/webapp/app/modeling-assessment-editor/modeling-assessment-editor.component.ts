@@ -185,6 +185,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
+                this.handleFeedback(this.result.feedbacks);
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
