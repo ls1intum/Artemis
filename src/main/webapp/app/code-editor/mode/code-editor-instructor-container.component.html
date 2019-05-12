@@ -1,5 +1,5 @@
 <div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_INSTRUCTOR']" class="card mb-3">
-    <div *ngIf="loadingState !== 'INITIALIZING'; else loadingExercise" class="card-body d-flex p-2">
+    <div *ngIf="loadingState !== LOADING_STATE.INITIALIZING; else loadingExercise" class="card-body d-flex p-2">
         <!-- repository select -->
         <div ngbDropdown class="d-inline-block mr-2">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
@@ -8,7 +8,7 @@
                     [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id"
                     (click)="selectTemplateParticipation()"
                     ngbDropdownItem
-                    [style.background-color]="selectedRepository === 'TEMPLATE' ? '#3e8acc' : 'transparent'"
+                    [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
                     jhiTranslate="arTeMiSApp.editor.repoSelect.templateRepo"
                 >
                     Template Repository
@@ -17,25 +17,34 @@
                     [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
                     (click)="selectSolutionParticipation()"
                     ngbDropdownItem
-                    [style.background-color]="selectedRepository === 'SOLUTION' ? '#3e8acc' : 'transparent'"
+                    [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
                     jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo"
                 >
                     Solution Repository
                 </button>
                 <button
                     [disabled]="
-                        loadingState === 'CREATING_ASSIGNMENT_REPO' ||
-                        loadingState === 'DELETING_ASSIGNMENT_REPO' ||
+                        loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                        loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                         !exercise ||
                         !exercise.participations ||
                         !exercise.participations.length
                     "
                     (click)="selectAssignmentParticipation()"
                     ngbDropdownItem
-                    [style.background-color]="selectedRepository === 'ASSIGNMENT' ? '#3e8acc' : 'transparent'"
+                    [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
                     jhiTranslate="arTeMiSApp.editor.repoSelect.assignmentRepo"
                 >
                     Assignment Participation
+                </button>
+                <button
+                    [disabled]="!exercise"
+                    (click)="selectTestRepository()"
+                    ngbDropdownItem
+                    [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                    jhiTranslate="arTeMiSApp.editor.repoSelect.testRepo"
+                >
+                    Test Repository
                 </button>
             </div>
         </div>
@@ -44,22 +53,26 @@
             <button
                 *ngIf="!exercise.participations || !exercise.participations.length"
                 (click)="createAssignmentParticipation()"
-                [disabled]="loadingState !== 'NOT_LOADING'"
+                [disabled]="loadingState !== LOADING_STATE.NOT_LOADING"
                 class="btn btn-primary mr-2"
             >
-                <fa-icon *ngIf="loadingState !== 'CREATING_ASSIGNMENT_REPO'" icon="plus" class="text-white mr-2"></fa-icon>
-                <fa-icon *ngIf="loadingState === 'CREATING_ASSIGNMENT_REPO'" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="plus" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
                 *ngIf="exercise.participations && exercise.participations.length"
                 (click)="resetAssignmentParticipation()"
-                [disabled]="loadingState !== 'NOT_LOADING'"
+                [disabled]="loadingState !== LOADING_STATE.NOT_LOADING"
                 class="btn btn-danger"
             >
-                <fa-icon *ngIf="loadingState !== 'DELETING_ASSIGNMENT_REPO' && loadingState !== 'CREATING_ASSIGNMENT_REPO'" icon="times" class="text-white mr-2"></fa-icon>
                 <fa-icon
-                    *ngIf="loadingState === 'DELETING_ASSIGNMENT_REPO' || loadingState === 'CREATING_ASSIGNMENT_REPO'"
+                    *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                    icon="times"
+                    class="text-white mr-2"
+                ></fa-icon>
+                <fa-icon
+                    *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
                     icon="circle-notch"
                     [spin]="true"
                     class="text-white mr-2"
@@ -141,7 +154,13 @@
 </div>
 <jhi-code-editor #grid *ngIf="exercise" [exercise]="exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-result *ngIf="selectedRepository !== 'TEST'" [participation]="selectedParticipation" [isBuilding]="isBuilding" class="mr-2"></jhi-result>
+        <jhi-result
+            *ngIf="selectedParticipation && selectedRepository !== 'TEST'"
+            [participation]="selectedParticipation"
+            [result]="selectedParticipation.results && selectedParticipation.results[0]"
+            [isBuilding]="isBuilding"
+            class="mr-2"
+        ></jhi-result>
         <jhi-code-editor-actions
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"

@@ -70,6 +70,7 @@
                 "resetAssignmentRepo": "Reset Assignment Repository",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
+                "testRepo": "Test Repository",
                 "loadingExercise": "Loading Exercise",
                 "solutionWarning": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue in the Solution Repository.",
                 "solutionSuccess": "The Solution Repository fulfills all test cases.",

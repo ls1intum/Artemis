@@ -12,7 +12,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.tum.in.www1.artemis.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -302,8 +302,8 @@ public class ProgrammingExerciseResource {
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
      * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or
-     *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
+     *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PatchMapping("/programming-exercises-problem")
@@ -392,42 +392,12 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
 
-            // Map latest result for solutionParticipation
-            Result latestSolutionResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getSolutionParticipation());
-            Set<Result> solutionResults = new HashSet<>();
-            if (latestSolutionResult != null) {
-                solutionResults.add(latestSolutionResult);
-            }
-            programmingExercise.getSolutionParticipation().setResults(solutionResults);
-
-            // Map latest result for templateParticipation
-            Result latestTemplateResult = programmingExercise.findLatestRatedResultWithCompletionDate(programmingExercise.getTemplateParticipation());
-            Set<Result> templateResults = new HashSet<>();
-            if (latestTemplateResult != null) {
-                templateResults.add(latestTemplateResult);
-            }
-            programmingExercise.getTemplateParticipation().setResults(templateResults);
-
             // Make sure to not return the template/solution participation in the participations array
-            Optional<Participation> participation = programmingExercise.getParticipations()
-                .stream().filter(p -> p.getStudent() != null).findFirst();
+            Optional<Participation> participation = programmingExercise.getParticipations().stream().filter(p -> p.getStudent() != null).findFirst();
 
-            // Map latest result for assignmentParticipation
-            if (participation.isPresent()) {
-                Result latestResult = programmingExercise.
-                    findLatestRatedResultWithCompletionDate(participation.get());
-                Set<Result> results = new HashSet<>();
-                if (latestResult != null) {
-                    results.add(latestResult);
-                }
-                participation.get().setResults(results);
-                Set<Participation> participations = new HashSet<>();
-                participations.add(participation.get());
-                programmingExercise.setParticipations(participations);
-            } else {
-                Set<Participation> participations = new HashSet<>();
-                programmingExercise.setParticipations(participations);
-            }
+            Set<Participation> participations = new HashSet<>();
+            participations.add(participation.get());
+            programmingExercise.setParticipations(participations);
 
             Course course = programmingExercise.getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -435,7 +405,8 @@ public class ProgrammingExerciseResource {
                 return forbidden();
             }
             return ResponseEntity.ok(programmingExercise);
-        } else {
+        }
+        else {
             return notFound();
         }
     }

@@ -69,6 +69,7 @@
                 "resetAssignmentRepo": "Assignment Repository zurücksetzen",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
+                "testRepo": "Test Repository",
                 "loadingExercise": "Aufgabe wird geladen",
                 "solutionWarning": "Das Solution Repository erfüllt einen oder mehreren Testfälle nicht. Das könnte auf ein Problem im Solution Repository hinweisen.",
                 "solutionSuccess": "Das Solution Repository erfüllt alle Testfälle",
