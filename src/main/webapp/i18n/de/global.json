@@ -186,7 +186,8 @@
             "newResult": "Neues Ergebnis",
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
-            "exercise": "Aufgaben"
+            "exercise": "Aufgaben",
+            "scores": "Bewertungen"
         },
         "detail": {
             "field": "Feld",

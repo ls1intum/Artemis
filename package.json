@@ -163,7 +163,7 @@
     },
     "lint-staged": {
         "linters": {
-            "src/**/*.{json,ts,css,scss}": [
+            "src/**/*.{json,ts,css,scss,html}": [
                 "prettier --write",
                 "git add"
             ],
