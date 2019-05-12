@@ -112,25 +112,27 @@
 
     <div class="row mt-3">
         <h4 class="col-12" jhiTranslate="arTeMiSApp.textAssessment.detail.feedback">Feedback</h4>
-        <div *ngIf="invalidError" class="col-12 col-lg-8 alert col-xl-6 alert-danger" role="alert">{{ invalidError | translate }}</div>
-        <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6 alert alert-secondary text-center" role="alert">
-            <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
-            <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
-        </div>
-        <div class="row">
-            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
-                <jhi-text-assessment-detail
-                    [(assessment)]="referencedFeedback[i]"
-                    (assessmentChange)="checkScoreBoundaries()"
-                    [highlightColor]="getColorForIndex(i)"
-                    (deleteAssessment)="deleteAssessment($event)"
-                ></jhi-text-assessment-detail>
+        <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+        <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+            <div class="alert alert-secondary text-center" role="alert">
+                <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+                <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
             </div>
+        </div>
+        <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
+            <jhi-text-assessment-detail
+                [(assessment)]="referencedFeedback[i]"
+                (assessmentChange)="checkScoreBoundaries()"
+                [highlightColor]="getColorForIndex(i)"
+                (deleteAssessment)="deleteAssessment($event)"
+            ></jhi-text-assessment-detail>
         </div>
     </div>
     <div class="row mt-3">
         <h4 class="col-12" jhiTranslate="arTeMiSApp.textAssessment.generalFeedback">General Feedback</h4>
-        <textarea class="col-12 col-lg-8 col-xl-6 form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="checkScoreBoundaries()"></textarea>
+        <div class="col-12 col-lg-8 col-xl-6">
+            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="checkScoreBoundaries()"></textarea>
+        </div>
     </div>
 </ng-container>
 

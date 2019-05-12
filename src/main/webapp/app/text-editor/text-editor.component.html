@@ -62,7 +62,7 @@
         </ng-template>
     </div>
 
-    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint">
+    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint">
         <button
             class="btn btn-primary"
             [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
@@ -76,6 +76,6 @@
     </div>
 
     <div class="row" *ngIf="showComplaintForm || hasComplaint">
-        <jhi-complaint-form [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints" class="col-12"></jhi-complaint-form>
+        <jhi-complaint-form class="flex-grow-1" [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
     </div>
 </div>

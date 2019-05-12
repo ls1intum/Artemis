@@ -306,10 +306,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * because a score is not a number/empty.
      */
     public checkScoreBoundaries() {
-        if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback.length === 0) {
+        if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
-            this.invalidError = 'The score field must be a number and can not be empty!';
             return;
         }
 
@@ -321,9 +320,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.credits !== 0 || f.detailText.length > 0)) {
+        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText && f.detailText.length > 0))) {
             this.invalidError = 'arTeMiSApp.textAssessment.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
+            return;
         }
 
         this.totalScore = credits.reduce((a, b) => a + b, 0);
