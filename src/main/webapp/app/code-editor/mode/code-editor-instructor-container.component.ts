@@ -93,13 +93,19 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                                 this.domainChangeSubscription = this.domainService
                                     .subscribeDomainChange()
                                     .pipe(
-                                        filter(participation => !!participation),
-                                        distinctUntilChanged(
-                                            ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 && domainValue1.id !== domainValue2.id,
-                                        ),
-                                        tap(([, participation]) => {
+                                        tap(console.log),
+                                        filter(domain => !!domain),
+                                        // distinctUntilChanged(
+                                        //     ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 && domainValue1.id !== domainValue2.id,
+                                        // ),
+                                        tap(([domainType, domainValue]) => {
                                             this.initializeProperties();
-                                            this.setSelectedParticipation(participation.id);
+                                            if (domainType === DomainType.PARTICIPATION) {
+                                                this.setSelectedParticipation(domainValue.id);
+                                            } else {
+                                                this.selectedParticipation = null;
+                                                this.selectedRepository = REPOSITORY.TEST;
+                                            }
                                         }),
                                     )
                                     .subscribe();
@@ -165,7 +171,6 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
 
     selectTestRepository() {
         this.selectedRepository = REPOSITORY.TEST;
-        this.selectedParticipation = null;
         this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
     }
 

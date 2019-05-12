@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -149,6 +150,17 @@ public class RepositoryService {
             gitService.get().pull(repository);
         }
         return status;
+    }
+
+    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = exercise.getCourse();
+        boolean hasPermissions = authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        if (!hasPermissions) {
+            throw new IllegalAccessException();
+        }
+        return gitService.get().getOrCheckoutRepository(repoUrl);
+
     }
 
     public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {

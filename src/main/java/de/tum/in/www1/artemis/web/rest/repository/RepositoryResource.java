@@ -59,8 +59,6 @@ public abstract class RepositoryResource {
 
     abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
 
-    abstract boolean hasPermissions(Long domainId);
-
     /**
      * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *

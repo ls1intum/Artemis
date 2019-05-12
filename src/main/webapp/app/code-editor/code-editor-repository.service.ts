@@ -52,7 +52,6 @@ export abstract class DomainDependent implements OnDestroy {
             .pipe(
                 filter(domain => !!domain),
                 tap((domain: DomainChange) => {
-                    console.log({ domain });
                     this.setDomain(domain);
                 }),
             )
