@@ -190,16 +190,16 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         assessment.reference = assessmentText;
         assessment.credits = 0;
         this.referencedFeedback.push(assessment);
-        this.checkScoreBoundaries();
+        this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
         this.referencedFeedback = this.referencedFeedback.filter(elem => elem !== assessmentToDelete);
-        this.checkScoreBoundaries();
+        this.validateAssessment();
     }
 
     public save(): void {
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;
@@ -220,7 +220,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return; // We need to have saved the result before
         }
 
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;
@@ -289,7 +289,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
-        this.checkScoreBoundaries();
+        this.validateAssessment();
     }
 
     goToExerciseDashboard() {
@@ -301,11 +301,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
+     * Checks if the assessment is valid:
+     *   - There must be at least one feedback referencing a text element or a general feedback.
+     *   - Each reference feedback must have either a score or a feedback text or both.
+     *   - The score must be a valid number.
+     *
+     * Additionally, the total score is calculated if the current assessment is valid.
      */
-    public checkScoreBoundaries() {
+    public validateAssessment() {
         if ((this.generalFeedback.detailText == null || this.generalFeedback.detailText.length === 0) && this.referencedFeedback && this.referencedFeedback.length === 0) {
             this.totalScore = 0;
             this.assessmentsAreValid = false;
@@ -363,7 +366,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.checkScoreBoundaries();
+        this.validateAssessment();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
             return;

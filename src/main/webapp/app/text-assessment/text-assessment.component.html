@@ -122,7 +122,7 @@
         <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
             <jhi-text-assessment-detail
                 [(assessment)]="referencedFeedback[i]"
-                (assessmentChange)="checkScoreBoundaries()"
+                (assessmentChange)="validateAssessment()"
                 [highlightColor]="getColorForIndex(i)"
                 (deleteAssessment)="deleteAssessment($event)"
             ></jhi-text-assessment-detail>
@@ -131,7 +131,7 @@
     <div class="row mt-3">
         <h4 class="col-12" jhiTranslate="arTeMiSApp.textAssessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-8 col-xl-6">
-            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="checkScoreBoundaries()"></textarea>
+            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
         </div>
     </div>
 </ng-container>
