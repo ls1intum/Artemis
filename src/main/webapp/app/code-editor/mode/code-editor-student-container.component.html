@@ -1,16 +1,51 @@
-<jhi-code-editor-buildable
-    #buildableEditor
-    *ngIf="selectedRepository !== 'TEST'"
-    [(participation)]="participation"
-    [repositoryFileService]="repositoryFileParticipationService"
-    [repositoryService]="repositoryParticipationService"
->
-    <jhi-code-editor-instructions #editorSidebarRight [participation]="selectedParticipation" [exercise]="exercise" [editableInstructions]="true"> </jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        #editorBottomArea
+<jhi-code-editor #grid [exercise]="participation?.exercise">
+    <div class="d-flex align-items-center ml-auto" editorNavbar>
+        <jhi-result
+            *ngIf="participation"
+            [participation]="participation"
+            [result]="participation.results && participation.results[0]"
+            [isBuilding]="isBuilding"
+            class="mr-2"
+        ></jhi-result>
+        <jhi-code-editor-actions
+            [unsavedFiles]="unsavedFiles"
+            [(editorState)]="editorState"
+            [(commitState)]="commitState"
+            [(isBuilding)]="isBuilding"
+            (onSavedFiles)="onSavedFiles($event)"
+            (onError)="onError(err)"
+        ></jhi-code-editor-actions>
+    </div>
+    <jhi-code-editor-file-browser
+        editorSidebarLeft
+        [unsavedFiles]="unsavedFiles | keys"
+        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+        [editorState]="editorState"
+        [toggleEditorCollapse]="grid.toggleEditorCollapse"
+        [(selectedFile)]="selectedFile"
+        [(commitState)]="commitState"
+        (onRepositoryChecked)="onRepositoryChecked($event)"
+        (onFileChange)="onFileChange($event)"
+    ></jhi-code-editor-file-browser>
+    <jhi-code-editor-ace
+        editorCenter
+        [selectedFile]="selectedFile"
+        [fileChange]="fileChange"
+        [commitState]="commitState"
+        [(buildLogErrors)]="buildLogErrors"
+        (onFileContentChange)="onFileContentChange($event)"
+    ></jhi-code-editor-ace>
+    <jhi-code-editor-instructions
+        editorSidebarRight
         [participation]="participation"
-        [isBuilding]="buildableEditor.isBuilding"
-        (buildLogChange)="buildableEditor.updateLatestBuildLogs($event)"
-    >
-    </jhi-code-editor-build-output>
-</jhi-code-editor-buildable>
+        [exercise]="participation.exercise"
+        [editableInstructions]="true"
+    ></jhi-code-editor-instructions>
+    <jhi-code-editor-build-output
+        editorBottomArea
+        *ngIf="participation"
+        [participation]="participation"
+        [(isBuilding)]="isBuilding"
+        [(buildLogErrors)]="buildLogErrors"
+    ></jhi-code-editor-build-output>
+</jhi-code-editor>
