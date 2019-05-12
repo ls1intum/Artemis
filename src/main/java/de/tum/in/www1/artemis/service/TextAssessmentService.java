@@ -6,8 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -32,8 +30,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, objectMapper);
+            ParticipationRepository participationRepository, ResultService resultService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
