@@ -1,20 +1,16 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.*;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +24,12 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.FileMove;
+import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,13 +53,16 @@ public class RepositoryResource {
 
     private final UserService userService;
 
+    private final RepositoryService repositoryService;
+
     public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService) {
         this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.repositoryService = repositoryService;
     }
 
     /**
@@ -75,21 +77,14 @@ public class RepositoryResource {
         log.debug("REST request to files for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<HashMap<String, FileType>> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
-
-        HashMap<String, FileType> fileList = new HashMap<>();
-
-        while (itr.hasNext()) {
-            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
-            fileList.put(pair.getKey().toString(), pair.getValue());
+        try {
+            Repository repository = repositoryService.checkoutRepositoryByParticipation(participation);
+            HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
+            return new ResponseEntity<>(fileList, HttpStatus.OK);
         }
-
-        return new ResponseEntity<>(fileList, HttpStatus.OK);
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
     }
 
     /**
@@ -105,34 +100,22 @@ public class RepositoryResource {
         log.debug("REST request to file {} for Participation : {}", filename, participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<String> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if (!file.isPresent()) {
-            return notFound();
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
         }
-
-        InputStream inputStream = new FileInputStream(file.get());
-
-        byte[] out = org.apache.commons.io.IOUtils.toByteArray(inputStream);
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-        return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
-    }
-
-    @Nullable
-    private <X> ResponseEntity<X> checkParticipation(Participation participation) {
-        if (!userHasPermissions(participation))
+        catch (IllegalAccessException ex) {
             return forbidden();
-
-        if (!Optional.ofNullable(participation).isPresent()) {
+        }
+        try {
+            byte[] out = repositoryService.getFile(repository, filename);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
+        }
+        catch (FileNotFoundException ex) {
             return notFound();
         }
-        return null;
     }
 
     /**
@@ -148,29 +131,29 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
             throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
-        if (filename.contains("../")) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        if (gitService.get().getFileByName(repository, filename).isPresent()) {
-            // File already existing. Conflict.
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
         }
-
-        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
-        if (!repository.isValidFile(file)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        catch (IllegalAccessException ex) {
+            return forbidden();
         }
 
         InputStream inputStream = request.getInputStream();
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setContent(null); // invalidate cache
+
+        try {
+            repositoryService.createFile(repository, filename, inputStream);
+        }
+        catch (FileAlreadyExistsException ex) {
+            // File already existing. Conflict.
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (IllegalArgumentException ex) {
+            // Invalid file
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
     }
@@ -188,22 +171,29 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
             throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
-        if (folderName.contains("../")) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
-        // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
         InputStream inputStream = request.getInputStream();
-        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setContent(null); // invalidate cache
+
+        try {
+            repositoryService.createFolder(repository, folderName, inputStream);
+        }
+        catch (FileAlreadyExistsException ex) {
+            // File already existing. Conflict.
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (IllegalArgumentException ex) {
+            // Invalid file
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("folder", folderName)).build();
     }
@@ -218,29 +208,32 @@ public class RepositoryResource {
      * @throws InterruptedException
      */
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFolder(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
-        if (fileMove.getNewFilename().contains("../")) {
+    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+
+        Participation participation = participationService.findOne(participationId);
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+
+        try {
+            repositoryService.renameFile(repository, fileMove);
+        }
+        catch (FileNotFoundException ex) {
+            return notFound();
+        }
+        catch (FileAlreadyExistsException ex) {
+            // File already existing. Conflict.
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (IllegalArgumentException ex) {
+            // Invalid file
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
-        if (!file.isPresent()) {
-            return notFound();
-        }
-        File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
-
-        boolean isRenamed = file.get().renameTo(newFile);
-        if (!isRenamed) {
-            return notFound();
-        }
-
-        repository.setContent(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
     }
 
@@ -257,23 +250,22 @@ public class RepositoryResource {
         log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if (!file.isPresent()) {
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        try {
+            repositoryService.deleteFile(repository, filename);
+        }
+        catch (FileNotFoundException ex) {
             return notFound();
         }
-
-        if (file.get().isFile()) {
-            Files.delete(file.get().toPath());
+        catch (IllegalArgumentException ex) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        else {
-            FileUtils.deleteDirectory(file.get());
-        }
-        repository.setContent(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
     }
 
@@ -289,12 +281,15 @@ public class RepositoryResource {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        repositoryService.pullChanges(repository);
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        gitService.get().pull(repository);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -307,17 +302,24 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        gitService.get().stageAllChanges(repository);
-        gitService.get().commitAndPush(repository, "Changes by Online Editor");
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        try {
+            repositoryService.commitChanges(repository);
+        }
+        catch (GitAPIException ex) {
+            // TODO: Properly catch specific git errors
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -334,17 +336,14 @@ public class RepositoryResource {
         log.debug("REST request to get clean status for Repository for Participation : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<RepositoryStatusDTO> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        RepositoryStatusDTO status = new RepositoryStatusDTO();
-        status.isClean = gitService.get().isClean(repository);
-
-        if (status.isClean) {
-            gitService.get().pull(repository);
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByParticipation(participation);
         }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        RepositoryStatusDTO status = repositoryService.getStatus(repository);
 
         return new ResponseEntity<>(status, HttpStatus.OK);
     }
@@ -360,22 +359,11 @@ public class RepositoryResource {
         log.debug("REST request to get build log : {}", participationId);
 
         Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
+        boolean hasPermissions = repositoryService.canAccessParticipation(participation);
+        if (!hasPermissions)
+            return forbidden();
 
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
         return new ResponseEntity<>(logs, HttpStatus.OK);
-    }
-
-    private boolean userHasPermissions(Participation participation) {
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            // if the user is not the owner of the participation, the user can only see it in case he is
-            // a teaching assistant or an instructor of the course, or in case he is admin
-            User user = userService.getUserWithGroupsAndAuthorities();
-            Course course = participation.getExercise().getCourse();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
-        }
-        return true;
     }
 }
