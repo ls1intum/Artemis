@@ -98,7 +98,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                                             ([domainType1, domainValue1], [domainType2, domainValue2]) => domainType1 !== domainType2 && domainValue1.id !== domainValue2.id,
                                         ),
                                         tap(([, participation]) => {
-                                            this.commitState = CommitState.UNDEFINED;
+                                            this.initializeProperties();
                                             this.setSelectedParticipation(participation.id);
                                         }),
                                     )

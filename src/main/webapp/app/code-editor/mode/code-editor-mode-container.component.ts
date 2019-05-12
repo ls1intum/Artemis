@@ -34,7 +34,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         protected sessionService: CodeEditorSessionService,
     ) {}
 
-    onDomainChange = () => {
+    initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
         this.session = undefined;

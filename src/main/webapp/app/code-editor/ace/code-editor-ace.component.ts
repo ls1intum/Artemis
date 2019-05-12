@@ -17,11 +17,9 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { TextChange, AnnotationArray } from '../../entities/ace-editor';
-import { EditorState } from 'app/entities/ace-editor/editor-state.model';
+import { TextChange, AnnotationArray, CommitState } from '../../entities/ace-editor';
 import { RenameFileChange, DeleteFileChange, FileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorRepositoryFileService } from '../code-editor-repository.service';
-import { CodeEditorContainer } from '../mode/code-editor-mode-container.component';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -31,6 +29,24 @@ import { CodeEditorContainer } from '../mode/code-editor-mode-container.componen
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor')
     editor: AceEditorComponent;
+
+    @Input()
+    readonly selectedFile: string;
+    // TODO: Could be emitted as an event
+    @Input()
+    readonly fileChange: FileChange;
+    @Input()
+    readonly commitState: CommitState;
+    @Input()
+    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timeStamp: number } {
+        return this.buildLogErrorsValue;
+    }
+    @Output()
+    onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
+    @Output()
+    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
+    @Output()
+    onError = new EventEmitter<string>();
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
@@ -44,31 +60,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     // We store changes in the editor since the last content emit to update annotation positions.
     editorChangeLog: TextChange[] = [];
 
-    @Input()
-    readonly selectedFile: string;
-    // TODO: Could be emitted as an event
-    @Input()
-    readonly fileChange: FileChange;
-    @Input()
-    readonly unsavedFiles: string[];
-    @Output()
-    onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
-    @Output()
-    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
-    @Output()
-    onError = new EventEmitter<string>();
-
-    constructor(public modalService: NgbModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
-
-    @Input()
-    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timeStamp: number } {
-        return this.buildLogErrorsValue;
-    }
-
     set buildLogErrors(buildLogErrors) {
         this.buildLogErrorsValue = buildLogErrors;
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
+
+    constructor(public modalService: NgbModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
      * @function ngAfterViewInit
@@ -92,6 +89,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
+            this.fileSession = {};
+            this.editor
+                .getEditor()
+                .getSession()
+                .setValue('');
+        }
         if (changes.fileChange && changes.fileChange.currentValue) {
             if (this.fileChange instanceof RenameFileChange) {
                 // Rename references to file / path
@@ -199,7 +203,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.fileSession[this.selectedFile].code !== code) {
+        if (this.selectedFile && this.fileSession[this.selectedFile].code !== code) {
             const cursor = this.editor.getEditor().getCursorPosition();
             this.fileSession[this.selectedFile] = { code, cursor };
             if (this.buildLogErrors.errors[this.selectedFile]) {
