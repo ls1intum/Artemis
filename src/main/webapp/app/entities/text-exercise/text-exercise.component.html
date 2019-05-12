@@ -41,18 +41,25 @@
                     <td>{{ textExercise.maxScore }}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button *ngIf="textExercise.isAtLeastTutor"
-                                type="submit" [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard']" class="btn btn-info btn-sm mr-1">
+                            <button
+                                *ngIf="textExercise.isAtLeastTutor"
+                                type="submit"
+                                [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard']"
+                                class="btn btn-info btn-sm mr-1"
+                            >
                                 <fa-icon icon="eye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
                             </button>
-                            <button *ngIf="textExercise.isAtLeastTutor"
-                                type="submit" [routerLink]="['/exercise', textExercise.id, 'participation']" class="btn btn-primary btn-sm mr-1">
+                            <button
+                                *ngIf="textExercise.isAtLeastTutor"
+                                type="submit"
+                                [routerLink]="['/exercise', textExercise.id, 'participation']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
                             </button>
-                            <button *ngIf="textExercise.isAtLeastInstructor"
-                                type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
+                            <button *ngIf="textExercise.isAtLeastInstructor" type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
                                 <fa-icon icon="eye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
