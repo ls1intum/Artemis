@@ -295,8 +295,16 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Validates the feedback:
+     *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
+     *   - Each reference feedback must have a score that is a valid number
+     */
     private validateFeedback() {
-        if (!this.referencedFeedback) {
+        if (
+            (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
+            (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
+        ) {
             this.assessmentsAreValid = false;
             return;
         }

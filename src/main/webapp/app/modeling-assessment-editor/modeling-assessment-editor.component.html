@@ -67,7 +67,7 @@
     <div class="row mt-3">
         <h4 class="col-12" jhiTranslate="modelingAssessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-6">
-            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText"></textarea>
+            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
         </div>
     </div>
 </div>
