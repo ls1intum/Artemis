@@ -4,7 +4,6 @@
         <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
         <div class="row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
-            <jhi-updating-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-updating-result>
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-container row-container">
