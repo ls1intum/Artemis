@@ -48,120 +48,120 @@ public class TestRepositoryResource extends RepositoryResource {
     /**
      * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/test-repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
-        return super.getFiles(participationId);
+    @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+        return super.getFiles(exerciseId);
     }
 
     /**
      * GET /repository/{participationId}/file: Get the content of a file
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @param filename
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/test-repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
-        return super.getFile(participationId, filename);
+    @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<String> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+        return super.getFile(exerciseId, filename);
     }
 
     /**
      * POST /repository/{participationId}/file: Create new file
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @param filename
      * @param request
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/test-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
+    @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request)
             throws IOException, InterruptedException {
-        return super.createFile(participationId, filename, request);
+        return super.createFile(exerciseId, filename, request);
     }
 
     /**
      * POST /repository/{participationId}/folder: Create new folder
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @param folderName
      * @param request
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/test-repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
+    @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request)
             throws IOException, InterruptedException {
-        return super.createFolder(participationId, folderName, request);
+        return super.createFolder(exerciseId, folderName, request);
     }
 
     /**
      * Change the name of a file.
      *
-     * @param participationId id of the participation the git repository belongs to.
-     * @param fileMove        defines current and new path in git repository.
+     * @param exerciseId Exercise ID
+     * @param fileMove   defines current and new path in git repository.
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping(value = "/test-repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
-        return super.renameFile(participationId, fileMove);
+    @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
+        return super.renameFile(exerciseId, fileMove);
     }
 
     /**
      * DELETE /repository/{participationId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
      *
-     * @param participationId Participation ID
-     * @param filename        path of file or folder to delete.
+     * @param exerciseId Exercise ID
+     * @param filename   path of file or folder to delete.
      * @return
      * @throws IOException
      */
-    @DeleteMapping(value = "/test-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
-        return super.deleteFile(participationId, filename);
+    @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) throws IOException, InterruptedException {
+        return super.deleteFile(exerciseId, filename);
     }
 
     /**
      * GET /repository/{participationId}/pull: Pull into the participation repository
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/test-repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
-        return super.pullChanges(participationId);
+    @GetMapping(value = "/test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+        return super.pullChanges(exerciseId);
     }
 
     /**
      * POST /repository/{participationId}/commit: Commit into the participation repository
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/test-repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
-        return super.commitChanges(participationId);
+    @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) throws IOException, InterruptedException {
+        return super.commitChanges(exerciseId);
     }
 
     /**
      * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
-     * @param participationId Participation ID
+     * @param exerciseId Exercise ID
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/test-repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
-        return super.getStatus(participationId);
+    @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws IOException, GitAPIException, InterruptedException {
+        return super.getStatus(exerciseId);
     }
 }

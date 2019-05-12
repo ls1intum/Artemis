@@ -9,6 +9,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Optional;
@@ -160,7 +161,16 @@ public class RepositoryService {
             throw new IllegalAccessException();
         }
         return gitService.get().getOrCheckoutRepository(repoUrl);
+    }
 
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+        User user = userService.getUserWithGroupsAndAuthorities(principal);
+        Course course = exercise.getCourse();
+        boolean hasPermissions = authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        if (!hasPermissions) {
+            throw new IllegalAccessException();
+        }
+        return gitService.get().getOrCheckoutRepository(repoUrl);
     }
 
     public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {

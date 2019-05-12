@@ -9,7 +9,6 @@ import { ParticipationService, Participation } from 'app/entities/participation'
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../code-editor-repository.service';
-import { CommitState } from 'app/code-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { CodeEditorComponent } from '../code-editor.component';
@@ -46,6 +45,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     selectedRepository: REPOSITORY;
 
     loadingState = LOADING_STATE.NOT_LOADING;
+
     domainChangeSubscription: Subscription;
 
     constructor(

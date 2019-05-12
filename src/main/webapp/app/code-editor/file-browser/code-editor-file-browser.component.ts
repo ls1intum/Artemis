@@ -34,7 +34,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     editorState: EditorState;
     @Input()
-    commitState: CommitState;
+    get commitState() {
+        return this.commitStateValue;
+    }
     @Input()
     toggleCollapse: (event: any, horizontal: boolean, interactable: Interactable, resizableMinWidth: number) => void;
     @Output()
@@ -44,12 +46,15 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Output()
     selectedFileChange = new EventEmitter<string>();
     @Output()
+    commitStateChange = new EventEmitter<CommitState>();
+    @Output()
     onError = new EventEmitter<string>();
 
     public FileType = FileType;
 
     isLoadingFiles: boolean;
     selectedFileValue: string;
+    commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     folder: string;
     filesTreeViewItem: TreeviewItem[];
@@ -81,6 +86,11 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     set selectedFile(file: string) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
+    }
+
+    set commitState(commitState: CommitState) {
+        this.commitStateValue = commitState;
+        this.commitStateChange.emit(commitState);
     }
 
     constructor(
@@ -149,7 +159,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 }),
                 tap(commitState => {
                     this.commitState = commitState;
-                    this.onRepositoryChecked.emit(this.commitState);
                 }),
                 switchMap(() => this.loadFiles()),
                 catchError((error: HttpErrorResponse) => {

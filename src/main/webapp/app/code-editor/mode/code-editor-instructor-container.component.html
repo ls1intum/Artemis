@@ -175,9 +175,9 @@
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
-        [commitState]="commitState"
         [toggleEditorCollapse]="grid.toggleEditorCollapse"
         [(selectedFile)]="selectedFile"
+        [(commitState)]="commitState"
         (onRepositoryChecked)="onRepositoryChecked($event)"
         (onFileChange)="onFileChange($event)"
     ></jhi-code-editor-file-browser>
