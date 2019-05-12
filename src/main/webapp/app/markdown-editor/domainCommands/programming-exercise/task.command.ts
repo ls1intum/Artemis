@@ -13,7 +13,7 @@ export class TaskCommand extends DomainTagCommand {
      * @desc add a new task. doesn't use the closing identifier for legacy reasons.
      */
     execute(): void {
-        const text = `\n${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+        const text = `\n1. ${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
         this.insertText(text);
     }
 
