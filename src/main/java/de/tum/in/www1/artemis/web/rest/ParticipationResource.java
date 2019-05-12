@@ -505,12 +505,14 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
-        log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
+            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         Participation participation = participationService.findOne(id);
+        checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
+                deleteBuildPlan, deleteRepository, principal.getName());
         participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
     }
@@ -522,13 +524,20 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id, Principal principal) {
         Participation participation = participationService.findOne(id);
-        log.info("REST request clean up participation with build plan id " + participation.getBuildPlanId());
-        checkAccessPermissionAtLeastTA(participation);
+        checkAccessPermissionAtInstructor(participation);
+        log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
+    }
+
+    private void checkAccessPermissionAtInstructor(Participation participation) {
+        Course course = participation.getExercise().getCourse();
+        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
     }
 
     private void checkAccessPermissionAtLeastTA(Participation participation) {
