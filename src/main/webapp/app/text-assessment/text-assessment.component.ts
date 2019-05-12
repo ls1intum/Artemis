@@ -286,10 +286,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
+        this.hasComplaint = this.result.hasComplaint;
 
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
         this.validateAssessment();
+        this.checkAuthorization();
     }
 
     goToExerciseDashboard() {
@@ -332,6 +334,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
+    }
+
+    private checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     toggleCollapse($event: any) {
