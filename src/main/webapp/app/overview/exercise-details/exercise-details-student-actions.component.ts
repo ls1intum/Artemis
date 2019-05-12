@@ -174,7 +174,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .resumeExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                () => true,
+                participation => {
+                    if (participation) {
+                        this.exercise.participations = [participation];
+                        this.exercise.participationStatus = this.participationStatus();
+                    }
+                },
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
                 },

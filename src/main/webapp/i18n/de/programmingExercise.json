@@ -37,6 +37,10 @@
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
                 "testCaseCommand": "Testfall einfügen"
+            },
+            "status": {
+                "solutionFailsTest": "Das Solution Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution Repository oder den Testfällen hinweisen.",
+                "templateFulfillsTest": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template Repository oder den Testfällen hinweisen."
             }
         }
     }
