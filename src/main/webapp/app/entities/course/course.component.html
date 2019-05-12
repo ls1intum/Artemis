@@ -61,7 +61,13 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button *ngIf="course.isAtLeastTutor" type="submit" [routerLink]="['/course', course.id]" class="btn btn-primary btn-sm mr-1 mb-1" id="exercises-button-{{ course.id }}">
+                                <button
+                                    *ngIf="course.isAtLeastTutor"
+                                    type="submit"
+                                    [routerLink]="['/course', course.id]"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    id="exercises-button-{{ course.id }}"
+                                >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
                                 </button>
@@ -85,7 +91,12 @@
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.tutorCourseDashboard' | translate }}</span>
                                 </button>
-                                <button type="submit" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course', course.id, 'instructor-dashboard']" class="btn btn-info btn-sm mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="['/course', course.id, 'instructor-dashboard']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon [icon]="'th-list'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'arTeMiSApp.course.instructorDashboard' | translate }}</span>
                                 </button>
@@ -95,7 +106,14 @@
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                                 </button>
-                                <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN']" [routerLink]="['/', { outlets: { popup: 'course/' + course.id + '/delete' } }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                                    [routerLink]="['/', { outlets: { popup: 'course/' + course.id + '/delete' } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'entity.action.delete' | translate }}</span>
                                 </button>
