@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -25,8 +27,10 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -51,13 +55,16 @@ public class ComplaintResource {
 
     private UserService userService;
 
+    private ResultService resultService;
+
     public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService,
-            ExerciseService exerciseService, UserService userService) {
+            ExerciseService exerciseService, UserService userService, ResultService resultService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.userService = userService;
+        this.resultService = resultService;
     }
 
     /**
@@ -106,7 +113,13 @@ public class ComplaintResource {
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setStudent(originalSubmissor);
         complaint.setResult(originalResult);
-        complaint.setResultBeforeComplaint(originalResult.getResultString());
+        try {
+            // Store the original result with the complaint
+            complaint.setResultBeforeComplaint(resultService.getOriginalResultAsString(originalResult));
+        }
+        catch (JsonProcessingException exception) {
+            throw new InternalServerErrorException("Failed to store original result");
+        }
 
         resultRepository.save(originalResult);
 
