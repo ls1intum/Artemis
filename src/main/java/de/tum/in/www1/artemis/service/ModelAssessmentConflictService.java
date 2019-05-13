@@ -82,6 +82,12 @@ public class ModelAssessmentConflictService {
         return conflicts;
     }
 
+    public List<ModelAssessmentConflict> getConflictsForResultInConflict(Result result) {
+        List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByResultInConflict(result);
+        loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
+        return conflicts;
+    }
+
     public List<ModelAssessmentConflict> getUnresolvedConflictsForResult(Result result) {
         List<ModelAssessmentConflict> existingConflicts = getConflictsForResult(result);
         return existingConflicts.stream().filter(conflict -> !conflict.isResolved()).collect(Collectors.toList());

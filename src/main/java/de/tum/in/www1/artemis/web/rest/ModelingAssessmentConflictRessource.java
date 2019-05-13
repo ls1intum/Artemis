@@ -14,10 +14,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
 import de.tum.in.www1.artemis.service.ModelingExerciseService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -40,11 +42,14 @@ public class ModelingAssessmentConflictRessource {
 
     private final ModelingExerciseService modelingExerciseService;
 
+    private final ResultService resultService;
+
     public ModelingAssessmentConflictRessource(AuthorizationCheckService authCheckService, ModelAssessmentConflictService conflictService,
-            ModelingExerciseService modelingExerciseService) {
+            ModelingExerciseService modelingExerciseService, ResultService resultService) {
         this.authCheckService = authCheckService;
         this.conflictService = conflictService;
         this.modelingExerciseService = modelingExerciseService;
+        this.resultService = resultService;
     }
 
     @ResponseStatus(HttpStatus.OK)
@@ -67,6 +72,16 @@ public class ModelingAssessmentConflictRessource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelAssessmentConflict>> getConflictsForSubmission(@PathVariable Long submissionId) {
         return ResponseEntity.ok(conflictService.getConflictsForCurrentUserForSubmission(submissionId));
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON),
+            @ApiResponse(code = 200, message = GET_CONFLICTS_200_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
+    @GetMapping("/results/{resultId}/model-assessment-conflicts")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ModelAssessmentConflict>> getConflictsForResult(@PathVariable Long resultId) {
+        Result result = resultService.findOne(resultId);
+        return ResponseEntity.ok(conflictService.getConflictsForResultInConflict(result));
     }
 
     @ResponseStatus(HttpStatus.OK)
@@ -102,5 +117,4 @@ public class ModelingAssessmentConflictRessource {
         }
         return ResponseEntity.ok(escalatedConflicts);
     }
-
 }

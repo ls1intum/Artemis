@@ -16,7 +16,7 @@ import { User } from 'app/core';
 })
 export class EscalatedConflictResolutionComponent implements OnInit {
     private resultId: number;
-    private conflicts: Conflict[];
+    conflicts: Conflict[];
 
     @ViewChild('escalationModal') escalationModal: ElementRef;
 
@@ -31,8 +31,8 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe(params => {
-            this.resultId = Number(params['submissionId']);
-            this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(
+            this.resultId = Number(params['resultId']);
+            this.modelingAssessmentService.getConflictsForResultInconflict(this.resultId).subscribe(
                 conflicts => {
                     this.conflicts = conflicts;
                 },
