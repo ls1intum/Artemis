@@ -20,9 +20,12 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
+/**
+ * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
+ */
 @RestController
 @RequestMapping({ "/api", "/api_basic" })
-@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+@PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
 public class TestRepositoryResource extends RepositoryResource {
 
     private final ExerciseService exerciseService;

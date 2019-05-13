@@ -18,7 +18,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -32,7 +31,8 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
- * Created by Josias Montag on 14.10.16.
+ * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
+ * the respository and the permission checks can be outsourced to child classes.
  */
 public abstract class RepositoryResource {
 
