@@ -2,6 +2,7 @@
     "modelingAssessmentEditor": {
         "assessment": "Assessment",
         "assessmentLocked": "Assessment locked by: {{otherUser}}",
+        "assessmentLockedCurrentUser": "You have the lock for this assessment",
         "button": {
             "overrideAssessment": "Override Assessment",
             "nextSubmission": "Assess Next Submission",
@@ -16,7 +17,11 @@
             "submitSuccessful": "Your assessment was submitted successfully!",
             "submitFailed": "Submitting your assessment failed!",
             "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
-            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
-        }
+            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
+            "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
+            "updateAfterComplaintFailed": "Updating the Assessment failed.",
+            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again."
+        },
+        "reviewComplaint": "Review Complaint"
     }
 }

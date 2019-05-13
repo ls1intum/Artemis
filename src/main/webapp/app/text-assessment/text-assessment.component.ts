@@ -1,6 +1,6 @@
 import * as $ from 'jquery';
 
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -15,9 +15,11 @@ import { Feedback } from 'app/entities/feedback';
 import { Participation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { WindowRef } from 'app/core';
+import { AccountService, WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
+import { ComplaintResponse } from 'app/entities/complaint-response';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -35,12 +37,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     assessmentsAreValid: boolean;
     invalidError: string;
     isAuthorized = true;
-    accountId = 0;
+    isAtLeastInstructor = false;
     busy = true;
     showResult = true;
-    includeComplaint = false;
+    hasComplaint = false;
     complaint: Complaint;
     notFound = false;
+    userId: number;
 
     formattedProblemStatement: string;
     formattedSampleSolution: string;
@@ -53,6 +56,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     interactResizable: Interactable;
     interactResizableTop: Interactable;
 
+    private cancelConfirmationText: string;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
@@ -63,19 +68,28 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private route: ActivatedRoute,
         private resultService: ResultService,
         private assessmentsService: TextAssessmentsService,
+        private accountService: AccountService,
         private location: Location,
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
+        private translateService: TranslateService,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
+        translateService.get('arTeMiSApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     public ngOnInit(): void {
         this.busy = true;
+
+        // Used to check if the assessor is the current user
+        this.accountService.identity().then(user => {
+            this.userId = user.id;
+        });
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionValue = this.route.snapshot.paramMap.get('submissionId');
-        this.includeComplaint = !!this.route.snapshot.queryParamMap.get('includeComplaint');
 
         if (submissionValue === 'new') {
             this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
@@ -216,6 +230,18 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         );
     }
 
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
+    cancelAssessment() {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.assessmentsService.cancelAssessment(this.exercise.id, this.submission.id).subscribe(() => {
+                this.goToExerciseDashboard();
+            });
+        }
+    }
+
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
@@ -243,14 +269,20 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
+        this.hasComplaint = this.result.hasComplaint;
 
         this.assessments = this.result.feedbacks || [];
         this.busy = false;
         this.checkScoreBoundaries();
+        this.checkAuthorization();
     }
 
-    public previous(): void {
-        this.location.back();
+    goToExerciseDashboard() {
+        if (this.exercise && this.exercise.course) {
+            this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
+        } else {
+            this.location.back();
+        }
     }
 
     /**
@@ -278,6 +310,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.invalidError = null;
     }
 
+    private checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+    }
+
     toggleCollapse($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
@@ -301,6 +337,33 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return baseKey + 'exampleAssessment';
         }
         return baseKey + 'assessment';
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.checkScoreBoundaries();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
+            response => {
+                this.result = response.body;
+                this.updateParticipationWithResult();
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('arTeMiSApp.textAssessment.updateAfterComplaintFailed');
+            },
+        );
     }
 
     private onError(error: string) {

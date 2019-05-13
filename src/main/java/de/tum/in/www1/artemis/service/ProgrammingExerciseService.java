@@ -250,8 +250,7 @@ public class ProgrammingExerciseService {
 
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
-            repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted
-            // between attempts
+            repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
         }
     }
 

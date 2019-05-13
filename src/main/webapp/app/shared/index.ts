@@ -11,6 +11,7 @@ export * from './pipes/safe-html.pipe';
 export * from './pipes/safe-url.pipe';
 export * from './pipes/remove-keys.pipe';
 export * from './pipes/keys.pipe';
+export * from './pipes/type-check.pipe';
 export * from './translations/jhi-dynamic-translate.directive';
 export * from './shared-libs.module';
 export * from './shared-common.module';

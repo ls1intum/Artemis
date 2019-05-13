@@ -1,7 +1,7 @@
-import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 
-export class ExplanationCommand extends DomainCommand {
+export class ExplanationCommand extends DomainTagCommand {
     public static readonly identifier = '[exp]';
     public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 

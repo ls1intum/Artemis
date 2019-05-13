@@ -1,7 +1,10 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 import {
     Command,
     BoldCommand,
@@ -19,15 +22,26 @@ import {
     ColorPickerCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
+import { DomainTagCommand } from './domainCommands/domainTag.command';
+
+export enum MarkdownEditorHeight {
+    SMALL = 200,
+    MEDIUM = 500,
+    LARGE = 1000,
+}
 
 @Component({
     selector: 'jhi-markdown-editor',
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
+    styleUrls: ['./markdown-editor.component.scss'],
 })
 export class MarkdownEditorComponent implements AfterViewInit {
+    public DomainMultiOptionCommand = DomainMultiOptionCommand;
+    public DomainTagCommand = DomainTagCommand;
+    public MarkdownEditorHeight = MarkdownEditorHeight;
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
@@ -66,7 +80,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
-    @Input() domainCommands: DomainCommand[];
+    @Input() domainCommands: Array<DomainCommand>;
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();
@@ -86,7 +100,15 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
     @ContentChild('preview') previewChild: ElementRef;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    /** Resizable constants **/
+    @Input()
+    enableResize = false;
+    @Input()
+    resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    resizableMinHeight = MarkdownEditorHeight.SMALL;
+    interactResizable: Interactable;
+
+    constructor(private artemisMarkdown: ArtemisMarkdown, private $window: WindowRef) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -133,6 +155,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
             });
         }
         this.setupMarkdownEditor();
+
+        if (this.enableResize) {
+            this.setupResizable();
+        }
     }
 
     /**
@@ -147,6 +173,38 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
+        this.aceEditorContainer.getEditor().setAutoScrollEditorIntoView(true);
+    }
+
+    /**
+     * @function setupResizable
+     * @desc Sets up resizable to enable resizing for the user
+     */
+    setupResizable(): void {
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.interactResizable = interact('.markdown-editor')
+            .resizable({
+                // Enable resize from top edge; triggered by class rg-top
+                edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.aceEditorContainer.getEditor().resize();
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+            });
     }
 
     /**

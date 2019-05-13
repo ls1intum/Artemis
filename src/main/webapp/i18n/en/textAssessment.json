@@ -51,11 +51,11 @@
                     "assess": "Assess Submission"
                 }
             },
-            "complaint": "Complaint",
-            "complaintAlreadyAccepted": "The complaint has been already reviewed and replied by",
-            "complaintResponse": "Complaint's response",
-            "submitComplaintResponse": "Submit complaint's response",
-            "notFound": "We haven't found any new text submission without an assessment, please go back."
+            "notFound": "We haven't found any new text submission without an assessment, please go back.",
+            "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
+            "updateAfterComplaintFailed": "Updating the Assessment failed.",
+            "cancel": "Cancel assessment",
+            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again."
         }
     }
 }

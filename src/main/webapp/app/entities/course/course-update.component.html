@@ -1,8 +1,15 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
-            <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="arTeMiSApp.course.home.createLabel">Create new Course</h4>
-            <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="arTeMiSApp.course.home.editLabel">Edit Course</h4>
+            <div class="headline">
+                <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage"> </jhi-secured-image>
+                <div *ngIf="!croppedImage" class="no-image"></div>
+                <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="arTeMiSApp.course.home.createLabel">
+                    Create new Course
+                </h4>
+                <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="arTeMiSApp.course.home.editLabel">Edit Course</h4>
+            </div>
+            <hr />
             <div>
                 <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
@@ -34,7 +41,7 @@
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                         <div class="alert alert-danger">
-                            <div *ngFor="let e of (shortName.errors | keyvalue | removekeys: ['required'])">
+                            <div *ngFor="let e of shortName.errors | keyvalue | removekeys: ['required']">
                                 <div jhiDynamicTranslate="arTeMiSApp.course.form.shortname" dynamicLookup="{{ e.key }}"></div>
                             </div>
                         </div>
@@ -45,10 +52,32 @@
                     <div class="input-group background-file">
                         <div class="custom-file">
                             <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
-                            <label class="custom-file-label ellipsis" for="courseImageInput{{ course.id }}">{{ courseImageFileName }}</label>
+                            <label class="custom-file-label text-truncate" for="courseImageInput{{ course.id }}">{{ courseImageFileName }}</label>
                         </div>
-                        <div class="input-group-prepend">
-                            <button class="btn btn-outline-primary" (click)="uploadCourseImage()" [disabled]="isUploadingCourseImage || !courseImageFileName">
+                    </div>
+                </div>
+                <div class="container no-padding">
+                    <div class="row">
+                        <div class="col-6">
+                            <image-cropper
+                                [imageChangedEvent]="imageChangedEvent"
+                                [maintainAspectRatio]="true"
+                                [aspectRatio]="1 / 1"
+                                [resizeToWidth]="200"
+                                [cropperMinWidth]="100"
+                                [cropperMaxWidth]="400"
+                                [lyScaleDown]="true"
+                                [roundCropper]="true"
+                                outputType="base64"
+                                (imageCropped)="imageCropped($event)"
+                                (imageLoaded)="imageLoaded()"
+                                (cropperReady)="cropperReady()"
+                                (loadImageFailed)="loadImageFailed()"
+                                [style.display]="showCropper ? null : 'none'"
+                            ></image-cropper>
+                        </div>
+                        <div *ngIf="showCropper" class="col-3">
+                            <button class="btn btn-outline-primary icon-upload" (click)="uploadCourseImage()" [disabled]="isUploadingCourseImage || !courseImageFileName">
                                 <span *ngIf="isUploadingCourseImage" jhiTranslate="arTeMiSApp.course.uploading"></span>
                                 <span *ngIf="!isUploadingCourseImage" jhiTranslate="arTeMiSApp.course.upload"></span>
                             </button>

@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -53,12 +54,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     websocketChannel: string;
 
     problemStatement: string;
+    showComplaintForm = false;
+    // indicates if there is a complaint for the result of the submission
+    hasComplaint: boolean;
+    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
+    numberOfAllowedComplaints: number;
+    // indicates if the result is older than one week. if it is, the complain button is disabled.
+    resultOlderThanOneWeek: boolean;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
+        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
@@ -85,6 +94,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
+                        if (this.modelingExercise.course) {
+                            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
+                                this.numberOfAllowedComplaints = allowedComplaints;
+                            });
+                        }
                         /**
                          * set diagramType to class diagram if exercise is null
                          */
@@ -104,9 +118,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.result = this.submission.result;
                         }
                         if (this.submission.submitted && this.result && this.result.completionDate) {
+                            this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
+                            });
+                            this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                                this.hasComplaint = !!res.body;
                             });
                         }
                         this.setAutoSaveTimer();

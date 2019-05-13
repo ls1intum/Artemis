@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * A TextSubmission.
  */
 @Entity
-@DiscriminatorValue(value="T")
+@DiscriminatorValue(value = "T")
 public class TextSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -58,9 +59,6 @@ public class TextSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "TextSubmission{" +
-            "id=" + getId() +
-            ", text='" + getText() + "'" +
-            "}";
+        return "TextSubmission{" + "id=" + getId() + ", text='" + getText() + "'" + "}";
     }
 }

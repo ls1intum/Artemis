@@ -19,20 +19,26 @@ import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
-import { CodeEditorService } from '../../code-editor/code-editor.service';
-import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
-import { Feedback } from '../feedback';
-import { Result, ResultService, ResultWebsocketService } from '../result';
-import { ProgrammingExercise } from './programming-exercise.model';
-import { RepositoryFileService } from '../repository';
-import { Participation, hasParticipationChanged } from '../participation';
+import { CodeEditorService } from 'app/code-editor/code-editor.service';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
+import { Feedback } from 'app/entities/feedback';
+import { Result, ResultService, ResultWebsocketService } from 'app/entities/result';
+import { ProgrammingExercise } from '../programming-exercise.model';
+import { RepositoryFileService } from 'app/entities/repository';
+import { Participation, hasParticipationChanged } from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
+
+enum TestCaseState {
+    UNDEFINED = 'UNDEFINED',
+    SUCCESS = 'SUCCESS',
+    FAIL = 'FAIL',
+}
 
 type Step = {
     title: string;
-    done: boolean;
+    done: TestCaseState;
 };
 
 @Component({
@@ -46,18 +52,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
-    // If true, shows the participation of the exercise's template, instead of the assignment participation
-    @Input()
-    private showTemplatePartipation = false;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
+    @Output()
+    public resultChange = new EventEmitter<Result>();
 
     private resultSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResult: Result | null;
+    public latestResultValue: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
@@ -77,11 +82,21 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
-        this.markdown = new Remarkable();
+        // Enabled for color picker of markdown editor that inserts spans into the markdown
+        this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+    }
+
+    get latestResult() {
+        return this.latestResultValue;
+    }
+
+    set latestResult(result: Result) {
+        this.latestResultValue = result;
+        this.resultChange.emit(result);
     }
 
     /**
@@ -218,16 +233,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            let participationId: number;
-            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
-                participationId = this.exercise.templateParticipation.id;
-            } else if (this.participation) {
-                participationId = this.participation.id;
-            } else {
-                // in this case, no participation is available
+            if (!this.participation.id) {
                 return Observable.of(null);
             }
-            return this.repositoryFileService.get(participationId, 'README.md').pipe(
+            return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
@@ -271,8 +280,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps.forEach(({ done }, i) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
             componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done ? 'text-success' : 'text-danger'];
+            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
+            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
             componentRef.instance.ngOnChanges({});
             this.appRef.attachView(componentRef.hostView);
             const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -460,15 +469,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done) {
+        if (done === TestCaseState.SUCCESS) {
             text += '<span class="text-success bold">' + label + '</span>';
+        } else if (done === TestCaseState.FAIL) {
+            text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
         } else {
-            // bugfix: do not let the user click on 'No Results'
-            if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
-                text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
-            } else {
-                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
-            }
+            text += '<span class="text-danger bold">' + label + '</span>';
         }
         text += '<br>';
 
@@ -498,7 +504,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
             const [done] = this.statusForTests(tests);
-            return done ? 'green' : 'red';
+            return done === TestCaseState.SUCCESS ? 'green' : 'red';
         });
 
         this.plantUMLs[id] = plantUml;
@@ -511,43 +517,42 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    private statusForTests(tests: string[]): [boolean, string] {
+    private statusForTests(tests: string[]): [TestCaseState, string] {
         const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
-        let done = false;
-        let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
-        if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length > 0) {
-            let failedTests = 0;
-            for (const test of tests) {
-                for (const result of this.latestResult.feedbacks) {
-                    if (result.text === test) {
-                        failedTests++;
-                    }
-                }
-            }
+        if (this.latestResult && this.latestResult.successful) {
+            // Case 1: Submission fulfills all test cases, no further checking needed.
+            const label = this.translateService.instant(translationBasePath + 'testPassing');
+            return [TestCaseState.SUCCESS, label];
+        } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
+            // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
+            const failedTests = tests.filter(testName => {
+                const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
+                // If there is no feedback item, we assume that the test was successful (legacy check)
+                return feedback ? !feedback.positive : false;
+            });
 
-            // Exercise is done if it was completed successfully or no tests have failed
-            done = (this.latestResult && this.latestResult.successful) || failedTests === 0;
+            // Exercise is done if none of the tests failed
+            const testCaseState = failedTests.length === 0 ? TestCaseState.SUCCESS : TestCaseState.FAIL;
             if (totalTests === 1) {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'testPassing');
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'testFailing');
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'testPassing')
+                        : this.translateService.instant(translationBasePath + 'testFailing');
+                return [testCaseState, label];
             } else {
-                if (done) {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests });
-                } else {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests });
-                }
+                const label =
+                    testCaseState === TestCaseState.SUCCESS
+                        ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
+                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
+                return [testCaseState, label];
             }
-        } else if (this.latestResult && this.latestResult.successful) {
-            done = true;
-            label = this.translateService.instant(translationBasePath + 'testPassing');
+        } else {
+            // Case 3: There are no results
+            const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
+            return [TestCaseState.UNDEFINED, label];
         }
-
-        return [done, label];
     }
 
     ngOnDestroy() {

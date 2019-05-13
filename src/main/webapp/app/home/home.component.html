@@ -32,7 +32,7 @@
             </div>
             <div class="row">
                 <div class="col-12 d-flex justify-content-center">
-                    <form name="loginForm" class="form" role="form" (ngSubmit)="login()">
+                    <form name="loginForm" class="form" role="form" (change)="inputChange($event)" (ngSubmit)="login()">
                         <div class="form-group">
                             <label for="username" jhiTranslate="global.form.username">Login</label>
                             <input

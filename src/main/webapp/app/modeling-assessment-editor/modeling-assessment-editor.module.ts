@@ -11,13 +11,24 @@ import { AssessmentInstructionsModule } from 'app/assessment-instructions/assess
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSResultModule, AssessmentInstructionsModule, ModelingAssessmentModule],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
-    entryComponents: [ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArTEMiSResultModule,
+        AssessmentInstructionsModule,
+        ModelingAssessmentModule,
+        FontAwesomeModule,
+        ArTEMiSComplaintsForTutorModule,
+    ],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
+    entryComponents: [HomeComponent, ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

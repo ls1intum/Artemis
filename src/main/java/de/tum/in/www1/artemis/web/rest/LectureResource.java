@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -12,9 +14,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -34,9 +41,19 @@ public class LectureResource {
 
     private final LectureService lectureService;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService) {
+    private final CourseService courseService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    private final UserService userService;
+
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
+        this.courseService = courseService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -47,12 +64,15 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
-    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin()) {
+            return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -68,12 +88,15 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
-    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin()) {
+            return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, lecture.getId().toString())).body(result);
@@ -86,14 +109,20 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
-    // TODO: add courseId into REST URL and check that the user has access to this course!
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lecture = lectureRepository.findById(id);
-        if (lecture.isPresent()) {
-            lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!lecture.isPresent()) {
+            return ResponseEntity.notFound().build();
         }
+        Course course = lecture.get().getCourse();
+        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
+                && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
         return ResponseUtil.wrapOrNotFound(lecture);
     }
 
@@ -103,13 +132,20 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    // TODO: check that the user has access to this course!
-    public List<Lecture> getLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        return lectureService.findAllByCourseId(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseService.findOne(courseId);
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(lectureService.findAllByCourseId(courseId));
     }
 
     /**
@@ -120,10 +156,22 @@ public class LectureResource {
      */
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    // TODO: add courseId into REST URL and check that the user has access to this course!
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Lecture> optionalLecture = lectureRepository.findById(id);
+        if (!optionalLecture.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        Lecture lecture = optionalLecture.get();
+        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
         log.debug("REST request to delete Lecture : {}", id);
-        lectureRepository.deleteById(id);
+        lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

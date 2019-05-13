@@ -44,7 +44,10 @@ export class CourseService {
     }
 
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)));
     }
 
     findWithExercises(courseId: number): Observable<EntityResponseType> {
@@ -63,6 +66,7 @@ export class CourseService {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -106,6 +110,7 @@ export class CourseService {
         return this.http
             .get<Course[]>(this.resourceUrl, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -121,7 +126,7 @@ export class CourseService {
         return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/categories`, { observe: 'response' });
     }
 
-    protected convertDateFromClient(course: Course): Course {
+    private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
             startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
             endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null,
@@ -129,7 +134,7 @@ export class CourseService {
         return copy;
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
             res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
@@ -139,7 +144,7 @@ export class CourseService {
         return res;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
                 course.startDate = course.startDate != null ? moment(course.startDate) : null;
@@ -151,9 +156,27 @@ export class CourseService {
         return res;
     }
 
-    subscribeToCourseNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
+    private subscribeToCourseNotifications(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             this.notificationService.handleCoursesNotifications(res.body);
+        }
+        return res;
+    }
+
+    private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
+            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body);
+        }
+        return res;
+    }
+
+    private checkAccessRights(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+                course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+            });
         }
         return res;
     }
@@ -163,7 +186,7 @@ export class CourseService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient) {}
 
     findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
         return this.http.get<Exercise>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}`).map((res: Exercise) => this.convertDateFromServer(res));

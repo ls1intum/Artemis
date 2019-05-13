@@ -28,6 +28,10 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
         });
+        this.loadQuestions();
+    }
+
+    private loadQuestions() {
         if (this.exercise) {
             this.studentQuestionService.query({ exercise: this.exercise.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body;
@@ -69,6 +73,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
             studentQuestion.exercise = Object.assign({}, this.exercise, {});
         } else {
             studentQuestion.lecture = Object.assign({}, this.lecture, {});
+            delete studentQuestion.lecture.attachments;
         }
         studentQuestion.creationDate = moment();
         this.studentQuestionService.create(studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {

@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * A ProgrammingSubmission.
  */
 @Entity
-@DiscriminatorValue(value="P")
+@DiscriminatorValue(value = "P")
 public class ProgrammingSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -56,9 +57,6 @@ public class ProgrammingSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" +
-            "id=" + getId() +
-            ", commitHash='" + getCommitHash() + "'" +
-            "}";
+        return "ProgrammingSubmission{" + "id=" + getId() + ", commitHash='" + getCommitHash() + "'" + "}";
     }
 }

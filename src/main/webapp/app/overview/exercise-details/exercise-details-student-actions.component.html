@@ -129,7 +129,12 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    !exercise.participations[0].results
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -140,7 +145,12 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    exercise.participations[0].results
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
         </div>
@@ -170,7 +180,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
+            *ngIf="isOnlineEditorAllowed() && participationStatus() == INITIALIZED && exercise.participations && exercise.participations.length > 0"
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
@@ -182,9 +192,19 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.participations && exercise.participations.length > 0"
+            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatus() === INACTIVE"
+            (click)="resumeExercise()"
         ></button>
         <ng-template #popContent>
             <p>{{ 'arTeMiSApp.exerciseActions.clonePersonalRepository' | translate }}</p>
@@ -273,7 +293,12 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                !exercise.participations[0].results
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -284,7 +309,9 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+            *ngIf="
+                exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
     </div>
