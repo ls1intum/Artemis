@@ -317,6 +317,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
+        if (!this.referencedFeedback.every(f => f.reference && f.reference.length <= 2000)) {
+            this.invalidError = 'arTeMiSApp.textAssessment.feedbackReferenceTooLong';
+            this.assessmentsAreValid = false;
+            return;
+        }
+
         const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
