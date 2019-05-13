@@ -16,7 +16,7 @@ export class CodeEditorActionsComponent {
     EditorState = EditorState;
 
     @Input()
-    readonly unsavedFiles: { [fileName: string]: string };
+    unsavedFiles: { [fileName: string]: string };
     @Input()
     get editorState() {
         return this.editorStateValue;

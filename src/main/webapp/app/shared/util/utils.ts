@@ -1,5 +1,3 @@
-import { flatten as _flatten } from 'lodash';
-
 const cartesianProduct2ary = (a: any[], b: any[]) => {
     return a.reduce((acc, v) => [...acc, ...b.reduce((acc2, v2) => [...acc2, [...v, v2]], [])], []);
 };

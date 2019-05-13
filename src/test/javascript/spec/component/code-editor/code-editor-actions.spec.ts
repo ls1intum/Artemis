@@ -5,17 +5,17 @@ import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { spy, stub, SinonStub } from 'sinon';
-import { Observable, Subject, throwError } from 'rxjs';
+import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash';
 
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CodeEditorActionsComponent } from 'app/code-editor';
 import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryService, CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
-import { MockCodeEditorRepositoryService, MockCodeEditorRepositoryFileService } from 'test/mocks';
 import { ArTEMiSTestModule } from '../../test.module';
 
-import { cartesianProduct } from 'test/utils';
+import { cartesianProduct } from 'app/shared/util/utils';
+import { MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService } from '../../mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,23 +29,25 @@ describe('CodeEditorActionsComponent', () => {
     let updateFilesStub: SinonStub;
     let commitStub: SinonStub;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
             declarations: [CodeEditorActionsComponent],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(CodeEditorActionsComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
-        updateFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
-        codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
-        commitStub = stub(codeEditorRepositoryService, 'commit');
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CodeEditorActionsComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
+                updateFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
+                codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
+                commitStub = stub(codeEditorRepositoryService, 'commit');
+            });
     });
 
     afterEach(() => {
@@ -67,12 +69,12 @@ describe('CodeEditorActionsComponent', () => {
         [false],
     );
 
-    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState), [true, false]).map(combination => {
-        const enableSaveButton = enableSaveButtonCombinations.some(c => _isEqual(combination, c));
-        const enableCommitButton = enableCommitButtonCombinations.some(c => _isEqual(combination, c));
+    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState), [true, false]).map((combination: [EditorState, CommitState, boolean]) => {
+        const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
             enableCommitButton ? 'Enable commit button' : 'Disable commit button'
-        } for this state combination: ${combination[0]} / ${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
+        } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
             const [editorState, commitState, isBuilding] = combination;
             comp.editorState = editorState;
             comp.commitState = commitState;
@@ -99,7 +101,7 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should update ui when building', () => {
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        comp.editorState = EditorState.COMMITTING;
+        comp.commitState = CommitState.COMMITTING;
         fixture.detectChanges();
         const commitButtonFeedbackBeforeStartBuild = commitButton.nativeElement.innerHTML;
         comp.isBuilding = true;
@@ -110,7 +112,7 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should call repositoryFileService to save unsavedFiles and emit result on success', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
-        const savedFilesResult = { fileName: null };
+        const savedFilesResult: { [fileName: string]: null } = { fileName: null };
         const onSavedFilesSpy = spy(comp.onSavedFiles, 'emit');
         const saveObservable = new Subject<typeof savedFilesResult>();
         comp.editorState = EditorState.UNSAVED_CHANGES;
@@ -172,7 +174,7 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     it('should commit if no unsaved changes exist and update its state on response', () => {
-        const commitObservable = new Subject<void>();
+        const commitObservable = new Subject<null>();
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.CLEAN;
         comp.isBuilding = false;
@@ -194,7 +196,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(commitButton.nativeElement.disabled).to.be.true;
 
         // commit result returns
-        commitObservable.next(Observable.of({}));
+        commitObservable.next(null);
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
@@ -237,12 +239,13 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should not commit if unsavedFiles exist, instead should save files first and then try to commit', () => {
         const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
-        const commitObservable = new Subject<void>();
-        const saveObservable = new Subject<void>();
+        const commitObservable = new Subject<null>();
+        const saveObservable = new Subject<null>();
         const saveChangedFilesStub = stub(comp, 'saveChangedFiles');
         comp.commitState = CommitState.UNCOMMITTED_CHANGES;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.isBuilding = false;
+
         comp.unsavedFiles = unsavedFiles;
         comp.saveChangedFiles = saveChangedFilesStub;
         fixture.detectChanges();
@@ -259,11 +262,11 @@ describe('CodeEditorActionsComponent', () => {
         expect(saveChangedFilesStub).to.have.been.calledOnce;
 
         // save completed
-        saveObservable.next(Observable.of(null));
+        saveObservable.next(null);
         expect(comp.commitState).to.equal(CommitState.COMMITTING);
 
         // commit result returns
-        commitObservable.next(Observable.of({}));
+        commitObservable.next(null);
         expect(comp.isBuilding).to.be.true;
         expect(comp.commitState).to.equal(CommitState.CLEAN);
 
