@@ -8,7 +8,7 @@
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
+            <div *ngIf="participation"><jhi-updating-result [participation]="participation"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
