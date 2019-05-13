@@ -17,9 +17,10 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { TextChange, AnnotationArray, CommitState } from '../../entities/ace-editor';
-import { RenameFileChange, DeleteFileChange, FileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService } from '../code-editor-repository.service';
+import { AnnotationArray, TextChange } from 'app/entities/ace-editor';
+import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
+import { CommitState } from 'app/code-editor/model';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -32,7 +33,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     @Input()
     readonly selectedFile: string;
-    // TODO: Could be emitted as an event
     @Input()
     readonly fileChange: FileChange;
     @Input()

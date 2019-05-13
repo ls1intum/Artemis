@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DomainDependent, DomainService, DomainType } from './code-editor-repository.service';
+import { DomainType, DomainDependent, DomainService } from 'app/code-editor/service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { AnnotationArray } from 'app/entities/ace-editor';

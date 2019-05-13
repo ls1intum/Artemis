@@ -1,4 +1,4 @@
-<jhi-code-editor #grid [exercise]="participation?.exercise">
+<jhi-code-editor-grid #grid [exercise]="participation?.exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-result
             *ngIf="participation"
@@ -48,4 +48,4 @@
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
     ></jhi-code-editor-build-output>
-</jhi-code-editor>
+</jhi-code-editor-grid>

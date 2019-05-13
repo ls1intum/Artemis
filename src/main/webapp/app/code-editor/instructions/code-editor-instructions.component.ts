@@ -1,4 +1,4 @@
-import { AfterViewInit, OnChanges, Component, Input, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -6,8 +6,8 @@ import { tap } from 'rxjs/operators';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorService } from '../code-editor.service';
+import { CodeEditorGridComponent } from '../layout/code-editor-grid.component';
+import { CodeEditorService } from '../service/code-editor.service';
 import { Participation } from '../../entities/participation';
 import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
@@ -45,7 +45,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     unsavedChanges = false;
 
     constructor(
-        private parent: CodeEditorComponent,
+        private parent: CodeEditorGridComponent,
         private $window: WindowRef,
         public artemisMarkdown: ArtemisMarkdown,
         private programmingExerciseService: ProgrammingExerciseService,

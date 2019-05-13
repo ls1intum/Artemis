@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -9,9 +9,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
-import { DomainService, DomainType, CodeEditorRepositoryFileService } from '../code-editor-repository.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorSessionService } from '../code-editor-session.service';
+import { CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -29,11 +28,15 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         translateService: TranslateService,
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
-        repositoryFileService: CodeEditorRepositoryFileService,
         sessionService: CodeEditorSessionService,
     ) {
-        super(participationService, translateService, route, jhiAlertService, repositoryFileService, sessionService);
+        super(participationService, translateService, route, jhiAlertService, sessionService);
     }
+
+    /**
+     * On init set up the route param subscription.
+     * Will load the participation according to participation Id with the latest result and result details.
+     */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const participationId = Number(params['participationId']);

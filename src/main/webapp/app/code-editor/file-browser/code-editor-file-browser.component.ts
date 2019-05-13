@@ -1,18 +1,17 @@
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/code-editor-repository.service';
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, OnChanges, Output, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { sortBy as _sortBy } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
-import { CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CreateFileChange, RenameFileChange, FileType, FileChange, DeleteFileChange } from 'app/entities/ace-editor/file-change.model';
-import { textFileExtensions } from '../text-files.json';
-import { HttpErrorResponse } from '@angular/common/http';
+import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
+import { textFileExtensions } from './text-files.json';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -528,4 +527,18 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     createFolder = (folderName: string): Observable<void> => {
         return this.repositoryFileService.createFolder(folderName);
     };
+
+    /**
+     * @function openDeleteFileModal
+     * @desc Opens a popup to delete the selected repository file
+     */
+    openDeleteFileModal($event: any, fileName: string, fileType: FileType) {
+        $event.stopPropagation();
+        if (fileName) {
+            const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.parent = this;
+            modalRef.componentInstance.fileNameToDelete = fileName;
+            modalRef.componentInstance.fileType = fileType;
+        }
+    }
 }

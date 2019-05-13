@@ -19,8 +19,8 @@ import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, distinctUntilChanged, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 
-import { CodeEditorService } from '../../code-editor/code-editor.service';
-import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
+import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
 import { Result, ResultService, ResultWebsocketService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
@@ -28,7 +28,7 @@ import { RepositoryFileService } from '../repository';
 import { Participation, hasParticipationChanged } from '../participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+import { hasExerciseChanged } from '../exercise';
 
 type Step = {
     title: string;

@@ -152,7 +152,7 @@
         <div class="card-body"><fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span></div>
     </ng-template>
 </div>
-<jhi-code-editor #grid *ngIf="exercise" [exercise]="exercise">
+<jhi-code-editor-grid #grid *ngIf="exercise" [exercise]="exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-result
             *ngIf="selectedParticipation && selectedRepository !== 'TEST'"
@@ -202,4 +202,4 @@
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
     ></jhi-code-editor-build-output>
-</jhi-code-editor>
+</jhi-code-editor-grid>

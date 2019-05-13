@@ -1,30 +1,18 @@
 import * as $ from 'jquery';
-import { ContentChild, Component, ElementRef, Input, OnInit, OnChanges, ViewChild, SimpleChanges } from '@angular/core';
+import { Component, ContentChild, ElementRef, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
-import { difference as _difference } from 'lodash';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
-import { CourseService } from '../entities/course';
-import { WindowRef } from '../core/websocket/window.service';
+import { CourseService } from 'app/entities/course';
+import { WindowRef } from 'app/core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
-import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
-import { EditorState, CommitState } from 'app/entities/ace-editor';
-import { Observable, Subject } from 'rxjs';
-import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
-import { IRepositoryService, IRepositoryFileService, DomainService } from './code-editor-repository.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { AnnotationArray, Session } from '../entities/ace-editor';
-import { BuildLogEntryArray } from 'app/entities/build-log';
-import { CodeEditorSessionService } from './code-editor-session.service';
 
 @Component({
-    selector: 'jhi-code-editor',
-    templateUrl: './code-editor.component.html',
+    selector: 'jhi-code-editor-grid',
+    templateUrl: './code-editor-grid.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorComponent {
+export class CodeEditorGridComponent {
     @ContentChild('editorSidebarRight') editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft') editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea') editorBottomArea: ElementRef;

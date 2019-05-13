@@ -1,20 +1,22 @@
 import { HostListener } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { difference as _difference, isEmpty as _isEmpty } from 'lodash';
+import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 
 import { ComponentCanDeactivate } from 'app/shared';
 import { ParticipationService } from 'app/entities/participation';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
-import { AnnotationArray, EditorState, CommitState } from 'app/entities/ace-editor';
+import { AnnotationArray } from 'app/entities/ace-editor';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorRepositoryFileService } from '../code-editor-repository.service';
-import { CodeEditorSessionService } from '../code-editor-session.service';
+import { CodeEditorSessionService } from 'app/code-editor/service';
+import { EditorState, CommitState } from 'app/code-editor/model';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
+    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
+    // This variable is used to inform components that a file has changed its filename, e.g. because of renaming
     fileChange: FileChange;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -28,7 +30,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         private translateService: TranslateService,
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        protected repositoryFileService: CodeEditorRepositoryFileService,
         protected sessionService: CodeEditorSessionService,
     ) {
         this.initializeProperties();
@@ -38,6 +39,13 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         return this.unsavedFilesValue;
     }
 
+    /**
+     * Setting unsaved files also updates the editorState / commitState.
+     * - unsaved files empty -> EditorState.CLEAN
+     * - unsaved files NOT empty -> EditorState.UNSAVED_CHANGES
+     * - unsaved files empty AND editorState.SAVING -> CommitState.UNCOMMITTED_CHANGES
+     * @param unsavedFiles
+     */
     set unsavedFiles(unsavedFiles: { [fileName: string]: string }) {
         this.unsavedFilesValue = unsavedFiles;
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
@@ -50,6 +58,11 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         }
     }
 
+    /**
+     * Resets all variables of this class.
+     * When a new variable is added, it needs to be added to this method!
+     * Initializing in variable declaration is not allowed.
+     */
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
@@ -65,7 +78,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
      * Also all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    // TODO: Refactor, maybe move into service
     onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
         this.commitState = CommitState.UNCOMMITTED_CHANGES;
         if (fileChange instanceof CreateFileChange) {
@@ -75,6 +87,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
             }
         } else if (fileChange instanceof RenameFileChange) {
             const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
+            // Update unsavedFiles
             const renamedUnsavedFiles = compose(
                 fromPairs,
                 map(([fileName, fileContent]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), fileContent]),
@@ -87,25 +100,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
                 toPairs,
             );
             this.unsavedFiles = { ...renamedUnsavedFiles, ...unaffectedUnsavedFiles };
-            // Also updated the name of the selectedFile
-            if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
-                this.selectedFile = fileChange.newFileName;
-            } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {
-                this.selectedFile = this.selectedFile.replace(oldFileNameRegex, fileChange.newFileName);
-            }
-        } else if (fileChange instanceof DeleteFileChange) {
-            this.unsavedFiles = compose(
-                fromPairs,
-                filter(([fileName]) => !fileName.startsWitch(fileChange.fileName)),
-                toPairs,
-            )(this.unsavedFiles);
-            // If the selected file or its containing folder was deleted, unselect it
-            if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
-                this.selectedFile = undefined;
-            }
-        }
-        if (fileChange instanceof RenameFileChange) {
-            const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
+            // Update buildLogErrors
             const renamedErrors = compose(
                 fromPairs,
                 map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
@@ -117,20 +112,37 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
                 toPairs,
             )(this.buildLogErrors.errors);
             this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
+            // Also updated the name of the selectedFile
+            if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
+                this.selectedFile = fileChange.newFileName;
+            } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {
+                this.selectedFile = this.selectedFile.replace(oldFileNameRegex, fileChange.newFileName);
+            }
         } else if (fileChange instanceof DeleteFileChange) {
+            // Update unsavedFiles
+            this.unsavedFiles = compose(
+                fromPairs,
+                filter(([fileName]) => !fileName.startsWitch(fileChange.fileName)),
+                toPairs,
+            )(this.unsavedFiles);
+            // Update buildLogErrors
             const errors = compose(
                 fromPairs,
                 filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
                 toPairs,
             )(this.buildLogErrors.errors);
             this.buildLogErrors = { errors, timestamp: this.buildLogErrors.timestamp };
+            // If unsavedFiles are deleted, this can mean that the editorState becomes clean
+            if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
+                this.editorState = EditorState.CLEAN;
+            }
+            // If the selected file or its containing folder was deleted, unselect it
+            if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
+                this.selectedFile = undefined;
+            }
         }
+        // Set the fileChange to inform other Components so they can update their references to the files
         this.fileChange = fileChange;
-        if (!_isEmpty(this.unsavedFiles) && this.editorState === EditorState.CLEAN) {
-            this.editorState = EditorState.UNSAVED_CHANGES;
-        } else if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
-            this.editorState = EditorState.CLEAN;
-        }
     }
 
     /**
@@ -138,7 +150,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    // TODO: Signatur wrong?
     onSavedFiles(files: { [fileName: string]: string | null }) {
         const savedFiles = Object.entries(files)
             .filter(([, error]: [string, string | null]) => !error)
@@ -147,7 +158,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
             .filter(([, error]: [string, string | null]) => error)
             .map(([fileName]) => fileName);
 
-        // TODO: Refactor
         this.unsavedFiles = fromPairs(toPairs(this.unsavedFiles).filter(([fileName]) => !savedFiles.includes(fileName)));
 
         if (errorFiles.length) {
@@ -158,7 +168,6 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
 
     /**
      * When the content of a file changes, set it as unsaved.
-     * @param file
      */
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };

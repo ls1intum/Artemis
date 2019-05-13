@@ -1,122 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, Subscription, BehaviorSubject } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/Observable';
-import { filter, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
-import { SERVER_API_URL } from 'app/app.constants';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-import { Participation } from 'app/entities/participation';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { JhiWebsocketService } from 'app/core';
+import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
-}
-
-export type DomainParticipationChange = [DomainType.PARTICIPATION, Participation];
-export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
-export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
-
-@Injectable({ providedIn: 'root' })
-export class DomainService {
-    protected domain: DomainChange;
-    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange>(null);
-    // private domainChange = this.subject.pipe(share());
-
-    public setDomain(domain: DomainChange) {
-        this.domain = domain;
-        this.subject.next(domain);
-    }
-    public getDomain() {
-        return this.domain;
-    }
-    public subscribeDomainChange(): Observable<DomainChange> {
-        return this.subject;
-        // return this.domainChange as Observable<DomainChange>;
-    }
-}
-
-export abstract class DomainDependent implements OnDestroy {
-    protected domain: DomainChange;
-    protected domainChangeSubscription: Subscription;
-
-    constructor(private domainService: DomainService) {}
-
-    initDomainSubscription() {
-        this.domainChangeSubscription = this.domainService
-            .subscribeDomainChange()
-            .pipe(
-                filter(domain => !!domain),
-                tap((domain: DomainChange) => {
-                    this.setDomain(domain);
-                }),
-            )
-            .subscribe();
-    }
-
-    setDomain(domain: DomainChange) {
-        this.domain = domain;
-    }
-
-    ngOnDestroy() {
-        if (this.domainChangeSubscription) {
-            this.domainChangeSubscription.unsubscribe();
-        }
-    }
-}
-
-export abstract class DomainDependentEndpoint extends DomainDependent implements OnDestroy {
-    private restResourceUrlBase = `${SERVER_API_URL}/api`;
-    protected restResourceUrl: string;
-    private websocketResourceUrlBase = '/topic';
-    protected websocketResourceUrlSend: string;
-    protected websocketResourceUrlReceive: string;
-
-    constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
-        super(domainService);
-        this.initDomainSubscription();
-    }
-
-    setDomain(domain: DomainChange) {
-        super.setDomain(domain);
-        const [domainType, domainValue] = this.domain;
-        if (this.websocketResourceUrlSend) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
-        }
-        if (this.websocketResourceUrlReceive) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
-        }
-        switch (domainType) {
-            case DomainType.PARTICIPATION:
-                this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
-                break;
-            case DomainType.TEST_REPOSITORY:
-                this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
-                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/test-repository/${domainValue.id}`;
-                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
-                break;
-            default:
-                this.restResourceUrl = null;
-                this.websocketResourceUrlSend = null;
-                this.websocketResourceUrlReceive = null;
-        }
-    }
-
-    ngOnDestroy() {
-        super.ngOnDestroy();
-        if (this.websocketResourceUrlSend) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
-        }
-        if (this.websocketResourceUrlReceive) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
-        }
-    }
 }
 
 export interface IRepositoryFileService {
@@ -125,7 +19,6 @@ export interface IRepositoryFileService {
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    // TODO: Implement websocket call
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<Array<[string, string]>>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;

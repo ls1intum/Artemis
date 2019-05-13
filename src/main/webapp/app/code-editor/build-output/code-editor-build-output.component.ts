@@ -1,20 +1,19 @@
 import { hasParticipationChanged, Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
-import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorSessionService } from '../code-editor-session.service';
+import { CodeEditorGridComponent } from '../layout/code-editor-grid.component';
+import { CodeEditorSessionService } from '../service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
-import { CodeEditorBuildLogService } from '../code-editor-repository.service';
+import { CodeEditorBuildLogService } from '../service/code-editor-repository.service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -61,7 +60,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     private resultSubscription: Subscription;
 
     constructor(
-        private parent: CodeEditorComponent,
+        private parent: CodeEditorGridComponent,
         private $window: WindowRef,
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,

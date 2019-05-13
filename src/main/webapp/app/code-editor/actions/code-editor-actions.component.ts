@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, Output, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
-import { CodeEditorRepositoryService, CodeEditorRepositoryFileService } from 'app/code-editor/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor-actions',
