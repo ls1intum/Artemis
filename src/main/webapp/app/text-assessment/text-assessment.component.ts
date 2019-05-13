@@ -201,7 +201,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public save(): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -211,7 +211,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(error.message),
+            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -222,7 +222,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -232,7 +232,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(error.message),
+            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -318,7 +318,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         if (!this.referencedFeedback.every(f => f.reference && f.reference.length <= 2000)) {
-            this.invalidError = 'arTeMiSApp.textAssessment.feedbackReferenceTooLong';
+            this.invalidError = 'arTeMiSApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
             return;
         }
@@ -326,13 +326,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.invalidScoreMustBeNumber';
+            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
             return;
         }
 
         if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText && f.detailText.length > 0))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.invalidNeedScoreOrFeedback';
+            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
             return;
         }
@@ -380,7 +380,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
             return;
         }
 

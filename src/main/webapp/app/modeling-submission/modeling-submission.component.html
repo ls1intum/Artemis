@@ -81,7 +81,7 @@
         <div class="col-3" *ngIf="submission?.submitted">
             <h4 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.title">Assessment</h4>
             <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
-                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="modelingAssessment.generalFeedback">General Feedback</span>:</b>
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
                 <br />
                 {{ generalFeedbackText }}
             </div>

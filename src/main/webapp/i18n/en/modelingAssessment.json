@@ -2,7 +2,6 @@
     "modelingAssessment": {
         "points": "Points",
         "assessor": "Assessor: {{firstName}} {{lastName}}",
-        "noModel": "No model found to display",
-        "generalFeedback": "General Feedback"
+        "noModel": "No model found to display"
     }
 }
