@@ -7,7 +7,9 @@
             "ObjectDiagram": "Object Diagram",
             "ActivityDiagram": "Activity Diagram",
             "UseCaseDiagram": "Use Case Diagram",
-            "CommunicationDiagram": "Communication Diagram"
+            "CommunicationDiagram": "Communication Diagram",
+            "ComponentDiagram": "Component Diagram",
+            "DeploymentDiagram": "Deployment Diagram"
         }
     }
 }
