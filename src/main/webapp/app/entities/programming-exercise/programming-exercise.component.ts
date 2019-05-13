@@ -8,6 +8,7 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -19,9 +20,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private accountService: AccountService,
+        private jhiAlertService: JhiAlertService,
         courseService: CourseService,
         translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
@@ -34,8 +36,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
                 // reconnect exercise with course
-                this.programmingExercises.forEach(programmingExercise => {
-                    programmingExercise.course = this.course;
+                this.programmingExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },

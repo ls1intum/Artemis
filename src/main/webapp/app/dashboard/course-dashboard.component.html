@@ -57,7 +57,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let student of (students | sortBy: predicate:reverse)">
+                <tr *ngFor="let student of students | sortBy: predicate:reverse">
                     <td>{{ student.user.firstName }} {{ student.user.lastName }}</td>
                     <td>{{ student.user.login }}</td>
                     <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>

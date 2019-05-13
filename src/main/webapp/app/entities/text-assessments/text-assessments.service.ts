@@ -6,6 +6,7 @@ import { Result } from 'app/entities/result';
 import { Participation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
 import * as moment from 'moment';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 type EntityResponseType = HttpResponse<Result>;
 
@@ -27,6 +28,19 @@ export class TextAssessmentsService {
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, textAssessments, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
+    public updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, exerciseId: number, resultId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/after-complaint`;
+        const assessmentUpdate = {
+            feedbacks,
+            complaintResponse,
+        };
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
+    public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, null);
     }
 
     public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {

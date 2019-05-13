@@ -45,7 +45,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         });
     }
 

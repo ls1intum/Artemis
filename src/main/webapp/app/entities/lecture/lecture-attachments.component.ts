@@ -31,7 +31,7 @@ export class LectureAttachmentsComponent implements OnInit {
     attachmentBackup: Attachment | null;
     attachmentFile: any;
     isUploadingAttachment: boolean;
-    isDownloadingAttachment = false;
+    isDownloadingAttachmentLink: string | null;
     notificationText: string;
 
     constructor(
@@ -130,23 +130,21 @@ export class LectureAttachmentsComponent implements OnInit {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.isDownloadingAttachment = true;
+        this.isDownloadingAttachmentLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {
-                if (response.body) {
-                    const blob = new Blob([response.body], { type: response.headers.get('content-type') || 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', response.headers.get('filename') || 'undefined.pdf');
-                    document.body.appendChild(link); // Required for FF
-                    link.click();
-                    window.URL.revokeObjectURL(url);
-                }
-                this.isDownloadingAttachment = false;
+                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', response.headers.get('filename')!);
+                document.body.appendChild(link); // Required for FF
+                link.click();
+                window.URL.revokeObjectURL(url);
+                this.isDownloadingAttachmentLink = null;
             },
             error => {
-                this.isDownloadingAttachment = false;
+                this.isDownloadingAttachmentLink = null;
             },
         );
     }

@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.RequestUtilService;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.HashSet;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,16 +16,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.HashSet;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 public class CourseIntegrationTest {
+
     @Autowired
     DatabaseUtilService database;
 
@@ -35,12 +37,10 @@ public class CourseIntegrationTest {
     @Autowired
     CourseRepository courseRepo;
 
-
     @Before
     public void resetDatabase() {
         database.resetDatabase();
     }
-
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -52,11 +52,8 @@ public class CourseIntegrationTest {
 
         course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        assertThat(courseRepo.findAll())
-            .as("Course has not been stored")
-            .contains(repoContent.toArray(new Course[0]));
+        assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
     }
-
 
     @Test
     @WithMockUser(roles = "USER")
@@ -66,13 +63,11 @@ public class CourseIntegrationTest {
         assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(0);
     }
 
-
     @Test
     @WithMockUser(roles = "USER")
     public void getCourseWithoutPermission() throws Exception {
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
     }
-
 
     public void loadInitialCourses() {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());

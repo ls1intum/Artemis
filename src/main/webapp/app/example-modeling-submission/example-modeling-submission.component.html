@@ -6,7 +6,7 @@
 
     <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
         <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
-            Example Modeling Submission for Exercise {{exercise?.title}}
+            Example Modeling Submission for Exercise {{ exercise?.title }}
         </h2>
         <p *ngIf="assessmentMode" jhiTranslate="arTeMiSApp.exampleSubmission.assessmentInstruction">
             Double-click on a model element to view and edit the element's assessment.
@@ -16,10 +16,8 @@
     <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
-                <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
-                       [(ngModel)]="usedForTutorial"/>
-                <label class="form-check-label" for="field_usedForTutorial"
-                       jhiTranslate="arTeMiSApp.modelingExercise.usedForTutorial">Used for tutorial</label>
+                <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
+                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="arTeMiSApp.modelingExercise.usedForTutorial">Used for tutorial</label>
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ml-2 button-resize">
@@ -55,19 +53,18 @@
     </div>
 
     <div class="col-12 text-right mb-2" *ngIf="toComplete">
-        <button class="btn btn-primary px-5" (click)="checkAssessment()"
-                [disabled]="!feedbacks || !assessmentsAreValid" jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment">
+        <button
+            class="btn btn-primary px-5"
+            (click)="checkAssessment()"
+            [disabled]="!feedbacks || !assessmentsAreValid"
+            jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment"
+        >
             Submit Assessment
         </button>
     </div>
 
     <div class="col-12 editor-container">
-        <jhi-modeling-editor
-            *ngIf="!assessmentMode"
-            [umlModel]="umlModel"
-            [diagramType]="exercise.diagramType"
-            [readOnly]="readOnly"
-        ></jhi-modeling-editor>
+        <jhi-modeling-editor *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly"></jhi-modeling-editor>
         <jhi-modeling-assessment
             *ngIf="assessmentMode"
             [model]="umlModel"
@@ -77,10 +74,6 @@
             [readOnly]="readOnly"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
-        <jhi-assessment-instructions
-            *ngIf="exercise"
-            [exercise]="exercise"
-            [collapsed]="!readOnly && !toComplete">
-        </jhi-assessment-instructions>
+        <jhi-assessment-instructions *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete"> </jhi-assessment-instructions>
     </div>
 </div>

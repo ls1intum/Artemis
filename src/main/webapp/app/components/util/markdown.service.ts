@@ -108,7 +108,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForMarkdown(markdownText: string) {
+    htmlForMarkdown(markdownText: string | null) {
         if (markdownText == null || markdownText === '') {
             return '';
         }

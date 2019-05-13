@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -31,14 +32,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private subscription: Subscription;
     participation: Participation;
     modelingExercise: ModelingExercise;
-    result: Result | null;
+    result: Result;
 
     selectedEntities: string[];
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
-    assessmentResult: Result | null;
+    assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
@@ -53,12 +54,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     websocketChannel: string;
 
     problemStatement: string | null;
+    showComplaintForm = false;
+    // indicates if there is a complaint for the result of the submission
+    hasComplaint: boolean;
+    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
+    numberOfAllowedComplaints: number;
+    // indicates if the result is older than one week. if it is, the complain button is disabled.
+    resultOlderThanOneWeek: boolean;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
+        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
@@ -84,7 +93,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement!);
+                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
+                        if (this.modelingExercise.course) {
+                            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
+                                this.numberOfAllowedComplaints = allowedComplaints;
+                            });
+                        }
                         /**
                          * set diagramType to class diagram if exercise is null
                          */
@@ -104,9 +118,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.result = this.submission.result;
                         }
                         if (this.submission.submitted && this.result && this.result.completionDate) {
+                            this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
+                            });
+                            this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                                this.hasComplaint = !!res.body;
                             });
                         }
                         this.setAutoSaveTimer();
@@ -123,7 +141,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     subscribeToWebsocket(): void {
-        if (this.submission === null) {
+        if (!this.submission && !this.submission.id) {
             return;
         }
         this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
@@ -185,7 +203,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body!;
+                    this.submission = response.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
@@ -198,7 +216,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
                 submission => {
-                    this.submission = submission.body!;
+                    this.submission = submission.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
@@ -232,7 +250,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.submission.submitted = true;
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body!;
+                    this.submission = response.body;
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
                     // Compass has already calculated a result
@@ -301,7 +319,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
-                totalScore += feedback.credits!;
+                totalScore += feedback.credits;
             }
             this.totalScore = totalScore;
         }

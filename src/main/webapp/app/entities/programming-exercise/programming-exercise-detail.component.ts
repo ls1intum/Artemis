@@ -5,12 +5,15 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
 import { ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
+import { ParticipationType } from './programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
+    styleUrls: ['./programming-exercise-detail.component.scss'],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit {
+    ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
 
     programmingExercise: ProgrammingExercise;

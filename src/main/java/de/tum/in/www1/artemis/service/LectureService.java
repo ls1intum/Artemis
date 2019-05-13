@@ -59,4 +59,8 @@ public class LectureService {
         return lecturesWithFilteredAttachments;
     }
 
+    public void delete(Lecture lecture) {
+        lectureRepository.delete(lecture);
+    }
+
 }
