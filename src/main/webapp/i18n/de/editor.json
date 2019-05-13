@@ -48,6 +48,7 @@
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
                 "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",

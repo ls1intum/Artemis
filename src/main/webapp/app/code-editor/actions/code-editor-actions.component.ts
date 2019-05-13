@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { tap } from 'rxjs/operators';
+import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
+import { catchError, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
@@ -10,7 +11,10 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
     templateUrl: './code-editor-actions.component.html',
     providers: [],
 })
-export class CodeEditorActionsComponent implements OnChanges {
+export class CodeEditorActionsComponent {
+    CommitState = CommitState;
+    EditorState = EditorState;
+
     @Input()
     readonly unsavedFiles: { [fileName: string]: string };
     @Input()
@@ -58,12 +62,6 @@ export class CodeEditorActionsComponent implements OnChanges {
 
     constructor(private repositoryService: CodeEditorRepositoryService, private repositoryFileService: CodeEditorRepositoryFileService) {}
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.editorState && this.commitState === CommitState.WANTS_TO_COMMIT && this.editorState === EditorState.CLEAN) {
-            this.commit();
-        }
-    }
-
     /**
      * @function saveFiles
      * @desc Saves all files that have unsaved changes in the editor.
@@ -72,15 +70,16 @@ export class CodeEditorActionsComponent implements OnChanges {
         if (!_isEmpty(this.unsavedFiles)) {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            this.repositoryFileService.updateFiles(unsavedFiles).subscribe(
-                res => {
-                    this.onSavedFiles.emit(res);
-                },
-                err => {
+            return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
+                catchError(err => {
                     this.onError.emit(err.error);
                     this.editorState = EditorState.UNSAVED_CHANGES;
-                },
+                    return Observable.of(null);
+                }),
+                tap((res: Array<[string, string]> | null) => (res ? this.onSavedFiles.emit(res) : null)),
             );
+        } else {
+            return Observable.of(null);
         }
     }
 
@@ -96,23 +95,22 @@ export class CodeEditorActionsComponent implements OnChanges {
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
-        if (this.editorState === EditorState.UNSAVED_CHANGES) {
-            this.commitState = CommitState.WANTS_TO_COMMIT;
-            this.saveChangedFiles();
-        } else {
-            this.commitState = CommitState.COMMITTING;
-            this.repositoryService
-                .commit()
-                // TODO: How to only do this when buildable?
-                .pipe(tap(() => (this.isBuilding = true)))
-                .subscribe(
-                    () => {
-                        this.commitState = CommitState.CLEAN;
-                    },
-                    (err: any) => {
-                        console.log('Error during commit ocurred!', err);
-                    },
-                );
-        }
+        Observable.of(null)
+            .pipe(
+                switchMap(() => (this.editorState === EditorState.UNSAVED_CHANGES ? this.saveChangedFiles() : Observable.of(null))),
+                tap(() => (this.commitState = CommitState.COMMITTING)),
+                switchMap(() => this.repositoryService.commit()),
+                tap(() => {
+                    this.commitState = CommitState.CLEAN;
+                    this.isBuilding = true;
+                }),
+            )
+            .subscribe(
+                () => {},
+                () => {
+                    this.commitState = CommitState.UNCOMMITTED_CHANGES;
+                    this.onError.emit('commitFailed');
+                },
+            );
     }
 }

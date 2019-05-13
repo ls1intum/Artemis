@@ -16,6 +16,7 @@ module.exports = {
     testMatch: ['<rootDir>/src/test/javascript/spec/integration/**/*.ts', '<rootDir>/src/test/javascript/spec/component/**/*.ts'],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
+        '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
         '@assets/(.*)': '<rootDir>/src/main/webapp/assets/$1',
         '@core/(.*)': '<rootDir>/src/main/webapp/app/core/$1',
         '@env': '<rootDir>/src/main/webapp/environments/environment',

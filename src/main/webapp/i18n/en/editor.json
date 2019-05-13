@@ -49,6 +49,7 @@
             "errors": {
                 "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
                 "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
+                "commitFailed": "One or more files could not be commited. Please try again shortly or contact your tutor.",
                 "noPermissions": "You don't have the necessary permissions.",
                 "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",

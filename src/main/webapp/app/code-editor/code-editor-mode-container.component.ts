@@ -48,7 +48,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
      */
     set unsavedFiles(unsavedFiles: { [fileName: string]: string }) {
         this.unsavedFilesValue = unsavedFiles;
-        if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING && this.commitState !== CommitState.WANTS_TO_COMMIT) {
+        if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.SAVING) {
             this.editorState = EditorState.CLEAN;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (_isEmpty(this.unsavedFiles)) {
