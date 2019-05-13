@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Complaint;
@@ -30,15 +29,15 @@ abstract class AssessmentService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ObjectMapper objectMapper;
+    private final ResultService resultService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
+            ParticipationRepository participationRepository, ResultService resultService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.participationRepository = participationRepository;
-        this.objectMapper = objectMapper;
+        this.resultService = resultService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -72,7 +71,7 @@ abstract class AssessmentService {
         try {
             // Store the original result with the complaint
             Complaint complaint = complaintResponse.getComplaint();
-            complaint.setResultBeforeComplaint(getOriginalResultAsString(originalResult));
+            complaint.setResultBeforeComplaint(resultService.getOriginalResultAsString(originalResult));
             complaintRepository.save(complaint);
         }
         catch (JsonProcessingException exception) {
@@ -101,30 +100,6 @@ abstract class AssessmentService {
         participation.removeResult(result);
         participationRepository.save(participation);
         resultRepository.deleteById(result.getId());
-    }
-
-    /**
-     * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
-     * the original result of a submission before updating the result due to a complaint.
-     *
-     * @param originalResult the original result that was complained about
-     * @return the reduced result as a JSON string
-     * @throws JsonProcessingException when the conversion to JSON string fails
-     */
-    private String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
-        Result resultCopy = new Result();
-        resultCopy.setId(originalResult.getId());
-        resultCopy.setResultString(originalResult.getResultString());
-        resultCopy.setCompletionDate(originalResult.getCompletionDate());
-        resultCopy.setSuccessful(originalResult.isSuccessful());
-        resultCopy.setScore(originalResult.getScore());
-        resultCopy.setRated(originalResult.isRated());
-        resultCopy.hasFeedback(originalResult.getHasFeedback());
-        resultCopy.setFeedbacks(originalResult.getFeedbacks());
-        resultCopy.setAssessor(originalResult.getAssessor());
-        resultCopy.setAssessmentType(originalResult.getAssessmentType());
-        resultCopy.setHasComplaint(originalResult.getHasComplaint());
-        return objectMapper.writeValueAsString(resultCopy);
     }
 
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {

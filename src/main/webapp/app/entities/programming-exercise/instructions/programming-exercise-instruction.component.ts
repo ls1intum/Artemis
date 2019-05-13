@@ -18,17 +18,16 @@ import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
-
-import { CodeEditorService } from '../../code-editor/code-editor.service';
-import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
-import { Feedback } from '../feedback';
-import { Result, ResultService } from '../result';
-import { ProgrammingExercise } from './programming-exercise.model';
-import { RepositoryFileService } from '../repository';
-import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../participation';
+import { CodeEditorService } from 'app/code-editor/code-editor.service';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
+import { Feedback } from 'app/entities/feedback';
+import { Result, ResultService } from 'app/entities/result';
+import { ProgrammingExercise } from '../programming-exercise.model';
+import { RepositoryFileService } from 'app/entities/repository';
+import { Participation, hasParticipationChanged, ParticipationWebsocketService } from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged, problemStatementHasChanged } from '../exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
 enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
@@ -52,18 +51,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
-    // If true, shows the participation of the exercise's template, instead of the assignment participation
-    @Input()
-    private showTemplatePartipation = false;
     // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
+    @Output()
+    public resultChange = new EventEmitter<Result>();
 
     private participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResult: Result | null;
+    public latestResultValue: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
@@ -89,6 +87,15 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+    }
+
+    get latestResult() {
+        return this.latestResultValue;
+    }
+
+    set latestResult(result: Result) {
+        this.latestResultValue = result;
+        this.resultChange.emit(result);
     }
 
     /**
@@ -223,16 +230,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.exercise.problemStatement) {
             return Observable.of(this.exercise.problemStatement);
         } else {
-            let participationId: number;
-            if (this.showTemplatePartipation && this.exercise.templateParticipation) {
-                participationId = this.exercise.templateParticipation.id;
-            } else if (this.participation) {
-                participationId = this.participation.id;
-            } else {
-                // in this case, no participation is available
+            if (!this.participation.id) {
                 return Observable.of(null);
             }
-            return this.repositoryFileService.get(participationId, 'README.md').pipe(
+            return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
@@ -384,7 +385,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param endLine
      * @param silent
      */
-    private remarkablePlantUmlParser = function(state: any, startLine: number, endLine: number, silent: boolean) {
+    private remarkablePlantUmlParser = function (state: any, startLine: number, endLine: number, silent: boolean) {
         /**
          * Excerpt from the remarkable documentation regarding the stateBlock (param state):
          * src: the complete string the parser is currently working on

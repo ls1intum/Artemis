@@ -10,6 +10,7 @@ import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { StatsForInstructorDashboard, StatsForTutorDashboard } from 'app/entities/course';
+import { AccountService } from 'app/core';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -18,7 +19,7 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
@@ -31,7 +32,10 @@ export class ExerciseService {
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
@@ -116,6 +120,14 @@ export class ExerciseService {
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
             res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
             res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
+        }
+        return res;
+    }
+
+    checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body) {
+            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
+            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }
         return res;
     }
