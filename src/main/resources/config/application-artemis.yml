@@ -8,8 +8,8 @@ artemis:
     result-retrieval-delay: 5000
     jira:
         url: https://jirabruegge.in.tum.de
-        user: ga82kuw    # e.g. ga12abc
-        password: MVO1}JdWS;iZ,a+
+        user: <username>    # e.g. ga12abc
+        password: <password>
         admin-group-name: tumuser
     version-control:
         url: https://repobruegge.in.tum.de
