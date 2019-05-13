@@ -13,6 +13,8 @@ import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-asses
 import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { HomeComponent } from 'app/home';
+import { JhiMainComponent } from 'app/layouts';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
@@ -27,7 +29,7 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         FontAwesomeModule,
         ArTEMiSComplaintsForTutorModule,
     ],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
     entryComponents: [HomeComponent, ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
