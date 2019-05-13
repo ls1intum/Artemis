@@ -249,7 +249,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
                         if (exercise.maxScore) {
                             groupedExercises[index].missedScores.tooltips.push(
-                                `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`,
+                                `Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)!} points (${missedScore}%)`,
                             );
                         }
                     } else {

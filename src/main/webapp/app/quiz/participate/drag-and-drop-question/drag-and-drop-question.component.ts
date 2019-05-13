@@ -120,7 +120,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                     May be null if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
         if (dropLocation) {

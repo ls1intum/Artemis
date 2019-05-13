@@ -127,7 +127,7 @@ export class ExerciseService {
     }
 
     checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body) {
+        if (res.body && res.body.course) {
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }

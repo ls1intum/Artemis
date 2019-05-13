@@ -37,18 +37,18 @@ export class MultipleChoiceQuestionComponent {
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
-    rendered: MultipleChoiceQuestion;
+    rendered?: MultipleChoiceQuestion;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    watchCollection() {
+    watchCollection(): void {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new MultipleChoiceQuestion();
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
-        this.rendered.answerOptions = this.question.answerOptions!.map(function(answerOption) {
+        this.rendered.answerOptions = this.question.answerOptions!.map(answerOption => {
             const renderedAnswerOption = new AnswerOption();
             renderedAnswerOption.text = artemisMarkdown.htmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdown(answerOption.hint);
@@ -57,15 +57,13 @@ export class MultipleChoiceQuestionComponent {
         });
     }
 
-    toggleSelection(answerOption: AnswerOption) {
+    toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled) {
             // Do nothing
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter(function(selectedAnswerOption) {
-                return selectedAnswerOption.id !== answerOption.id;
-            });
+            this.selectedAnswerOptions = this.selectedAnswerOptions.filter(selectedAnswerOption => selectedAnswerOption.id !== answerOption.id);
         } else {
             this.selectedAnswerOptions.push(answerOption);
         }

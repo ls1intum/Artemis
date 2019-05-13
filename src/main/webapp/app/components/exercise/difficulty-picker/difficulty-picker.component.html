@@ -1,5 +1,5 @@
 <div class="btn-group">
-    <div class="btn" [ngClass]="{ 'btn-primary': !exercise.difficulty, 'btn-default': exercise.difficulty }" (click)="setDifficulty(undefined)">
+    <div class="btn" [ngClass]="{ 'btn-primary': !exercise.difficulty, 'btn-default': exercise.difficulty }" (click)="setDifficulty(null)">
         {{ 'arTeMiSApp.exercise.noLevel' | translate }}
     </div>
     <div class="btn" [ngClass]="{ 'btn-success': exercise.difficulty === EASY, 'btn-default': exercise.difficulty !== EASY }" (click)="setDifficulty(EASY)">

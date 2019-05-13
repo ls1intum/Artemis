@@ -84,7 +84,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -354,7 +354,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
