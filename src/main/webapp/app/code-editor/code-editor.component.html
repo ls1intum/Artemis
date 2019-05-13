@@ -7,9 +7,10 @@
             <span>{{ participation?.exercise.title }}</span>
         </div>
         <div class="navbar-collapse editor-top-right">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav ml-auto mr-3">
                 <li class="nav-item dropdown pointer">
-                    <jhi-result [participation]="participation" [isBuilding]="isBuilding" (newResult)="updateLatestResult()" [hidden]="isBuilding"> </jhi-result>
+                    <jhi-updating-result [participation]="participation" [isBuilding]="isBuilding" (newResultReceived)="updateLatestResult()" [hidden]="isBuilding">
+                    </jhi-updating-result>
                 </li>
             </ul>
         </div>

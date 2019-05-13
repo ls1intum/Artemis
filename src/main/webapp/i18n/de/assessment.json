@@ -1,0 +1,10 @@
+{
+    "arTeMiSApp": {
+        "assessment": {
+            "generalFeedback": "Allgemeines Feedback",
+            "error": {
+                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment"
+            }
+        }
+    }
+}

@@ -348,7 +348,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     public saveAssessments(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -373,7 +373,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     checkAssessment() {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
             return;
         }
 

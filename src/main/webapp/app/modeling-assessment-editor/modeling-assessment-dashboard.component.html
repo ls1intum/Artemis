@@ -120,7 +120,7 @@
                     <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>
-                        <jhi-result [participation]="submission.participation"></jhi-result>
+                        <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>

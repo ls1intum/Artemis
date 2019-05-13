@@ -287,7 +287,7 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
                         }
-                        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + quizId + "/participation", participation);
+                        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + quizId + "/participation", participation);
                         counter++;
                     }
                     if (counter > 0) {
