@@ -7,13 +7,42 @@
         </h3>
     </div>
 
-    <div class="card-second-header">
-        <a class="btn btn-small" (click)="openCreateFileModal()"><fa-icon icon="plus"></fa-icon> </a>
-        <a class="btn btn-small" (click)="openDeleteFileModal()"><fa-icon icon="trash"></fa-icon> </a>
+    <!-- Root actions -->
+    <div class="card-second-header d-flex">
+        <button class="btn btn-primary" (click)="setCreatingFile($event, '', FileType.FILE)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFileRoot' | translate }}">
+            <fa-icon icon="plus"></fa-icon>
+            <fa-icon icon="file" class="ml-1"></fa-icon>
+        </button>
+        <button class="btn btn-primary ml-2" (click)="setCreatingFile($event, '', FileType.FOLDER)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFolderRoot' | translate }}">
+            <fa-icon icon="plus"></fa-icon>
+            <fa-icon icon="folder" class="ml-1"></fa-icon>
+        </button>
+        <button class="btn btn-secondary ml-auto" (click)="toggleTreeCompress($event)" title="{{ 'arTeMiSApp.editor.fileBrowser.compressTree' | translate }}">
+            <fa-icon [icon]="compressFolders ? ['fa', 'angle-double-up'] : ['fa', 'angle-double-down']"></fa-icon>
+        </button>
     </div>
 
+    <!-- File Tree -->
     <div class="card-body">
-        <ngx-treeview #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <!-- Root level create file/folder tree element -->
+        <li *ngIf="creatingFile && creatingFile[0] === ''" class="list-group-item border-0">
+            <fa-icon aria-hidden="true" [icon]="creatingFile[1] === FileType.FILE ? 'file' : 'folder'" [fixedWidth]="true"></fa-icon>
+            <span class="ml-1"
+                ><input
+                    #creatingInput
+                    value=""
+                    (keyup.enter)="onCreateFile($event)"
+                    (focusout)="onCreateFile($event)"
+                    (keyup.esc)="clearCreatingFile($event)"
+                    class="list-group-item__input"
+            /></span>
+        </li>
+        <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <!-- Loading files indicator -->
+        <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
+            <fa-icon icon="circle-notch" spin="true"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.editor.loadingFiles">Loading file</span>
+        </div>
     </div>
     <jhi-code-editor-status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
     <!-- Required for resizing; don't remove empty span -->
@@ -22,21 +51,86 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
-    <li *ngIf="item.children" (click)="onCollapseExpand()" class="list-group-item">
+    <li *ngIf="repositoryFiles[item.value] === 'FOLDER'" (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
+        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
         <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
-        <span>{{ item.text }}</span>
+        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value">{{ item.text }}</span>
+        <!-- Renaming folder tree item -->
+        <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
+            ><input
+                #renamingInput
+                value="{{ item.text }}"
+                (keyup.enter)="onRenameFile($event)"
+                (focusout)="onRenameFile($event)"
+                (keyup.esc)="clearRenamingFile($event)"
+                class="list-group-item__input"
+        /></span>
+        <!-- Folder level actions -->
+        <span class="file-icons">
+            <button (click)="setCreatingFile($event, item.value, FileType.FILE)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'file']" title="{{ 'arTeMiSApp.editor.fileBrowser.createFile' | translate }}"></fa-icon>
+            </button>
+            <button (click)="setCreatingFile($event, item.value, FileType.FOLDER)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'folder']" title="{{ 'arTeMiSApp.editor.fileBrowser.createFolder' | translate }}"></fa-icon>
+            </button>
+            <button [disabled]="compressedTreeItems.includes(item.text)" (click)="setRenamingFile($event, item.value, item.text, FileType.FOLDER)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'edit']" title="{{ 'arTeMiSApp.editor.fileBrowser.renameFolder' | translate }}"></fa-icon>
+            </button>
+            <button (click)="openDeleteFileModal($event, item.value, FileType.FOLDER)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'trash']" title="{{ 'arTeMiSApp.editor.fileBrowser.deleteFolder' | translate }}"></fa-icon>
+            </button>
+        </span>
+    </li>
+    <li *ngIf="creatingFile && creatingFile[0] === item.value" class="list-group-item ">
+        <fa-icon aria-hidden="true" [icon]="creatingFile[1] === FileType.FILE ? 'file' : 'folder'" [fixedWidth]="true"></fa-icon>
+        <!-- Creating file/folder tree item -->
+        <span class="ml-1"
+            ><input
+                #creatingInput
+                value=""
+                (keyup.enter)="onCreateFile($event)"
+                (focusout)="onCreateFile($event)"
+                (keyup.esc)="clearCreatingFile($event)"
+                class="list-group-item__input"
+        /></span>
     </li>
     <li
-        *ngIf="!item.children"
+        *ngIf="repositoryFiles[item.value] === 'FILE'"
         (click)="handleNodeSelected(item)"
         class="list-group-item"
         [class.node-selected]="item.checked"
         [class.text-danger]="!item.checked && errorFiles && errorFiles.includes(item.value)"
     >
         <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
-        <span class="text-warning">
-            <fa-icon *ngIf="unsavedFiles && unsavedFiles.includes(item.value)" aria-hidden="true" [icon]="['fas', 'circle']" [fixedWidth]="true"></fa-icon>
+        <fa-icon
+            *ngIf="unsavedFiles && unsavedFiles.includes(item.value)"
+            aria-hidden="true"
+            [icon]="['fas', 'circle']"
+            class="d-flex align-items-center text-warning"
+            title="{{ 'arTeMiSApp.editor.fileBrowser.unsavedChanges' | translate }}"
+            size="xs"
+        ></fa-icon>
+        <span class="ml-1 list-group-item__fileName" *ngIf="!renamingFile || renamingFile[0] !== item.value" [ngClass]="item.checked ? 'text-white' : 'primary'">{{
+            item.text
+        }}</span>
+        <!-- Renaming file tree item -->
+        <span class="ml-1" *ngIf="renamingFile && renamingFile[0] === item.value"
+            ><input
+                #renamingInput
+                value="{{ item.text }}"
+                (keyup.enter)="onRenameFile($event)"
+                (focusout)="onRenameFile($event)"
+                (keyup.esc)="clearRenamingFile($event)"
+                class="list-group-item__input"
+        /></span>
+        <!-- File level actions -->
+        <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
+            <button (click)="setRenamingFile($event, item.value, item.text, FileType.FILE)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'edit']" title="{{ 'arTeMiSApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
+            </button>
+            <button (click)="openDeleteFileModal($event, item.value, FileType.FILE)" class="btn btn-small">
+                <fa-icon [icon]="['fa', 'trash']" title="{{ 'arTeMiSApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
+            </button>
         </span>
-        <span>{{ item.text }}</span>
     </li>
 </ng-template>

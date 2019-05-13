@@ -12,6 +12,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintResponse } from 'app/entities/complaint-response';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -34,6 +36,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAuthorized = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
+    hasComplaint: boolean;
+    canOverride = false;
+
+    private cancelConfirmationText: string;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -46,7 +52,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
-    ) {}
+        private translateService: TranslateService,
+    ) {
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+    }
 
     ngOnInit() {
         // Used to check if the assessor is the current user
@@ -64,16 +73,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.showBackButton = !!this.route.snapshot.queryParamMap.get('showBackButton');
-    }
-
-    checkAuthorization() {
-        this.isAuthorized = this.result !== null && this.result.assessor !== null && this.result.assessor.id === this.userId;
+        this.route.queryParams.subscribe(params => {
+            this.showBackButton = params['showBackButton'] === 'true';
+        });
     }
 
     ngOnDestroy() {}
 
-    loadSubmission(submissionId: number): void {
+    private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -84,7 +91,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    loadOptimalSubmission(exerciseId: number): void {
+    private loadOptimalSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
@@ -105,10 +112,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    handleReceivedSubmission(submission: ModelingSubmission): void {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.submission = submission;
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
+        this.hasComplaint = this.result.hasComplaint;
         this.localFeedbacks = this.result.feedbacks;
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
@@ -132,6 +140,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         this.checkAuthorization();
         this.validateFeedback();
+    }
+
+    private checkAuthorization() {
+        this.isAuthorized = this.result != null && this.result.assessor != null && this.result.assessor.id != null && this.result.assessor.id === this.userId;
     }
 
     onError(): void {
@@ -193,6 +205,42 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 }
             },
         );
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.removeCircularDependencies();
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, complaintResponse, this.submission!.id).subscribe(
+            (result: Result) => {
+                this.result = result;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+            },
+        );
+    }
+
+    /**
+     * Cancel the current assessment and navigate back to the exercise dashboard.
+     */
+    onCancelAssessment() {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
+                this.goToExerciseDashboard();
+            });
+        }
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {

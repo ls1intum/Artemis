@@ -143,9 +143,9 @@ public class QuizExerciseService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public QuizExercise findOne(Long id) {
+    public Optional<QuizExercise> findById(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
-        return quizExerciseRepository.findById(id).get();
+        return quizExerciseRepository.findById(id);
     }
 
     /**

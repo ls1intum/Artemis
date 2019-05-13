@@ -69,7 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exercise = exercise;
             this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
             if (this.hasResults) {
                 this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                     const aValue = moment(a.completionDate!).valueOf();

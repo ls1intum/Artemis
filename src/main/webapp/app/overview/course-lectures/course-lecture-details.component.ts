@@ -15,8 +15,8 @@ import { Attachment } from 'app/entities/attachment';
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
-    public lecture: Lecture;
-    public isDownloading = false;
+    public lecture: Lecture | null;
+    public isDownloadingLink: string | null;
 
     constructor(
         private $location: Location,
@@ -27,8 +27,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
     ) {
-        const navigation = this.router.getCurrentNavigation()!;
-        if (navigation.extras.state) {
+        const navigation = this.router.getCurrentNavigation();
+        if (navigation && navigation.extras.state) {
             const stateLecture = navigation.extras.state.lecture as Lecture;
             if (stateLecture && stateLecture.startDate) {
                 stateLecture.startDate = moment(stateLecture.startDate);
@@ -42,9 +42,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            if (!this.lecture) {
+            if (!this.lecture || this.lecture.id !== params.lectureId) {
+                this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                    this.lecture = lectureResponse.body!;
+                    this.lecture = lectureResponse.body;
                 });
             }
         });
@@ -73,23 +74,21 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     downloadAttachment(downloadUrl: string) {
-        this.isDownloading = true;
+        this.isDownloadingLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {
-                if (response.body) {
-                    const blob = new Blob([response.body], { type: response.headers.get('content-type') || 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', response.headers.get('filename') || 'undefined.pdf');
-                    document.body.appendChild(link); // Required for FF
-                    link.click();
-                    window.URL.revokeObjectURL(url);
-                }
-                this.isDownloading = false;
+                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', response.headers.get('filename')!);
+                document.body.appendChild(link); // Required for FF
+                link.click();
+                window.URL.revokeObjectURL(url);
+                this.isDownloadingLink = null;
             },
             error => {
-                this.isDownloading = false;
+                this.isDownloadingLink = null;
             },
         );
     }

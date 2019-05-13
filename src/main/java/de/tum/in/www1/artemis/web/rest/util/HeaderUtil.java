@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
+import java.nio.charset.Charset;
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-
-import java.nio.charset.Charset;
-import java.util.Base64;
 
 /**
  * Utility class for HTTP headers creation.
@@ -50,6 +50,7 @@ public final class HeaderUtil {
 
     public static HttpHeaders createAuthorization(String username, String password) {
         HttpHeaders acceptHeaders = new HttpHeaders() {
+
             {
                 set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
                 set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());
@@ -64,6 +65,7 @@ public final class HeaderUtil {
 
     public static HttpHeaders createPrivateTokenAuthorization(String privateToken) {
         HttpHeaders acceptHeaders = new HttpHeaders() {
+
             {
                 set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
                 set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());

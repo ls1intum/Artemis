@@ -9,7 +9,9 @@ public class UMLAttribute extends UMLElement {
     public final static String UML_ATTRIBUTE_TYPE = "ClassAttribute";
 
     private UMLClass parentClass;
+
     private String name;
+
     private String type;
 
     public UMLAttribute(String name, String type, String jsonElementID) {
@@ -46,7 +48,7 @@ public class UMLAttribute extends UMLElement {
     }
 
     @Override
-    public String getName () {
+    public String getName() {
         return "Attribute " + name + (type != null && !type.equals("") ? ": " + type : "") + " in class " + parentClass.getValue();
     }
 
@@ -56,5 +58,7 @@ public class UMLAttribute extends UMLElement {
     }
 
     @Override
-    public String getType() { return UML_ATTRIBUTE_TYPE; }
+    public String getType() {
+        return UML_ATTRIBUTE_TYPE;
+    }
 }

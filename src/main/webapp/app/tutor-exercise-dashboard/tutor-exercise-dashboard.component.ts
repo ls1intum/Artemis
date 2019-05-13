@@ -103,10 +103,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
 
                 if (this.exercise.type === this.ExerciseType_TEXT) {
-                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                    const textExercise = this.exercise as TextExercise;
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
                 } else if (this.exercise.type === this.ExerciseType_MODELING) {
                     this.modelingExercise = this.exercise as ModelingExercise;
                     if (this.modelingExercise.sampleSolutionModel) {
@@ -306,10 +307,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     calculateComplaintStatus(accepted?: boolean) {
-        if (accepted) {
+        if (accepted !== undefined) {
             return 'The complaint has already been evaluated';
         }
-
+        // in the case of 'undefined' the complaint is not yet handled
         return 'The complaint still needs to be evaluated';
     }
 }

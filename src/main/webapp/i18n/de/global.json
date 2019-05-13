@@ -2,6 +2,9 @@
     "global": {
         "title": "Artemis",
         "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
+        "generic": {
+            "emptyList": "Keine Elemente verfügbar"
+        },
         "menu": {
             "home": "Startseite",
             "overview": "Übersicht",
@@ -186,7 +189,8 @@
             "newResult": "Neues Ergebnis",
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
-            "exercise": "Aufgaben"
+            "exercise": "Aufgaben",
+            "scores": "Bewertungen"
         },
         "detail": {
             "field": "Feld",

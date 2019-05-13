@@ -45,8 +45,6 @@ export class CourseListComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 for (const course of this.courses) {
-                    course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
-                    course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
                     const scores = this.courseScoreCalculationService.calculateTotalScores(course.exercises);
                     course.absoluteScore = scores.get(ABSOLUTE_SCORE)!;
                     course.relativeScore = scores.get(RELATIVE_SCORE)!;

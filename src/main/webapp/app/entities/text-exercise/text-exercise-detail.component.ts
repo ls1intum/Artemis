@@ -36,7 +36,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.textExercise = textExerciseResponse.body!;
 
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement!);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.textExercise.sampleSolution);
         });
     }

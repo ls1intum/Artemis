@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -25,6 +26,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
+        private accountService: AccountService,
         private artemisMarkdown: ArtemisMarkdown,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -37,8 +39,10 @@ export class TextExerciseComponent extends ExerciseComponent {
                 this.textExercises = res.body!;
 
                 // reconnect exercise with course
-                this.textExercises.forEach(textExercise => {
-                    textExercise.course = this.course;
+                this.textExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },

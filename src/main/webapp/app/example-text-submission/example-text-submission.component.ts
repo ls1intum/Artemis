@@ -173,7 +173,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement!);
+            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
