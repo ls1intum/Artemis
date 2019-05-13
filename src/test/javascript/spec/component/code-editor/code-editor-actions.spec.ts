@@ -60,11 +60,19 @@ describe('CodeEditorActionsComponent', () => {
         expect(submitButton).to.exist;
     });
 
-    const enableSaveButton = cartesianProduct([EditorState.UNSAVED_CHANGES], Object.keys(CommitState).filter(k => k !== CommitState.COMMITTING), [true, false]);
-    const enableCommitButton = cartesianProduct(Object.keys(EditorState).filter(k => k !== EditorState.SAVING), [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
+    const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], Object.keys(CommitState).filter(k => k !== CommitState.COMMITTING), [true, false]);
+    const enableCommitButtonCombinations = cartesianProduct(
+        Object.keys(EditorState).filter(k => k !== EditorState.SAVING),
+        [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN],
+        [false],
+    );
 
-    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState), [true, false]).map(combination =>
-        it(`should save and submit button only if allowed to: ${combination[0]} / ${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
+    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState), [true, false]).map(combination => {
+        const enableSaveButton = enableSaveButtonCombinations.some(c => _isEqual(combination, c));
+        const enableCommitButton = enableCommitButtonCombinations.some(c => _isEqual(combination, c));
+        return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
+            enableCommitButton ? 'Enable commit button' : 'Disable commit button'
+        } for this state combination: ${combination[0]} / ${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
             const [editorState, commitState, isBuilding] = combination;
             comp.editorState = editorState;
             comp.commitState = commitState;
@@ -73,10 +81,10 @@ describe('CodeEditorActionsComponent', () => {
             const saveButton = fixture.debugElement.query(By.css('#save_button'));
             const commitButton = fixture.debugElement.query(By.css('#submit_button'));
 
-            expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton.some(c => _isEqual(combination, c)));
-            expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton.some(c => _isEqual(combination, c)));
-        }),
-    );
+            expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
+            expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
+        });
+    });
 
     it('should update ui when saving', () => {
         const saveButton = fixture.debugElement.query(By.css('#save_button'));
