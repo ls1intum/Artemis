@@ -385,7 +385,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param endLine
      * @param silent
      */
-    private remarkablePlantUmlParser = function (state: any, startLine: number, endLine: number, silent: boolean) {
+    private remarkablePlantUmlParser = function(state: any, startLine: number, endLine: number, silent: boolean) {
         /**
          * Excerpt from the remarkable documentation regarding the stateBlock (param state):
          * src: the complete string the parser is currently working on
