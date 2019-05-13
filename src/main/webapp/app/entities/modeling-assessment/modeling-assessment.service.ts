@@ -35,6 +35,10 @@ export class ModelingAssessmentService {
         return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
     }
 
+    getConflictsForResultInconflict(resultId: number): Observable<Conflict[]> {
+        return this.http.get<Conflict[]>(`${this.resourceUrl}/results/${resultId}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
+    }
+
     escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
         return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
     }

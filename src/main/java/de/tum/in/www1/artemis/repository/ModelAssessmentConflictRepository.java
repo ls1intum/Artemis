@@ -21,5 +21,8 @@ public interface ModelAssessmentConflictRepository extends JpaRepository<ModelAs
     @Query("select  c from ModelAssessmentConflict c where c.causingConflictingResult.result.participation.exercise.id = :#{#exerciseId}")
     List<ModelAssessmentConflict> findAllConflictsOfExercise(@Param("exerciseId") Long exerciseId);
 
+    @Query("select distinct c from ModelAssessmentConflict c, ConflictingResult r where c.id = r.conflict.id and r.result.id = :#{#result.id}")
+    List<ModelAssessmentConflict> findAllConflictsByResultInConflict(@Param("result") Result result);
+
     Optional<ModelAssessmentConflict> findById(Long id);
 }
