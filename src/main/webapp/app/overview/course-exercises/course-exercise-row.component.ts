@@ -59,7 +59,7 @@ export class CourseExerciseRowComponent implements OnInit {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
-    getUrgentClass(date: Moment): string | null {
+    getUrgentClass(date: Moment | null): string | null {
         if (!date) {
             return null;
         }

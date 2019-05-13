@@ -29,7 +29,7 @@
                             <label class="form-control-label" jhiTranslate="arTeMiSApp.course.color" for="field_title">Color</label>
                             <div
                                 class="color-preview form-control"
-                                [ngStyle]="{ backgroundColor: courseForm.get('color').value || ARTEMIS_DEFAULT_COLOR }"
+                                [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
                                 (click)="openColorSelector($event)"
                             ></div>
                             <jhi-color-selector (selectedColor)="onSelectedColor($event)"></jhi-color-selector>

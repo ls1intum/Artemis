@@ -43,7 +43,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.sortQuestionAnswers();
     }
 
-    sortQuestionAnswers() {
+    sortQuestionAnswers(): void {
         this.sortedQuestionAnswers = this.studentQuestion.answers.sort((a, b) => {
             const aValue = moment(a.answerDate!).valueOf();
             const bValue = moment(b.answerDate!).valueOf();
@@ -54,18 +54,18 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {}
 
-    toggleQuestionEditMode() {
+    toggleQuestionEditMode(): void {
         this.studentQuestionText = this.studentQuestion.questionText;
         this.isEditMode = !this.isEditMode;
     }
 
-    toggleAnswerMode(questionAnswer: StudentQuestionAnswer): void {
+    toggleAnswerMode(questionAnswer: StudentQuestionAnswer | null): void {
         this.isAnswerMode = !this.isAnswerMode;
         this.questionAnswerText = questionAnswer ? questionAnswer.answerText : '';
         this.selectedQuestionAnswer = questionAnswer;
     }
 
-    saveQuestion() {
+    saveQuestion(): void {
         this.studentQuestion.questionText = this.studentQuestionText;
         this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
             this.studentQuestionText = null;
@@ -73,7 +73,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
-    deleteQuestion() {
+    deleteQuestion(): void {
         this.studentQuestionService.delete(this.studentQuestion.id).subscribe((res: HttpResponse<any>) => {
             this.interactQuestion.emit({
                 name: QuestionActionName.DELETE,
@@ -97,7 +97,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
-    saveAnswer() {
+    saveAnswer(): void {
         this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
         this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
             this.questionAnswerText = null;
@@ -106,7 +106,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
-    deleteAnswer(studentAnswer: StudentQuestionAnswer) {
+    deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
         this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
             this.studentQuestion.answers = this.studentQuestion.answers.filter(el => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();

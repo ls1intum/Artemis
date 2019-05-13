@@ -21,25 +21,25 @@
             <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
                 <div
                     class="control-label"
-                    [ngClass]="{ 'text-primary': weeklyLecturesGrouped[weekKey].isCurrentWeek }"
-                    (click)="weeklyLecturesGrouped[weekKey].isCollapsed = !weeklyLecturesGrouped[weekKey].isCollapsed"
+                    [ngClass]="{ 'text-primary': weeklyLecturesGrouped[weekKey]!.isCurrentWeek }"
+                    (click)="weeklyLecturesGrouped[weekKey]!.isCollapsed = !weeklyLecturesGrouped[weekKey]!.isCollapsed"
                 >
-                    <fa-icon class="pr-3" [icon]="weeklyLecturesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
-                    <span [innerHtml]="weeklyLecturesGrouped[weekKey].label"></span>
+                    <fa-icon class="pr-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <span [innerHtml]="weeklyLecturesGrouped[weekKey]!.label"></span>
                     <span
                         class="ml-2"
                         jhiTranslate="arTeMiSApp.courseOverview.lectureList.lectureGroupHeader"
-                        [translateValues]="{ total: weeklyLecturesGrouped[weekKey].lectures.length }"
+                        [translateValues]="{ total: weeklyLecturesGrouped[weekKey]!.lectures.length }"
                     >
-                        Exercises: {{ weeklyLecturesGrouped[weekKey].lectures.length }}
+                        Exercises: {{ weeklyLecturesGrouped[weekKey]!.lectures.length }}
                     </span>
                 </div>
-                <div *ngIf="!weeklyLecturesGrouped[weekKey].isCollapsed">
+                <div *ngIf="!weeklyLecturesGrouped[weekKey]!.isCollapsed">
                     <jhi-course-lecture-row
                         class="pb-1"
                         [lecture]="lecture"
                         [course]="course"
-                        *ngFor="let lecture of weeklyLecturesGrouped[weekKey].lectures"
+                        *ngFor="let lecture of weeklyLecturesGrouped[weekKey]!.lectures"
                     ></jhi-course-lecture-row>
                 </div>
                 <div class="collapsed"></div>

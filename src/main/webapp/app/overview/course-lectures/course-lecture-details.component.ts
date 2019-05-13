@@ -40,7 +40,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
                 this.lecture = null;
@@ -51,29 +51,29 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
     }
 
-    backToCourse() {
+    backToCourse(): void {
         this.$location.back();
     }
 
-    attachmentNotReleased(attachment: Attachment) {
-        return attachment.releaseDate && !moment(attachment.releaseDate).isBefore(moment());
+    attachmentNotReleased(attachment: Attachment): boolean {
+        return attachment.releaseDate != null && !moment(attachment.releaseDate).isBefore(moment())!;
     }
 
-    attachmentExtension(attachment: Attachment) {
+    attachmentExtension(attachment: Attachment): string {
         if (!attachment.link) {
             return 'N/A';
         }
 
-        return attachment.link.split('.').pop();
+        return attachment.link.split('.').pop()!;
     }
 
-    downloadAttachment(downloadUrl: string) {
+    downloadAttachment(downloadUrl: string): void {
         this.isDownloadingLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {

@@ -63,7 +63,7 @@
                             <jhi-result [participation]="exercise.participations[0]" [result]="currentResult" showUngradedResults="true" short="true"></jhi-result>
                         </div>
                         <div class="col text-left d-none d-md-flex">
-                            <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate | amTimeAgo }})</h6>
+                            <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate! | amTimeAgo }})</h6>
                         </div>
                     </div>
                     <div class="row mb-2" *ngIf="!currentResult">
@@ -112,7 +112,7 @@
                                 <jhi-result [result]="result" [participation]="exercise.participations[0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
-                                <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate | amTimeAgo }})</h6>
+                                <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>
                             </div>
                         </div>
                     </div>

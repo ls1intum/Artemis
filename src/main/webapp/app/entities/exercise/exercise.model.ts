@@ -52,7 +52,7 @@ export abstract class Exercise implements BaseEntity {
     public dueDate: Moment | null;
     public assessmentDueDate: Moment | null;
     public maxScore: number;
-    public difficulty: DifficultyLevel;
+    public difficulty: DifficultyLevel | null;
     public categories: string[];
     public type: ExerciseType;
 

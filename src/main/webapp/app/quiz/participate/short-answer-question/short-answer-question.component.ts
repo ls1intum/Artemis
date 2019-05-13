@@ -69,7 +69,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.rendered = new ShortAnswerQuestion();
 
         // new way
-        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);

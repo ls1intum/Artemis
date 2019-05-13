@@ -12,15 +12,15 @@ export class DifficultyPickerComponent {
     readonly HARD = DifficultyLevel.HARD;
 
     @Input() exercise: Exercise;
-    @Output() ngModelChange = new EventEmitter<string>();
+    @Output() ngModelChange = new EventEmitter();
 
     /**
      * @function setDifficulty
      * @desc set the difficulty tag and emit the changes to the parent component to notice changes
-     * @param chosen level of difficulty {DifficultyLevel}
+     * @param level chosen level of difficulty {DifficultyLevel}
      */
-    setDifficulty(level: DifficultyLevel) {
+    setDifficulty(level: DifficultyLevel | null) {
         this.exercise.difficulty = level;
-        this.ngModelChange.emit(level);
+        this.ngModelChange.emit();
     }
 }
