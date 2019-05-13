@@ -69,16 +69,14 @@ export class ModelingExerciseDialogComponent implements OnInit {
     }
 
     validateDate() {
-        this.dueDateError =
-            this.modelingExercise.releaseDate !== undefined &&
-            this.modelingExercise.dueDate !== undefined &&
-            !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate);
+        this.dueDateError = this.modelingExercise.releaseDate && this.modelingExercise.dueDate ? !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate) : false;
 
         this.assessmentDueDateError =
-            this.modelingExercise.assessmentDueDate !== undefined &&
-            (this.modelingExercise.releaseDate !== undefined || this.modelingExercise.dueDate !== undefined) &&
-            (!this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.releaseDate) ||
-                !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.dueDate));
+            this.modelingExercise.assessmentDueDate && this.modelingExercise.releaseDate
+                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.releaseDate)
+                : this.modelingExercise.assessmentDueDate && this.modelingExercise.dueDate
+                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.dueDate)
+                : false;
     }
 
     save() {
