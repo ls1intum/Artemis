@@ -172,7 +172,11 @@ export class NotificationService {
 
     interpretNotification(notification: GroupNotification): void {
         const target = JSON.parse(notification.target);
-        const courseId = target.course || notification.course.id;
-        this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+        if (target.course || (notification.course && notification.course.id)) {
+            const courseId = target.course || notification.course.id;
+            this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+        } else if (target.exerciseId) {
+            this.router.navigate([target.mainPage, target.exerciseId, target.entity, target.id, 'conflict']);
+        }
     }
 }

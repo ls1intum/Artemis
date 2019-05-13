@@ -96,9 +96,12 @@ public class ModelAssessmentConflictService {
      * Deletes all conflicts related to the given Participation. Needs to be called before a Participation gets deleted to prevent foreign key constraint violations.
      */
     public void deleteAllConflictsForParticipation(Participation participation) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll().stream()
-                .filter(conflict -> conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())).collect(Collectors.toList());
-        modelAssessmentConflictRepository.deleteAll(existingConflicts);
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll();
+        existingConflicts.forEach(conflict -> {
+            if (conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())) {
+                modelAssessmentConflictRepository.delete(conflict);
+            }
+        });
     }
 
     /**
@@ -143,7 +146,9 @@ public class ModelAssessmentConflictService {
         case UNHANDLED:
             Set<Result> distinctResultsInConflict = new HashSet<>();
             storedConflict.getResultsInConflict().forEach(conflictingResult -> distinctResultsInConflict.add(conflictingResult.getResult()));
-            distinctResultsInConflict.forEach(result -> singleUserNotificationService.notifyTutorAboutNewConflictForResult(result));
+            distinctResultsInConflict.forEach(result -> singleUserNotificationService.notifyTutorAboutNewConflictForResult(result,
+                    storedConflict.getCausingConflictingResult().getResult().getParticipation().getExercise(),
+                    storedConflict.getCausingConflictingResult().getResult().getAssessor()));
             storedConflict.setState(EscalationState.ESCALATED_TO_TUTORS_IN_CONFLICT);
             break;
         case ESCALATED_TO_TUTORS_IN_CONFLICT:

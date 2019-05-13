@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ElementRef, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
@@ -31,50 +31,23 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflictingModel: UMLModel;
     conflictingModelHighlightedElementIds: Set<string>;
 
-    conflicts: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
     conflictsAllHandled = false;
     modelingExercise: ModelingExercise;
-    submissionId: number;
 
-    @ViewChild('escalationModal') escalationModal: ElementRef;
+    @Input() conflicts: Conflict[];
+    @Output() save = new EventEmitter<Feedback[]>();
+    @Output() submit = new EventEmitter<Feedback[]>();
+    @Output() escalate = new EventEmitter<{ escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }>();
+
     constructor(
         private jhiAlertService: JhiAlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
+
         private accountService: AccountService,
-        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
-        this.jhiAlertService.clear();
-        this.route.params.subscribe(params => {
-            this.submissionId = Number(params['submissionId']);
-            this.conflicts = this.modelingAssessmentService.popLocalConflicts(this.submissionId);
-            if (this.conflicts && this.conflicts.length > 0) {
-                this.initComponent();
-            } else {
-                this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(
-                    conflicts => {
-                        this.conflicts = conflicts;
-                        this.initComponent();
-                    },
-                    error => {
-                        this.jhiAlertService.error('modelingAssessmentConflict.messages.noConflicts');
-                    },
-                );
-            }
-        });
-    }
-
-    ngAfterViewInit() {
-        this.setSameWidthOnModelingAssessments();
-    }
-
-    initComponent() {
         this.jhiAlertService.clear();
         this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
         this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
@@ -86,6 +59,10 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateSelectedConflict();
         this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
         this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
+    }
+
+    ngAfterViewInit() {
+        this.setSameWidthOnModelingAssessments();
     }
 
     onNextConflict() {
@@ -130,25 +107,15 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSave() {
-        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
-            result => {
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
-            },
-            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
-        );
+        this.save.emit(this.mergedFeedbacks);
     }
 
     onSubmit() {
         const escalatedConflicts: Conflict[] = this.getEscalatedConflicts();
         if (escalatedConflicts.length > 0) {
-            const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-            modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
-            modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
-            modalRef.result.then(value => {
-                this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submitAssessment());
-            });
+            this.escalate.emit({ escalatedConflicts: this.getEscalatedConflicts(), newFeedbacks: this.mergedFeedbacks });
         } else {
-            this.submitAssessment();
+            this.submit.emit(this.mergedFeedbacks);
         }
     }
 
@@ -168,30 +135,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
         $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
-    }
-
-    private submitAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-            result => {
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
-            },
-            error => {
-                if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
-                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
-                    this.initComponent();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
-                }
-            },
-        );
     }
 
     private updateSelectedConflict() {
@@ -267,15 +210,5 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             }
         }
         return escalatedConflicts;
-    }
-
-    private getDistinctTutorsEscalatingTo(escalatedConflicts: Conflict[]): User[] {
-        const distinctTutors: Map<number, User> = new Map<number, User>();
-        escalatedConflicts.forEach((conflict: Conflict) => {
-            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) =>
-                distinctTutors.set(conflictingResult.result.assessor.id, conflictingResult.result.assessor),
-            );
-        });
-        return Array.from(distinctTutors.values());
     }
 }
