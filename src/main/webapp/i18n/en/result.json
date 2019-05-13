@@ -37,7 +37,9 @@
             "addFeedback": "Add Feedback",
             "deleteFeedback": "Delete Feedback",
             "feedbackTextRequired": "Feedback text is required.",
-            "positive": "Positive"
+            "positive": "Positive",
+            "graded": "Graded",
+            "notGraded": "Not graded"
         }
     }
 }
