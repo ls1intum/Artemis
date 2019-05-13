@@ -615,10 +615,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
 
-"@ls1intum/apollon@2.0.0-rc.7":
-  version "2.0.0-rc.7"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.7.tgz#604903e37367a1428719390f8c1b8339dec32865"
-  integrity sha512-zF8Knp4NHKhMcxBH4Xy7kn468fFgTjLbZzwvK9usTgoAKhKoNYZzT15ua9W6S3Fkxu3nCRx3sythwQFRqo+mag==
+"@ls1intum/apollon@2.0.0-rc.8":
+  version "2.0.0-rc.8"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-rc.8.tgz#889cf79aa565448ae144bc819ef9586bc3961d78"
+  integrity sha512-gtJ7Eq4T6Nzd679J+FW6QJ2z/2NpmiW64o5EqAwsA91eX+U8HiQMuWS1r9QS59FdynNxy1n2ZJ0y6Wsr2Ss7ew==
   dependencies:
     pepjs "0.5.2"
     react "16.8.6"
