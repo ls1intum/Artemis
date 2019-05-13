@@ -22,7 +22,7 @@ public class TextBlockService {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final String submissionText = textSubmission.getText();
         final List<String> blocks = splitSubmissionIntoBlocks(submissionText);
-        final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block)).collect(Collectors.toList());
+        final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block).credits(0d)).collect(Collectors.toList());
 
         result.getFeedbacks().addAll(feedbacks);
     }
