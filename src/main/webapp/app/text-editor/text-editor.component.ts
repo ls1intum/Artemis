@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -13,12 +13,13 @@ import * as moment from 'moment';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit, OnDestroy {
+export class TextEditorComponent implements OnInit {
     textExercise: TextExercise;
     participation: Participation;
     result: Result;
@@ -97,7 +98,9 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    ngOnDestroy() {}
+    get generalFeedback(): Feedback | null {
+        return this.result.feedbacks.find(f => f.reference == null) || null;
+    }
 
     saveText() {
         if (this.isSaving) {
