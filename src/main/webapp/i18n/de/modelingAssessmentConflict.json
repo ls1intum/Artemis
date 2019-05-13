@@ -4,7 +4,8 @@
         "ownAssessmentTitle": "Deine aktuelle Bewertung",
         "button": {
             "keepYours": "Beibehalten",
-            "acceptTheirs": "Übernehmen"
+            "acceptTheirs": "Übernehmen",
+            "submitAnyways": "Dennoch Absenden"
         },
         "tooltip": {
             "keepYours": "Deine Bewertung des markierten Elements wird beibehalten. Der Konflikt wird dabei an diejenigen Tutoren eskaliert, die das markierte Element anders als du bewertet haben.",
@@ -12,7 +13,7 @@
         },
         "messages": {
             "warning": "Hinweis",
-            "escalationWarning": "Du bist dabei {{escalatedConflictsCount}} Konflikte an die betroffenen {{tutorsEscalatingCount}} Tutoren zu eskalieren. Folgende Tutoren sind von deiner Entscheidung betroffen:",
+            "escalationWarning": "Du bist dabei {{escalatedConflictsCount}} Konflikte an die folgenden {{tutorsEscalatingCount}} betroffenen  Tutoren zu eskalieren:",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
@@ -20,7 +21,8 @@
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
             "noConflicts": "Es wurden keine Konflikte zum Bearbeiten gefunden!",
             "conflictsResolved": "Alle Konflikte wurden bearbeitet. Sende deine aktualisierte Bewertung ab, um die Konfliktbehandlung abzuschließen.",
-            "conflictResolutionInstructions": "Entscheide für jeden der vorhandenen Konflikte ob du deine Bewertung behalten oder die bereits vorhandene übernehmen möchtest."
+            "conflictResolutionInstructions": "Entscheide für jeden der vorhandenen Konflikte ob du deine Bewertung behalten oder die bereits vorhandene übernehmen möchtest.",
+            "areYouSure": "Möchtest du dennoch fortfahren?"
         }
     }
 }

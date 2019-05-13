@@ -1,0 +1,7 @@
+<jhi-modeling-assessment-conflict
+    *ngIf="conflicts"
+    [conflicts]="conflicts"
+    (save)="onSave($event)"
+    (escalate)="onEscalate($event)"
+    (submit)="onSubmit($event)"
+></jhi-modeling-assessment-conflict>

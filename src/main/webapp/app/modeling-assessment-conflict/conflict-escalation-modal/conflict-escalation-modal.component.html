@@ -13,6 +13,7 @@
     <li *ngFor="let tutor of tutorsEscalatingTo">{{ tutor.firstName }} {{ tutor.lastName }}</li>
 </div>
 <div class="modal-footer">
+    <span class="ml-2" jhiTranslate="">Are your sure to continue?</span>
     <button type="button" class="btn btn-outline-danger" (click)="activeModal.dismiss('cancel')">Cancel</button>
-    <button type="button" class="btn btn-warning" ngbAutofocus (click)="activeModal.close('Save click')">Continue</button>
+    <button type="button" class="btn btn-primary" ngbAutofocus (click)="activeModal.close('Save click')">Submit Anyways</button>
 </div>

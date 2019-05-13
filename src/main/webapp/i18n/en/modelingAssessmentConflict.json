@@ -4,7 +4,8 @@
         "ownAssessmentTitle": "Your current assessment",
         "button": {
             "keepYours": "Keep Yours",
-            "acceptTheirs": "Take Over"
+            "acceptTheirs": "Take Over",
+            "submitAnyways": "Submit Anyways"
         },
         "tooltip": {
             "keepYours": "You are keeping your assessment of the highlighted element. By that the conflict will be escalated to all tutors that have assessed this element differently.",
@@ -12,7 +13,7 @@
         },
         "messages": {
             "warning": "Warning",
-            "escalationWarning": "You are about to escalate {{escalatedConflictsCount}} conflicts to the affected {{tutorsEscalatingCount}} tutors. The following tutors are affected by your decision:",
+            "escalationWarning": "You are about to escalate {{escalatedConflictsCount}} conflicts to the following affected {{tutorsEscalatingCount}} tutors:",
             "saveSuccessful": "Your assessment was saved successfully!",
             "saveFailed": "Saving your assessment failed!",
             "submitSuccessful": "Your assessment was submitted successfully!",
@@ -20,7 +21,8 @@
             "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
             "noConflicts": "Found no conflicts to handle!",
             "conflictsResolved": "All conflicts have been handled. Submit your updated assessment to complete the conflict resolution.",
-            "conflictResolutionInstructions": "Decide for each conflict whether to keep your own assessment or to take over the already existing one."
+            "conflictResolutionInstructions": "Decide for each conflict whether to keep your own assessment or to take over the already existing one.",
+            "areYouSure": "Are your sure to continue?"
         }
     }
 }

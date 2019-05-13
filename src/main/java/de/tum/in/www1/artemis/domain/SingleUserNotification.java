@@ -70,6 +70,16 @@ public class SingleUserNotification extends Notification implements Serializable
         return target.toString();
     }
 
+    public String newConflictTargetForTutor(Result conflictingResult, Exercise exercise) {
+        JsonObject target = new JsonObject();
+        target.addProperty("message", "newConflict");
+        target.addProperty("id", conflictingResult.getId());
+        target.addProperty("entity", "results");
+        target.addProperty("exerciseId", exercise.getId());
+        target.addProperty("mainPage", "modeling-exercise");
+        return target.toString();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

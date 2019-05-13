@@ -30,9 +30,8 @@ public class SingleUserNotificationService {
         return new SingleUserNotification(recipient, author, title, text);
     }
 
-    public SingleUserNotification createTutorNotificationForConflictingResult(Result conflictingResult) {
+    public SingleUserNotification createTutorNotificationForConflictingResult(Result conflictingResult, User author) {
         User recipient = conflictingResult.getAssessor();
-        User author = conflictingResult.getAssessor();
         String title = "New Conflict";
         String text = "A coflict with one of your assessments has been escalated!";
         return new SingleUserNotification(recipient, author, title, text);
@@ -50,8 +49,9 @@ public class SingleUserNotificationService {
         saveAndSendSingleUserNotification(userNotification);
     }
 
-    public void notifyTutorAboutNewConflictForResult(Result conflictingResult) {
-        SingleUserNotification userNotification = createTutorNotificationForConflictingResult(conflictingResult);
+    public void notifyTutorAboutNewConflictForResult(Result conflictingResult, Exercise exercise, User author) {
+        SingleUserNotification userNotification = createTutorNotificationForConflictingResult(conflictingResult, author);
+        userNotification.setTarget(userNotification.newConflictTargetForTutor(conflictingResult, exercise));
         saveAndSendSingleUserNotification(userNotification);
     }
 
