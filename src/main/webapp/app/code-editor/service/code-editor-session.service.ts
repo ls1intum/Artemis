@@ -1,13 +1,9 @@
 import { Injectable } from '@angular/core';
-import { DomainType, DomainDependent, DomainService } from 'app/code-editor/service';
+import { DomainDependent, DomainService, DomainType } from 'app/code-editor/service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { AnnotationArray } from 'app/entities/ace-editor';
-
-export interface ICodeEditorSessionService {
-    storeSession: (session: { errors: { [fileName: string]: AnnotationArray }; timestamp: number }) => void;
-    loadSession: () => { errors: { [fileName: string]: AnnotationArray }; timestamp: number } | null;
-}
+import { ICodeEditorSessionService } from 'app/code-editor/service/icode-editor-session.service';
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorSessionService extends DomainDependent implements ICodeEditorSessionService {

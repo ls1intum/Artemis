@@ -6,11 +6,10 @@ import { RepositoryService } from '../../entities/repository/repository.service'
 import { Result, ResultService } from '../../entities/result';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
-import { Observable, Subscription } from 'rxjs';
+import { of, Observable, Subscription } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorGridComponent } from '../layout/code-editor-grid.component';
 import { CodeEditorSessionService } from '../service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
 import { CodeEditorBuildLogService } from '../service/code-editor-repository.service';
@@ -20,7 +19,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorSessionService],
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
     @Input()
@@ -33,6 +32,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     get buildLogErrors() {
         return this.buildLogErrorsValue;
     }
+    @Input()
+    toggleCollapse: (event: any, horizontal: boolean, interactable: Interactable, resizableMinWidth: number, resizableMinHeight: number) => void;
     @Output()
     buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
@@ -60,7 +61,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     private resultSubscription: Subscription;
 
     constructor(
-        private parent: CodeEditorGridComponent,
         private $window: WindowRef,
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
@@ -115,10 +115,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results) {
-            const latestResult = this.participation.results.length ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
-            Observable.of(latestResult)
+            const latestResult = this.participation.results.length > 1 ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
+            // TODO: Check if this is still needed as the participationSubscription might already get the latest result...
+            of(latestResult)
                 .pipe(
-                    switchMap(result => (result ? this.loadAndAttachResultDetails(result) : Observable.of(result))),
+                    switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
                     tap(buildLogsFromServer => {
                         const sessionBuildLogs = this.loadSession();
@@ -154,7 +155,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => Observable.of(null)),
+            catchError(() => of(null)),
             map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -189,7 +190,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         ) {
             this.rawBuildLogs = new BuildLogEntryArray();
             const buildLogErrors = this.rawBuildLogs.extractErrors();
-            return Observable.of(buildLogErrors);
+            return of(buildLogErrors);
         } else {
             // If the build failed, find out why
             return this.getBuildLogs();
@@ -203,7 +204,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, undefined, this.resizableMinHeight);
+        this.toggleCollapse($event, horizontal, this.interactResizable, undefined, this.resizableMinHeight);
     }
 
     /**

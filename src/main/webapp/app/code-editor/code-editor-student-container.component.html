@@ -44,6 +44,7 @@
         editorBottomArea
         *ngIf="participation"
         [participation]="participation"
+        [toggleCollapse]="grid.toggleCollapse"
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
     ></jhi-code-editor-build-output>
