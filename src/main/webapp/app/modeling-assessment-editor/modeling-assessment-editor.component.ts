@@ -144,7 +144,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.jhiAlertService.clear();
             this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
         }
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
         }
