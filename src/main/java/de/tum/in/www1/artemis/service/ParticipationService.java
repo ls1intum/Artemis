@@ -647,8 +647,12 @@ public class ParticipationService {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
         }
-        else if (participation.getExercise() instanceof ModelingExercise) {
-            conflictService.deleteAllConflictsForParticipation(participation);
+        if (participation.getExercise() instanceof ModelingExercise && participation.getSubmissions() != null) {
+            for (Submission submission : participation.getSubmissions()) {
+                if (submission.getResult() != null) {
+                    conflictService.updateConflictsOnResultRemoval(submission.getResult());
+                }
+            }
         }
 
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
