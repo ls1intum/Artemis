@@ -12,6 +12,7 @@ import interact from 'interactjs';
 import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -22,6 +23,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @ViewChild('treeview')
     treeview: TreeviewComponent;
 
+    @Input()
+    exercise: ProgrammingExercise;
     @Input()
     get selectedFile() {
         return this.selectedFileValue;
@@ -39,8 +42,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     toggleCollapse: (event: any, horizontal: boolean, interactable: Interactable, resizableMinWidth: number) => void;
     @Output()
-    onRepositoryChecked = new EventEmitter<CommitState>();
-    @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
     selectedFileChange = new EventEmitter<string>();
@@ -55,6 +56,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     selectedFileValue: string;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
+    // TODO: Still used?
     folder: string;
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
@@ -148,21 +150,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     }
 
     initializeComponent = () => {
+        this.isLoadingFiles = true;
         this.checkIfRepositoryIsClean()
             .pipe(
                 tap(commitState => {
-                    if (commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
-                        this.onError.emit('couldNotBeRetrieved');
-                        throwError('couldNotBeRetrieved');
-                    }
-                }),
-                tap(commitState => {
                     this.commitState = commitState;
                 }),
-                switchMap(() => this.loadFiles()),
-                catchError((error: HttpErrorResponse) => {
-                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
-                    return Observable.of({});
+                switchMap(() => {
+                    if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
+                        return throwError('couldNotBeRetrieved');
+                    }
+                    return this.loadFiles();
                 }),
                 tap(files => {
                     this.isLoadingFiles = false;
@@ -170,7 +168,13 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     this.setupTreeview();
                 }),
             )
-            .subscribe(() => {}, err => {});
+            .subscribe(
+                () => {},
+                error => {
+                    this.isLoadingFiles = false;
+                    this.onError.emit(error);
+                },
+            );
     };
 
     /**
@@ -495,7 +499,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
-        this.isLoadingFiles = true;
         return this.repositoryFileService.getRepositoryContent().pipe(
             rxMap(files =>
                 compose(
@@ -513,6 +516,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     toPairs,
                 )(files),
             ),
+            catchError(() => throwError('couldNotBeRetrieved')),
         );
     };
 
