@@ -129,6 +129,10 @@
     right: 0;
     z-index: 10;
 
+    @media (min-width: 320px) and (max-width: 480px) {
+        height: 150px;
+    }
+
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
 
     background: white;
@@ -136,7 +140,8 @@
     .container {
         height: 100%;
 
-        .quiz-footer-content {
+        .quiz-footer-content,
+        .edit-quiz-footer-content {
             @media (min-width: 320px) and (max-width: 480px) {
                 .form-group {
                     padding-top: 10px;
