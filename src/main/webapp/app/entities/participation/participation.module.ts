@@ -15,6 +15,7 @@ import {
     ParticipationPopupService,
     participationRoute,
     ParticipationService,
+    ParticipationWebsocketService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 
@@ -36,7 +37,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ParticipationCleanupBuildPlanDialogComponent,
         ParticipationCleanupBuildPlanPopupComponent,
     ],
-    providers: [ParticipationService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [ParticipationService, ParticipationWebsocketService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSParticipationModule {

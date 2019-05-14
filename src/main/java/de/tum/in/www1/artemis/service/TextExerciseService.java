@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 @Service
 @Transactional
@@ -14,6 +15,7 @@ public class TextExerciseService {
     private final Logger log = LoggerFactory.getLogger(TextExerciseService.class);
 
     private final TextExerciseRepository textExerciseRepository;
+
     private final ParticipationService participationService;
 
     public TextExerciseService(TextExerciseRepository textExerciseRepository, ParticipationService participationService) {

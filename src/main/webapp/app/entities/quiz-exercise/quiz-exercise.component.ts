@@ -27,12 +27,12 @@ export class QuizExerciseComponent extends ExerciseComponent {
     @Input() quizExercises: QuizExercise[] = [];
 
     constructor(
-        courseService: CourseService,
-        translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
-        eventManager: JhiEventManager,
         private accountService: AccountService,
+        courseService: CourseService,
+        translateService: TranslateService,
+        eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
         super(courseService, translateService, route, eventManager);
@@ -43,8 +43,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
             (res: HttpResponse<QuizExercise[]>) => {
                 this.quizExercises = res.body;
                 // reconnect exercise with course
-                this.quizExercises.forEach(quizExercise => {
-                    quizExercise.course = this.course;
+                this.quizExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.quizExercises.length);
                 this.setQuizExercisesStatus();
@@ -108,14 +110,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     setQuizExercisesStatus() {
         this.quizExercises.forEach(quizExercise => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
-    }
-
-    /**
-     * Checks if the User is Admin/Instructor or Teaching Assistant
-     * @returns {boolean} true if the User is an Admin/Instructor, false if not.
-     */
-    userIsInstructor() {
-        return this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
     /**

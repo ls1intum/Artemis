@@ -19,6 +19,10 @@
                 "label": "Füge Präsentation hinzu",
                 "error": "Die Präsentation konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
             },
+            "removePresentation": {
+                "label": "Entferne Präsentation",
+                "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
+            },
             "detail": {
                 "title": "Teilnahme"
             },

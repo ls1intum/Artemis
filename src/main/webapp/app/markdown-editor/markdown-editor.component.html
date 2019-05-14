@@ -11,10 +11,12 @@
                     </ng-container>
                 </div>
                 <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
-                    <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>{{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}</button>
+                    <button class="btn btn-outline-secondary mr-1" type="button" id="dropdownBasic1" ngbDropdownToggle>
+                        {{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}
+                    </button>
                     <div class="dropdown-menu" ngbDropdownMenu>
                         <ng-container *ngFor="let command of headerCommands"
-                            ><button class="dropdown-item" (click)="command.execute()">{{ command.buttonTranslationString | translate }}</button></ng-container
+                            ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
                         >
                     </div>
                 </div>
@@ -26,9 +28,20 @@
                 </div>
             </div>
             <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px">
-                <ng-container *ngFor="let command of domainCommands">
+                <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
                     <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
                         {{ command.buttonTranslationString | translate }}
+                    </div>
+                </ng-container>
+                <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
+                    <div ngbDropdown class="d-inline-block">
+                        <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
+                            {{ command.buttonTranslationString | translate }}
+                        </button>
+                        <div ngbDropdownMenu>
+                            <button *ngFor="let value of command.values" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
+                            <button *ngIf="!command.values.length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                        </div>
                     </div>
                 </ng-container>
             </div>

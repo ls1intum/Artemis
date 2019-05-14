@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import de.tum.in.www1.artemis.domain.*;
-import org.springframework.http.ResponseEntity;
-
 import java.net.URL;
 import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+
+import de.tum.in.www1.artemis.domain.*;
 
 public interface ContinuousIntegrationService {
 
@@ -14,10 +15,11 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     *  @param exercise a programming exercise with the required information to create the base build plan
-     * @param planKey the key of the plan
+     * 
+     * @param exercise                    a programming exercise with the required information to create the base build plan
+     * @param planKey                     the key of the plan
      * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testVcsRepositorySlug the slug of the test repository, i.e. the unique identifier
+     * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
@@ -25,16 +27,14 @@ public interface ContinuousIntegrationService {
      * Copy the base build plan for the given user on the CI system.
      *
      * @param templateBuildPlanId unique identifier for build plan on CI system
-     * @param username        username of user for whom to copy build plan
+     * @param username            username of user for whom to copy build plan
      * @return unique identifier of the copied build plan
      */
     public String copyBuildPlan(String templateBuildPlanId, String username);
 
     /**
-     * Configure the build plan with the given participation on the CI system. Common configurations:
-     * - update the repository in the build plan
-     * - set appropriate user permissions
-     * - initialize/enable the build plan so that it works
+     * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
+     * initialize/enable the build plan so that it works
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
@@ -42,10 +42,10 @@ public interface ContinuousIntegrationService {
 
     /**
      * triggers a build for the build plan in the given participation
+     * 
      * @param participation the participation with the id of the build plan that should be triggered
      */
     public void triggerBuild(Participation participation);
-
 
     /**
      * Delete project with given identifier from CI system.
@@ -62,8 +62,7 @@ public interface ContinuousIntegrationService {
     public void deleteBuildPlan(String buildPlanId);
 
     /**
-     * Will be called when a POST request is sent to the '/results/{buildPlanId}'.
-     * Configure this as a build step in the build plan.
+     * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
      * <p>
      * Important: The implementation is responsible for retrieving and saving the result from the CI system.
      *
@@ -73,9 +72,8 @@ public interface ContinuousIntegrationService {
     public Result onBuildCompletedOld(Participation participation);
 
     /**
-     * Get the plan key of the finished build, the information of the build gets passed via the requestBody.
-     * The requestBody must match the information passed from the bamboo-server-notification-plugin, the body is
-     * described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
+     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -84,12 +82,11 @@ public interface ContinuousIntegrationService {
     public String getPlanKey(Object requestBody) throws Exception;
 
     /**
-     * Get the result of the finished build, the information of the build gets passed via the requestBody.
-     * The requestBody must match the information passed from the bamboo-server-notification-plugin, the body is
-     * described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
+     * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
      *
      * @param participation The participation for which the build finished
-     * @param requestBody The request Body received from the CI-Server.
+     * @param requestBody   The request Body received from the CI-Server.
      * @return the result of the build
      * @throws Exception if the Body could not be parsed
      */
@@ -106,16 +103,14 @@ public interface ContinuousIntegrationService {
     /**
      * Check if the given build plan ID is valid and accessible.
      *
-     * @param buildPlanId   unique identifier for build plan on CI system
+     * @param buildPlanId unique identifier for build plan on CI system
      * @return
      */
     public Boolean buildPlanIdIsValid(String buildPlanId);
 
     /**
-     * Get details about the latest build result.
-     *
-     * Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html
-     * Used to generate the interactive exercise instructions: webapp/app/editor/instructions/editor-instructions.components.js
+     * Get details about the latest build result. Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html Used to generate the
+     * interactive exercise instructions: webapp/app/editor/instructions/editor-instructions.components.js
      *
      * @param result the result for which to get details
      * @return List of automatic feedback by the continuous integration server. contains the test methods and their results:
@@ -125,15 +120,15 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
-     * @param participation  participation for which to get the build logs
-     * @return  list of build log entries
+     * @param participation participation for which to get the build logs
+     * @return list of build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(Participation participation);
 
     /**
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
      *
-     * @param participation  participation for which to get the build plan URL
+     * @param participation participation for which to get the build plan URL
      * @return
      */
     public URL getBuildPlanWebUrl(Participation participation);

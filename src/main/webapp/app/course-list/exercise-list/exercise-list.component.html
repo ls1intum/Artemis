@@ -18,7 +18,7 @@
                 </td>
             </tr>
 
-            <tr *ngFor="let exercise of (exercises | showExercise: showInactiveExercises)">
+            <tr *ngFor="let exercise of exercises | showExercise: showInactiveExercises">
                 <td>
                     <span>{{ exercise.title }}</span>
                     <a class="text-primary" *ngIf="exercise.isAtLeastInstructor">
@@ -72,16 +72,16 @@
                 </td>
                 <td [ngSwitch]="exercise.participationStatus">
                     <span class="text-muted" *ngSwitchCase="'uninitialized'" jhiTranslate="arTeMiSApp.exercise.notStarted">You have not started this exercise yet.</span>
-                    <span *ngSwitchCase="'initialized'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
-                    <span *ngSwitchCase="'inactive'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
+                    <span *ngSwitchCase="'initialized'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
+                    <span *ngSwitchCase="'inactive'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">You have not started this quiz yet.</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">You have not participated in this live quiz.</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-active'">You are currently participating in this quiz.</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
-                    <span *ngSwitchCase="'quiz-finished'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
-                    <span *ngSwitchCase="'modeling-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
-                    <span *ngSwitchCase="'text-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
+                    <span *ngSwitchCase="'quiz-finished'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
+                    <span *ngSwitchCase="'modeling-exercise'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
+                    <span *ngSwitchCase="'text-exercise'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
                 </td>
                 <td class="text-center" [ngSwitch]="exercise.participationStatus">
                     <button

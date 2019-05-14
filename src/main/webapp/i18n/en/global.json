@@ -2,6 +2,9 @@
     "global": {
         "title": "Artemis",
         "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">upgrade your browser</a> to improve your experience.",
+        "generic": {
+            "emptyList": "No items available"
+        },
         "menu": {
             "home": "Home",
             "overview": "Overview",
@@ -187,7 +190,8 @@
             "newResult": "New Result",
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "scores": "Scores"
         },
         "detail": {
             "field": "Field",
