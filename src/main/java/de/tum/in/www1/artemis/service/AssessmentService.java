@@ -156,27 +156,20 @@ abstract class AssessmentService {
             User assessor = result.getAssessor();
 
             Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
+            StatsTutorLeaderboardDTO element;
 
-            if (existingElement.isPresent()) {
-                existingElement.get().numberOfAssessments += 1;
-
-                if (result.getHasComplaint()) {
-                    existingElement.get().numberOfComplaints += 1;
-                }
+            if (!existingElement.isPresent()) {
+                String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
+                element = new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 0, 0);
             }
             else {
-                String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
-                int numberOfComplaints = 0;
+                element = existingElement.get();
+            }
 
-                try {
-                    if (result.hasComplaint()) {
-                        numberOfComplaints = 1;
-                    }
-                }
-                catch (Exception ex) {
-                } // Since hasComplaint() is not always present, we ignore null exceptions
+            element.numberOfAssessments += 1;
 
-                tutorWithNumberAssessmentList.add(new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 1, numberOfComplaints));
+            if (result.getHasComplaint()) {
+                element.numberOfComplaints += 1;
             }
         });
 
