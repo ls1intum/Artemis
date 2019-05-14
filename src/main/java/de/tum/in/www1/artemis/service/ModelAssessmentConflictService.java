@@ -99,13 +99,16 @@ public class ModelAssessmentConflictService {
         return existingConflicts.stream().filter(conflict -> conflict.getState().equals(state)).collect(Collectors.toList());
     }
 
-    public void deleteAllConflictsForParticipation(Participation participation) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll();
-        existingConflicts.forEach(conflict -> {
-            if (conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())) {
-                modelAssessmentConflictRepository.delete(conflict);
+    public void updateConflictsOnResultRemoval(Result result) {
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
+        modelAssessmentConflictRepository.deleteAll(existingConflicts);
+        existingConflicts = modelAssessmentConflictRepository.findAllConflictsByResultInConflict(result);
+        existingConflicts.forEach(conflict -> conflict.getResultsInConflict().forEach(conflictingResult -> {
+            if (conflictingResult.getResult().getId().equals(result.getId())) {
+                conflict.getResultsInConflict().remove(conflictingResult);
+                conflictingResultRepository.delete(conflictingResult);
             }
-        });
+        }));
     }
 
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {

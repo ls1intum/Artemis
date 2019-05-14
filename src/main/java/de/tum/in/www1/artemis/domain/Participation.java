@@ -69,7 +69,7 @@ public class Participation implements Serializable {
     @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
-    private Set<Result> results = new HashSet<>();
+    private Set<Result> results = new HashSet<>(); // TODO MJ always empty in case of modelling submissions
 
     /**
      * Because a submission has a reference to the participation and the participation has a collection of submissions, setting the cascade type to PERSIST would result in
