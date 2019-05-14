@@ -56,7 +56,7 @@ public class AutomaticSubmissionService {
      * due date. - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
      * of the corresponding participation to FINISHED. - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
-    @Scheduled(cron = "*/20 * * * * *")
+    @Scheduled(cron = "0 0 1 * * *")
     @Transactional
     public void run() {
         // global try-catch for error logging
