@@ -100,7 +100,8 @@ public class AutomaticSubmissionService {
     }
 
     /**
-     * Updates the participation for a given submission. The participation is set to FINISHED. Currently only handles modeling submissions.
+     * Updates the participation for a given submission. The participation is set to FINISHED. In the case of a modeling exercise Compass is additionally notified about the new
+     * submission.
      *
      * @param submission the submission for which the participation should be updated for
      * @return submission if updating participation successful, otherwise null
