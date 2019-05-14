@@ -404,9 +404,15 @@ public class BitbucketService implements VersionControlService {
         try {
             restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
             grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions
-            grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
-            grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get write-permissions
 
+            if (programmingExercise.getCourse().getInstructorGroupName() != null && !programmingExercise.getCourse().getInstructorGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
+            }
+
+            if (programmingExercise.getCourse().getTeachingAssistantGroupName() != null && !programmingExercise.getCourse().getTeachingAssistantGroupName().isEmpty()) {
+                grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
+                                                                                                                                             // write-permissions
+            }
         }
         catch (HttpClientErrorException e) {
             log.error("Could not create Bitbucket project {} with key {}", projectName, projectKey, e);

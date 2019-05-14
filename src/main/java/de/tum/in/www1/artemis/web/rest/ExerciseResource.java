@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -125,13 +124,20 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
+
+        User student = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(id);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
+
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+        if (isStudent) {
+            exercise.filterSensitiveInformation();
+        }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
@@ -355,7 +361,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
