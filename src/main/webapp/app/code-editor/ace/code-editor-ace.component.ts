@@ -38,13 +38,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     @Input()
     readonly commitState: CommitState;
     @Input()
-    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timeStamp: number } {
+    get buildLogErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
         return this.buildLogErrorsValue;
     }
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
-    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timeStamp: number }>();
+    buildLogErrorsChange = new EventEmitter<{ errors: { [fileName: string]: AnnotationArray }; timestamp: number }>();
     @Output()
     onError = new EventEmitter<string>();
 
@@ -55,7 +55,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
     isLoading = false;
     annotationChange: Subscription;
-    buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timeStamp: number };
+    buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     // We store changes in the editor since the last content emit to update annotation positions.
     editorChangeLog: TextChange[] = [];

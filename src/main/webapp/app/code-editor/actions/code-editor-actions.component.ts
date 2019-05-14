@@ -37,7 +37,7 @@ export class CodeEditorActionsComponent {
     @Output()
     isBuildingChange = new EventEmitter<boolean>();
     @Output()
-    onSavedFiles = new EventEmitter<Array<[string, string | null]>>();
+    onSavedFiles = new EventEmitter<{ [fileName: string]: string | null }>();
     @Output()
     onError = new EventEmitter<string>();
 

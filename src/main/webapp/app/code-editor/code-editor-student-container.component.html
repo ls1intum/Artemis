@@ -13,7 +13,7 @@
             [(commitState)]="commitState"
             [(isBuilding)]="isBuilding"
             (onSavedFiles)="onSavedFiles($event)"
-            (onError)="onError(err)"
+            (onError)="onError($event)"
         ></jhi-code-editor-actions>
     </div>
     <jhi-code-editor-file-browser
@@ -21,10 +21,9 @@
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"
-        [toggleEditorCollapse]="grid.toggleEditorCollapse"
+        [toggleCollapse]="grid.toggleCollapse"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
-        (onRepositoryChecked)="onRepositoryChecked($event)"
         (onFileChange)="onFileChange($event)"
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace

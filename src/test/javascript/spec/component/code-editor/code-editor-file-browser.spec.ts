@@ -17,7 +17,7 @@ import { FileType } from 'app/entities/ace-editor/file-change.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('CodeEditorActionsComponent', () => {
+describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
     let fixture: ComponentFixture<CodeEditorFileBrowserComponent>;
     let debugElement: DebugElement;
