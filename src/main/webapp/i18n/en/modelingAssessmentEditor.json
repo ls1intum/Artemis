@@ -15,7 +15,8 @@
             "submitSuccessful": "Your assessment was submitted successfully!",
             "submitFailed": "Submitting your assessment failed!",
             "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
-            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
+            "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
+            "confirmSubmission": "Are you sure you want to submit this assessment? You will not be able to change it afterwards."
         }
     }
 }

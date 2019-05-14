@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { DiagramType, UMLModel, UMLElement } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -46,6 +47,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -162,37 +164,20 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        this.removeCircularDependencies();
-        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
-            this.localFeedbacks = [];
+        if (!this.localFeedbacks || !this.assessmentsAreValid) {
+            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+            const confirm = window.confirm(confirmationMessage);
+            if (confirm) {
+                this.submitAssessment();
+            } else {
+                this.highlightedElementIds = new Set<string>();
+                this.model.elements.forEach((element: UMLElement) => {
+                    this.highlightedElementIds.add(element.id);
+                });
+            }
+        } else {
+            this.submitAssessment();
         }
-        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
-        // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
-            (result: Result) => {
-                result.participation.results = [result];
-                this.result = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.conflicts = undefined;
-                this.ignoreConflicts = false;
-            },
-            (error: HttpErrorResponse) => {
-                if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.result);
-                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
-                    this.highlightConflictingElements();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
-                }
-            },
-        );
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
@@ -221,6 +206,38 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.busy = false;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+            },
+        );
+    }
+
+    private submitAssessment() {
+        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
+            this.localFeedbacks = [];
+        }
+        this.removeCircularDependencies();
+        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+            (result: Result) => {
+                result.participation.results = [result];
+                this.result = result;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.conflicts = undefined;
+                this.ignoreConflicts = false;
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 409) {
+                    this.conflicts = error.error as Conflict[];
+                    this.conflicts.forEach((conflict: Conflict) => {
+                        this.modelingAssessmentService.convertResult(conflict.result);
+                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                    });
+                    this.highlightConflictingElements();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
+                } else {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
+                }
             },
         );
     }
