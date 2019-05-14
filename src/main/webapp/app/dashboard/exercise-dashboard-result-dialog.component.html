@@ -1,8 +1,8 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result.participation">
     <div class="modal-header">
         <h4 class="modal-title" id="myResultLabel">
-            <span jhiTranslate="arTeMiSApp.result.createManual">Create manual result for </span> {{ result.participation.student.firstName }}
-            {{ result.participation.student.lastName }} ({{ result.participation.exercise.title }})
+            <span jhiTranslate="arTeMiSApp.result.createManual">Create manual result for </span> {{ result.participation?.student.firstName }}
+            {{ result.participation?.student.lastName }} ({{ result.participation?.exercise.title }})
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -21,7 +21,7 @@
         <div class="form-group">
             <label class="control-label" jhiTranslate="arTeMiSApp.result.resultString">Result Text</label>
             <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
-            <span class="text-danger" *ngIf="resultString.invalid && resultString.errors.required" jhiTranslate="arTeMiSApp.result.resultStringRequired"
+            <span class="text-danger" *ngIf="resultString.invalid && resultString?.errors?.required" jhiTranslate="arTeMiSApp.result.resultStringRequired"
                 >Result text is required.</span
             >
         </div>
@@ -61,7 +61,7 @@
                 <div class="form-group">
                     <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"> Feedback #{{ i + 1 }} Text </label>
                     <input type="text" class="form-control" name="feedbackText{{ i }}" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
-                    <span class="text-danger" *ngIf="feedbackText.invalid && feedbackText.errors.required" jhiTranslate="arTeMiSApp.result.feedbackTextRequired"
+                    <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="arTeMiSApp.result.feedbackTextRequired"
                         >Feedback text is required.</span
                     >
                 </div>
