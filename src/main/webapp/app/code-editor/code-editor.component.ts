@@ -360,7 +360,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: any) {
+    onSavedFiles(files: { [fileName: string]: string | null }) {
         const { errorFiles, savedFiles } = Object.entries(files).reduce(
             (acc, [fileName, error]: [string, string | null]) =>
                 error ? { ...acc, errorFiles: [fileName, ...acc.errorFiles] } : { ...acc, savedFiles: [fileName, ...acc.savedFiles] },
