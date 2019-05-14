@@ -148,6 +148,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
+            console.log('automatically submitted');
+            console.log(submission);
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.model) {
