@@ -1,9 +1,9 @@
-import { hasParticipationChanged, Participation } from '../../entities/participation';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
-import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
@@ -64,8 +64,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         private $window: WindowRef,
         private buildLogService: CodeEditorBuildLogService,
         private resultService: ResultService,
-        private resultWebsocketService: ResultWebsocketService,
         private sessionService: CodeEditorSessionService,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
     /**
@@ -137,15 +137,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable
-                .pipe(
-                    tap(() => (this.isBuilding = false)),
-                    switchMap(result => this.fetchBuildResults(result)),
-                    tap(buildLogErrors => (this.buildLogErrors = buildLogErrors)),
-                )
-                .subscribe();
-        });
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(
+                tap(() => (this.isBuilding = false)),
+                switchMap(result => this.fetchBuildResults(result)),
+                tap(buildLogErrors => (this.buildLogErrors = buildLogErrors)),
+            )
+            .subscribe();
     }
 
     /**

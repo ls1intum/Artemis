@@ -118,6 +118,7 @@ import {
     faListAlt as farListAlt,
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
+    faCommentDots as farCommentDots,
     faSave as farSave,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
@@ -226,6 +227,7 @@ library.add(farQuestionCircle);
 library.add(farCheckCircle);
 library.add(farDotCircle);
 library.add(farTimeCircle);
+library.add(farCommentDots);
 library.add(farListAlt);
 library.add(farFileImage);
 library.add(farCheckSquare);

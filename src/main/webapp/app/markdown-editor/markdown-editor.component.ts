@@ -22,9 +22,9 @@ import {
     ColorPickerCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
-import { NgbTabset } from '@ng-bootstrap/ng-bootstrap';
+import { DomainTagCommand } from './domainCommands/domainTag.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -39,6 +39,8 @@ export enum MarkdownEditorHeight {
     styleUrls: ['./markdown-editor.component.scss'],
 })
 export class MarkdownEditorComponent implements AfterViewInit {
+    public DomainMultiOptionCommand = DomainMultiOptionCommand;
+    public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
@@ -47,7 +49,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
         mode: 'markdown',
     };
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
-    @ViewChild('tabs') tabs: NgbTabset;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input()
@@ -80,7 +81,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
-    @Input() domainCommands: DomainCommand[];
+    @Input() domainCommands: Array<DomainCommand>;
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();

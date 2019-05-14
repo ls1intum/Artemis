@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -55,9 +56,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService) {
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -66,6 +70,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -185,6 +190,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             result.getParticipation().setStudent(null);
         }
+        if (submit) {
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -216,6 +224,30 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise);
         Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
+        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        if (modelingSubmission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
+            // you cannot cancel the assessment of other tutors
+            return forbidden();
+        }
+        modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
+        return ResponseEntity.ok().build();
     }
 
     @Override

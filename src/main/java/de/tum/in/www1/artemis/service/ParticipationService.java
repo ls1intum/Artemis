@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,12 +35,8 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -72,6 +69,8 @@ public class ParticipationService {
 
     private final QuizSubmissionService quizSubmissionService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final UserService userService;
 
     private final Optional<GitService> gitService;
@@ -80,10 +79,13 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            SimpMessageSendingOperations messagingTemplate) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -91,10 +93,12 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -133,6 +137,7 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -255,8 +260,16 @@ public class ParticipationService {
      * @return resumed participation
      */
     public Participation resumeExercise(Exercise exercise, Participation participation) {
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        participation = copyBuildPlan(participation, programmingExercise);
+        // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
+        // as the VCS-server performs the request
+        SecurityUtils.setAuthorizationObject();
+
+        // Reload programming exercise from database so that the template participation is available
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
+        if (!programmingExercise.isPresent()) {
+            return null;
+        }
+        participation = copyBuildPlan(participation, programmingExercise.get());
         participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {

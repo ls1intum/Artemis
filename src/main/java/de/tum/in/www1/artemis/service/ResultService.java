@@ -9,6 +9,9 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -40,8 +43,10 @@ public class ResultService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final ObjectMapper objectMapper;
+
     public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
         this.userService = userService;
         this.participationService = participationService;
         this.feedbackService = feedbackService;
@@ -49,6 +54,7 @@ public class ResultService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
         this.messagingTemplate = messagingTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Result findOne(long id) {
@@ -162,5 +168,29 @@ public class ResultService {
 
     public List<Result> findByCourseId(Long courseId) {
         return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
+    }
+
+    /**
+     * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
+     * the original result of a submission before updating the result due to a complaint.
+     *
+     * @param originalResult the original result that was complained about
+     * @return the reduced result as a JSON string
+     * @throws JsonProcessingException when the conversion to JSON string fails
+     */
+    public String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
+        Result resultCopy = new Result();
+        resultCopy.setId(originalResult.getId());
+        resultCopy.setResultString(originalResult.getResultString());
+        resultCopy.setCompletionDate(originalResult.getCompletionDate());
+        resultCopy.setSuccessful(originalResult.isSuccessful());
+        resultCopy.setScore(originalResult.getScore());
+        resultCopy.setRated(originalResult.isRated());
+        resultCopy.hasFeedback(originalResult.getHasFeedback());
+        resultCopy.setFeedbacks(originalResult.getFeedbacks());
+        resultCopy.setAssessor(originalResult.getAssessor());
+        resultCopy.setAssessmentType(originalResult.getAssessmentType());
+        resultCopy.setHasComplaint(originalResult.getHasComplaint());
+        return objectMapper.writeValueAsString(resultCopy);
     }
 }

@@ -2,14 +2,19 @@
     <h4>
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
-        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'new']" id="create-quiz-button">
+        <button
+            *ngIf="course && course.isAtLeastInstructor"
+            class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
+            [routerLink]="['/course', courseId, 'quiz-exercise', 'new']"
+            id="create-quiz-button"
+        >
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
         </button>
         <button
-            *ngIf="quizExercises && quizExercises.length > 0"
+            *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastInstructor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course', courseId, 'quiz-exercise', 'export']"
         >
@@ -18,7 +23,7 @@
                 Export Quiz Exercises
             </span>
         </button>
-        <button class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+        <button *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
@@ -44,10 +49,10 @@
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises | sortBy: predicate:reverse; trackBy: trackId">
-                    <td *ngIf="!quizIsOver(quizExercise) || !userIsInstructor()">
+                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor">
                         <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="quizIsOver(quizExercise) && userIsInstructor()">
+                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
                         <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
@@ -104,21 +109,37 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button type="submit" [routerLink]="['/quiz', quizExercise.id, 'preview']" class="btn btn-info btn-sm mr-1 mb-1">
+                                <button
+                                    *ngIf="quizExercise.isAtLeastTutor"
+                                    type="submit"
+                                    [routerLink]="['/quiz', quizExercise.id, 'preview']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon icon="eye"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.preview">Preview</span>
                                 </button>
-                                <button type="submit" [routerLink]="['/quiz', quizExercise.id, 'solution']" class="btn btn-info btn-sm mr-1 mb-1">
+                                <button
+                                    *ngIf="quizExercise.isAtLeastTutor"
+                                    type="submit"
+                                    [routerLink]="['/quiz', quizExercise.id, 'solution']"
+                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon icon="eye"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.solution">Solution</span>
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button type="submit" [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']" class="btn btn-success btn-sm mr-1 mb-1">
+                                <button
+                                    *ngIf="quizExercise.isAtLeastTutor"
+                                    type="submit"
+                                    [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
+                                    class="btn btn-success btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon icon="signal"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
                                 </button>
                                 <button
+                                    *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
                                     [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
@@ -128,14 +149,20 @@
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
-                                <button type="submit" (click)="exportQuizById(quizExercise.id, true)" class="btn btn-primary btn-sm mr-1 mb-1">
+                                <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
+                                    type="submit"
+                                    (click)="exportQuizById(quizExercise.id, true)"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon [icon]="'file-export'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                 </button>
                                 <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    [hidden]="quizIsOver(quizExercise) && userIsInstructor()"
-                                    [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
+                                    [hidden]="quizIsOver(quizExercise)"
+                                    [disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -143,8 +170,9 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </button>
                                 <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    [hidden]="!quizIsOver(quizExercise) || !userIsInstructor()"
+                                    [hidden]="!quizIsOver(quizExercise)"
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -154,6 +182,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/delete' } }]"
                                     replaceUrl="true"
@@ -165,6 +194,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                                 </button>
                                 <button
+                                    *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/reset' } }]"
                                     replaceUrl="true"

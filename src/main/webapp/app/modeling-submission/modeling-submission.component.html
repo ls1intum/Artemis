@@ -1,4 +1,4 @@
-<div [ngClass]="{ 'submission-container': !submission?.submitted, 'assessment-result-container': submission?.submitted }">
+<div class="submission-container d-flex flex-column">
     <jhi-alert></jhi-alert>
     <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
         <div class="col-12 col-lg-8">
@@ -8,7 +8,7 @@
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
+            <div *ngIf="participation"><jhi-updating-result [participation]="participation"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <div class="row editor-container">
+    <div class="row flex-grow-1">
         <div *ngIf="submission?.submitted" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"
@@ -80,6 +80,11 @@
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.title">Assessment</h4>
+            <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedbackText }}
+            </div>
             <p
                 *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
                 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.noAssessment"

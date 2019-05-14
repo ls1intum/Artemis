@@ -75,6 +75,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
+    removePresentation(participation: Participation) {
+        participation.presentationScore = 0;
+        this.participationService.update(participation).subscribe(
+            () => {},
+            () => {
+                this.jhiAlertService.error('arTeMiSApp.participation.removePresentation.error');
+            },
+        );
+    }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }

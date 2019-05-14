@@ -6,19 +6,11 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -29,21 +21,13 @@ public class TextAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
-    private final ComplaintResponseService complaintResponseService;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final ObjectMapper objectMapper;
-
-    public TextAssessmentService(FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ObjectMapper objectMapper) {
-        super(complaintResponseService, complaintRepository, resultRepository, objectMapper);
+    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
+            ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
+            ParticipationRepository participationRepository, ResultService resultService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
-        this.complaintResponseService = complaintResponseService;
-        this.complaintRepository = complaintRepository;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -54,9 +38,10 @@ public class TextAssessmentService extends AssessmentService {
      * @param textExercise   the text exercise the assessment belongs to
      * @param textAssessment the assessments as a list
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) {
+    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
         Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
@@ -70,9 +55,19 @@ public class TextAssessmentService extends AssessmentService {
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+        checkGeneralFeedback(textAssessment);
+
+        final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
+                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+        if (hasAssessmentWithTooLongReference) {
+            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "textAssessment",
+                    "feedbackReferenceTooLong");
+        }
+
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
 
@@ -118,7 +113,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a courseId, return the number of assessments for that course
-     * 
+     *
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
@@ -128,7 +123,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
-     * 
+     *
      * @param courseId - the course we are interested in
      * @param tutorId  - the tutor we are interested in
      * @return a number of assessments for the course
@@ -139,7 +134,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given an exerciseId, return the number of assessments for that exerciseId
-     * 
+     *
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
@@ -149,7 +144,7 @@ public class TextAssessmentService extends AssessmentService {
 
     /**
      * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor
-     * 
+     *
      * @param exerciseId - the exercise we are interested in
      * @param tutorId    - the tutor we are interested in
      * @return a number of assessments for the exercise
