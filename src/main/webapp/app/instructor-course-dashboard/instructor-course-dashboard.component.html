@@ -32,14 +32,14 @@
                             </li>
                             <li>
                                 <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }} ({{ stats.numberOfOpenComplaints }}
-                                {{ 'arTeMiSApp.instructorCourseDashboard.open' | translate }})
+                                {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4" *ngIf="stats">
+            <div class="col-md-4" *ngIf="stats && !loading">
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
             </div>
         </div>
@@ -84,7 +84,11 @@
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
-                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">{{ exercise.numberOfAssessments }}</span>
+                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">
+                                        {{ exercise.numberOfAssessments }} / {{ exercise.participations.length }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments, exercise.participations.length)
+                                        }}%)
+                                    </span>
                                 </div>
                             </div>
                         </td>

@@ -450,7 +450,7 @@ public class CourseResource {
      * GET /courses/:id/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints
+     * assessments - number of complaints - number of open complaints - tutor leaderboard data
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
@@ -474,6 +474,14 @@ public class CourseResource {
         stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
         stats.numberOfComplaints = numberOfComplaints;
         stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
+
+        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+
+        stats.numberOfSubmissions = numberOfSubmissions;
+        stats.numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+
+        stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
 
         return ResponseEntity.ok(stats);
     }
