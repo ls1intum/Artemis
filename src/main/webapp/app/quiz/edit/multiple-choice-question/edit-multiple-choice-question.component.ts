@@ -131,13 +131,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                 currentAnswerOption.text = text;
                 this.question.answerOptions.push(currentAnswerOption);
             } else if (command instanceof ExplanationCommand) {
-                if (currentAnswerOption != null) {
+                if (currentAnswerOption.isCorrect !== undefined) {
                     currentAnswerOption.explanation = text;
                 } else {
                     this.question.explanation = text;
                 }
             } else if (command instanceof HintCommand) {
-                if (currentAnswerOption != null) {
+                if (currentAnswerOption.isCorrect !== undefined) {
                     currentAnswerOption.hint = text;
                 } else {
                     this.question.hint = text;
