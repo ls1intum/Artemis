@@ -166,7 +166,18 @@ public class ParticipationResource {
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        if (exercise == null) {
+            log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "exerciseNotFound", "The exercise does not exist")).body(null);
+        }
+
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if (participation == null) {
+            log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert("participation", "participationNotFound", "No participation was found for the given exercise and user.")).body(null);
+        }
+
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
