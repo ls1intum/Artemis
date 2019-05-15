@@ -34,7 +34,7 @@
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
                     <div class="col-12 col-md-12 markdown-preview">
                         <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
-                        <p [innerHTML]="formattedProblemStatement"></p>
+                        <p [innerHTML]="exercise.problemStatement | htmlForMarkdown | safeHtml"></p>
                     </div>
                 </div>
             </ng-template>
