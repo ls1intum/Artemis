@@ -53,7 +53,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService,
         private location: Location,
-        private translateService: TranslateService
+        private translateService: TranslateService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
@@ -276,10 +276,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private submitAssessment() {
-        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
-            this.localFeedbacks = [];
-        }
-        this.removeCircularDependencies();
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
