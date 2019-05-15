@@ -14,8 +14,19 @@ import { ExerciseService } from 'app/entities/exercise';
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 
+export interface IResultService {
+    create: (result: Result) => Observable<EntityResponseType>;
+    update: (result: Result) => Observable<EntityResponseType>;
+    find: (id: number) => Observable<EntityResponseType>;
+    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
+    findResultsForParticipation: (courseId: number, exerciseId: number, participationId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getFeedbackDetailsForResult: (resultId: number) => Observable<HttpResponse<Feedback[]>>;
+    delete: (id: number) => Observable<HttpResponse<void>>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class ResultService {
+export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
 

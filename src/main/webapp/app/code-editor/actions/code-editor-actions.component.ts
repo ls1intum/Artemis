@@ -5,6 +5,7 @@ import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { FileType } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -76,7 +77,7 @@ export class CodeEditorActionsComponent {
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     return Observable.of(null);
                 }),
-                tap((res: Array<[string, string]> | null) => (res ? this.onSavedFiles.emit(res) : null)),
+                tap((res: { [fileName: string]: FileType }) => (res ? this.onSavedFiles.emit(res) : null)),
             );
         } else {
             return Observable.of(null);

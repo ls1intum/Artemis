@@ -201,5 +201,6 @@
         [participation]="selectedParticipation"
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
+        (onError)="onError($event)"
     ></jhi-code-editor-build-output>
 </jhi-code-editor-grid>

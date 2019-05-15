@@ -1,18 +1,18 @@
 import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { WindowRef } from '../../core/websocket/window.service';
-import { RepositoryService } from '../../entities/repository/repository.service';
+import { WindowRef } from 'app/core/websocket/window.service';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { Result, ResultService } from '../../entities/result';
-import { BuildLogEntryArray } from '../../entities/build-log';
+import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { of, Observable, Subscription } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorSessionService } from '../service/code-editor-session.service';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { AnnotationArray } from 'app/entities/ace-editor';
-import { CodeEditorBuildLogService } from '../service/code-editor-repository.service';
+import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -38,6 +38,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
     isBuildingChange = new EventEmitter<boolean>();
+    @Output()
+    onError = new EventEmitter<string>();
 
     rawBuildLogs = new BuildLogEntryArray();
     buildLogErrorsValue: BuildLogErrors;
@@ -58,7 +60,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         this.isBuildingChange.emit(isBuilding);
     }
 
-    private resultSubscription: Subscription;
+    private resultSubscriptions: { [id: number]: Subscription } = {};
 
     constructor(
         private $window: WindowRef,
@@ -103,30 +105,40 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     /**
      * @function ngOnChanges
      * @desc We need to update the participation results under certain conditions:
-     *       - Participation changed
+     *       - Participation changed => reset websocket connection and load initial result
      * @param {SimpleChanges} changes
      *
      */
     ngOnChanges(changes: SimpleChanges): void {
         const participationChange = hasParticipationChanged(changes);
-        // If the participation changes, set component to initial as everything needs to be reloaded now
-        if (participationChange) {
-            this.setupResultWebsocket();
-        }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
-        if (participationChange && this.participation.results) {
-            const latestResult = this.participation.results.length > 1 ? this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc)) : null;
-            // TODO: Check if this is still needed as the participationSubscription might already get the latest result...
+        if (participationChange && this.participation.results && this.participation.results.length) {
+            if (!this.resultSubscriptions[this.participation.id]) {
+                this.setupResultWebsocket();
+            }
+            const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
             of(latestResult)
                 .pipe(
                     switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
-                    tap(buildLogsFromServer => {
-                        const sessionBuildLogs = this.loadSession();
-                        this.buildLogErrors = !sessionBuildLogs || buildLogsFromServer.timestamp > sessionBuildLogs.timestamp ? buildLogsFromServer : sessionBuildLogs;
+                    map(buildLogsFromServer => (buildLogsFromServer ? new BuildLogEntryArray(...buildLogsFromServer) : new BuildLogEntryArray())),
+                    tap((buildLogsFromServer: BuildLogEntryArray) => {
+                        this.rawBuildLogs = buildLogsFromServer;
+                        const buildLogErrors = this.rawBuildLogs.extractErrors();
+                        // Only load errors from session if the last result has build errors
+                        if (this.rawBuildLogs.length) {
+                            const sessionBuildLogs = this.loadSession();
+                            this.buildLogErrors = !sessionBuildLogs || buildLogErrors.timestamp > sessionBuildLogs.timestamp ? buildLogErrors : sessionBuildLogs;
+                        } else {
+                            this.buildLogErrors = buildLogErrors;
+                        }
                     }),
                 )
-                .subscribe();
+                .subscribe(() => {}, console.log);
+        } else {
+            if (!this.resultSubscriptions[this.participation.id]) {
+                this.setupResultWebsocket();
+            }
         }
     }
 
@@ -135,17 +147,27 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Online updates the build logs if the result is new, otherwise doesn't react.
      */
     private setupResultWebsocket() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (!this.resultSubscriptions[this.participation.id]) {
+            this.participationWebsocketService.addParticipation(this.participation);
+            this.resultSubscriptions[this.participation.id] = this.participationWebsocketService
+                .subscribeForLatestResultOfParticipation(this.participation.id)
+                .pipe(
+                    // Ignore initial null result from service
+                    filter(result => !!result),
+                    switchMap(result => this.fetchBuildResults(result)),
+                    catchError(() => {
+                        this.onError.emit('failedToLoadBuildLogs');
+                        this.isBuilding = false;
+                        return [] as BuildLogEntry[];
+                    }),
+                    tap((buildLogsFromServer: BuildLogEntry[]) => {
+                        this.isBuilding = false;
+                        this.rawBuildLogs = new BuildLogEntryArray(...buildLogsFromServer);
+                        this.buildLogErrors = this.rawBuildLogs.extractErrors();
+                    }),
+                )
+                .subscribe(() => {}, console.log);
         }
-        this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(
-                tap(() => (this.isBuilding = false)),
-                switchMap(result => this.fetchBuildResults(result)),
-                tap(buildLogErrors => (this.buildLogErrors = buildLogErrors)),
-            )
-            .subscribe();
     }
 
     /**
@@ -169,12 +191,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @desc Gets the buildlogs for the current participation
      */
     getBuildLogs() {
-        return this.buildLogService.getBuildLogs().pipe(
-            map((buildLogs: BuildLogEntryArray) => {
-                this.rawBuildLogs = new BuildLogEntryArray(...buildLogs);
-                return this.rawBuildLogs.extractErrors();
-            }),
-        );
+        return this.buildLogService.getBuildLogs();
     }
 
     /**
@@ -183,14 +200,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Else -> show build logs.
      * @param result
      */
-    fetchBuildResults(result: Result) {
-        if (
-            !result ||
-            ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
-        ) {
-            this.rawBuildLogs = new BuildLogEntryArray();
-            const buildLogErrors = this.rawBuildLogs.extractErrors();
-            return of(buildLogErrors);
+    fetchBuildResults(result: Result): Observable<BuildLogEntry[] | null> {
+        if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
+            return of(null);
         } else {
             // If the build failed, find out why
             return this.getBuildLogs();
@@ -216,8 +228,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     }
 
     ngOnDestroy() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
+        Object.values(this.resultSubscriptions).forEach(subscription => subscription.unsubscribe());
     }
 }

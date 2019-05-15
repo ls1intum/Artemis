@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/Observable';
 
-import { BuildLogEntryArray } from 'app/entities/build-log';
+import { BuildLogEntryArray, BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
@@ -31,7 +31,7 @@ export interface IRepositoryService {
 }
 
 export interface IBuildLogService {
-    getBuildLogs: () => Observable<BuildLogEntryArray>;
+    getBuildLogs: () => Observable<BuildLogEntry[]>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -60,7 +60,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
     }
 
     getBuildLogs = () => {
-        return this.http.get<BuildLogEntryArray>(`${this.restResourceUrl}/buildlogs`, {});
+        return this.http.get<BuildLogEntry[]>(`${this.restResourceUrl}/buildlogs`, {});
     };
 }
 

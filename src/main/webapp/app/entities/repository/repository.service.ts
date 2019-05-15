@@ -6,7 +6,7 @@ import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { tap } from 'rxjs/operators';
 
-import { BuildLogEntryArray } from '../../entities/build-log';
+import { BuildLogEntry, BuildLogEntryArray } from '../../entities/build-log';
 import { SERVER_API_URL } from '../../app.constants';
 import { FileType } from '../ace-editor/file-change.model';
 import { Participation } from '../participation';
@@ -30,8 +30,8 @@ export class RepositoryService {
         return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
 
-    buildlogs(participationId: number): Observable<BuildLogEntryArray> {
-        return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/${participationId}/buildlogs`);
+    buildlogs(participationId: number): Observable<BuildLogEntry[]> {
+        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
 }
 

@@ -1,7 +1,7 @@
 import { safeUnescape } from 'app/shared';
 import { AnnotationArray } from '../ace-editor';
 
-type BuildLogEntry = {
+export type BuildLogEntry = {
     time: any;
     log: string;
 };
@@ -18,7 +18,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
      */
     extractErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
         if (this.length) {
-            const timestamp = this[0].time;
+            const timestamp = Date.parse(this[0].time);
             const errors = this
                 // Parse build logs
                 .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })

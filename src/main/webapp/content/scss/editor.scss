@@ -157,20 +157,21 @@ body.editor .navbar-brand span {
     font-size: 11px;
     overflow: hidden;
     margin: 0;
-}
 
-.buildoutput dt {
-    width: 130px;
-    color: #505050;
-    font-weight: normal;
-    float: left;
-    clear: left;
-}
-
-.buildoutput dd {
-    margin-left: 140px;
-    margin-bottom: 0;
-    color: #003366;
+    &__entry {
+        &-date {
+            width: 130px;
+            color: #505050;
+            font-weight: normal;
+            float: left;
+            clear: left;
+        }
+        &- text {
+            margin-left: 140px;
+            margin-bottom: 0;
+            color: #003366;
+        }
+    }
 }
 
 .editor .instructions {
