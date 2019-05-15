@@ -1,6 +1,6 @@
 import { HostListener } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, map, tap, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 
@@ -92,6 +92,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
                 fromPairs,
                 map(([fileName, fileContent]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), fileContent]),
                 filter(([fileName]) => fileName.startsWitch(fileChange.oldFileName)),
+                filter(entry => !_isEmpty(entry)),
                 toPairs,
             )(this.unsavedFiles);
             const unaffectedUnsavedFiles = compose(
@@ -141,6 +142,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
                 this.selectedFile = undefined;
             }
         }
+        this.storeSession();
         // Set the fileChange to inform other Components so they can update their references to the files
         this.fileChange = fileChange;
     }

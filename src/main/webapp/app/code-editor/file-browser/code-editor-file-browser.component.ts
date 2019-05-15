@@ -20,6 +20,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+    FileType = FileType;
+
     @ViewChild('treeview')
     treeview: TreeviewComponent;
 
@@ -49,8 +51,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     commitStateChange = new EventEmitter<CommitState>();
     @Output()
     onError = new EventEmitter<string>();
-
-    public FileType = FileType;
 
     isLoadingFiles: boolean;
     selectedFileValue: string;
@@ -383,58 +383,40 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * and emit the changes to the parent.
      * After rename the rename state is exited.
      **/
-    onRenameFile(event: any) {
-        if (!event.target.value || !this.renamingFile) {
-            return;
-        } else if (event.target.value === this.renamingFile[1]) {
-            this.renamingFile = null;
-            return;
-        }
-
-        const [filePath, fileName, fileType] = this.renamingFile;
+    onRenameFile({ item, newFileName }: { item: TreeviewItem; newFileName: string }) {
+        const [filePath, , fileType] = this.renamingFile;
         let newFilePath: any = filePath.split('/');
-        newFilePath[newFilePath.length - 1] = event.target.value;
+        newFilePath[newFilePath.length - 1] = newFileName;
         newFilePath = newFilePath.join('/');
 
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
+        } else if (newFileName.split('.').length > 1 && !textFileExtensions.includes(newFileName.split('.').pop())) {
             this.onError.emit('unsupportedFile');
             return;
         }
 
-        if (event.target.value !== fileName) {
-            this.renameFile(filePath, event.target.value).subscribe(
-                () => {
-                    this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
-                    this.renamingFile = null;
-                },
-                () => this.onError.emit('fileOperationFailed'),
-            );
-        } else {
-            this.renamingFile = null;
-        }
+        this.renameFile(filePath, newFileName).subscribe(
+            () => {
+                this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                this.renamingFile = null;
+            },
+            () => this.onError.emit('fileOperationFailed'),
+        );
     }
 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setRenamingFile(event: any, filePath: string, fileName: string, fileType: FileType) {
-        event.stopPropagation();
-        this.renamingFile = [filePath, fileName, fileType];
-        setTimeout(() => {
-            if (this.renamingInput) {
-                this.renamingInput.nativeElement.focus();
-            }
-        }, 0);
+    setRenamingFile(item: TreeviewItem) {
+        this.renamingFile = [item.value, item.text, this.repositoryFiles[item.value]];
     }
 
     /**
      * Set renamingFile to null to make the input disappear.
      **/
-    clearRenamingFile($event: any) {
-        $event.stopPropagation();
+    clearRenamingFile() {
         this.renamingFile = null;
     }
 
@@ -442,16 +424,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Create a file with the value of the creation input.
      **/
     onCreateFile(event: any) {
-        if (!event.target.value || !this.creatingFile) {
-            this.creatingFile = null;
+        if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
+            this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(event.target.value)) {
             this.onError.emit('fileExists');
             return;
-        } else if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
-            this.onError.emit('unsupportedFile');
-            return;
         }
+
         const [folderPath, fileType] = this.creatingFile;
         const file = folderPath ? `${folderPath}/${event.target.value}` : event.target.value;
         if (fileType === FileType.FILE) {
@@ -476,9 +456,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     /**
      * Enter rename file mode and focus the created input.
      **/
-    setCreatingFile(event: any, folder: string, fileType: FileType) {
-        event.stopPropagation();
+    setCreatingFile({ item: { value: folder }, fileType }: { item: TreeviewItem; fileType: FileType }) {
         this.creatingFile = [folder, fileType];
+        setTimeout(() => {
+            if (this.creatingInput) {
+                this.creatingInput.nativeElement.focus();
+            }
+        }, 0);
+    }
+
+    setCreatingFileRoot(fileType: FileType) {
+        this.creatingFile = ['', fileType];
         setTimeout(() => {
             if (this.creatingInput) {
                 this.creatingInput.nativeElement.focus();
@@ -536,8 +524,9 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @function openDeleteFileModal
      * @desc Opens a popup to delete the selected repository file
      */
-    openDeleteFileModal($event: any, fileName: string, fileType: FileType) {
-        $event.stopPropagation();
+    openDeleteFileModal(item: TreeviewItem) {
+        const { text: fileName } = item;
+        const fileType = this.repositoryFiles[item.value];
         if (fileName) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.parent = this;
