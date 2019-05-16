@@ -141,14 +141,14 @@ For more information, review [Working with Angular](https://www.jhipster.tech/de
 
 ### Using docker-compose
 
-A full functioning development environment can also be setup using docker-compose: `docker-compose up`
+A full functioning development environment can also be set up using docker-compose: `docker-compose up`. But first configure the file `application-artemis.yml` in the folder `src/main/resources/config` as described above.
 
 Requirements:
 
 * [docker](https://docs.docker.com/install/)
 * [docker-compose](https://docs.docker.com/compose/install/)
 
-Currently the frontend and the server are running in the same container. Frontend-based changes will be applied without reloading. For server-side changes you need to stop the setup via `docker-compose stop` and restart it again with `docker-compose up`.
+Currently the client and the server are running in the same container. Client-based changes will be applied without reloading. For server-side changes you need to stop the setup via `docker-compose stop` and restart it again with `docker-compose up`.
 
 Get a shell into the containers:
 
