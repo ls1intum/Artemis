@@ -269,7 +269,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const spotIds = spots.split(',').map(Number);
 
         for (const id of spotIds) {
-            const spotForMapping = this.question.spots.find(spot => spot.spotNr === id);
+            const spotForMapping = this.question.spots.find(spot => spot.spotNr === id)!;
             this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
         }
     }
