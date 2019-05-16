@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,10 +39,14 @@ public class QuizSubmissionResource {
 
     private final ParticipationService participationService;
 
-    public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService) {
+    private final SimpMessageSendingOperations messagingTemplate;
+
+    public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
+            SimpMessageSendingOperations messagingTemplate) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -94,6 +99,7 @@ public class QuizSubmissionResource {
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
+        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }

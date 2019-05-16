@@ -75,9 +75,9 @@ export class ArtemisMarkdown {
      * @return {string}
      */
     generateTextHintExplanation(sourceObject: MarkDownElement) {
-        return sourceObject.text
-            ? sourceObject.text
-            : '' +
+        return !sourceObject.text
+            ? ''
+            : sourceObject.text +
                   (sourceObject.hint ? '\n\t' + HintCommand.identifier + ' ' + sourceObject.hint : '') +
                   (sourceObject.explanation ? '\n\t' + ExplanationCommand.identifier + ' ' + sourceObject.explanation : '');
     }

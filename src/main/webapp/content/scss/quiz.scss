@@ -10,6 +10,14 @@
     margin-bottom: 8px;
 }
 
+.short-answer-question-div-as-input {
+    background-color: white;
+    border: 1px solid #ced4da;
+    padding: 2px 3px;
+    width: 170px;
+    height: 40px;
+}
+
 .short-answer-question-display {
     display: flex;
     max-width: 100%;
@@ -129,12 +137,34 @@
     right: 0;
     z-index: 10;
 
+    @media (min-width: 320px) and (max-width: 480px) {
+        height: 150px;
+    }
+
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
 
     background: white;
 
     .container {
         height: 100%;
+
+        .quiz-footer-content,
+        .edit-quiz-footer-content {
+            @media (min-width: 320px) and (max-width: 480px) {
+                .form-group {
+                    padding-top: 10px;
+                }
+            }
+
+            .form-group {
+                justify-content: center;
+
+                .dropup {
+                    text-align: center;
+                    width: 100%;
+                }
+            }
+        }
     }
 }
 
@@ -183,6 +213,10 @@
 
 .quiz-footer {
     height: 100px;
+
+    @media (min-width: 320px) and (max-width: 480px) {
+        height: 150px;
+    }
 }
 
 .edit-quiz-footer-content,
@@ -898,8 +932,12 @@
 .quiz-footer-content {
     #remaining-time {
         text-align: center;
-        position: absolute;
-        left: 42%;
+        width: 100%;
+
+        > div {
+            text-align: center;
+            width: 100%;
+        }
     }
 
     #remaining-time-value {

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -55,9 +56,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService) {
+            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
@@ -66,6 +70,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -184,6 +189,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             result.getParticipation().setStudent(null);
+        }
+        if (submit) {
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
     }

@@ -447,11 +447,11 @@ export class ShortAnswerQuestionUtil {
      * @param text
      */
     getSpotNr(text: string): number {
+        // separate "[-spot 1]" into just "1"
         return +text
-            .split(/\[-spot/g)
-            .slice(1)
-            .join()
-            .trim()[0];
+            .split(/\[-spot/g)[1]
+            .split(']')[0]
+            .trim();
     }
 
     /**
