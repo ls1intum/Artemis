@@ -60,7 +60,10 @@
             "isModeling": "This is a modeling exercise",
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
-            "isFileUpload": "This is a file upload exercise"
+            "isFileUpload": "This is a file upload exercise",
+            "errors": {
+                "exerciseNotExisting": "This exercise does not exist (anymore)"
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

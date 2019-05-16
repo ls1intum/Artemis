@@ -168,14 +168,13 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (exercise == null) {
             log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "exerciseNotFound", "The exercise does not exist")).body(null);
+            throw new BadRequestAlertException("The exercise does not exist.", "exercise", "exerciseNotFound");
         }
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         if (participation == null) {
             log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("participation", "participationNotFound", "No participation was found for the given exercise and user.")).body(null);
+            throw new BadRequestAlertException("No participation was found for the given exercise and user.", "editor", "participationNotFound");
         }
 
         checkAccessPermissionOwner(participation);
