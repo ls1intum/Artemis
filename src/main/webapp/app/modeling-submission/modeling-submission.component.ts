@@ -174,7 +174,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.umlModel = JSON.parse(this.submission.model);
                     this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
-                if (this.submission.result && this.submission.result.rated) {
+                if (this.submission.result && this.submission.result.completionDate) {
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
