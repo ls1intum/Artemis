@@ -129,13 +129,11 @@
                                 (change)="setQuestionText('element-' + i + '-' + j + '-textInput')"
                             />
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element)" style="position: relative; display: inline-block">
-                                <input
-                                    class="short-answer-question-input"
-                                    disabled
-                                    type="text"
+                                <div
+                                    class="short-answer-question-div-as-input"
                                     dnd-droppable
                                     (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question), $event)"
-                                />
+                                ></div>
                                 <div style="position: absolute;top: -8px;right: -4px;display: inline-flex;" *ngIf="reEvaluationInProgress">
                                     <div
                                         class="re-evaluate-button"
