@@ -17,7 +17,7 @@
             "unsubmittedChanges": "Nicht abgesendete Änderungen vorhanden.",
             "submittingChanges": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Absendung wird vorbereitet.",
-            "submit": "Kompilieren und Ausführen",
+            "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
             "building": "Building...",
             "buildFailed": "Build gescheitert",
