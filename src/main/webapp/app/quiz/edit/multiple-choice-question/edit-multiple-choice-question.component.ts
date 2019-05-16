@@ -115,7 +115,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        let currentAnswerOption = new AnswerOption();
+        let currentAnswerOption;
 
         for (const [text, command] of domainCommands) {
             if (command === null && text.length > 0) {
@@ -131,13 +131,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                 currentAnswerOption.text = text;
                 this.question.answerOptions!.push(currentAnswerOption);
             } else if (command instanceof ExplanationCommand) {
-                if (currentAnswerOption != null) {
+                if (currentAnswerOption) {
                     currentAnswerOption.explanation = text;
                 } else {
                     this.question.explanation = text;
                 }
             } else if (command instanceof HintCommand) {
-                if (currentAnswerOption != null) {
+                if (currentAnswerOption) {
                     currentAnswerOption.hint = text;
                 } else {
                     this.question.hint = text;

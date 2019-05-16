@@ -67,8 +67,8 @@
         </div>
         <div class="quizStatistic-footer">
             <div class="container">
-                <div class="edit-quiz-footer-content">
-                    <div class="form-group">
+                <div class="edit-quiz-footer-content row">
+                    <div class="form-group col-sm">
                         <div class="d-inline-block" ngbDropdown placement="top-right">
                             <button class="btn btn-primary btn-sm" ngbDropdownToggle>
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -110,7 +110,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group col-sm">
                         <div class="btn-group flex-btn-group-container">
                             <button (click)="previousStatistic()" jhiTranslate="showStatistic.previousStatistic" class="btn btn-default"></button>
                             <button (click)="nextStatistic()" jhiTranslate="showStatistic.nextStatistic" class="btn btn-default"></button>

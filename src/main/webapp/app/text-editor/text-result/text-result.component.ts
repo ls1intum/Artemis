@@ -28,7 +28,10 @@ export class TextResultComponent {
     constructor(private translateService: TranslateService) {}
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
-        const resultBlocks = feedbacks.map(this.feedbackToTextResultBlock, this).sort((a, b) => b.startIndex - a.startIndex);
+        const resultBlocks = feedbacks
+            .filter(f => f.reference != null)
+            .map(this.feedbackToTextResultBlock, this)
+            .sort((a, b) => b.startIndex - a.startIndex);
 
         let nextBlock = resultBlocks.pop();
         let startIndex = 0;

@@ -34,7 +34,7 @@
                 <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
                     <div class="col-12 col-md-12 markdown-preview">
                         <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
-                        <p [innerHTML]="formattedProblemStatement"></p>
+                        <p [innerHTML]="exercise.problemStatement | htmlForMarkdown | safeHtml"></p>
                     </div>
                 </div>
             </ng-template>
@@ -60,7 +60,7 @@
                             </h4>
                         </div>
                         <div class="col text-left">
-                            <jhi-result [participation]="exercise.participations[0]" [result]="currentResult" showUngradedResults="true" short="true"></jhi-result>
+                            <jhi-result [participation]="currentResult.participation" [result]="currentResult" short="true"></jhi-result>
                         </div>
                         <div class="col text-left d-none d-md-flex">
                             <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate! | amTimeAgo }})</h6>
@@ -116,12 +116,12 @@
                             </div>
                         </div>
                     </div>
-                    <div *ngIf="!exercise.participations">
+                    <div *ngIf="!combinedParticipation || !combinedParticipation.results">
                         {{ 'arTeMiSApp.courseOverview.exerciseDetails.noResults' | translate }}
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-iexercise.participations[0].resultstems-baseline" *ngIf="hasResults && exercise.participations[0].results.length > 1">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="hasResults && combinedParticipation.results.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
                         showMoreResults

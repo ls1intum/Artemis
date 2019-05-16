@@ -69,7 +69,7 @@
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise.templateParticipation.results" class="d-flex align-items-center">
-                        <jhi-result [participation]="programmingExercise.templateParticipation" class="mr-2"></jhi-result>
+                        <jhi-updating-result [participation]="programmingExercise.templateParticipation" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.templateParticipation.results.length"
                             class="repository-status-icon"
@@ -81,7 +81,7 @@
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise.solutionParticipation.results" class="d-flex align-items-center">
-                        <jhi-result [participation]="programmingExercise.solutionParticipation" class="mr-2"></jhi-result>
+                        <jhi-updating-result [participation]="programmingExercise.solutionParticipation" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.solutionParticipation.results.length"
                             class="repository-status-icon"

@@ -299,7 +299,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const shortAnswerQuestion = new ShortAnswerQuestion();
         shortAnswerQuestion.title = '';
-        shortAnswerQuestion.text = 'Enter your long question if needed';
+        shortAnswerQuestion.text =
+            'Enter your long question if needed\n\n' +
+            'Select a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\n' +
+            'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n\n' +
+            'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):\n\n' +
+            '[-option 1] is\n' +
+            '[-option 2] input\n' +
+            '[-option 1,2] correctInBothFields';
         shortAnswerQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.score = 1;
