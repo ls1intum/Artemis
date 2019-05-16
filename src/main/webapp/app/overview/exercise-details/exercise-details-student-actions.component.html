@@ -99,16 +99,6 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="participationStatus() === INACTIVE"
-            (click)="resumeExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openModelingEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -263,16 +253,6 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="participationStatus() === INACTIVE"
-            (click)="resumeExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openTextEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -332,16 +312,6 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            (click)="resumeExercise()"
         ></button>
     </div>
     <!-- ACTIONS END-->
