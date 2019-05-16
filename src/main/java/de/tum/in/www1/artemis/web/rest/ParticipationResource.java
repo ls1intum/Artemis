@@ -165,10 +165,13 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        if (exercise == null) {
+        Exercise exercise;
+        try {
+            exercise = exerciseService.findOne(exerciseId);
+        }
+        catch (EntityNotFoundException e) {
             log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
-            throw new BadRequestAlertException("The exercise does not exist.", "exercise", "exerciseNotFound");
+            throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
         }
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());

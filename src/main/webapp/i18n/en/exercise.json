@@ -62,7 +62,7 @@
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
             "errors": {
-                "exerciseNotExisting": "This exercise does not exist (anymore)"
+                "exerciseNotFound": "This exercise was not found"
             }
         },
         "exerciseLtiConfiguration": {

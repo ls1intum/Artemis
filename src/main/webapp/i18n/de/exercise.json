@@ -62,7 +62,7 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "errors": {
-                "exerciseNotExisting": "Diese Übung existiert nicht (mehr)"
+                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
             }
         },
         "exerciseLtiConfiguration": {
