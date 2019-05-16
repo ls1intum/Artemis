@@ -7,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { AccountService, JhiWebsocketService } from 'app/core';
+import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
@@ -23,6 +23,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    private currentUser: User;
     private exerciseId: number;
     public courseId: number;
     private subscription: Subscription;
@@ -53,6 +54,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
+            this.accountService.identity().then((user: User) => {
+                this.currentUser = user;
+            });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
             }
@@ -66,7 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-                this.exercise.participations = cachedParticipations;
+                this.exercise.participations = cachedParticipations.filter((participation: Participation) => participation.student.id === this.currentUser.id);
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
