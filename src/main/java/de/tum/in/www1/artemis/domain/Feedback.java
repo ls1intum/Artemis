@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Feedback implements Serializable {
 
+    public static final int MAX_REFERENCE_LENGTH = 2000;
+
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -40,7 +42,7 @@ public class Feedback implements Serializable {
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
-    @Size(max = 2000)
+    @Size(max = MAX_REFERENCE_LENGTH)
     @Column(name = "reference")
     private String reference;
 
@@ -103,6 +105,10 @@ public class Feedback implements Serializable {
     public Feedback reference(String reference) {
         this.reference = reference;
         return this;
+    }
+
+    public boolean hasReference() {
+        return reference != null && !reference.isEmpty();
     }
 
     public void setReference(String reference) {

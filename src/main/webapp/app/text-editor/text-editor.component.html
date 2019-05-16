@@ -8,7 +8,7 @@
         </div>
 
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
+            <div *ngIf="participation"><jhi-updating-result [participation]="participation"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary mr-2" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
@@ -43,20 +43,26 @@
     </div>
 
     <div class="row">
-        <div class="col" *ngIf="!result; else hasFeedback">
+        <div class="col-12 col-lg-10 col-xl-8" *ngIf="!result; else hasFeedback">
             <textarea [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
         </div>
 
         <ng-template #hasFeedback>
-            <div class="col mt-3">
+            <div class="col-md-12 col-lg-10 col-xl-8">
                 <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
                 <br />
                 <jhi-text-result [result]="result"></jhi-text-result>
             </div>
+
+            <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedback.detailText }}
+            </div>
         </ng-template>
     </div>
 
-    <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint">
+    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint">
         <button
             class="btn btn-primary"
             [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
@@ -70,6 +76,6 @@
     </div>
 
     <div class="row" *ngIf="showComplaintForm || hasComplaint">
-        <jhi-complaint-form [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints" class="col-12"></jhi-complaint-form>
+        <jhi-complaint-form class="flex-grow-1" [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
     </div>
 </div>

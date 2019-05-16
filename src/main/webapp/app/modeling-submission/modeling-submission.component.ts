@@ -42,6 +42,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
+    generalFeedbackText: String;
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
@@ -121,7 +122,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
-                                this.initializeAssessmentInfo();
+                                this.prepareAssessmentData();
                             });
                             this.complaintService.findByResultId(this.result.id).subscribe(res => {
                                 this.hasComplaint = !!res.body;
@@ -153,10 +154,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.umlModel = JSON.parse(this.submission.model);
                     this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
-                if (this.submission.result && this.submission.result.rated) {
+                if (this.submission.result && this.submission.result.completionDate) {
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
-                        this.initializeAssessmentInfo();
+                        this.prepareAssessmentData();
                     });
                 }
                 this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
@@ -260,7 +261,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.participation = Object.assign({}, participation);
                         this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                             this.assessmentResult = assessmentResult;
-                            this.initializeAssessmentInfo();
+                            this.prepareAssessmentData();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
                     } else {
@@ -312,9 +313,31 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
+     * Prepare assessment data for displaying the assessment information to the student.
+     */
+    private prepareAssessmentData(): void {
+        this.filterGeneralFeedback();
+        this.initializeAssessmentInfo();
+    }
+
+    /**
+     * Gets the text of the general feedback, if there is one, and removes it from the original feedback list that is displayed in the assessment list.
+     */
+    private filterGeneralFeedback(): void {
+        if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
+            const feedback = this.assessmentResult.feedbacks;
+            const generalFeedbackIndex = feedback.findIndex(feedbackElement => feedbackElement.reference == null);
+            if (generalFeedbackIndex >= 0) {
+                this.generalFeedbackText = feedback[generalFeedbackIndex].detailText;
+                feedback.splice(generalFeedbackIndex, 1);
+            }
+        }
+    }
+
+    /**
      * Retrieves names for displaying the assessment and calculates the total score
      */
-    initializeAssessmentInfo(): void {
+    private initializeAssessmentInfo(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
