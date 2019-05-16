@@ -64,10 +64,10 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
                     this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate > r2.completionDate) {
+                        if (r1.completionDate! > r2.completionDate!) {
                             return -1;
                         }
-                        if (r1.completionDate < r2.completionDate) {
+                        if (r1.completionDate! < r2.completionDate!) {
                             return 1;
                         }
                         return 0;
@@ -85,8 +85,8 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     subscribeForNewResults(exercise: Exercise) {
         this.accountService.identity().then(user => {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course);
-            const isSameUser = this.participation.student && user.id === this.participation.student.id;
+            const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course!);
+            const isSameUser = this.participation.student && user!.id === this.participation.student.id;
             const exerciseNotOver = exercise.dueDate == null || exercise.dueDate.isAfter(moment());
 
             if ((isSameUser && exerciseNotOver) || isInstructorInCourse) {

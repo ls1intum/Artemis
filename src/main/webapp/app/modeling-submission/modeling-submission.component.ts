@@ -42,7 +42,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     assessmentResult: Result | null;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
-    generalFeedbackText: String;
+    generalFeedbackText: String | null;
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element

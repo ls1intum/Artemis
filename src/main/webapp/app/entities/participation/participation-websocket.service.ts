@@ -13,8 +13,8 @@ const EXERCISE_WEBSOCKET = 'exercise_';
 export class ParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
     openWebsocketConnections: Map<string /* results_{id of participation} */, string /* url of websocket connection */> = new Map<string, string>();
-    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();
-    participationObservable: BehaviorSubject<Participation>;
+    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
+    participationObservable: BehaviorSubject<Participation | null>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
 
@@ -82,12 +82,12 @@ export class ParticipationWebsocketService {
     removeParticipation(id: number, exerciseId?: number) {
         this.cachedParticipations.delete(id);
         // removing results observable
-        const participationResultTopic = this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${id}`);
+        const participationResultTopic = this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${id}`)!;
         this.jhiWebsocketService.unsubscribe(participationResultTopic);
         this.openWebsocketConnections.delete(`${RESULTS_WEBSOCKET}${id}`);
         // removing exercise observable
         if (exerciseId) {
-            const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+            const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`)!;
             this.jhiWebsocketService.unsubscribe(participationTopic);
             this.openWebsocketConnections.delete(`${EXERCISE_WEBSOCKET}${exerciseId}`);
         }
@@ -146,7 +146,7 @@ export class ParticipationWebsocketService {
     }
 
     getParticipation(id: number): Participation {
-        return this.cachedParticipations.get(id);
+        return this.cachedParticipations.get(id)!;
     }
 
     /**
@@ -157,7 +157,7 @@ export class ParticipationWebsocketService {
      * @private
      */
     private addResultToParticipation(result: Result) {
-        const correspondingParticipation = this.cachedParticipations.get(result.participation.id);
+        const correspondingParticipation = this.cachedParticipations.get(result.participation!.id)!;
         if (!correspondingParticipation.results) {
             correspondingParticipation.results = [];
         }
@@ -181,9 +181,9 @@ export class ParticipationWebsocketService {
      *
      * If no observable exists a new one will be created.
      */
-    subscribeForParticipationChanges(): BehaviorSubject<Participation> {
+    subscribeForParticipationChanges(): BehaviorSubject<Participation | null> {
         if (!this.participationObservable) {
-            this.participationObservable = new BehaviorSubject<Participation>(null);
+            this.participationObservable = new BehaviorSubject<Participation | null>(null);
         }
         return this.participationObservable;
     }
@@ -196,10 +196,10 @@ export class ParticipationWebsocketService {
      *
      * @param participationId ID of the participation that the new results should belong to
      */
-    subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result> {
-        let resultObservable = this.resultObservables.get(participationId);
+    subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
+        let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
-            resultObservable = new BehaviorSubject<Result>(null);
+            resultObservable = new BehaviorSubject<Result | null>(null);
             this.resultObservables.set(participationId, resultObservable);
         }
         return resultObservable;
