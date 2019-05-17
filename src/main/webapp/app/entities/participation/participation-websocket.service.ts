@@ -24,6 +24,13 @@ export class ParticipationWebsocketService {
         });
     }
 
+    resetLocalCache() {
+        const participations = this.getAllParticipations();
+        participations.forEach(participation => {
+            this.removeParticipation(participation.id, participation.exercise.id);
+        });
+    }
+
     updateParticipation(participation: Participation, exercise?: Exercise) {
         this.addParticipationToList(participation, exercise);
     }
