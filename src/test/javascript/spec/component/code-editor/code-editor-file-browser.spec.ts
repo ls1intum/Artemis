@@ -469,12 +469,12 @@ describe('CodeEditorFileBrowserComponent', () => {
         const setupTreeviewStub = stub(comp, 'setupTreeview');
         renameFileStub.returns(Observable.of(null));
         comp.repositoryFiles = repositoryFiles;
-        comp.renamingFile = ['', fileName, FileType.FILE];
+        comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
         comp.onRenameFile(afterRename);
 
-        expect(renameFileStub).to.have.been.calledOnceWithExactly('', afterRename);
+        expect(renameFileStub).to.have.been.calledOnceWithExactly(fileName, afterRename);
         expect(comp.renamingFile).to.be.null;
         expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;
@@ -512,12 +512,12 @@ describe('CodeEditorFileBrowserComponent', () => {
         const setupTreeviewStub = stub(comp, 'setupTreeview');
         renameFileStub.returns(Observable.of(null));
         comp.repositoryFiles = repositoryFiles;
-        comp.renamingFile = ['', folderName, FileType.FILE];
+        comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
         comp.onRenameFile(afterRename);
 
-        expect(renameFileStub).to.have.been.calledOnceWithExactly('', afterRename);
+        expect(renameFileStub).to.have.been.calledOnceWithExactly(folderName, afterRename);
         expect(comp.renamingFile).to.be.null;
         expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;

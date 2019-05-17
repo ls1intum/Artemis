@@ -9,7 +9,6 @@ import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { fromEvent, Subscription } from 'rxjs';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 
@@ -25,16 +24,16 @@ import { CommitState } from 'app/code-editor/model';
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
-    providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService],
+    providers: [JhiAlertService, WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor')
     editor: AceEditorComponent;
 
     @Input()
-    readonly selectedFile: string;
+    selectedFile: string;
     @Input()
-    readonly fileChange: FileChange;
+    fileChange: FileChange;
     @Input()
     readonly commitState: CommitState;
     @Input()
@@ -51,8 +50,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension
     readonly aceModeList = ace.acequire('ace/ext/modelist');
     /** Ace Editor Options **/
-    // TODO: Is the hardcoded string a bug?
-    editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
+    editorMode: string; // String or mode object
     isLoading = false;
     annotationChange: Subscription;
     buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
@@ -65,7 +63,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
 
-    constructor(public modalService: NgbModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
      * @function ngAfterViewInit
@@ -121,20 +119,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     toPairs,
                 )(this.fileSession);
             } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
+                this.fileSession = { ...this.fileSession, [this.selectedFile]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
-        }
-        // Current file has changed
-        else if (changes.selectedFile && this.selectedFile) {
+        } else if (changes.selectedFile && this.selectedFile) {
+            // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!this.fileSession[this.selectedFile]) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
             }
-        }
-        // Build log errors have changed - this can be new build results, but also a file change that has updated the object
-        else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
+        } else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
+            // Build log errors have changed - this can be new build results, but also a file change that has updated the object
             this.editor
                 .getEditor()
                 .getSession()
