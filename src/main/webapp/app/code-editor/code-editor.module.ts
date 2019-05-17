@@ -72,7 +72,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorActionsComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
-    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent],
+    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent, EditorInstructionsResultDetailComponent],
     providers: [
         JhiAlertService,
         ResultService,

@@ -91,7 +91,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
             const renamedUnsavedFiles = compose(
                 fromPairs,
                 map(([fileName, fileContent]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), fileContent]),
-                filter(([fileName]) => fileName.startsWitch(fileChange.oldFileName)),
+                filter(([fileName]) => fileName.startsWith(fileChange.oldFileName)),
                 filter(entry => !_isEmpty(entry)),
                 toPairs,
             )(this.unsavedFiles);

@@ -277,7 +277,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     private setUpTaskIcons() {
         // E.g. when the instructions are used in an editor, the steps area might not be rendered, so check first
-        if (document.getElementsByClassName('stepwizard')) {
+        if (document.getElementsByClassName('stepwizard').length) {
             this.steps.forEach(({ done }, i) => {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
                 componentRef.instance.size = 'lg';
