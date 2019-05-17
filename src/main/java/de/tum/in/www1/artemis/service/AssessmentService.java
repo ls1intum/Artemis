@@ -160,8 +160,8 @@ abstract class AssessmentService {
                 StatsTutorLeaderboardDTO element;
 
                 if (!existingElement.isPresent()) {
-                    String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
-                    element = new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 0, 0);
+                    String name = assessor.getFirstName().concat(" ").concat(assessor.getLastName());
+                    element = new StatsTutorLeaderboardDTO(name, assessor.getLogin(), 0, 0);
                     tutorWithNumberAssessmentList.add(element);
                 }
                 else {
