@@ -19,7 +19,7 @@
             <span *ngIf="isAuthorized" class="text-danger ml-3" style="font-size: 65%" jhiTranslate="modelingAssessmentEditor.assessmentLockedCurrentUser">
                 You have the lock for this assessment
             </span>
-            <div *ngIf="!result?.rated">
+            <div *ngIf="!result?.completionDate">
                 <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
                     <fa-icon icon="save"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
@@ -37,13 +37,13 @@
             </div>
             <button
                 class="btn btn-danger"
-                *ngIf="result?.rated && (isAtLeastInstructor || isAuthorized)"
+                *ngIf="result?.completionDate && (isAtLeastInstructor || isAuthorized)"
                 (click)="onSubmitAssessment()"
                 [disabled]="!assessmentsAreValid || !isAtLeastInstructor"
             >
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
-            <button class="btn btn-success" *ngIf="result?.rated && isAuthorized" [disabled]="busy" (click)="assessNextOptimal()">
+            <button class="btn btn-success" *ngIf="result?.completionDate && isAuthorized" [disabled]="busy" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
