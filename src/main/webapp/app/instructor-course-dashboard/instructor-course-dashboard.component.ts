@@ -46,38 +46,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     private loadCourse(courseId: number) {
-        this.courseService.findWithExercisesAndParticipations(courseId).subscribe(
-            (res: HttpResponse<Course>) => {
-                this.course = res.body;
-
-                let numberOfSubmissions = 0;
-                let numberOfAssessments = 0;
-
-                for (const exercise of this.course.exercises) {
-                    const validParticipations: Participation[] = exercise.participations.filter(
-                        participation => participation.initializationState === InitializationState.FINISHED,
-                    );
-
-                    let numberOfComplaints = 0;
-
-                    for (const participation of validParticipations) {
-                        for (const result of participation.results) {
-                            if (result.hasComplaint) {
-                                numberOfComplaints++;
-                            }
-                        }
-                    }
-
-                    exercise.participations = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
-                    exercise.numberOfAssessments = exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
-                    exercise.numberOfComplaints = numberOfComplaints;
-
-                    numberOfAssessments += exercise.numberOfAssessments;
-                    numberOfSubmissions += exercise.participations.length;
-                }
-            },
-            (response: HttpErrorResponse) => this.onError(response.message),
-        );
+        this.courseService
+            .findWithExercisesAndParticipations(courseId)
+            .subscribe((res: HttpResponse<Course>) => (this.course = res.body), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {

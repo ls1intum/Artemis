@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -437,10 +438,21 @@ public class CourseResource {
         List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true, true);
 
         for (Exercise exercise : interestingExercises) {
-            Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
+            Set<Participation> participationsForExercise = participations.stream()
+                    .filter(participation -> participation.getExercise().getId().equals(exercise.getId()) && participation.getInitializationState() == InitializationState.FINISHED)
+                    .collect(Collectors.toSet());
+            Set<Participation> participationsWithResult = participationsForExercise.stream().filter(participation -> {
+                Result result = participation.findLatestResult();
+
+                return result != null && result.isRated();
+            }).collect(Collectors.toSet());
+            Set<Participation> participationsWithComplaints = participationsWithResult.stream()
+                    .filter(participation -> participation.findLatestResult().getHasComplaint().isPresent() && participation.findLatestResult().getHasComplaint().get())
                     .collect(Collectors.toSet());
 
-            exercise.setParticipations(participationsForExercise);
+            exercise.setNumberOfParticipations(participationsForExercise.size());
+            exercise.setNumberOfAssessments(participationsWithResult.size());
+            exercise.setNumberOfComplaints(participationsWithComplaints.size());
         }
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));

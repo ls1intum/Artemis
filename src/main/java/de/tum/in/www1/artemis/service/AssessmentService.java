@@ -161,6 +161,7 @@ abstract class AssessmentService {
             if (!existingElement.isPresent()) {
                 String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
                 element = new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 0, 0);
+                tutorWithNumberAssessmentList.add(element);
             }
             else {
                 element = existingElement.get();
@@ -168,7 +169,9 @@ abstract class AssessmentService {
 
             element.numberOfAssessments += 1;
 
-            if (result.getHasComplaint()) {
+            Optional<Boolean> hasComplaint = result.getHasComplaint();
+
+            if (hasComplaint.isPresent() && hasComplaint.get()) {
                 element.numberOfComplaints += 1;
             }
         });
