@@ -45,7 +45,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
             this.onClearRenamingNode.emit();
             return;
         }
-        this.onRenameNode.emit({ item: this.item, newFileName: event.target.value });
+        this.onRenameNode.emit(event.target.value);
     }
 
     deleteNode(event: any) {

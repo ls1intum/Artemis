@@ -65,6 +65,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;
+    // Tuple: [filePath, fileType
+    // ]
     creatingFile: [string, FileType] | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
@@ -186,7 +188,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         );
     };
 
-    emitFileChange(fileChange: FileChange) {
+    handleFileChange(fileChange: FileChange) {
         if (fileChange instanceof CreateFileChange) {
             this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
         } else if (fileChange instanceof DeleteFileChange) {
@@ -216,7 +218,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param statusChange
      */
     onFileDeleted(fileChange: FileChange) {
-        this.emitFileChange(fileChange);
+        this.handleFileChange(fileChange);
     }
 
     /**
@@ -371,7 +373,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * and emit the changes to the parent.
      * After rename the rename state is exited.
      **/
-    onRenameFile({ item, newFileName }: { item: TreeviewItem; newFileName: string }) {
+    onRenameFile(newFileName: string) {
         const [filePath, , fileType] = this.renamingFile;
         let newFilePath: any = filePath.split('/');
         newFilePath[newFilePath.length - 1] = newFileName;
@@ -387,7 +389,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
         this.renameFile(filePath, newFileName).subscribe(
             () => {
-                this.emitFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                 this.renamingFile = null;
             },
             () => this.onError.emit('fileOperationFailed'),
@@ -425,7 +427,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (fileType === FileType.FILE) {
             this.createFile(file).subscribe(
                 () => {
-                    this.emitFileChange(new CreateFileChange(FileType.FILE, file));
+                    this.handleFileChange(new CreateFileChange(FileType.FILE, file));
                     this.creatingFile = null;
                 },
                 () => this.onError.emit('fileOperationFailed'),
@@ -433,7 +435,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         } else {
             this.createFolder(file).subscribe(
                 () => {
-                    this.emitFileChange(new CreateFileChange(FileType.FOLDER, file));
+                    this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
                     this.creatingFile = null;
                 },
                 () => this.onError.emit('fileOperationFailed'),

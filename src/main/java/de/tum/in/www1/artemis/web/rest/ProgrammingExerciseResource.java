@@ -393,10 +393,8 @@ public class ProgrammingExerciseResource {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
 
             // Make sure to not return the template/solution participation in the participations array
-            Optional<Participation> participation = programmingExercise.getParticipations().stream().filter(p -> p.getStudent() != null).findFirst();
-
             Set<Participation> participations = new HashSet<>();
-            participations.add(participation.get());
+            programmingExercise.getParticipations().stream().filter(p -> p.getStudent() != null).findFirst().ifPresent(participations::add);
             programmingExercise.setParticipations(participations);
 
             Course course = programmingExercise.getCourse();

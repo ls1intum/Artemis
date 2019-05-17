@@ -157,10 +157,9 @@
 <jhi-code-editor-grid #grid *ngIf="exercise" [exercise]="exercise">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-result
-            *ngIf="selectedParticipation && selectedRepository !== 'TEST'"
+            *ngIf="selectedParticipation && !isBuilding && selectedRepository !== 'TEST'"
             [participation]="selectedParticipation"
             [result]="selectedParticipation.results && selectedParticipation.results[0]"
-            [isBuilding]="isBuilding"
             class="mr-2"
         ></jhi-result>
         <jhi-code-editor-actions
