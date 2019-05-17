@@ -3,6 +3,8 @@ import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 
 export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
+    FileType = FileType;
+
     @ViewChild('renamingInput') renamingInput: ElementRef;
 
     @Input() item: TreeviewItem;

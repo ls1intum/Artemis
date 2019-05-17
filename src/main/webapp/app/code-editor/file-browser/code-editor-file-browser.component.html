@@ -9,15 +9,30 @@
 
     <!-- Root actions -->
     <div class="card-second-header d-flex">
-        <button class="btn btn-primary" (click)="setCreatingFileRoot(FileType.FILE)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFileRoot' | translate }}">
+        <button
+            [disabled]="isLoadingFiles"
+            class="btn btn-primary"
+            (click)="setCreatingFileInRoot(FileType.FILE)"
+            title="{{ 'arTeMiSApp.editor.fileBrowser.createFileRoot' | translate }}"
+        >
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="file" class="ml-1"></fa-icon>
         </button>
-        <button class="btn btn-primary ml-2" (click)="setCreatingFileRoot(FileType.FOLDER)" title="{{ 'arTeMiSApp.editor.fileBrowser.createFolderRoot' | translate }}">
+        <button
+            [disabled]="isLoadingFiles"
+            class="btn btn-primary ml-2"
+            (click)="setCreatingFileInRoot(FileType.FOLDER)"
+            title="{{ 'arTeMiSApp.editor.fileBrowser.createFolderRoot' | translate }}"
+        >
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="folder" class="ml-1"></fa-icon>
         </button>
-        <button class="btn btn-secondary ml-auto" (click)="toggleTreeCompress($event)" title="{{ 'arTeMiSApp.editor.fileBrowser.compressTree' | translate }}">
+        <button
+            [disabled]="isLoadingFiles"
+            class="btn btn-secondary ml-auto"
+            (click)="toggleTreeCompress($event)"
+            title="{{ 'arTeMiSApp.editor.fileBrowser.compressTree' | translate }}"
+        >
             <fa-icon [icon]="compressFolders ? ['fa', 'angle-double-up'] : ['fa', 'angle-double-down']"></fa-icon>
         </button>
     </div>
@@ -29,7 +44,7 @@
             <jhi-code-editor-file-browser-create-node
                 [createFileType]="creatingFile[1]"
                 [folder]="''"
-                (clearCreatingFile)="clearCreatingFile($event)"
+                (onClearCreatingFile)="clearCreatingFile($event)"
                 (onCreateFile)="onCreateFile($event)"
             ></jhi-code-editor-file-browser-create-node>
         </ng-container>
@@ -47,6 +62,7 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
+    <!--file-->
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"
         [item]="item"
@@ -54,6 +70,8 @@
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [fileType]="FileType.FILE"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
+        [onCollapseExpand]="onCollapseExpand"
+        [isCompressed]="compressFolders"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"
@@ -61,14 +79,7 @@
         (onClearRenamingNode)="clearRenamingFile()"
         (onSetCreatingNodeInFolder)="setCreatingFile($event)"
     ></jhi-code-editor-file-browser-folder>
-    <ng-container *ngIf="creatingFile && creatingFile[0] === item.value">
-        <jhi-code-editor-file-browser-create-node
-            [createFileType]="creatingFile[1]"
-            [folder]="''"
-            (clearCreatingFile)="clearCreatingFile($event)"
-            (onCreateFile)="onCreateFile($event)"
-        ></jhi-code-editor-file-browser-create-node>
-    </ng-container>
+    <!--folder-->
     <jhi-code-editor-file-browser-file
         *ngIf="repositoryFiles[item.value] === FileType.FILE"
         [item]="item"
@@ -82,4 +93,13 @@
         (onDeleteNode)="openDeleteFileModal(item)"
         (onClearRenamingNode)="clearRenamingFile()"
     ></jhi-code-editor-file-browser-file>
+    <!--new item-->
+    <ng-container *ngIf="creatingFile && creatingFile[0] === item.value">
+        <jhi-code-editor-file-browser-create-node
+            [createFileType]="creatingFile[1]"
+            [folder]="''"
+            (onClearCreatingFile)="clearCreatingFile($event)"
+            (onCreateFile)="onCreateFile($event)"
+        ></jhi-code-editor-file-browser-create-node>
+    </ng-container>
 </ng-template>

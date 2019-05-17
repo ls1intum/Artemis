@@ -18,7 +18,7 @@ import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
 import { AnnotationArray, TextChange } from 'app/entities/ace-editor';
-import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor/model';
 
@@ -120,10 +120,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     filter(([fn]) => !fn.startsWith(fileName)),
                     toPairs,
                 )(this.fileSession);
+            } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
+                this.initEditorAfterFileChange();
             }
         }
         // Current file has changed
-        if (changes.selectedFile && this.selectedFile) {
+        else if (changes.selectedFile && this.selectedFile) {
             // Only load the file from server if there is nothing stored in the editorFileSessions
             if (!this.fileSession[this.selectedFile]) {
                 this.loadFile(this.selectedFile);
@@ -132,7 +134,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
         }
         // Build log errors have changed - this can be new build results, but also a file change that has updated the object
-        if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
+        else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
             this.editor
                 .getEditor()
                 .getSession()

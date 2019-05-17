@@ -1,4 +1,4 @@
-import { Component, EventEmitter, ElementRef, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, ElementRef, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WindowRef } from 'app/core';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
@@ -8,7 +8,7 @@ import { FileType } from 'app/entities/ace-editor/file-change.model';
     templateUrl: './code-editor-file-browser-create-node.component.html',
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserCreateNodeComponent {
+export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;
 
     @ViewChild('creatingInput') creatingInput: ElementRef;
@@ -24,5 +24,9 @@ export class CodeEditorFileBrowserCreateNodeComponent {
             return;
         }
         this.onCreateFile.emit(event.target.value);
+    }
+
+    ngAfterViewInit(): void {
+        this.creatingInput.nativeElement.focus();
     }
 }

@@ -56,8 +56,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     selectedFileValue: string;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
-    // TODO: Still used?
-    folder: string;
     filesTreeViewItem: TreeviewItem[];
     compressFolders = true;
     compressedTreeItems: string[];
@@ -237,18 +235,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     priorFileSelection.checked = false;
                 }
             }
-
             // Inform parent editor component about the file selection change
             this.selectedFile = item.value;
-        }
-        /** Reset folder and search our parent with the TreeviewHelper and set the folder value accordingly **/
-        this.folder = null;
-        for (const treeviewItem of this.filesTreeViewItem) {
-            const parent = TreeviewHelper.findParent(treeviewItem, item);
-            // We found our parent => process the value and assign it
-            if (parent) {
-                this.folder = parent.text;
-            }
         }
     }
 
@@ -423,17 +411,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     /**
      * Create a file with the value of the creation input.
      **/
-    onCreateFile(event: any) {
-        if (event.target.value.split('.').length > 1 && !textFileExtensions.includes(event.target.value.split('.').pop())) {
+    onCreateFile(fileName: string) {
+        if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop())) {
             this.onError.emit('unsupportedFile');
             return;
-        } else if (Object.keys(this.repositoryFiles).includes(event.target.value)) {
+        } else if (Object.keys(this.repositoryFiles).includes(fileName)) {
             this.onError.emit('fileExists');
             return;
         }
 
         const [folderPath, fileType] = this.creatingFile;
-        const file = folderPath ? `${folderPath}/${event.target.value}` : event.target.value;
+        const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
             this.createFile(file).subscribe(
                 () => {
@@ -458,20 +446,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      **/
     setCreatingFile({ item: { value: folder }, fileType }: { item: TreeviewItem; fileType: FileType }) {
         this.creatingFile = [folder, fileType];
-        setTimeout(() => {
-            if (this.creatingInput) {
-                this.creatingInput.nativeElement.focus();
-            }
-        }, 0);
     }
 
-    setCreatingFileRoot(fileType: FileType) {
+    setCreatingFileInRoot(fileType: FileType) {
         this.creatingFile = ['', fileType];
-        setTimeout(() => {
-            if (this.creatingInput) {
-                this.creatingInput.nativeElement.focus();
-            }
-        }, 0);
     }
 
     /**
@@ -525,12 +503,12 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @desc Opens a popup to delete the selected repository file
      */
     openDeleteFileModal(item: TreeviewItem) {
-        const { text: fileName } = item;
-        const fileType = this.repositoryFiles[item.value];
-        if (fileName) {
+        const { value: filePath } = item;
+        const fileType = this.repositoryFiles[filePath];
+        if (filePath) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.parent = this;
-            modalRef.componentInstance.fileNameToDelete = fileName;
+            modalRef.componentInstance.fileNameToDelete = filePath;
             modalRef.componentInstance.fileType = fileType;
         }
     }
