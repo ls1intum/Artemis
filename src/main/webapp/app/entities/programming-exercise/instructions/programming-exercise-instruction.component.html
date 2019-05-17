@@ -1,4 +1,4 @@
-<div class="card" *ngIf="!isLoading; else loadingInstructions">
+<div id="programming-exercise-instructions-content" class="card" *ngIf="!isLoading; else loadingInstructions">
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">
@@ -25,5 +25,5 @@
     <div class="card-body instructions markdown-preview" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown | safeHtml"></div>
 </div>
 <ng-template #loadingInstructions>
-    <span class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>
+    <span id="programming-exercise-instructions-loading" class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>
 </ng-template>

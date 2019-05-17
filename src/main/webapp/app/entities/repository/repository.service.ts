@@ -35,8 +35,23 @@ export class RepositoryService {
     }
 }
 
+export interface IRepositoryFileService {
+    query: (participationId: number) => Observable<{ [fileName: string]: FileType }>;
+    get: (participationId: number, fileName: string) => Observable<any>;
+
+    update: (participationId: number, fileName: string, fileContent: string) => Observable<any>;
+
+    createFile: (participationId: number, fileName: string) => Observable<void>;
+
+    createFolder: (participationId: number, folderName: string) => Observable<void>;
+
+    rename: (participationId: number, currentFilePath: string, newFilename: string) => Observable<void>;
+
+    delete: (participationId: number, fileName: string) => Observable<void>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class RepositoryFileService {
+export class RepositoryFileService implements IRepositoryFileService {
     private resourceUrl = SERVER_API_URL + 'api/repository';
 
     constructor(private http: HttpClient) {}

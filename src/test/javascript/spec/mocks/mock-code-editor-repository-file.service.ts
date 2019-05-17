@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { IRepositoryFileService } from 'app/code-editor/service';
+import { ICodeEditorRepositoryFileService } from 'app/code-editor/service';
 
 @Injectable({ providedIn: 'root' })
-export class MockCodeEditorRepositoryFileService implements IRepositoryFileService {
+export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositoryFileService {
     getRepositoryContent = () => Observable.of();
     getFile = (fileName: string) => Observable.of();
     createFile = (fileName: string) => Observable.of();

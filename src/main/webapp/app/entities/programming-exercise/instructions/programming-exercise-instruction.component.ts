@@ -29,7 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged } from 'app/entities/exercise';
 
-enum TestCaseState {
+export enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
@@ -59,7 +59,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public resultChange = new EventEmitter<Result>();
 
-    private participationSubscription: Subscription;
+    public participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -113,7 +113,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-        if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+        if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
             this.isLoading = true;
             this.loadInstructions()
                 .pipe(
@@ -122,12 +122,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         if (!problemStatement) {
                             this.onNoInstructionsAvailable.emit();
                             this.isLoading = false;
+                            this.isInitial = false;
                             return Observable.of(null);
                         }
                     }),
                     filter(problemStatement => !!problemStatement),
                     tap(problemStatement => (this.problemStatement = problemStatement)),
-                    switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
+                    switchMap(() => this.loadInitialResult()),
                     map(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
                         this.updateMarkdown();

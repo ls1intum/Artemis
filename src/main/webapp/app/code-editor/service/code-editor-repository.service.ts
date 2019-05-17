@@ -13,7 +13,7 @@ export enum DomainType {
     TEST_REPOSITORY = 'TEST_REPOSITORY',
 }
 
-export interface IRepositoryFileService {
+export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void>;
@@ -24,7 +24,7 @@ export interface IRepositoryFileService {
     deleteFile: (filePath: string) => Observable<void>;
 }
 
-export interface IRepositoryService {
+export interface ICodeEditorRepositoryService {
     isClean: () => Observable<{ isClean: boolean }>;
     commit: () => Observable<void>;
     pull: () => Observable<void>;
@@ -35,7 +35,7 @@ export interface IBuildLogService {
 }
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorRepositoryService extends DomainDependentEndpoint implements IRepositoryService {
+export class CodeEditorRepositoryService extends DomainDependentEndpoint implements ICodeEditorRepositoryService {
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -65,7 +65,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
 }
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements IRepositoryFileService {
+export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements ICodeEditorRepositoryFileService {
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(http, jhiWebsocketService, domainService);
     }

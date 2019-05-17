@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs/Observable';
-import { IRepositoryService } from 'app/code-editor/service';
+import { ICodeEditorRepositoryService } from 'app/code-editor/service';
 
-export class MockCodeEditorRepositoryService implements IRepositoryService {
+export class MockCodeEditorRepositoryService implements ICodeEditorRepositoryService {
     isClean = () => Observable.of();
     commit = () => Observable.of();
     pull = () => Observable.of();
