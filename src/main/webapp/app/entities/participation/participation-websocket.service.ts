@@ -12,10 +12,7 @@ const PARTICIPATION_WEBSOCKET = 'participation_';
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
-    openWebsocketConnections: Map<string /* results_{id of participation} OR participation_{id of exercise} */, string /* url of websocket connection */> = new Map<
-        string,
-        string
-    >();
+    openWebsocketConnections: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation>;
 
