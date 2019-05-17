@@ -155,24 +155,26 @@ abstract class AssessmentService {
         results.forEach(result -> {
             User assessor = result.getAssessor();
 
-            Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
-            StatsTutorLeaderboardDTO element;
+            if (assessor != null && assessor.getLogin() != null) {
+                Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
+                StatsTutorLeaderboardDTO element;
 
-            if (!existingElement.isPresent()) {
-                String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
-                element = new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 0, 0);
-                tutorWithNumberAssessmentList.add(element);
-            }
-            else {
-                element = existingElement.get();
-            }
+                if (!existingElement.isPresent()) {
+                    String name = result.getAssessor().getFirstName().concat(" ").concat(result.getAssessor().getLastName());
+                    element = new StatsTutorLeaderboardDTO(name, result.getAssessor().getLogin(), 0, 0);
+                    tutorWithNumberAssessmentList.add(element);
+                }
+                else {
+                    element = existingElement.get();
+                }
 
-            element.numberOfAssessments += 1;
+                element.numberOfAssessments += 1;
 
-            Optional<Boolean> hasComplaint = result.getHasComplaint();
+                Optional<Boolean> hasComplaint = result.getHasComplaint();
 
-            if (hasComplaint.isPresent() && hasComplaint.get()) {
-                element.numberOfComplaints += 1;
+                if (hasComplaint.isPresent() && hasComplaint.get()) {
+                    element.numberOfComplaints += 1;
+                }
             }
         });
 
