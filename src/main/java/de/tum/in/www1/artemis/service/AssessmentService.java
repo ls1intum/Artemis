@@ -155,7 +155,8 @@ abstract class AssessmentService {
         results.forEach(result -> {
             User assessor = result.getAssessor();
 
-            if (assessor != null && assessor.getLogin() != null) {
+            // We count only completed assessments, not draft
+            if (assessor != null && assessor.getLogin() != null && result.getCompletionDate() != null) {
                 Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
                 StatsTutorLeaderboardDTO element;
 

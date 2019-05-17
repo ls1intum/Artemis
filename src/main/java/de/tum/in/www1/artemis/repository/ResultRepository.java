@@ -61,9 +61,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query(value = "insert into result (participation_id, rated) select :participationId, 0 from dual where not exists (select * from result where participation_id = :participationId and rated = 0)", nativeQuery = true)
     void insertIfNonExisting(@Param("participationId") Long participationId);
 
-    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRated(long courseId, boolean rated);
+    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long courseId, boolean rated);
 
-    Long countByAssessor_IdAndParticipation_Exercise_CourseIdAndRated(long assessorId, long courseId, boolean rated);
+    Long countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long assessorId, long courseId, boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
@@ -78,7 +78,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
     Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);
 
-    long countByAssessorIsNotNullAndParticipation_ExerciseId(Long exerciseId);
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
-    long countByAssessor_IdAndParticipation_ExerciseId(Long tutorId, Long exerciseId);
+    long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 }
