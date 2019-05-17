@@ -276,18 +276,21 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Existing icons will be removed.
      */
     private setUpTaskIcons() {
-        this.steps.forEach(({ done }, i) => {
-            const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
-            componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
-            componentRef.instance.ngOnChanges({});
-            this.appRef.attachView(componentRef.hostView);
-            const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-            const iconContainer = document.getElementById(`step-icon-${i}`);
-            iconContainer.innerHTML = '';
-            iconContainer.append(domElem);
-        });
+        // E.g. when the instructions are used in an editor, the steps area might not be rendered, so check first
+        if (document.getElementsByClassName('stepwizard')) {
+            this.steps.forEach(({ done }, i) => {
+                const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
+                componentRef.instance.size = 'lg';
+                componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
+                componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
+                componentRef.instance.ngOnChanges({});
+                this.appRef.attachView(componentRef.hostView);
+                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                const iconContainer = document.getElementById(`step-icon-${i}`);
+                iconContainer.innerHTML = '';
+                iconContainer.append(domElem);
+            });
+        }
     }
 
     /**
