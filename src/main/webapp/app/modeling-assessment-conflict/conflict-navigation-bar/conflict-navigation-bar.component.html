@@ -1,0 +1,24 @@
+<div class="container-fluid">
+    <h3 class="row justify-content-between">
+        <div class="navigation-container row-container">
+            <span jhiTranslate="modelingAssessmentConflict.conflicts">Conflicts</span>
+            <button class="btn btn-primary" (click)="onPrevConflict()">
+                <fa-icon icon="arrow-left"></fa-icon>
+            </button>
+            <span *ngIf="conflicts">{{ conflictIndex + 1 }}/{{ conflicts.length }}</span>
+            <button class="btn btn-primary" (click)="onNextConflict()">
+                <fa-icon icon="arrow-right"></fa-icon>
+            </button>
+        </div>
+        <jhi-alert></jhi-alert>
+        <div class="control-button-container">
+            <button class="btn btn-primary" (click)="onSave()">
+                <fa-icon icon="save"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
+            </button>
+            <button class="btn btn-success" [disabled]="!enableSubmit" (click)="onSubmit()" jhiTranslate="entity.action.submit">
+                <span jhiTranslate="entity.action.submit">Submit</span>
+            </button>
+        </div>
+    </h3>
+</div>

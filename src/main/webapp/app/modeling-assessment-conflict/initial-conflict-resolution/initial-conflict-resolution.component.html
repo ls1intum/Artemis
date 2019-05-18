@@ -1,7 +1,18 @@
+<jhi-conflict-navigation-bar [conflicts]="conflicts" (selectedConflictChanged)="onCurrentConflictChanged($event)"> </jhi-conflict-navigation-bar>
 <jhi-modeling-assessment-conflict
-    *ngIf="conflicts"
-    [conflicts]="conflicts"
-    (save)="onSave($event)"
+    *ngIf="currentConflict"
+    [modelingExercise]="modelingExercise"
+    [conflictState]="currentState"
+    [leftModel]="conflictingModel"
+    [leftFeedbacks]="conflictingResult.result.feedbacks"
+    [leftHighlightedElementIds]="conflictingHighlightedElementIds"
+    [leftCenteredElementId]="conflictingCenteredElementId"
+    [rightModel]="currentModel"
+    [rightFeedback]="mergedFeedbacks"
+    [rightHighlightedElementIds]="currentHighlightedElementIds"
+    [rightCenteredElementId]="currentCenteredElementId"
     (escalate)="onEscalate($event)"
-    (submit)="onSubmit($event)"
+    (leftButtonPressed)="onTakeOver()"
+    (rightButtonPressed)="onKeepYours()"
+    (rightFeedbacksChanged)="onFeedbackChanged($event)"
 ></jhi-modeling-assessment-conflict>

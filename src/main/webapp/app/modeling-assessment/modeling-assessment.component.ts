@@ -96,10 +96,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.applyStateConfiguration();
             }
         }
-        if (changes.centeredElementId) {
-            if (this.centeredElementId) {
-                this.scrollIntoView(this.centeredElementId);
-            }
+        if (changes.centeredElementId && changes.centeredElementId.currentValue) {
+            this.scrollIntoView(changes.centeredElementId.currentValue);
         }
     }
 
