@@ -197,6 +197,8 @@
         [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
         [exercise]="exercise"
         [editableInstructions]="true"
+        (onToggleCollapse)="onToggleCollapse($event)"
+        (onError)="onError($event)"
     ></jhi-code-editor-instructions>
     <jhi-code-editor-build-output
         editorBottomArea

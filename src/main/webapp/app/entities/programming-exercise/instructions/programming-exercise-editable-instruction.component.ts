@@ -5,6 +5,7 @@ import { Result } from 'app/entities/result';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
+import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -22,8 +23,7 @@ export class ProgrammingExerciseEditableInstructionComponent {
     get participation() {
         return this.participationValue;
     }
-    @Output()
-    participationChange = new EventEmitter<Participation>();
+    @Output() participationChange = new EventEmitter<Participation>();
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -34,6 +34,8 @@ export class ProgrammingExerciseEditableInstructionComponent {
     get exercise() {
         return this.exerciseValue;
     }
+    @Input() markdownEditorHeight = MarkdownEditorHeight.SMALL;
+
     @Output()
     exerciseChange = new EventEmitter<ProgrammingExercise>();
 

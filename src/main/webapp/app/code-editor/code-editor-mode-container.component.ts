@@ -1,8 +1,9 @@
-import { HostListener } from '@angular/core';
+import { HostListener, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { compose, filter, fromPairs, map, tap, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
+import Interactable from '@interactjs/core/Interactable';
 
 import { ComponentCanDeactivate } from 'app/shared';
 import { ParticipationService } from 'app/entities/participation';
@@ -11,8 +12,10 @@ import { AnnotationArray } from 'app/entities/ace-editor';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorSessionService } from 'app/code-editor/service';
 import { EditorState, CommitState } from 'app/code-editor/model';
+import { CodeEditorGridComponent } from 'app/code-editor/layout';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
+    @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
@@ -204,5 +207,9 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
+    }
+
+    onToggleCollapse({ event, horizontal, interactable, resizableMinWidth }: { event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number }) {
+        this.grid.toggleCollapse(event, horizontal, interactable, resizableMinWidth);
     }
 }

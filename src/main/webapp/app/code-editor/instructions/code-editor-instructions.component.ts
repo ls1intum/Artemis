@@ -1,17 +1,16 @@
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
-import { CodeEditorGridComponent } from '../layout/code-editor-grid.component';
 import { CodeEditorService } from '../service/code-editor.service';
 import { Participation } from '../../entities/participation';
 import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
-import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
 
@@ -20,19 +19,19 @@ import { MarkdownEditorHeight } from 'app/markdown-editor';
     templateUrl: './code-editor-instructions.component.html',
     providers: [JhiAlertService, WindowRef, ResultService, CodeEditorService],
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
-    // TODO: Remove participation
+export class CodeEditorInstructionsComponent implements AfterViewInit {
+    MarkdownEditorHeight = MarkdownEditorHeight;
+
     @Input()
     participation: Participation;
     @Input()
     exercise: ProgrammingExercise;
     @Input()
     editableInstructions = false;
-
-    MarkdownEditorHeight = MarkdownEditorHeight;
-
-    haveDetailsBeenLoaded = false;
-    problemStatement: string;
+    @Output()
+    onError = new EventEmitter<string>();
+    @Output()
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number }>();
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
@@ -44,12 +43,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     savingInstructions = false;
     unsavedChanges = false;
 
-    constructor(
-        private parent: CodeEditorGridComponent,
-        private $window: WindowRef,
-        public artemisMarkdown: ArtemisMarkdown,
-        private programmingExerciseService: ProgrammingExerciseService,
-    ) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private programmingExerciseService: ProgrammingExerciseService) {}
 
     /**
      * @function ngAfterViewInit
@@ -84,33 +78,30 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
             });
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (hasExerciseChanged(changes)) {
-            this.problemStatement = this.exercise.problemStatement;
-        }
-    }
-
     onProblemStatementEditorUpdate(newProblemStatement: string) {
-        if (newProblemStatement !== this.problemStatement) {
+        if (newProblemStatement !== this.exercise.problemStatement) {
             this.unsavedChanges = true;
-            this.problemStatement = newProblemStatement;
+            this.exercise = { ...this.exercise, problemStatement: newProblemStatement };
         }
     }
 
     saveInstructions($event: any) {
         $event.stopPropagation();
         this.savingInstructions = true;
-        const exercise = { ...this.exercise, problemStatement: this.problemStatement };
-        this.programmingExerciseService
-            .updateProblemStatement(exercise.id, this.problemStatement)
+        return this.programmingExerciseService
+            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement)
             .pipe(
                 tap(() => {
-                    this.savingInstructions = false;
                     this.unsavedChanges = false;
-                    this.exercise = exercise;
+                }),
+                catchError(() => {
+                    this.onError.emit('problemStatementCouldNotBeUpdated');
+                    return of(null);
                 }),
             )
-            .subscribe();
+            .subscribe(() => {
+                this.savingInstructions = false;
+            });
     }
 
     /**
@@ -120,7 +111,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
+        this.onToggleCollapse.emit({ event: $event, horizontal, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 
     onNoInstructionsAvailable() {

@@ -132,15 +132,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
         const result = { id: 1, feedbacks: [] as Feedback[] } as Result;
         const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const problemStatement = 'lorem ipsum';
+        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
         const loadInitialResultStub = stub(comp, 'loadInitialResult').returns(of(result));
         const updateMarkdownStub = stub(comp, 'updateMarkdown');
-        const problemStatement = 'lorem ipsum';
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
         comp.isLoading = false;
-        comp.problemStatement = problemStatement;
 
         fixture.detectChanges();
         comp.ngOnChanges({} as SimpleChanges);
@@ -189,29 +188,34 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
     });
 
-    it('should update markdown if the problemStatement is changed as input, given that exercise and participation are loading', () => {
+    it('should update markdown if the problemStatement is changed, given participation is loaded', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
-        const problemStatement = 'lorem ipsum new';
+        const oldProblemStatement = 'lorem ipsum';
+        const newProblemStatement = 'new lorem ipsum';
         const updateMarkdownStub = stub(comp, 'updateMarkdown');
         const loadInitialResult = stub(comp, 'loadInitialResult');
         fixture.detectChanges();
-        comp.exercise = exercise;
+        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
         comp.participation = participation;
-        comp.problemStatement = problemStatement;
         comp.isInitial = false;
-        comp.ngOnChanges({ problemStatement: { previousValue: 'lorem ipsum', currentValue: problemStatement, firstChange: false } as SimpleChange } as SimpleChanges);
+        comp.ngOnChanges({
+            exercise: {
+                previousValue: { ...exercise, problemStatement: oldProblemStatement },
+                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                firstChange: false,
+            } as SimpleChange,
+        } as SimpleChanges);
         expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
         expect(loadInitialResult).not.to.have.been.called;
     });
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
-        const updateMarkdownStub = stub(comp, 'updateMarkdown');
         const problemStatement = 'lorem ipsum';
+        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+        const updateMarkdownStub = stub(comp, 'updateMarkdown');
         findResultsForParticipationStub.returns(throwError('fatal error'));
-        comp.problemStatement = problemStatement;
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -231,8 +235,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             id: 1,
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: 0 }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: 1 }],
         } as any;
+        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
         openModalStub.returns({ componentInstance: {} });
-        comp.problemStatement = problemStatement;
+        comp.problemStatement = exercise.problemStatement;
+        comp.exercise = exercise;
         comp.latestResult = result;
         comp.updateMarkdown();
         expect(comp.steps).to.have.lengthOf(2);

@@ -68,7 +68,6 @@
                 <jhi-programming-exercise-editable-instructions
                     *ngIf="problemStatementLoaded"
                     #preview
-                    [problemStatement]="programmingExercise.problemStatement"
                     [participation]="programmingExercise.templateParticipation"
                     [exercise]="programmingExercise"
                     (onProblemStatementChange)="updateProblemStatement($event)"

@@ -1,4 +1,10 @@
-<jhi-markdown-editor [domainCommands]="domainCommands" [enableResize]="true" [markdown]="exercise.problemStatement" (markdownChange)="updateProblemStatement($event)">
+<jhi-markdown-editor
+    [defaultHeight]="markdownEditorHeight"
+    [domainCommands]="domainCommands"
+    [enableResize]="true"
+    [markdown]="exercise.problemStatement"
+    (markdownChange)="updateProblemStatement($event)"
+>
     <jhi-programming-exercise-instructions
         #preview
         [participation]="participation"

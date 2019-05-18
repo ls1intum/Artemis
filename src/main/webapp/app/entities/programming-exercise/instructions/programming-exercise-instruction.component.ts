@@ -27,7 +27,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { Participation, hasParticipationChanged, ParticipationWebsocketService } from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
-import { hasExerciseChanged } from 'app/entities/exercise';
+import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
 export enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
@@ -50,8 +50,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdown: Remarkable;
 
     @Input()
-    public problemStatement: string;
-    @Input()
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
@@ -61,6 +59,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public resultChange = new EventEmitter<Result>();
 
+    public problemStatement: string;
     public participationSubscription: Subscription;
 
     public isInitial = true;
@@ -109,13 +108,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
-        const exerciseHasChanged = hasExerciseChanged(changes);
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-        if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+        if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
             this.isLoading = true;
             this.loadInstructions()
                 .pipe(
@@ -139,9 +137,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
-        } else if (this.exercise && this.participation && changes.problemStatement && changes.problemStatement.previousValue !== this.problemStatement) {
+        } else if (this.exercise && this.participation && problemStatementHasChanged(changes)) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
+            this.problemStatement = this.exercise.problemStatement;
             this.updateMarkdown();
         }
     }
@@ -154,10 +153,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        this.participationSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((result: Result) => {
-            this.latestResult = result;
-            this.updateMarkdown();
-        });
+        this.participationSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(filter(p => !!p))
+            .subscribe((result: Result) => {
+                this.latestResult = result;
+                this.updateMarkdown();
+            });
     }
 
     /**
@@ -232,8 +234,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
     loadInstructions(): Observable<string> {
-        if (this.problemStatement) {
-            return Observable.of(this.problemStatement);
+        if (this.exercise.problemStatement !== null && this.exercise.problemStatement !== undefined) {
+            return Observable.of(this.exercise.problemStatement);
         } else {
             if (!this.participation.id) {
                 return Observable.of(null);
