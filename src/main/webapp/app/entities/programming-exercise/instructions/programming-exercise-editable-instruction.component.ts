@@ -53,7 +53,7 @@ export class ProgrammingExerciseEditableInstructionComponent {
 
     setTestCasesFromResults(result: Result) {
         // If the exercise is created, there is no result available
-        if (result) {
+        if (result && result.feedbacks) {
             this.testCaseCommand.setValues(result.feedbacks.map(({ text }) => text));
         }
     }
