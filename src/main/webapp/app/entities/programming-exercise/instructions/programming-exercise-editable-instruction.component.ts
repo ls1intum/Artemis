@@ -44,11 +44,8 @@ export class ProgrammingExerciseEditableInstructionComponent {
         this.exerciseChange.emit(this.exerciseValue);
     }
 
-    @Output()
-    onProblemStatementChange = new EventEmitter<string>();
-
     updateProblemStatement(problemStatement: string) {
-        this.onProblemStatementChange.emit(problemStatement);
+        this.exercise = { ...this.exercise, problemStatement };
     }
 
     setTestCasesFromResults(result: Result) {

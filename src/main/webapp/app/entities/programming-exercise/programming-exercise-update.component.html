@@ -124,8 +124,7 @@
                         *ngIf="problemStatementLoaded"
                         #preview
                         [participation]="programmingExercise.templateParticipation"
-                        [exercise]="programmingExercise"
-                        (onProblemStatementChange)="updateProblemStatement($event)"
+                        [(exercise)]="programmingExercise"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>
 

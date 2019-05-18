@@ -188,7 +188,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
     });
 
-    it('should update markdown if the problemStatement is changed, given participation is loaded', () => {
+    it('should update markdown if the problemStatement is changed', () => {
         const participation = { id: 2 } as Participation;
         const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
         const oldProblemStatement = 'lorem ipsum';
@@ -202,6 +202,27 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.ngOnChanges({
             exercise: {
                 previousValue: { ...exercise, problemStatement: oldProblemStatement },
+                currentValue: { ...this.exercise, problemStatement: newProblemStatement },
+                firstChange: false,
+            } as SimpleChange,
+        } as SimpleChanges);
+        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
+        expect(loadInitialResult).not.to.have.been.called;
+    });
+
+    it('should initially update the markdown if there is no participation and the exercise has changed', () => {
+        const participation = { id: 2 } as Participation;
+        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const newProblemStatement = 'new lorem ipsum';
+        const updateMarkdownStub = stub(comp, 'updateMarkdown');
+        const loadInitialResult = stub(comp, 'loadInitialResult');
+        fixture.detectChanges();
+        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
+        comp.participation = participation;
+        comp.isInitial = false;
+        comp.ngOnChanges({
+            exercise: {
+                previousValue: undefined,
                 currentValue: { ...this.exercise, problemStatement: newProblemStatement },
                 firstChange: false,
             } as SimpleChange,

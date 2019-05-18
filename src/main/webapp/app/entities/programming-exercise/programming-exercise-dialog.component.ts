@@ -80,14 +80,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
-    /**
-     * Update the problemStatement of the exercise with the data emitted by the markdown editor.
-     * @param problemStatement
-     */
-    updateProblemStatement(problemStatement: string) {
-        this.programmingExercise = { ...this.programmingExercise, problemStatement };
-    }
-
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {

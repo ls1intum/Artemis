@@ -137,7 +137,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
-        } else if (this.exercise && this.participation && problemStatementHasChanged(changes)) {
+        } else if (this.exercise && problemStatementHasChanged(changes)) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.problemStatement = this.exercise.problemStatement;

@@ -6,8 +6,7 @@ export const hasExerciseChanged = (changes: SimpleChanges) => {
 export const problemStatementHasChanged = (changes: SimpleChanges) => {
     return (
         changes.exercise &&
-        changes.exercise.previousValue &&
         changes.exercise.currentValue &&
-        changes.exercise.previousValue.problemStatement !== changes.exercise.currentValue.problemStatement
+        (!changes.exercise.previousValue || changes.exercise.previousValue.problemStatement !== changes.exercise.currentValue.problemStatement)
     );
 };

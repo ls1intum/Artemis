@@ -25,7 +25,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Input()
     participation: Participation;
     @Input()
-    exercise: ProgrammingExercise;
+    get exercise() {
+        return this.exerciseValue;
+    }
     @Input()
     editableInstructions = false;
     @Output()
@@ -33,6 +35,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number }>();
 
+    exerciseValue: ProgrammingExercise;
+    set exercise(exercise: ProgrammingExercise) {
+        if (this.exercise && exercise.problemStatement !== this.exercise.problemStatement) {
+            this.unsavedChanges = true;
+        }
+        this.exerciseValue = exercise;
+    }
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
