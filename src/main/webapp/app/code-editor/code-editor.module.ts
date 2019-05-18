@@ -37,6 +37,7 @@ import {
     // containers
     CodeEditorInstructorContainerComponent,
     CodeEditorStudentContainerComponent,
+    CodeEditorFileService,
 } from './';
 
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
@@ -83,6 +84,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorRepositoryFileService,
         CodeEditorBuildLogService,
         CodeEditorSessionService,
+        CodeEditorFileService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

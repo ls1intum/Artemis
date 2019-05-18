@@ -8,7 +8,7 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorGridComponent, CodeEditorSessionService } from 'app/code-editor';
 
@@ -66,8 +66,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
         sessionService: CodeEditorSessionService,
+        fileService: CodeEditorFileService,
     ) {
-        super(participationService, translateService, route, jhiAlertService, sessionService);
+        super(participationService, translateService, route, jhiAlertService, sessionService, fileService);
     }
 
     /**

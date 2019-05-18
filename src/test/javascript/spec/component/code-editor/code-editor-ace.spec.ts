@@ -9,7 +9,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
-import { CodeEditorAceComponent, CodeEditorRepositoryFileService } from 'app/code-editor';
+import { CodeEditorAceComponent, CodeEditorFileService, CodeEditorRepositoryFileService } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import { MockCodeEditorRepositoryFileService } from '../../mocks';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
@@ -29,7 +29,7 @@ describe('CodeEditorAceComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, TreeviewModule.forRoot()],
             declarations: [CodeEditorAceComponent],
-            providers: [WindowRef, { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService }],
+            providers: [WindowRef, CodeEditorFileService, { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService }],
         })
             .compileComponents()
             .then(() => {

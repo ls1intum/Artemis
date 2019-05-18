@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, tick, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9,12 +9,13 @@ import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import {
     CodeEditorFileBrowserComponent,
     CodeEditorFileBrowserCreateNodeComponent,
     CodeEditorFileBrowserFileComponent,
     CodeEditorFileBrowserFolderComponent,
+    CodeEditorFileService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
     CodeEditorStatusComponent,
@@ -51,6 +52,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             ],
             providers: [
                 WindowRef,
+                CodeEditorFileService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
             ],
@@ -448,6 +450,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should not be able to create binary file', () => {
         const fileName = 'danger.bin';
         const onErrorSpy = spy(comp.onError, 'emit');
+        comp.creatingFile = ['', FileType.FILE];
         comp.onCreateFile(fileName);
         fixture.detectChanges();
         expect(onErrorSpy).to.have.been.calledOnce;
@@ -455,12 +458,12 @@ describe('CodeEditorFileBrowserComponent', () => {
     });
 
     it('should not be able to create node that already exists', () => {
-        const filePath = 'folder2/file1';
+        const fileName = 'file1';
         const repositoryFiles = { 'folder2/file1': FileType.FILE, folder2: FileType.FOLDER };
         const onErrorSpy = spy(comp.onError, 'emit');
         comp.creatingFile = ['folder2', FileType.FILE];
         comp.repositoryFiles = repositoryFiles;
-        comp.onCreateFile(filePath);
+        comp.onCreateFile(fileName);
         fixture.detectChanges();
         expect(onErrorSpy).to.have.been.calledOnce;
         expect(createFileStub).not.to.have.been.called;
@@ -548,8 +551,15 @@ describe('CodeEditorFileBrowserComponent', () => {
                 text: 'folder',
                 value: 'folder',
             } as any),
+            new TreeviewItem({
+                internalDisabled: false,
+                internalChecked: false,
+                internalCollapsed: false,
+                text: 'folder2',
+                value: 'folder2',
+            } as any),
         ];
-        const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER };
+        const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
         renameFileStub.returns(Observable.of(null));
         comp.repositoryFiles = repositoryFiles;
@@ -560,7 +570,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).to.have.lengthOf(2);
         let foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        expect(foldersInTreeHtml).to.have.lengthOf(2);
         let renamingInput = foldersInTreeHtml[0].query(By.css('input'));
         expect(renamingInput).to.exist;
 
@@ -580,12 +590,13 @@ describe('CodeEditorFileBrowserComponent', () => {
             [[afterRename, 'file1'].join('/')]: FileType.FILE,
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
             [afterRename]: FileType.FOLDER,
+            folder2: FileType.FOLDER,
         });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).to.have.lengthOf(2);
         foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
-        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        expect(foldersInTreeHtml).to.have.lengthOf(2);
         renamingInput = filesInTreeHtml[0].query(By.css('input'));
         expect(renamingInput).not.to.exist;
     }));

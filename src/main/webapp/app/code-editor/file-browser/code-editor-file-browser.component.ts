@@ -13,6 +13,7 @@ import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileCha
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -99,6 +100,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         public modalService: NgbModal,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private repositoryService: CodeEditorRepositoryService,
+        private fileService: CodeEditorFileService,
     ) {}
 
     /**
@@ -191,22 +193,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     handleFileChange(fileChange: FileChange) {
         if (fileChange instanceof CreateFileChange) {
             this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
-        } else if (fileChange instanceof DeleteFileChange) {
-            const fileRegex = new RegExp(`^${fileChange.fileName}`);
-            // If the deleted item is a folder, also delete all sub files/folders
-            this.repositoryFiles = compose(
-                fromPairs,
-                filter(([fileName]) => !fileRegex.test(fileName)),
-                toPairs,
-            )(this.repositoryFiles);
-        } else if (fileChange instanceof RenameFileChange) {
-            const fileRegex = new RegExp(`^${fileChange.oldFileName}`);
-            // If the renamed item is a folder, also rename the path of all sub files/folders
-            this.repositoryFiles = compose(
-                fromPairs,
-                map(([fileName, fileType]) => [fileName.replace(fileRegex, fileChange.newFileName), fileType]),
-                toPairs,
-            )(this.repositoryFiles);
+        } else {
+            this.repositoryFiles = this.fileService.updateFileReferences(this.repositoryFiles, fileChange);
         }
         this.setupTreeview();
         this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange]);
@@ -414,15 +402,16 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Create a file with the value of the creation input.
      **/
     onCreateFile(fileName: string) {
+        const [folderPath, fileType] = this.creatingFile;
+
         if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop())) {
             this.onError.emit('unsupportedFile');
             return;
-        } else if (Object.keys(this.repositoryFiles).includes(fileName)) {
+        } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
             this.onError.emit('fileExists');
             return;
         }
 
-        const [folderPath, fileType] = this.creatingFile;
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
             this.createFile(file).subscribe(

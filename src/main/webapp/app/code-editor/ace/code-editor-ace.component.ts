@@ -20,6 +20,7 @@ import { AnnotationArray, TextChange } from 'app/entities/ace-editor';
 import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor/model';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -63,7 +64,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
 
     /**
      * @function ngAfterViewInit
@@ -95,29 +96,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 .setValue('');
         }
         if (changes.fileChange && changes.fileChange.currentValue) {
-            if (this.fileChange instanceof RenameFileChange) {
-                // Rename references to file / path
-                const { oldFileName, newFileName } = this.fileChange;
-                const oldFileNameRegex = new RegExp(`^${oldFileName}`);
-                const renamedSessions = compose(
-                    fromPairs,
-                    map(([fileName, session]) => [fileName.replace(oldFileNameRegex, newFileName), session]),
-                    toPairs,
-                )(this.fileSession);
-                const filteredSession = compose(
-                    fromPairs,
-                    filter(([fileName]) => fileName !== oldFileName),
-                    toPairs,
-                )(this.fileSession);
-                this.fileSession = { ...filteredSession, ...renamedSessions };
-            } else if (this.fileChange instanceof DeleteFileChange) {
-                // Make sure to also remove references to sub items (files in folder)
-                const { fileName } = this.fileChange;
-                this.fileSession = compose(
-                    fromPairs,
-                    filter(([fn]) => !fn.startsWith(fileName)),
-                    toPairs,
-                )(this.fileSession);
+            if (this.fileChange instanceof RenameFileChange || this.fileChange instanceof DeleteFileChange) {
+                this.fileSession = this.fileService.updateFileReferences(this.fileSession, this.fileChange);
             } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
                 this.fileSession = { ...this.fileSession, [this.selectedFile]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();

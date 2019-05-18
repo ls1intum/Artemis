@@ -13,6 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorSessionService } from 'app/code-editor/service';
 import { EditorState, CommitState } from 'app/code-editor/model';
 import { CodeEditorGridComponent } from 'app/code-editor/layout';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
@@ -34,6 +35,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         protected sessionService: CodeEditorSessionService,
+        private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
     }
@@ -89,60 +91,16 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
                 this.selectedFile = fileChange.fileName;
             }
         } else if (fileChange instanceof RenameFileChange) {
-            const oldFileNameRegex = new RegExp(`^${fileChange.oldFileName}`);
-            // Update unsavedFiles
-            const renamedUnsavedFiles = compose(
-                fromPairs,
-                map(([fileName, fileContent]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), fileContent]),
-                filter(([fileName]) => fileName.startsWith(fileChange.oldFileName)),
-                filter(entry => !_isEmpty(entry)),
-                toPairs,
-            )(this.unsavedFiles);
-            const unaffectedUnsavedFiles = compose(
-                fromPairs,
-                filter(([fileName]) => !fileName.startsWitch(fileChange.oldFileName)),
-                toPairs,
-            );
-            this.unsavedFiles = { ...renamedUnsavedFiles, ...unaffectedUnsavedFiles };
-            // Update buildLogErrors
-            const renamedErrors = compose(
-                fromPairs,
-                map(([fileName, session]) => [fileName.replace(oldFileNameRegex, fileChange.newFileName), session]),
-                toPairs,
-            )(this.buildLogErrors.errors);
-            const filteredErrors = compose(
-                fromPairs,
-                filter(([fileName]) => !fileName.startsWith(fileChange.oldFileName)),
-                toPairs,
-            )(this.buildLogErrors.errors);
-            this.buildLogErrors = { errors: { ...filteredErrors, ...renamedErrors }, timestamp: this.buildLogErrors.timestamp };
-            // Also updated the name of the selectedFile
-            if (this.selectedFile && fileChange.oldFileName === this.selectedFile) {
-                this.selectedFile = fileChange.newFileName;
-            } else if (this.selectedFile && this.selectedFile.startsWith(fileChange.oldFileName)) {
-                this.selectedFile = this.selectedFile.replace(oldFileNameRegex, fileChange.newFileName);
-            }
+            this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
+            this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
+            this.selectedFile = this.fileService.updateFileReference(this.selectedFile, fileChange);
         } else if (fileChange instanceof DeleteFileChange) {
-            // Update unsavedFiles
-            this.unsavedFiles = compose(
-                fromPairs,
-                filter(([fileName]) => !fileName.startsWitch(fileChange.fileName)),
-                toPairs,
-            )(this.unsavedFiles);
-            // Update buildLogErrors
-            const errors = compose(
-                fromPairs,
-                filter(([fileName]) => !fileName.startsWith(fileChange.fileName)),
-                toPairs,
-            )(this.buildLogErrors.errors);
-            this.buildLogErrors = { errors, timestamp: this.buildLogErrors.timestamp };
+            this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
+            this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
+            this.selectedFile = this.fileService.updateFileReference(this.selectedFile, fileChange);
             // If unsavedFiles are deleted, this can mean that the editorState becomes clean
             if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
                 this.editorState = EditorState.CLEAN;
-            }
-            // If the selected file or its containing folder was deleted, unselect it
-            if (this.selectedFile && (this.selectedFile === fileChange.fileName || this.selectedFile.startsWith(fileChange.fileName))) {
-                this.selectedFile = undefined;
             }
         }
         this.storeSession();
