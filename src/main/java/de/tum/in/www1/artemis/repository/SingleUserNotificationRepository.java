@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.Notification;
 @Repository
 public interface SingleUserNotificationRepository extends JpaRepository<Notification, Long> {
 
-    @Query("select userNotification from SingleUserNotification userNotification where userNotification.recipient.login = ?#{principal.username}")
+    @Query("select userNotification from SingleUserNotification userNotification where userNotification.notificationDate > userNotification.recipient.lastNotificationRead AND userNotification.recipient.login = ?#{principal.username}")
     List<Notification> findAllNewNotificationsForCurrentUser();
 
 }

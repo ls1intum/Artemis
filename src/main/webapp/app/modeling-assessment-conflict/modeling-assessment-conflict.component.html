@@ -1,39 +1,15 @@
 <div class="conflict-container">
-    <h3 class="top-container">
-        <div class="navigation-container row-container">
-            <span jhiTranslate="modelingAssessmentConflict.conflicts">Conflicts</span>
-            <button class="btn btn-primary" (click)="onPrevConflict()">
-                <fa-icon icon="arrow-left"></fa-icon>
-            </button>
-            <span *ngIf="conflicts">{{ conflictIndex + 1 }}/{{ conflicts.length }}</span>
-            <button class="btn btn-primary" (click)="onNextConflict()">
-                <fa-icon icon="arrow-right"></fa-icon>
-            </button>
-        </div>
-        <jhi-alert></jhi-alert>
-        <div class="control-button-container">
-            <button class="btn btn-primary" (click)="onSave()">
-                <fa-icon icon="save"></fa-icon>
-                <span jhiTranslate="entity.action.save">Save</span>
-            </button>
-            <button class="btn btn-success" [disabled]="!conflictsAllHandled" (click)="onSubmit()" jhiTranslate="entity.action.submit">
-                <span jhiTranslate="entity.action.submit">Submit</span>
-            </button>
-        </div>
-    </h3>
-
     <div id="conflictEditor" class="conflict-editor">
-        <!--        <div class="modeling-assessment-editors">-->
-        <div class="conflicting-assessment">
+        <div class="left-assessment">
             <jhi-modeling-assessment
-                *ngIf="currentConflict"
+                *ngIf="leftModel"
                 [diagramType]="modelingExercise.diagramType"
-                [model]="conflictingModel"
-                [feedbacks]="conflictingResult.result.feedbacks"
-                [resultsInConflict]="currentConflict.resultsInConflict"
-                [highlightedElementIds]="conflictingModelHighlightedElementIds"
+                [model]="leftModel"
+                [feedbacks]="leftFeedbacks"
+                [resultsInConflict]=""
+                [highlightedElementIds]="leftHighlightedElementIds"
                 [highlightColor]="highlightColor"
-                [centeredElementId]="conflictingResult.modelElementId"
+                [centeredElementId]="leftCenteredElementId"
                 [readOnly]="true"
                 [resizeOptions]="{}"
             ></jhi-modeling-assessment>
@@ -43,23 +19,23 @@
                     ngbTooltip="{{ 'modelingAssessmentConflict.tooltip.acceptTheirs' | translate }}"
                     openDelay="200"
                     data-placement="auto"
-                    (click)="onTakeOver()"
+                    (click)="onLeftButtonPressed()"
                     jhiTranslate="modelingAssessmentConflict.button.acceptTheirs"
                 >
                     accept theirs
                 </button>
             </div>
         </div>
-        <div class="assessment">
+        <div class="right-assessment">
             <jhi-modeling-assessment
-                *ngIf="currentConflict"
+                *ngIf="rightModel"
                 [diagramType]="modelingExercise.diagramType"
-                [model]="model"
+                [model]="rightModel"
                 [feedbacks]="currentFeedbacksCopy"
-                [highlightedElementIds]="modelHighlightedElementIds"
+                [highlightedElementIds]="rightHighlightedElementIds"
                 [highlightColor]="highlightColor"
                 title="{{ 'modelingAssessmentConflict.ownAssessmentTitle' | translate }}"
-                [centeredElementId]="currentConflict.causingConflictingResult.modelElementId"
+                [centeredElementId]="rightCenteredElementId"
                 (feedbackChanged)="onFeedbackChanged($event)"
                 [readOnly]="false"
             ></jhi-modeling-assessment>
@@ -69,7 +45,7 @@
                     ngbTooltip="{{ 'modelingAssessmentConflict.tooltip.keepYours' | translate }}"
                     openDelay="200"
                     data-placement="auto"
-                    (click)="onKeepYours()"
+                    (click)="onRightButtonPressed()"
                     jhiTranslate="modelingAssessmentConflict.button.keepYours"
                 >
                     keep yours

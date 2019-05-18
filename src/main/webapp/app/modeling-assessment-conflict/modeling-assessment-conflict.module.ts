@@ -10,11 +10,18 @@ import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-con
 import { ConflictEscalationModalComponent } from './conflict-escalation-modal/conflict-escalation-modal.component';
 import { EscalatedConflictResolutionComponent } from './escalated-conflict-resolution/escalated-conflict-resolution.component';
 import { InitialConflictResolutionComponent } from './initial-conflict-resolution/initial-conflict-resolution.component';
+import { ConflictNavigationBarComponent } from './conflict-navigation-bar/conflict-navigation-bar.component';
 
 const ENTITY_STATES = [...modelingAssessmentConflictRoutes];
 
 @NgModule({
-    declarations: [ModelingAssessmentConflictComponent, ConflictEscalationModalComponent, EscalatedConflictResolutionComponent, InitialConflictResolutionComponent],
+    declarations: [
+        ModelingAssessmentConflictComponent,
+        ConflictEscalationModalComponent,
+        EscalatedConflictResolutionComponent,
+        InitialConflictResolutionComponent,
+        ConflictNavigationBarComponent,
+    ],
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, AssessmentInstructionsModule, ModelingAssessmentModule],
     entryComponents: [ConflictEscalationModalComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
