@@ -45,6 +45,8 @@ type Step = {
     templateUrl: './programming-exercise-instruction.component.html',
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    TestCaseState = TestCaseState;
+
     private markdown: Remarkable;
 
     @Input()
@@ -137,7 +139,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
-        } else if (changes.problemStatement && changes.problemStatement.previousValue !== this.problemStatement) {
+        } else if (this.exercise && this.participation && changes.problemStatement && changes.problemStatement.previousValue !== this.problemStatement) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
             this.updateMarkdown();
@@ -186,7 +188,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.loadAndInsertPlantUmls();
             this.setUpClickListeners();
             this.setUpTaskIcons();
-        }, 100);
+        }, 0);
     }
 
     /**

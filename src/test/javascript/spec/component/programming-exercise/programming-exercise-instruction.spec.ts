@@ -1,29 +1,30 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
 import { spy, stub, SinonStub } from 'sinon';
-import { Observable, of, Subscription, Subject } from 'rxjs';
-import { CodeEditorBuildLogService, CodeEditorSessionService, CodeEditorBuildOutputComponent } from 'src/main/webapp/app/code-editor';
+import { of, Subscription, Subject, throwError } from 'rxjs';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { AceEditorModule } from 'ng2-ace-editor';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
-import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
-import { MockCodeEditorSessionService, MockParticipationWebsocketService } from '../../mocks';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
-import { MockLocalStorageService } from '../../mocks/mock-local-storage.service';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { BuildLogEntryArray } from 'src/main/webapp/app/entities/build-log';
-import { AnnotationArray } from 'src/main/webapp/app/entities/ace-editor';
 import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, TestCaseState } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementHtml } from './problemStatement.json';
+import { MockParticipationWebsocketService } from '../../mocks';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
+import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
+import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -35,19 +36,24 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let resultService: ResultService;
+    let modalService: NgbModal;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getFileStub: SinonStub;
+    let openModalStub: SinonStub;
+    let findResultsForParticipationStub: SinonStub;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
             declarations: [ProgrammingExerciseInstructionComponent, SafeHtmlPipe],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
+            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
@@ -56,14 +62,19 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 resultService = debugElement.injector.get(ResultService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
+                modalService = debugElement.injector.get(NgbModal);
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+                openModalStub = stub(modalService, 'open');
                 getFileStub = stub(repositoryFileService, 'get');
+                findResultsForParticipationStub = stub(resultService, 'findResultsForParticipation');
             });
     });
 
     afterEach(() => {
         subscribeForLatestResultOfParticipationStub.restore();
+        openModalStub.restore();
         getFileStub.restore();
+        findResultsForParticipationStub.restore();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
@@ -178,11 +189,49 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).to.exist;
     });
 
-    it('should create the steps for the tasks in problem statement markdown', () => {
+    it('should update markdown if the problemStatement is changed as input, given that exercise and participation are loading', () => {
+        const participation = { id: 2 } as Participation;
+        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const problemStatement = 'lorem ipsum new';
+        const updateMarkdownStub = stub(comp, 'updateMarkdown');
+        const loadInitialResult = stub(comp, 'loadInitialResult');
+        fixture.detectChanges();
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.problemStatement = problemStatement;
+        comp.isInitial = false;
+        comp.ngOnChanges({ problemStatement: { previousValue: 'lorem ipsum', currentValue: problemStatement, firstChange: false } as SimpleChange } as SimpleChanges);
+        expect(updateMarkdownStub).to.have.been.calledOnceWithExactly();
+        expect(loadInitialResult).not.to.have.been.called;
+    });
+
+    it('should still render the instructions if fetching the latest result fails', () => {
+        const participation = { id: 2 } as Participation;
+        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const updateMarkdownStub = stub(comp, 'updateMarkdown');
+        const problemStatement = 'lorem ipsum';
+        findResultsForParticipationStub.returns(throwError('fatal error'));
+        comp.problemStatement = problemStatement;
+        comp.participation = participation;
+        comp.exercise = exercise;
+        comp.isInitial = true;
+        comp.isLoading = false;
+
+        fixture.detectChanges();
+        comp.ngOnChanges({} as SimpleChanges);
+
+        expect(findResultsForParticipationStub).to.have.been.calledOnceWith(exercise.course.id, exercise.id, participation.id);
+        expect(updateMarkdownStub).to.have.been.calledOnce;
+        expect(comp.isInitial).to.be.false;
+        expect(comp.isLoading).to.be.false;
+    });
+
+    it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
         const result = {
             id: 1,
             feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: 0 }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: 1 }],
         } as any;
+        openModalStub.returns({ componentInstance: {} });
         comp.problemStatement = problemStatement;
         comp.latestResult = result;
         comp.updateMarkdown();
@@ -192,6 +241,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         expect(debugElement.query(By.css('.stepwizard'))).to.exist;
         expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
+        tick();
+        fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementHtml);
-    });
+
+        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
+        const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
+        expect(bubbleSortStep).to.exist;
+        expect(mergeSortStep).to.exist;
+        bubbleSortStep.nativeElement.click();
+        mergeSortStep.nativeElement.click();
+
+        expect(openModalStub).to.have.been.calledOnceWithExactly(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
+    }));
 });

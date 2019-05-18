@@ -3,7 +3,6 @@ import { IRepositoryFileService } from 'app/entities/repository';
 import { Observable, of } from 'rxjs';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 
-@Injectable({ providedIn: 'root' })
 export class MockRepositoryFileService implements IRepositoryFileService {
     createFile = (participationId: number, fileName: string) => of();
     createFolder = (participationId: number, folderName: string) => of();
