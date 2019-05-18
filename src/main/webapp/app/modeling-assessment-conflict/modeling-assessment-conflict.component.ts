@@ -13,26 +13,25 @@ import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict
     styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor/modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit, OnChanges {
-    // mergedFeedbacks: Feedback[];
-    currentFeedbacksCopy: Feedback[];
+    rightFeedbacksCopy: Feedback[];
     highlightColor: string;
-    // user: User;
-
-    // currentConflict: Conflict;
-    // conflictingResult: ConflictingResult;
+    private userInteractionWithConflict = false;
 
     @Input() modelingExercise: ModelingExercise;
     @Input() leftModel: UMLModel;
     @Input() leftFeedbacks: Feedback[];
     @Input() leftHighlightedElementIds: Set<string> = new Set<string>();
     @Input() leftCenteredElementId: string;
+    @Input() leftConflictingElemenId: string;
     @Input() rightFeedback: Feedback[];
     @Input() rightModel: UMLModel;
     @Input() rightHighlightedElementIds: Set<string> = new Set<string>();
     @Input() rightCenteredElementId: string;
+    @Input() rightConflictingElemenId: string;
     @Input() rightAssessmentReadOnly = false;
     @Input() conflictState: ConflictResolutionState = ConflictResolutionState.UNHANDLED;
-    @Output() escalate = new EventEmitter<{ escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }>();
+    // @Output() escalate = new EventEmitter<{ escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }>();
+    @Output() conflictResolutionStateChanged = new EventEmitter<ConflictResolutionState>();
     @Output() leftButtonPressed = new EventEmitter();
     @Output() rightButtonPressed = new EventEmitter();
     @Output() rightFeedbacksChanged = new EventEmitter<Feedback[]>();
@@ -46,10 +45,16 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.conflictState) {
+            if (changes.conflictState.currentValue === ConflictResolutionState.UNHANDLED) {
+                this.userInteractionWithConflict = false;
+            }
             this.updateHighlightColor();
         }
         if (changes.rightFeedback) {
-            this.currentFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
+            this.rightFeedbacksCopy = JSON.parse(JSON.stringify(changes.rightFeedback.currentValue));
+            if (this.userInteractionWithConflict) {
+                this.updateCurrentState();
+            }
         }
     }
 
@@ -58,14 +63,22 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onLeftButtonPressed() {
+        this.userInteractionWithConflict = true;
         this.leftButtonPressed.emit();
     }
 
     onRightButtonPressed() {
+        this.userInteractionWithConflict = true;
         this.rightButtonPressed.emit();
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
+        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
+        const originalElementAssessment = this.rightFeedback.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
+        if (elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
+            this.userInteractionWithConflict = true;
+            this.updateCurrentState();
+        }
         this.rightFeedbacksChanged.emit(feedbacks);
     }
 
@@ -73,6 +86,26 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
         $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+    }
+
+    private updateCurrentState() {
+        if (this.leftConflictingElemenId && this.rightConflictingElemenId) {
+            let newState;
+            const rightElementFeedback = this.rightFeedback.find((feedback: Feedback) => feedback.referenceId === this.rightConflictingElemenId);
+            const leftElementFeedback = this.leftFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.leftConflictingElemenId);
+            if (rightElementFeedback && leftElementFeedback) {
+                if (rightElementFeedback.credits !== leftElementFeedback.credits) {
+                    newState = ConflictResolutionState.ESCALATED;
+                } else {
+                    newState = ConflictResolutionState.RESOLVED;
+                }
+                if (newState != this.conflictState) {
+                    this.conflictState = newState;
+                    this.conflictResolutionStateChanged.emit(newState);
+                }
+            }
+        }
+        this.updateHighlightColor();
     }
 
     private updateHighlightColor() {
