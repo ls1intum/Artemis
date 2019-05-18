@@ -16,7 +16,7 @@
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn btn-success" [disabled]="!enableSubmit" (click)="onSubmit()" jhiTranslate="entity.action.submit">
+            <button class="btn btn-success" [disabled]="!conflictsAllHandled" (click)="onSubmit()" jhiTranslate="entity.action.submit">
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
         </div>

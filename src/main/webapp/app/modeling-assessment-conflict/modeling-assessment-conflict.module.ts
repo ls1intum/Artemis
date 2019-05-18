@@ -10,7 +10,7 @@ import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-con
 import { ConflictEscalationModalComponent } from './conflict-escalation-modal/conflict-escalation-modal.component';
 import { EscalatedConflictResolutionComponent } from './escalated-conflict-resolution/escalated-conflict-resolution.component';
 import { InitialConflictResolutionComponent } from './initial-conflict-resolution/initial-conflict-resolution.component';
-import { ConflictNavigationBarComponent } from './conflict-navigation-bar/conflict-navigation-bar.component';
+import { ConflictControlBarComponent } from './conflict-navigation-bar/conflict-control-bar.component';
 
 const ENTITY_STATES = [...modelingAssessmentConflictRoutes];
 
@@ -20,7 +20,7 @@ const ENTITY_STATES = [...modelingAssessmentConflictRoutes];
         ConflictEscalationModalComponent,
         EscalatedConflictResolutionComponent,
         InitialConflictResolutionComponent,
-        ConflictNavigationBarComponent,
+        ConflictControlBarComponent,
     ],
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, AssessmentInstructionsModule, ModelingAssessmentModule],
     entryComponents: [ConflictEscalationModalComponent],
