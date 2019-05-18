@@ -44,7 +44,7 @@
             <jhi-code-editor-file-browser-create-node
                 [createFileType]="creatingFile[1]"
                 [folder]="''"
-                (onClearCreatingFile)="clearCreatingFile($event)"
+                (onClearCreatingFile)="clearCreatingFile()"
                 (onCreateFile)="onCreateFile($event)"
             ></jhi-code-editor-file-browser-create-node>
         </ng-container>
@@ -96,7 +96,7 @@
         <jhi-code-editor-file-browser-create-node
             [createFileType]="creatingFile[1]"
             [folder]="''"
-            (onClearCreatingFile)="clearCreatingFile($event)"
+            (onClearCreatingFile)="clearCreatingFile()"
             (onCreateFile)="onCreateFile($event)"
         ></jhi-code-editor-file-browser-create-node>
     </ng-container>

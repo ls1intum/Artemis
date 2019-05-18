@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, tick, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
@@ -45,9 +45,9 @@ describe('CodeEditorFileBrowserComponent', () => {
             declarations: [
                 CodeEditorFileBrowserComponent,
                 MockComponent(CodeEditorStatusComponent),
-                MockComponent(CodeEditorFileBrowserFileComponent),
-                MockComponent(CodeEditorFileBrowserFolderComponent),
-                MockComponent(CodeEditorFileBrowserCreateNodeComponent),
+                CodeEditorFileBrowserFileComponent,
+                CodeEditorFileBrowserFolderComponent,
+                CodeEditorFileBrowserCreateNodeComponent,
             ],
             providers: [
                 WindowRef,
@@ -298,7 +298,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renderedFiles).to.have.lengthOf(0);
     });
 
-    it('should set node to checked if its file gets selected', () => {
+    it('should set node to checked if its file gets selected and update ui', () => {
         const selectedFile = 'folder/file1';
         const repositoryFiles = {
             folder: FileType.FOLDER,
@@ -338,9 +338,16 @@ describe('CodeEditorFileBrowserComponent', () => {
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).to.have.lengthOf(2);
         expect(renderedFiles).to.have.lengthOf(2);
+
+        const selectedFileHtml = renderedFiles[0];
+        const isSelected = !!selectedFileHtml.query(By.css('.node-selected'));
+        expect(isSelected).to.be.true;
+        const notSelectedFilesHtml = [renderedFiles[1], ...renderedFolders];
+        const areUnSelected = !notSelectedFilesHtml.some(el => !!el.query(By.css('.node-selected')));
+        expect(areUnSelected).to.be.true;
     });
 
-    it('should add file to node tree if created', () => {
+    it('should add file to node tree if created', fakeAsync((done: any) => {
         const fileName = 'file2';
         const filePath = 'folder2/file2';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
@@ -370,9 +377,16 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).to.exist;
-        comp.onCreateFile(fileName);
+        const creatingInput = creatingElement.query(By.css('input'));
+        expect(creatingInput).to.exist;
 
+        tick();
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(creatingInput.nativeElement).to.deep.equal(focusedElement);
+
+        comp.onCreateFile(fileName);
         fixture.detectChanges();
+
         expect(createFileStub).to.have.been.calledOnceWithExactly(filePath);
         expect(comp.creatingFile).to.be.null;
         expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
@@ -380,9 +394,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FILE });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).not.to.exist;
-    });
+    }));
 
-    it('should add folder to node tree if created', () => {
+    it('should add folder to node tree if created', fakeAsync(() => {
         const fileName = 'folder3';
         const filePath = 'folder2/folder3';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
@@ -412,6 +426,13 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).to.exist;
+        const creatingInput = creatingElement.query(By.css('input'));
+        expect(creatingInput).to.exist;
+
+        tick();
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(creatingInput.nativeElement).to.deep.equal(focusedElement);
+
         comp.onCreateFile(fileName);
 
         fixture.detectChanges();
@@ -422,7 +443,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.repositoryFiles).to.deep.equal({ ...repositoryFiles, [filePath]: FileType.FOLDER });
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).not.to.exist;
-    });
+    }));
 
     it('should not be able to create binary file', () => {
         const fileName = 'danger.bin';
@@ -445,7 +466,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(createFileStub).not.to.have.been.called;
     });
 
-    it('should update repository file entry on rename', () => {
+    it('should update repository file entry on rename', fakeAsync(() => {
         const fileName = 'file1';
         const afterRename = 'newFileName';
         const treeItems = [
@@ -466,22 +487,43 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        const setupTreeviewStub = stub(comp, 'setupTreeview');
         renameFileStub.returns(Observable.of(null));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
-        comp.onRenameFile(afterRename);
+
+        let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(filesInTreeHtml).to.have.lengthOf(1);
+        let foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
+        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        let renamingInput = filesInTreeHtml[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+
+        // Wait for focus of input element
+        tick();
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+
+        renamingInput.nativeElement.value = afterRename;
+        renamingInput.nativeElement.dispatchEvent(new Event('input'));
+        renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
+        fixture.detectChanges();
 
         expect(renameFileStub).to.have.been.calledOnceWithExactly(fileName, afterRename);
         expect(comp.renamingFile).to.be.null;
-        expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
-    });
 
-    it('should rename all paths concerned if a folder is renamed', () => {
+        filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(filesInTreeHtml).to.have.lengthOf(1);
+        foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
+        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        renamingInput = filesInTreeHtml[0].query(By.css('input'));
+        expect(renamingInput).not.to.exist;
+    }));
+
+    it('should rename all paths concerned if a folder is renamed', fakeAsync(() => {
         const folderName = 'folder';
         const afterRename = 'newFolderName';
         const treeItems = [
@@ -509,48 +551,136 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        const setupTreeviewStub = stub(comp, 'setupTreeview');
         renameFileStub.returns(Observable.of(null));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
         fixture.detectChanges();
-        comp.onRenameFile(afterRename);
+
+        let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(filesInTreeHtml).to.have.lengthOf(2);
+        let foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
+        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        let renamingInput = foldersInTreeHtml[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+
+        // Wait for focus of input element
+        tick();
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+
+        renamingInput.nativeElement.value = afterRename;
+        renamingInput.nativeElement.dispatchEvent(new Event('input'));
+        renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
 
         expect(renameFileStub).to.have.been.calledOnceWithExactly(folderName, afterRename);
         expect(comp.renamingFile).to.be.null;
-        expect(setupTreeviewStub).to.have.been.calledOnceWithExactly();
         expect(onFileChangeSpy).to.have.been.calledOnce;
         expect(comp.repositoryFiles).to.deep.equal({
             [[afterRename, 'file1'].join('/')]: FileType.FILE,
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
             [afterRename]: FileType.FOLDER,
         });
-    });
 
-    it('should not rename a file if its new fileName already exists in the repository', () => {
+        filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
+        expect(filesInTreeHtml).to.have.lengthOf(2);
+        foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
+        expect(foldersInTreeHtml).to.have.lengthOf(1);
+        renamingInput = filesInTreeHtml[0].query(By.css('input'));
+        expect(renamingInput).not.to.exist;
+    }));
+
+    it('should not rename a file if its new fileName already exists in the repository', fakeAsync(() => {
         const fileName = 'file1';
         const afterRename = 'newFileName';
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
         comp.repositoryFiles = repositoryFiles;
-        comp.renamingFile = ['', fileName, FileType.FILE];
-        comp.onRenameFile(afterRename);
+        comp.setupTreeview();
+        fixture.detectChanges();
+        comp.renamingFile = [fileName, fileName, FileType.FILE];
+        fixture.detectChanges();
+
+        let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+
+        // Wait for focus of input element
+        tick();
+        let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+
+        renamingInput.nativeElement.value = afterRename;
+        renamingInput.nativeElement.dispatchEvent(new Event('input'));
+        renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
         expect(renameFileStub).not.to.have.been.called;
         expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
-    });
 
-    it('should not rename a file if its new fileName indicates a binary file', () => {
+        // When renaming failed, the input should not be closed, because the user probably still wants to rename
+        renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+        focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+    }));
+
+    it('should not rename a file if its new fileName indicates a binary file', fakeAsync(() => {
         const fileName = 'file1';
         const afterRename = 'newFileName.bin';
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
         comp.repositoryFiles = repositoryFiles;
-        comp.renamingFile = ['', fileName, FileType.FILE];
-        comp.onRenameFile(afterRename);
+        comp.setupTreeview();
+        fixture.detectChanges();
+        comp.renamingFile = [fileName, fileName, FileType.FILE];
+        fixture.detectChanges();
+
+        let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+
+        // Wait for focus of input element
+        tick();
+        let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+
+        renamingInput.nativeElement.value = afterRename;
+        renamingInput.nativeElement.dispatchEvent(new Event('input'));
+        renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
         fixture.detectChanges();
 
         expect(renameFileStub).not.to.have.been.called;
         expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
-    });
+
+        // When renaming failed, the input should not be closed, because the user probably still wants to rename
+        renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+        focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+    }));
+
+    it('should leave rename state if renaming a file to the same file name', fakeAsync(() => {
+        const fileName = 'file1';
+        const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
+        comp.repositoryFiles = repositoryFiles;
+        comp.setupTreeview();
+        fixture.detectChanges();
+        comp.renamingFile = [fileName, fileName, FileType.FILE];
+        fixture.detectChanges();
+
+        let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).to.exist;
+
+        // Wait for focus of input element
+        tick();
+        let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
+
+        renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
+        fixture.detectChanges();
+
+        expect(renameFileStub).not.to.have.been.called;
+        expect(comp.repositoryFiles).to.deep.equal(repositoryFiles);
+
+        // When renaming failed, the input should not be closed, because the user probably still wants to rename
+        renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
+        expect(renamingInput).not.to.exist;
+    }));
 });

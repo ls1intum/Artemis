@@ -457,8 +457,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     /**
      * Set creatingFile to null to make the input disappear.
      **/
-    clearCreatingFile(event: any) {
-        event.stopPropagation();
+    clearCreatingFile() {
         this.creatingFile = null;
     }
 
