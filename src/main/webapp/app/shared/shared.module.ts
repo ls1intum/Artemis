@@ -11,6 +11,7 @@ import {
     JhiDynamicTranslateDirective,
     KeysPipe,
     TypeCheckPipe,
+    HtmlForMarkdownPipe,
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
@@ -32,6 +33,7 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
         KeysPipe,
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
+        HtmlForMarkdownPipe,
     ],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
@@ -48,6 +50,7 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
         KeysPipe,
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
+        HtmlForMarkdownPipe,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

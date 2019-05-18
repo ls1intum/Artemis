@@ -34,8 +34,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener: Subscription;
     combinedParticipation: Participation;
 
-    formattedProblemStatement: string;
-
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
