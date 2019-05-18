@@ -17,7 +17,8 @@
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
                 "invalidScoreMustBeNumber": "Das Score-Feld muss eine Zahl sein und darf nicht leer sein!",
                 "invalidNeedScoreOrFeedback": "Jedes Feedback-Element muss mindestens eine Punktzahl oder ein Feedback enthalten.",
-                "feedbackReferenceTooLong": "Wähle bitte einen Textabschnitt mit weniger als 2000 Zeichen aus."
+                "feedbackReferenceTooLong": "Wähle bitte einen Textabschnitt mit weniger als 2000 Zeichen aus.",
+                "assessmentDueDateOver": "Das Fälligkeitsdatum der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessInstruction": "Markiere den zu bewertenden Textblock und klicke \"Bewerten\".",
             "predefineTextBlocks": "Textblöcke automatisch anlegen",

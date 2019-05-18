@@ -187,6 +187,13 @@ public abstract class Exercise implements Serializable {
         this.assessmentDueDate = assessmentDueDate;
     }
 
+    /**
+     * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
+     */
+    public boolean isAssessmentDueDateOver() {
+        return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
+    }
+
     public Double getMaxScore() {
         return maxScore;
     }

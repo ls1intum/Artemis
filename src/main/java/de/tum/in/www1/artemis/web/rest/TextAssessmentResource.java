@@ -87,6 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise);
+        checkAssessmentDueDate(textExercise);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
@@ -256,4 +257,12 @@ public class TextAssessmentResource extends AssessmentResource {
         checkAuthorization(textExercise);
     }
 
+    /**
+     * Tutors are not allowed to submit an assessment after the assessment due date.
+     */
+    private void checkAssessmentDueDate(TextExercise textExercise) {
+        if (textExercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            throw new BadRequestAlertException("The assessment due date is already over.", "textAssessment", "assessmentDueDateOver");
+        }
+    }
 }
