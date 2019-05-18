@@ -87,7 +87,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
             const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course);
             const isSameUser = this.participation.student && user.id === this.participation.student.id;
-            const exerciseNotOver = exercise.dueDate == null || exercise.dueDate.isAfter(moment());
+            const exerciseNotOver = exercise.dueDate == null || (moment(exercise.dueDate).isValid() && exercise.dueDate.isAfter(moment()));
 
             if ((isSameUser && exerciseNotOver) || isInstructorInCourse) {
                 this.participationWebsocketService.addParticipation(this.participation);
