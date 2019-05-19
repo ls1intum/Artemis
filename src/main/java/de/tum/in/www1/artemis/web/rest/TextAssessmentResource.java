@@ -256,13 +256,4 @@ public class TextAssessmentResource extends AssessmentResource {
         validateExercise(textExercise);
         checkAuthorization(textExercise);
     }
-
-    /**
-     * Tutors are not allowed to submit an assessment after the assessment due date.
-     */
-    private void checkAssessmentDueDate(TextExercise textExercise) {
-        if (textExercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            throw new BadRequestAlertException("The assessment due date is already over.", "textAssessment", "assessmentDueDateOver");
-        }
-    }
 }

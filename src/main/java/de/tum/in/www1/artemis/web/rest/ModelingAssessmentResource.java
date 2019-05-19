@@ -164,6 +164,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+        checkAssessmentDueDate(modelingExercise);
+
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
