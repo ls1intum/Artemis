@@ -63,17 +63,28 @@
         </button>
     </div>
 
-    <div class="col-12 editor-container">
-        <jhi-modeling-editor *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly"></jhi-modeling-editor>
-        <jhi-modeling-assessment
-            *ngIf="assessmentMode"
-            [model]="umlModel"
-            [feedbacks]="result?.feedbacks"
-            [diagramType]="exercise.diagramType"
-            [maxScore]="exercise.maxScore"
-            [readOnly]="readOnly"
-            (feedbackChanged)="onFeedbackChanged($event)"
-        ></jhi-modeling-assessment>
-        <jhi-assessment-instructions *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete"> </jhi-assessment-instructions>
+    <div class="col-12">
+        <div class="row flex-nowrap">
+            <div class="col editor-container">
+                <div>
+                    <jhi-modeling-editor *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly"></jhi-modeling-editor>
+
+                    <jhi-modeling-assessment
+                        *ngIf="assessmentMode"
+                        [model]="umlModel"
+                        [feedbacks]="result?.feedbacks"
+                        [diagramType]="exercise.diagramType"
+                        [maxScore]="exercise.maxScore"
+                        [readOnly]="readOnly"
+                        (feedbackChanged)="onFeedbackChanged($event)"
+                    ></jhi-modeling-assessment>
+                </div>
+
+                <h3 class="mt-3" *ngIf="assessmentMode">Explanation</h3>
+                <textarea *ngIf="assessmentMode" class="form-control" rows="4" [(ngModel)]="exampleSubmission.assessmentExplanation"></textarea>
+            </div>
+
+            <jhi-assessment-instructions class="pr-2" *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete"> </jhi-assessment-instructions>
+        </div>
     </div>
 </div>
