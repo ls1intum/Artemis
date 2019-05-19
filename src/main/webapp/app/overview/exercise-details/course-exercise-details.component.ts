@@ -33,6 +33,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     combinedParticipation: Participation;
+    isAfterAssessmentDueDate: boolean;
 
     constructor(
         private $location: Location,
@@ -68,6 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.exercise.participations = cachedParticipations;
                 this.mergeResultsAndSubmissionsForParticipations();
+                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
@@ -76,6 +78,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.mergeResultsAndSubmissionsForParticipations();
+                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
@@ -152,6 +155,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             return;
         }
+    }
+
+    get showResults(): boolean {
+        return this.hasResults && this.isAfterAssessmentDueDate;
     }
 
     get hasResults(): boolean {
