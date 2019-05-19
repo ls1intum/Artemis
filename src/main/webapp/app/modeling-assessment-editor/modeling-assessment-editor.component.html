@@ -6,7 +6,7 @@
             Assessment
         </div>
         <jhi-alert></jhi-alert>
-        <div class="control-container row-container">
+        <div class="control-container row-container" *ngIf="!isLoading">
             <span
                 *ngIf="!isAuthorized"
                 class="text-danger ml-3"
