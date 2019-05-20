@@ -84,7 +84,7 @@
                 </div>
 
                 <h3 class="mt-3" *ngIf="assessmentMode">Explanation</h3>
-                <textarea *ngIf="assessmentMode" class="form-control" rows="4" [(ngModel)]="exampleSubmission.assessmentExplanation"></textarea>
+                <textarea *ngIf="assessmentMode" class="form-control" rows="4" [(ngModel)]="assessmentExplanation"></textarea>
             </div>
 
             <jhi-assessment-instructions class="pr-2" *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete"> </jhi-assessment-instructions>
