@@ -3,5 +3,5 @@ import { Session } from 'app/entities/ace-editor';
 
 export class MockCodeEditorSessionService implements ICodeEditorSessionService {
     storeSession = () => {};
-    loadSession = () => ({} as Session);
+    loadSession = () => null;
 }

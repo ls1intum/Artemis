@@ -72,12 +72,12 @@ export class CodeEditorActionsComponent {
             this.editorState = EditorState.SAVING;
             const unsavedFiles = Object.entries(this.unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             return this.repositoryFileService.updateFiles(unsavedFiles).pipe(
+                tap(res => this.onSavedFiles.emit(res)),
                 catchError(err => {
                     this.onError.emit(err.error);
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     return Observable.of(null);
                 }),
-                tap((res: { [fileName: string]: FileType }) => (res ? this.onSavedFiles.emit(res) : null)),
             );
         } else {
             return Observable.of(null);

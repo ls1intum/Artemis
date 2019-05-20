@@ -56,7 +56,7 @@ describe('CodeEditorInstructionsComponent', () => {
         const exercise = { id: 1, problemStatement } as ProgrammingExercise;
         updateProblemStatementStub.returns(of(null));
         comp.exercise = exercise;
-        comp.editableInstructions = true;
+        comp.editable = true;
         fixture.detectChanges();
 
         const saveInstructionsButton = debugElement.query(By.css('#save-instructions-button'));

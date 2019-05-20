@@ -19,7 +19,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile: string;
-    unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
+    unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
     // This variable is used to inform components that a file has changed its filename, e.g. because of renaming
     fileChange: FileChange;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };

@@ -19,7 +19,7 @@ export interface ICodeEditorRepositoryFileService {
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<Array<[string, string]>>;
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
 }
@@ -98,10 +98,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     };
 
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
-        const subject = new Subject<Array<[string, string]>>();
+        const subject = new Subject<{ [fileName: string]: string | null }>();
         this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         this.jhiWebsocketService.receive(`${this.websocketResourceUrlReceive}/files`).subscribe(res => subject.next(res), err => subject.error(err));
-        return subject as Observable<Array<[string, string]>>;
+        return subject;
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {

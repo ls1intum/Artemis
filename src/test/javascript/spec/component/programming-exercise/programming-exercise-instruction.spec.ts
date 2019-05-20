@@ -20,7 +20,7 @@ import { MockResultService } from '../../mocks/mock-result.service';
 import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, TestCaseState } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementHtml } from './problemStatement.json';
+import { problemStatement, problemStatementHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';

@@ -19,7 +19,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService],
+    providers: [JhiAlertService, WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
     @Input()
@@ -121,7 +121,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
-                    map(buildLogsFromServer => (buildLogsFromServer ? new BuildLogEntryArray(...buildLogsFromServer) : new BuildLogEntryArray())),
+                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
                         const buildLogErrors = this.rawBuildLogs.extractErrors();
@@ -133,8 +133,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                             this.buildLogErrors = buildLogErrors;
                         }
                     }),
+                    catchError(() => {
+                        this.rawBuildLogs = new BuildLogEntryArray();
+                        this.buildLogErrors = this.rawBuildLogs.extractErrors();
+                        return Observable.of();
+                    }),
                 )
-                .subscribe(() => {}, console.log);
+                .subscribe();
         } else {
             if (!this.resultSubscriptions[this.participation.id]) {
                 this.setupResultWebsocket();
@@ -155,15 +160,17 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                     // Ignore initial null result from service
                     filter(result => !!result),
                     switchMap(result => this.fetchBuildResults(result)),
-                    catchError(() => {
-                        this.onError.emit('failedToLoadBuildLogs');
-                        this.isBuilding = false;
-                        return [] as BuildLogEntry[];
-                    }),
                     tap((buildLogsFromServer: BuildLogEntry[]) => {
                         this.isBuilding = false;
                         this.rawBuildLogs = new BuildLogEntryArray(...buildLogsFromServer);
                         this.buildLogErrors = this.rawBuildLogs.extractErrors();
+                    }),
+                    catchError(() => {
+                        this.onError.emit('failedToLoadBuildLogs');
+                        this.isBuilding = false;
+                        this.rawBuildLogs = new BuildLogEntryArray();
+                        this.buildLogErrors = this.rawBuildLogs.extractErrors();
+                        return Observable.of(null);
                     }),
                 )
                 .subscribe(() => {}, console.log);
@@ -202,7 +209,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     fetchBuildResults(result: Result): Observable<BuildLogEntry[] | null> {
         if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-            return of(null);
+            return of([]);
         } else {
             // If the build failed, find out why
             return this.getBuildLogs();

@@ -1,7 +1,7 @@
 import { StorageService } from 'ngx-webstorage/lib/core/interfaces/storageService';
 import { Observable } from 'rxjs';
 
-export class MockLocalStorageService implements StorageService {
+export class MockSyncStorage implements StorageService {
     clear(key?: string): any {}
 
     getStrategyName(): string {

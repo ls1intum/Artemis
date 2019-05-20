@@ -1,26 +1,29 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-
-import { CodeEditorService } from '../service/code-editor.service';
 import { Participation } from '../../entities/participation';
-import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
-import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import {
+    ProgrammingExercise,
+    ProgrammingExerciseEditableInstructionComponent,
+    ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseService,
+} from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit {
     MarkdownEditorHeight = MarkdownEditorHeight;
+
+    @ViewChild(ProgrammingExerciseInstructionComponent) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     @Input()
     participation: Participation;
@@ -29,7 +32,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
         return this.exerciseValue;
     }
     @Input()
-    editableInstructions = false;
+    editable = false;
     @Output()
     onError = new EventEmitter<string>();
     @Output()

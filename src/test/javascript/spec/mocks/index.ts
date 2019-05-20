@@ -2,7 +2,7 @@ export * from './mock-code-editor-repository.service';
 export * from './mock-code-editor-repository-file.service';
 export * from './mock-code-editor-session.service';
 export * from './mock-code-editor-build-log.service';
-export * from './mock-local-storage.service';
+export * from './mock-sync.storage';
 export * from './mock-ngb-modal.service';
 export * from './mock-repository-file.service';
 export * from './mock-result.service';

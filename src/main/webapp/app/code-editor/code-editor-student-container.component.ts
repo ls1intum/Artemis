@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -10,7 +10,14 @@ import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
+import { CodeEditorActionsComponent } from 'app/code-editor/actions';
+import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
+import { CodeEditorStatusComponent } from 'app/code-editor/status';
+import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
+import { CodeEditorAceComponent } from 'app/code-editor/ace';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -18,8 +25,15 @@ import { CodeEditorSessionService, DomainService, DomainType } from 'app/code-ed
     providers: [],
 })
 export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
+    @ViewChild(CodeEditorFileBrowserComponent) fileBrowser: CodeEditorFileBrowserComponent;
+    @ViewChild(CodeEditorActionsComponent) actions: CodeEditorActionsComponent;
+    @ViewChild(CodeEditorBuildOutputComponent) buildOutput: CodeEditorBuildOutputComponent;
+    @ViewChild(CodeEditorInstructionsComponent) instructions: CodeEditorInstructionsComponent;
+    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
+
     paramSub: Subscription;
     participation: Participation;
+    exercise: ProgrammingExercise;
 
     constructor(
         private resultService: ResultService,
@@ -29,8 +43,9 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         route: ActivatedRoute,
         jhiAlertService: JhiAlertService,
         sessionService: CodeEditorSessionService,
+        fileService: CodeEditorFileService,
     ) {
-        super(participationService, translateService, route, jhiAlertService, sessionService);
+        super(participationService, translateService, route, jhiAlertService, sessionService, fileService);
     }
 
     /**
@@ -43,7 +58,10 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap(participation => this.domainService.setDomain([DomainType.PARTICIPATION, participation])),
-                    tap(participationWithResults => (this.participation = participationWithResults)),
+                    tap(participationWithResults => {
+                        this.participation = participationWithResults;
+                        this.exercise = this.participation.exercise as ProgrammingExercise;
+                    }),
                 )
 
                 .subscribe();

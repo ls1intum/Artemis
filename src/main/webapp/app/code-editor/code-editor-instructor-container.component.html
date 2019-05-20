@@ -187,7 +187,6 @@
         [selectedFile]="selectedFile"
         [fileChange]="fileChange"
         [commitState]="commitState"
-        [toggleCollapse]="grid.toggleCollapse"
         [(buildLogErrors)]="buildLogErrors"
         (onFileContentChange)="onFileContentChange($event)"
         (onError)="onError($event)"
@@ -196,7 +195,7 @@
         editorSidebarRight
         [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
         [exercise]="exercise"
-        [editableInstructions]="true"
+        [editable]="true"
         (onToggleCollapse)="onToggleCollapse($event)"
         (onError)="onError($event)"
     ></jhi-code-editor-instructions>

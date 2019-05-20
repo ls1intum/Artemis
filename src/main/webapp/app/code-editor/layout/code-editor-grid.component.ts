@@ -18,7 +18,7 @@ export class CodeEditorGridComponent {
     @ContentChild('editorBottomArea') editorBottomArea: ElementRef;
 
     @Input()
-    exercise: ProgrammingExercise;
+    exerciseTitle: string;
 
     /**
      * @function toggleCollapse

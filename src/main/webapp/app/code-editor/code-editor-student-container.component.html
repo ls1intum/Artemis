@@ -1,12 +1,6 @@
-<jhi-code-editor-grid #grid [exercise]="participation?.exercise">
+<jhi-code-editor-grid #grid *ngIf="exercise && participation" [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-result
-            *ngIf="participation"
-            [participation]="participation"
-            [result]="participation.results && participation.results[0]"
-            [isBuilding]="isBuilding"
-            class="mr-2"
-        ></jhi-result>
+        <jhi-result *ngIf="participation && !isBuilding" [participation]="participation" [result]="participation.results && participation.results[0]" class="mr-2"></jhi-result>
         <jhi-code-editor-actions
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
@@ -25,6 +19,7 @@
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
+        (onError)="onError($event)"
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace
         editorCenter
@@ -33,19 +28,20 @@
         [commitState]="commitState"
         [(buildLogErrors)]="buildLogErrors"
         (onFileContentChange)="onFileContentChange($event)"
+        (onError)="onError($event)"
     ></jhi-code-editor-ace>
     <jhi-code-editor-instructions
         editorSidebarRight
         [participation]="participation"
-        [exercise]="participation.exercise"
-        [editableInstructions]="true"
+        [exercise]="exercise"
+        (onToggleCollapse)="onToggleCollapse($event)"
+        (onError)="onError($event)"
     ></jhi-code-editor-instructions>
     <jhi-code-editor-build-output
         editorBottomArea
-        *ngIf="participation"
         [participation]="participation"
-        [toggleCollapse]="grid.toggleCollapse"
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
+        (onError)="onError($event)"
     ></jhi-code-editor-build-output>
 </jhi-code-editor-grid>

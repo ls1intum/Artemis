@@ -5,7 +5,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
-import { CodeEditorFileBrowserDeleteComponent, CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -23,8 +23,8 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     FileType = FileType;
 
-    @ViewChild('treeview')
-    treeview: TreeviewComponent;
+    @ViewChild('status') status: CodeEditorStatusComponent;
+    @ViewChild('treeview') treeview: TreeviewComponent;
 
     @Input()
     exercise: ProgrammingExercise;

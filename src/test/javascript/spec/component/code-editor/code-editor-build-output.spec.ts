@@ -15,7 +15,7 @@ import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-buil
 import { SafeHtmlPipe } from 'app/shared';
 import { MockCodeEditorSessionService, MockParticipationWebsocketService } from '../../mocks';
 import { ResultService } from 'app/entities/result';
-import { MockLocalStorageService } from '../../mocks/mock-local-storage.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { Feedback } from 'app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
@@ -43,7 +43,7 @@ describe('CodeEditorBuildOutputComponent', () => {
             declarations: [CodeEditorBuildOutputComponent, SafeHtmlPipe],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

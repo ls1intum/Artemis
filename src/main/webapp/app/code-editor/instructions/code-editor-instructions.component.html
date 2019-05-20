@@ -8,14 +8,14 @@
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span id="instructions-status" *ngIf="editableInstructions">
+            <span id="instructions-status" *ngIf="editable">
                 <fa-icon *ngIf="!unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
                 <fa-icon *ngIf="unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
             </span>
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
             <button
                 id="save-instructions-button"
-                *ngIf="editableInstructions"
+                *ngIf="editable"
                 [disabled]="savingInstructions || !unsavedChanges"
                 (click)="saveInstructions($event)"
                 class="btn btn-sm btn-light"
@@ -27,7 +27,7 @@
         </h3>
     </div>
     <jhi-programming-exercise-instructions
-        *ngIf="!editableInstructions; else markdownEditorInstructions"
+        *ngIf="!editable; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
         [exercise]="exercise"
         [participation]="participation"

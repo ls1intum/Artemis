@@ -55,7 +55,7 @@
             <span jhiTranslate="arTeMiSApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
-    <jhi-code-editor-status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
+    <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-right"><span></span></div>
 </div>
