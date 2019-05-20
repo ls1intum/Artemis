@@ -392,4 +392,13 @@ public class UserService {
         return loggedInUser;
     }
 
+    @Transactional(readOnly = true)
+    public User getUserById(Long tutorId) {
+        User user = userRepository.findById(tutorId).orElse(null);
+        if (user != null) {
+            user.getGroups().size(); // eagerly load the association
+            user.getAuthorities().size(); // eagerly load the association
+        }
+        return user;
+    }
 }
