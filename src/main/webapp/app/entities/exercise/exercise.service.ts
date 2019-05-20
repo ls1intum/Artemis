@@ -108,9 +108,9 @@ export class ExerciseService {
 
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null,
-            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null,
+            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : null,
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : null,
+            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : null,
         });
     }
 
@@ -150,6 +150,15 @@ export class ExerciseService {
 
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
         return categories.map(el => JSON.parse(el));
+    }
+
+    convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
+        let copy = Object.assign(exercise, {});
+        copy = this.convertDateFromClient(copy);
+        delete copy.course.exercises;
+        delete copy.course.lectures;
+        delete copy.participations;
+        return copy;
     }
 
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
