@@ -69,16 +69,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
-                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.exercise.participations = cachedParticipations.filter((participation: Participation) => participation.student.id === this.currentUser.id);
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
         } else {
-            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
-                this.exercise = exercise;
-                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                this.exercise = exerciseResponse.body;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
