@@ -247,6 +247,36 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             });
         }
     }
+    /**
+     * Load next assessment in the same page.
+     */
+    assessNextOptimal() {
+        console.log('here');
+        /**
+         * this.busy = true;
+         this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+         (optimal: number[]) => {
+                this.busy = false;
+                if (optimal.length === 0) {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                } else {
+                    this.jhiAlertService.clear();
+                    this.router.onSameUrlNavigation = 'reload';
+                    // navigate to root and then to new assessment page to trigger re-initialization of the components
+                    this.router
+                        .navigateByUrl('/', { skipLocationChange: true })
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
+                }
+            },
+         () => {
+                this.busy = false;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+            },
+         );
+         **/
+    }
 
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(

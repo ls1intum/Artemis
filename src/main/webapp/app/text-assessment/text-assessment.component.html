@@ -50,6 +50,15 @@
             >
                 Override Assessment
             </button>
+            <button
+                class="btn btn-success ml-3"
+                (click)="assessNextOptimal()"
+                [disabled]="!assessmentsAreValid"
+                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
+                jhiTranslate="modelingAssessmentEditor.button.nextSubmission"
+            >
+                Assess Next Assessment
+            </button>
         </div>
     </div>
 </div>
