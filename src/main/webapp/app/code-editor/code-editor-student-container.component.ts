@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,14 +15,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
 import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
-import { CodeEditorStatusComponent } from 'app/code-editor/status';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
 import { CodeEditorAceComponent } from 'app/code-editor/ace';
 
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
-    providers: [],
 })
 export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
     @ViewChild(CodeEditorFileBrowserComponent) fileBrowser: CodeEditorFileBrowserComponent;
@@ -34,6 +32,10 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     paramSub: Subscription;
     participation: Participation;
     exercise: ProgrammingExercise;
+
+    // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
+    loadingParticipation = false;
+    participationCouldNotBeFetched = false;
 
     constructor(
         private resultService: ResultService,
@@ -54,17 +56,25 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
+            this.loadingParticipation = true;
             const participationId = Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
-                    tap(participation => this.domainService.setDomain([DomainType.PARTICIPATION, participation])),
                     tap(participationWithResults => {
+                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                     }),
                 )
-
-                .subscribe();
+                .subscribe(
+                    () => {
+                        this.loadingParticipation = false;
+                    },
+                    err => {
+                        this.participationCouldNotBeFetched = true;
+                        this.loadingParticipation = false;
+                    },
+                );
         });
     }
 
@@ -80,34 +90,21 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      */
     loadParticipationWithLatestResult(participationId: number): Observable<Participation | null> {
         return this.participationService.findWithLatestResult(participationId).pipe(
-            catchError(() => Observable.of(null)),
             map(res => res && res.body),
             flatMap((participation: Participation) =>
-                this.loadLatestResult(participation).pipe(
-                    switchMap(result =>
-                        result
-                            ? this.loadResultDetails(result).pipe(
-                                  map(feedback => {
-                                      if (feedback) {
-                                          participation.results[0].feedbacks = feedback;
-                                      }
-                                      return participation;
-                                  }),
-                              )
-                            : Observable.of(participation),
-                    ),
-                ),
+                participation.results && participation.results.length
+                    ? this.loadResultDetails(participation.results[0]).pipe(
+                          map(feedback => {
+                              if (feedback) {
+                                  participation.results[0].feedbacks = feedback;
+                              }
+                              return participation;
+                          }),
+                          catchError(() => Observable.of(participation)),
+                      )
+                    : Observable.of(participation),
             ),
         );
-    }
-
-    loadLatestResult(participation: Participation): Observable<Result | null> {
-        if (participation && participation.results) {
-            return Observable.of(participation.results.length ? participation.results[0] : null);
-        }
-        return this.resultService
-            .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, participation.id)
-            .pipe(map(({ body: results }) => (results.length ? results.reduce((acc, result) => (result > acc ? result : acc)) : null)));
     }
 
     /**
@@ -116,9 +113,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Mutates the input parameter result.
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => Observable.of(null)),
-            map(res => res && res.body),
-        );
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map(res => res && res.body));
     }
 }

@@ -29,6 +29,7 @@
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
+            "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "fileBrowser": {
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",

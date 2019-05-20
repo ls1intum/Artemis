@@ -7,3 +7,5 @@ export * from './mock-ngb-modal.service';
 export * from './mock-repository-file.service';
 export * from './mock-result.service';
 export * from './mock-participation-websocket.service';
+export * from './mock-activated.route';
+export * from './mock-participation.service';

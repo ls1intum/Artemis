@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper, WindowRef } from 'app/core';
+import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
-import { of, Subject } from 'rxjs';
+import { of, BehaviorSubject, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -26,20 +28,24 @@ import {
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
+    MockParticipationService,
     MockParticipationWebsocketService,
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService } from 'app/entities/result';
+import { ArTEMiSResultModule, Result, ResultService, UpdatingResultComponent } from 'app/entities/result';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement, problemStatementRendered } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
+import { activateRoute } from 'app/account';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockAccountService } from '../../mocks/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,6 +59,8 @@ describe('CodeEditorStudentIntegration', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
     let buildLogService: CodeEditorBuildLogService;
+    let participationService: ParticipationService;
+    let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
     let getRepositoryContentStub: SinonStub;
@@ -62,8 +70,10 @@ describe('CodeEditorStudentIntegration', () => {
     let getFileStub: SinonStub;
     let saveFilesStub: SinonStub;
     let commitStub: SinonStub;
+    let findWithLatestResultStub: SinonStub;
 
-    let subscribeForLatestResultOfParticipationSubject: Subject<Result>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
+    let routeSubject: Subject<Params>;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -77,12 +87,14 @@ describe('CodeEditorStudentIntegration', () => {
                 ArTEMiSResultModule,
                 ArTEMiSCodeEditorModule,
             ],
-            declarations: [],
+            declarations: [MockComponent(UpdatingResultComponent)],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
                 CodeEditorFileService,
                 ChangeDetectorRef,
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -92,6 +104,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
+                { provide: ParticipationService, useClass: MockParticipationService },
             ],
         })
             .compileComponents()
@@ -105,8 +118,14 @@ describe('CodeEditorStudentIntegration', () => {
                 participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
                 resultService = containerDebugElement.injector.get(ResultService);
                 buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
+                participationService = containerDebugElement.injector.get(ParticipationService);
+                route = containerDebugElement.injector.get(ActivatedRoute);
 
-                subscribeForLatestResultOfParticipationSubject = new Subject();
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+
+                routeSubject = new Subject<Params>();
+                //@ts-ignore
+                (route as MockActivatedRoute).setSubject(routeSubject);
 
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'isClean');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
@@ -118,6 +137,7 @@ describe('CodeEditorStudentIntegration', () => {
                 getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
+                findWithLatestResultStub = stub(participationService, 'findWithLatestResult');
             });
     });
 
@@ -129,9 +149,15 @@ describe('CodeEditorStudentIntegration', () => {
         getBuildLogsStub.restore();
         getFileStub.restore();
         saveFilesStub.restore();
+        commitStub.restore();
+        findWithLatestResultStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new Subject();
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
+
+        routeSubject = new Subject<Params>();
+        //@ts-ignore
+        (route as MockActivatedRoute).setSubject(routeSubject);
     });
 
     const cleanInitialize = () => {
@@ -421,5 +447,46 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.buildOutput.isBuilding).to.be.false;
         expect(container.buildOutput.rawBuildLogs).to.deep.equal(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).to.be.empty;
+    });
+
+    it('should initialize correctly on route change if participation can be retrieved', () => {
+        container.ngOnInit();
+        const result = { id: 3, successful: false };
+        const participation = { id: 1, results: [result] } as Participation;
+        const feedbacks = [{ id: 2 }] as Feedback[];
+        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
+        findWithLatestResultStub.returns(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+
+        expect(container.loadingParticipation).to.be.true;
+
+        findWithLatestResultSubject.next({ body: participation });
+        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
+
+        expect(findWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
+        expect(container.loadingParticipation).to.be.false;
+        expect(container.participationCouldNotBeFetched).to.be.false;
+        expect(container.participation).to.deep.equal({ ...participation, results: [{ ...result, feedbacks }] });
+    });
+
+    it('should abort initialization and show error state if participation cannot be retrieved', () => {
+        container.ngOnInit();
+        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        findWithLatestResultStub.returns(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+
+        expect(container.loadingParticipation).to.be.true;
+
+        findWithLatestResultSubject.error('fatal error');
+
+        expect(container.loadingParticipation).to.be.false;
+        expect(container.participationCouldNotBeFetched).to.be.true;
+        expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
+        expect(container.participation).to.be.undefined;
     });
 });
