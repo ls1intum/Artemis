@@ -65,11 +65,13 @@
 
     <div class="col-12">
         <div class="row flex-nowrap">
-            <div class="col editor-container">
-                <div>
-                    <jhi-modeling-editor *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly"></jhi-modeling-editor>
+            <div class="col editor-container-outer">
+                <div class="row editor-container-inner">
+                    <jhi-modeling-editor class="col-12" *ngIf="!assessmentMode" [umlModel]="umlModel" [diagramType]="exercise.diagramType" [readOnly]="readOnly">
+                    </jhi-modeling-editor>
 
                     <jhi-modeling-assessment
+                        class="col-12"
                         *ngIf="assessmentMode"
                         [model]="umlModel"
                         [feedbacks]="result?.feedbacks"
@@ -77,7 +79,8 @@
                         [maxScore]="exercise.maxScore"
                         [readOnly]="readOnly"
                         (feedbackChanged)="onFeedbackChanged($event)"
-                    ></jhi-modeling-assessment>
+                    >
+                    </jhi-modeling-assessment>
                 </div>
 
                 <h3 class="mt-3" *ngIf="assessmentMode">Explanation</h3>
