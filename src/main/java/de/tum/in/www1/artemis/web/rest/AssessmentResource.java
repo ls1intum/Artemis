@@ -36,13 +36,4 @@ public abstract class AssessmentResource {
             throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
         }
     }
-
-    /**
-     * Tutors are not allowed to submit an assessment after the assessment due date. Instructors can submit assessments at any time.
-     */
-    void checkAssessmentDueDate(Exercise exercise) {
-        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
-        }
-    }
 }
