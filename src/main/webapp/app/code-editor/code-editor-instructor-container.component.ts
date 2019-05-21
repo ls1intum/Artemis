@@ -3,7 +3,7 @@ import { Observable, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ParticipationType, ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';

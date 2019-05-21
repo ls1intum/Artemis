@@ -79,7 +79,8 @@
                 "solutionInfo": "No result found for the Solution Repository.",
                 "templateWarning": "The Template Repository does already fulfill one or more test cases. This could indicate an issue in the Template Repository.",
                 "templateSuccess": "The Template Repository fulfills no test case.",
-                "templateInfo": "No result found for the Template Repository."
+                "templateInfo": "No result found for the Template Repository.",
+                "exerciseHasNoIssues": "No issues were identified in the repositories."
             }
         }
     }

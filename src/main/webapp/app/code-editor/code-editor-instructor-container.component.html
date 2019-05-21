@@ -1,177 +1,108 @@
 <jhi-alert-error></jhi-alert-error>
-<div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_INSTRUCTOR']" class="card mb-3">
-    <div *ngIf="loadingState !== LOADING_STATE.INITIALIZING && loadingState !== LOADING_STATE.FETCHING_FAILED" class="card-body d-flex p-2">
-        <!-- repository select -->
-        <div ngbDropdown class="d-inline-block mr-2">
-            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
-            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                <button
-                    [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id"
-                    (click)="selectTemplateParticipation()"
-                    ngbDropdownItem
-                    [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
-                    jhiTranslate="arTeMiSApp.editor.repoSelect.templateRepo"
-                >
-                    Template Repository
-                </button>
-                <button
-                    [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
-                    (click)="selectSolutionParticipation()"
-                    ngbDropdownItem
-                    [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
-                    jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo"
-                >
-                    Solution Repository
-                </button>
-                <button
-                    [disabled]="
-                        loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                        loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
-                        !exercise ||
-                        !exercise.participations ||
-                        !exercise.participations.length
-                    "
-                    (click)="selectAssignmentParticipation()"
-                    ngbDropdownItem
-                    [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
-                    jhiTranslate="arTeMiSApp.editor.repoSelect.assignmentRepo"
-                >
-                    Assignment Participation
-                </button>
-                <button
-                    [disabled]="!exercise"
-                    (click)="selectTestRepository()"
-                    ngbDropdownItem
-                    [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
-                    jhiTranslate="arTeMiSApp.editor.repoSelect.testRepo"
-                >
-                    Test Repository
-                </button>
-            </div>
-        </div>
-        <!-- action buttons -->
-        <div class="mr-2">
-            <button
-                *ngIf="!exercise.participations || !exercise.participations.length"
-                (click)="createAssignmentParticipation()"
-                [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                class="btn btn-primary mr-2"
-            >
-                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="plus" class="text-white mr-2"></fa-icon>
-                <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
-            </button>
-            <button
-                *ngIf="exercise.participations && exercise.participations.length"
-                (click)="resetAssignmentParticipation()"
-                [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                class="btn btn-danger"
-            >
-                <fa-icon
-                    *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                    icon="times"
-                    class="text-white mr-2"
-                ></fa-icon>
-                <fa-icon
-                    *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                    icon="circle-notch"
-                    [spin]="true"
-                    class="text-white mr-2"
-                ></fa-icon>
-                <span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
-            </button>
-        </div>
-        <!-- status -->
-        <div class="d-flex ml-auto">
-            <!-- solution state ok -->
-            <div
-                *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].score === 100"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-success"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionSuccess' | translate }}">
-                    <fa-icon icon="check-circle" class="mr-2"></fa-icon>
-                    <span>Solution Repository Status</span>
-                </span>
-            </div>
-            <!-- solution state warning -->
-            <div
-                *ngIf="this.exercise.solutionParticipation.results && this.exercise.solutionParticipation.results[0].score !== 100"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-warning"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionWarning' | translate }}">
-                    <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>
-                    <span>Solution Repository Status</span>
-                </span>
-            </div>
-            <!-- solution state info -->
-            <div
-                *ngIf="!this.exercise?.solutionParticipation?.results"
-                icon="question-circle"
-                class="mr-2"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-info"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.solutionInfo' | translate }}">
-                    <fa-icon></fa-icon>
-                    <span>Solution Repository Status</span>
-                </span>
-            </div>
-            <!-- template state ok -->
-            <div
-                *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].score === 0"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-success"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateSuccess' | translate }}">
-                    <fa-icon icon="check-circle" class="mr-2"></fa-icon>
-                    <span>Template Repository Status</span>
-                </span>
-            </div>
-            <!-- template state warning -->
-            <div
-                *ngIf="this.exercise.templateParticipation.results && this.exercise.templateParticipation.results[0].score > 0"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-warning"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateWarning' | translate }}">
-                    <fa-icon icon="exclamation-triangle" class="mr-2"></fa-icon>
-                    <span>Template Repository Status</span>
-                </span>
-            </div>
-            <!-- template state info -->
-            <div
-                *ngIf="!this.exercise?.templateParticipation?.results"
-                icon="question-circle"
-                class="mr-2"
-                class="instructor-bar__badge d-flex align-items-center mr-2 badge badge-info"
-            >
-                <span title="{{ 'arTeMiSApp.editor.repoSelect.templateInfo' | translate }}">
-                    <fa-icon></fa-icon>
-                    <span>Template Repository Status</span>
-                </span>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="loadingState === LOADING_STATE.INITIALIZING" class="card-body">
-        <fa-icon icon="circle-notch" [spin]="true" class="mr-2"></fa-icon><span>Loading Participation</span>
-    </div>
-    <div *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED" class="card-body">
-        <fa-icon icon="times-circle" class="text-danger"></fa-icon>
-        <span jhiTranslate="arTeMiSApp.editor.participationCouldNotBeFound">Your participation could not be found.</span>
-    </div>
-</div>
 <jhi-code-editor-grid #grid *ngIf="exercise" [exerciseTitle]="exercise?.title">
-    <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-updating-result
-            *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
-            [participation]="selectedParticipation"
-            class="mr-2"
-        ></jhi-updating-result>
-        <jhi-code-editor-actions
-            [unsavedFiles]="unsavedFiles"
-            [(editorState)]="editorState"
-            [(commitState)]="commitState"
-            [(isBuilding)]="isBuilding"
-            (onSavedFiles)="onSavedFiles($event)"
-            (onError)="onError($event)"
-        ></jhi-code-editor-actions>
+    <div class="d-flex flex-grow-1 justify-content-between align-items-center" editorNavbar>
+        <div class="d-flex align-items-center ml-2">
+            <jhi-programming-exercise-instructor-exercise-status
+                class="mr-2"
+                [templateParticipation]="exercise?.templateParticipation"
+                [solutionParticipation]="exercise?.solutionParticipation"
+            ></jhi-programming-exercise-instructor-exercise-status>
+            <!-- repository select -->
+            <div ngbDropdown class="d-inline-block mr-2">
+                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+                <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                    <button
+                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id"
+                        (click)="selectTemplateParticipation()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
+                    >
+                        <span jhiTranslate="arTeMiSApp.editor.repoSelect.templateRepo">Template Repository</span>
+                    </button>
+                    <button
+                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
+                        (click)="selectSolutionParticipation()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                        jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo"
+                    >
+                        <span jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
+                    </button>
+                    <button
+                        [disabled]="
+                            loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                            loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
+                            !exercise ||
+                            !exercise.participations ||
+                            !exercise.participations.length
+                        "
+                        (click)="selectAssignmentParticipation()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
+                        jhiTranslate="arTeMiSApp.editor.repoSelect.assignmentRepo"
+                    >
+                        Assignment Participation
+                    </button>
+                    <button
+                        [disabled]="!exercise"
+                        (click)="selectTestRepository()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        jhiTranslate="arTeMiSApp.editor.repoSelect.testRepo"
+                    >
+                        Test Repository
+                    </button>
+                </div>
+            </div>
+            <!-- action buttons -->
+            <div>
+                <button
+                    *ngIf="!exercise.participations || !exercise.participations.length"
+                    (click)="createAssignmentParticipation()"
+                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                    class="btn btn-primary mr-2"
+                >
+                    <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="plus" class="text-white mr-2"></fa-icon>
+                    <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
+                </button>
+                <button
+                    *ngIf="exercise.participations && exercise.participations.length"
+                    (click)="resetAssignmentParticipation()"
+                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                    class="btn btn-danger"
+                >
+                    <fa-icon
+                        *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                        icon="times"
+                        class="text-white mr-2"
+                    ></fa-icon>
+                    <fa-icon
+                        *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                        icon="circle-notch"
+                        [spin]="true"
+                        class="text-white mr-2"
+                    ></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                </button>
+            </div>
+        </div>
+        <div class="ml-auto d-flex align-items-center">
+            <jhi-updating-result
+                *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
+                [participation]="selectedParticipation"
+                [result]="selectedParticipation.results && selectedParticipation.results[0]"
+                class="mr-2"
+            ></jhi-updating-result>
+            <jhi-code-editor-actions
+                [unsavedFiles]="unsavedFiles"
+                [(editorState)]="editorState"
+                [(commitState)]="commitState"
+                [(isBuilding)]="isBuilding"
+                (onSavedFiles)="onSavedFiles($event)"
+                (onError)="onError($event)"
+            ></jhi-code-editor-actions>
+        </div>
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft

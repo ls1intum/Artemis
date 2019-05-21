@@ -184,12 +184,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => of(null)),
             map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
             }),
+            catchError(() => of(result)),
         );
     }
 

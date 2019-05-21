@@ -78,7 +78,8 @@
                 "solutionInfo": "Kein Ergebnis verfügbar.",
                 "templateWarning": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem im Template Repository hinweisen.",
                 "templateSuccess": "Das Template Repository erfüllt keinen Testfall.",
-                "templateInfo": "Kein Ergebnis verfügbar."
+                "templateInfo": "Kein Ergebnis verfügbar.",
+                "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             }
         }
     }

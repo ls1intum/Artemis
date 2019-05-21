@@ -169,6 +169,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+            if (!latestResult) {
+                return Observable.of(null);
+            }
             return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -218,12 +221,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => Observable.of(null)),
             map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
             }),
+            catchError(() => Observable.of(result)),
         );
     }
 
