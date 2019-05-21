@@ -5,6 +5,6 @@
 </ng-template>
 
 <ng-template #tooltipContent>
-    <span *ngIf="issues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)" jhiTranslate="arTeMiSApp.programmingExercise.status.templateFulfillsTest"></span>
-    <span *ngIf="issues.includes(ProgrammingExerciseIssues.SOLUTION_FAILING)" jhiTranslate="arTeMiSApp.programmingExercise.status.solutionFailsTest"></span>
+    <div *ngIf="issues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)" jhiTranslate="arTeMiSApp.programmingExercise.status.templateFulfillsTest"></div>
+    <div *ngIf="issues.includes(ProgrammingExerciseIssues.SOLUTION_FAILING)" jhiTranslate="arTeMiSApp.programmingExercise.status.solutionFailsTest"></div>
 </ng-template>

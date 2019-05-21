@@ -42,8 +42,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     get commitState() {
         return this.commitStateValue;
     }
-    @Input()
-    toggleCollapse: (event: any, horizontal: boolean, interactable: Interactable, resizableMinWidth: number) => void;
+    @Output()
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number }>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
@@ -66,8 +66,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;
-    // Tuple: [filePath, fileType
-    // ]
+    // Tuple: [filePath, fileType]
     creatingFile: [string, FileType] | null = null;
 
     /** Provide basic configuration for the TreeView (ngx-treeview) **/
@@ -137,7 +136,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     /**
      * @function ngOnInit
-     * @desc Updates the file tree with the repositoryFiles
+     * @desc When the commitState is undefined, fetch the repository status and load the files if possible.
+     * When this is done, render the file tree.
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -352,8 +352,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        // TODO: Find better way to do this
-        this.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
+        this.onToggleCollapse.emit({ event: $event, horizontal, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
     }
 
     /**
@@ -362,6 +361,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * After rename the rename state is exited.
      **/
     onRenameFile(newFileName: string) {
+        // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
+        if (!this.renamingFile) {
+            return;
+        }
         const [filePath, , fileType] = this.renamingFile;
         let newFilePath: any = filePath.split('/');
         newFilePath[newFilePath.length - 1] = newFileName;
@@ -402,6 +405,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * Create a file with the value of the creation input.
      **/
     onCreateFile(fileName: string) {
+        // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
+        if (!this.creatingFile) {
+            return;
+        }
         const [folderPath, fileType] = this.creatingFile;
 
         if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop())) {

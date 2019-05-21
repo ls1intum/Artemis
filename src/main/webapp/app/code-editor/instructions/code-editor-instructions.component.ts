@@ -90,6 +90,11 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
             });
     }
 
+    /**
+     * Update the problem statement with the new string received.
+     * This does not save the new problem statement on the server.
+     * @param newProblemStatement
+     */
     onProblemStatementEditorUpdate(newProblemStatement: string) {
         if (newProblemStatement !== this.exercise.problemStatement) {
             this.unsavedChanges = true;
@@ -97,6 +102,10 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * Save the problem statement on the server.
+     * @param $event
+     */
     saveInstructions($event: any) {
         $event.stopPropagation();
         this.savingInstructions = true;

@@ -18,8 +18,13 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     @Output() onRenameNode = new EventEmitter<{ item: TreeviewItem; newFileName: string }>();
     @Output() onDeleteNode = new EventEmitter<TreeviewItem>();
 
+    /**
+     * Check if the node is being renamed now, if so, focus the input when the view is rendered.
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isBeingRenamed && this.isBeingRenamed) {
+            // Timeout is needed to wait for view to render.
             setTimeout(() => {
                 if (this.renamingInput) {
                     this.renamingInput.nativeElement.focus();
@@ -28,16 +33,28 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
         }
     }
 
+    /**
+     * Emit that this node should be renamed.
+     * @param event
+     */
     setRenamingNode(event: any) {
         event.stopPropagation();
         this.onSetRenamingNode.emit(this.item);
     }
 
+    /**
+     * Stop renaming this node.
+     * @param event
+     */
     clearRenamingNode(event: any) {
         event.stopPropagation();
         this.onClearRenamingNode.emit();
     }
 
+    /**
+     * Send an event to the parent with the new name of the node.
+     * @param event
+     */
     renameNode(event: any) {
         if (!event.target.value || !this.isBeingRenamed) {
             return;
@@ -48,6 +65,10 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
         this.onRenameNode.emit(event.target.value);
     }
 
+    /**
+     * Delete the node.
+     * @param event
+     */
     deleteNode(event: any) {
         event.stopPropagation();
         this.onDeleteNode.emit(this.item);

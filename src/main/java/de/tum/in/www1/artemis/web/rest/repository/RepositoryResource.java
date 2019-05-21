@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
- * the respository and the permission checks can be outsourced to child classes.
+ * the repository and the permission checks can be outsourced to child classes. The domain could be any ID needed to make API calls (exercise, participation, etc.).
  */
 public abstract class RepositoryResource {
 
@@ -57,15 +57,17 @@ public abstract class RepositoryResource {
         this.repositoryService = repositoryService;
     }
 
-    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
-
     /**
-     * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
-     *
+     * Override this method to define how a repository can be retrieved.
+     * 
      * @param domainId
      * @return
      * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
      */
+    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
+
     public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) throws IOException, InterruptedException {
         log.debug("REST request to files for domainId : {}", domainId);
 
@@ -80,19 +82,19 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/file: Get the content of a file
+     * Get the content of a file.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @param filename
      * @return
      * @throws IOException
      */
-    public ResponseEntity<String> getFile(Long participationId, String filename) throws IOException, InterruptedException {
-        log.debug("REST request to file {} for Participation : {}", filename, participationId);
+    public ResponseEntity<String> getFile(Long domainId, String filename) throws IOException, InterruptedException {
+        log.debug("REST request to file {} for domainId : {}", filename, domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -109,20 +111,20 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/file: Create new file
+     * Create new file.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @param filename
      * @param request
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> createFile(Long participationId, String filename, HttpServletRequest request) throws IOException, InterruptedException {
-        log.debug("REST request to create file {} for Participation : {}", filename, participationId);
+    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) throws IOException, InterruptedException {
+        log.debug("REST request to create file {} for domainId : {}", filename, domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -146,20 +148,20 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/folder: Create new folder
+     * Create new folder
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @param folderName
      * @param request
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> createFolder(Long participationId, String folderName, HttpServletRequest request) throws IOException, InterruptedException {
-        log.debug("REST request to create file {} for Participation : {}", folderName, participationId);
+    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) throws IOException, InterruptedException {
+        log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -184,18 +186,19 @@ public abstract class RepositoryResource {
 
     /**
      * Change the name of a file.
-     * 
-     * @param participationId id of the participation the git repository belongs to.
-     * @param fileMove        defines current and new path in git repository.
+     *
+     * @param domainId id of the participation the git repository belongs to.
+     * @param fileMove defines current and new path in git repository.
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    public ResponseEntity<Void> renameFile(Long participationId, FileMove fileMove) throws IOException, InterruptedException {
+    public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) throws IOException, InterruptedException {
+        log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -220,19 +223,19 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
+     * Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
      * 
-     * @param participationId Participation ID
-     * @param filename        path of file or folder to delete.
+     * @param domainId
+     * @param filename path of file or folder to delete.
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> deleteFile(Long participationId, String filename) throws IOException, InterruptedException {
-        log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
+    public ResponseEntity<Void> deleteFile(Long domainId, String filename) throws IOException, InterruptedException {
+        log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -250,18 +253,18 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/pull: Pull into the participation repository
+     * Pull into the participation repository.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @return
      * @throws IOException
      */
-    public ResponseEntity<Void> pullChanges(Long participationId) throws IOException, InterruptedException {
-        log.debug("REST request to commit Repository for Participation : {}", participationId);
+    public ResponseEntity<Void> pullChanges(Long domainId) throws IOException, InterruptedException {
+        log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -272,19 +275,19 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/commit: Commit into the participation repository
+     * Commit into the participation repository.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    public ResponseEntity<Void> commitChanges(Long participationId) throws IOException, InterruptedException {
-        log.debug("REST request to commit Repository for Participation : {}", participationId);
+    public ResponseEntity<Void> commitChanges(Long domainId) throws IOException, InterruptedException {
+        log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -300,19 +303,19 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
+     * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
-     * @param participationId Participation ID
+     * @param domainId
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long participationId) throws IOException, GitAPIException, InterruptedException {
-        log.debug("REST request to get clean status for Repository for Participation : {}", participationId);
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
+        log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         Repository repository;
         try {
-            repository = getRepository(participationId);
+            repository = getRepository(domainId);
         }
         catch (IllegalAccessException ex) {
             return forbidden();

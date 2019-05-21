@@ -144,11 +144,11 @@ public class RepositoryWebsocketResource {
     }
 
     /**
-     * Update a list of files based on the submission's content.
+     * Update a list of files in a test repository based on the submission's content.
      *
-     * @param participationId id of participation to which the files belong
-     * @param submissions     information about the file updates
-     * @param principal       used to check if the user can update the files
+     * @param exerciseId  of exercise to which the files belong
+     * @param submissions information about the file updates
+     * @param principal   used to check if the user can update the files
      */
     @MessageMapping("/topic/test-repository/{exerciseId}/files")
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {

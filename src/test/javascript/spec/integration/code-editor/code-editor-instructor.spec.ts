@@ -242,7 +242,8 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.buildOutput).to.exist;
 
         setTimeout(() => {
-            expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
+            // Called once by each build-output, instructions, result & instructor-status
+            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(4);
             done();
         }, 0);
     });

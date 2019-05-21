@@ -49,7 +49,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
+     * GET /test-repository/{exerciseId}/files: Map of all file and folders of the repository. Each entry states if it is a file or a folder.
      *
      * @param exerciseId Exercise ID
      * @return
@@ -61,7 +61,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/file: Get the content of a file
+     * GET /test-repository/{exerciseId}/file: Get the content of a file
      *
      * @param exerciseId Exercise ID
      * @param filename
@@ -74,7 +74,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/file: Create new file
+     * POST /test-repository/{exerciseId}/file: Create new file
      *
      * @param exerciseId Exercise ID
      * @param filename
@@ -89,7 +89,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/folder: Create new folder
+     * POST /test-repository/{exerciseId}/folder: Create new folder
      *
      * @param exerciseId Exercise ID
      * @param folderName
@@ -118,7 +118,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * DELETE /repository/{participationId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
+     * DELETE /test-repository/{exerciseId}/file: Delete the file or the folder specified. If the path is a folder, all files in it will be deleted, too.
      *
      * @param exerciseId Exercise ID
      * @param filename   path of file or folder to delete.
@@ -131,7 +131,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}/pull: Pull into the participation repository
+     * GET /test-repository/{exerciseId}/pull: Pull into the participation repository
      *
      * @param exerciseId Exercise ID
      * @return
@@ -143,7 +143,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/commit: Commit into the participation repository
+     * POST /test-repository/{exerciseId}/commit: Commit into the participation repository
      *
      * @param exerciseId Exercise ID
      * @return
@@ -156,7 +156,7 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
+     * GET /test-repository/{exerciseId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param exerciseId Exercise ID
      * @return

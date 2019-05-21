@@ -25,6 +25,9 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
+/**
+ * Service that provides utilites for managing files in a git repository.
+ */
 @Service
 public class RepositoryService {
 
@@ -43,6 +46,12 @@ public class RepositoryService {
         this.userService = userService;
     }
 
+    /**
+     * Get the repository content (files and folders).
+     * 
+     * @param repository
+     * @return
+     */
     public HashMap<String, FileType> getFiles(Repository repository) {
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
 
@@ -56,6 +65,14 @@ public class RepositoryService {
         return fileList;
     }
 
+    /**
+     * Get a single file/folder from repository.
+     * 
+     * @param repository
+     * @param filename
+     * @return
+     * @throws IOException
+     */
     public byte[] getFile(Repository repository, String filename) throws IOException {
         Optional<File> file = gitService.get().getFileByName(repository, filename);
         if (!file.isPresent()) {
@@ -66,6 +83,14 @@ public class RepositoryService {
         return org.apache.commons.io.IOUtils.toByteArray(inputStream);
     }
 
+    /**
+     * Create a file in a repository.
+     * 
+     * @param repository
+     * @param filename
+     * @param inputStream
+     * @throws IOException
+     */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
         if (gitService.get().getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
@@ -80,6 +105,14 @@ public class RepositoryService {
         repository.setContent(null); // invalidate cache
     }
 
+    /**
+     * Create a folder in a repository.
+     * 
+     * @param repository
+     * @param folderName
+     * @param inputStream
+     * @throws IOException
+     */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
         if (gitService.get().getFileByName(repository, folderName).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
@@ -95,6 +128,15 @@ public class RepositoryService {
         repository.setContent(null); // invalidate cache
     }
 
+    /**
+     * Rename a file in a repository.
+     * 
+     * @param repository
+     * @param fileMove
+     * @throws FileNotFoundException
+     * @throws FileAlreadyExistsException
+     * @throws IllegalArgumentException
+     */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
         if (!file.isPresent()) {
@@ -115,6 +157,13 @@ public class RepositoryService {
         repository.setContent(null); // invalidate cache
     }
 
+    /**
+     * Delete a file in a repository.
+     * 
+     * @param repository
+     * @param filename
+     * @throws IOException
+     */
     public void deleteFile(Repository repository, String filename) throws IOException {
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -134,15 +183,33 @@ public class RepositoryService {
         repository.setContent(null); // invalidate cache
     }
 
+    /**
+     * Pull from a git repository.
+     * 
+     * @param repository
+     */
     public void pullChanges(Repository repository) {
         gitService.get().pull(repository);
     }
 
+    /**
+     * Commit all staged and unstaged changes in the given repository.
+     * 
+     * @param repository
+     * @throws GitAPIException
+     */
     public void commitChanges(Repository repository) throws GitAPIException {
         gitService.get().stageAllChanges(repository);
         gitService.get().commitAndPush(repository, "Changes by Online Editor");
     }
 
+    /**
+     * Retrieve the status of the repository. Also pulls the repository.
+     * 
+     * @param repository
+     * @return
+     * @throws GitAPIException
+     */
     public RepositoryStatusDTO getStatus(Repository repository) throws GitAPIException {
         RepositoryStatusDTO status = new RepositoryStatusDTO();
         status.isClean = gitService.get().isClean(repository);
@@ -153,6 +220,16 @@ public class RepositoryService {
         return status;
     }
 
+    /**
+     * Retrieve a repository by its name.
+     * 
+     * @param exercise
+     * @param repoUrl
+     * @return
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
     public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
@@ -163,6 +240,16 @@ public class RepositoryService {
         return gitService.get().getOrCheckoutRepository(repoUrl);
     }
 
+    /**
+     * Retrieve a repository by its name.
+     * 
+     * @param exercise
+     * @param repoUrl
+     * @return
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         Course course = exercise.getCourse();
@@ -173,6 +260,15 @@ public class RepositoryService {
         return gitService.get().getOrCheckoutRepository(repoUrl);
     }
 
+    /**
+     * Retrieve a repository by a participation connected to it.
+     * 
+     * @param participation
+     * @return
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
     public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {
         boolean hasAccess = canAccessParticipation(participation);
         if (!hasAccess) {
@@ -182,6 +278,12 @@ public class RepositoryService {
         return gitService.get().getOrCheckoutRepository(participation);
     }
 
+    /**
+     * Check if a repository can be accessed given a participation.
+     * 
+     * @param participation
+     * @return
+     */
     @Nullable
     public boolean canAccessParticipation(Participation participation) {
         if (!userHasPermissions(participation))
@@ -193,6 +295,12 @@ public class RepositoryService {
         return true;
     }
 
+    /**
+     * Check if a user has permissions to to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
+     * 
+     * @param participation
+     * @return
+     */
     private boolean userHasPermissions(Participation participation) {
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             // if the user is not the owner of the participation, the user can only see it in case he is

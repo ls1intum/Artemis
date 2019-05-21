@@ -2,7 +2,20 @@ import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace
 import { compose, filter, fromPairs, map, tap, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 
+/**
+ * Updates references to files based on FileChanges.
+ * This includes renaming and deleting files.
+ * E.g.:
+ * - file refs: {file: any, file2: any}
+ * - fileChange: RenameFileChange(file, file3)
+ * => file refs: {file3: any, file2: any}
+ */
 export class CodeEditorFileService {
+    /**
+     * Update multiple references at once.
+     * @param refs
+     * @param fileChange
+     */
     updateFileReferences = (refs: { [fileName: string]: any }, fileChange: FileChange) => {
         if (fileChange instanceof RenameFileChange) {
             const testRegex = new RegExp(`^${fileChange.oldFileName}($|/.*)`);
@@ -25,6 +38,12 @@ export class CodeEditorFileService {
             return refs;
         }
     };
+
+    /**
+     * Update a single reference.
+     * @param fileName
+     * @param fileChange
+     */
     updateFileReference = (fileName: string, fileChange: FileChange) => {
         if (fileChange instanceof RenameFileChange) {
             const testRegex = new RegExp(`^${fileChange.oldFileName}($|/.*)`);

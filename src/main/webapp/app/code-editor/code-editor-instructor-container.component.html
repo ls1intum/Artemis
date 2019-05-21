@@ -1,4 +1,18 @@
 <jhi-alert-error></jhi-alert-error>
+<nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
+    <div class="card-body">
+        <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
+            <fa-icon icon="circle-notch" spin="true"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.editor.fetchingParticipation">
+                Your participation is being loaded...
+            </span>
+        </span>
+        <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
+            <fa-icon icon="times-circle" class="text-danger"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.editor.participationCouldNotBeFound">Your participation could not be found.</span>
+        </span>
+    </div>
+</nav>
 <jhi-code-editor-grid #grid *ngIf="exercise" [exerciseTitle]="exercise?.title">
     <div class="d-flex flex-grow-1 justify-content-between align-items-center" editorNavbar>
         <div class="d-flex align-items-center ml-2">
@@ -115,6 +129,7 @@
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace
         editorCenter
@@ -140,5 +155,6 @@
         [(isBuilding)]="isBuilding"
         [(buildLogErrors)]="buildLogErrors"
         (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
     ></jhi-code-editor-build-output>
 </jhi-code-editor-grid>

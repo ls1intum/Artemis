@@ -1,4 +1,4 @@
-<ngb-tabset #tabs class="md-editor-tabs" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
+<ngb-tabset class="md-editor-tabs" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
     <!--Begin Editor-->
     <ngb-tab title="{{ 'entity.action.edit' | translate }}" id="editor_edit">
         <ng-template ngbTabContent>
