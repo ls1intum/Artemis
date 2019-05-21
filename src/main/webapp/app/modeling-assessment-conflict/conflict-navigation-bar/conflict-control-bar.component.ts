@@ -1,10 +1,11 @@
-import { Component, OnInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { JhiAlertService } from 'ng-jhipster';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
-    selector: 'jhi-conflict-navigation-bar',
+    selector: 'jhi-conflict-control-bar',
     templateUrl: './conflict-control-bar.component.html',
     styleUrls: ['./conflict-control-bar.component.scss'],
 })
@@ -16,7 +17,7 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     @Input() conflictResolutionStates: ConflictResolutionState[];
     @Output() selectedConflictChanged = new EventEmitter<number>();
     @Output() save = new EventEmitter();
-    @Output() submit = new EventEmitter();
+    @Output() submit = new EventEmitter<Conflict[]>();
     constructor(private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {}
@@ -47,11 +48,21 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     }
 
     onSubmit() {
-        this.submit.emit();
+        this.submit.emit(this.getEscalatedConflicts());
     }
 
     updateSelectedConflict() {
         this.selectedConflictChanged.emit(this.conflictIndex);
+    }
+
+    private getEscalatedConflicts() {
+        let escalatedConflicts = new Array<Conflict>();
+        for (let i = 0; i < this.conflictResolutionStates.length; i++) {
+            if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
+                escalatedConflicts.push(this.conflicts[i]);
+            }
+        }
+        return escalatedConflicts;
     }
 
     private updateOverallResolutionState() {
