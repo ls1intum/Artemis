@@ -15,7 +15,6 @@ import { Moment, isMoment } from 'moment';
                 [ngClass]="{ 'is-invalid': error }"
                 [ngModel]="value"
                 [disabled]="disabled"
-                [min]="this.getCurrentDate()"
                 (ngModelChange)="updateField($event)"
                 [owlDateTime]="dt"
                 name="datePicker"
@@ -63,11 +62,5 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this.value = newValue;
         this._onChange(moment(this.value));
         this.valueChanged();
-    }
-
-    getCurrentDate() {
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        return date;
     }
 }
