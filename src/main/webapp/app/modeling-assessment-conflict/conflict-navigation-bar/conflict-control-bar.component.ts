@@ -56,7 +56,7 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     }
 
     private getEscalatedConflicts() {
-        let escalatedConflicts = new Array<Conflict>();
+        const escalatedConflicts = new Array<Conflict>();
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
             if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
                 escalatedConflicts.push(this.conflicts[i]);

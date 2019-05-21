@@ -14,16 +14,16 @@ public class AssessmentIndex {
         modelElementAssessmentMapping = new HashMap<>();
     }
 
-    public Optional<Assessment> getAssessment(int elementID) {
-        Assessment assessment = modelElementAssessmentMapping.get(elementID);
+    public Optional<Assessment> getAssessment(int similarityID) {
+        Assessment assessment = modelElementAssessmentMapping.get(similarityID);
         if (assessment == null) {
             return Optional.empty();
         }
         return Optional.of(assessment);
     }
 
-    protected void addAssessment(int elementID, Assessment assessment) {
-        modelElementAssessmentMapping.putIfAbsent(elementID, assessment);
+    protected void addAssessment(int similarityID, Assessment assessment) {
+        modelElementAssessmentMapping.putIfAbsent(similarityID, assessment);
     }
 
     /**

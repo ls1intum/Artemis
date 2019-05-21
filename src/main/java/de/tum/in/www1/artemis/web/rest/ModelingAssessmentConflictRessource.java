@@ -2,27 +2,19 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.*;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
-import de.tum.in.www1.artemis.service.ModelingExerciseService;
-import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 
 @Controller
 @RequestMapping("/api")
@@ -38,15 +30,18 @@ public class ModelingAssessmentConflictRessource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserService userService;
+
     private final ModelAssessmentConflictService conflictService;
 
     private final ModelingExerciseService modelingExerciseService;
 
     private final ResultService resultService;
 
-    public ModelingAssessmentConflictRessource(AuthorizationCheckService authCheckService, ModelAssessmentConflictService conflictService,
+    public ModelingAssessmentConflictRessource(AuthorizationCheckService authCheckService, UserService userService, ModelAssessmentConflictService conflictService,
             ModelingExerciseService modelingExerciseService, ResultService resultService) {
         this.authCheckService = authCheckService;
+        this.userService = userService;
         this.conflictService = conflictService;
         this.modelingExerciseService = modelingExerciseService;
         this.resultService = resultService;
@@ -95,7 +90,8 @@ public class ModelingAssessmentConflictRessource {
             return forbidden();
         }
         else {
-            return ResponseEntity.ok(conflictService.escalateConflict(conflictId));
+            ModelAssessmentConflict conflict = conflictService.findOne(conflictId);
+            return ResponseEntity.ok(conflictService.escalateConflict(conflict));
         }
     }
 
@@ -113,8 +109,22 @@ public class ModelingAssessmentConflictRessource {
         }
         List<ModelAssessmentConflict> escalatedConflicts = new ArrayList<>(conflicts.size());
         for (ModelAssessmentConflict conflict : conflicts) {
-            escalatedConflicts.add(conflictService.escalateConflict(conflict.getId()));
+            escalatedConflicts.add(conflictService.escalateConflict(conflict));
         }
         return ResponseEntity.ok(escalatedConflicts);
+    }
+
+    @PutMapping("/model-assessment-conflicts")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity updateConflict(@RequestBody List<ModelAssessmentConflict> conflicts) {
+        User currentUser = userService.getUser();
+        for (ModelAssessmentConflict conflict : conflicts) {
+            Exercise exercise = conflictService.getExerciseOfConflict(conflict.getId());
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !conflictService.userIsResponsibleForHandling(conflict, exercise, currentUser)) {
+                return forbidden();
+            }
+        }
+        conflictService.updateEscalatedConflicts(conflicts, currentUser);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -49,6 +49,12 @@ public class Assessment {
         contextScoreMapping.put(context, calculateTotalScore(feedbacks));
     }
 
+    public void updateFeedback(Feedback newFeedback, Context context) {
+        List<Feedback> feedbacks = getFeedbacks(context);
+        feedbacks.removeIf(feedback -> newFeedback.getId().equals(feedback.getId()));
+        addFeedback(newFeedback, context);
+    }
+
     /**
      * Used for statistic
      */
