@@ -4,8 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +12,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
-import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
-import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
-import de.tum.in.www1.artemis.repository.ConflictingResultRepository;
-import de.tum.in.www1.artemis.repository.ModelAssessmentConflictRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -31,6 +28,8 @@ public class ModelAssessmentConflictService {
 
     private final ConflictingResultRepository conflictingResultRepository;
 
+    private final CompassService compassService;
+
     private final UserService userService;
 
     private final AuthorizationCheckService authCheckService;
@@ -40,11 +39,12 @@ public class ModelAssessmentConflictService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            ConflictingResultRepository conflictingResultRepository, CompassService compassService, UserService userService, AuthorizationCheckService authCheckService,
+            ResultRepository resultRepository, SingleUserNotificationService singleUserNotificationService) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
         this.conflictingResultRepository = conflictingResultRepository;
+        this.compassService = compassService;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
@@ -62,12 +62,13 @@ public class ModelAssessmentConflictService {
     @Transactional(readOnly = true)
     public List<ModelAssessmentConflict> getConflictsForCurrentUserForSubmission(Long submissionId) {
         List<ModelAssessmentConflict> conflictsForSubmission = getConflictsForSubmission(submissionId);
+        User currentUser = userService.getUser();
         if (conflictsForSubmission.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
         else {
             Exercise exercise = conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation().getExercise();
-            return conflictsForSubmission.stream().filter(conflict -> currentUserIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
+            return conflictsForSubmission.stream().filter(conflict -> userIsResponsibleForHandling(conflict, exercise, currentUser)).collect(Collectors.toList());
         }
     }
 
@@ -142,11 +143,10 @@ public class ModelAssessmentConflictService {
      * @return escalated conflict of the given conflictId
      */
     @Transactional
-    public ModelAssessmentConflict escalateConflict(Long conflictId) {
-        ModelAssessmentConflict storedConflict = findOne(conflictId);
+    public ModelAssessmentConflict escalateConflict(ModelAssessmentConflict storedConflict) {
         if (storedConflict.isResolved()) {
-            log.error("Escalating resolved conflict {} is not possible.", conflictId);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + conflictId + "has already been resolved");
+            log.error("Escalating resolved conflict {} is not possible.", storedConflict.getId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + storedConflict.getId() + "has already been resolved");
         }
         switch (storedConflict.getState()) {
         case UNHANDLED:
@@ -162,11 +162,22 @@ public class ModelAssessmentConflictService {
             storedConflict.setState(EscalationState.ESCALATED_TO_INSTRUCTOR);
             break;
         default:
-            log.error("Escalating conflict {} with state {} failed .", conflictId, storedConflict.getState());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict: " + conflictId + " can´t be escalated");
+            log.error("Escalating conflict {} with state {} failed .", storedConflict.getId(), storedConflict.getState());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict: " + storedConflict.getId() + " can´t be escalated");
         }
         modelAssessmentConflictRepository.save(storedConflict);
         return storedConflict;
+    }
+
+    public void updateEscalatedConflicts(List<ModelAssessmentConflict> conflicts, User currentUser) {
+        conflicts.forEach(conflict -> {
+            ModelAssessmentConflict storedConflict = findOne(conflict.getId());
+            ConflictingResult updatedConflictingResult = conflict.getResultsInConflict().stream()
+                    .filter(conflictingResult -> conflictingResult.getResult().getAssessor().getId().equals(currentUser.getId())).findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Provided request body contains conflict " + conflict.getId() + " without conflictingResult of user"));
+            updateEscalatedConflict(storedConflict, updatedConflictingResult);
+        });
     }
 
     /**
@@ -210,16 +221,15 @@ public class ModelAssessmentConflictService {
         });
     }
 
-    public boolean currentUserIsResponsibleForHandling(ModelAssessmentConflict conflict, Exercise exercise) {
-        User currentUser = userService.getUser();
+    public boolean userIsResponsibleForHandling(ModelAssessmentConflict conflict, Exercise exercise, User user) {
         if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return true;
         }
         switch (conflict.getState()) {
         case UNHANDLED:
-            return conflict.getCausingConflictingResult().getResult().getAssessor().equals(currentUser);
+            return conflict.getCausingConflictingResult().getResult().getAssessor().equals(user);
         case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getResult().getAssessor().equals(currentUser));
+            return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getResult().getAssessor().equals(user));
         default:
             return false;
         }
@@ -251,6 +261,7 @@ public class ModelAssessmentConflictService {
             conflict.setResolutionDate(ZonedDateTime.now());
             break;
         case ESCALATED_TO_TUTORS_IN_CONFLICT:
+            applyTutorsDecisionToCompass(conflict);
             conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
             conflict.setResolutionDate(ZonedDateTime.now());
             break;
@@ -262,5 +273,35 @@ public class ModelAssessmentConflictService {
             log.error("Tried to resolve already resolved conflict {}", conflict);
             break;
         }
+    }
+
+    private void updateEscalatedConflict(ModelAssessmentConflict storedConflict, ConflictingResult updatedConflictingResult) {
+        ConflictingResult storedConflictingResult = storedConflict.getResultsInConflict().stream()
+                .filter(conflictingResult -> conflictingResult.getId().equals(updatedConflictingResult.getId())).findFirst().get();
+        storedConflictingResult.setUpdatedFeedback(updatedConflictingResult.getUpdatedFeedback());
+        if (decisionOfAllTutorsPresent(storedConflict)) {
+            if (decisionOfAllTutorsUniform(storedConflict)) {
+                resolveConflict(storedConflict);
+            }
+            else {
+                escalateConflict(storedConflict);
+            }
+        }
+        modelAssessmentConflictRepository.save(storedConflict);
+    }
+
+    private void applyTutorsDecisionToCompass(ModelAssessmentConflict conflict) {
+        conflict.getResultsInConflict().forEach(conflictingResult -> {
+            compassService.applyUpdateOnSubmittedAssessment(conflictingResult.getResult(), conflictingResult.getUpdatedFeedback());
+        });
+    }
+
+    private boolean decisionOfAllTutorsUniform(ModelAssessmentConflict conflict) {
+        ConflictingResult firstConflictingResult = conflict.getResultsInConflict().iterator().next();
+        return conflict.getResultsInConflict().stream().allMatch(cR -> cR.getUpdatedFeedback().getCredits().equals(firstConflictingResult.getUpdatedFeedback().getCredits()));
+    }
+
+    private boolean decisionOfAllTutorsPresent(ModelAssessmentConflict conflict) {
+        return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getUpdatedFeedback() != null);
     }
 }

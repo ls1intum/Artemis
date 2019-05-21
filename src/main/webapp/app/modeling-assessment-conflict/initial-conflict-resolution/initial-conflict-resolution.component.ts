@@ -108,6 +108,17 @@ export class InitialConflictResolutionComponent implements OnInit {
         }
     }
 
+    onCurrentConflictChanged(conflictIndex: number) {
+        this.conflictIndex = conflictIndex;
+        this.currentConflict = this.conflicts[conflictIndex];
+        this.currentState = this.conflictResolutionStates[conflictIndex];
+        this.conflictingResult = this.currentConflict.resultsInConflict[0];
+        this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
+        this.updateHighlightedElements();
+        this.currentCenteredElementId = this.currentHighlightedElementIds.values().next().value;
+        this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
+    }
+
     escalateAndSubmit(escalatedConflicts: Conflict[]) {
         const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
@@ -144,17 +155,6 @@ export class InitialConflictResolutionComponent implements OnInit {
         );
     }
 
-    onCurrentConflictChanged(conflictIndex: number) {
-        this.conflictIndex = conflictIndex;
-        this.currentConflict = this.conflicts[conflictIndex];
-        this.currentState = this.conflictResolutionStates[conflictIndex];
-        this.conflictingResult = this.currentConflict.resultsInConflict[0];
-        this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
-        this.updateHighlightedElements();
-        this.currentCenteredElementId = this.currentHighlightedElementIds.values().next().value;
-        this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
-    }
-
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.mergedFeedbacks = feedbacks;
     }
@@ -183,6 +183,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     }
 
     private initResolutionStates(conflicts: Conflict[]) {
+        //TODO MJ move into service
         this.conflictResolutionStates = [];
         if (conflicts && conflicts.length > 0) {
             const mergedFeedbacks = conflicts[0].causingConflictingResult.result.feedbacks;

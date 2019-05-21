@@ -2,7 +2,7 @@
     [conflicts]="conflicts"
     [conflictResolutionStates]="conflictResolutionStates"
     (save)="onSave()"
-    (submit)="onSubmit()"
+    (submit)="onSubmit($event)"
     (selectedConflictChanged)="onCurrentConflictChanged($event)"
 >
 </jhi-conflict-control-bar>

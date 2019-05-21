@@ -6,23 +6,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.assessment.*;
 import de.tum.in.www1.artemis.service.compass.controller.*;
-import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.grade.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
@@ -78,7 +72,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
-            assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
+            assessmentIndex.getAssessment(currentElement.getSimilarityID()).ifPresent(assessment -> {
                 List<Feedback> feedbacks = assessment.getFeedbacks(currentElement.getContext());
                 List<Feedback> feedbacksInConflict = feedbacks.stream().filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
                         .collect(Collectors.toList());
@@ -88,6 +82,25 @@ public class CompassCalculationEngine implements CalculationEngine {
             });
         });
         return elementConflictingFeedbackMapping;
+    }
+
+    public void updateFeedback(ModelingSubmission submission, Feedback newFeedback) {
+        UMLClassDiagram model = getModel(submission);
+        UMLElement element = model.getElementByJSONID(newFeedback.getReferenceElementId());
+        if (element != null) {
+            Optional<Assessment> assessment = assessmentIndex.getAssessment(element.getSimilarityID());
+            if (assessment.isPresent()) {
+                assessment.get().updateFeedback(newFeedback, element.getContext());
+            }
+            else {
+                log.error("Expected Assessment for similarity id {} was not found.", element.getSimilarityID());
+                throw new IllegalStateException("Expected Assessment for similarity id " + element.getSimilarityID() + " was not found.");
+            }
+        }
+        else {
+            log.error("Expected UMLElement with reference id {} was not found.", newFeedback.getReferenceElementId());
+            throw new IllegalStateException("Expected UMLElement with reference id " + element.getSimilarityID() + " was not found.");
+        }
     }
 
     private UMLClassDiagram getModel(ModelingSubmission modelingSubmission) {
@@ -317,12 +330,12 @@ public class CompassCalculationEngine implements CalculationEngine {
             JsonObject uniqueElement = new JsonObject();
             uniqueElement.addProperty("name", umlElement.getName());
             uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
-            boolean conflict = this.hasConflict(umlElement.getElementID());
+            boolean conflict = this.hasConflict(umlElement.getSimilarityID());
             if (conflict) {
                 conflicts++;
             }
             uniqueElement.addProperty("conflicts", conflict);
-            uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
+            uniqueElements.add(umlElement.getSimilarityID() + "", uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
 
@@ -345,7 +358,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 elements.addAll(umlClass.getMethods());
             }
             for (UMLElement element : elements) {
-                boolean modelConflict = this.hasConflict(element.getElementID());
+                boolean modelConflict = this.hasConflict(element.getSimilarityID());
                 if (modelConflict) {
                     modelConflicts++;
                 }

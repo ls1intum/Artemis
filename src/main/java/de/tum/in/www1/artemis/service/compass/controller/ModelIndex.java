@@ -40,8 +40,8 @@ public class ModelIndex {
         // element is similar to existing element
         for (UMLElement knownElement : uniqueModelElementList) {
             if (knownElement.similarity(element) > CompassConfiguration.EQUALITY_THRESHOLD) {
-                modelElementMapping.put(element, knownElement.getElementID());
-                return knownElement.getElementID();
+                modelElementMapping.put(element, knownElement.getSimilarityID());
+                return knownElement.getSimilarityID();
             }
         }
         // element does not fit already known element

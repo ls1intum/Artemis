@@ -1,35 +1,22 @@
 package de.tum.in.www1.artemis.service.compass;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
-import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.ConflictingResultService;
-import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
-import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.compass.grade.*;
 
 @Service
 public class CompassService {
@@ -218,6 +205,12 @@ public class CompassService {
         else {
             return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED)).collect(Collectors.toList());
         }
+    }
+
+    public void applyUpdateOnSubmittedAssessment(Result result, Feedback newFeedback) {
+        CompassCalculationEngine engine = getCalculationEngine(result.getSubmission().getId());
+        engine.updateFeedback((ModelingSubmission) result.getSubmission(), newFeedback);
+        // TODO trigger complete recalculation of all assessments
     }
 
     /**
