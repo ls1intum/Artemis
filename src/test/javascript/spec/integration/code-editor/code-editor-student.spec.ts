@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
-import { of, BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -33,12 +32,12 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { ArTEMiSResultModule, Result, ResultService, UpdatingResultComponent } from 'app/entities/result';
+import { ArTEMiSResultModule, Result, ResultService } from 'app/entities/result';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement, problemStatementRendered } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
@@ -86,7 +85,7 @@ describe('CodeEditorStudentIntegration', () => {
                 ArTEMiSResultModule,
                 ArTEMiSCodeEditorModule,
             ],
-            declarations: [MockComponent(UpdatingResultComponent)],
+            declarations: [],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
@@ -160,8 +159,8 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     const cleanInitialize = () => {
-        const exercise = { id: 1, problemStatement } as ProgrammingExercise;
-        const participation = { id: 2, results: [{ id: 3, successful: false }] } as Participation;
+        const exercise = { id: 1, problemStatement };
+        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as Participation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
@@ -172,7 +171,7 @@ describe('CodeEditorStudentIntegration', () => {
         getBuildLogsStub.returns(getBuildLogsSubject);
 
         container.participation = participation;
-        container.exercise = exercise;
+        container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
         containerFixture.detectChanges();
 
@@ -223,9 +222,6 @@ describe('CodeEditorStudentIntegration', () => {
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
         expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
-
-        // called by build output, instructions & result
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
     };
 
     const loadFile = (fileName: string, fileContent: string) => {
@@ -233,13 +229,17 @@ describe('CodeEditorStudentIntegration', () => {
         container.fileBrowser.selectedFile = fileName;
     };
 
-    it('should initialize all components correctly if all server calls are successful', () => {
+    it('should initialize all components correctly if all server calls are successful', done => {
         cleanInitialize();
+        setTimeout(() => {
+            expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
+            done();
+        }, 0);
     });
 
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', () => {
-        const exercise = { id: 1, problemStatement } as ProgrammingExercise;
-        const participation = { id: 2, results: [{ id: 3, successful: false }] } as Participation;
+    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
+        const exercise = { id: 1, problemStatement, course: { id: 2 } };
+        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as Participation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -249,7 +249,7 @@ describe('CodeEditorStudentIntegration', () => {
         getBuildLogsStub.returns(getBuildLogsSubject);
 
         container.participation = participation;
-        container.exercise = exercise;
+        container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
         containerFixture.detectChanges();
 
@@ -300,8 +300,11 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
         expect(getFeedbackDetailsForResultStub).to.have.been.calledWithExactly(participation.results[0].id);
 
-        // called by build output, instructions & result
-        expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
+        setTimeout(() => {
+            // called by build output, instructions & result
+            expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
+            done();
+        }, 0);
     });
 
     it('should update the file browser and ace editor on file selection', () => {
@@ -372,6 +375,27 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.editorState).to.equal(EditorState.CLEAN);
         expect(container.commitState).to.equal(CommitState.UNCOMMITTED_CHANGES);
         expect(container.fileBrowser.unsavedFiles).to.be.empty;
+        expect(container.actions.editorState).to.equal(EditorState.CLEAN);
+    });
+
+    it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
+        cleanInitialize();
+        const repositoryFiles = { file: FileType.FILE, file2: FileType.FILE, folder: FileType.FOLDER };
+        const expectedFilesAfterDelete = { file2: FileType.FILE, folder: FileType.FOLDER };
+        const unsavedChanges = { file: 'lorem ipsum' };
+        container.fileBrowser.repositoryFiles = repositoryFiles;
+        container.unsavedFiles = unsavedChanges;
+
+        containerFixture.detectChanges();
+
+        expect(container.fileBrowser.unsavedFiles).to.deep.equal(Object.keys(unsavedChanges));
+        expect(container.actions.editorState).to.equal(EditorState.UNSAVED_CHANGES);
+
+        container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
+        containerFixture.detectChanges();
+
+        expect(container.unsavedFiles).to.be.empty;
+        expect(container.fileBrowser.repositoryFiles).to.deep.equal(expectedFilesAfterDelete);
         expect(container.actions.editorState).to.equal(EditorState.CLEAN);
     });
 

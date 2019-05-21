@@ -1,3 +1,4 @@
+<jhi-alert-error></jhi-alert-error>
 <nav *ngIf="loadingParticipation || participationCouldNotBeFetched" class="editor-wrapper">
     <div class="navbar navbar-light navbar-expand-sm jh-navbar d-flex">
         <div class="jh-logo-container float-left editor-top-left">
@@ -28,6 +29,7 @@
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft
+        [exerciseTitle]="exercise?.title"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"

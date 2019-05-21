@@ -1,4 +1,3 @@
-<jhi-alert></jhi-alert>
 <jhi-alert-error></jhi-alert-error>
 <div *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_INSTRUCTOR']" class="card mb-3">
     <div *ngIf="loadingState !== LOADING_STATE.INITIALIZING && loadingState !== LOADING_STATE.FETCHING_FAILED" class="card-body d-flex p-2">
@@ -158,10 +157,10 @@
         <span jhiTranslate="arTeMiSApp.editor.participationCouldNotBeFound">Your participation could not be found.</span>
     </div>
 </div>
-<jhi-code-editor-grid #grid *ngIf="exercise" [exercise]="exercise">
+<jhi-code-editor-grid #grid *ngIf="exercise" [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
         <jhi-updating-result
-            *ngIf="selectedParticipation && !isBuilding && selectedRepository !== 'TEST'"
+            *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
             [participation]="selectedParticipation"
             class="mr-2"
         ></jhi-updating-result>
@@ -176,6 +175,7 @@
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft
+        [exerciseTitle]="exercise?.title"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
         [editorState]="editorState"

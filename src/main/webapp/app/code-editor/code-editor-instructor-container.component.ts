@@ -19,6 +19,7 @@ import {
     CodeEditorInstructionsComponent,
     CodeEditorSessionService,
 } from 'app/code-editor';
+import { UpdatingResultComponent } from 'app/entities/result';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -45,6 +46,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     @ViewChild(CodeEditorBuildOutputComponent) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorInstructionsComponent) instructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
+    @ViewChild(UpdatingResultComponent) resultComp: UpdatingResultComponent;
 
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -90,6 +92,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      * On route param change load the exercise and the selected participation OR the test repository.
      */
     ngOnInit(): void {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
         this.paramSub = this.route.params.subscribe(params => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
@@ -159,15 +164,18 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     setSelectedParticipation(participationId: number) {
+        // The result component needs a circular structure of participation -> exercise.
+        const exercise = this.exercise;
         if (participationId === this.exercise.templateParticipation.id) {
             this.selectedRepository = REPOSITORY.TEMPLATE;
-            this.selectedParticipation = this.exercise.templateParticipation;
+            this.selectedParticipation = { ...this.exercise.templateParticipation, exercise };
         } else if (participationId === this.exercise.solutionParticipation.id) {
             this.selectedRepository = REPOSITORY.SOLUTION;
-            this.selectedParticipation = this.exercise.solutionParticipation;
+            this.selectedParticipation = { ...this.exercise.solutionParticipation, exercise };
         } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
             this.selectedParticipation = this.exercise.participations[0];
+            this.selectedParticipation = { ...this.exercise.participations[0], exercise };
         } else {
             this.onError('participationNotFound');
         }
@@ -181,15 +189,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
-            : this.exerciseService.findWithParticipations(exerciseId).pipe(
-                  map(({ body }) => body),
-                  map((exercise: ProgrammingExercise) => {
-                      exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
-                      exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
-                      exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
-                      return exercise;
-                  }),
-              );
+            : this.exerciseService.findWithParticipations(exerciseId).pipe(map(({ body }) => body));
     }
 
     /**

@@ -27,7 +27,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @ViewChild('treeview') treeview: TreeviewComponent;
 
     @Input()
-    exercise: ProgrammingExercise;
+    exerciseTitle: string;
     @Input()
     get selectedFile() {
         return this.selectedFileValue;
