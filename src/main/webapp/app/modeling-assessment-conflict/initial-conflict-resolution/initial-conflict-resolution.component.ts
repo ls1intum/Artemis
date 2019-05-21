@@ -69,7 +69,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     }
     initComponent() {
         this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
-        this.initResolutionStates();
+        this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
         this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
         this.currentModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
@@ -90,8 +90,6 @@ export class InitialConflictResolutionComponent implements OnInit {
             this.currentConflict.causingConflictingResult.modelElementId,
             this.currentConflict.causingConflictingResult.result.feedbacks,
         );
-        // this.currentConflict.causingConflictingResult.result.feedbacks = JSON.parse(JSON.stringify(this.mergedFeedbacks));
-        // this.updateCurrentState();
     }
 
     onTakeOver() {
@@ -100,21 +98,27 @@ export class InitialConflictResolutionComponent implements OnInit {
             this.conflictingResult.modelElementId,
             this.conflictingResult.result.feedbacks,
         );
-        // this.currentConflict.causingConflictingResult.result.feedbacks = JSON.parse(JSON.stringify(this.mergedFeedbacks));
-        // this.updateCurrentState();
     }
 
-    onEscalate(emitted: { escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }) {
+    onSubmit(escalatedConflicts: Conflict[]) {
+        if (escalatedConflicts && escalatedConflicts.length > 0) {
+            this.escalateAndSubmit(escalatedConflicts);
+        } else {
+            this.submit();
+        }
+    }
+
+    escalateAndSubmit(escalatedConflicts: Conflict[]) {
         const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(emitted.escalatedConflicts);
-        modalRef.componentInstance.escalatedConflictsCount = emitted.escalatedConflicts.length;
-        modalRef.result.then(value => {
-            this.modelingAssessmentService.escalateConflict(emitted.escalatedConflicts).subscribe(() => this.onSubmit(emitted.newFeedbacks));
+        modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
+        modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
+        modalRef.result.then(() => {
+            this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
         });
     }
 
-    onSubmit(newFeedbacks: Feedback[]) {
-        this.modelingAssessmentService.saveAssessment(newFeedbacks, this.submissionId, true).subscribe(
+    submit() {
+        this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
             () => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.router.navigate([
@@ -178,29 +182,20 @@ export class InitialConflictResolutionComponent implements OnInit {
         this.conflictingHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 
-    // private updateCurrentState() {
-    //     const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId);
-    //     const conflictingFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
-    //     if (mergedFeedback.credits !== conflictingFeedback.credits) {
-    //         this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.ESCALATED;
-    //     } else {
-    //         this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.RESOLVED;
-    //     }
-    //     this.currentState = this.conflictResolutionStates[this.conflictIndex];
-    //     this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
-    // }
-
-    private initResolutionStates() {
+    private initResolutionStates(conflicts: Conflict[]) {
         this.conflictResolutionStates = [];
-        for (let i = 0; i < this.conflicts.length; i++) {
-            const currentConflict: Conflict = this.conflicts[i];
-            const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
-            const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
-            const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
-            if (mergedFeedback.credits !== conflictingFeedback.credits) {
-                this.conflictResolutionStates.push(ConflictResolutionState.UNHANDLED);
-            } else {
-                this.conflictResolutionStates.push(ConflictResolutionState.RESOLVED);
+        if (conflicts && conflicts.length > 0) {
+            const mergedFeedbacks = conflicts[0].causingConflictingResult.result.feedbacks;
+            for (let i = 0; i < this.conflicts.length; i++) {
+                const currentConflict: Conflict = conflicts[i];
+                const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
+                const mergedFeedback = mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
+                const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
+                if (mergedFeedback.credits !== conflictingFeedback.credits) {
+                    this.conflictResolutionStates.push(ConflictResolutionState.UNHANDLED);
+                } else {
+                    this.conflictResolutionStates.push(ConflictResolutionState.RESOLVED);
+                }
             }
         }
     }

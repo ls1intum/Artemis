@@ -1,11 +1,11 @@
-<jhi-conflict-navigation-bar
+<jhi-conflict-control-bar
     [conflicts]="conflicts"
     [conflictResolutionStates]="conflictResolutionStates"
     (save)="onSave()"
     (submit)="onSubmit()"
     (selectedConflictChanged)="onCurrentConflictChanged($event)"
 >
-</jhi-conflict-navigation-bar>
+</jhi-conflict-control-bar>
 <jhi-modeling-assessment-conflict
     *ngIf="currentConflict"
     [modelingExercise]="modelingExercise"
