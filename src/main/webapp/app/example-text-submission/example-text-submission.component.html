@@ -39,9 +39,9 @@
             class="resizable-submission card markdown-preview"
             id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
-            [formattedProblemStatement]="formattedProblemStatement"
-            [formattedGradingInstructions]="formattedGradingInstructions"
-            [formattedSampleSolution]="formattedSampleSolution"
+            [formattedProblemStatement]="exercise!.problemStatement | htmlForMarkdown | safeHtml"
+            [formattedGradingInstructions]="exercise!.gradingInstructions | htmlForMarkdown | safeHtml"
+            [formattedSampleSolution]="exercise!.sampleSolution | htmlForMarkdown | safeHtml"
             [toggleCollapse]="toggleCollapse.bind(this)"
             toggleCollapseId="submission"
         >
@@ -95,9 +95,9 @@
                 id="assessment-instructions"
                 [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
                 *ngIf="!isAtLeastInstructor || readOnly || toComplete"
-                [formattedProblemStatement]="formattedProblemStatement"
-                [formattedGradingInstructions]="formattedGradingInstructions"
-                [formattedSampleSolution]="formattedSampleSolution"
+                [formattedProblemStatement]="exercise!.problemStatement | htmlForMarkdown | safeHtml"
+                [formattedGradingInstructions]="exercise!.gradingInstructions | htmlForMarkdown | safeHtml"
+                [formattedSampleSolution]="exercise!.sampleSolution | htmlForMarkdown | safeHtml"
                 [toggleCollapse]="toggleCollapse.bind(this)"
                 toggleCollapseId="assessment"
             >
@@ -127,6 +127,17 @@
             ></jhi-text-assessment-detail>
         </div>
     </div>
+
+    <!--TODO: comment in for enabling assessment explanation-->
+    <!--<h3 class="mt-3" *ngIf="!exampleSubmission?.usedForTutorial">Explanation</h3>-->
+    <!--<textarea-->
+    <!--*ngIf="!exampleSubmission?.usedForTutorial"-->
+    <!--class="form-control"-->
+    <!--rows="4"-->
+    <!--maxLength="2000"-->
+    <!--[(ngModel)]="assessmentExplanation"-->
+    <!--[disabled]="readOnly"-->
+    <!--&gt;</textarea>-->
 </div>
 
 <div class="col-12 text-right" *ngIf="toComplete">

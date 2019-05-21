@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ExampleSubmissionService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
@@ -56,7 +55,7 @@ public class ExampleSubmissionService {
      * @param exampleSubmissionId the id of the example submission we want to retrieve
      * @return list of feedback for an example submission
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
         ExampleSubmission exampleSubmission = this.exampleSubmissionRepository.getOne(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
@@ -90,6 +89,7 @@ public class ExampleSubmissionService {
         return exampleSubmissionRepository.findByIdWithEagerExercise(exampleSubmissionId);
     }
 
+    @Transactional
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerSubmissionAndEagerTutorParticipation(exampleSubmissionId);
 

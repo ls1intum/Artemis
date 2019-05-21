@@ -58,6 +58,7 @@ public class TextAssessmentService extends AssessmentService {
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
+    // TODO: refactor this to use the submission instead of the resultId and combine with method in ModelingAssessmentService and saveExampleAssessment() method below
     public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
         checkGeneralFeedback(textAssessment);
 
@@ -68,6 +69,7 @@ public class TextAssessmentService extends AssessmentService {
                     "feedbackReferenceTooLong");
         }
 
+        // TODO: load submission and result eagerly here
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
 
@@ -91,8 +93,41 @@ public class TextAssessmentService extends AssessmentService {
         }
         result.setHasFeedback(false);
 
-        resultRepository.save(result);
-        return result;
+        return resultRepository.save(result);
+    }
+
+    /**
+     * This function is used for saving an example assessment. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
+     * database.
+     *
+     * @param textSubmission the text submission to which the feedback belongs to
+     * @param textAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
+     */
+    @Transactional
+    public Result saveExampleAssessment(TextSubmission textSubmission, List<Feedback> textAssessment) {
+        Result result = textSubmission.getResult();
+        if (result == null) {
+            result = new Result();
+        }
+        checkGeneralFeedback(textAssessment);
+
+        result.setHasComplaint(false);
+        result.setExampleResult(textSubmission.isExampleSubmission());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+        result.setNewFeedback(textAssessment);
+        // Note: this boolean flag is only used for programming exercises
+        result.setHasFeedback(false);
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(textSubmission);
+            textSubmission.setResult(result);
+            textSubmissionRepository.save(textSubmission);
+        }
+        // Note: This also saves the feedback objects in the database because of the 'cascade =
+        // CascadeType.ALL' option.
+        return resultRepository.save(result);
     }
 
     public List<Feedback> getAssessmentsForResult(Result result) {

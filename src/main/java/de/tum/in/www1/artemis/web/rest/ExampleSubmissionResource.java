@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
@@ -50,7 +48,6 @@ public class ExampleSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -70,7 +67,6 @@ public class ExampleSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {

@@ -47,6 +47,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionService textSubmissionService;
 
+    private final ExampleSubmissionService exampleSubmissionService;
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final ResultRepository resultRepository;
@@ -56,7 +58,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
             TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
             TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+            ExampleSubmissionService exampleSubmissionService, SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
@@ -67,12 +69,14 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
+        this.exampleSubmissionService = exampleSubmissionService;
         this.messagingTemplate = messagingTemplate;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: we should send a result object here that includes the feedback
+    // TODO: refactor this to use the submissionId instead of the resultId (see ModelingAssessmentResource)
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise);
@@ -194,6 +198,17 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         return ResponseEntity.ok(participation);
+    }
+
+    @PutMapping("/exercise/{exerciseId}/submission/{exampleSubmissionId}/exampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Object> saveTextExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        TextSubmission textSubmission = (TextSubmission) exampleSubmission.getSubmission();
+        TextExercise textExercise = (TextExercise) exampleSubmission.getExercise();
+        checkAuthorization(textExercise);
+        Result result = textAssessmentService.saveExampleAssessment(textSubmission, feedbacks);
+        return ResponseEntity.ok(result);
     }
 
     /**

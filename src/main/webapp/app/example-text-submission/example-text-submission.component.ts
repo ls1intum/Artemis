@@ -42,10 +42,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
-
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    // TODO: comment in for enabling assessment explanation
+    // assessmentExplanation: string;
 
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
@@ -169,13 +167,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             });
     }
 
-    loadAll() {
+    private loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body;
-            this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
-            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
-
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
@@ -186,6 +180,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body;
             this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+            // TODO: comment in for enabling assessment explanation
+            // this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
@@ -241,70 +237,65 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private createNewExampleTextSubmission() {
-        const newSubmission = this.textSubmission;
-        newSubmission.exampleSubmission = true;
+        const textSubmission = this.textSubmission;
+        textSubmission.exampleSubmission = true;
 
-        this.textSubmissionService.create(newSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body;
+        const newExampleSubmission = this.exampleSubmission;
+        newExampleSubmission.submission = textSubmission;
+        newExampleSubmission.exercise = this.exercise;
 
-            const newExampleSubmission = this.exampleSubmission;
-            newExampleSubmission.submission = this.textSubmission;
-            newExampleSubmission.exercise = this.exercise;
-
-            let bothCompleted = false;
-
-            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
-                this.result = result;
-                this.assessments = this.result.feedbacks || [];
-                this.checkScoreBoundaries();
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
-            }, this.onError);
-
-            this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body;
                 this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+                }
                 this.isNewSubmission = false;
+
+                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
                 this.location.go(newUrl);
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
-            }, this.onError);
-        }, this.onError);
+            },
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     private updateExampleTextSubmission() {
         this.textSubmission.exampleSubmission = true;
+        if (this.result) {
+            this.result.feedbacks = this.assessments;
+            this.textSubmission.result = this.result;
+            this.checkScoreBoundaries();
+        }
 
-        let hasOneFinished = false;
+        const exampleSubmission = this.exampleSubmission;
+        exampleSubmission.submission = this.textSubmission;
+        exampleSubmission.exercise = this.exercise;
+        // TODO: comment in for enabling assessment explanation
+        // exampleSubmission.assessmentExplanation = this.assessmentExplanation;
 
-        this.textSubmissionService.update(this.textSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body;
+        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
+            (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                if (this.exampleSubmission.submission) {
+                    this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+                }
+                this.isNewSubmission = false;
 
-            if (hasOneFinished) {
                 this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
-        }, this.onError);
-
-        this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
-
-            if (hasOneFinished) {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
-        }, this.onError);
+            },
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+            },
+        );
     }
 
     public addAssessment(assessmentText: string): void {
@@ -352,12 +343,30 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
-            this.result = response.body;
-            this.areNewAssessments = false;
-            this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
-        });
+        // TODO: comment in for enabling assessment explanation
+        // this.updateAssessmentExplanation();
+
+        if (this.assessments) {
+            this.assessmentsService.saveExampleAssessment(this.exercise.id, this.exampleSubmissionId, this.assessments).subscribe((result: Result) => {
+                this.result = result;
+                if (this.result) {
+                    this.assessments = this.result.feedbacks;
+                }
+                this.areNewAssessments = false;
+                this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+            });
+        }
     }
+
+    // TODO: comment in for enabling assessment explanation
+    // public updateAssessmentExplanation(): void {
+    //     if (this.assessmentExplanation && this.assessmentExplanation.length > 0 && this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && !this.areNewAssessments) {
+    //         this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
+    //         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+    //             this.assessmentExplanation = exampleSubmissionResponse.body.assessmentExplanation;
+    //         });
+    //     }
+    // }
 
     async back() {
         const courseId = this.exercise.course.id;

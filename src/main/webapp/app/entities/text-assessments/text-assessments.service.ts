@@ -51,6 +51,10 @@ export class TextAssessmentsService {
         return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
     }
 
+    public saveExampleAssessment(exerciseId: number, exampleSubmissionId: number, assessment: Feedback[]): Observable<Result> {
+        return this.http.put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${exampleSubmissionId}/exampleAssessment`, assessment);
+    }
+
     public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
     }
