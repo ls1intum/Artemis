@@ -9,3 +9,4 @@ export * from './mock-result.service';
 export * from './mock-participation-websocket.service';
 export * from './mock-activated.route';
 export * from './mock-participation.service';
+export * from './mock-programming-exercise.service';

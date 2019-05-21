@@ -10,7 +10,15 @@ import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileService, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorGridComponent, CodeEditorSessionService } from 'app/code-editor';
+import {
+    CodeEditorAceComponent,
+    CodeEditorActionsComponent,
+    CodeEditorBuildOutputComponent,
+    CodeEditorFileBrowserComponent,
+    CodeEditorGridComponent,
+    CodeEditorInstructionsComponent,
+    CodeEditorSessionService,
+} from 'app/code-editor';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -20,8 +28,9 @@ enum REPOSITORY {
 }
 
 enum LOADING_STATE {
-    NOT_LOADING = 'NOT_LOADING',
+    CLEAR = 'CLEAR',
     INITIALIZING = 'INITIALIZING',
+    FETCHING_FAILED = 'FETCHING_FAILED',
     CREATING_ASSIGNMENT_REPO = 'CREATING_ASSIGNMENT_REPO',
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
@@ -31,7 +40,12 @@ enum LOADING_STATE {
     templateUrl: './code-editor-instructor-container.component.html',
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
+    @ViewChild(CodeEditorFileBrowserComponent) fileBrowser: CodeEditorFileBrowserComponent;
+    @ViewChild(CodeEditorActionsComponent) actions: CodeEditorActionsComponent;
+    @ViewChild(CodeEditorBuildOutputComponent) buildOutput: CodeEditorBuildOutputComponent;
+    @ViewChild(CodeEditorInstructionsComponent) instructions: CodeEditorInstructionsComponent;
+    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
+
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
 
@@ -54,7 +68,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     domainChangeSubscription: Subscription;
 
     // State variables
-    loadingState = LOADING_STATE.NOT_LOADING;
+    loadingState = LOADING_STATE.CLEAR;
 
     constructor(
         private router: Router,
@@ -99,7 +113,13 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         }
                     }),
                 )
-                .subscribe(() => (this.loadingState = LOADING_STATE.NOT_LOADING), err => this.onError(err));
+                .subscribe(
+                    () => (this.loadingState = LOADING_STATE.CLEAR),
+                    err => {
+                        this.loadingState = LOADING_STATE.FETCHING_FAILED;
+                        this.onError(err);
+                    },
+                );
         });
     }
 
@@ -215,7 +235,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {
                     this.exercise.participations = [participation];
-                    this.loadingState = LOADING_STATE.NOT_LOADING;
+                    this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
             .subscribe(() => {}, err => this.onError(err));

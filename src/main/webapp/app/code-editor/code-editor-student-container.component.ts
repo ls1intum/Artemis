@@ -57,6 +57,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             this.loadingParticipation = true;
+            this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(

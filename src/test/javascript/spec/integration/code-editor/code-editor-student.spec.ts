@@ -43,7 +43,6 @@ import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement, problemStatementRendered } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
-import { activateRoute } from 'app/account';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
 
@@ -124,7 +123,7 @@ describe('CodeEditorStudentIntegration', () => {
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
 
                 routeSubject = new Subject<Params>();
-                //@ts-ignore
+                // @ts-ignore
                 (route as MockActivatedRoute).setSubject(routeSubject);
 
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'isClean');
@@ -156,7 +155,7 @@ describe('CodeEditorStudentIntegration', () => {
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();
-        //@ts-ignore
+        // @ts-ignore
         (route as MockActivatedRoute).setSubject(routeSubject);
     });
 
