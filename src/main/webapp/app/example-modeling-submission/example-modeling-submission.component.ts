@@ -238,6 +238,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
+        this.updateAssessmentExplanation();
+
         if (this.feedbacks) {
             this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
                 (result: Result) => {
@@ -253,7 +255,12 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 },
             );
         }
+    }
 
+    /**
+     * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
+     */
+    private updateAssessmentExplanation() {
         if (this.assessmentExplanation && this.assessmentExplanation.length > 0 && this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
             this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
             this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
