@@ -90,6 +90,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
             this.fileSession = {};
+            if (this.annotationChange) {
+                this.annotationChange.unsubscribe();
+            }
             this.editor
                 .getEditor()
                 .getSession()

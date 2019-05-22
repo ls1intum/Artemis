@@ -66,7 +66,7 @@ export abstract class DomainDependent implements OnDestroy {
 /**
  * Service that can be extended to update rest endpoint urls with the received domain information.
  */
-export abstract class DomainDependentEndpoint extends DomainDependent implements OnDestroy {
+export abstract class DomainDependentEndpoint extends DomainDependent {
     private restResourceUrlBase = `${SERVER_API_URL}/api`;
     protected restResourceUrl: string;
     private websocketResourceUrlBase = '/topic';
@@ -81,12 +81,6 @@ export abstract class DomainDependentEndpoint extends DomainDependent implements
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = this.domain;
-        if (this.websocketResourceUrlSend) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
-        }
-        if (this.websocketResourceUrlReceive) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
-        }
         switch (domainType) {
             case DomainType.PARTICIPATION:
                 this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
@@ -102,16 +96,6 @@ export abstract class DomainDependentEndpoint extends DomainDependent implements
                 this.restResourceUrl = null;
                 this.websocketResourceUrlSend = null;
                 this.websocketResourceUrlReceive = null;
-        }
-    }
-
-    ngOnDestroy() {
-        super.ngOnDestroy();
-        if (this.websocketResourceUrlSend) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlSend);
-        }
-        if (this.websocketResourceUrlReceive) {
-            this.jhiWebsocketService.unsubscribe(this.websocketResourceUrlReceive);
         }
     }
 }

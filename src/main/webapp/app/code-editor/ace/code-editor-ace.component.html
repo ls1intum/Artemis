@@ -16,7 +16,7 @@
             id="ace-code-editor"
             [mode]="editorMode"
             [readOnly]="isLoading"
-            [hidden]="!selectedFile"
+            [hidden]="!selectedFile || isLoading"
             [autoUpdateContent]="true"
             [durationBeforeCallback]="200"
             (textChanged)="onFileTextChanged($event)"

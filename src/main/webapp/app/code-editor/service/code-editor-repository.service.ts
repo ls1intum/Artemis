@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
-import { BuildLogEntryArray, BuildLogEntry } from 'app/entities/build-log';
+import { BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
@@ -65,14 +66,28 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint implement
 }
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements ICodeEditorRepositoryFileService {
+export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements ICodeEditorRepositoryFileService, OnDestroy {
+    private fileUpdateSubject = new Subject<{ [fileName: string]: string | null }>();
+    private fileUpdateUrl: string;
+
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(http, jhiWebsocketService, domainService);
     }
 
+    ngOnDestroy() {
+        super.ngOnDestroy();
+        this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
+    }
+
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
-        this.jhiWebsocketService.subscribe(`${this.websocketResourceUrlReceive}/files`);
+        if (this.fileUpdateSubject) {
+            this.fileUpdateSubject.complete();
+        }
+        if (this.fileUpdateUrl) {
+            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
+        }
+        this.fileUpdateUrl = `${this.websocketResourceUrlReceive}/files`;
     }
 
     getRepositoryContent = () => {
@@ -98,10 +113,18 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     };
 
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
-        const subject = new Subject<{ [fileName: string]: string | null }>();
+        if (this.fileUpdateSubject) {
+            this.fileUpdateSubject.complete();
+        }
+        if (this.fileUpdateUrl) {
+            this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
+        }
+        this.fileUpdateSubject = new Subject<{ [p: string]: string | null }>();
+
+        this.jhiWebsocketService.subscribe(this.fileUpdateUrl);
+        this.jhiWebsocketService.receive(this.fileUpdateUrl).subscribe(res => this.fileUpdateSubject.next(res), err => this.fileUpdateSubject.error(err));
         this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
-        this.jhiWebsocketService.receive(`${this.websocketResourceUrlReceive}/files`).subscribe(res => subject.next(res), err => subject.error(err));
-        return subject;
+        return this.fileUpdateSubject as Observable<{ [fileName: string]: string | null }>;
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {

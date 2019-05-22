@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
@@ -76,7 +76,7 @@ export class CodeEditorActionsComponent {
                 catchError(err => {
                     this.onError.emit(err.error);
                     this.editorState = EditorState.UNSAVED_CHANGES;
-                    return Observable.of(null);
+                    return throwError('saving failed');
                 }),
             );
         } else {
