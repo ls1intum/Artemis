@@ -17,6 +17,8 @@ export class CodeEditorActionsComponent {
     EditorState = EditorState;
 
     @Input()
+    buildable = true;
+    @Input()
     unsavedFiles: { [fileName: string]: string };
     @Input()
     get editorState() {
@@ -103,7 +105,9 @@ export class CodeEditorActionsComponent {
                 switchMap(() => this.repositoryService.commit()),
                 tap(() => {
                     this.commitState = CommitState.CLEAN;
-                    this.isBuilding = true;
+                    if (this.buildable) {
+                        this.isBuilding = true;
+                    }
                 }),
             )
             .subscribe(

@@ -110,6 +110,7 @@
                 class="mr-2"
             ></jhi-updating-result>
             <jhi-code-editor-actions
+                [buildable]="selectedRepository !== REPOSITORY.TEST"
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"
