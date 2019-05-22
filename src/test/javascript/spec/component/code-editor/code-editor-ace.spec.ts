@@ -60,11 +60,12 @@ describe('CodeEditorAceComponent', () => {
         const placeholder = debugElement.query(By.css('#no-file-selected'));
         expect(placeholder).not.to.exist;
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).to.be.false;
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).to.be.true;
         expect(comp.editor.getEditor().getReadOnly()).to.be.true;
 
         comp.isLoading = false;
         fixture.detectChanges();
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).to.be.false;
         expect(comp.editor.getEditor().getReadOnly()).to.be.false;
     });
 
