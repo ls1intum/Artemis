@@ -56,7 +56,8 @@
                 "unsupportedFile": "Datei mit dieser Endung wird nicht unterstützt.",
                 "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal.",
                 "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
-                "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden"
+                "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
+                "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden."
             },
             "testStatusLabels": {
                 "testStatusNoResult": "Keine Ergebnisse",

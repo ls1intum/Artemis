@@ -41,7 +41,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         return this.commitStateValue;
     }
     @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number }>();
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()

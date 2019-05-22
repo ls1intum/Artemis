@@ -177,8 +177,8 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         event: any;
         horizontal: boolean;
         interactable: Interactable;
-        resizableMinWidth: number;
-        resizableMinHeight: number;
+        resizableMinWidth?: number;
+        resizableMinHeight?: number;
     }) {
         this.grid.toggleCollapse(event, horizontal, interactable, resizableMinWidth, resizableMinHeight);
     }

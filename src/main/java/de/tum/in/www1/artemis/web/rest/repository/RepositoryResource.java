@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
@@ -144,7 +143,7 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -181,7 +180,7 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("folder", folderName)).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -219,7 +218,7 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", fileMove.getNewFilename())).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -249,7 +248,7 @@ public abstract class RepositoryResource {
         catch (IllegalArgumentException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**

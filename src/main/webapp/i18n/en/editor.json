@@ -57,7 +57,8 @@
                 "unsupportedFile": "File with this extension not supported.",
                 "fileOperationFailed": "File operation could not be executed. Please try again later.",
                 "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
-                "participationCouldNotBeCreated": "Participation could not be created."
+                "participationCouldNotBeCreated": "Participation could not be created.",
+                "couldNotBeRetrieved": "The repository status could not be retrieved."
             },
             "testStatusLabels": {
                 "noResult": "No results",
