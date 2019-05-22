@@ -48,7 +48,7 @@ export class CodeEditorGridComponent {
             }
         } else {
             $card.addClass('collapsed');
-            horizontal ? $card.height('35px') : $card.width('55px');
+            horizontal ? $card.width('55px') : $card.height('35px');
             interactResizable.resizable({ enabled: false });
         }
     }

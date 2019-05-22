@@ -131,8 +131,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.onToggleCollapse.emit({ event: $event, horizontal, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
+    toggleEditorCollapse($event: any) {
+        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 
     onNoInstructionsAvailable() {

@@ -46,7 +46,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     isBuildingValue: boolean;
 
     /** Resizable constants **/
-    resizableMinHeight = 100;
+    resizableMinHeight = 150;
     resizableMaxHeight = 500;
     interactResizable: Interactable;
 
@@ -77,7 +77,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
@@ -221,8 +221,14 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.onToggleCollapse.emit({ event: $event, horizontal, interactable: this.interactResizable, resizableMinWidth: undefined, resizableMinHeight: this.resizableMinHeight });
+    toggleEditorCollapse($event: any) {
+        this.onToggleCollapse.emit({
+            event: $event,
+            horizontal: false,
+            interactable: this.interactResizable,
+            resizableMinWidth: undefined,
+            resizableMinHeight: this.resizableMinHeight,
+        });
     }
 
     /**

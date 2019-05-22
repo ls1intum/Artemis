@@ -1,10 +1,5 @@
-<div
-    *ngIf="!noInstructionsAvailable"
-    id="cardInstructions"
-    class="card-body card resizable-instructions p-0 border-0"
-    [ngStyle]="{ 'width.vw': 40, overflow: 'inherit', minHeight: '500px' }"
->
-    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
+<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card-body card resizable-instructions p-0 border-0" [ngStyle]="{ 'width.vw': 40, overflow: 'inherit' }">
+    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>

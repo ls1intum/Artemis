@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, throwError } from 'rxjs';
@@ -9,10 +8,9 @@ import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, Commit
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
@@ -351,8 +349,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.onToggleCollapse.emit({ event: $event, horizontal, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
+    toggleEditorCollapse($event: any) {
+        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
     }
 
     /**
