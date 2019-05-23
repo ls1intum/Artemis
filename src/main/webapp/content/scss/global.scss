@@ -154,6 +154,7 @@ Generic styles
 }
 
 .page-wrapper {
+    overflow-x: hidden;
     @media (min-width: 768px) {
         padding-bottom: 46px;
         min-height: 100vh;
@@ -593,6 +594,10 @@ displaycolor {
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
 .cdk-overlay-container {
     z-index: 1060;
+}
+
+.not-allowed {
+    cursor: not-allowed;
 }
 
 /* ==========================================================================

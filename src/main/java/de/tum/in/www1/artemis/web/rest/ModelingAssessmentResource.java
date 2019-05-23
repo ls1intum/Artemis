@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-/**
- * REST controller for managing ModelingAssessment.
- */
+/** REST controller for managing ModelingAssessment. */
 @RestController
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -35,11 +34,13 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "modelingAssessment";
 
-    private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with exsisting assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
+    private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with existing assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
 
     private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";
 
     private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
+
+    private static final String POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON = "Assessment has been updated after complaint";
 
     private final CompassService compassService;
 
@@ -55,20 +56,23 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     private final ModelAssessmentConflictService conflictService;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
             ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
-            ModelAssessmentConflictService conflictService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
+        this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
     }
 
@@ -190,6 +194,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             result.getParticipation().setStudent(null);
         }
+        if (submit) {
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -207,6 +214,44 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise);
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         return ResponseEntity.ok(result);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({ @ApiResponse(code = 200, message = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, response = Result.class),
+            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @PostMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * again.
+     *
+     * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
+        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
+        if (modelingSubmission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
+            // you cannot cancel the assessment of other tutors
+            return forbidden();
+        }
+        modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
+        return ResponseEntity.ok().build();
     }
 
     @Override

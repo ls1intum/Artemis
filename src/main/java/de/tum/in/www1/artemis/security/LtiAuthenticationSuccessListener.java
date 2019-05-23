@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.security;
 
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
@@ -10,6 +9,8 @@ import org.springframework.security.authentication.event.InteractiveAuthenticati
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.service.connectors.LtiService;
+
 /**
  * Created by Josias Montag on 22/11/2016.
  */
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class LtiAuthenticationSuccessListener implements ApplicationListener<InteractiveAuthenticationSuccessEvent> {
 
     private final Logger log = LoggerFactory.getLogger(LtiAuthenticationSuccessListener.class);
+
     private final LtiService ltiService;
 
     public LtiAuthenticationSuccessListener(LtiService ltiService) {
@@ -25,15 +27,13 @@ public class LtiAuthenticationSuccessListener implements ApplicationListener<Int
     }
 
     @Override
-    public void onApplicationEvent(InteractiveAuthenticationSuccessEvent event)
-    {
-        //The InteractiveAuthenticationSuccessEvent is fired on manual logins and remember-me logins.
-        //Not fired on programmatic logins!
-        if (event instanceof InteractiveAuthenticationSuccessEvent)
-        {
+    public void onApplicationEvent(InteractiveAuthenticationSuccessEvent event) {
+        // The InteractiveAuthenticationSuccessEvent is fired on manual logins and remember-me logins.
+        // Not fired on programmatic logins!
+        if (event instanceof InteractiveAuthenticationSuccessEvent) {
             AbstractAuthenticationToken token = (AbstractAuthenticationToken) event.getSource();
             WebAuthenticationDetails authDetails = (WebAuthenticationDetails) token.getDetails();
-            String sessionId= authDetails.getSessionId();
+            String sessionId = authDetails.getSessionId();
 
             ltiService.handleLaunchRequestForSession(sessionId);
         }

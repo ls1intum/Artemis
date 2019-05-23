@@ -1,10 +1,10 @@
-import { hasParticipationChanged, Participation } from '../../entities/participation';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, EventEmitter, Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { CodeEditorComponent } from '../code-editor.component';
-import { Result, ResultService, ResultWebsocketService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
@@ -40,7 +40,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         private $window: WindowRef,
         private repositoryService: RepositoryService,
         private resultService: ResultService,
-        private resultWebsocketService: ResultWebsocketService,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
     /**
@@ -103,9 +103,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
         }
-        this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable.subscribe(result => this.toggleBuildLogs(result));
-        });
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribe((result: Result) => this.toggleBuildLogs(result));
     }
 
     /**
@@ -131,7 +131,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
             this.buildLogs = new BuildLogEntryArray(...buildLogs);
-            $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
             this.buildLogChange.emit(this.buildLogs);
         });
     }
@@ -143,16 +142,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * @param result
      */
     toggleBuildLogs(result: Result) {
-        if (
-            !result ||
-            ((result && result.successful && (!result.feedbacks || !result.feedbacks.length)) || (result && !result.successful && result.feedbacks && result.feedbacks.length))
-        ) {
+        if (result && !result.successful && (!result.feedbacks || !result.feedbacks.length)) {
+            // If the build failed, find out why
+            this.getBuildLogs();
+        } else {
             this.buildLogs = new BuildLogEntryArray();
             // If there are no compile errors, send recent timestamp
             this.buildLogChange.emit(new BuildLogEntryArray({ time: new Date(Date.now()), log: '' }));
-        } else {
-            // If the build failed, find out why
-            this.getBuildLogs();
         }
     }
 

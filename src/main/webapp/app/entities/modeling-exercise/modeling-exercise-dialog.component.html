@@ -40,7 +40,11 @@
             </div>
         </div>
         <div class="form-group-narrow">
-            <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}" [(ngModel)]="modelingExercise.assessmentDueDate" name="assessmentDueDate"></jhi-date-time-picker>
+            <jhi-date-time-picker
+                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
+                [(ngModel)]="modelingExercise.assessmentDueDate"
+                name="assessmentDueDate"
+            ></jhi-date-time-picker>
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -63,7 +67,9 @@
                 <option value="ActivityDiagram">{{ 'arTeMiSApp.DiagramType.ActivityDiagram' | translate }}</option>
                 <option value="ObjectDiagram">{{ 'arTeMiSApp.DiagramType.ObjectDiagram' | translate }}</option>
                 <option value="UseCaseDiagram">{{ 'arTeMiSApp.DiagramType.UseCaseDiagram' | translate }}</option>
-                <option value="CommunicationDiagram">{{'arTeMiSApp.DiagramType.CommunicationDiagram' | translate}}</option>
+                <option value="CommunicationDiagram">{{ 'arTeMiSApp.DiagramType.CommunicationDiagram' | translate }}</option>
+                <option value="ComponentDiagram">{{ 'arTeMiSApp.DiagramType.ComponentDiagram' | translate }}</option>
+                <option value="DeploymentDiagram">{{ 'arTeMiSApp.DiagramType.DeploymentDiagram' | translate }}</option>
             </select>
         </div>
         <div class="form-group">
@@ -89,25 +95,30 @@
             <span jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution">Example Solution</span>
             <ul>
                 <li *ngIf="modelingExercise.id && modelingExercise.sampleSolutionModel">
-                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution"
-                            class="btn btn-link" type="button" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution">
+                    <button
+                        routerLink="modeling-exercise/{{ modelingExercise.id }}/example-solution"
+                        class="btn btn-link"
+                        type="button"
+                        jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution"
+                    >
                         Example Solution
                     </button>
                 </li>
             </ul>
-            <button *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
-                    class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-solution"
-                    jhiTranslate="arTeMiSApp.modelingExercise.createExampleSolution">
+            <button
+                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
+                class="btn btn-primary"
+                routerLink="modeling-exercise/{{ modelingExercise.id }}/example-solution"
+                jhiTranslate="arTeMiSApp.modelingExercise.createExampleSolution"
+            >
                 Create example solution
             </button>
-            <div class="alert alert-info" *ngIf="!modelingExercise.id"
-                 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionRequiresExercise">
+            <div class="alert alert-info" *ngIf="!modelingExercise.id" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionRequiresExercise">
                 To create an example solution, you first need to finish creating the modeling exercise
             </div>
         </div>
         <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionExplanation"
-                   for="field_exampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
                 Example Solution Explanation
             </label>
             <div class="question-content background-editor-color">
@@ -119,8 +130,15 @@
 
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
-                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link" type="button"
-                            jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmission" [translateValues]="{ number: i + 1 }">Example submission {{i + 1}}</button>
+                    <button
+                        routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/{{ exampleSubmission.id }}"
+                        class="btn btn-link"
+                        type="button"
+                        jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmission"
+                        [translateValues]="{ number: i + 1 }"
+                    >
+                        Example submission {{ i + 1 }}
+                    </button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
@@ -129,13 +147,16 @@
                 </li>
             </ul>
 
-            <button *ngIf="modelingExercise.id" class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/new"
-                    jhiTranslate="arTeMiSApp.modelingExercise.createExampleSubmission">
+            <button
+                *ngIf="modelingExercise.id"
+                class="btn btn-primary"
+                routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/new"
+                jhiTranslate="arTeMiSApp.modelingExercise.createExampleSubmission"
+            >
                 Create example submission
             </button>
 
-            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id"
-                 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionsRequireExercise">
+            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id" jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the modeling exercise
             </div>
         </div>

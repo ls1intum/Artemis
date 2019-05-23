@@ -22,6 +22,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     long countBySubmittedAndParticipation_Exercise_Id(boolean submitted, Long exerciseId);
 
-    @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false")
+    @Query("select submission from Submission submission where type(submission) in (ModelingSubmission, TextSubmission) and submission.submitted = false and not submission.participation is null")
     List<Submission> findAllUnsubmittedModelingAndTextSubmissions();
 }

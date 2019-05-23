@@ -8,6 +8,7 @@ import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -48,6 +49,15 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
+        const assessmentUpdate = {
+            feedbacks,
+            complaintResponse,
+        };
+        return this.http.post<Result>(url, assessmentUpdate).map(res => this.convertResult(res));
+    }
+
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
     }
@@ -69,6 +79,10 @@ export class ModelingAssessmentService {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }
 
+    cancelAssessment(submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
     /**
      * Iterates over all feedback elements of a response and converts the reference field of the feedback into
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
@@ -78,8 +92,10 @@ export class ModelingAssessmentService {
             return result;
         }
         for (const feedback of result.feedbacks) {
-            feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
-            feedback.referenceId = feedback.reference.split(':')[1];
+            if (feedback.reference) {
+                feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
+                feedback.referenceId = feedback.reference.split(':')[1];
+            }
         }
         return result;
     }

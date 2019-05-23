@@ -17,27 +17,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -64,7 +57,13 @@ public class ParticipationService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
+
     private final QuizSubmissionService quizSubmissionService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserService userService;
 
@@ -76,19 +75,26 @@ public class ParticipationService {
 
     private final ModelAssessmentConflictService conflictService;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
+            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ModelAssessmentConflictService conflictService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
     }
 
@@ -128,6 +134,7 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -250,8 +257,16 @@ public class ParticipationService {
      * @return resumed participation
      */
     public Participation resumeExercise(Exercise exercise, Participation participation) {
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        participation = copyBuildPlan(participation, programmingExercise);
+        // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
+        // as the VCS-server performs the request
+        SecurityUtils.setAuthorizationObject();
+
+        // Reload programming exercise from database so that the template participation is available
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
+        if (!programmingExercise.isPresent()) {
+            return null;
+        }
+        participation = copyBuildPlan(participation, programmingExercise.get());
         participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
@@ -490,8 +505,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
-        return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
+        List<Participation> participations = includeAssessors ? participationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
+                : participationRepository.findByCourseIdWithEagerResults(courseId);
+
+        return participations.stream()
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -504,7 +522,7 @@ public class ParticipationService {
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
-                        if (result.isRated() == Boolean.FALSE) {
+                        if (!includeNotRatedResults && result.isRated() == Boolean.FALSE) {
                             // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
                             // TODO: for compatibility reasons, we include rated == null, in the future we can remove this
                             continue;
@@ -525,12 +543,10 @@ public class ParticipationService {
                                     continue;
                                 }
                             }
-                            else {
-                                // For all other exercises the result completion date is the same as the submission date
-                                if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                                    // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                                    continue;
-                                }
+                            // For all other exercises the result completion date is the same as the submission date
+                            else if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                                // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                                continue;
                             }
                         }
                         relevantResults.add(result);
@@ -616,6 +632,12 @@ public class ParticipationService {
         else if (participation.getExercise() instanceof ModelingExercise) {
             conflictService.deleteAllConflictsForParticipation(participation);
         }
+        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+            // For modeling and text exercises students can send complaints about their assessments and we need to remove
+            // the complaints and the according responses belonging to a participation before deleting the participation itself.
+            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
+            complaintRepository.deleteByResult_Participation_Id(id);
+        }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
@@ -657,4 +679,7 @@ public class ParticipationService {
         }
     }
 
+    public Participation findOneWithEagerCourse(Long participationId) {
+        return participationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
 }

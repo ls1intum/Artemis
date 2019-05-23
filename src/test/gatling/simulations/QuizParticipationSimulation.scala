@@ -197,9 +197,8 @@ class QuizParticipationSimulation extends Simulation {
 
     val waitForResult: ChainBuilder = pause(10 seconds)
         .exec(ws("Subscribe Participation")
-            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/participation\n\n\u0000")
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/exercise/" + exerciseId + "/participation\n\n\u0000")
             .await(600 seconds)())
-
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
