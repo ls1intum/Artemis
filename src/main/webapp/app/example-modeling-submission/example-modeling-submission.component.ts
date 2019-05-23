@@ -261,10 +261,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
      * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
      */
     private updateAssessmentExplanation() {
-        if (this.assessmentExplanation && this.assessmentExplanation.length > 0 && this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
+        if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
             this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
             this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.assessmentExplanation = exampleSubmissionResponse.body.assessmentExplanation;
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
             });
         }
     }
