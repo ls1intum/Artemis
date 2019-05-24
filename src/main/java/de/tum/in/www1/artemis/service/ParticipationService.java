@@ -121,7 +121,8 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (participation == null || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+        boolean isNewParticipation = participation == null;
+        if (isNewParticipation || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
             // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
@@ -131,7 +132,6 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -165,6 +165,11 @@ public class ParticipationService {
         }
 
         participation = save(participation);
+
+        if (isNewParticipation) {
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
+        }
+
         return participation;
     }
 

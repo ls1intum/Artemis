@@ -30,7 +30,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() short = false;
     @Input() result: Result;
     @Input() showUngradedResults: boolean;
-    @Input() showBadge = false;
+    @Input() showGradedBadge = false;
 
     textColorClass: string;
     hasFeedback: boolean;
