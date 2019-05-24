@@ -7,12 +7,12 @@ import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
 
 const RESULTS_WEBSOCKET = 'results_';
-const EXERCISE_WEBSOCKET = 'exercise_';
+const PARTICIPATION_WEBSOCKET = 'participation_';
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
-    openWebsocketConnections: Map<string /* results_{id of participation} */, string /* url of websocket connection */> = new Map<string, string>();
+    openWebsocketConnections: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation>;
 
@@ -21,6 +21,13 @@ export class ParticipationWebsocketService {
     setCachedParticipation(participations: Participation[], exercise?: Exercise) {
         participations.forEach(participation => {
             this.addParticipationToList(participation, exercise);
+        });
+    }
+
+    resetLocalCache() {
+        const participations = this.getAllParticipations();
+        participations.forEach(participation => {
+            this.removeParticipation(participation.id, participation.exercise.id);
         });
     }
 
@@ -87,9 +94,9 @@ export class ParticipationWebsocketService {
         this.openWebsocketConnections.delete(`${RESULTS_WEBSOCKET}${id}`);
         // removing exercise observable
         if (exerciseId) {
-            const participationTopic = this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+            const participationTopic = this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
             this.jhiWebsocketService.unsubscribe(participationTopic);
-            this.openWebsocketConnections.delete(`${EXERCISE_WEBSOCKET}${exerciseId}`);
+            this.openWebsocketConnections.delete(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
         }
     }
 
@@ -132,16 +139,15 @@ export class ParticipationWebsocketService {
      * @private
      */
     private checkWebsocketConnectionForNewParticipations(exerciseId: number) {
-        if (!this.openWebsocketConnections.get(`${EXERCISE_WEBSOCKET}${exerciseId}`)) {
-            const participationResultTopic = `/user/topic/exercise/${exerciseId}/participation`;
-            this.jhiWebsocketService.subscribe(participationResultTopic);
-            const participationObservable = this.jhiWebsocketService.receive(participationResultTopic);
+        if (!this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)) {
+            const participationTopic = `/user/topic/exercise/${exerciseId}/participation`;
+            this.jhiWebsocketService.subscribe(participationTopic);
+            const participationObservable = this.jhiWebsocketService.receive(participationTopic);
             participationObservable.subscribe((participationMessage: Participation) => {
-                this.cachedParticipations.set(participationMessage.id, participationMessage);
                 this.addParticipation(participationMessage);
                 this.participationObservable.next(participationMessage);
             });
-            this.openWebsocketConnections.set(`${EXERCISE_WEBSOCKET}${exerciseId}`, participationResultTopic);
+            this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
         }
     }
 

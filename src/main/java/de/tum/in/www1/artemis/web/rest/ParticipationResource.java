@@ -547,25 +547,33 @@ public class ParticipationResource {
     }
 
     private void checkAccessPermissionAtInstructor(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionAtLeastTA(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if (!courseService.userHasAtLeastTAPermissions(course)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
+    }
+
+    private Course findCourseFromParticipation(Participation participation) {
+        if (participation.getExercise() != null && participation.getExercise().getCourse() != null) {
+            return participation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 }
