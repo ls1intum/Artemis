@@ -22,13 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -127,7 +121,8 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (participation == null || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+        boolean isNewParticipation = participation == null;
+        if (isNewParticipation || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
             // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
@@ -137,7 +132,6 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -171,6 +165,11 @@ public class ParticipationService {
         }
 
         participation = save(participation);
+
+        if (isNewParticipation) {
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
+        }
+
         return participation;
     }
 
@@ -681,4 +680,7 @@ public class ParticipationService {
         }
     }
 
+    public Participation findOneWithEagerCourse(Long participationId) {
+        return participationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
 }
