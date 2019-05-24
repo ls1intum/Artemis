@@ -36,7 +36,6 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     @Output() newResultReceived = new EventEmitter<boolean>();
 
     private resultUpdateListener: Subscription;
-    websocketChannelSubmissions: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -50,12 +49,16 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     ) {}
 
     ngOnInit(): void {
+        if (!this.participation || !this.participation.id) {
+            return;
+        }
+
         if (this.result) {
             const exercise = this.participation.exercise;
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewResults(exercise as ProgrammingExercise);
             }
-        } else if (this.participation && this.participation.id) {
+        } else {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
@@ -121,9 +124,6 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnDestroy() {
         if (this.resultUpdateListener) {
             this.resultUpdateListener.unsubscribe();
-        }
-        if (this.websocketChannelSubmissions) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
         }
     }
 }
