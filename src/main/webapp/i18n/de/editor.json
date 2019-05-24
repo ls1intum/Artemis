@@ -47,17 +47,19 @@
                 "compressTree": "Leere Verzeichnisse zusammenfassen"
             },
             "errors": {
-                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
+                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
+                "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
-                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
                 "unsupportedFile": "Datei mit dieser Endung wird nicht unterstützt.",
                 "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal.",
                 "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
                 "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
-                "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden."
+                "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
+                "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
+                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
             },
             "testStatusLabels": {
                 "testStatusNoResult": "Keine Ergebnisse",

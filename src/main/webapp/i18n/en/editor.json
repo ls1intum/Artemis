@@ -48,17 +48,19 @@
                 "compressTree": "Combine empty folders"
             },
             "errors": {
-                "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
-                "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
-                "commitFailed": "One or more files could not be commited. Please try again shortly or contact your tutor.",
+                "participationNotFound": "Your participation could not be found.",
+                "saveFailed": "One or more files could not be updated.",
+                "commitFailed": "One or more files could not be commited.",
                 "noPermissions": "You don't have the necessary permissions.",
-                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor.",
+                "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
                 "unsupportedFile": "File with this extension not supported.",
                 "fileOperationFailed": "File operation could not be executed. Please try again later.",
                 "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
                 "participationCouldNotBeCreated": "Participation could not be created.",
-                "couldNotBeRetrieved": "The repository status could not be retrieved."
+                "couldNotBeRetrieved": "The repository status could not be retrieved.",
+                "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
+                "failedToLoadBuildLogs": "The build logs could not be retrieved."
             },
             "testStatusLabels": {
                 "noResult": "No results",
