@@ -23,8 +23,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ResultService resultService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService);
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
@@ -42,7 +42,7 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment);
+        Result result = saveAssessment(resultId, textAssessment, textExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
         return submitResult(result, textExercise, calculatedScore);
@@ -58,7 +58,7 @@ public class TextAssessmentService extends AssessmentService {
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
         checkGeneralFeedback(textAssessment);
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
@@ -70,6 +70,11 @@ public class TextAssessmentService extends AssessmentService {
 
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
+
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(textExercise);
+        }
 
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();

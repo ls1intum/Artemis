@@ -33,13 +33,16 @@ abstract class AssessmentService {
 
     private final ResultService resultService;
 
+    private final AuthorizationCheckService authCheckService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService) {
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.participationRepository = participationRepository;
         this.resultService = resultService;
+        this.authCheckService = authCheckService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -113,6 +116,15 @@ abstract class AssessmentService {
         final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
         if (generalFeedbackCount > 1) {
             throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+        }
+    }
+
+    /**
+     * Tutors are not allowed to override an assessment after the assessment due date. Instructors can submit assessments at any time.
+     */
+    void checkAssessmentDueDate(Exercise exercise) {
+        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
         }
     }
 
