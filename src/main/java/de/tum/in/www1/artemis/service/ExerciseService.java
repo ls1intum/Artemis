@@ -341,6 +341,8 @@ public class ExerciseService {
                 }
                 else {
                     // finish with clean state
+                    gitService.get().checkoutBranch(repo, "master");
+                    gitService.get().deleteLocalBranch(repo, "stager");
                     gitService.get().resetToOriginMaster(repo);
                 }
             }

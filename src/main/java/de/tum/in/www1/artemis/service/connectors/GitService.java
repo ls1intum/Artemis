@@ -269,6 +269,38 @@ public class GitService {
     }
 
     /**
+     * checkout branch
+     *
+     * @param repo Local Repository Object.
+     */
+    public void checkoutBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.checkout().setForceRefUpdate(true).setName("master").call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot checkout branch in repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Remove branch from local repository.
+     *
+     * @param repo Local Repository Object.
+     */
+    public void deleteLocalBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.branchDelete().setBranchNames(branch).setForce(true).call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot remove branch " + branch + " from the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Get last commit hash from master
      *
      * @param repoUrl
