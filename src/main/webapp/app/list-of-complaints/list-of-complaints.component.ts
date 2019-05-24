@@ -7,8 +7,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -22,13 +23,13 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private route: ActivatedRoute) {}
+    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private route: ActivatedRoute, private router: Router) {}
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(queryParams => {
-            this.courseId = Number(queryParams.get('courseId'));
-            this.exerciseId = Number(queryParams.get('exerciseId'));
-            this.tutorId = Number(queryParams.get('exerciseId'));
+            this.courseId = Number(queryParams['courseId']);
+            this.exerciseId = Number(queryParams['exerciseId']);
+            this.tutorId = Number(queryParams['tutorId']);
         });
 
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
@@ -48,6 +49,30 @@ export class ListOfComplaintsComponent implements OnInit {
         }
 
         complaintResponse.subscribe(res => (this.complaints = res.body), (err: HttpErrorResponse) => this.onError(err.message));
+    }
+
+    openAssessmentEditor(complaint: Complaint) {
+        if (!complaint || !complaint.result || !complaint.result.participation || !complaint.result.submission) {
+            return;
+        }
+
+        const exercise: Exercise = complaint.result.participation.exercise;
+        const submissionId = complaint.result.submission.id;
+
+        if (!exercise || !exercise.type || !submissionId) {
+            return;
+        }
+
+        const queryParams: any = {};
+        let route: string;
+
+        if (exercise.type === ExerciseType.TEXT) {
+            route = `/text/${exercise.id}/assessment/${submissionId}`;
+        } else if (exercise.type === ExerciseType.MODELING) {
+            route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
+            queryParams.showBackButton = true;
+        }
+        this.router.navigate([route], { queryParams });
     }
 
     private onError(error: string) {

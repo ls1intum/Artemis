@@ -147,7 +147,8 @@ public class ComplaintResource {
 
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam Long tutorId, @RequestParam Long exerciseId, @RequestParam Long courseId, Principal principal) {
+    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,
+            @RequestParam(required = false) Long courseId, Principal principal) {
         if (tutorId == null && exerciseId == null && courseId == null) {
             throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
         }

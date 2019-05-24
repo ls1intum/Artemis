@@ -124,6 +124,7 @@ public class ComplaintService {
                 // Remove data about the student
                 complaint.getResult().getParticipation().setStudent(null);
                 complaint.setStudent(null);
+                complaint.setResultBeforeComplaint(null);
 
                 responseComplaints.add(complaint);
             }
@@ -134,26 +135,51 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_Id(tutorId);
+        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_Id(tutorId);
+
+        return filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+        List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+
+        return filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
+        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
+
+        return filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
+        List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
+
+        return filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
+        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
+
+        return filterOutStudentFromComplaints(complaints);
+    }
+
+    private void filterOutStudentFromComplaint(Complaint complaint) {
+        complaint.setStudent(null);
+        complaint.setResultBeforeComplaint(null);
+
+        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
+            complaint.getResult().getParticipation().setStudent(null);
+        }
+    }
+
+    private List<Complaint> filterOutStudentFromComplaints(List<Complaint> complaints) {
+        complaints.forEach(this::filterOutStudentFromComplaint);
+
+        return complaints;
     }
 }

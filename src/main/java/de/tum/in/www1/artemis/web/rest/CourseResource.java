@@ -374,8 +374,11 @@ public class CourseResource {
         long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutor(courseId, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
         data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
     }

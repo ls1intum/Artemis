@@ -30,6 +30,14 @@
                 "updateAssessmentTooltip": "Send complaint response and update assessment",
                 "rejectComplaint": "Reject complaint",
                 "rejectComplaintTooltip": "Send complaint response and reject complaint"
+            },
+            "listOfComplaints": {
+                "exercise": "Exercise",
+                "submissionId": "Submission ID",
+                "login": "Login",
+                "name": "Name",
+                "actions": "Actions",
+                "title": "List of complaints"
             }
         }
     }
