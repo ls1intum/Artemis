@@ -1,14 +1,8 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { Result } from 'app/entities/result';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import {
-    hasParticipationChanged,
-    hasSolutionParticipationChanged,
-    hasTemplateParticipationChanged,
-    Participation,
-    ParticipationWebsocketService,
-} from 'app/entities/participation';
+import { hasSolutionParticipationChanged, hasTemplateParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 enum ProgrammingExerciseIssues {
     TEMPLATE_PASSING = 'TEMPLATE_PASSING',
@@ -23,6 +17,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
     ProgrammingExerciseIssues = ProgrammingExerciseIssues;
     @Input() templateParticipation: Participation;
     @Input() solutionParticipation: Participation;
+    @Input() exercise: ProgrammingExercise;
 
     templateParticipationSubscription: Subscription;
     solutionParticipationSubscription: Subscription;
@@ -35,6 +30,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.templateParticipationSubscription) {
                 this.templateParticipationSubscription.unsubscribe();
             }
+            this.participationWebsocketService.addParticipation(this.templateParticipation, this.exercise);
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
@@ -49,6 +45,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.solutionParticipationSubscription) {
                 this.solutionParticipationSubscription.unsubscribe();
             }
+            this.participationWebsocketService.addParticipation(this.solutionParticipation, this.exercise);
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(
