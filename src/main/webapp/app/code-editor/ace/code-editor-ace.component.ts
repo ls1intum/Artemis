@@ -102,7 +102,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.fileChange instanceof RenameFileChange || this.fileChange instanceof DeleteFileChange) {
                 this.fileSession = this.fileService.updateFileReferences(this.fileSession, this.fileChange);
             } else if (this.fileChange instanceof CreateFileChange && this.selectedFile === this.fileChange.fileName) {
-                this.fileSession = { ...this.fileSession, [this.selectedFile]: { code: '', cursor: { row: 0, column: 0 } } };
+                this.fileSession = { ...this.fileSession, [this.fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
                 this.initEditorAfterFileChange();
             }
         } else if (changes.selectedFile && this.selectedFile) {
