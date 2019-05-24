@@ -99,7 +99,11 @@ export class TextEditorComponent implements OnInit {
     }
 
     get generalFeedback(): Feedback | null {
-        return this.result.feedbacks.find(f => f.reference == null) || null;
+        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
+            return this.result.feedbacks.find(f => f.reference == null) || null;
+        }
+
+        return null;
     }
 
     saveText() {
