@@ -6,8 +6,6 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +14,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,6 +34,10 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -121,16 +132,28 @@ public class ProgrammingExerciseService {
             // Eclipse .project file
             File eclipseProjectFile = new File(repo.getLocalPath().toString(), ".project");
             if (eclipseProjectFile.exists()) {
-                Path path = eclipseProjectFile.toPath();
-                Charset charset = StandardCharsets.UTF_8;
+
                 try {
-                    String content = new String(Files.readAllBytes(path), charset);
-                    content = content.replaceFirst("<name>(.+?)</name>", "<name>" + programmingExercise.getTitle() + " " + participation.getStudent().getLogin()) + "</name>";
-                    Files.write(path, content.getBytes(charset));
+                    // 1- Build the doc from the XML file
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
+                    doc.setXmlStandalone(true);
+
+                    // 2- Find the node with xpath
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
+
+                    // 3- Set new value
+                    nameNode.setTextContent(programmingExercise.getTitle() + " " + participation.getStudent().getLogin());
+
+                    // 4- Save the result to a new XML doc
+                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
+                    xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
+
                 }
-                catch (IOException ex) {
+                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
                     log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
                 }
+
             }
         }
 
