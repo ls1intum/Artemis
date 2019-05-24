@@ -183,7 +183,7 @@
         "clean-www": "rimraf build//www/app/{src,build/}",
         "start": "yarn run webpack:dev --hot",
         "start-cold": "yarn run webpack:dev",
-        "start-tls": "yarn run webpack:dev --env.tls",
+        "start-tls": "yarn run webpack:dev --hot --env.tls",
         "serve": "yarn run start",
         "build": "yarn run webpack:prod",
         "test": "jest --config=src/test/javascript/jest.config.js",
