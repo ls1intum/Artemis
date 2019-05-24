@@ -166,6 +166,19 @@ public class GitService {
     }
 
     /**
+     * Commits with the given message into the repository.
+     *
+     * @param repo    Local Repository Object.
+     * @param message Commit Message
+     * @throws GitAPIException
+     */
+    public void commit(Repository repo, String message) throws GitAPIException {
+        Git git = new Git(repo);
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
+        git.close();
+    }
+
+    /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
      * @param repo    Local Repository Object.

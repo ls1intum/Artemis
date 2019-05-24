@@ -6,6 +6,8 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,6 +112,34 @@ public class ProgrammingExerciseService {
             participationRepository.save(participation);
 
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
+        }
+    }
+
+    public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, Participation participation) {
+        // is Java programming language
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            // Eclipse .project file
+            File eclipseProjectFile = new File(repo.getLocalPath().toString(), ".project");
+            if (eclipseProjectFile.exists()) {
+                Path path = eclipseProjectFile.toPath();
+                Charset charset = StandardCharsets.UTF_8;
+                try {
+                    String content = new String(Files.readAllBytes(path), charset);
+                    content = content.replaceFirst("<name>(.+?)</name>", "<name>" + programmingExercise.getTitle() + " " + participation.getStudent().getLogin()) + "</name>";
+                    Files.write(path, content.getBytes(charset));
+                }
+                catch (IOException ex) {
+                    log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+                }
+            }
+        }
+
+        try {
+            gitService.stageAllChanges(repo);
+            gitService.commit(repo, "Add Student Id to Project Name");
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 
