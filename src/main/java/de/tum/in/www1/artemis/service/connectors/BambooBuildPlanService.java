@@ -102,7 +102,9 @@ public class BambooBuildPlanService {
 
         return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
                 .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                        new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").hasTests(true))))
+                        new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                        new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)
+                )))
                 .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 

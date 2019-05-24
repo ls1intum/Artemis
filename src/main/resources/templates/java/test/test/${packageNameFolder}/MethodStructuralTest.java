@@ -20,7 +20,7 @@ import org.junit.runners.Parameterized;
  * and visibility modifiers (in case these are specified).
  */
 @RunWith(Parameterized.class)
-public class MethodTest extends StructuralTest {
+public class MethodStructuralTest extends StructuralTest {
 
     public MethodTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
