@@ -1,9 +1,9 @@
-import { User } from 'app/core';
 import { Component, Input } from '@angular/core';
 import { KeyValue } from '@angular/common';
 
-interface TutorLeaderboardElement {
-    tutor: User;
+export interface TutorLeaderboardElement {
+    name: string;
+    login: string;
     numberOfAssessments: number;
     numberOfComplaints: number;
 }

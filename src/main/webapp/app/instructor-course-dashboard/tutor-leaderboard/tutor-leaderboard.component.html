@@ -12,8 +12,8 @@
         <tbody>
             <tr *ngFor="let tutor of tutorsData | keyvalue: orderByNumberOfAssessments; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.value.tutor.firstName }} {{ tutor.value.tutor.lastName }}</td>
-                <td>{{ tutor.value.tutor.login }}</td>
+                <td>{{ tutor.value.name }}</td>
+                <td>{{ tutor.value.login }}</td>
                 <td>{{ tutor.value.numberOfAssessments }}</td>
                 <td>{{ tutor.value.numberOfComplaints }}</td>
             </tr>
