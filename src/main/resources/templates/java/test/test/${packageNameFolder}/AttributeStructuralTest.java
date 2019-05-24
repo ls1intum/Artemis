@@ -29,7 +29,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class AttributeStructuralTest extends StructuralTest {
 
-    public AttributeTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    public AttributeStructuralTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 

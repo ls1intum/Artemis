@@ -22,7 +22,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class MethodStructuralTest extends StructuralTest {
 
-    public MethodTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    public MethodStructuralTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 
