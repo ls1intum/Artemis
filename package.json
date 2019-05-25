@@ -133,7 +133,6 @@
         "postinstall-prepare": "1.0.1",
         "prettier": "1.17.0",
         "protractor": "6.0.0",
-        "proxy-middleware": "0.15.0",
         "rimraf": "2.6.3",
         "sass": "1.20.1",
         "sass-loader": "7.1.0",
