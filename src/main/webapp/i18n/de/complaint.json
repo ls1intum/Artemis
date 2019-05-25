@@ -30,6 +30,14 @@
                 "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
                 "rejectComplaint": "Beschwerde zurückweisen",
                 "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
+            },
+            "listOfComplaints": {
+                "exercise": "Übung",
+                "submissionId": "Einreichung ID",
+                "login": "Login",
+                "name": "Name",
+                "actions": "Aktionen",
+                "title": "Liste der Beschwerden"
             }
         }
     }
