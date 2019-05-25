@@ -20,6 +20,11 @@
                         {{ tutor.value.numberOfComplaints }}
                     </a>
                 </td>
+                <td *ngIf="exerciseId">
+                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.value.tutorId }">
+                        {{ tutor.value.numberOfComplaints }}
+                    </a>
+                </td>
             </tr>
         </tbody>
     </table>

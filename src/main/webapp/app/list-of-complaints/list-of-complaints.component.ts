@@ -1,12 +1,9 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
-import { Result } from 'app/entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Moment } from 'moment';
-import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
@@ -23,7 +20,13 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private complaintService: ComplaintService,
+        private jhiAlertService: JhiAlertService,
+        private route: ActivatedRoute,
+        private router: Router,
+        private location: Location,
+    ) {}
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(queryParams => {
@@ -78,5 +81,9 @@ export class ListOfComplaintsComponent implements OnInit {
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error('error.http.400', null, null);
+    }
+
+    back() {
+        this.location.back();
     }
 }
