@@ -59,8 +59,10 @@
                 "noResult": "No results",
                 "testPassing": "Test passing",
                 "testFailing": "Test failing",
+                "testNotExecuted": "Test not executed",
                 "totalTestsPassing": "{{totalTests}} tests passing",
-                "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing"
+                "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing",
+                "totalTestsNotExecuted": "{{notExecuted}} of {{totalTests}} not executed"
             }
         }
     }

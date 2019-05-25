@@ -16,7 +16,7 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle, faTimesCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
@@ -30,7 +30,7 @@ import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
 enum TestCaseState {
-    UNDEFINED = 'UNDEFINED',
+    NOT_EXECUTED = 'NOT_EXECUTED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
 }
@@ -45,6 +45,8 @@ type Step = {
     templateUrl: './programming-exercise-instruction.component.html',
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    TestCaseState = TestCaseState;
+
     private markdown: Remarkable;
 
     @Input()
@@ -277,8 +279,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps.forEach(({ done }, i) => {
             const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
             componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
+            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : done === TestCaseState.FAIL ? faTimesCircle : faQuestionCircle;
+            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary'];
             componentRef.instance.ngOnChanges({});
             this.appRef.attachView(componentRef.hostView);
             const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -318,9 +320,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
         const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
-        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.children[0].classList.contains('text-success')).length;
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => !testCircle.classList.contains('stepwizard-step--failed')).length;
         /** The click should only be executed if the clicked element is not a positive test **/
-        if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
+        if (testStatusDOMElements.length && testStatusCircleElements[index].classList.contains('stepwizard-step--failed')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
             testStatusDOMElements[index - positiveTestsUntilIndex].click();
         }
@@ -471,7 +473,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         } else if (done === TestCaseState.FAIL) {
             text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
         } else {
-            text += '<span class="text-danger bold">' + label + '</span>';
+            text += '<span class="text-secondary bold">' + label + '</span>';
         }
         text += '<br>';
 
@@ -501,7 +503,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
             const [done] = this.statusForTests(tests);
-            return done === TestCaseState.SUCCESS ? 'green' : 'red';
+            return done === TestCaseState.SUCCESS ? 'green' : done === TestCaseState.FAIL ? 'red' : 'grey';
         });
 
         this.plantUMLs[id] = plantUml;
@@ -524,31 +526,52 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return [TestCaseState.SUCCESS, label];
         } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
-            const failedTests = tests.filter(testName => {
-                const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
-                // If there is no feedback item, we assume that the test was successful (legacy check)
-                return feedback ? !feedback.positive : false;
-            });
+            const { failed, notExecuted } = tests.reduce(
+                (acc, testName) => {
+                    const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
+                    // This is a legacy check, results before the 24th May are considered legacy.
+                    const isLegacyResult = this.latestResult.completionDate.valueOf() < 1558724787078;
+                    // If there is no feedback item, we assume that the test was successful (legacy check).
+                    if (isLegacyResult) {
+                        return {
+                            failed: feedback ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback ? acc.successful : [...acc.successful, testName],
+                            notExecuted: acc.notExecuted,
+                        };
+                    } else {
+                        return {
+                            failed: feedback && !feedback.positive ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback && feedback.positive ? [...acc.successful, testName] : acc.successful,
+                            notExecuted: !feedback ? [...acc.notExecuted, testName] : acc.notExecuted,
+                        };
+                    }
+                },
+                { failed: [], successful: [], notExecuted: [] },
+            );
 
             // Exercise is done if none of the tests failed
-            const testCaseState = failedTests.length === 0 ? TestCaseState.SUCCESS : TestCaseState.FAIL;
+            const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
             if (totalTests === 1) {
                 const label =
                     testCaseState === TestCaseState.SUCCESS
                         ? this.translateService.instant(translationBasePath + 'testPassing')
+                        : testCaseState === TestCaseState.NOT_EXECUTED
+                        ? this.translateService.instant(translationBasePath + 'testNotExecuted')
                         : this.translateService.instant(translationBasePath + 'testFailing');
                 return [testCaseState, label];
             } else {
                 const label =
                     testCaseState === TestCaseState.SUCCESS
                         ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
-                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
+                        : testCaseState === TestCaseState.NOT_EXECUTED
+                        ? this.translateService.instant(translationBasePath + 'totalTestsNotExecuted', { totalTests, notExecuted: notExecuted.length })
+                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failed.length });
                 return [testCaseState, label];
             }
         } else {
             // Case 3: There are no results
             const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
-            return [TestCaseState.UNDEFINED, label];
+            return [TestCaseState.NOT_EXECUTED, label];
         }
     }
 

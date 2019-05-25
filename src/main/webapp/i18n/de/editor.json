@@ -56,10 +56,12 @@
             },
             "testStatusLabels": {
                 "testStatusNoResult": "Keine Ergebnisse",
-                "testStatusTestPassing": "Test bestanden",
-                "testStatusTestFailing": "Test fehlgeschlagen",
+                "testPassing": "Test bestanden",
+                "testFailing": "Test fehlgeschlagen",
+                "testNotExecuted": "Test nicht ausgeführt",
                 "totalTestsPassing": "{{totalTests}} Tests bestanden",
-                "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen"
+                "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen",
+                "totalTestsNotExecuted": "{{notExecuted}} von {{totalTests}} Tests nicht ausgeführt"
             }
         }
     }
