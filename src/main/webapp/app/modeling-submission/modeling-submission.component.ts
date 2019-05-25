@@ -77,9 +77,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modalService: NgbModal,
         private translateService: TranslateService,
         private router: Router,
-        private artemisMarkdown: ArtemisMarkdown,
         private participationWebsocketService: ParticipationWebsocketService,
-
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -115,9 +113,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.umlModel = JSON.parse(this.submission.model);
                             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                         }
-                        if (this.submission.id && !this.submission.submitted) {
-                            this.subscribeToWebsocket();
-                        }
+                        this.subscribeToWebsockets();
                         if (this.submission.result && this.isAfterAssessmentDueDate) {
                             this.result = this.submission.result;
                         }
