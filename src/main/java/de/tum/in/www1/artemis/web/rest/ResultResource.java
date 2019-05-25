@@ -2,15 +2,25 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.junit.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -472,5 +482,56 @@ public class ResultResource {
     private boolean userHasPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return userHasPermissions(course, user);
+    }
+
+    @PostMapping(value = Constants.NEW_TEST_REPO_RESULT_RESOURCE_PATH)
+    @Transactional
+    public ResponseEntity<?> notifyTestRepoChange(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+            return forbidden(); // Only allow endpoint when using correct token
+        }
+
+        try {
+            String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            Optional<Participation> optionalParticipation = getParticipation(planKey);
+            if (optionalParticipation.isPresent()) {
+                Participation participation = optionalParticipation.get();
+                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
+                    participation.setExercise(programmingExerciseService.getExerciseForTemplateParticipation(participation));
+                }
+                else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
+                    participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
+                }
+                resultService.onResultNotifiedNew(participation, requestBody);
+                return ResponseEntity.ok().build();
+            }
+            else {
+                // return ok so that Bamboo does not think it was an error
+                return ResponseEntity.ok().build();
+            }
+
+        }
+        catch (Exception e) {
+            return badRequest();
+        }
+
+    }
+
+    public Map<String, List<String>> getTestCases(Repository repository) throws IOException {
+        // TODO: Doesn't seem to be working
+        URL testClassesURL = Paths.get(repository.getLocalPath().toString() + "/test-classes").toUri().toURL();
+
+        URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] { testClassesURL }, ClasspathHelper.staticClassLoader());
+
+        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder().addUrls(ClasspathHelper.forPackage("todo.main", classLoader))
+                .filterInputsBy(new FilterBuilder().includePackage("todo.main"))
+                .setScanners(new SubTypesScanner(false), new TypeAnnotationsScanner(), new MethodAnnotationsScanner()).addClassLoader(classLoader);
+
+        Reflections reflections = new Reflections(configurationBuilder);
+        Map<String, List<String>> testCases = reflections.getMethodsAnnotatedWith(Test.class).stream()
+                // Only get files from test-classes, otherwise students could add tests
+                .filter(method -> method.getDeclaringClass().getProtectionDomain().getCodeSource().getLocation().getPath().contains("test-classes"))
+                .collect(Collectors.groupingBy(method -> method.getDeclaringClass().getName(), Collectors.mapping(Method::getName, Collectors.toList())));
+        return testCases;
     }
 }
