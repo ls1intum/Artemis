@@ -103,8 +103,7 @@ public class BambooBuildPlanService {
         return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
                 .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
                         new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                        new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)
-                )))
+                        new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true))))
                 .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
@@ -113,7 +112,9 @@ public class BambooBuildPlanService {
         return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
                 .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1"))
                         .tasks(createCheckoutTask("", "tests"),
-                                new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                new ScriptTask().description("Builds and tests the code")
+                                        .inlineBody("pytest test/structural --junitxml=test-reports/structural-results.xml\nexit 0"),
+                                new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/behavior --junitxml=test-reports/behavior-results.xml\nexit 0"),
                                 new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
                         .requirements(new Requirement("Python3"))))
                 .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
