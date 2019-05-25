@@ -424,6 +424,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
+        long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
 
         if (!userHasPermission(course)) {
@@ -454,7 +455,8 @@ public class CourseResource {
             exercise.setNumberOfAssessments(participationsWithResult.size());
             exercise.setNumberOfComplaints(participationsWithComplaints.size());
         }
-
+        long end = System.currentTimeMillis();
+        log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
@@ -471,7 +473,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
-
+        long start = System.currentTimeMillis();
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -495,6 +497,8 @@ public class CourseResource {
 
         stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
 
+        long end = System.currentTimeMillis();
+        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (end - start) + "ms");
         return ResponseEntity.ok(stats);
     }
 
