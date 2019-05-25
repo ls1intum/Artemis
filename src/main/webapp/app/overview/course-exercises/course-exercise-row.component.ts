@@ -30,6 +30,7 @@ export class CourseExerciseRowComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
     public exerciseCategories: ExerciseCategory[];
+    isAfterAssessmentDueDate: boolean;
 
     constructor(
         private accountService: AccountService,
@@ -49,6 +50,7 @@ export class CourseExerciseRowComponent implements OnInit {
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
