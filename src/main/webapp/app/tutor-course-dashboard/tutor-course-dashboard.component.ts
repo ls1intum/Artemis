@@ -31,7 +31,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    private tutor: User;
+    tutor: User;
 
     constructor(
         private courseService: CourseService,
