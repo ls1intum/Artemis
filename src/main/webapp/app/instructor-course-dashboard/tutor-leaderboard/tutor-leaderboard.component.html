@@ -15,7 +15,11 @@
                 <td>{{ tutor.value.name }}</td>
                 <td>{{ tutor.value.login }}</td>
                 <td>{{ tutor.value.numberOfAssessments }}</td>
-                <td>{{ tutor.value.numberOfComplaints }}</td>
+                <td *ngIf="courseId">
+                    <a routerLink="/complaints" [queryParams]="{ courseId: courseId, tutorId: tutor.value.tutorId }">
+                        {{ tutor.value.numberOfComplaints }}
+                    </a>
+                </td>
             </tr>
         </tbody>
     </table>
