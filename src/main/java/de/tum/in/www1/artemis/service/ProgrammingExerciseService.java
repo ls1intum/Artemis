@@ -127,6 +127,7 @@ public class ProgrammingExerciseService {
     }
 
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, Participation participation) {
+        String studentId = participation.getStudent().getLogin();
         // is Java programming language
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             // Eclipse .project file
@@ -142,8 +143,10 @@ public class ProgrammingExerciseService {
                     XPath xPath = XPathFactory.newInstance().newXPath();
                     Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
 
-                    // 3- Set new value
-                    nameNode.setTextContent(nameNode.getTextContent() + " " + participation.getStudent().getLogin());
+                    // 3- Append Student Id to Project Name
+                    if (nameNode != null) {
+                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                    }
 
                     // 4- Save the result to a new XML doc
                     Transformer xformer = TransformerFactory.newInstance().newTransformer();
@@ -152,6 +155,39 @@ public class ProgrammingExerciseService {
                 }
                 catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
                     log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+                }
+
+            }
+
+            // Eclipse pom.xml file
+            File pomFile = new File(repo.getLocalPath().toString(), "pom.xml");
+            if (pomFile.exists()) {
+
+                try {
+                    // 1- Build the doc from the XML file
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
+                    doc.setXmlStandalone(true);
+
+                    // 2- Find the relevant nodes with xpath
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    Node nameNode = (Node) xPath.compile("/project/name").evaluate(doc, XPathConstants.NODE);
+                    Node artifactIdNode = (Node) xPath.compile("/project/artifactId").evaluate(doc, XPathConstants.NODE);
+
+                    // 3- Append Student Id to Project Names
+                    if (nameNode != null) {
+                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                    }
+                    if (artifactIdNode != null) {
+                        artifactIdNode.setTextContent(artifactIdNode.getTextContent() + "-" + studentId);
+                    }
+
+                    // 4- Save the result to a new XML doc
+                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
+                    xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
+
+                }
+                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+                    log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
                 }
 
             }
