@@ -12,7 +12,15 @@
         </div>
         <div class="form-group row">
             <label class="col-3" jhiTranslate="arTeMiSApp.textAssessment.detail.feedback"></label>
-            <textarea class="col form-control" rows="2" [(ngModel)]="assessment.detailText" (ngModelChange)="emitChanges()" [readOnly]="disabled" [disabled]="disabled"></textarea>
+            <textarea
+                class="col form-control"
+                rows="2"
+                [(ngModel)]="assessment.detailText"
+                (ngModelChange)="emitChanges()"
+                [readOnly]="disabled"
+                [disabled]="disabled"
+                spellcheck="true"
+            ></textarea>
         </div>
     </div>
 </div>
