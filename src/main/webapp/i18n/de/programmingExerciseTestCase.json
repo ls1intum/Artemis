@@ -15,10 +15,9 @@
             "detail": {
                 "title": "Programming Exercise Test Case"
             },
-            "file_name": "File Name",
-            "test_name": "Test Name",
-            "type": "Type",
+            "testName": "Test Name",
             "weight": "Weight",
+            "active": "Active",
             "exercise": "Exercise"
         }
     }

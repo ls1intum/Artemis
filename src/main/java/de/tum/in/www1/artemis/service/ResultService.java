@@ -111,6 +111,10 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+        if (result != null && participation.getExercise() instanceof ProgrammingExercise
+            && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
+            testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
+        }
         notifyUser(participation, result);
     }
 

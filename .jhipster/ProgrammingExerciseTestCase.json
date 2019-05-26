@@ -12,25 +12,18 @@
     ],
     "fields": [
         {
-            "fieldName": "file_name",
+            "fieldName": "testName",
             "fieldType": "String",
-            "fieldValidateRules": []
-        },
-        {
-            "fieldName": "test_name",
-            "fieldType": "String",
-            "fieldValidateRules": []
-        },
-        {
-            "fieldName": "type",
-            "fieldType": "TestCaseType",
-            "fieldValues": "STRUCTURAL,BEHAVIOR",
             "fieldValidateRules": []
         },
         {
             "fieldName": "weight",
             "fieldType": "Integer",
             "fieldValidateRules": []
+        },
+        {
+            "fieldName": "active",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20190526152122",

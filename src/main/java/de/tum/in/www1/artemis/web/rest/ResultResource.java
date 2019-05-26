@@ -176,10 +176,6 @@ public class ResultResource {
                 }
 
                 Result result = continuousIntegrationService.onBuildCompletedNew(participation, requestBody);
-                if (result != null && participation.getExercise() instanceof ProgrammingExercise
-                        && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
-                    testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
-                }
                 resultService.onResultNotifiedNew(participation, requestBody);
                 return ResponseEntity.ok().build();
             }

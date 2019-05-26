@@ -72,10 +72,9 @@ class ProgrammingExerciseTestCaseGatlingTest extends Simulation {
             .headers(headers_http_authenticated)
             .body(StringBody("""{
                 "id":null
-                , "fileName":"SAMPLE_TEXT"
                 , "testName":"SAMPLE_TEXT"
-                , "type":"STRUCTURAL"
                 , "weight":"0"
+                , "active":null
                 }""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_programmingExerciseTestCase_url"))).exitHereIfFailed

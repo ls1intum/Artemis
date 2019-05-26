@@ -1,14 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
 
-import javax.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import de.tum.in.www1.artemis.domain.enumeration.TestCaseType;
+import javax.persistence.*;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -19,26 +19,23 @@ import de.tum.in.www1.artemis.domain.enumeration.TestCaseType;
 public class ProgrammingExerciseTestCase implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "fileName")
-    private String fileName;
-
     @Column(name = "testName")
     private String testName;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "jhi_type")
-    private TestCaseType type;
 
     @Column(name = "weight")
     private Integer weight;
 
-    @ManyToOne
-    private ProgrammingExercise exercise;
+    @Column(name = "active")
+    private Boolean active;
+
+    @ManyToOne(cascade = CascadeType.REMOVE)
+    @JsonIgnoreProperties("programmingExerciseTestCases")
+    private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -49,43 +46,17 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.id = id;
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public ProgrammingExerciseTestCase file_name(String file_name) {
-        this.fileName = file_name;
-        return this;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
     public String getTestName() {
         return testName;
     }
 
-    public ProgrammingExerciseTestCase test_name(String test_name) {
-        this.testName = test_name;
+    public ProgrammingExerciseTestCase testName(String testName) {
+        this.testName = testName;
         return this;
     }
 
     public void setTestName(String testName) {
         this.testName = testName;
-    }
-
-    public TestCaseType getType() {
-        return type;
-    }
-
-    public ProgrammingExerciseTestCase type(TestCaseType type) {
-        this.type = type;
-        return this;
-    }
-
-    public void setType(TestCaseType type) {
-        this.type = type;
     }
 
     public Integer getWeight() {
@@ -101,16 +72,29 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.weight = weight;
     }
 
+    public Boolean isActive() {
+        return active;
+    }
+
+    public ProgrammingExerciseTestCase active(Boolean active) {
+        this.active = active;
+        return this;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
     public Exercise getExercise() {
         return exercise;
     }
 
-    public ProgrammingExerciseTestCase exercise(ProgrammingExercise exercise) {
+    public ProgrammingExerciseTestCase exercise(Exercise exercise) {
         this.exercise = exercise;
         return this;
     }
 
-    public void setExercise(ProgrammingExercise exercise) {
+    public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -127,6 +111,9 @@ public class ProgrammingExerciseTestCase implements Serializable {
         if (programmingExerciseTestCase.getId() == null || getId() == null) {
             return false;
         }
+        if (programmingExerciseTestCase.getTestName().equals(((ProgrammingExerciseTestCase) o).getTestName()) && programmingExerciseTestCase.getExercise().equals(((ProgrammingExerciseTestCase) o).getExercise())) {
+            return true;
+        }
         return Objects.equals(getId(), programmingExerciseTestCase.getId());
     }
 
@@ -137,7 +124,11 @@ public class ProgrammingExerciseTestCase implements Serializable {
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", fileName='" + getFileName() + "'" + ", testName='" + getTestName() + "'" + ", type='" + getType() + "'"
-                + ", weight=" + getWeight() + "}";
+        return "ProgrammingExerciseTestCase{" +
+            "id=" + getId() +
+            ", testName='" + getTestName() + "'" +
+            ", weight=" + getWeight() +
+            ", active='" + isActive() + "'" +
+            "}";
     }
 }

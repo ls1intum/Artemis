@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections.ListUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -26,7 +27,7 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
-        // Known bug: https://jira.spring.io/browse/DATAJPA-1357
+/*        // Known bug: https://jira.spring.io/browse/DATAJPA-1357
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = new Authentication() {
 
@@ -65,19 +66,26 @@ public class ProgrammingExerciseTestCaseService {
                 return null;
             }
         };
-        context.setAuthentication(authentication);
+        context.setAuthentication(authentication);*/
 
-        testCaseRepository.deleteByExerciseId(exercise.getId());
-        List<ProgrammingExerciseTestCase> testCases = feedbacks.stream().map(feedback -> {
-            TestCaseType type = feedback.getText().contains("Structural") ? TestCaseType.STRUCTURAL
-                    : feedback.getText().contains("Behavior") ? TestCaseType.BEHAVIOR : TestCaseType.OTHER;
-            ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase();
-            testCase.setTestName(feedback.getText());
-            testCase.setType(type);
-            testCase.setWeight(1);
-            testCase.setExercise(exercise);
-            return testCase;
-        }).collect(Collectors.toList());
-        testCaseRepository.saveAll(testCases);
+/*        List<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.getByExerciseId(exercise.getId());*/
+        List<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().map(feedback ->
+            new ProgrammingExerciseTestCase()
+                .testName(feedback.getText())
+                .weight(1)
+                .exercise(exercise)
+                .active(true)
+        ).collect(Collectors.toList());
+/*        List<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream()
+            .filter(testCase -> existingTestCases.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase)))
+            .collect(Collectors.toList());
+        List<ProgrammingExerciseTestCase> removedTestCases = existingTestCases.stream()
+            .filter(testCase -> testCasesFromFeedbacks.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase)))
+            .map(testCase -> testCase.active(false))
+            .collect(Collectors.toList());*/
+
+/*        testCaseRepository.saveAll(ListUtils.union(newTestCases, removedTestCases));*/
+        testCaseRepository.saveAll(testCasesFromFeedbacks);
+
     }
 }

@@ -22,20 +22,16 @@
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="file_name" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-
             <column name="test_name" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="jhi_type" type="varchar(255)">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
 
             <column name="weight" type="integer">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
+            </column>
+
+            <column name="active" type="boolean">
+                <constraints nullable="false" />
             </column>
 
             <column name="exercise_id" type="bigint">
