@@ -259,7 +259,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
                 (response: HttpResponse<TextSubmission>) => {
                     this.unassessedSubmission = response.body;
-                    let route = `/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`;
                     this.router.onSameUrlNavigation = 'reload';
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
