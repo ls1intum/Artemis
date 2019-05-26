@@ -45,7 +45,7 @@
                 class="btn btn-danger ml-3"
                 (click)="submit()"
                 [disabled]="!assessmentsAreValid"
-                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
+                *ngIf="result?.completionDate && canOverride"
                 jhiTranslate="arTeMiSApp.textAssessment.override"
             >
                 Override Assessment
