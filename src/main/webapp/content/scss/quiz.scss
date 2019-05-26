@@ -350,6 +350,7 @@
     margin-bottom: 18px;
     padding: 20px;
     background: #fefefe;
+    overflow: auto;
 
     h2 {
         margin: 0 90px 0 0;
@@ -459,6 +460,11 @@
     .background-area {
         position: relative;
 
+        @media (min-width: 1024px) {
+            float: left;
+            width: 49%;
+        }
+
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
@@ -488,21 +494,32 @@
         }
     }
 
-    .instructions {
-        margin: 10px 0;
-        font-weight: bold;
-    }
+    .drag-and-drop-items {
+        @media (min-width: 1024px) {
+            float: right;
+            width: 49%;
+        }
 
-    .drag-items {
-        margin: 6px 0;
+        .instructions {
+            margin: 10px 0;
+            font-weight: bold;
 
-        width: 100%;
-        min-height: 180px;
+            @media (min-width: 1024px) {
+                margin: 0 0 10px 0;
+            }
+        }
 
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
+        .drag-items {
+            margin: 6px 0;
+
+            width: 100%;
+            min-height: 180px;
+
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
     }
 
     .ellipsis {
