@@ -71,11 +71,11 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     }
 
     initComponent() {
-        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
         this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
+        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.currentConflictingResult.result.feedbacks));
         this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
-        this.currentModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
+        this.currentModel = JSON.parse((this.currentConflictingResult.result.submission as ModelingSubmission).model);
     }
 
     onCurrentConflictChanged(conflictIndex: number) {
@@ -84,7 +84,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.currentConflictingResult = this.getUsersConflictingResult();
         this.currentState = this.conflictResolutionStates[conflictIndex];
         this.conflictingResult = this.currentConflict.causingConflictingResult;
-        this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
+        this.conflictingModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
         this.currentCenteredElementId = this.currentHighlightedElementIds.values().next().value;
         this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
@@ -157,7 +157,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     }
 
     private updateHighlightedElements() {
-        this.currentHighlightedElementIds = new Set<string>([this.currentConflict.causingConflictingResult.modelElementId]);
+        this.currentHighlightedElementIds = new Set<string>([this.currentConflictingResult.modelElementId]);
         this.conflictingHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 
