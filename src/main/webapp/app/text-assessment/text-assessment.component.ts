@@ -2,9 +2,9 @@ import * as $ from 'jquery';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
-import { TextSubmission } from 'app/entities/text-submission';
+import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { HighlightColors } from '../text-shared/highlight-colors';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -20,6 +20,8 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseType } from 'app/entities/exercise';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -30,6 +32,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     text: string;
     participation: Participation;
     submission: TextSubmission;
+    unassessedSubmission: Submission;
     result: Result;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
@@ -74,6 +77,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
         private translateService: TranslateService,
+        private textSubmissionService: TextSubmissionService,
     ) {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
@@ -251,31 +255,27 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      * Load next assessment in the same page.
      */
     assessNextOptimal() {
-        console.log('here');
-        /**
-         * this.busy = true;
-         this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
-         (optimal: number[]) => {
-                this.busy = false;
-                if (optimal.length === 0) {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                } else {
-                    this.jhiAlertService.clear();
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+                (response: HttpResponse<TextSubmission>) => {
+                    this.unassessedSubmission = response.body;
+                    let route = `/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`;
                     this.router.onSameUrlNavigation = 'reload';
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
-                }
-            },
-         () => {
-                this.busy = false;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-            },
-         );
-         **/
+                        .then(() => this.router.navigateByUrl(`/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`, {}));
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                        this.jhiAlertService.error('arTeMiSApp.textAssessment.noSubmissions');
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        }
     }
 
     public predefineTextBlocks(): void {
