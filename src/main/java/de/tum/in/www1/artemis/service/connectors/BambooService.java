@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -48,7 +49,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 @Service
 @Profile("bamboo")
-public class BambooService implements ContinuousIntegrationService {
+public class BambooService implements ContinuousIntegrationService<Plan> {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
@@ -87,8 +88,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+    public Plan createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
+        return bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+    }
+
+    @Override
+    public Plan createTestBuildPlanForExercise(ProgrammingExercise programmingExercise, String testVcsRepositorySlug, Plan solutionRepositoryPlan, Plan templateRepositoryPlan) {
+        return bambooBuildPlanService.createTestBuildPlanForExercise(programmingExercise, testVcsRepositorySlug, solutionRepositoryPlan, templateRepositoryPlan);
     }
 
 

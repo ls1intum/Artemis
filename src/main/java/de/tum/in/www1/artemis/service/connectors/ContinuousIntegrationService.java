@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 
-public interface ContinuousIntegrationService {
+public interface ContinuousIntegrationService<T> {
 
     public enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
@@ -21,7 +21,19 @@ public interface ContinuousIntegrationService {
      * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
      * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
+    public T createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
+
+
+    /**
+     * Create the test build plan and assigns the template and solution build plans as childs to it,
+     * so that they get executed on every build run of the test repository.
+     * @param exercise                    a programming exercise with the required information to create the base build plan
+     * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
+     * @param solutionRepositoryPlan      the plan of the solution repository
+     * @param templateRepositoryPlan      the plan of the template repository
+     * @return
+     */
+    public T createTestBuildPlanForExercise(ProgrammingExercise exercise, String testVcsRepositorySlug, T solutionRepositoryPlan, T templateRepositoryPlan);
 
     /**
      * Copy the base build plan for the given user on the CI system.

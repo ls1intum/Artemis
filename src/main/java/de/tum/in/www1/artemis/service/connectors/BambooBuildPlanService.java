@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 
+import com.atlassian.bamboo.specs.api.builders.plan.dependencies.Dependencies;
+import com.atlassian.bamboo.specs.api.builders.plan.dependencies.DependenciesConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -63,7 +65,7 @@ public class BambooBuildPlanService {
     @Value("${artemis.bamboo.bitbucket-application-link-id}")
     private String BITBUCKET_APPLICATION_LINK_ID;
 
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
+    public Plan createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
@@ -91,6 +93,38 @@ public class BambooBuildPlanService {
 
         final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
+        return plan;
+    }
+
+    public Plan createTestBuildPlanForExercise(ProgrammingExercise programmingExercise, String testVcsRepositorySlug, Plan solutionRepositoryPlan, Plan templateRepositoryPlan) {
+        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
+        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+
+        // Bamboo build plan
+        final String planName = "TESTS"; // Must be unique within the project
+        final String planDescription = planName + " Build Plan for Exercise " + programmingExercise.getTitle();
+
+        // Bamboo build project
+        final String projectKey = programmingExercise.getProjectKey();
+        final String projectName = programmingExercise.getProjectName();
+
+        // Permissions
+        Course course = programmingExercise.getCourse();
+        final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+        final String instructorGroupName = course.getInstructorGroupName();
+
+        Plan plan = new Plan(createBuildProject(projectName, projectKey), planName, planName).description(planDescription)
+            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+            .planRepositories(
+                createBuildPlanRepository(TEST_REPO_NAME, projectKey, testVcsRepositorySlug)
+            ).dependencies(new Dependencies().childPlans(templateRepositoryPlan.getIdentifier(), solutionRepositoryPlan.getIdentifier()))
+            .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+
+        bambooServer.publish(plan);
+
+        final PlanPermissions planPermission = setPlanPermission(projectKey, planName, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
+        bambooServer.publish(planPermission);
+        return plan;
     }
 
     Project createBuildProject(String name, String key) {
