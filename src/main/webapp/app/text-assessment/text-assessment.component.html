@@ -50,12 +50,13 @@
             >
                 Override Assessment
             </button>
+            <!--the implementation to display this button should be changed if the condition to display this button is not same as override assessment -->
             <button
                 class="btn btn-success ml-3"
                 (click)="assessNextOptimal()"
                 [disabled]="!assessmentsAreValid"
                 *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
-                jhiTranslate="modelingAssessmentEditor.button.nextSubmission"
+                jhiTranslate="arTeMiSApp.textAssessment.nextAssessment"
             >
                 Assess Next Assessment
             </button>
