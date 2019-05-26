@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -44,8 +43,11 @@ public class ResultService {
 
     private final ObjectMapper objectMapper;
 
+    private final ProgrammingExerciseTestCaseService testCaseService;
+
     public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
+            ProgrammingExerciseTestCaseService testCaseService) {
         this.userService = userService;
         this.participationService = participationService;
         this.feedbackService = feedbackService;
@@ -54,6 +56,7 @@ public class ResultService {
         this.ltiService = ltiService;
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
+        this.testCaseService = testCaseService;
     }
 
     public Result findOne(long id) {
@@ -108,12 +111,6 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
-
-        if(result != null && participation.getExercise() instanceof ProgrammingExercise && ((ProgrammingExercise) participation.getExercise()).getTemplateParticipation().getId().equals(participation.getId())) {
-           List<String> testCases = result.getFeedbacks().stream().map(Feedback::getText).collect(Collectors.toList());
-           log.warn(String.join(",", testCases));
-        }
-
         notifyUser(participation, result);
     }
 

@@ -148,6 +148,7 @@ public class CacheConfiguration {
             cm.createCache(ModelAssessmentConflict.class.getName() + ".resultsInConflict", jcacheConfiguration);
             cm.createCache(ConflictingResult.class.getName(), jcacheConfiguration);
             cm.createCache(ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
         };

@@ -73,9 +73,11 @@ public class ResultResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseTestCaseService testCaseService;
+
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseTestCaseService testCaseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -86,6 +88,7 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
+        this.testCaseService = testCaseService;
     }
 
     /**
@@ -170,6 +173,12 @@ public class ResultResource {
                 }
                 else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
                     participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
+                }
+
+                Result result = continuousIntegrationService.onBuildCompletedNew(participation, requestBody);
+                if (result != null && participation.getExercise() instanceof ProgrammingExercise
+                        && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
+                    testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
                 }
                 resultService.onResultNotifiedNew(participation, requestBody);
                 return ResponseEntity.ok().build();
