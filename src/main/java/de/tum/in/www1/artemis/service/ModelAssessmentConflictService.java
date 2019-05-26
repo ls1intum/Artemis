@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,8 @@ public class ModelAssessmentConflictService {
 
     private final ConflictingResultRepository conflictingResultRepository;
 
-    private final CompassService compassService;
+    @Autowired
+    private CompassService compassService;
 
     private final UserService userService;
 
@@ -39,12 +41,12 @@ public class ModelAssessmentConflictService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     public ModelAssessmentConflictService(ModelAssessmentConflictRepository modelAssessmentConflictRepository, ConflictingResultService conflictingResultService,
-            ConflictingResultRepository conflictingResultRepository, CompassService compassService, UserService userService, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository, SingleUserNotificationService singleUserNotificationService) {
+            ConflictingResultRepository conflictingResultRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         this.modelAssessmentConflictRepository = modelAssessmentConflictRepository;
         this.conflictingResultService = conflictingResultService;
         this.conflictingResultRepository = conflictingResultRepository;
-        this.compassService = compassService;
+        // this.compassService = compassService;
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;

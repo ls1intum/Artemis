@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
@@ -31,7 +32,8 @@ public class CompassService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ModelAssessmentConflictService conflictService;
+    @Autowired
+    private ModelAssessmentConflictService conflictService;
 
     private final ConflictingResultService conflictingResultService;
 
@@ -63,12 +65,12 @@ public class CompassService {
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ParticipationRepository participationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
+            ParticipationRepository participationRepository, ConflictingResultService conflictingResultService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.participationRepository = participationRepository;
-        this.conflictService = conflictService;
+        // this.conflictService = conflictService;
         this.conflictingResultService = conflictingResultService;
     }
 
