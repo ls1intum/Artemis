@@ -143,7 +143,7 @@ public class ProgrammingExerciseService {
                     Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
 
                     // 3- Set new value
-                    nameNode.setTextContent(programmingExercise.getTitle() + " " + participation.getStudent().getLogin());
+                    nameNode.setTextContent(nameNode.getTextContent() + " " + participation.getStudent().getLogin());
 
                     // 4- Save the result to a new XML doc
                     Transformer xformer = TransformerFactory.newInstance().newTransformer();
