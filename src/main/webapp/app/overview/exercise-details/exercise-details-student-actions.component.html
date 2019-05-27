@@ -64,7 +64,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED"
+            *ngIf="participationStatus() === QUIZ_FINISHED && ratedResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
