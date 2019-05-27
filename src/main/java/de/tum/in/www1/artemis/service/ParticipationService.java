@@ -185,7 +185,7 @@ public class ParticipationService {
     public Participation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
-            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
 
             if (!optionalParticipation.isPresent()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
@@ -454,6 +454,19 @@ public class ParticipationService {
     public Optional<Participation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return participationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    }
+
+    /**
+     * Get one finished participation by its student and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Optional<Participation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+        return participationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
     }
 
     /**
