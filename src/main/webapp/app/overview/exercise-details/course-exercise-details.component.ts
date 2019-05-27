@@ -70,7 +70,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
-                this.exercise.participations = cachedParticipations.filter((participation: Participation) => participation.student.id === this.currentUser.id);
+                this.exercise.participations = cachedParticipations.filter(
+                    (participation: Participation) => participation.student && participation.student.id === this.currentUser.id,
+                );
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
