@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course';
@@ -41,9 +41,14 @@ export class CourseExerciseRowComponent implements OnInit {
         private httpClient: HttpClient,
         private router: Router,
         private route: ActivatedRoute,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
     ngOnInit() {
+        const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exercise.id);
+        if (cachedParticipations && cachedParticipations.length > 0) {
+            this.exercise.participations = cachedParticipations;
+        }
         this.exercise.participationStatus = this.participationStatus(this.exercise);
         if (this.exercise.participations.length > 0) {
             this.exercise.participations[0].exercise = this.exercise;

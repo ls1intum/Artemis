@@ -145,7 +145,11 @@ export class ParticipationWebsocketService {
             const participationObservable = this.jhiWebsocketService.receive(participationTopic);
             participationObservable.subscribe((participationMessage: Participation) => {
                 this.addParticipation(participationMessage);
-                this.participationObservable.next(participationMessage);
+                if (!this.participationObservable) {
+                    this.participationObservable = new BehaviorSubject<Participation>(participationMessage);
+                } else {
+                    this.participationObservable.next(participationMessage);
+                }
             });
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
         }
