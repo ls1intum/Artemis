@@ -194,7 +194,8 @@ public class ProgrammingExerciseService {
                         nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
                     }
                     if (artifactIdNode != null) {
-                        artifactIdNode.setTextContent(artifactIdNode.getTextContent() + "-" + studentId);
+                        String artifactId = (artifactIdNode.getTextContent() + "-" + studentId).replaceAll(" ", "-").toLowerCase();
+                        artifactIdNode.setTextContent(artifactId);
                     }
 
                     // 4- Save the result to a new XML doc
