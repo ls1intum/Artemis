@@ -182,6 +182,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 },
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
+                    this.jhiAlertService.error(`arTeMiSApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
     }
