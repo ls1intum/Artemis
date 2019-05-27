@@ -112,12 +112,15 @@ public class ProgrammingExerciseTestCase implements Serializable {
         if (programmingExerciseTestCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(programmingExerciseTestCase.getExercise().getId())) {
             return true;
         }
+        if (getId() == null && programmingExerciseTestCase.getId() == null) {
+            return false;
+        }
         return Objects.equals(getId(), programmingExerciseTestCase.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getId());
+        return Objects.hashCode(testName) + Objects.hashCode(getExercise().getId());
     }
 
     @Override

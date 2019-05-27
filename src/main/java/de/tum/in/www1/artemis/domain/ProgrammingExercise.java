@@ -3,14 +3,11 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +54,7 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
+    private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
@@ -261,11 +258,11 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return getPackageName().replace(".", "/");
     }
 
-    public List<ProgrammingExerciseTestCase> getTestCases() {
+    public Set<ProgrammingExerciseTestCase> getTestCases() {
         return testCases;
     }
 
-    public void setTestCases(List<ProgrammingExerciseTestCase> testCases) {
+    public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
     }
 

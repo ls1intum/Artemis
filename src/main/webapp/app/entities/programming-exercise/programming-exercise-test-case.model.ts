@@ -1,15 +1,15 @@
-import { IExercise } from 'app/shared/model/exercise.model';
+import { ProgrammingExercise } from '.';
 
 export interface IProgrammingExerciseTestCase {
     id?: number;
     testName?: string;
     weight?: number;
     active?: boolean;
-    exercise?: IExercise;
+    exercise?: ProgrammingExercise;
 }
 
 export class ProgrammingExerciseTestCase implements IProgrammingExerciseTestCase {
-    constructor(public id?: number, public testName?: string, public weight?: number, public active?: boolean, public exercise?: IExercise) {
+    constructor(public id?: number, public testName?: string, public weight?: number, public active?: boolean, public exercise?: ProgrammingExercise) {
         this.active = this.active || false;
     }
 }
