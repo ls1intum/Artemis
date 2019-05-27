@@ -154,20 +154,13 @@ public class ComplaintResource {
         }
 
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
-        // to filter by at least exerciseId or courseId, to be sure they are really instructors/
-        // Of course tutors cannot ask for complaints about other tutors
+        // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
+        // exercise.
+        // Of course tutors cannot ask for complaints about other tutors.
+        // So, if the courseId is null, and the exerciseId is null, we just use the userId of the caller
         if (exerciseId == null && courseId == null) {
-            User requestedTutor = userService.getUserById(tutorId);
-
-            if (requestedTutor == null) {
-                throw new BadRequestAlertException("The requested tutor does not exist", ENTITY_NAME, "wrongTutorId");
-            }
-
-            if (!requestedTutor.getLogin().equals(principal.getName())) {
-                throw new BadRequestAlertException("You can only request your own complaints without filters", ENTITY_NAME, "wrongTutorId");
-            }
-
-            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(tutorId);
+            User callerUser = userService.getUser();
+            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(callerUser.getId());
 
             return ResponseEntity.ok(complaints);
         }
