@@ -80,6 +80,9 @@
                                 height: dropLocation.height / 2 + '%'
                             }"
                             (onDropSuccess)="onDragDrop(dropLocation, $event)"
+                            (onDragEnter)="preventDefault($event)"
+                            (onDragOver)="preventDefault($event)"
+                            (onDragLeave)="preventDefault($event)"
                             dnd-droppable
                         >
                             <jhi-drag-item

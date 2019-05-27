@@ -20,7 +20,7 @@ polyfill({
     event.preventDefault();
 };
 
-window.addEventListener('touchmove', function() {});
+window.addEventListener('touchmove', function() {}, { passive: false });
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -111,6 +111,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
+    }
+
+    preventDefault(event: any) {
+        event.mouseEvent.preventDefault();
+        return false;
     }
 
     /**

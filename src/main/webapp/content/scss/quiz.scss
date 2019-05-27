@@ -137,9 +137,9 @@
     right: 0;
     z-index: 10;
 
-    @media (min-width: 320px) and (max-width: 480px) {
+    /*@media (min-width: 320px) and (max-width: 480px) {
         height: 150px;
-    }
+    }*/
 
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
 
@@ -214,9 +214,9 @@
 .quiz-footer {
     height: 100px;
 
-    @media (min-width: 320px) and (max-width: 480px) {
+    /*@media (min-width: 320px) and (max-width: 480px) {
         height: 150px;
-    }
+    }*/
 }
 
 .edit-quiz-footer-content,
@@ -785,9 +785,15 @@
                     div {
                         padding: 6px;
 
+                        @media (max-width: 480px) {
+                            height: 100%;
+                            padding: 0;
+                        }
+
                         span {
                             border: none;
                             padding: 0;
+                            vertical-align: middle;
                         }
                     }
                 }
@@ -873,7 +879,7 @@
     background: transparent;
     border: none;
     position: relative;
-    height: 160px;
+    //height: 160px;
     min-width: 160px;
     max-width: 360px;
     margin: 10px 4px;
@@ -903,9 +909,13 @@
     .drag-item-picture {
         cursor: move;
         width: 0;
-        height: 0;
+        height: 160px;
         padding: 0;
         margin: 0;
+
+        @media (min-width: 320px) and (max-width: 480px) {
+            height: 120px;
+        }
     }
 
     .drag-item-text {
@@ -914,8 +924,12 @@
         justify-content: center;
         text-align: center;
         width: 100%;
-        height: 100%;
+        //height: 100%;
         white-space: pre-wrap;
+
+        @media (max-width: 481px) {
+            //height: 50%;
+        }
 
         span {
             color: black;
@@ -1158,6 +1172,10 @@ table.answer-options-result {
             .drag-item {
                 div {
                     padding: 6px;
+
+                    @media (max-width: 480px) {
+                        padding: 0;
+                    }
 
                     span {
                         border: none;
