@@ -175,7 +175,6 @@ public class ResultResource {
                     participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
                 }
 
-                Result result = continuousIntegrationService.onBuildCompletedNew(participation, requestBody);
                 resultService.onResultNotifiedNew(participation, requestBody);
                 return ResponseEntity.ok().build();
             }

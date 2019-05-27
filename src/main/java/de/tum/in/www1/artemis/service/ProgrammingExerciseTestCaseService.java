@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
-/*        // Known bug: https://jira.spring.io/browse/DATAJPA-1357
+        // Known bug: https://jira.spring.io/browse/DATAJPA-1357
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = new Authentication() {
 
@@ -66,9 +67,9 @@ public class ProgrammingExerciseTestCaseService {
                 return null;
             }
         };
-        context.setAuthentication(authentication);*/
+        context.setAuthentication(authentication);
 
-/*        List<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.getByExerciseId(exercise.getId());*/
+        List<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.getByExerciseId(exercise.getId());
         List<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().map(feedback ->
             new ProgrammingExerciseTestCase()
                 .testName(feedback.getText())
@@ -76,16 +77,20 @@ public class ProgrammingExerciseTestCaseService {
                 .exercise(exercise)
                 .active(true)
         ).collect(Collectors.toList());
-/*        List<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream()
+        List<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream()
             .filter(testCase -> existingTestCases.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase)))
             .collect(Collectors.toList());
         List<ProgrammingExerciseTestCase> removedTestCases = existingTestCases.stream()
             .filter(testCase -> testCasesFromFeedbacks.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase)))
             .map(testCase -> testCase.active(false))
-            .collect(Collectors.toList());*/
+            .collect(Collectors.toList());
 
+        List<ProgrammingExerciseTestCase> toSave = new ArrayList<>();
+        toSave.addAll(newTestCases);
+        toSave.addAll(removedTestCases);
 /*        testCaseRepository.saveAll(ListUtils.union(newTestCases, removedTestCases));*/
-        testCaseRepository.saveAll(testCasesFromFeedbacks);
-
+        if (toSave.size() > 0) {
+            testCaseRepository.saveAll(toSave);
+        }
     }
 }

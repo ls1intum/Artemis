@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -33,9 +34,9 @@ public class ProgrammingExerciseTestCase implements Serializable {
     @Column(name = "active")
     private Boolean active;
 
-    @ManyToOne(cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties("programmingExerciseTestCases")
-    private Exercise exercise;
+    @ManyToOne
+    @JsonIgnoreProperties("programmingExerciseTestCase")
+    private ProgrammingExercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -89,12 +90,12 @@ public class ProgrammingExerciseTestCase implements Serializable {
         return exercise;
     }
 
-    public ProgrammingExerciseTestCase exercise(Exercise exercise) {
+    public ProgrammingExerciseTestCase exercise(ProgrammingExercise exercise) {
         this.exercise = exercise;
         return this;
     }
 
-    public void setExercise(Exercise exercise) {
+    public void setExercise(ProgrammingExercise exercise) {
         this.exercise = exercise;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -108,10 +109,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
             return false;
         }
         ProgrammingExerciseTestCase programmingExerciseTestCase = (ProgrammingExerciseTestCase) o;
-        if (programmingExerciseTestCase.getId() == null || getId() == null) {
-            return false;
-        }
-        if (programmingExerciseTestCase.getTestName().equals(((ProgrammingExerciseTestCase) o).getTestName()) && programmingExerciseTestCase.getExercise().equals(((ProgrammingExerciseTestCase) o).getExercise())) {
+        if (programmingExerciseTestCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(programmingExerciseTestCase.getExercise().getId())) {
             return true;
         }
         return Objects.equals(getId(), programmingExerciseTestCase.getId());
