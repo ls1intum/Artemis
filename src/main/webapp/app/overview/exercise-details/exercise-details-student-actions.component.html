@@ -298,7 +298,7 @@
                 exercise.participations &&
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
-                !exercise.participations[0].results
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -311,7 +311,11 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
-                exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                exercise.participations[0].results &&
+                exercise.participations[0].results.length > 0
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
