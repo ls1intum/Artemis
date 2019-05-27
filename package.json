@@ -118,7 +118,7 @@
         "jasmine-core": "3.4.0",
         "lint-staged": "8.1.7",
         "merge-jsons-webpack-plugin": "1.0.19",
-        "mini-css-extract-plugin": "0.6.0",
+        "mini-css-extract-plugin": "0.7.0",
         "mocha": "6.1.4",
         "mocha-junit-reporter": "1.22.0",
         "moment-locales-webpack-plugin": "1.0.7",
