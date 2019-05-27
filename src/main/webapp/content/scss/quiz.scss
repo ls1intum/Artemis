@@ -912,10 +912,6 @@
         height: 160px;
         padding: 0;
         margin: 0;
-
-        @media (min-width: 320px) and (max-width: 480px) {
-            height: 120px;
-        }
     }
 
     .drag-item-text {
@@ -924,12 +920,7 @@
         justify-content: center;
         text-align: center;
         width: 100%;
-        //height: 100%;
         white-space: pre-wrap;
-
-        @media (max-width: 481px) {
-            //height: 50%;
-        }
 
         span {
             color: black;
