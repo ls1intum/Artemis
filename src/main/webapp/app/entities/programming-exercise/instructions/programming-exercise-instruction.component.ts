@@ -540,9 +540,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         };
                     } else {
                         return {
-                            failed: feedback && !feedback.positive ? [...acc.failed, testName] : acc.failed,
-                            successful: feedback && feedback.positive ? [...acc.successful, testName] : acc.successful,
-                            notExecuted: !feedback ? [...acc.notExecuted, testName] : acc.notExecuted,
+                            failed: feedback && feedback.positive === false ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback && feedback.positive === true ? [...acc.successful, testName] : acc.successful,
+                            notExecuted: !feedback || feedback.positive === undefined ? [...acc.notExecuted, testName] : acc.notExecuted,
                         };
                     }
                 },

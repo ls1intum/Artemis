@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -111,13 +114,42 @@ public class ResultService {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
-        notifyUser(participation, result);
 
+        // When the result is from a solution participation of a programming exercise, extract the feedback items (= test cases)
+        // and store them in our database.
         if (result != null && participation.getExercise() instanceof ProgrammingExercise
-            && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
+                && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
             testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
         }
 
+        if (result != null && result.getFeedbacks().size() > 0) {
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
+            if (testCases.size() > 0) {
+                Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
+                        .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
+                        .collect(Collectors.toSet());
+                Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCases.stream()
+                        .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
+                List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
+                        .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed."))
+                        .collect(Collectors.toList());
+                result.addFeedbacks(feedbacksForNotExecutedTestCases);
+
+                long score = 0L;
+                if (successfulTestCases.size() > 0) {
+                    score = (successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)
+                            / testCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)) * 100L;
+                }
+                result.setScore(score);
+                if (successfulTestCases.size() < testCases.size()) {
+                    result.setResultString(testCases.size() - successfulTestCases.size() + " of " + testCases.size() + " failed");
+                }
+                else {
+                    result.setResultString(testCases.size() + " passed");
+                }
+            }
+        }
+        notifyUser(participation, result);
     }
 
     private void notifyUser(Participation participation, Result result) {

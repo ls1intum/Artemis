@@ -60,4 +60,8 @@ export class ProgrammingExerciseService {
         params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
     }
+
+    getTestCases(id: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${id}/test-cases`);
+    }
 }

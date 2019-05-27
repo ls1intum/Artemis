@@ -321,6 +321,11 @@ public class Result implements Serializable {
         return this;
     }
 
+    public Result addFeedbacks(List<Feedback> feedbacks) {
+        feedbacks.forEach(feedback -> addFeedback(feedback));
+        return this;
+    }
+
     public Result removeFeedback(Feedback feedback) {
         this.feedbacks.remove(feedback);
         feedback.setResult(null);
