@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -128,11 +130,21 @@ public class ProgrammingExerciseService {
 
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, Participation participation) {
         String studentId = participation.getStudent().getLogin();
+
+        // Get all files in repository expect .git files
+        List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
+
         // is Java programming language
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            // Eclipse .project file
-            File eclipseProjectFile = new File(repo.getLocalPath().toString(), ".project");
-            if (eclipseProjectFile.exists()) {
+            // Filter all Eclipse .project files
+            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(s -> s.endsWith(".project")).collect(Collectors.toList());
+
+            for (String f : eclipseProjectFiles) {
+                File eclipseProjectFile = new File(f);
+                // Check if file exists and full file name is .project and not just the file ending.
+                if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
+                    continue;
+                }
 
                 try {
                     // 1- Build the doc from the XML file
@@ -156,12 +168,16 @@ public class ProgrammingExerciseService {
                 catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
                     log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
                 }
-
             }
 
-            // Eclipse pom.xml file
-            File pomFile = new File(repo.getLocalPath().toString(), "pom.xml");
-            if (pomFile.exists()) {
+            // Filter all pom.xml files
+            List<String> pomFiles = allRepoFiles.stream().filter(s -> s.endsWith("pom.xml")).collect(Collectors.toList());
+            for (String f : pomFiles) {
+                File pomFile = new File(f);
+                // check if file exists and full file name is pom.xml and not just the file ending.
+                if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
+                    continue;
+                }
 
                 try {
                     // 1- Build the doc from the XML file
@@ -189,7 +205,6 @@ public class ProgrammingExerciseService {
                 catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
                     log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
                 }
-
             }
         }
 
@@ -200,6 +215,22 @@ public class ProgrammingExerciseService {
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
+    }
+
+    /**
+     * Get all files in path expect .git files
+     *
+     * @param path
+     */
+    private List<String> listAllFilesInPath(Path path) {
+        List<String> allRepoFiles = null;
+        try (Stream<Path> walk = Files.walk(path)) {
+            allRepoFiles = walk.filter(Files::isRegularFile).map(x -> x.toString()).filter(s -> !s.contains(".git")).collect(Collectors.toList());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return allRepoFiles;
     }
 
     /**
