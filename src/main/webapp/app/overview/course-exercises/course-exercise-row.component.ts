@@ -49,6 +49,16 @@ export class CourseExerciseRowComponent implements OnInit {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exercise.participations = cachedParticipations;
         }
+        this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+            if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
+                this.exercise.participations = this.exercise.participations
+                    ? this.exercise.participations.map(el => {
+                          return el.id === changedParticipation.id ? changedParticipation : el;
+                      })
+                    : [changedParticipation];
+                this.participationStatus(this.exercise);
+            }
+        });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
         if (this.exercise.participations.length > 0) {
             this.exercise.participations[0].exercise = this.exercise;
