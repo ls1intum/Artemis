@@ -350,7 +350,6 @@
     margin-bottom: 18px;
     padding: 20px;
     background: #fefefe;
-    overflow: auto;
 
     h2 {
         margin: 0 90px 0 0;
@@ -459,12 +458,6 @@
 .sa-question {
     .background-area {
         position: relative;
-
-        @media (min-width: 1024px) {
-            float: left;
-            width: 49%;
-        }
-
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
@@ -494,32 +487,19 @@
         }
     }
 
-    .drag-and-drop-items {
-        @media (min-width: 1024px) {
-            float: right;
-            width: 49%;
-        }
+    .instructions {
+        margin: 10px 0;
+        font-weight: bold;
+    }
 
-        .instructions {
-            margin: 10px 0;
-            font-weight: bold;
-
-            @media (min-width: 1024px) {
-                margin: 0 0 10px 0;
-            }
-        }
-
-        .drag-items {
-            margin: 6px 0;
-
-            width: 100%;
-            min-height: 180px;
-
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: space-evenly;
-        }
+    .drag-items {
+        margin: 6px 0;
+        width: 100%;
+        min-height: 180px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
     }
 
     .ellipsis {
@@ -527,6 +507,48 @@
         /* Required for text-overflow to do anything */
         white-space: nowrap;
         overflow: hidden;
+    }
+}
+
+.dnd-question {
+    overflow: auto;
+
+    .background-area {
+        @media (orientation: landscape) {
+            float: left;
+            width: 49%;
+        }
+
+        .click-layer {
+            .drop-location {
+                .drag-item {
+                    div {
+                        span {
+                            @media (max-width: 812px) {
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .drag-and-drop-items {
+        @media (orientation: landscape) {
+            float: right;
+            width: 49%;
+        }
+
+        .instructions {
+            @media (orientation: landscape) {
+                margin: 0 0 10px 0;
+            }
+        }
+
+        .drag-items {
+            width: 100%;
+        }
     }
 }
 
@@ -785,11 +807,6 @@
                     div {
                         padding: 6px;
 
-                        @media (max-width: 480px) {
-                            height: 100%;
-                            padding: 0;
-                        }
-
                         span {
                             border: none;
                             padding: 0;
@@ -879,7 +896,7 @@
     background: transparent;
     border: none;
     position: relative;
-    //height: 160px;
+    height: 160px;
     min-width: 160px;
     max-width: 360px;
     margin: 10px 4px;
@@ -909,7 +926,7 @@
     .drag-item-picture {
         cursor: move;
         width: 0;
-        height: 160px;
+        height: 0;
         padding: 0;
         margin: 0;
     }
@@ -919,6 +936,7 @@
         align-items: center;
         justify-content: center;
         text-align: center;
+        height: 100%;
         width: 100%;
         white-space: pre-wrap;
 
@@ -1164,10 +1182,6 @@ table.answer-options-result {
                 div {
                     padding: 6px;
 
-                    @media (max-width: 480px) {
-                        padding: 0;
-                    }
-
                     span {
                         border: none;
                         padding: 0;
@@ -1247,10 +1261,8 @@ table.answer-options-result {
 
     .drag-items {
         margin: 6px 0;
-
         width: 100%;
         min-height: 180px;
-
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
