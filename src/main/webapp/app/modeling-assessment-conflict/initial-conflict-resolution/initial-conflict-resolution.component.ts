@@ -165,7 +165,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
     }
 
-    updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
+    private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
         this.mergedFeedbacks.forEach(feedback => {
