@@ -38,7 +38,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeQuiz' | translate"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.openQuiz' | translate"
             *ngIf="participationStatus() === QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -66,7 +66,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED"
+            *ngIf="participationStatus() === QUIZ_FINISHED && ratedResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -125,7 +125,7 @@
                     exercise.participations &&
                     exercise.participations.length > 0 &&
                     exercise.participations[0].initializationState === 'FINISHED' &&
-                    !exercise.participations[0].results
+                    (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !ratedResult)
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -141,7 +141,9 @@
                     exercise.participations &&
                     exercise.participations.length > 0 &&
                     exercise.participations[0].initializationState === 'FINISHED' &&
-                    exercise.participations[0].results
+                    exercise.participations[0].results &&
+                    exercise.participations[0].results.length > 0 &&
+                    ratedResult
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -279,7 +281,7 @@
                 exercise.participations &&
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
-                !exercise.participations[0].results
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -292,7 +294,11 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
-                exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                exercise.participations[0].results &&
+                exercise.participations[0].results.length > 0
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
