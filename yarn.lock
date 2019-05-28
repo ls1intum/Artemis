@@ -369,79 +369,79 @@
   dependencies:
     "@hapi/hoek" "6.x.x"
 
-"@interactjs/actions@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/actions/-/actions-1.4.3.tgz#2076cf874594410c5e76f9ed8027b44e493dde78"
-  integrity sha512-aDqkw8IuOie4xu3utToPRJDkW43dAcGwk6RX3gQFDCrVyUh/va4l5d6knj/qtv0t/uQbAesNP73a80gq/sYL7Q==
+"@interactjs/actions@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/actions/-/actions-1.4.4.tgz#fd029c66a5b82c0aa1ec95f48eab67d92bfb49f1"
+  integrity sha512-vFvjaYrpxLWL5ObLr+vWqEilTie+fMl2LNzJtZBb4Ni9uJ1SG8Tyi3SbxN+HfMpXhWbVjvrfeBKFoHBJ0PNalg==
 
-"@interactjs/auto-scroll@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/auto-scroll/-/auto-scroll-1.4.3.tgz#792adf12eed578bf67146468254b7e1c978af30c"
-  integrity sha512-kpq+fzJsBeCQsGH73URerjILfcdYKHvpL4XytTk3JXUW1ey3SDwIC3mv/VoAqhZZ3ZUmEqLWZflvcRN3EQkxfg==
+"@interactjs/auto-scroll@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/auto-scroll/-/auto-scroll-1.4.4.tgz#2996670efcb1769e60dfb449d8f2e017c7e2bf10"
+  integrity sha512-uzDAemEAMDyM5Y0O3qItqjUpQIe0IO3CErpTrbMYLlZHT8ZulS5vjGmkfMlYhEpG2KbfK/jnzkZb6IJyCMQYPw==
 
-"@interactjs/auto-start@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/auto-start/-/auto-start-1.4.3.tgz#78d4e3dec6646e00abc266762d00c49644ed2230"
-  integrity sha512-0/behKz1d/XAgjskE/zwCschTSoNNbrVpTn8jdIr/oRpfPNvckXq521G/Z6A/yPt2uPlSQIXdwcAtagUjpEj/Q==
+"@interactjs/auto-start@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/auto-start/-/auto-start-1.4.4.tgz#cbf9f6665f6a0df4b7ff305ce0d2fcecd0f7f803"
+  integrity sha512-YbhhjXdhpr0c8nuges7mXZeVbgyUAd25RvhZrirmKZF2nPjS2RMlx8UXGDSEZKJbqkschjHu6jvUVzft2FYdRA==
 
-"@interactjs/core@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/core/-/core-1.4.3.tgz#ed2751248dff511343461c85b1f9d04a6cdfb407"
-  integrity sha512-uJg3c7zHNeekl0tYE9XzwZo9zAcS2JKAVo4G2PkXn2dpcJc0w+P3nWBX6h2oL5nKMFuqCeCrtAYWn1RhWa1eJA==
+"@interactjs/core@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/core/-/core-1.4.4.tgz#0793d5d0206aca34410ae7125d7949ac277776a9"
+  integrity sha512-UH5GAdmvONIJHqRR6fDL228+G/vIfyh7m7b0SOqbKgSfOm1clwkQ2ky+YxHaCpvrgnYVePljEwN3HMaWOnp9zg==
 
-"@interactjs/dev-tools@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/dev-tools/-/dev-tools-1.4.3.tgz#d0433b7785f6dc0810d80257704dca744f3bb6e7"
-  integrity sha512-4joEux43Jl38S+XwJ3+nr2ht4CMRNTua5slGLJPm1cuCR9G503qy+8klp7AXq4SSOty6GObfLKYtCfQgrAe0AA==
+"@interactjs/dev-tools@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/dev-tools/-/dev-tools-1.4.4.tgz#3818d42048d7bf9a5a23c1be6087dd4eba76323e"
+  integrity sha512-xAdMRbE/DYAxfOCRQmN/cNcaw0ECmN6Cr/7Lawx4riCopwNmuawR7Ymbo3IBoqEKJqF4xobovAmmeLmq/FnYNA==
   dependencies:
-    "@interactjs/utils" "1.4.3"
+    "@interactjs/utils" "1.4.4"
 
-"@interactjs/inertia@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/inertia/-/inertia-1.4.3.tgz#c937fdcf072522e530ed2d0f12bbeb7b02b50427"
-  integrity sha512-9WUVrxTIRZI91b16Nubxkoi4j8Jhmt67Ii2hFPYoqsu/QcSCnGj5ftdn8VEqPFTGRtd6+WL2iSease0yXNTacQ==
+"@interactjs/inertia@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/inertia/-/inertia-1.4.4.tgz#dd923c3181a340a05db983d8ced89e84207b0783"
+  integrity sha512-0WODz2dnJQ3Ul/pusVkHwFUq7D6fmbAMccTbhmTprGPSP5ccHAiHsi3l9UmjqTwIRSiVgXjMKeCKnqxkUFf+/Q==
 
-"@interactjs/interact@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/interact/-/interact-1.4.3.tgz#c3cc341278aaaeedcf1cb71dbc0abcc58eac5170"
-  integrity sha512-VMF096rQ9Tl10YKCdNoIz1dcUSKXl/96X5ApheH5xaWMmIC2AGi8bcoolpcbIA29iuZm8OOhtEyNN9+03PCw8w==
+"@interactjs/interact@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/interact/-/interact-1.4.4.tgz#0121526a5478bdb6885e937c0d103717c62f37c0"
+  integrity sha512-Cm7J0yraE0LgJOnrMeAxGPq2g9spfNP8GFzUSXcKsD/Vg4BCBdmRDeO7ypIEa1COS5VoUeRmmxu1/6DgDUfumA==
 
-"@interactjs/modifiers@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/modifiers/-/modifiers-1.4.3.tgz#647e4f384dbe83f654ba580759bd48d07ee8bce6"
-  integrity sha512-7dICSB1o6ECHnrGORLq5N3q2PeE0QKsKKkQU4JWfNEBIm8CXoOBctAZcOlqAEalMh64RgRX3+l+V735FBCRKug==
+"@interactjs/modifiers@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/modifiers/-/modifiers-1.4.4.tgz#e49ebdfb6afac3ff5beda6a56070ef5f329f7cdb"
+  integrity sha512-qTY6Z+4YGOXiv6sAB9/GbFfcMMLRe0DFj9Z3chrAoE+K02VrdKhlurihjogZTqd3jNX8XKgxG/vJwOZHlSz3KQ==
 
-"@interactjs/pointer-events@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/pointer-events/-/pointer-events-1.4.3.tgz#5de340e45caaca7a8ae9628133202df14474e798"
-  integrity sha512-ulYZsscvEq2ZTyu4ljwOITPFzx+q8hQGNNMUzvAxIAcwMDWQd0q1jFHxQNnQEBpI2P9ZKmmRxgz/3zxOM03NyA==
+"@interactjs/pointer-events@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/pointer-events/-/pointer-events-1.4.4.tgz#42208feb9b344dd9ce10df180bd05ed2ad533992"
+  integrity sha512-NE09fNUNgfXnEzlL5VUCib+pYuLZ80lrwCbmC/hxrPvUzhqDxUshlb2vi/IoLP8eblQvvrkmOYhQgPp+xUse+w==
 
-"@interactjs/reflow@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/reflow/-/reflow-1.4.3.tgz#53df44d035f7e52eddde558f845be0af19eb810f"
-  integrity sha512-MUX76awAeXGd4VIKe4AqvEX/OJQ+pyY1jgn2AeNo16XCiLSmvjJilnqwS+GGGxINoyqqEnOYlUtq0Pgr2FDhJw==
+"@interactjs/reflow@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/reflow/-/reflow-1.4.4.tgz#eba8908cabb8a725b99d727793f9923d544b2eb6"
+  integrity sha512-R1D7GGLzqpit5jDVI3BoMTAHm/aK28K62AZ1TnfbQiqhkD3RKIFJEbZ2MEwJBLAxxfZmPMbgZX+wASHbZ1/d/A==
 
-"@interactjs/types@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/types/-/types-1.4.3.tgz#f902f9ff8724142ede2889984a21568c55a9d4a4"
-  integrity sha512-/xOLR5IHMThoBtyS7tydAe4T694mgHy9eBPPX5AEpMOijLNGNeVAmrJDesIN0AR8+BhVG1n7AZej9sqzz1+63w==
+"@interactjs/types@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/types/-/types-1.4.4.tgz#aedf4bd197d128a8d058e65f754698ffc9efd3ef"
+  integrity sha512-q6wv46UZFDeg2TJDjnDJKkLtM4yela2MSduOVsuGM6pxsv3X2vCwiCjWiRDaHS9QSmJ5LmDcwsipgEGJuf8ePw==
   dependencies:
-    "@interactjs/actions" "1.4.3"
-    "@interactjs/auto-scroll" "1.4.3"
-    "@interactjs/auto-start" "1.4.3"
-    "@interactjs/core" "1.4.3"
-    "@interactjs/dev-tools" "1.4.3"
-    "@interactjs/inertia" "1.4.3"
-    "@interactjs/interact" "1.4.3"
-    "@interactjs/modifiers" "1.4.3"
-    "@interactjs/pointer-events" "1.4.3"
-    "@interactjs/reflow" "1.4.3"
-    "@interactjs/utils" "1.4.3"
+    "@interactjs/actions" "1.4.4"
+    "@interactjs/auto-scroll" "1.4.4"
+    "@interactjs/auto-start" "1.4.4"
+    "@interactjs/core" "1.4.4"
+    "@interactjs/dev-tools" "1.4.4"
+    "@interactjs/inertia" "1.4.4"
+    "@interactjs/interact" "1.4.4"
+    "@interactjs/modifiers" "1.4.4"
+    "@interactjs/pointer-events" "1.4.4"
+    "@interactjs/reflow" "1.4.4"
+    "@interactjs/utils" "1.4.4"
 
-"@interactjs/utils@1.4.3":
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/@interactjs/utils/-/utils-1.4.3.tgz#408832d37b5ed0f469a7bd223ae83bfe15ee3b8d"
-  integrity sha512-VTyF/aJXvwTzHkgQ4TY4t4upYIeFRRXwzB4YRCcBOwYbUTYnQXqEqvRQK4jVxg050rTF+k42qFP4vMhfO90fnQ==
+"@interactjs/utils@1.4.4":
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/@interactjs/utils/-/utils-1.4.4.tgz#c927779a42022b1f4ac473581f491ba3fa22135b"
+  integrity sha512-s4pet+uz54Md9aRd2btPax9ICwMlSmLYhpWtYEd2v+g9WZozuRKg+R6FDC1uMkfcVclxKchVb5r7HV03GcmNnw==
 
 "@jest/console@^24.7.1":
   version "24.7.1"
@@ -5908,12 +5908,12 @@ insight@0.10.1:
     tough-cookie "^2.0.0"
     uuid "^3.0.0"
 
-interactjs@1.4.3:
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/interactjs/-/interactjs-1.4.3.tgz#b2934da1fb70de59febdbeed63a41ee40eafb2c2"
-  integrity sha512-LNc2X6nQ+5pkqFURqsHSTI2L0eUkSEKRrT2sksVhawMc5qbuAl3sYjbPxET+ei7D/hzKAvMpFt6/KLftUVpEtg==
+interactjs@1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/interactjs/-/interactjs-1.4.4.tgz#8f07a07568f00719aa0e64bce3c1d31e14e42682"
+  integrity sha512-xr+DLSqB7LDHgwvTyxINgPqfg2pCLTab2vHCbop/KiZkYslU+uEEdwSOcfqYskxeGyPzFWLEzPQXapAhW5x+og==
   dependencies:
-    "@interactjs/types" "1.4.3"
+    "@interactjs/types" "1.4.4"
 
 internal-ip@^4.3.0:
   version "4.3.0"

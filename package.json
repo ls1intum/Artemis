@@ -36,7 +36,7 @@
         "bootstrap": "4.3.1",
         "chart.js": "2.8.0",
         "core-js": "3.1.2",
-        "interactjs": "1.4.3",
+        "interactjs": "1.4.4",
         "jest": "24.8.0",
         "jest-preset-angular": "7.1.1",
         "jquery": "3.4.1",
