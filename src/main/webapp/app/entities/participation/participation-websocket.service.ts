@@ -29,6 +29,9 @@ export class ParticipationWebsocketService {
         participations.forEach(participation => {
             this.removeParticipation(participation.id, participation.exercise.id);
         });
+        this.cachedParticipations = new Map<number, Participation>();
+        this.resultObservables = new Map<number, BehaviorSubject<Result>>();
+        this.participationObservable = null;
     }
 
     updateParticipation(participation: Participation, exercise?: Exercise) {
