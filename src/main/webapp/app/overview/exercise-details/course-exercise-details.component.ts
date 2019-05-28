@@ -172,7 +172,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get currentResult(): Result {
-        if (!this.exercise.participations || !this.exercise.participations[0].results) {
+        if (!this.exercise.participations || !this.exercise.participations[0] || !this.exercise.participations[0].results) {
             return null;
         }
         const results = this.exercise.participations[0].results;
