@@ -10,6 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -40,6 +41,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
+    @Input() ratedResult: Result;
     @Input() courseId: number;
 
     @Input() actionsOnly: boolean;
