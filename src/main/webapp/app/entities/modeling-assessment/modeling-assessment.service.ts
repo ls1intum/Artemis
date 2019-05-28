@@ -43,6 +43,10 @@ export class ModelingAssessmentService {
         return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
     }
 
+    updateConflicts(conflicts: Conflict[]): Observable<Conflict> {
+        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts`, conflicts);
+    }
+
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
         if (submit) {

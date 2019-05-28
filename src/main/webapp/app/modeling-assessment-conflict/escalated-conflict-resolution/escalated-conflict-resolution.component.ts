@@ -71,23 +71,24 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     }
 
     initComponent() {
-        this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
         this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.currentConflictingResult.result.feedbacks));
-        this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
         this.currentModel = JSON.parse((this.currentConflictingResult.result.submission as ModelingSubmission).model);
+        this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
+        this.initResolutionStates(this.conflicts);
     }
 
     onCurrentConflictChanged(conflictIndex: number) {
         this.conflictIndex = conflictIndex;
         this.currentConflict = this.conflicts[conflictIndex];
         this.currentConflictingResult = this.getUsersConflictingResult();
-        this.currentState = this.conflictResolutionStates[conflictIndex];
+        if (this.conflictResolutionStates) {
+            this.currentState = this.conflictResolutionStates[conflictIndex];
+        }
         this.conflictingResult = this.currentConflict.causingConflictingResult;
         this.conflictingModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
-        this.currentCenteredElementId = this.currentHighlightedElementIds.values().next().value;
-        this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
+        this.updateCenteredElements();
     }
 
     onSave() {}
@@ -102,23 +103,18 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     onKeepYours() {
         this.updateFeedbackInMergedFeedback(
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.currentConflict.causingConflictingResult.result.feedbacks,
+            this.currentConflictingResult.modelElementId,
+            this.currentConflictingResult.modelElementId,
+            this.currentConflictingResult.result.feedbacks,
         );
     }
 
     onTakeOver() {
-        this.updateFeedbackInMergedFeedback(
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.conflictingResult.modelElementId,
-            this.conflictingResult.result.feedbacks,
-        );
+        this.updateFeedbackInMergedFeedback(this.currentConflictingResult.modelElementId, this.conflictingResult.modelElementId, this.conflictingResult.result.feedbacks);
     }
 
     escalateAndSubmit(escalatedConflicts: Conflict[]) {
         const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
         modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
         modalRef.result.then(() => {
             this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
@@ -126,7 +122,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
-        this.mergedFeedbacks = feedbacks;
+        // this.mergedFeedbacks = feedbacks;
     }
 
     onConflictStateChanged(newState: ConflictResolutionState) {
@@ -135,7 +131,9 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
     }
 
-    private submit() {}
+    private submit() {
+        // this.modelingAssessmentService.updateConflicts();
+    }
 
     private initResolutionStates(conflicts: Conflict[]) {
         //TODO MJ move into service
@@ -154,11 +152,29 @@ export class EscalatedConflictResolutionComponent implements OnInit {
                 }
             }
         }
+        this.currentState = this.conflictResolutionStates[this.conflictIndex];
+    }
+
+    private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
+        const feedbacks: Feedback[] = [];
+        const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
+        this.currentFeedbacksCopy.forEach(feedback => {
+            if (feedback.referenceId === elementIdToUpdate) {
+                feedback.credits = feedbackToUse.credits;
+            }
+            feedbacks.push(feedback);
+        });
+        this.currentFeedbacksCopy = feedbacks;
     }
 
     private updateHighlightedElements() {
         this.currentHighlightedElementIds = new Set<string>([this.currentConflictingResult.modelElementId]);
         this.conflictingHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
+    }
+
+    private updateCenteredElements() {
+        this.currentCenteredElementId = this.currentHighlightedElementIds.values().next().value;
+        this.conflictingCenteredElementId = this.conflictingHighlightedElementIds.values().next().value;
     }
 
     private getUsersConflictingResult(): ConflictingResult {

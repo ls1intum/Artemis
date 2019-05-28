@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import * as $ from 'jquery';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
@@ -18,18 +18,21 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     private userInteractionWithConflict = false;
 
     @Input() modelingExercise: ModelingExercise;
+    @Input() leftTitle: string;
     @Input() leftModel: UMLModel;
     @Input() leftFeedbacks: Feedback[];
     @Input() leftHighlightedElementIds: Set<string> = new Set<string>();
     @Input() leftCenteredElementId: string;
     @Input() leftConflictingElemenId: string;
-    @Input() rightFeedback: Feedback[];
+    @Input() rightTitle: string;
     @Input() rightModel: UMLModel;
+    @Input() rightFeedback: Feedback[];
     @Input() rightHighlightedElementIds: Set<string> = new Set<string>();
     @Input() rightCenteredElementId: string;
     @Input() rightConflictingElemenId: string;
     @Input() rightAssessmentReadOnly = false;
     @Input() conflictState: ConflictResolutionState = ConflictResolutionState.UNHANDLED;
+    @Input() resultsInConflict: ConflictingResult[];
     // @Output() escalate = new EventEmitter<{ escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }>();
     @Output() conflictResolutionStateChanged = new EventEmitter<ConflictResolutionState>();
     @Output() leftButtonPressed = new EventEmitter();
