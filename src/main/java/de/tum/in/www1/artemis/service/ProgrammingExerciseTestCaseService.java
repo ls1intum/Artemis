@@ -23,10 +23,9 @@ public class ProgrammingExerciseTestCaseService {
         this.testCaseRepository = testCaseRepository;
     }
 
-    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
-        // TODO: Workaround for known bug, should be removed once fixed: https://jira.spring.io/browse/DATAJPA-1357
-        SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = new Authentication() {
+    // TODO: Workaround for known bug, should be removed once fixed: https://jira.spring.io/browse/DATAJPA-1357
+    private Authentication getAuthDummy() {
+        return new Authentication() {
 
             @Override
             public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -63,51 +62,23 @@ public class ProgrammingExerciseTestCaseService {
                 return null;
             }
         };
-        context.setAuthentication(authentication);
+    }
+
+    public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
+        SecurityContext context = SecurityContextHolder.getContext();
+        context.setAuthentication(getAuthDummy());
         return this.testCaseRepository.findByExerciseId(id);
     }
 
-    public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
-        // TODO: Workaround for known bug, should be removed once fixed: https://jira.spring.io/browse/DATAJPA-1357
+    public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
         SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = new Authentication() {
+        context.setAuthentication(getAuthDummy());
+        return this.testCaseRepository.findActiveByExerciseId(id);
+    }
 
-            @Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return null;
-            }
-
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
-
-            @Override
-            public Object getDetails() {
-                return null;
-            }
-
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
-
-            @Override
-            public boolean isAuthenticated() {
-                return false;
-            }
-
-            @Override
-            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-
-            }
-
-            @Override
-            public String getName() {
-                return null;
-            }
-        };
-        context.setAuthentication(authentication);
+    public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
+        SecurityContext context = SecurityContextHolder.getContext();
+        context.setAuthentication(getAuthDummy());
 
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()

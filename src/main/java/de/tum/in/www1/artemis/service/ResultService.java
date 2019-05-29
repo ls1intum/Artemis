@@ -122,8 +122,9 @@ public class ResultService {
             testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
         }
 
+        // Find out which test cases were executed and calculate the score according to their status and weight
         if (result != null && result.getFeedbacks().size() > 0) {
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(participation.getExercise().getId());
             if (testCases.size() > 0) {
                 Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
                         .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
@@ -140,9 +141,11 @@ public class ResultService {
                     score = (successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)
                             / testCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)) * 100L;
                 }
+
                 result.setScore(score);
                 if (successfulTestCases.size() < testCases.size()) {
-                    result.setResultString(testCases.size() - successfulTestCases.size() + " of " + testCases.size() + " failed");
+                    result.setResultString(testCases.size() - successfulTestCases.size() - notExecutedTestCases.size() + " of " + testCases.size() + " failed, "
+                            + notExecutedTestCases.size() + " not executed");
                 }
                 else {
                     result.setResultString(testCases.size() + " passed");

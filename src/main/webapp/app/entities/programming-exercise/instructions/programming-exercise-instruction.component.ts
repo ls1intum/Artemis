@@ -324,9 +324,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
         const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
-        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => !testCircle.classList.contains('stepwizard-step--failed')).length;
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.classList.contains('stepwizard-step--success')).length;
         /** The click should only be executed if the clicked element is not a positive test **/
-        if (testStatusDOMElements.length && testStatusCircleElements[index].classList.contains('stepwizard-step--failed')) {
+        if (testStatusDOMElements.length && !testStatusCircleElements[index].classList.contains('stepwizard-step--success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
             testStatusDOMElements[index - positiveTestsUntilIndex].click();
         }
@@ -474,10 +474,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
         if (done === TestCaseState.SUCCESS) {
             text += '<span class="text-success bold">' + label + '</span>';
-        } else if (done === TestCaseState.FAIL) {
-            text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
         } else {
-            text += '<span class="text-secondary bold">' + label + '</span>';
+            const textColor = done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
+            text += '<a data-tests="' + tests.toString() + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
         text += '<br>';
 
