@@ -70,7 +70,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
-                this.exercise.participations = cachedParticipations.filter((participation: Participation) => participation.student.id === this.currentUser.id);
+                this.exercise.participations = cachedParticipations.filter(
+                    (participation: Participation) => participation.student && participation.student.id === this.currentUser.id,
+                );
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -123,11 +125,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
-                this.exercise.participations = this.exercise.participations
-                    ? this.exercise.participations.map(el => {
-                          return el.id === changedParticipation.id ? changedParticipation : el;
-                      })
-                    : [changedParticipation];
+                this.exercise.participations =
+                    this.exercise.participations && this.exercise.participations.length > 0
+                        ? this.exercise.participations.map(el => {
+                              return el.id === changedParticipation.id ? changedParticipation : el;
+                          })
+                        : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
             }
         });
@@ -169,7 +172,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get currentResult(): Result {
-        if (!this.exercise.participations || !this.exercise.participations[0].results) {
+        if (!this.exercise.participations || !this.exercise.participations[0] || !this.exercise.participations[0].results) {
             return null;
         }
         const results = this.exercise.participations[0].results;
