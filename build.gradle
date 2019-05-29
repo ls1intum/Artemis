@@ -254,8 +254,6 @@ dependencies {
     testCompile 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
     compile 'io.sentry:sentry-spring:1.7.22'
-    compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile group: 'junit', name: 'junit', version: '4.12'
 }
 
 task cleanResources(type: Delete) {
