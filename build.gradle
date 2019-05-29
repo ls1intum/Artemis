@@ -31,12 +31,13 @@ plugins {
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.21.1"
+    id "com.diffplug.gradle.spotless" version "3.23.0"
 }
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
-assert System.properties["java.specification.version"] == "1.8" || "11" || "12"
+// Until JHipster supports JDK 9
+//assert System.properties['java.specification.version'] == '1.8'
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
@@ -64,11 +65,11 @@ idea {
 }
 
 spotless {
-    // allows to execute the command ./gradlew spotlessApply
+    // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
     java {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
-            exclude 'src/main/java/de/tum/in/www1/artemis/security/SecurityConfiguration.java'
+            exclude '**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java', '**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java', '**/node_modules/**', '**/out/**', '**/repos/**', '**/build/**', '**/src/main/resources/templates/**'
         }
         importOrderFile 'artemis-spotless.importorder'
         removeUnusedImports()
@@ -79,7 +80,7 @@ spotless {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.0.3'
+version = '3.1.5'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -151,7 +152,7 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.0.201903130848-r'
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.1.201904271842-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -167,29 +168,30 @@ dependencies {
 
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
-    implementation group: "io.github.jhipster", name: "jhipster-framework"
-    implementation "org.springframework.boot:spring-boot-starter-cache"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.1.3"
-    implementation "net.logstash.logback:logstash-logback-encoder:5.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.9.8"
-    implementation "com.fasterxml.jackson.core:jackson-databind"
-    implementation "com.fasterxml.jackson.module:jackson-module-afterburner"
-    implementation "javax.cache:cache-api"
-    implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP"
-    implementation "org.apache.commons:commons-lang3:3.8.1"
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.6'
-    implementation "commons-io:commons-io"
-    implementation "javax.transaction:javax.transaction-api:1.3"
-    implementation "org.ehcache:ehcache"
-    implementation "org.hibernate:hibernate-jcache"
-    implementation "org.hibernate:hibernate-entitymanager"
-    implementation "org.hibernate:hibernate-envers"
-    implementation "org.hibernate.validator:hibernate-validator"
-    implementation "org.liquibase:liquibase-core"
+    compile group: "io.github.jhipster", name: "jhipster-framework"
+    compile "org.springframework.boot:spring-boot-starter-cache"
+    compile "io.micrometer:micrometer-registry-prometheus:1.1.3"
+    compile "net.logstash.logback:logstash-logback-encoder:5.3"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.9.8"
+    compile "com.fasterxml.jackson.core:jackson-databind"
+    compile "com.fasterxml.jackson.module:jackson-module-afterburner"
+    compile "javax.cache:cache-api"
+    compile "org.hibernate:hibernate-core"
+    compile "com.zaxxer:HikariCP"
+    compile "org.apache.commons:commons-lang3:3.9"
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.6'
+    compile "commons-io:commons-io"
+    compile "javax.transaction:javax.transaction-api:1.3"
+    compile "org.ehcache:ehcache"
+    compile "org.hibernate:hibernate-jcache"
+    compile "org.hibernate:hibernate-entitymanager"
+    compile "org.hibernate:hibernate-envers"
+    compile "org.hibernate.validator:hibernate-validator"
+    compile "org.liquibase:liquibase-core"
+    compile "com.mattbertolini:liquibase-slf4j"
 //    liquibaseRuntime "org.liquibase:liquibase-core"
 //    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
 //    liquibaseRuntime sourceSets.main.compileClasspath
@@ -222,25 +224,20 @@ dependencies {
 //    liquibaseRuntime "mysql:mysql-connector-java"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
-    annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
-//    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
-//        exclude group: 'com.vaadin.external.google', module: 'android-json'
-//    }
-    testImplementation "com.jayway.jsonpath:json-path"
-    testImplementation ("org.springframework.boot:spring-boot-starter-test") {
-        exclude group: "com.vaadin.external.google", module: "android-json"
+    annotationProcessor "org.hibernate:hibernate-jpamodelgen"
+    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
+        exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
-    testImplementation "org.springframework.security:spring-security-test"
-    testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "org.assertj:assertj-core"
-    testImplementation "junit:junit"
-    testImplementation "org.mockito:mockito-core:2.24.5"
-    testImplementation "org.hamcrest:hamcrest-library"
-    testImplementation "com.h2database:h2"
-    testImplementation 'org.awaitility:awaitility:3.1.6'
+    testCompile ("org.springframework.boot:spring-boot-starter-test") {
+        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    }
+    testCompile "org.springframework.security:spring-security-test"
+    testCompile "org.mockito:mockito-core:2.27.0"
+    testCompile "com.mattbertolini:liquibase-slf4j"
+    testCompile "com.h2database:h2"
+    testCompile 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
-    compile 'io.sentry:sentry-spring:1.7.16'
+    compile 'io.sentry:sentry-spring:1.7.22'
 }
 
 task cleanResources(type: Delete) {
@@ -253,6 +250,9 @@ task executeTests (type: Exec) {
 
 wrapper {
     gradleVersion = '5.4.1'
+}
+
+task stage(dependsOn: 'bootWar') {
 }
 
 if (project.hasProperty('nodeInstall')) {

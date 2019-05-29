@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * A FileUploadSubmission.
  */
 @Entity
-@DiscriminatorValue(value="F")
+@DiscriminatorValue(value = "F")
 public class FileUploadSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -56,9 +57,6 @@ public class FileUploadSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "FileUploadSubmission{" +
-            "id=" + getId() +
-            ", filePath='" + getFilePath() + "'" +
-            "}";
+        return "FileUploadSubmission{" + "id=" + getId() + ", filePath='" + getFilePath() + "'" + "}";
     }
 }

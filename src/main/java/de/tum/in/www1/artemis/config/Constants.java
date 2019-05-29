@@ -61,6 +61,8 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_PATH = "assignment";
 
+    public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
+
     private Constants() {
     }
 }

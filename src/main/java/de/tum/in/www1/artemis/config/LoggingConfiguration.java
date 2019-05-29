@@ -4,20 +4,9 @@ import java.net.InetSocketAddress;
 import java.util.Iterator;
 
 import net.logstash.logback.appender.LogstashTcpSocketAppender;
-import net.logstash.logback.composite.ContextJsonProvider;
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
-import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
-import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
-import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
-import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
-import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider;
-import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
-import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
-import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
-import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
-import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
-import net.logstash.logback.encoder.LogstashEncoder;
+import net.logstash.logback.composite.*;
+import net.logstash.logback.composite.loggingevent.*;
+import net.logstash.logback.encoder.*;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
 
 import org.slf4j.Logger;

@@ -132,7 +132,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
             } else {
-                this.elementFeedback.set(assessment.modelElementId, new Feedback(assessment.modelElementId, assessment.elementType, assessment.score, assessment.feedback));
+                this.elementFeedback.set(assessment.modelElementId, new Feedback(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }
         }
         return [...this.elementFeedback.values()];

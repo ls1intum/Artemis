@@ -7,10 +7,10 @@
         </h3>
     </div>
     <div class="card-body">
-        <p class="text-center" [hidden]="!isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building...</span></p>
-        <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding" jhiTranslate="arTeMiSApp.editor.noBuildOutput">No build results available</p>
+        <p class="text-center" *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building...</span></p>
+        <p class="text-center" *ngIf="!buildLogs.length && !isBuilding" jhiTranslate="arTeMiSApp.editor.noBuildOutput">No build results available</p>
 
-        <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || isBuilding">
+        <dl class="buildoutput dl-horizontal" *ngIf="buildLogs.length && !isBuilding">
             <ng-container *ngFor="let logEntry of buildLogs">
                 <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
                 <dd [innerHtml]="logEntry.log | safeHtml"></dd>

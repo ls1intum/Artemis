@@ -257,29 +257,20 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.solutions.push(solution);
 
             // create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
-            this.createMapping(solutionText, solution);
+            this.createMapping(solutionText[0], solution);
         }
     }
 
     /**
      * This function creates the mapping. It differentiates 2 cases one solution To one spot (case 1) and
-     * one solution to many spots (default)
+     * one solution to many spots.
      */
-    createMapping(solutionText: string[], solution: ShortAnswerSolution) {
-        switch (solutionText[0].trim().length) {
-            case 1: {
-                const spotForMapping = this.question.spots.filter(spot => spot.spotNr === +solutionText[0])[0];
-                this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
-                break;
-            }
-            default: {
-                const spotsID = solutionText[0].split(',');
-                for (const spotID of spotsID) {
-                    const spotForMapping = this.question.spots.filter(spot => spot.spotNr === +spotID[0])[0];
-                    this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
-                }
-                break;
-            }
+    private createMapping(spots: string, solution: ShortAnswerSolution) {
+        const spotIds = spots.split(',').map(Number);
+
+        for (const id of spotIds) {
+            const spotForMapping = this.question.spots.find(spot => spot.spotNr === id);
+            this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
         }
     }
 

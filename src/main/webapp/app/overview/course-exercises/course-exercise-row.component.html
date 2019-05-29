@@ -1,7 +1,7 @@
 <div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="(getIconTooltip(exercise.type) | translate)" container="body"></fa-icon>
+            <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
         </div>
     </div>
     <div class="col">
@@ -28,22 +28,21 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'arTeMiSApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'arTeMiSApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
-
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
             </div>
         </div>

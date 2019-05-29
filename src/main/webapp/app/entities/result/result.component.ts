@@ -1,19 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from '../participation';
-import { Result, ResultDetailComponent, ResultService, ResultWebsocketService } from '.';
-import { ProgrammingSubmission } from '../programming-submission';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Participation, ParticipationService } from 'app/entities/participation';
+import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
-
-import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { AccountService, JhiWebsocketService } from 'app/core';
 
 @Component({
     selector: 'jhi-result',
@@ -25,7 +19,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
  * When using the result component make sure that the reference to the participation input is changed if the result changes
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
-export class ResultComponent implements OnInit, OnChanges, OnDestroy {
+export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -36,10 +30,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() short = false;
     @Input() result: Result;
     @Input() showUngradedResults: boolean;
-    @Output() newResult = new EventEmitter<object>();
+    @Input() showGradedBadge = false;
 
-    private resultSubscription: Subscription;
-    websocketChannelSubmissions: string;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string[];
@@ -50,7 +42,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private resultWebsocketService: ResultWebsocketService,
         private accountService: AccountService,
         private translate: TranslateService,
         private http: HttpClient,
@@ -59,12 +50,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         if (this.result) {
-            if (this.participation) {
-                const exercise = this.participation.exercise;
-                if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                    this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
-                }
-            }
             this.init();
         } else if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
@@ -90,58 +75,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             }
 
             this.init();
-
-            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
-            }
         }
-    }
-
-    subscribeForProgramingExercise(exercise: ProgrammingExercise) {
-        this.accountService.identity().then(user => {
-            // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            if (
-                (this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) ||
-                (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))
-            ) {
-                // subscribe for new results (e.g. when a programming exercise was automatically tested)
-                this.setupResultWebsocket();
-
-                // subscribe for new submissions (e.g. when code was pushed and is currently built)
-                this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
-                this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
-                this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
-                    // TODO handle this case properly, e.g. by animating a progress bar in the result view
-                    console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
-                });
-            }
-        });
-    }
-
-    private setupResultWebsocket() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-        this.resultWebsocketService.subscribeResultForParticipation(this.participation.id).then(observable => {
-            this.resultSubscription = observable
-                .pipe(distinctUntilChanged(({ id: id1 }: Result, { id: id2 }: Result) => id1 === id2))
-                .subscribe(result => this.handleNewResult(result));
-        });
-    }
-
-    handleNewResult(newResult: Result) {
-        if (newResult.rated !== undefined && newResult.rated !== null && newResult.rated === false) {
-            // do not handle unrated results
-            return;
-        }
-        this.result = newResult;
-        // Reconnect the new result with the existing participation
-        this.result.participation = this.participation;
-        this.participation.results = [this.result];
-        this.newResult.emit({
-            newResult,
-        });
-        this.init();
     }
 
     init() {
@@ -157,17 +91,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation) {
+        if (changes.participation || changes.result) {
             this.ngOnInit();
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-        if (this.websocketChannelSubmissions) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
         }
     }
 

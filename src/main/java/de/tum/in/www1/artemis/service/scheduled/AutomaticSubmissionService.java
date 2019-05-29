@@ -52,9 +52,9 @@ public class AutomaticSubmissionService {
     }
 
     /**
-     * Check for every un-submitted modeling and text submissions if the corresponding exercise has finished (i.e. due date < now). - If yes, we set the submission to submitted =
-     * true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state of the corresponding participation to FINISHED. - If no,
-     * we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
+     * Check for every un-submitted modeling and text submission if the corresponding exercise has finished (i.e. due date < now) and the submission was saved before the exercise
+     * due date. - If yes, we set the submission to submitted = true (without changing the submission date) and the submissionType to TIMEOUT. We also set the initialization state
+     * of the corresponding participation to FINISHED. - If no, we ignore the submission. This is executed every night at 1:00:00 am by the cron job.
      */
     @Scheduled(cron = "0 0 1 * * *")
     @Transactional
@@ -69,10 +69,12 @@ public class AutomaticSubmissionService {
 
                 Exercise exercise = unsubmittedSubmission.getParticipation().getExercise();
 
-                if (exercise.isEnded()) {
-                    unsubmittedSubmission.setSubmitted(true);
-                    unsubmittedSubmission.setType(SubmissionType.TIMEOUT);
+                if (!exercise.isEnded() || unsubmittedSubmission.getSubmissionDate() == null || unsubmittedSubmission.getSubmissionDate().isAfter(exercise.getDueDate())) {
+                    continue;
                 }
+
+                unsubmittedSubmission.setSubmitted(true);
+                unsubmittedSubmission.setType(SubmissionType.TIMEOUT);
 
                 updateParticipation(unsubmittedSubmission);
 
@@ -94,13 +96,14 @@ public class AutomaticSubmissionService {
             DecimalFormat df = new DecimalFormat("#.##");
             log.info("Checked {} submissions in {} seconds for automatic submit.", unsubmittedSubmissions.size(), df.format(elapsedTimeInSeconds));
         }
-        catch (Exception e) {
-            log.error("Exception in AutomaticSubmissionService:\n{}", e.getMessage());
+        catch (Exception ex) {
+            log.error("Exception in AutomaticSubmissionService:\n{}", ex.getMessage(), ex);
         }
     }
 
     /**
-     * Updates the participation for a given submission. The participation is set to FINISHED. Currently only handles modeling submissions.
+     * Updates the participation for a given submission. The participation is set to FINISHED. In the case of a modeling exercise Compass is additionally notified about the new
+     * submission.
      *
      * @param submission the submission for which the participation should be updated for
      * @return submission if updating participation successful, otherwise null

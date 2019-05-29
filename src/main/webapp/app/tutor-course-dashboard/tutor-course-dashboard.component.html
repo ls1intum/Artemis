@@ -59,7 +59,7 @@
             <tbody>
                 <tr *ngFor="let exercise of exercises">
                     <td>
-                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="(getIconTooltip(exercise.type) | translate)" container="body"></fa-icon>
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                     </td>
                     <td>
                         <span>{{ exercise.title }}</span>

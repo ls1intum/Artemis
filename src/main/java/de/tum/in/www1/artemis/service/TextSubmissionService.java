@@ -5,9 +5,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
@@ -31,12 +34,15 @@ public class TextSubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, ParticipationRepository participationRepository, ParticipationService participationService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -91,6 +97,9 @@ public class TextSubmissionService {
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
+
+            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
+                    participation);
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (textSubmission.getId() == null) {
@@ -125,17 +134,21 @@ public class TextSubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random text submission for that exercise which still doesn't have any result. We relay for the randomness to `findAny()`, which return any
-     * element of the stream. While it is not mathematically random, it is not deterministic https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
+     * Given an exercise id, find a random text submission for that exercise which still doesn't have any result.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without result
      * @return a textSubmission without any result, if any
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
-        return this.participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
-                // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).findAny();
+        Random r = new Random();
+        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
+                .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
     /**
@@ -193,6 +206,11 @@ public class TextSubmissionService {
             textSubmissions.add(optionalTextSubmission.get());
         }
         return textSubmissions;
+    }
+
+    public TextSubmission findOneWithEagerResultAndAssessor(Long id) {
+        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(id)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + id + "\" does not exist"));
     }
 
     /**

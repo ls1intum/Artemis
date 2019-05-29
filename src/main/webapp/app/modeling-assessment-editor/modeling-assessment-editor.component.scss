@@ -14,13 +14,6 @@ $titlebar-height: 65px;
     align-items: center;
 }
 
-.assessment-title {
-    jhi-result {
-        padding-left: 25px;
-        font-size: 1rem;
-    }
-}
-
 .control-container {
     button {
         margin-left: 15px;
@@ -29,7 +22,7 @@ $titlebar-height: 65px;
 
 .assessment-container {
     display: flex;
-    height: calc(100vh - 173px);
+    min-height: calc(100vh - 173px);
     flex-flow: column nowrap;
 }
 

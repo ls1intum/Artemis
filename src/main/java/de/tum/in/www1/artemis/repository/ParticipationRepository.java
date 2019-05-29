@@ -27,7 +27,12 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.course.id = :courseId")
     List<Participation> findByCourseIdWithEagerResults(@Param("courseId") Long courseId);
 
+    @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.results r LEFT JOIN FETCH r.assessor WHERE participation.exercise.course.id = :courseId")
+    List<Participation> findByCourseIdWithEagerResultsAndAssessors(@Param("courseId") Long courseId);
+
     Optional<Participation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    Optional<Participation> findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState initializationState, Long exerciseId, String username);
 
     @Query("select distinct participation from Participation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.login = :#{#username}")
     Optional<Participation> findByExerciseIdAndStudentLoginWithEagerSubmissions(@Param("exerciseId") Long exerciseId, @Param("username") String username);
@@ -64,4 +69,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.submissions s LEFT JOIN FETCH s.result r LEFT JOIN FETCH r.assessor WHERE participation.exercise.id = :#{#exerciseId}")
     List<Participation> findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(@Param("exerciseId") long exerciseId);
+
+    @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
+    Participation findOneByIdWithEagerExerciseAndEagerCourse(@Param("participationId") Long participationId);
 }

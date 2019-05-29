@@ -32,14 +32,14 @@
                             </li>
                             <li>
                                 <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }} ({{ stats.numberOfOpenComplaints }}
-                                {{ 'arTeMiSApp.instructorCourseDashboard.open' | translate }})
+                                {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4" *ngIf="stats">
+            <div class="col-md-4" *ngIf="stats && !loading">
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
             </div>
         </div>
@@ -66,25 +66,29 @@
                     <tr *ngFor="let exercise of course.exercises">
                         <td>
                             {{ exercise.id }}
-                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="(getIconTooltip(exercise.type) | translate)" container="body"></fa-icon>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                         </td>
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | date: 'medium' }}</td>
                         <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
-                        <td>{{ exercise.participations.length }}</td>
+                        <td>{{ exercise.numberOfParticipations }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td class="text-center">
                             <div class="progress position-relative">
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.participations.length)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) }}"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfParticipations)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
-                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">{{ exercise.numberOfAssessments }}</span>
+                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">
+                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfParticipations }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations)
+                                        }}%)
+                                    </span>
                                 </div>
                             </div>
                         </td>

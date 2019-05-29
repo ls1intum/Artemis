@@ -15,30 +15,36 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 })
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
+    @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
     accepted: boolean;
+    handled: boolean;
     complaintResponse: ComplaintResponse;
+
+    readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
+                if (!res.body) {
+                    return;
+                }
                 this.complaintText = res.body.complaintText;
                 this.alreadySubmitted = true;
                 this.submittedDate = res.body.submittedTime;
+                this.accepted = res.body.accepted;
+                this.handled = this.accepted !== undefined;
 
-                if (res.body.accepted) {
+                if (this.handled) {
                     this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
                 }
             },
             (err: HttpErrorResponse) => {
-                // We can ignore 404, it simply means that there isn't a complain (yet!) associate with this result
-                if (err.status !== 404) {
-                    this.onError(err.message);
-                }
+                this.onError(err.message);
             },
         );
     }
@@ -51,12 +57,16 @@ export class ComplaintsComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
-                this.jhiAlertService.success('arTeMiSApp.complaint.submitted');
                 this.submittedDate = res.body.submittedTime;
                 this.alreadySubmitted = true;
+                this.allowedComplaints--;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.message);
+                if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
+                    this.jhiAlertService.error('arTeMiSApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
+                } else {
+                    this.onError(err.message);
+                }
             },
         );
     }
@@ -67,6 +77,6 @@ export class ComplaintsComponent implements OnInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error('error.http.400', null, null);
     }
 }

@@ -1,3 +1,5 @@
+<jhi-alert></jhi-alert>
+
 <!-- QUIZ EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === QUIZ">
     <!-- ACTIONS START -->
@@ -36,7 +38,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeQuiz' | translate"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.openQuiz' | translate"
             *ngIf="participationStatus() === QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -64,7 +66,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED"
+            *ngIf="participationStatus() === QUIZ_FINISHED && ratedResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -99,16 +101,6 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="participationStatus() === INACTIVE"
-            (click)="resumeExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openModelingEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -129,7 +121,12 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !ratedResult)
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -140,7 +137,14 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+                *ngIf="
+                    exercise.participations &&
+                    exercise.participations.length > 0 &&
+                    exercise.participations[0].initializationState === 'FINISHED' &&
+                    exercise.participations[0].results &&
+                    exercise.participations[0].results.length > 0 &&
+                    ratedResult
+                "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
         </div>
@@ -170,7 +174,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
+            *ngIf="isOnlineEditorAllowed() && participationStatus() == INITIALIZED && exercise.participations && exercise.participations.length > 0"
             routerLink="/code-editor/{{ exercise.participations[0].id }}"
         ></button>
         <button
@@ -182,9 +186,19 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.participations && exercise.participations.length > 0"
+            *ngIf="exercise.participations && participationStatus() == INITIALIZED && exercise.participations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatus() === INACTIVE"
+            (click)="resumeExercise()"
         ></button>
         <ng-template #popContent>
             <p>{{ 'arTeMiSApp.exerciseActions.clonePersonalRepository' | translate }}</p>
@@ -243,16 +257,6 @@
         ></button>
         <button
             jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="participationStatus() === INACTIVE"
-            (click)="resumeExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openTextEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -273,7 +277,12 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && !exercise.participations[0].results"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
@@ -284,7 +293,13 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results"
+            *ngIf="
+                exercise.participations &&
+                exercise.participations.length > 0 &&
+                exercise.participations[0].initializationState === 'FINISHED' &&
+                exercise.participations[0].results &&
+                exercise.participations[0].results.length > 0
+            "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
     </div>
@@ -305,16 +320,6 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
-        ></button>
-        <button
-            jhi-exercise-action-button
-            buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
-            [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            (click)="resumeExercise()"
         ></button>
     </div>
     <!-- ACTIONS END-->

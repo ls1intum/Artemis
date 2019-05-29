@@ -9,6 +9,7 @@
                 </div>
                 <canvas
                     baseChart
+                    id="complete-chart"
                     height="200"
                     width="200"
                     [legend]="false"
@@ -27,7 +28,11 @@
             <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
                 <div class="col-12 mb-1 d-flex align-items-center">
                     <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
-                    <h2>{{ 'arTeMiSApp.courseOverview.statistics.exerciseCount' | translate: {number:exerciseGroup.names.length, type: exerciseTitles[exerciseGroup.type].name} }}</h2>
+                    <h2>
+                        {{
+                            'arTeMiSApp.courseOverview.statistics.exerciseCount' | translate: { number: exerciseGroup.names.length, type: exerciseTitles[exerciseGroup.type].name }
+                        }}
+                    </h2>
                 </div>
                 <div class="col-12 col-md-8">
                     <canvas
@@ -52,7 +57,7 @@
     </div>
     <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
         <div class="col mt-3">
-            {{ 'arTeMiSApp.courseOverview.statistics.noStatistics' | translate}}
+            {{ 'arTeMiSApp.courseOverview.statistics.noStatistics' | translate }}
         </div>
     </div>
 </div>

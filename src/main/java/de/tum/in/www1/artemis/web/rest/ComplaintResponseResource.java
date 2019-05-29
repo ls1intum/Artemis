@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -13,16 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -45,15 +41,14 @@ public class ComplaintResponseResource {
 
     private ComplaintResponseRepository complaintResponseRepository;
 
-    private UserService userService;
+    private ComplaintResponseService complaintResponseService;
 
     private AuthorizationCheckService authorizationCheckService;
 
-    public ComplaintResponseResource(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserService userService,
+    public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
             AuthorizationCheckService authorizationCheckService) {
-        this.complaintRepository = complaintRepository;
+        this.complaintResponseService = complaintResponseService;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.userService = userService;
         this.authorizationCheckService = authorizationCheckService;
     }
 

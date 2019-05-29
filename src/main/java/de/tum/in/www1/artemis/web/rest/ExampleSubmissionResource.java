@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +18,8 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -110,7 +110,7 @@ public class ExampleSubmissionResource {
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
 
         if (exampleSubmission.isPresent()) {
-            if (! authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
                 return forbidden();
             }
         }

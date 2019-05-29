@@ -10,6 +10,7 @@ import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { StatsForInstructorDashboard, StatsForTutorDashboard } from 'app/entities/course';
+import { AccountService } from 'app/core';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -18,7 +19,7 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
@@ -31,7 +32,10 @@ export class ExerciseService {
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
@@ -58,8 +62,11 @@ export class ExerciseService {
         });
     }
 
-    findResultsForExercise(id: number): Observable<Exercise> {
-        return this.http.get<Exercise>(`${this.resourceUrl}/${id}/results`);
+    findResultsForExercise(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${id}/results`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
@@ -104,9 +111,9 @@ export class ExerciseService {
 
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null,
-            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null,
+            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? moment(exercise.releaseDate).toJSON() : null,
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? moment(exercise.dueDate).toJSON() : null,
+            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? moment(exercise.assessmentDueDate).toJSON() : null,
         });
     }
 
@@ -116,6 +123,14 @@ export class ExerciseService {
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
             res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
             res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
+        }
+        return res;
+    }
+
+    checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body) {
+            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
+            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }
         return res;
     }
@@ -138,6 +153,15 @@ export class ExerciseService {
 
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
         return categories.map(el => JSON.parse(el));
+    }
+
+    convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
+        let copy = Object.assign(exercise, {});
+        copy = this.convertDateFromClient(copy);
+        delete copy.course.exercises;
+        delete copy.course.lectures;
+        delete copy.participations;
+        return copy;
     }
 
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {

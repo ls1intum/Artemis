@@ -10,6 +10,7 @@ export class ExampleSubmission implements BaseEntity {
     public exercise: Exercise;
     public submission: Submission;
     public tutorParticipations: TutorParticipation[];
+    public assessmentExplanation: string;
 
     constructor() {}
 }

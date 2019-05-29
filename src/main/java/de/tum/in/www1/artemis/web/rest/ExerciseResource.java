@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -129,13 +129,20 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
+
+        User student = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(id);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
+
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+        if (isStudent) {
+            exercise.filterSensitiveInformation();
+        }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
@@ -238,6 +245,9 @@ public class ExerciseResource {
 
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
         data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+
+        List<StatsTutorLeaderboardDTO> tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForExercise(id);
+        data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
 
         return ResponseEntity.ok(data);
     }
@@ -361,7 +371,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
@@ -379,8 +388,6 @@ public class ExerciseResource {
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);

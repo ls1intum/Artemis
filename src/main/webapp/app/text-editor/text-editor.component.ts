@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -12,12 +12,14 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit, OnDestroy {
+export class TextEditorComponent implements OnInit {
     textExercise: TextExercise;
     participation: Participation;
     result: Result;
@@ -27,7 +29,14 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     answer: string;
     isExampleSubmission = false;
     showComplaintForm = false;
-    formattedProblemStatement: string;
+    // indicates if there is a complaint for the result of the submission
+    hasComplaint: boolean;
+    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
+    numberOfAllowedComplaints: number;
+    // indicates if the result is older than one week. if it is, the complain button is disabled
+    resultOlderThanOneWeek: boolean;
+    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
+    isAfterAssessmentDueDate: boolean;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -38,6 +47,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
+        private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
@@ -57,17 +67,28 @@ export class TextEditorComponent implements OnInit, OnDestroy {
             (data: Participation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
+                this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
+                if (this.textExercise.course) {
+                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.textExercise.course.id).subscribe((allowedComplaints: number) => {
+                        this.numberOfAllowedComplaints = allowedComplaints;
+                    });
+                }
 
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
-                    if (this.submission && data.results) {
+                    if (this.submission && data.results && this.isAfterAssessmentDueDate) {
                         this.result = data.results.find(r => r.submission.id === this.submission.id);
                     }
 
                     if (this.submission && this.submission.text) {
                         this.answer = this.submission.text;
+                    }
+                    if (this.result && this.result.completionDate) {
+                        this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                        this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                            this.hasComplaint = !!res.body;
+                        });
                     }
                 }
 
@@ -77,7 +98,13 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    ngOnDestroy() {}
+    get generalFeedback(): Feedback | null {
+        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
+            return this.result.feedbacks.find(f => f.reference == null) || null;
+        }
+
+        return null;
+    }
 
     saveText() {
         if (this.isSaving) {

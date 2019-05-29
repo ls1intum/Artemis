@@ -2,7 +2,6 @@
 name: "🐛 Bug report"
 about: Something on ArTEMiS is not working as expected? Create a report to help us
   improve.
-title: "🐛 "
 labels: bug
 assignees: jpbernius, krusche
 

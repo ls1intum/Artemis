@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.net.URL;
+
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-
-import java.net.URL;
 
 public interface VersionControlService {
 
@@ -12,8 +12,8 @@ public interface VersionControlService {
     public void configureRepository(URL repositoryUrl, String username);
 
     /**
-     * This creates a WebHook on the Version Control System that notifies the given URL about pushes to the repository.
-     * Multiple calls won't affect the result as the implementation must ensure that there is only one WebHook per URL.
+     * This creates a WebHook on the Version Control System that notifies the given URL about pushes to the repository. Multiple calls won't affect the result as the implementation
+     * must ensure that there is only one WebHook per URL.
      *
      * @param repositoryUrl   The repository to create the hook on
      * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.
@@ -24,14 +24,14 @@ public interface VersionControlService {
     /**
      * Add a Bamboo-Service on the VCS-Server
      *
-     * @param projectKey              The project key
-     * @param repositorySlug          The repository slug
-     * @param bambooUrl               The base URL of the Bamboo-Server
-     * @param buildKey                The buildKey (including Project and Build Plan)
-     * @param bambooUsername          The Bamboo Username
-     * @param bambooPassword          The Bamboo Password
+     * @param projectKey     The project key
+     * @param repositorySlug The repository slug
+     * @param bambooUrl      The base URL of the Bamboo-Server
+     * @param buildKey       The buildKey (including Project and Build Plan)
+     * @param bambooUsername The Bamboo Username
+     * @param bambooPassword The Bamboo Password
      */
-    //TODO: we should rename this method, because it's not very clear what it means
+    // TODO: we should rename this method, because it's not very clear what it means
     public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
 
     /**
@@ -59,17 +59,17 @@ public interface VersionControlService {
     /**
      * Get the clone URL used for cloning
      *
-     * @param projectKey              The project key
-     * @param repositorySlug          The repository slug
-     * @return                        The clone URL
+     * @param projectKey     The project key
+     * @param repositorySlug The repository slug
+     * @return The clone URL
      */
     public URL getCloneURL(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
      *
-     * @param repositoryUrl   repository URL
-     * @return                whether the repository is valid
+     * @param repositoryUrl repository URL
+     * @return whether the repository is valid
      */
     public Boolean repositoryUrlIsValid(URL repositoryUrl);
 
@@ -93,8 +93,8 @@ public interface VersionControlService {
     /**
      * Creates a repository on the VCS.
      *
-     * @param repoName The name of repository
-     * @param projectKey The key of the project that contains the repository (must exist)
+     * @param repoName         The name of repository
+     * @param projectKey       The key of the project that contains the repository (must exist)
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws Exception if the repository could not be created
      */

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import io.github.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
+import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
 @EnableAsync
@@ -44,5 +46,15 @@ public class AsyncConfiguration implements AsyncConfigurer {
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new SimpleAsyncUncaughtExceptionHandler();
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.setScheduler(scheduledTaskExecutor());
+    }
+
+    @Bean
+    public Executor scheduledTaskExecutor() {
+        return Executors.newScheduledThreadPool(jHipsterProperties.getAsync().getCorePoolSize());
     }
 }
