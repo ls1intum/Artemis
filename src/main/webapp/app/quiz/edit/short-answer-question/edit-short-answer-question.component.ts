@@ -18,9 +18,9 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     providers: [ArtemisMarkdown],
 })
 export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
-    @ViewChild('questionEditor')
+    @ViewChild('questionEditor', {static: false})
     private questionEditor: AceEditorComponent;
-    @ViewChild('clickLayer')
+    @ViewChild('clickLayer', {static: false})
     private clickLayer: ElementRef;
 
     @Input()

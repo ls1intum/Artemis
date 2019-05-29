@@ -16,8 +16,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
-    @ViewChild('editorContainer') editorContainer: ElementRef;
-    @ViewChild('resizeContainer') resizeContainer: ElementRef;
+    @ViewChild('editorContainer', {static: false}) editorContainer: ElementRef;
+    @ViewChild('resizeContainer', {static: false}) resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
     @Input() feedbacks: Feedback[] = [];

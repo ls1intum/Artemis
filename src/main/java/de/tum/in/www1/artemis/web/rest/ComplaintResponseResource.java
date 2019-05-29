@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,13 +13,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ComplaintResponseService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -37,19 +41,20 @@ public class ComplaintResponseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private ComplaintRepository complaintRepository;
+    private final ComplaintResponseRepository complaintResponseRepository;
 
-    private ComplaintResponseRepository complaintResponseRepository;
+    private final ComplaintRepository complaintRepository;
 
-    private ComplaintResponseService complaintResponseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
-    private AuthorizationCheckService authorizationCheckService;
+    private final UserService userService;
 
-    public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService) {
-        this.complaintResponseService = complaintResponseService;
+    public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.userService = userService;
     }
 
     /**

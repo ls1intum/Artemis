@@ -34,10 +34,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class); // TODO MJ add logging or remove unused logger
 
     private static final String ENTITY_NAME = "modelingAssessment";
-    
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-    
+
     private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with existing assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
 
     private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";

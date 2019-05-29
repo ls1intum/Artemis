@@ -10,7 +10,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     styleUrls: ['./category-selector.scss'],
 })
 export class CategorySelectorComponent implements OnChanges {
-    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, {static: false}) colorSelector: ColorSelectorComponent;
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
     @Input() exerciseCategories: ExerciseCategory[];

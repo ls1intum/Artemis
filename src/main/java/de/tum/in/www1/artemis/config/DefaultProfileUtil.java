@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.core.env.Environment;
 
 import io.github.jhipster.config.JHipsterConstants;
 

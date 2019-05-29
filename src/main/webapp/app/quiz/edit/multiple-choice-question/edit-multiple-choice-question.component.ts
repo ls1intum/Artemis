@@ -13,7 +13,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     providers: [ArtemisMarkdown],
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {
-    @ViewChild('markdownEditor')
+    @ViewChild('markdownEditor', {static: false})
     private markdownEditor: MarkdownEditorComponent;
 
     @Input()

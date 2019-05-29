@@ -15,7 +15,7 @@ const sass = require('sass');
 
 module.exports = webpackMerge(commonConfig({ env: ENV }), {
     // Enable source maps. Please note that this will slow down the build.
-    // You have to enable it in UglifyJSPlugin config below and in tsconfig-aot.json as well
+    // You have to enable it in Terser config below and in tsconfig-aot.json as well
     devtool: 'source-map',
     entry: {
         polyfills: './src/main/webapp/app/polyfills',
@@ -91,12 +91,12 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
             new TerserPlugin({
                 parallel: true,
                 cache: true,
+                sourceMap: true, // Enable source maps. Please note that this will slow down the build
                 terserOptions: {
                     ecma: 8,
                     ie8: false,
                     toplevel: true,
                     module: true,
-                    sourceMap: true, // Enable source maps. Please note that this will slow down the build
                     compress: {
                         dead_code: true,
                         warnings: false,

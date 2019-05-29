@@ -42,13 +42,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
-    @ViewChild('aceEditor')
+    @ViewChild('aceEditor', {static: false})
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
         autoUpdateContent: true,
         mode: 'markdown',
     };
-    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, {static: false}) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
@@ -98,7 +98,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
-    @ContentChild('preview') previewChild: ElementRef;
+    @ContentChild('preview', {static: false}) previewChild: ElementRef;
 
     /** Resizable constants **/
     @Input()

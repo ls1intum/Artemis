@@ -42,7 +42,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Output()
     selectedFileChange = new EventEmitter<string>();
 
-    @ViewChild('treeview')
+    @ViewChild('treeview', {static: false})
     treeview: TreeviewComponent;
 
     selectedFileValue: string;
@@ -52,8 +52,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     compressFolders = true;
     compressedTreeItems: string[];
 
-    @ViewChild('renamingInput') renamingInput: ElementRef;
-    @ViewChild('creatingInput') creatingInput: ElementRef;
+    @ViewChild('renamingInput', {static: false}) renamingInput: ElementRef;
+    @ViewChild('creatingInput', {static: false}) creatingInput: ElementRef;
 
     // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;

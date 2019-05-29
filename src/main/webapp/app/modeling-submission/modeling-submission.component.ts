@@ -25,7 +25,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 })
 // TODO CZ: move assessment stuff to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild(ModelingEditorComponent)
+    @ViewChild(ModelingEditorComponent, {static: false})
     modelingEditor: ModelingEditorComponent;
 
     private subscription: Subscription;
