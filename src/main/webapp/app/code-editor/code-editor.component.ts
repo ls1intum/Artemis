@@ -1,12 +1,13 @@
 import * as $ from 'jquery';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { LocalStorageService } from 'ngx-webstorage';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription } from 'rxjs/Subscription';
 import { difference as _difference } from 'lodash';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
-import { catchError, map as rxMap, switchMap, tap, flatMap } from 'rxjs/operators';
+import { catchError, flatMap, map as rxMap, switchMap, tap } from 'rxjs/operators';
 
 import { BuildLogEntryArray } from 'app/entities/build-log';
 
@@ -14,7 +15,7 @@ import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { AnnotationArray, Session } from '../entities/ace-editor';
+import { AnnotationArray, CommitState, Session } from '../entities/ace-editor';
 import { WindowRef } from '../core/websocket/window.service';
 
 import Interactable from '@interactjs/core/Interactable';
@@ -23,10 +24,11 @@ import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
 import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable, throwError } from 'rxjs';
-import { ResultService, Result } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { TranslateService } from '@ngx-translate/core';
-import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CodeEditorResetModalComponent } from 'app/code-editor/actions/code-editor-reset-modal.component';
 
 @Component({
     selector: 'jhi-editor',
@@ -56,6 +58,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     constructor(
         private route: ActivatedRoute,
+        private router: Router,
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
@@ -63,6 +66,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private localStorageService: LocalStorageService,
         private jhiAlertService: JhiAlertService,
         private translateService: TranslateService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -74,48 +78,52 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             const participationId = Number(params['participationId']);
-            // First: Load participation, which is needed for all successive calls
-            this.loadParticipation(participationId)
-                .pipe(
-                    // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
-                    switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
-                    // Load the participation with its result and result details, so that sub components don't try to also load the details
-                    flatMap(participation => {
-                        const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
-                        return latestResult
-                            ? this.loadResultDetails(latestResult).pipe(
-                                  rxMap(feedback => {
-                                      if (feedback) {
-                                          participation.results[0].feedbacks = feedback;
-                                      }
-                                      return participation;
-                                  }),
-                              )
-                            : Observable.of(participation);
-                    }),
-                    tap(participation => (this.participation = participation)),
-                    switchMap(() =>
-                        this.checkIfRepositoryIsClean().pipe(
-                            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
-                            catchError(err => {
-                                if (err && err.status) {
-                                    this.isInConflict = true;
-                                }
-                                return throwError('checkoutConflict');
-                            }),
-                        ),
-                    ),
-                    tap(commitState => (this.commitState = commitState)),
-                    tap(() => this.loadSession()),
-                )
-                .subscribe(
-                    () => {},
-                    err => {
-                        this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
-                        this.onError(err);
-                    },
-                );
+            this.init(participationId);
         });
+    }
+
+    init(participationId: number) {
+        // First: Load participation, which is needed for all successive calls
+        this.loadParticipation(participationId)
+            .pipe(
+                // If the participation can't be found, throw a fatal error - the exercise can't be conducted without a participation
+                switchMap(participation => (participation ? Observable.of(participation) : throwError('participationNotFound'))),
+                // Load the participation with its result and result details, so that sub components don't try to also load the details
+                flatMap(participation => {
+                    const latestResult = participation.results && participation.results.length ? participation.results[0] : null;
+                    return latestResult
+                        ? this.loadResultDetails(latestResult).pipe(
+                              rxMap(feedback => {
+                                  if (feedback) {
+                                      participation.results[0].feedbacks = feedback;
+                                  }
+                                  return participation;
+                              }),
+                          )
+                        : Observable.of(participation);
+                }),
+                tap(participation => (this.participation = participation)),
+                switchMap(() =>
+                    this.checkIfRepositoryIsClean().pipe(
+                        rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+                        catchError(err => {
+                            if (err && err.status) {
+                                this.isInConflict = true;
+                            }
+                            return throwError('checkoutConflict');
+                        }),
+                    ),
+                ),
+                tap(commitState => (this.commitState = commitState)),
+                tap(() => this.loadSession()),
+            )
+            .subscribe(
+                () => {},
+                err => {
+                    this.commitState = CommitState.COULD_NOT_BE_RETRIEVED;
+                    this.onError(err);
+                },
+            );
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
@@ -428,6 +436,20 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.commitState = CommitState.WANTS_TO_COMMIT;
             this.editor.saveChangedFiles();
         }
+    }
+
+    openResetModal() {
+        const modalRef = this.modalService.open(CodeEditorResetModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.participation = this.participation;
+        modalRef.componentInstance.parent = this;
+    }
+
+    onResetSuccess() {
+        this.isInConflict = false;
+        const participation = this.participation;
+        this.participation = undefined;
+        this.commitState = CommitState.UNDEFINED;
+        this.init(participation.id);
     }
 
     /**

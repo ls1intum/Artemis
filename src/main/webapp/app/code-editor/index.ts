@@ -10,5 +10,6 @@ export * from './instructions/code-editor-instructions.component';
 export * from './instructions/code-editor-instructions-result-detail';
 export * from './status/code-editor-status.component';
 export * from './actions/code-editor-actions.component';
+export * from './actions/code-editor-reset-modal.component';
 export { EditorState } from 'app/entities/ace-editor/editor-state.model';
 export { CommitState } from 'app/entities/ace-editor/commit-state.model';

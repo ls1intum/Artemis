@@ -23,6 +23,10 @@ export class RepositoryService {
     buildlogs(participationId: number): Observable<BuildLogEntryArray> {
         return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
+
+    reset(participationId: number): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/reset`, {});
+    }
 }
 
 @Injectable({ providedIn: 'root' })

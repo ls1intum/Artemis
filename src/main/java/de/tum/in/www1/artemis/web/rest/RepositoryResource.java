@@ -82,7 +82,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -119,7 +119,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -173,7 +173,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -219,7 +219,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -256,7 +256,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -295,7 +295,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -334,7 +334,7 @@ public class RepositoryResource {
 
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -361,13 +361,15 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         RepositoryStatusDTO status = new RepositoryStatusDTO();
         status.isClean = gitService.get().isClean(repository);
-
-        if (status.isClean) {
-            gitService.get().pull(repository);
-        }
 
         return new ResponseEntity<>(status, HttpStatus.OK);
     }
@@ -389,6 +391,23 @@ public class RepositoryResource {
 
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
         return new ResponseEntity<>(logs, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/repository/{participationId}/reset")
+    public ResponseEntity<Void> resetRepository(@PathVariable Long participationId) {
+        log.debug("REST request to perform reset: {}", participationId);
+
+        Participation participation = participationService.findOne(participationId);
+        ResponseEntity<Void> failureResponse = checkParticipation(participation);
+        if (failureResponse != null)
+            return failureResponse;
+        try {
+            gitService.get().performHardReset(participation);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        catch (IOException | InterruptedException | GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private boolean userHasPermissions(Participation participation) {

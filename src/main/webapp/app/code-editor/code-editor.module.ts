@@ -25,6 +25,7 @@ import { CodeEditorStatusComponent } from './status/code-editor-status.component
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
+import { CodeEditorResetModalComponent } from 'app/code-editor/actions/code-editor-reset-modal.component';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -48,6 +49,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         EditorInstructionsResultDetailComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
+        CodeEditorResetModalComponent,
     ],
     exports: [CodeEditorComponent],
     entryComponents: [
@@ -59,6 +61,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ResultComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
+        CodeEditorResetModalComponent,
     ],
     providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

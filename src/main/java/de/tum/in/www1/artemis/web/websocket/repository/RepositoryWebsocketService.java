@@ -114,7 +114,7 @@ public class RepositoryWebsocketService {
         // Git repository must be available to update a file
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
+            repository = gitService.get().getOrCheckoutRepository(participation, true);
         }
         catch (CheckoutConflictException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");

@@ -145,7 +145,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
             try {
-                Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
+                Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 gitService.commitAndPush(repo, "Setup");
                 ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
                 if (exercise == null) {

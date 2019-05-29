@@ -171,9 +171,9 @@ public class ProgrammingExerciseService {
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
         Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
-        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
-        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl);
+        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
+        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
         try {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
@@ -322,9 +322,9 @@ public class ProgrammingExerciseService {
         Repository testRepository;
 
         try {
-            solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
-            exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
-            testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+            solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
+            exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
+            testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
             gitService.pull(solutionRepository);
             gitService.pull(exerciseRepository);
             gitService.pull(testRepository);

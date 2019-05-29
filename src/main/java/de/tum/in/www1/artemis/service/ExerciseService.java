@@ -324,7 +324,7 @@ public class ExerciseService {
 
                 Repository repo;
                 try {
-                    repo = gitService.get().getOrCheckoutRepository(participation);
+                    repo = gitService.get().getOrCheckoutRepository(participation, true);
                 }
                 catch (CheckoutConflictException ex) {
                     log.error("An error occurred while checking out the participation's repository.");
@@ -389,7 +389,7 @@ public class ExerciseService {
                         // 1. clone the repository
                         Repository repo;
                         try {
-                            repo = gitService.get().getOrCheckoutRepository(participation);
+                            repo = gitService.get().getOrCheckoutRepository(participation, true);
                         }
                         catch (CheckoutConflictException ex) {
                             log.error("An error occurred while checking out the participation's repository.");

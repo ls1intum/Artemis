@@ -77,9 +77,9 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException, CheckoutConflictException {
+    public Repository getOrCheckoutRepository(Participation participation, boolean pullChanges) throws IOException, InterruptedException, CheckoutConflictException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl);
+        Repository repository = getOrCheckoutRepository(repoUrl, pullChanges);
         repository.setParticipation(participation);
         return repository;
     }
@@ -92,7 +92,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException, CheckoutConflictException {
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullChanges) throws IOException, InterruptedException, CheckoutConflictException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -100,7 +100,9 @@ public class GitService {
         if (cachedRepositories.containsKey(localPath)) {
             // in this case we pull for changes to make sure the Git repo is up to date
             Repository repository = cachedRepositories.get(localPath);
-            pull(repository);
+            if (pullChanges) {
+                pull(repository);
+            }
             return repository;
         }
 
@@ -143,7 +145,7 @@ public class GitService {
         else {
             log.debug("Repository at " + localPath + " already exists");
             // in this case we pull for changes to make sure the Git repo is up to date
-            shouldPullChanges = true;
+            shouldPullChanges = pullChanges;
         }
 
         // Open the repository from the filesystem
@@ -447,6 +449,18 @@ public class GitService {
         Git git = new Git(repo);
         Status status = git.status().call();
         return status.isClean();
+    }
+
+    public void performHardReset(Participation participation) throws IOException, InterruptedException, GitAPIException {
+        try {
+            Repository repo = getOrCheckoutRepository(participation, false);
+            Git git = new Git(repo);
+            git.reset().setMode(ResetCommand.ResetType.HARD).call();
+        }
+        catch (IOException | InterruptedException | GitAPIException ex) {
+            log.error("Exception on resetting repository for participation {}: {}", participation.getId(), ex);
+            throw ex;
+        }
     }
 
     /**
