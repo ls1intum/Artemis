@@ -31,8 +31,9 @@
                                 {{ 'arTeMiSApp.instructorCourseDashboard.open' | translate }})
                             </li>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b>
-                                <a routerLink="/complaints" [queryParams]="{ courseId: course.id }">{{ stats.numberOfComplaints }}</a>
+                                <a routerLink="/complaints" [queryParams]="{ courseId: course.id }">
+                                    <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
+                                </a>
                                 ({{ stats.numberOfOpenComplaints }} {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                         </ul>
