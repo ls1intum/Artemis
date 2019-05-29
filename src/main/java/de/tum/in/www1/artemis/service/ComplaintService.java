@@ -141,31 +141,31 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
+    public List<Complaint> getAllComplaintsByCourseId(Long courseId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
 
-        return filterOutStudentFromComplaints(complaints);
+        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
+    public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
 
-        return filterOutStudentFromComplaints(complaints);
+        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
+    public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
 
-        return filterOutStudentFromComplaints(complaints);
+        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
+    public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
 
-        return filterOutStudentFromComplaints(complaints);
+        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {

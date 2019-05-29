@@ -148,7 +148,7 @@ public class ComplaintResource {
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long courseId, Principal principal) {
+            @RequestParam(required = false) Long courseId) {
         if (tutorId == null && exerciseId == null && courseId == null) {
             throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
         }
@@ -180,7 +180,6 @@ public class ComplaintResource {
                 throw new AccessForbiddenException("Insufficient permission for these complaints");
             }
 
-            // Only instructors can access all complaints about a course without filtering by tutorId
             if (!isAtLeastInstructor) {
                 tutorId = userService.getUser().getId();
             }
@@ -188,10 +187,10 @@ public class ComplaintResource {
             List<Complaint> complaints;
 
             if (tutorId == null) {
-                complaints = complaintService.getAllComplaintsByCourseId(courseId);
+                complaints = complaintService.getAllComplaintsByCourseId(courseId, isAtLeastInstructor);
             }
             else {
-                complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
+                complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
             }
 
             return ResponseEntity.ok(complaints);
@@ -219,10 +218,10 @@ public class ComplaintResource {
         List<Complaint> complaints;
 
         if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
+            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId, isAtLeastInstructor);
         }
         else {
-            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
+            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId, isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(complaints);

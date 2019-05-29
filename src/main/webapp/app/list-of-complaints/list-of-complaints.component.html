@@ -16,12 +16,14 @@
         <table class="table" [hidden]="complaints.length === 0">
             <thead>
                 <tr>
-                    <th class="col-xs-1">#</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.complaint.listOfComplaints.exercise' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.complaint.listOfComplaints.submissionId' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.complaint.listOfComplaints.login' | translate }}</th>
-                    <th class="col-xs-3">{{ 'arTeMiSApp.complaint.listOfComplaints.name' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.complaint.listOfComplaints.actions' | translate }}</th>
+                    <th>#</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.exercise' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.submissionId' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentName' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.actions' | translate }}</th>
                 </tr>
             </thead>
 
@@ -45,6 +47,14 @@
 
                     <td>
                         <span>{{ complaint.result?.assessor?.firstName }} {{ complaint.result?.assessor?.lastName }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.student?.login }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
                     </td>
 
                     <td class="text-center">

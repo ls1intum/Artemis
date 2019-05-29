@@ -15,6 +15,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 })
 export class ListOfComplaintsComponent implements OnInit {
     public complaints: Complaint[] = [];
+    public hasStudentInformation = false;
 
     private courseId: number;
     private exerciseId: number;
@@ -51,7 +52,16 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
 
-        complaintResponse.subscribe(res => (this.complaints = res.body), (err: HttpErrorResponse) => this.onError(err.message));
+        complaintResponse.subscribe(
+            res => {
+                this.complaints = res.body;
+
+                if (this.complaints.length > 0 && this.complaints[0].student) {
+                    this.hasStudentInformation = true;
+                }
+            },
+            (err: HttpErrorResponse) => this.onError(err.message),
+        );
     }
 
     openAssessmentEditor(complaint: Complaint) {

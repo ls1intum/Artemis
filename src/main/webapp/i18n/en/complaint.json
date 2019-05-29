@@ -34,8 +34,10 @@
             "listOfComplaints": {
                 "exercise": "Exercise",
                 "submissionId": "Submission ID",
-                "login": "Login",
-                "name": "Name",
+                "reviewerLogin": "Reviewer's Login",
+                "reviewerName": "Reviewer's Name",
+                "studentLogin": "Student's Login",
+                "studentName": "Student's Name",
                 "actions": "Actions",
                 "title": "List of complaints"
             }

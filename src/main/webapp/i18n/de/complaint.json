@@ -34,8 +34,10 @@
             "listOfComplaints": {
                 "exercise": "Übung",
                 "submissionId": "Einreichung ID",
-                "login": "Login",
-                "name": "Name",
+                "reviewerLogin": "Prüfer-Login",
+                "reviewerName": "Prüfer-Name",
+                "studentLogin": "Schüler-Login",
+                "studentName": "Schüler-Name",
                 "actions": "Aktionen",
                 "title": "Liste der Beschwerden"
             }
