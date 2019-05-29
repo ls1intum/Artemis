@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 
-import com.atlassian.bamboo.specs.api.builders.plan.dependencies.Dependencies;
-import com.atlassian.bamboo.specs.api.builders.plan.dependencies.DependenciesConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -25,6 +23,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.Stage;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
+import com.atlassian.bamboo.specs.api.builders.plan.dependencies.Dependencies;
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
@@ -114,11 +113,10 @@ public class BambooBuildPlanService {
         final String instructorGroupName = course.getInstructorGroupName();
 
         Plan plan = new Plan(createBuildProject(projectName, projectKey), planName, planName).description(planDescription)
-            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-            .planRepositories(
-                createBuildPlanRepository(TEST_REPO_NAME, projectKey, testVcsRepositorySlug)
-            ).dependencies(new Dependencies().childPlans(templateRepositoryPlan.getIdentifier(), solutionRepositoryPlan.getIdentifier()))
-            .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+                .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+                .planRepositories(createBuildPlanRepository(TEST_REPO_NAME, projectKey, testVcsRepositorySlug))
+                .dependencies(new Dependencies().childPlans(templateRepositoryPlan.getIdentifier(), solutionRepositoryPlan.getIdentifier())).triggers(new BitbucketServerTrigger())
+                .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
 
         bambooServer.publish(plan);
 

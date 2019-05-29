@@ -23,14 +23,13 @@ public interface ContinuousIntegrationService<T> {
      */
     public T createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
-
     /**
-     * Create the test build plan and assigns the template and solution build plans as childs to it,
-     * so that they get executed on every build run of the test repository.
-     * @param exercise                    a programming exercise with the required information to create the base build plan
-     * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
-     * @param solutionRepositoryPlan      the plan of the solution repository
-     * @param templateRepositoryPlan      the plan of the template repository
+     * Create the test build plan and assigns the template and solution build plans as childs to it, so that they get executed on every build run of the test repository.
+     * 
+     * @param exercise               a programming exercise with the required information to create the base build plan
+     * @param testVcsRepositorySlug  the slug of the test repository, i.e. the unique identifier
+     * @param solutionRepositoryPlan the plan of the solution repository
+     * @param templateRepositoryPlan the plan of the template repository
      * @return
      */
     public T createTestBuildPlanForExercise(ProgrammingExercise exercise, String testVcsRepositorySlug, T solutionRepositoryPlan, T templateRepositoryPlan);

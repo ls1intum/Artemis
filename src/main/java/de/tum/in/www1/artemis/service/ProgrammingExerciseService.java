@@ -207,8 +207,11 @@ public class ProgrammingExerciseService {
         // create the
         // buildPlans then
         // (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        Object templatePlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
-        Object solutionPlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with
+        Object templatePlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise
+                                                                                                                                                          // (students)
+        Object solutionPlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the
+                                                                                                                                                              // solution
+                                                                                                                                                              // (instructors) with
         continuousIntegrationService.get().createTestBuildPlanForExercise(programmingExercise, testRepoName, solutionPlan, templatePlan); // test plan repository
 
         // save to get the id required for the webhook
