@@ -14,7 +14,6 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
@@ -56,7 +55,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     automaticSubmissionWebsocketChannel: string;
 
-    problemStatement: string;
     showComplaintForm = false;
     // indicates if there is a complaint for the result of the submission
     hasComplaint: boolean;
@@ -64,6 +62,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled.
     resultOlderThanOneWeek: boolean;
+    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
+    isAfterAssessmentDueDate: boolean;
+    isLoading: boolean;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -76,11 +77,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modalService: NgbModal,
         private translateService: TranslateService,
         private router: Router,
-        private artemisMarkdown: ArtemisMarkdown,
         private participationWebsocketService: ParticipationWebsocketService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
+        this.isLoading = true;
     }
 
     ngOnInit(): void {
@@ -97,26 +98,23 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
                         if (this.modelingExercise.course) {
                             this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
                                 this.numberOfAllowedComplaints = allowedComplaints;
                             });
                         }
-                        /**
-                         * set diagramType to class diagram if exercise is null
-                         */
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                         }
                         this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
+                        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
                             this.umlModel = JSON.parse(this.submission.model);
                             this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                         }
                         this.subscribeToWebsockets();
-                        if (this.submission.result) {
+                        if (this.submission.result && this.isAfterAssessmentDueDate) {
                             this.result = this.submission.result;
                         }
                         if (this.submission.submitted && this.result && this.result.completionDate) {
@@ -130,6 +128,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             });
                         }
                         this.setAutoSaveTimer();
+                        this.isLoading = false;
                     },
                     error => {
                         if (error.status === 403) {
@@ -174,7 +173,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.umlModel = JSON.parse(this.submission.model);
                     this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
                 }
-                if (this.submission.result && this.submission.result.completionDate) {
+                if (this.submission.result && this.submission.result.completionDate && this.isAfterAssessmentDueDate) {
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
@@ -295,7 +294,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
                     // Compass has already calculated a result
-                    if (this.result && this.result.assessmentType) {
+                    if (this.result && this.result.assessmentType && this.isAfterAssessmentDueDate) {
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);

@@ -230,7 +230,15 @@ public class ResultService {
         resultCopy.setFeedbacks(originalResult.getFeedbacks());
         resultCopy.setAssessor(originalResult.getAssessor());
         resultCopy.setAssessmentType(originalResult.getAssessmentType());
-        resultCopy.setHasComplaint(originalResult.getHasComplaint());
+
+        Optional<Boolean> hasComplaint = originalResult.getHasComplaint();
+        if (hasComplaint.isPresent()) {
+            resultCopy.setHasComplaint(originalResult.getHasComplaint().get());
+        }
+        else {
+            resultCopy.setHasComplaint(false);
+        }
+
         return objectMapper.writeValueAsString(resultCopy);
     }
 }

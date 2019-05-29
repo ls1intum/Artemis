@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -241,6 +242,9 @@ public class ExerciseResource {
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
         data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
 
+        List<StatsTutorLeaderboardDTO> tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForExercise(id);
+        data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
+
         return ResponseEntity.ok(data);
     }
 
@@ -378,8 +382,6 @@ public class ExerciseResource {
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -423,6 +424,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
+        long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
 
         if (!userHasPermission(course)) {
@@ -437,12 +439,24 @@ public class CourseResource {
         List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true, true);
 
         for (Exercise exercise : interestingExercises) {
-            Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
+            Set<Participation> participationsForExercise = participations.stream()
+                    .filter(participation -> participation.getExercise().getId().equals(exercise.getId()) && participation.getInitializationState() == InitializationState.FINISHED)
+                    .collect(Collectors.toSet());
+            Set<Participation> participationsWithResult = participationsForExercise.stream().filter(participation -> {
+                Result result = participation.findLatestResult();
+
+                return result != null && result.isRated();
+            }).collect(Collectors.toSet());
+            Set<Participation> participationsWithComplaints = participationsWithResult.stream()
+                    .filter(participation -> participation.findLatestResult().getHasComplaint().isPresent() && participation.findLatestResult().getHasComplaint().get())
                     .collect(Collectors.toSet());
 
-            exercise.setParticipations(participationsForExercise);
+            exercise.setNumberOfParticipations(participationsForExercise.size());
+            exercise.setNumberOfAssessments(participationsWithResult.size());
+            exercise.setNumberOfComplaints(participationsWithComplaints.size());
         }
-
+        long end = System.currentTimeMillis();
+        log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
@@ -450,7 +464,7 @@ public class CourseResource {
      * GET /courses/:id/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints
+     * assessments - number of complaints - number of open complaints - tutor leaderboard data
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
@@ -459,7 +473,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
-
+        long start = System.currentTimeMillis();
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -475,6 +489,16 @@ public class CourseResource {
         stats.numberOfComplaints = numberOfComplaints;
         stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
 
+        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+
+        stats.numberOfSubmissions = numberOfSubmissions;
+        stats.numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+
+        stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
+
+        long end = System.currentTimeMillis();
+        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (end - start) + "ms");
         return ResponseEntity.ok(stats);
     }
 

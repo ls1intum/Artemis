@@ -164,7 +164,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
+
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
             List<Conflict> conflicts = new ArrayList<>();
@@ -208,7 +209,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         return ResponseEntity.ok(result);
     }
 

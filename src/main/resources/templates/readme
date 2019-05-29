@@ -1,4 +1,4 @@
-# ${exerciseName}
+# Sorting with the Strategy Pattern
 
 In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
@@ -64,10 +64,10 @@ class MergeSort {
   +<color:testsColor(testMethods[MergeSort])>performSort(List<Date>)</color>
 }
 
-MergeSort -up-|> SortStrategy #testsColor(testFields[MergeSort])
-BubbleSort -up-|> SortStrategy #testsColor(testFields[BubbleSort])
-Policy -right-> Context #testsColor(testFields[Policy]): context
-Context -right-> SortStrategy #testsColor(testFields[Context]): sortAlgorithm
+MergeSort -up-|> SortStrategy #testsColor(testAttributes[MergeSort])
+BubbleSort -up-|> SortStrategy #testsColor(testAttributes[BubbleSort])
+Policy -right-> Context #testsColor(testAttributes[Policy]): context
+Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
