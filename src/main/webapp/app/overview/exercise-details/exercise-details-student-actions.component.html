@@ -281,7 +281,7 @@
                 exercise.participations &&
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
-                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !ratedResult)
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -298,7 +298,8 @@
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
                 exercise.participations[0].results &&
-                exercise.participations[0].results.length > 0
+                exercise.participations[0].results.length > 0 &&
+                ratedResult
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
