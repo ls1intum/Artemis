@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +80,14 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+
         Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
 
         HashMap<String, FileType> fileList = new HashMap<>();
@@ -109,7 +117,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         Optional<File> file = gitService.get().getFileByName(repository, filename);
         if (!file.isPresent()) {
             return notFound();
@@ -157,7 +171,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         if (gitService.get().getFileByName(repository, filename).isPresent()) {
             // File already existing. Conflict.
             return new ResponseEntity<>(HttpStatus.CONFLICT);
@@ -197,7 +217,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         Files.createDirectory(Paths.get(repository.getLocalPath() + File.separator + folderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName + File.separator + ".keep"), repository);
@@ -228,7 +254,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
         if (!file.isPresent()) {
             return notFound();
@@ -261,7 +293,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         Optional<File> file = gitService.get().getFileByName(repository, filename);
         if (!file.isPresent()) {
             return notFound();
@@ -275,27 +313,6 @@ public class RepositoryResource {
         }
         repository.setContent(null); // invalidate cache
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
-    }
-
-    /**
-     * GET /repository/{participationId}/pull: Pull into the participation repository
-     *
-     * @param participationId Participation ID
-     * @return
-     * @throws IOException
-     */
-    @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
-        log.debug("REST request to commit Repository for Participation : {}", participationId);
-
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null)
-            return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        gitService.get().pull(repository);
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -315,7 +332,13 @@ public class RepositoryResource {
         if (failureResponse != null)
             return failureResponse;
 
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         gitService.get().stageAllChanges(repository);
         gitService.get().commitAndPush(repository, "Changes by Online Editor");
         return new ResponseEntity<>(HttpStatus.OK);

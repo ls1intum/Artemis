@@ -16,6 +16,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
@@ -76,7 +77,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException, CheckoutConflictException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
@@ -91,7 +92,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException, CheckoutConflictException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -226,16 +227,18 @@ public class GitService {
      * @return The PullResult which contains FetchResult and MergeResult.
      * @throws GitAPIException
      */
-    public PullResult pull(Repository repo) {
+    public PullResult pull(Repository repo) throws CheckoutConflictException {
+        Git git = new Git(repo);
         try {
-            Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
             return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         }
+        catch (CheckoutConflictException ex) {
+            throw ex;
+        }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
-            // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
         return null;
     }

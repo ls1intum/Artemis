@@ -20,10 +20,6 @@ export class RepositoryService {
         return this.http.post<void>(`${this.resourceUrl}/${participationId}/commit`, {});
     }
 
-    pull(participationId: number): Observable<void> {
-        return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
-    }
-
     buildlogs(participationId: number): Observable<BuildLogEntryArray> {
         return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }

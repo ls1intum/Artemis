@@ -52,6 +52,7 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     commitState = CommitState.UNDEFINED;
     isBuilding = false;
     isLoadingFiles = true;
+    isInConflict = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -93,7 +94,17 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                             : Observable.of(participation);
                     }),
                     tap(participation => (this.participation = participation)),
-                    switchMap(() => this.checkIfRepositoryIsClean()),
+                    switchMap(() =>
+                        this.checkIfRepositoryIsClean().pipe(
+                            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+                            catchError(err => {
+                                if (err && err.status) {
+                                    this.isInConflict = true;
+                                }
+                                return throwError('checkoutConflict');
+                            }),
+                        ),
+                    ),
                     tap(commitState => (this.commitState = commitState)),
                     tap(() => this.loadSession()),
                 )
@@ -154,11 +165,8 @@ export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @function checkIfRepositoryIsClean
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
-    checkIfRepositoryIsClean(): Observable<CommitState> {
-        return this.repositoryService.isClean(this.participation.id).pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
-        );
+    checkIfRepositoryIsClean(): Observable<any> {
+        return this.repositoryService.isClean(this.participation.id);
     }
 
     /**

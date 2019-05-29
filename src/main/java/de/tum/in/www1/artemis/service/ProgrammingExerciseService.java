@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -316,13 +317,22 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException
      */
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+        Repository solutionRepository;
+        Repository exerciseRepository;
+        Repository testRepository;
 
-        gitService.pull(solutionRepository);
-        gitService.pull(exerciseRepository);
-        gitService.pull(testRepository);
+        try {
+            solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
+            exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
+            testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+            gitService.pull(solutionRepository);
+            gitService.pull(exerciseRepository);
+            gitService.pull(testRepository);
+        }
+        catch (CheckoutConflictException ex) {
+            log.error("An exception occurred while checking out the exercise repositories", ex);
+            return false;
+        }
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();

@@ -15,12 +15,14 @@
             </ul>
         </div>
         <jhi-code-editor-actions
+            *ngIf="!isInConflict"
             [editorState]="editorState"
             [commitState]="commitState"
             [isBuilding]="isBuilding"
             [onSave]="editor.saveChangedFiles.bind(editor)"
             [onCommit]="commit.bind(this)"
         ></jhi-code-editor-actions>
+        <button *ngIf="isInConflict" class="btn btn-danger"><fa-icon icon="check-circle"></fa-icon> Resolve Conflict</button>
     </nav>
 
     <div class="editor-main">

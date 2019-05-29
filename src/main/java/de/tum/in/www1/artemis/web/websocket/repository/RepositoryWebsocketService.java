@@ -14,6 +14,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.naming.NoPermissionException;
 
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -114,6 +115,11 @@ public class RepositoryWebsocketService {
         Repository repository;
         try {
             repository = gitService.get().getOrCheckoutRepository(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", error);
+            return;
         }
         catch (IOException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");

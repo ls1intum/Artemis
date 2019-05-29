@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -321,7 +322,14 @@ public class ExerciseService {
 
                 boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
 
-                Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                Repository repo;
+                try {
+                    repo = gitService.get().getOrCheckoutRepository(participation);
+                }
+                catch (CheckoutConflictException ex) {
+                    log.error("An error occurred while checking out the participation's repository.");
+                    return null;
+                }
                 gitService.get().resetToOriginMaster(repo); // start with clean state
                 gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
@@ -379,7 +387,14 @@ public class ExerciseService {
                 try {
                     if (participation.getRepositoryUrl() != null) {     // ignore participations without repository URL
                         // 1. clone the repository
-                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        Repository repo;
+                        try {
+                            repo = gitService.get().getOrCheckoutRepository(participation);
+                        }
+                        catch (CheckoutConflictException ex) {
+                            log.error("An error occurred while checking out the participation's repository.");
+                            return;
+                        }
                         // 2. zip repository and collect the zip file
                         log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
