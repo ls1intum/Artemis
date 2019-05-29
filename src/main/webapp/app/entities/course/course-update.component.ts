@@ -21,7 +21,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
     styleUrls: ['./course-update.component.scss'],
 })
 export class CourseUpdateComponent implements OnInit {
-    @ViewChild(ColorSelectorComponent, {static: false}) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
     course: Course;

@@ -31,7 +31,7 @@ import { RenameFileChange, DeleteFileChange, FileChange } from 'app/entities/ace
     providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
-    @ViewChild('editor', {static: false})
+    @ViewChild('editor', { static: false })
     editor: AceEditorComponent;
 
     // This fetches a list of all supported editor modes and matches it afterwards against the file extension

@@ -14,8 +14,7 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
     providers: [ApollonDiagramService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
-
-    @ViewChild('editorContainer', {static: false}) editorContainer: ElementRef;
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
 
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;

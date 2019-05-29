@@ -10,9 +10,9 @@ import interact from 'interactjs';
     styleUrls: ['./modeling-editor.component.scss'],
 })
 export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
-    @ViewChild('editorContainer', {static: false})
+    @ViewChild('editorContainer', { static: false })
     editorContainer: ElementRef;
-    @ViewChild('resizeContainer', {static: false})
+    @ViewChild('resizeContainer', { static: false })
     resizeContainer: ElementRef;
     @Input()
     umlModel: UMLModel;

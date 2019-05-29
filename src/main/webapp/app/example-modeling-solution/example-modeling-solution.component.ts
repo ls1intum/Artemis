@@ -14,7 +14,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
     styleUrls: ['./example-modeling-solution.component.scss'],
 })
 export class ExampleModelingSolutionComponent implements OnInit {
-    @ViewChild(ModelingEditorComponent, {static: false})
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
     exercise: ModelingExercise;

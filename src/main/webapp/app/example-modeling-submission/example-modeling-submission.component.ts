@@ -24,9 +24,9 @@ import { ModelingAssessmentComponent } from 'app/modeling-assessment';
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
 export class ExampleModelingSubmissionComponent implements OnInit {
-    @ViewChild(ModelingEditorComponent, {static: false})
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
-    @ViewChild(ModelingAssessmentComponent, {static: false})
+    @ViewChild(ModelingAssessmentComponent, { static: false })
     assessmentEditor: ModelingAssessmentComponent;
 
     isNewSubmission: boolean;
