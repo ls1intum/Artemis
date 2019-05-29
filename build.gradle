@@ -248,7 +248,7 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testCompile "org.springframework.security:spring-security-test"
-    testCompile "org.mockito:mockito-core:2.27.0"
+    testCompile "org.mockito:mockito-core:2.28.1"
     testCompile "com.mattbertolini:liquibase-slf4j"
     testCompile "com.h2database:h2"
     testCompile 'org.awaitility:awaitility:3.1.6'
