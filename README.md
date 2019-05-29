@@ -3,7 +3,7 @@
 ![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
 ![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)
 
-This application was generated using JHipster 6.0.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.0.0](http://www.jhipster.tech/documentation-archive/v6.0.0).
+This application was generated using JHipster 6.0.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.0.1](http://www.jhipster.tech/documentation-archive/v6.0.1).
 
 **Current version:** 3.1.5
 
@@ -55,15 +55,15 @@ This allows the students to immediately recognize which tasks are already fulfil
 
 ## Development Setup
 
-Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 8, and TypeScript development on the application client in the browser using [Angular 7](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 8, and TypeScript development on the application client in the browser using [Angular 8](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
 
-1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of Artemis. (Please note that newer versions of Java might work, but are not yet supported)
+1. [Java 8 JDK or later](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of Artemis. (Please note that newer versions of Java might work, but are not yet supported)
 2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. (Please note that MySQL 8 is not yet supported)
-3. [Node.js](https://nodejs.org): We use Node (>=6.9.0) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. (Please note that Node 11 has an annoying bug, so it is recommended to use the latest version of Node 10.x)
-4. [Yarn 1.13.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+3. [Node.js](https://nodejs.org): We use Node (>=11.x) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. (Please note that Node 11 has an annoying bug, so it is recommended to use the latest version of Node 10.x)
+4. [Yarn 1.16.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
