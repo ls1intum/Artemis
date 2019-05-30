@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -96,7 +97,7 @@ public class ComplaintResource {
         User originalSubmissor = originalResult.getParticipation().getStudent();
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
 
-        long numberOfUnacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
+        long numberOfUnacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId, ComplaintType.MORE_FEEDBACK);
         if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
@@ -170,7 +171,7 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        long unacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
+        long unacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId, ComplaintType.MORE_FEEDBACK);
         return ResponseEntity.ok(Math.max(MAX_COMPLAINT_NUMBER_PER_STUDENT - unacceptedComplaints, 0));
     }
 

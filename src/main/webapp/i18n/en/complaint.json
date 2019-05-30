@@ -5,9 +5,6 @@
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",
             "description": "You can submit up to {{ maxComplaintNumber }} complaints in total in this course.",
             "descriptionExtended": "Every student is allowed to submit up to {{ maxComplaintNumber }} complaints in total in this course. You still have <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
-            "moreFeedback": "More feedback",
-            "moreFeedbackDescription": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
-            "moreFeedbackButton": "Request more feedback",
             "beDescriptive": "Please describe in detail why the assessment is wrong. Your complaint will then be evaluated by a second reviewer.",
             "alreadySubmitted": "You have already submitted a complaint on",
             "submit": "Submit a complaint",
@@ -31,6 +28,13 @@
                 "rejectComplaint": "Reject complaint",
                 "rejectComplaintTooltip": "Send complaint response and reject complaint"
             }
+        },
+        "moreFeedback": {
+            "title": "More feedback request",
+            "description": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
+            "button": "Request more feedback",
+            "info": "Submitting feedback request will not affect number of maximum complaints, but your score will remain unchanged.",
+            "response": "Response to more feedback request"
         }
     }
 }
