@@ -76,7 +76,7 @@
         "@angular/cdk": "7.3.7",
         "@angular/cli": "7.3.9",
         "@angular/compiler-cli": "7.2.15",
-        "@angular/language-service": "7.2.15",
+        "@angular/language-service": "8.0.0",
         "@ngtools/webpack": "7.3.9",
         "@types/ace": "0.0.42",
         "@types/angular": "1.6.54",
