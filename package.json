@@ -56,7 +56,7 @@
         "ngx-infinite-scroll": "7.1.0",
         "ngx-moment": "3.4.0",
         "ngx-treeview": "6.0.2",
-        "ngx-webstorage": "3.0.2",
+        "ngx-webstorage": "4.0.0",
         "remarkable": "1.7.1",
         "rxjs": "6.5.2",
         "rxjs-compat": "6.5.2",

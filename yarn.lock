@@ -8273,10 +8273,10 @@ ngx-treeview@6.0.2:
   resolved "https://registry.yarnpkg.com/ngx-treeview/-/ngx-treeview-6.0.2.tgz#2836a0f2c90999e22819527afbf07252c8e0ceb5"
   integrity sha512-RlXRGtesdghJfLcUzk9sDUaYTAxvuyf16vn4H19If7gYvbHHCRgpdZ2md6jQCppkcjsYNJ4ZP1WkAeqxH5FcDg==
 
-ngx-webstorage@3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-webstorage/-/ngx-webstorage-3.0.2.tgz#407d3a908ad598a22c544d5f0b760f81e5d301fd"
-  integrity sha512-9CJIChJSruqlgAtAjbqCOQdDvlAR40pQ8VnSeYIY4KF83K1yVfq/IpOaa5hzHC0+jcq1PwJ+1TUyeR9A8bVHeQ==
+ngx-webstorage@4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-webstorage/-/ngx-webstorage-4.0.0.tgz#8815afce08ac082b97a2461bd7a33d269dc5dc43"
+  integrity sha512-xcwsEAIcpNvYudn6RfpDNKFg5civJlppkRKoghy2Jd6bQyVLXbjxjPgo6BwxBPb8CJdWI4WARvbGeamY3K637g==
   dependencies:
     tslib "^1.9.0"
 
