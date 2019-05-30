@@ -522,9 +522,18 @@
         .click-layer {
             .drop-location {
                 .drag-item {
+                    .drag-item-text {
+                        @media (max-width: 812px) {
+                            padding: 0;
+                        }
+                    }
                     div {
+                        @media (max-width: 812px) {
+                            padding: 0 !important;
+                        }
+
                         span {
-                            @media (max-width: 812px) {
+                            @media (max-width: 480px) {
                                 font-size: 12px;
                             }
                         }
@@ -537,10 +546,14 @@
     .drag-and-drop-items {
         @media (orientation: landscape) {
             float: right;
+            margin-top: -5px;
             width: 49%;
         }
 
         .instructions {
+            @media (max-width: 812px) {
+                display: none;
+            }
             @media (orientation: landscape) {
                 margin: 0 0 10px 0;
             }
@@ -548,6 +561,18 @@
 
         .drag-items {
             width: 100%;
+
+            @media (orientation: landscape) {
+                margin: 0;
+            }
+
+            .drag-item {
+                height: auto;
+
+                .drag-item-picture {
+                    height: 160px;
+                }
+            }
         }
     }
 }
