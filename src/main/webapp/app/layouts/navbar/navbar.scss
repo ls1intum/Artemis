@@ -75,3 +75,8 @@ Logo styles
         }
     }
 }
+
+/* workaround for ng-bootstrap nav dropdown */
+.dropdown-menu .notification-container .show {
+    transform: translate(-357px, 0px);
+}
