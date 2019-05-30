@@ -34,7 +34,7 @@ import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileT
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService],
 })
 export class CodeEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild(CodeEditorAceComponent, { static: false }) editor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorAceComponent, { static: true }) editor: CodeEditorAceComponent;
 
     /** Dependencies as defined by the Editor component */
     participation: Participation;
