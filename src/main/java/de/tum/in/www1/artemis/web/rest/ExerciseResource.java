@@ -22,7 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -379,6 +381,10 @@ public class ExerciseResource {
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
+            if (exercise instanceof QuizExercise) {
+                sortQuizParticipationsFinishedFirst(participations);
+            }
+
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
@@ -397,5 +403,17 @@ public class ExerciseResource {
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+    }
+
+    /**
+     * Sort participations of quiz exercises so that finished participations come first.
+     */
+    private void sortQuizParticipationsFinishedFirst(List<Participation> participations) {
+        participations.sort((part1, part2) -> {
+            if (part1.getInitializationState() == part2.getInitializationState()) {
+                return 0;
+            }
+            return part2.getInitializationState() == InitializationState.FINISHED ? -1 : 1;
+        });
     }
 }

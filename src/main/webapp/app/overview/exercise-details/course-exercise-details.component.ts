@@ -88,7 +88,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Filter for participations that belong to the current user only. Additionally, remove all results that are not finished (i.e. completionDate is not set)
+     * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
+     * removed from the participations.
      */
     private filterParticipations(participations: Participation[]): Participation[] {
         if (!participations) {
