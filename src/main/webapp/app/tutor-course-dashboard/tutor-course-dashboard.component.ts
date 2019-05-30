@@ -31,7 +31,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    private tutor: User;
+    tutor: User;
 
     constructor(
         private courseService: CourseService,
@@ -74,6 +74,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfAssessments = res.body.numberOfAssessments;
                 this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
                 this.numberOfComplaints = res.body.numberOfComplaints;
+                this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);

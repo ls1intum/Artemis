@@ -183,10 +183,14 @@ export class ParticipationService {
             combinedParticipation.exercise = participations[0].exercise;
 
             participations.forEach(participation => {
-                combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
-                combinedParticipation.submissions = combinedParticipation.submissions
-                    ? combinedParticipation.submissions.concat(participation.submissions)
-                    : participation.submissions;
+                if (participation.results) {
+                    combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
+                }
+                if (participation.submissions) {
+                    combinedParticipation.submissions = combinedParticipation.submissions
+                        ? combinedParticipation.submissions.concat(participation.submissions)
+                        : participation.submissions;
+                }
             });
         }
         return combinedParticipation;

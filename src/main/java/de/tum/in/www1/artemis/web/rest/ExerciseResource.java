@@ -382,8 +382,6 @@ public class ExerciseResource {
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);
