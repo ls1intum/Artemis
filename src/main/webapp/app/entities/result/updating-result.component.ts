@@ -88,7 +88,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     subscribeForNewResults(exercise: Exercise) {
         this.accountService.identity().then(user => {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course);
+            const isInstructorInCourse = this.participation.student == null && exercise.course && this.accountService.isAtLeastInstructorInCourse(exercise.course);
             const isSameUser = this.participation.student && user.id === this.participation.student.id;
             const exerciseNotOver = exercise.dueDate == null || (moment(exercise.dueDate).isValid() && moment(exercise.dueDate).isAfter(moment()));
 
