@@ -413,7 +413,7 @@ public class ExerciseResource {
             if (part1.getInitializationState() == part2.getInitializationState()) {
                 return 0;
             }
-            return part2.getInitializationState() == InitializationState.FINISHED ? -1 : 1;
+            return part2.getInitializationState() == InitializationState.FINISHED ? 1 : -1;
         });
     }
 }
