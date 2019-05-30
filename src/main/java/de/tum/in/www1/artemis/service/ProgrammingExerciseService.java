@@ -139,8 +139,8 @@ public class ProgrammingExerciseService {
             // Filter all Eclipse .project files
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(s -> s.endsWith(".project")).collect(Collectors.toList());
 
-            for (String f : eclipseProjectFiles) {
-                File eclipseProjectFile = new File(f);
+            for (String eclipseProjectFilePath : eclipseProjectFiles) {
+                File eclipseProjectFile = new File(eclipseProjectFilePath);
                 // Check if file exists and full file name is .project and not just the file ending.
                 if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
                     continue;
@@ -172,8 +172,8 @@ public class ProgrammingExerciseService {
 
             // Filter all pom.xml files
             List<String> pomFiles = allRepoFiles.stream().filter(s -> s.endsWith("pom.xml")).collect(Collectors.toList());
-            for (String f : pomFiles) {
-                File pomFile = new File(f);
+            for (String pomFilePath : pomFiles) {
+                File pomFile = new File(pomFilePath);
                 // check if file exists and full file name is pom.xml and not just the file ending.
                 if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
                     continue;
