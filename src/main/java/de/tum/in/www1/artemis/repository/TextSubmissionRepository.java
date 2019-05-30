@@ -19,15 +19,20 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     List<TextSubmission> findByIdIn(List<Long> textSubmissionsId);
 
-    long countBySubmittedAndParticipation_Exercise_Id(boolean submitted, long exerciseId);
-
-    /**
-     * @param courseId  the course we are interested in
-     * @param submitted boolean to check if an exercise has been submitted or not
-     * @return number of submissions belonging to courseId with submitted status
-     */
-    long countByParticipation_Exercise_Course_IdAndSubmitted(Long courseId, boolean submitted);
-
     @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
+
+    /**
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date
+     */
+    @Query("SELECT COUNT (DISTINCT textSubmission) FROM TextSubmission textSubmission WHERE textSubmission.participation.exercise.course.id = :#{#courseId} AND textSubmission.submitted = TRUE AND textSubmission.submissionDate < textSubmission.participation.exercise.dueDate")
+    long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
+
+    /**
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date
+     */
+    @Query("SELECT COUNT (DISTINCT textSubmission) FROM TextSubmission textSubmission WHERE textSubmission.participation.exercise.id = :#{#exerciseId} AND textSubmission.submitted = TRUE AND textSubmission.submissionDate < textSubmission.participation.exercise.dueDate")
+    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
 }
