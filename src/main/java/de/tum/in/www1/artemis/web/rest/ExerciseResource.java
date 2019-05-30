@@ -22,13 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -45,8 +41,6 @@ public class ExerciseResource {
 
     private static final String ENTITY_NAME = "exercise";
 
-    private final ExerciseRepository exerciseRepository;
-
     private final ExerciseService exerciseService;
 
     private final UserService userService;
@@ -56,10 +50,6 @@ public class ExerciseResource {
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
 
     private final TutorParticipationService tutorParticipationService;
 
@@ -73,18 +63,14 @@ public class ExerciseResource {
 
     private final SubmissionRepository submissionRepository;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
-            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
-        this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.objectMapper = objectMapper;
@@ -381,10 +367,6 @@ public class ExerciseResource {
         if (exercise != null) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
-            if (exercise instanceof QuizExercise) {
-                sortQuizParticipationsFinishedFirst(participations);
-            }
-
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
@@ -403,17 +385,5 @@ public class ExerciseResource {
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
-    }
-
-    /**
-     * Sort participations of quiz exercises so that finished participations come first.
-     */
-    private void sortQuizParticipationsFinishedFirst(List<Participation> participations) {
-        participations.sort((part1, part2) -> {
-            if (part1.getInitializationState() == part2.getInitializationState()) {
-                return 0;
-            }
-            return part2.getInitializationState() == InitializationState.FINISHED ? 1 : -1;
-        });
     }
 }
