@@ -45,17 +45,13 @@
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.yourGradedResult' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="showResults && currentResult">
+            <div class="row mb-2" *ngIf="showResults && currentResult?.rated">
                 <div class="col-12 col-md-12">
                     <div class="row justify-content-between">
                         <div class="col">
                             <h4>
-                                <span class="badge w-100 badge-success" [ngClass]="exerciseRatedBadge(currentResult)">
-                                    {{
-                                        (currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded')
-                                            | translate
-                                            | uppercase
-                                    }}
+                                <span class="badge w-100 badge-success">
+                                    {{ 'arTeMiSApp.courseOverview.exerciseDetails.graded' | translate | uppercase }}
                                 </span>
                             </h4>
                         </div>
@@ -68,7 +64,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="showResults && !currentResult">
+            <div class="row mb-2" *ngIf="showResults && !currentResult?.rated">
                 <div class="col-auto">
                     <h6>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noGradedResult' | translate }}</h6>
                 </div>
