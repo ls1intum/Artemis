@@ -69,14 +69,29 @@
                     <h6>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noGradedResult' | translate }}</h6>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults">
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (!currentResult?.rated || sortedHistoryResult.length > 1)">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults">
+            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult.length > 1">
                 <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxScore"></jhi-result-history>
+                </div>
+            </div>
+            <div class="row justify-content-between" *ngIf="showResults && currentResult && !currentResult.rated && combinedParticipation.results.length === 1">
+                <div class="col">
+                    <h4>
+                        <span class="badge w-100 badge-success" [ngClass]="exerciseRatedBadge(currentResult)">
+                            {{ 'arTeMiSApp.courseOverview.exerciseDetails.notGraded' | translate | uppercase }}
+                        </span>
+                    </h4>
+                </div>
+                <div class="col text-left">
+                    <jhi-result [result]="currentResult" [participation]="combinedParticipation" showUngradedResults="true" short="true"></jhi-result>
+                </div>
+                <div class="col text-left d-none d-md-flex">
+                    <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate | amTimeAgo }})</h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
