@@ -43,8 +43,6 @@ public class ExerciseResource {
 
     private static final String ENTITY_NAME = "exercise";
 
-    private final ExerciseRepository exerciseRepository;
-
     private final ExerciseService exerciseService;
 
     private final UserService userService;
@@ -69,13 +67,17 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final SubmissionRepository submissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
-            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
-        this.exerciseRepository = exerciseRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper,
+            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -88,7 +90,9 @@ public class ExerciseResource {
         this.objectMapper = objectMapper;
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -192,24 +196,37 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
+        ObjectNode data = populateCommonStatistics(id);
+        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
 
         long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndResult_Assessor_Id(id, user.getId());
         data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
+    }
+
+    /**
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
+     * instructor dashboard
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a object node with the stats
+     */
+    private ObjectNode populateCommonStatistics(@PathVariable Long exerciseId) {
+        ObjectNode data = objectMapper.createObjectNode();
+
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        return data;
     }
 
     /**
@@ -228,17 +245,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
-
+        ObjectNode data = populateCommonStatistics(id);
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
         data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
 
