@@ -10,10 +10,13 @@ public class StatsTutorLeaderboardDTO {
 
     public int numberOfComplaints;
 
-    public StatsTutorLeaderboardDTO(String name, String login, int numberOfAssessments, int numberOfComplaints) {
+    public long tutorId;
+
+    public StatsTutorLeaderboardDTO(String name, String login, int numberOfAssessments, int numberOfComplaints, long tutorId) {
         this.name = name;
         this.login = login;
         this.numberOfAssessments = numberOfAssessments;
         this.numberOfComplaints = numberOfComplaints;
+        this.tutorId = tutorId;
     }
 }
