@@ -79,7 +79,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
-                this.sortParticipationsFinishedFirst(this.exercise.participations);
+                this.exercise.participations = this.filterParticipations(this.exercise.participations);
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);

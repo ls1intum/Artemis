@@ -82,16 +82,18 @@ public class CourseResource {
 
     private final NotificationService notificationService;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -107,8 +109,9 @@ public class CourseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
-        this.textSubmissionRepository = textSubmissionRepository;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -365,18 +368,21 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
-        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+        long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
 
-        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutor(courseId, user.getId());
+        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
         data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
     }
@@ -489,11 +495,11 @@ public class CourseResource {
         stats.numberOfComplaints = numberOfComplaints;
         stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
 
-        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
-        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.numberOfSubmissions = numberOfSubmissions;
-        stats.numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+        stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
         stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
 
