@@ -31,8 +31,10 @@
                                 {{ 'arTeMiSApp.instructorCourseDashboard.open' | translate }})
                             </li>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }} ({{ stats.numberOfOpenComplaints }}
-                                {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
+                                <a routerLink="/complaints" [queryParams]="{ courseId: course.id }">
+                                    <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
+                                </a>
+                                ({{ stats.numberOfOpenComplaints }} {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                         </ul>
                     </div>
@@ -104,6 +106,6 @@
 
         <h2>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
 
-        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData" [courseId]="course.id"></jhi-tutor-leaderboard>
     </div>
 </div>
