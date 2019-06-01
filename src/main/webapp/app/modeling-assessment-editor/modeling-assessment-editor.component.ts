@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeli
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -28,7 +29,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
     conflicts: Conflict[];
-    highlightedElementIds: Set<string>;
+    highlightedElementIds: string[];
     ignoreConflicts = false;
 
     assessmentsAreValid = false;
@@ -39,6 +40,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     showBackButton: boolean;
     hasComplaint: boolean;
     canOverride = false;
+    isLoading: boolean;
 
     private cancelConfirmationText: string;
 
@@ -58,6 +60,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
+        this.isLoading = true;
     }
 
     get feedback(): Feedback[] {
@@ -144,12 +147,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.jhiAlertService.clear();
             this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
         }
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
         }
-        this.checkAuthorization();
+        this.checkPermissions();
         this.validateFeedback();
+        this.isLoading = false;
     }
 
     /**
@@ -168,8 +172,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.referencedFeedback = feedback;
     }
 
-    private checkAuthorization(): void {
+    private checkPermissions(): void {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {
@@ -197,20 +204,54 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        if (!this.referencedFeedback || !this.assessmentsAreValid) {
+        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
+        // in case he says no, we should potentially highlight the elements that are not yet assessed
+        if (!this.referencedFeedback || this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
             const confirm = window.confirm(confirmationMessage);
             if (confirm) {
                 this.submitAssessment();
             } else {
-                this.highlightedElementIds = new Set<string>();
+                this.highlightedElementIds = [];
                 this.model.elements.forEach((element: UMLElement) => {
-                    this.highlightedElementIds.add(element.id);
+                    this.highlightedElementIds.push(element.id);
                 });
             }
         } else {
             this.submitAssessment();
         }
+    }
+
+    private submitAssessment() {
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
+            (result: Result) => {
+                result.participation.results = [result];
+                this.result = result;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.conflicts = undefined;
+                this.ignoreConflicts = false;
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 409) {
+                    this.conflicts = error.error as Conflict[];
+                    this.conflicts.forEach((conflict: Conflict) => {
+                        this.modelingAssessmentService.convertResult(conflict.result);
+                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                    });
+                    this.highlightConflictingElements();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
+                } else {
+                    let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
+                    if (error.error && error.error.entityName && error.error.message) {
+                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
+                    }
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.error(errorMessage);
+                }
+            },
+        );
     }
 
     /**
@@ -275,38 +316,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    private submitAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
-            (result: Result) => {
-                result.participation.results = [result];
-                this.result = result;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.conflicts = undefined;
-                this.ignoreConflicts = false;
-            },
-            (error: HttpErrorResponse) => {
-                if (error.status === 409) {
-                    this.conflicts = error.error as Conflict[];
-                    this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.result);
-                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
-                    });
-                    this.highlightConflictingElements();
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
-                } else {
-                    this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
-                }
-            },
-        );
-    }
-
     private highlightConflictingElements() {
-        this.highlightedElementIds = new Set<string>();
+        this.highlightedElementIds = [];
         this.conflicts.forEach((conflict: Conflict) => {
-            this.highlightedElementIds.add(conflict.modelElementId);
+            this.highlightedElementIds.push(conflict.modelElementId);
         });
     }
 
@@ -322,6 +335,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         ) {
             this.assessmentsAreValid = false;
             return;
+        }
+        if (this.highlightedElementIds && this.highlightedElementIds.length > 0) {
+            this.highlightedElementIds = this.highlightedElementIds.filter(element => element !== this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {

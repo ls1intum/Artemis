@@ -19,7 +19,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
-    @Input() highlightedElementIds: Set<string>;
+    @Input() highlightedElementIds: string[];
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
@@ -188,20 +188,20 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private updateHighlightedElements(newElementIDs: Set<string>) {
+    private updateHighlightedElements(newElementIDs: string[]) {
         if (!newElementIDs) {
-            newElementIDs = new Set<string>();
+            newElementIDs = [];
         }
         const model: UMLModel = this.apollonEditor.model;
         for (const element of model.elements) {
-            if (newElementIDs.has(element.id)) {
+            if (newElementIDs.includes(element.id)) {
                 element.highlight = 'red';
             } else {
                 element.highlight = undefined;
             }
         }
         for (const relationship of model.relationships) {
-            if (newElementIDs.has(relationship.id)) {
+            if (newElementIDs.includes(relationship.id)) {
                 relationship.highlight = 'red';
             } else {
                 relationship.highlight = undefined;

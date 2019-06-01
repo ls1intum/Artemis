@@ -165,8 +165,21 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise;
+        try {
+            exercise = exerciseService.findOne(exerciseId);
+        }
+        catch (EntityNotFoundException e) {
+            log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
+        }
+
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if (participation == null) {
+            log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException("No participation was found for the given exercise and user.", "editor", "participationNotFound");
+        }
+
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
@@ -466,6 +479,9 @@ public class ParticipationResource {
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // avoid problems due to bidirectional associations between submission and result during serialization
+            if (participation == null) {
+                return null;
+            }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
                     result.getSubmission().setResult(null);
@@ -534,25 +550,33 @@ public class ParticipationResource {
     }
 
     private void checkAccessPermissionAtInstructor(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionAtLeastTA(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if (!courseService.userHasAtLeastTAPermissions(course)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
+    }
+
+    private Course findCourseFromParticipation(Participation participation) {
+        if (participation.getExercise() != null && participation.getExercise().getCourse() != null) {
+            return participation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 }
