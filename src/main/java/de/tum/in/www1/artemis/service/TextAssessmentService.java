@@ -23,8 +23,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ResultService resultService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService);
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
@@ -42,7 +42,7 @@ public class TextAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
-        Result result = saveAssessment(resultId, textAssessment);
+        Result result = saveAssessment(resultId, textAssessment, textExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
         return submitResult(result, textExercise, calculatedScore);
@@ -58,7 +58,7 @@ public class TextAssessmentService extends AssessmentService {
      * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) throws BadRequestAlertException {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
         checkGeneralFeedback(textAssessment);
 
         final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
@@ -70,6 +70,11 @@ public class TextAssessmentService extends AssessmentService {
 
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
+
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(textExercise);
+        }
 
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
@@ -109,47 +114,5 @@ public class TextAssessmentService extends AssessmentService {
     // good for text exercises?
     private Double calculateTotalScore(List<Feedback> assessments) {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseId(courseId);
-    }
-
-    /**
-     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
-     *
-     * @param courseId - the course we are interested in
-     * @param tutorId  - the tutor we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseId(tutorId, courseId);
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseId(exerciseId);
-    }
-
-    /**
-     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param tutorId    - the tutor we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseId(tutorId, exerciseId);
     }
 }
