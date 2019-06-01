@@ -28,6 +28,7 @@ import { Participation, hasParticipationChanged, ParticipationWebsocketService }
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
+import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 
 enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
@@ -64,6 +65,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public latestResultValue: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
+    public apollonUMLs: string[] = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
@@ -74,6 +76,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private apollonDiagramService: ApollonDiagramService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -81,12 +84,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private appRef: ApplicationRef,
         private injector: Injector,
     ) {
-        // Enabled for color picker of markdown editor that inserts spans into the markdown
+        // Enabled for color picker of markdown editor that inserts spans into the markdown,
         this.markdown = new Remarkable({ html: true });
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
+        this.markdown.inline.ruler.before('text', 'apollon', this.remarkableApollonParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        this.markdown.renderer.rules['apollon'] = this.remarkableApollonUmlRenderer.bind(this);
     }
 
     get latestResult() {
@@ -149,7 +154,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        this.participationWebsocketService.addParticipation(this.participation);
+        this.participationWebsocketService.addParticipation(this.participation, this.exercise);
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(filter(participation => !!participation))
@@ -185,6 +190,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         // Wait for re-render of component
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
+            this.loadAndInsertApollonUmls();
             this.setUpClickListeners();
             this.setUpTaskIcons();
         }, 0);
@@ -292,6 +298,19 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         });
     }
 
+    public loadAndInsertApollonUmls() {
+        this.apollonUMLs.forEach(apollonId =>
+            this.apollonDiagramService
+                .find(Number(apollonId))
+                .pipe(map(res => res && res.body))
+                .subscribe((diagram: ApollonDiagram) => {
+                    if (document.getElementById('apollon-' + diagram.id)) {
+                        // TODO: Insert Modeling Editor readonly component
+                    }
+                }),
+        );
+    }
+
     /**
      * PlantUMLs are rendered on the server, we provide their structure as a string.
      * When parsing the file for plantUMLs we store their ids (= position in HTML) and structure in a dictionary, so that we can load them after the initial render.
@@ -378,6 +397,20 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return true;
         } else {
             return false;
+        }
+    }
+
+    private remarkableApollonParser(state: any, startLine: number, endLine: number, silent: boolean) {
+        const regex = /^\[apollon\](.*)\[\/apollon\]/;
+        const match = regex.exec(state.src.slice(state.pos));
+        if (match) {
+            this.apollonUMLs = [...this.apollonUMLs, match[1]];
+            state.tokens.push({
+                type: 'apollon',
+                level: state.level,
+                lines: [startLine, state.line],
+                content: `apollon-${match[1]}`,
+            });
         }
     }
 
@@ -485,6 +518,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         });
 
         return text;
+    }
+
+    private remarkableApollonUmlRenderer(tokens: any[], id: number) {
+        const apollonUml = tokens[id].content;
+        return `<div id="${apollonUml}"></div>`;
     }
 
     /**

@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { Result } from 'app/entities/result';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
+import { ApollonCommand } from 'app/markdown-editor/domainCommands/apollon.command';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -16,7 +18,9 @@ export class ProgrammingExerciseEditableInstructionComponent {
 
     taskCommand = new TaskCommand();
     testCaseCommand = new TestCaseCommand();
-    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand];
+    apollonCommand = new ApollonCommand(this.modalService);
+
+    domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand, this.apollonCommand];
 
     @Input()
     get participation() {
@@ -44,6 +48,8 @@ export class ProgrammingExerciseEditableInstructionComponent {
 
     @Output()
     onProblemStatementChange = new EventEmitter<string>();
+
+    constructor(private modalService: NgbModal) {}
 
     updateProblemStatement(problemStatement: string) {
         this.onProblemStatementChange.emit(problemStatement);
