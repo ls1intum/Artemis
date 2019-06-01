@@ -169,6 +169,19 @@ public class GitService {
     }
 
     /**
+     * Commits with the given message into the repository.
+     *
+     * @param repo    Local Repository Object.
+     * @param message Commit Message
+     * @throws GitAPIException
+     */
+    public void commit(Repository repo, String message) throws GitAPIException {
+        Git git = new Git(repo);
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
+        git.close();
+    }
+
+    /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
      * @param repo    Local Repository Object.
@@ -257,6 +270,38 @@ public class GitService {
         }
         catch (GitAPIException ex) {
             log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * checkout branch
+     *
+     * @param repo Local Repository Object.
+     */
+    public void checkoutBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.checkout().setForceRefUpdate(true).setName("master").call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot checkout branch in repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Remove branch from local repository.
+     *
+     * @param repo Local Repository Object.
+     */
+    public void deleteLocalBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.branchDelete().setBranchNames(branch).setForce(true).call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot remove branch " + branch + " from the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 

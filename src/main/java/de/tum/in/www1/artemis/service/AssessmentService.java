@@ -174,7 +174,7 @@ abstract class AssessmentService {
 
                 if (!existingElement.isPresent()) {
                     String name = assessor.getFirstName().concat(" ").concat(assessor.getLastName());
-                    element = new StatsTutorLeaderboardDTO(name, assessor.getLogin(), 0, 0);
+                    element = new StatsTutorLeaderboardDTO(name, assessor.getLogin(), 0, 0, assessor.getId());
                     tutorWithNumberAssessmentList.add(element);
                 }
                 else {
