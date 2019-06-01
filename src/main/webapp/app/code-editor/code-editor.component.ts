@@ -22,7 +22,6 @@ import Interactable from '@interactjs/core/Interactable';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { ComponentCanDeactivate } from 'app/shared';
 import { EditorState } from 'app/entities/ace-editor/editor-state.model';
-import { CommitState } from 'app/entities/ace-editor/commit-state.model';
 import { Observable, throwError } from 'rxjs';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
