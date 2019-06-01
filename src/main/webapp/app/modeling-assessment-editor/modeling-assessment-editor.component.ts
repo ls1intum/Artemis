@@ -206,7 +206,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     onSubmitAssessment() {
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        if (!this.referencedFeedback || this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
+        if (this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
             const confirm = window.confirm(confirmationMessage);
             if (confirm) {
@@ -214,7 +214,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             } else {
                 this.highlightedElementIds = [];
                 this.model.elements.forEach((element: UMLElement) => {
-                    this.highlightedElementIds.push(element.id);
+                    if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
+                        this.highlightedElementIds.push(element.id);
+                    }
                 });
             }
         } else {
