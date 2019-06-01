@@ -5,7 +5,7 @@
 
 This application was generated using JHipster 5.8.2, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.2](http://www.jhipster.tech/documentation-archive/v5.8.2).
 
-**Current version:** 3.1.4
+**Current version:** 3.1.5
 
 ## Main features
 Artemis supports the following exercises:
@@ -139,6 +139,21 @@ This compiles TypeScript code to JavaScript code, starts the hot module replacem
 
 For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
+### Using docker-compose
+
+A full functioning development environment can also be set up using docker-compose: `docker-compose up`. But first configure the file `application-artemis.yml` in the folder `src/main/resources/config` as described above.
+
+Requirements:
+
+* [docker](https://docs.docker.com/install/)
+* [docker-compose](https://docs.docker.com/compose/install/)
+
+Currently the client and the server are running in the same container. Client-based changes will be applied without reloading. For server-side changes you need to stop the setup via `docker-compose stop` and restart it again with `docker-compose up`.
+
+Get a shell into the containers:
+
+* app container: `docker exec -it $(docker-compose ps -q artemis-app) sh`
+* mysql container: `docker exec -it $(docker-compose ps -q artemis-mysql) mysql`
 
 ## Building for production
 

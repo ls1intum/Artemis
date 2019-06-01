@@ -14,6 +14,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -25,6 +36,10 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -111,6 +126,112 @@ public class ProgrammingExerciseService {
 
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
+    }
+
+    public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, Participation participation) {
+        String studentId = participation.getStudent().getLogin();
+
+        // Get all files in repository expect .git files
+        List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
+
+        // is Java programming language
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            // Filter all Eclipse .project files
+            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(s -> s.endsWith(".project")).collect(Collectors.toList());
+
+            for (String eclipseProjectFilePath : eclipseProjectFiles) {
+                File eclipseProjectFile = new File(eclipseProjectFilePath);
+                // Check if file exists and full file name is .project and not just the file ending.
+                if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
+                    continue;
+                }
+
+                try {
+                    // 1- Build the doc from the XML file
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
+                    doc.setXmlStandalone(true);
+
+                    // 2- Find the node with xpath
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
+
+                    // 3- Append Student Id to Project Name
+                    if (nameNode != null) {
+                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                    }
+
+                    // 4- Save the result to a new XML doc
+                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
+                    xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
+
+                }
+                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+                    log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+                }
+            }
+
+            // Filter all pom.xml files
+            List<String> pomFiles = allRepoFiles.stream().filter(s -> s.endsWith("pom.xml")).collect(Collectors.toList());
+            for (String pomFilePath : pomFiles) {
+                File pomFile = new File(pomFilePath);
+                // check if file exists and full file name is pom.xml and not just the file ending.
+                if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
+                    continue;
+                }
+
+                try {
+                    // 1- Build the doc from the XML file
+                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
+                    doc.setXmlStandalone(true);
+
+                    // 2- Find the relevant nodes with xpath
+                    XPath xPath = XPathFactory.newInstance().newXPath();
+                    Node nameNode = (Node) xPath.compile("/project/name").evaluate(doc, XPathConstants.NODE);
+                    Node artifactIdNode = (Node) xPath.compile("/project/artifactId").evaluate(doc, XPathConstants.NODE);
+
+                    // 3- Append Student Id to Project Names
+                    if (nameNode != null) {
+                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                    }
+                    if (artifactIdNode != null) {
+                        String artifactId = (artifactIdNode.getTextContent() + "-" + studentId).replaceAll(" ", "-").toLowerCase();
+                        artifactIdNode.setTextContent(artifactId);
+                    }
+
+                    // 4- Save the result to a new XML doc
+                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
+                    xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
+
+                }
+                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+                    log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+                }
+            }
+        }
+
+        try {
+            gitService.stageAllChanges(repo);
+            gitService.commit(repo, "Add Student Id to Project Name");
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Get all files in path expect .git files
+     *
+     * @param path
+     */
+    private List<String> listAllFilesInPath(Path path) {
+        List<String> allRepoFiles = null;
+        try (Stream<Path> walk = Files.walk(path)) {
+            allRepoFiles = walk.filter(Files::isRegularFile).map(x -> x.toString()).filter(s -> !s.contains(".git")).collect(Collectors.toList());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return allRepoFiles;
     }
 
     /**
