@@ -160,7 +160,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, results: [{ id: 3, successful: false }] } as Participation;
+        const participation = { id: 2, exercise, student: { id: 99 }, results: [{ id: 3, successful: false }] } as Participation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
