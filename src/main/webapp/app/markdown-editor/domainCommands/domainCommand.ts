@@ -20,7 +20,7 @@ export abstract class DomainCommand extends Command {
                 .getLine(row),
             escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier()),
             escapedClosingIdentifier = escapeStringForUseInRegex(this.getClosingIdentifier()),
-            matchRegex = new RegExp(`${escapedOpeningIdentifier}[^${escapedOpeningIdentifier}]*${escapedClosingIdentifier}`, 'g'),
+            matchRegex = new RegExp(`${escapedOpeningIdentifier}.*${escapedClosingIdentifier}`, 'g'),
             extractRegex = new RegExp(`${escapedOpeningIdentifier}(.*)${escapedClosingIdentifier}`);
 
         let match,

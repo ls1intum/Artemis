@@ -1,11 +1,13 @@
-<jhi-modeling-editor [umlModel]="umlModel" [diagramType]="diagramType" [readOnly]="readOnly"></jhi-modeling-editor>
-<div class="d-flex justify-content-end m-3">
+<div class="d-flex justify-content-start m-3">
     <div ngbDropdown class="d-inline-block">
-        <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>Toggle dropdown</button>
+        <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>Select diagram type</button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
             <button *ngFor="let diagramType of DiagramType | keys" (click)="selectDiagramType(diagramType)" ngbDropdownItem>{{ diagramType }}</button>
         </div>
     </div>
-    <button (click)="onCancel()" class="btn btn-secondary mr-2">Cancel</button>
-    <button (click)="onSave()" class="btn btn-primary">Save</button>
+    <div class="ml-auto">
+        <button (click)="onCancel()" class="btn btn-secondary mr-2">Cancel</button>
+        <button (click)="onSave()" class="btn btn-primary">Save</button>
+    </div>
 </div>
+<jhi-modeling-editor [umlModel]="umlModel" [diagramType]="diagramType" [readOnly]="readOnly"></jhi-modeling-editor>

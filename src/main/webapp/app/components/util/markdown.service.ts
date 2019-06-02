@@ -27,6 +27,13 @@ export class ArtemisMarkdown {
         aceEditorContainer.getEditor().selection.setRange(range);
     }
 
+    static removeTextAtCursor(aceEditorContainer: AceEditorComponent) {
+        const currentCursor = aceEditorContainer.getEditor().getCursorPosition();
+        aceEditorContainer.getEditor().focus();
+        aceEditorContainer.getEditor().clearSelection();
+        aceEditorContainer.getEditor().removeLines([aceEditorContainer.getEditor().getCursorPosition().row]);
+    }
+
     constructor(private sanitizer: DomSanitizer) {}
 
     /**

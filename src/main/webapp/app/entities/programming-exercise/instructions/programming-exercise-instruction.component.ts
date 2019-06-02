@@ -28,8 +28,8 @@ import { Participation, hasParticipationChanged, ParticipationWebsocketService }
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
-import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
-import { ModelingEditorComponent, ModelingEditorDialogComponent } from 'app/modeling-editor';
+import { UMLModel } from '@ls1intum/apollon';
+import { ModelingEditorComponent } from 'app/modeling-editor';
 
 enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
@@ -66,7 +66,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public latestResultValue: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
-    public apollonUMLs: string[] = [];
+    public apollonUMLs: UMLModel[] = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
@@ -77,7 +77,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private apollonDiagramService: ApollonDiagramService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -299,24 +298,22 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         });
     }
 
+    /**
+     * Instantiate a readonly rendering component for each apollon diagram found.
+     */
     public loadAndInsertApollonUmls() {
-        this.apollonUMLs.forEach(apollonId =>
-            this.apollonDiagramService
-                .find(Number(apollonId))
-                .pipe(map(res => res && res.body))
-                .subscribe((diagram: ApollonDiagram) => {
-                    if (document.getElementById('apollon-' + diagram.id)) {
-                        const componentRef = this.componentFactoryResolver.resolveComponentFactory(ModelingEditorComponent).create(this.injector);
-                        componentRef.instance.readOnly = true;
-                        componentRef.instance.umlModel = JSON.parse(diagram.jsonRepresentation);
-                        this.appRef.attachView(componentRef.hostView);
-                        const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                        const apollonContainer = document.getElementById(`apollon-${diagram.id}`);
-                        apollonContainer.innerHTML = '';
-                        apollonContainer.append(domElem);
-                    }
-                }),
-        );
+        this.apollonUMLs.forEach((diagram, id) => {
+            if (document.getElementById('apollon-' + id)) {
+                const componentRef = this.componentFactoryResolver.resolveComponentFactory(ModelingEditorComponent).create(this.injector);
+                componentRef.instance.readOnly = true;
+                componentRef.instance.umlModel = diagram;
+                this.appRef.attachView(componentRef.hostView);
+                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                const apollonContainer = document.getElementById(`apollon-${id}`);
+                apollonContainer.innerHTML = '';
+                apollonContainer.append(domElem);
+            }
+        });
     }
 
     /**
@@ -408,16 +405,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
     }
 
+    /**
+     * Parse apollon diagrams from the markdown.
+     * @param state
+     * @param startLine
+     * @param endLine
+     * @param silent
+     */
     private remarkableApollonParser(state: any, startLine: number, endLine: number, silent: boolean) {
         const regex = /^\[apollon\](.*)\[\/apollon\]/;
         const match = regex.exec(state.src.slice(state.pos));
         if (match) {
-            this.apollonUMLs = this.apollonUMLs.includes(match[1]) ? this.apollonUMLs : [...this.apollonUMLs, match[1]];
+            const diagram: UMLModel = JSON.parse(match[1]);
+            this.apollonUMLs.push(diagram);
             state.tokens.push({
                 type: 'apollon',
                 level: state.level,
                 lines: [startLine, state.line],
-                content: `apollon-${match[1]}`,
+                content: `apollon-${this.apollonUMLs.length - 1}`,
             });
             state.pos += match[0].length;
             return true;
@@ -531,6 +536,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         return text;
     }
 
+    /**
+     * Return an empty apollon container if an apollon identifier is found.
+     * @param tokens
+     * @param id
+     */
     private remarkableApollonUmlRenderer(tokens: any[], id: number) {
         const apollonUml = tokens[id].content;
         return `<div id="${apollonUml}"></div>`;
