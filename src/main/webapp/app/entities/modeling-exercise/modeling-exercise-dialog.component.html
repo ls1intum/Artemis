@@ -32,19 +32,31 @@
                 <jhi-date-time-picker
                     labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
+                    (valueChange)="validateDate()"
+                    [error]="false"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
             <div class="form-group-narrow flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}" [(ngModel)]="modelingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker
+                    name="dueDate"
+                    [error]="this.dueDateError"
+                    labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="modelingExercise.dueDate"
+                ></jhi-date-time-picker>
+                <div *ngIf="this.dueDateError" class="invalid-feedback">{{ 'arTeMiSApp.exercise.dueDateError' | translate }}</div>
             </div>
         </div>
         <div class="form-group-narrow">
             <jhi-date-time-picker
-                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
-                [(ngModel)]="modelingExercise.assessmentDueDate"
                 name="assessmentDueDate"
+                [error]="this.assessmentDueDateError"
+                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
+                (valueChange)="validateDate()"
+                [(ngModel)]="modelingExercise.assessmentDueDate"
             ></jhi-date-time-picker>
+            <div *ngIf="this.assessmentDueDateError" class="invalid-feedback">{{ 'arTeMiSApp.exercise.assessmentDueDateError' | translate }}</div>
         </div>
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -165,7 +177,7 @@
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="button" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">
+        <button type="button" [disabled]="editForm.form.invalid || isSaving || this.dueDateError || this.assessmentDueDateError" class="btn btn-primary" (click)="save()">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,14 +36,18 @@ public class ModelingSubmissionService {
 
     private final ParticipationRepository participationRepository;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository) {
+            CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository,
+            SimpMessageSendingOperations messagingTemplate) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
         this.participationRepository = participationRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -185,6 +190,8 @@ public class ModelingSubmissionService {
             notifyCompass(modelingSubmission, modelingExercise);
             checkAutomaticResult(modelingSubmission, modelingExercise);
             participation.setInitializationState(InitializationState.FINISHED);
+            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
+                    participation);
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
@@ -281,5 +288,23 @@ public class ModelingSubmissionService {
             resultRepository.save(result); // TODO CZ: is this necessary? isn't the result saved together with the modeling submission in the next line anyway?
             modelingSubmissionRepository.save(modelingSubmission);
         }
+    }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return modelingSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return modelingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

@@ -41,6 +41,9 @@ public class ExampleSubmission implements Serializable {
     @JsonIgnoreProperties({ "trainedExampleSubmissions", "assessedExercise" })
     private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 
+    @Column(name = "assessment_explanation")
+    private String assessmentExplanation;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -112,6 +115,19 @@ public class ExampleSubmission implements Serializable {
 
     public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
         this.tutorParticipations = tutorParticipations;
+    }
+
+    public String getAssessmentExplanation() {
+        return assessmentExplanation;
+    }
+
+    public ExampleSubmission assessmentExplanation(String assessmentExplanation) {
+        this.assessmentExplanation = assessmentExplanation;
+        return this;
+    }
+
+    public void setAssessmentExplanation(String assessmentExplanation) {
+        this.assessmentExplanation = assessmentExplanation;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

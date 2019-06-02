@@ -64,16 +64,24 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query(value = "insert into result (participation_id, rated) select :participationId, 0 from dual where not exists (select * from result where participation_id = :participationId and rated = 0)", nativeQuery = true)
     void insertIfNonExisting(@Param("participationId") Long participationId);
 
-    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseId(long courseId);
+    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long courseId, boolean rated);
 
-    Long countByAssessor_IdAndParticipation_Exercise_CourseId(long assessorId, long courseId);
+    Long countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long assessorId, long courseId, boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
+
+    // The query is used to build the tutor leaderboard for the instructor course dashboard, therefore we need only the rated results
+    @Query("SELECT DISTINCT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.participation.exercise.course.id = :courseId AND rated = true")
+    List<Result> findAllByParticipation_Exercise_CourseIdWithEagerAssessor(@Param("courseId") Long courseId);
+
+    // The query is used to build the tutor leaderboard for the instructor exercise dashboard, therefore we need only the rated results
+    @Query("SELECT DISTINCT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.participation.exercise.id = :exerciseId AND rated = true")
+    List<Result> findAllByParticipation_Exercise_IdWithEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
     Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);
 
-    long countByAssessorIsNotNullAndParticipation_ExerciseId(Long exerciseId);
+    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
 
-    long countByAssessor_IdAndParticipation_ExerciseId(Long tutorId, Long exerciseId);
+    long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 }

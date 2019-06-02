@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,12 +34,15 @@ public class TextSubmissionService {
 
     private final ResultRepository resultRepository;
 
+    private final SimpMessageSendingOperations messagingTemplate;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, ParticipationRepository participationRepository, ParticipationService participationService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -93,6 +97,9 @@ public class TextSubmissionService {
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
+
+            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
+                    participation);
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (textSubmission.getId() == null) {
@@ -207,10 +214,20 @@ public class TextSubmissionService {
     }
 
     /**
-     * @param id the exercise we are interested in
-     * @return the number of submitted submissions for the exercise passed as argument
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
      */
-    public long countSubmittedSubmissionsForExerciseId(Long id) {
-        return textSubmissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return textSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return textSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }
