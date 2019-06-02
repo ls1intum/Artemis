@@ -76,7 +76,12 @@
                         <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
                     </td>
                     <td>
-                        <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]"> </jhi-tutor-participation-graph>
+                        <jhi-tutor-participation-graph
+                            [tutorParticipation]="exercise.tutorParticipations[0]"
+                            [numberOfParticipations]="exercise.numberOfParticipations"
+                            [numberOfAssessments]="exercise.numberOfAssessments"
+                        >
+                        </jhi-tutor-participation-graph>
                     </td>
                     <td>
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">

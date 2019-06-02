@@ -12,6 +12,8 @@ import { StatsForTutorDashboard } from '../../entities/course';
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public exerciseStats: StatsForTutorDashboard;
+    @Input() public numberOfParticipations: number;
+    @Input() public numberOfAssessments: number;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;

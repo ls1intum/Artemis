@@ -7,24 +7,23 @@
         <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
             <fa-icon icon="chalkboard-teacher"></fa-icon>
         </li>
-    </ul>
 
-    <div class="progress position-relative" *ngIf="exerciseStats" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
-        <div
-            class="progress-bar"
-            role="progressbar"
-            [ngClass]="calculateProgressBarClass(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions)"
-            [style.width]="calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions) + '%'"
-            attr.aria-valuenow="{{ calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions) }}"
-            aria-valuemin="0"
-            aria-valuemax="100"
-        >
-                <span
-                    class="justify-content-center d-flex position-absolute w-100"
-                    [ngClass]="chooseProgressBarTextColor(exerciseStats?.numberOfAssessments, exerciseStats?.numberOfSubmissions)"
+        <li class="progress-bar-li">
+            <div class="progress position-relative" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
+                <div
+                    class="progress-bar"
+                    role="progressbar"
+                    [ngClass]="calculateProgressBarClass(numberOfAssessments, numberOfParticipations)"
+                    [style.width]="calculatePercentage(numberOfAssessments, numberOfParticipations) + '%'"
+                    attr.aria-valuenow="{{ calculatePercentage(numberOfAssessments, numberOfParticipations) }}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
                 >
-                    {{ exerciseStats?.numberOfAssessments }} / {{ exerciseStats?.numberOfSubmissions }} ({{calculatePercentage(exerciseStats?.numberOfAssessments, exerciseStats.numberOfSubmissions) + '%'}})
-                </span>
-        </div>
-    </div>
+                    <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor(numberOfAssessments, numberOfParticipations)">
+                        {{ numberOfAssessments }} / {{ numberOfParticipations }} ({{ calculatePercentage(numberOfAssessments, numberOfParticipations) + '%' }})
+                    </span>
+                </div>
+            </div>
+        </li>
+    </ul>
 </div>

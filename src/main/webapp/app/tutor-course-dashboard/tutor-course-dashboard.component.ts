@@ -56,10 +56,10 @@ export class TutorCourseDashboardComponent implements OnInit {
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     this.unfinishedExercises = this.course.exercises
-                        .filter(exercise => exercise.tutorParticipations[0].status !== TutorParticipationStatus.COMPLETED)
+                        .filter(exercise => exercise.numberOfAssessments < exercise.numberOfParticipations)
                         .sort(this.sortByAssessmentDueDate);
                     this.finishedExercises = this.course.exercises
-                        .filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED)
+                        .filter(exercise => exercise.numberOfAssessments === exercise.numberOfParticipations)
                         .sort(this.sortByAssessmentDueDate);
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
