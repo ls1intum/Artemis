@@ -35,7 +35,10 @@
                 }
             },
             "title": "Title",
-            "jsonRepresentation": "JSON Representation"
+            "jsonRepresentation": "JSON Representation",
+            "command": {
+                "apollonCommand": "Create/Edit Apollon Diagram"
+            }
         }
     }
 }
