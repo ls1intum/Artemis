@@ -23,6 +23,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         numberOfAssessments: 0,
         numberOfComplaints: 0,
         numberOfOpenComplaints: 0,
+
+        tutorLeaderboard: [],
     };
 
     dataForAssessmentPieChart: number[];
@@ -51,35 +53,16 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             .find(exerciseId)
             .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body), (response: HttpErrorResponse) => this.onError(response.message));
 
-        this.resultService.getResultsForExercise(this.courseId, exerciseId, { withAssessors: true }).subscribe((res: HttpResponse<Result[]>) => {
-            const results = res.body;
-
-            for (const result of results) {
-                if (result.rated && result.assessor) {
-                    const tutorId = result.assessor.id;
-                    if (!this.tutorLeaderboardData[tutorId]) {
-                        this.tutorLeaderboardData[tutorId] = {
-                            tutor: result.assessor,
-                            numberOfAssessments: 0,
-                            numberOfComplaints: 0,
-                        };
-                    }
-
-                    this.tutorLeaderboardData[tutorId].numberOfAssessments++;
-
-                    if (result.hasComplaint) {
-                        this.tutorLeaderboardData[tutorId].numberOfComplaints++;
-                    }
-                }
-            }
-        });
-
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
 
                 if (this.stats.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.stats.numberOfAssessments / this.stats.numberOfSubmissions) * 100);
+                }
+
+                for (const tutor of this.stats.tutorLeaderboard) {
+                    this.tutorLeaderboardData[tutor.login] = tutor;
                 }
 
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];

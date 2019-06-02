@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  artemis-app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    command: ./gradlew bootRun
+    depends_on:
+      - artemis-mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false
+      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis
+    networks:
+      - artemis
+    ports:
+      - 8080:8080
+    volumes:
+      - ./:/app/ 
+
+  artemis-mysql:
+    command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
+    environment:
+      - MYSQL_USER=root
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=artemis
+    image: mysql:5.7.20
+    networks:
+      - artemis
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data/.db:/var/lib/mysql 
+
+networks:
+  artemis:
+    driver: bridge

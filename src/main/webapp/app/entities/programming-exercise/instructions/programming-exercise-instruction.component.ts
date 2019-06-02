@@ -149,10 +149,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        this.participationSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((result: Result) => {
-            this.latestResult = result;
-            this.updateMarkdown();
-        });
+        this.participationWebsocketService.addParticipation(this.participation, this.exercise);
+        this.participationSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(filter(participation => !!participation))
+            .subscribe((result: Result) => {
+                this.latestResult = result;
+                this.updateMarkdown();
+            });
     }
 
     /**
@@ -178,12 +182,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps = [];
         this.plantUMLs = {};
         this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
-        // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
+        // Wait for re-render of component
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
             this.setUpClickListeners();
             this.setUpTaskIcons();
-        }, 100);
+        }, 0);
     }
 
     /**

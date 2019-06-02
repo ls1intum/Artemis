@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +36,6 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final FeedbackService feedbackService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final LtiService ltiService;
@@ -45,11 +44,10 @@ public class ResultService {
 
     private final ObjectMapper objectMapper;
 
-    public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository,
+    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
         this.userService = userService;
         this.participationService = participationService;
-        this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
@@ -171,6 +169,51 @@ public class ResultService {
     }
 
     /**
+     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @return a number of assessments for the course
+     */
+    public long countNumberOfAssessments(Long courseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+    }
+
+    /**
+     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @param tutorId  - the tutor we are interested in
+     * @return a number of assessments for the course
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
+    }
+
+    /**
+     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
+    }
+
+    /**
+     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @param tutorId    - the tutor we are interested in
+     * @return a number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
+    }
+
+    /**
      * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
      * the original result of a submission before updating the result due to a complaint.
      *
@@ -190,7 +233,15 @@ public class ResultService {
         resultCopy.setFeedbacks(originalResult.getFeedbacks());
         resultCopy.setAssessor(originalResult.getAssessor());
         resultCopy.setAssessmentType(originalResult.getAssessmentType());
-        resultCopy.setHasComplaint(originalResult.getHasComplaint());
+
+        Optional<Boolean> hasComplaint = originalResult.getHasComplaint();
+        if (hasComplaint.isPresent()) {
+            resultCopy.setHasComplaint(originalResult.getHasComplaint().get());
+        }
+        else {
+            resultCopy.setHasComplaint(false);
+        }
+
         return objectMapper.writeValueAsString(resultCopy);
     }
 }
