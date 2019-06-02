@@ -6,7 +6,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
-import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import * as moment from 'moment';
 
 @Component({

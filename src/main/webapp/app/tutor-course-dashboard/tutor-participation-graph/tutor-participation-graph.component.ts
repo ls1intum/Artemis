@@ -2,7 +2,6 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { StatsForTutorDashboard } from '../../entities/course';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -11,7 +10,6 @@ import { StatsForTutorDashboard } from '../../entities/course';
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
-    @Input() public exerciseStats: StatsForTutorDashboard;
     @Input() public numberOfParticipations: number;
     @Input() public numberOfAssessments: number;
 

@@ -8,12 +8,7 @@
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
-            <jhi-tutor-participation-graph
-                [tutorParticipation]="tutorParticipation"
-                [numberOfParticipations]="exercise.numberOfParticipations"
-                [numberOfAssessments]="exercise.numberOfAssessments"
-                [exerciseStats]="statsForTutorStatusComponent"
-            >
+            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation" [numberOfParticipations]="numberOfSubmissions" [numberOfAssessments]="numberOfAssessments">
             </jhi-tutor-participation-graph>
         </div>
         <div class="col-4">
