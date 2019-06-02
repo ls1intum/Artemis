@@ -19,8 +19,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    loading = true;
-
     stats: StatsForInstructorDashboard = {
         numberOfStudents: 0,
         numberOfSubmissions: 0,
@@ -28,8 +26,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
         numberOfAssessments: 0,
         numberOfComplaints: 0,
         numberOfOpenComplaints: 0,
-
-        tutorLeaderboard: [],
     };
     dataForAssessmentPieChart: number[];
 
@@ -41,27 +37,70 @@ export class InstructorCourseDashboardComponent implements OnInit {
     constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
-        this.loading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
     }
 
     private loadCourse(courseId: number) {
-        this.courseService
-            .findWithExercisesAndParticipations(courseId)
-            .subscribe((res: HttpResponse<Course>) => (this.course = res.body), (response: HttpErrorResponse) => this.onError(response.message));
+        this.courseService.findWithExercisesAndParticipations(courseId).subscribe(
+            (res: HttpResponse<Course>) => {
+                this.course = res.body;
+
+                let numberOfSubmissions = 0;
+                let numberOfAssessments = 0;
+
+                for (const exercise of this.course.exercises) {
+                    const validParticipations: Participation[] = exercise.participations.filter(
+                        participation => participation.initializationState === InitializationState.FINISHED,
+                    );
+
+                    let numberOfComplaints = 0;
+
+                    for (const participation of validParticipations) {
+                        for (const result of participation.results) {
+                            if (result.rated && result.assessor) {
+                                const tutorId = result.assessor.id;
+                                if (!this.tutorLeaderboardData[tutorId]) {
+                                    this.tutorLeaderboardData[tutorId] = {
+                                        tutor: result.assessor,
+                                        numberOfAssessments: 0,
+                                        numberOfComplaints: 0,
+                                    };
+                                }
+
+                                if (result.hasComplaint) {
+                                    this.tutorLeaderboardData[tutorId].numberOfComplaints++;
+                                }
+
+                                this.tutorLeaderboardData[tutorId].numberOfAssessments++;
+                            }
+
+                            if (result.hasComplaint) {
+                                numberOfComplaints++;
+                            }
+                        }
+                    }
+
+                    exercise.participations = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
+                    exercise.numberOfAssessments = exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
+                    exercise.numberOfComplaints = numberOfComplaints;
+
+                    numberOfAssessments += exercise.numberOfAssessments;
+                    numberOfSubmissions += exercise.participations.length;
+                }
+
+                this.stats.numberOfAssessments = numberOfAssessments;
+                this.stats.numberOfSubmissions = numberOfSubmissions;
+
+                this.dataForAssessmentPieChart = [numberOfSubmissions - numberOfAssessments, numberOfAssessments];
+            },
+            (response: HttpErrorResponse) => this.onError(response.message),
+        );
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
-
-                for (const tutor of this.stats.tutorLeaderboard) {
-                    this.tutorLeaderboardData[tutor.login] = tutor;
-                }
-
-                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
             },
             (response: string) => this.onError(response),
-            () => (this.loading = false),
         );
     }
 

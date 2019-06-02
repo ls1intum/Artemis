@@ -14,7 +14,6 @@ import { Feedback } from 'app/entities/feedback';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -40,7 +39,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     showBackButton: boolean;
     hasComplaint: boolean;
     canOverride = false;
-    isLoading: boolean;
 
     private cancelConfirmationText: string;
 
@@ -60,7 +58,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
-        this.isLoading = true;
     }
 
     get feedback(): Feedback[] {
@@ -151,9 +148,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
         }
-        this.checkPermissions();
+        this.checkAuthorization();
         this.validateFeedback();
-        this.isLoading = false;
     }
 
     /**
@@ -172,11 +168,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.referencedFeedback = feedback;
     }
 
-    private checkPermissions(): void {
+    private checkAuthorization(): void {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {
@@ -226,12 +219,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
-                    let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
-                    if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
-                    }
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error(errorMessage);
+                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
                 }
             },
         );

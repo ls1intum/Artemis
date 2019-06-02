@@ -28,9 +28,7 @@
             "readAndUnderstood": "I have read and understood the example",
             "exampleSubmission": "Example Submission",
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
-            "deleted": "Example submission deleted successfully",
-            "assessmentExplanation": "Explanation",
-            "assessmentExplanationInfo": "Additional explanation for this example assessment"
+            "deleted": "Example submission deleted successfully"
         }
     }
 }

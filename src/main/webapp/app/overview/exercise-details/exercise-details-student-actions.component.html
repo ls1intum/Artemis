@@ -1,5 +1,3 @@
-<jhi-alert></jhi-alert>
-
 <!-- QUIZ EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === QUIZ">
     <!-- ACTIONS START -->
@@ -38,7 +36,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'arTeMiSApp.exerciseActions.openQuiz' | translate"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeQuiz' | translate"
             *ngIf="participationStatus() === QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -66,7 +64,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED && ratedResult"
+            *ngIf="participationStatus() === QUIZ_FINISHED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -101,6 +99,16 @@
         ></button>
         <button
             jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatus() === INACTIVE"
+            (click)="resumeExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openModelingEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -125,7 +133,7 @@
                     exercise.participations &&
                     exercise.participations.length > 0 &&
                     exercise.participations[0].initializationState === 'FINISHED' &&
-                    (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !ratedResult)
+                    !exercise.participations[0].results
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -141,9 +149,7 @@
                     exercise.participations &&
                     exercise.participations.length > 0 &&
                     exercise.participations[0].initializationState === 'FINISHED' &&
-                    exercise.participations[0].results &&
-                    exercise.participations[0].results.length > 0 &&
-                    ratedResult
+                    exercise.participations[0].results
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -257,6 +263,16 @@
         ></button>
         <button
             jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatus() === INACTIVE"
+            (click)="resumeExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'arTeMiSApp.exerciseActions.openTextEditor' | translate"
             [buttonLoading]="exercise.loading"
@@ -281,7 +297,7 @@
                 exercise.participations &&
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
-                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
+                !exercise.participations[0].results
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -294,11 +310,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
-                exercise.participations &&
-                exercise.participations.length > 0 &&
-                exercise.participations[0].initializationState === 'FINISHED' &&
-                exercise.participations[0].results &&
-                exercise.participations[0].results.length > 0
+                exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED' && exercise.participations[0].results
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -320,6 +332,16 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
+        ></button>
+        <button
+            jhi-exercise-action-button
+            buttonIcon="play-circle"
+            [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
+            [buttonLoading]="exercise.loading"
+            *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            (click)="resumeExercise()"
         ></button>
     </div>
     <!-- ACTIONS END-->

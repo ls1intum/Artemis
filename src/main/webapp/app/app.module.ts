@@ -67,7 +67,6 @@ import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
-import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 
 @NgModule({
     imports: [
@@ -124,7 +123,6 @@ import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
         ArTEMiSExampleModelingSolutionModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSConnectionNotificationModule,
-        ArTEMiSListOfComplaintsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

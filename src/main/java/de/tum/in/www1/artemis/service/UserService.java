@@ -391,4 +391,5 @@ public class UserService {
         userRepository.updateUserNotificationReadDate(loggedInUser.getId());
         return loggedInUser;
     }
+
 }

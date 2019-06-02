@@ -30,16 +30,6 @@
                 "updateAssessmentTooltip": "Send complaint response and update assessment",
                 "rejectComplaint": "Reject complaint",
                 "rejectComplaintTooltip": "Send complaint response and reject complaint"
-            },
-            "listOfComplaints": {
-                "exercise": "Exercise",
-                "submissionId": "Submission ID",
-                "reviewerLogin": "Reviewer's Login",
-                "reviewerName": "Reviewer's Name",
-                "studentLogin": "Student's Login",
-                "studentName": "Student's Name",
-                "actions": "Actions",
-                "title": "List of complaints"
             }
         }
     }

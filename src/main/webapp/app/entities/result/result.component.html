@@ -24,7 +24,7 @@
             &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.downloadBuildResult">Download Build Result</span></a
         >
     </span>
-    <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+    <span *ngIf="showBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
         {{ (result.rated ? 'arTeMiSApp.result.graded' : 'arTeMiSApp.result.notGraded') | translate | uppercase }}
     </span>
 </ng-container>

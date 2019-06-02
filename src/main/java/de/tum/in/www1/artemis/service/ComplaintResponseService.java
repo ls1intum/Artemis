@@ -12,17 +12,17 @@ import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
+import de.tum.in.www1.artemis.web.rest.SubmissionResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * Service for managing complaint responses.
+ * Service for managing complaints.
  */
 @Service
 public class ComplaintResponseService {
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
+    private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
     private static final String ENTITY_NAME = "complaintResponse";
 

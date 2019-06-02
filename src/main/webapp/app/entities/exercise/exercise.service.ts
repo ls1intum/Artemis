@@ -62,11 +62,8 @@ export class ExerciseService {
         });
     }
 
-    findResultsForExercise(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}/results`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.checkPermission(res));
+    findResultsForExercise(id: number): Observable<Exercise> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${id}/results`);
     }
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
