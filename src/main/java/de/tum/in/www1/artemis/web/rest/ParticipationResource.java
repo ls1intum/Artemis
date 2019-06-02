@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -166,8 +165,21 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise;
+        try {
+            exercise = exerciseService.findOne(exerciseId);
+        }
+        catch (EntityNotFoundException e) {
+            log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
+        }
+
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if (participation == null) {
+            log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException("No participation was found for the given exercise and user.", "editor", "participationNotFound");
+        }
+
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
@@ -190,10 +202,9 @@ public class ParticipationResource {
      * @param participation
      */
     private void addLatestResultToParticipation(Participation participation) {
-        // unproxy results if necessary
-        if (!Hibernate.isInitialized(participation.getResults())) {
-            participation.setResults((Set<Result>) Hibernate.unproxy(participation.getResults()));
-        }
+        // Load results of participation as they are not contained in the current object
+        participation = participationService.findOneWithEagerResults(participation.getId());
+
         Result result = participation.findLatestResult();
         participation.setResults(Sets.newHashSet(result));
     }
@@ -468,6 +479,9 @@ public class ParticipationResource {
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // avoid problems due to bidirectional associations between submission and result during serialization
+            if (participation == null) {
+                return null;
+            }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
                     result.getSubmission().setResult(null);
@@ -507,12 +521,14 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
-        log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
+            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         Participation participation = participationService.findOne(id);
+        checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
+                deleteBuildPlan, deleteRepository, principal.getName());
         participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
     }
@@ -524,28 +540,43 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/participations/{id}/cleanupBuildPlan")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id, Principal principal) {
         Participation participation = participationService.findOne(id);
-        log.info("REST request clean up participation with build plan id " + participation.getBuildPlanId());
-        checkAccessPermissionAtLeastTA(participation);
+        checkAccessPermissionAtInstructor(participation);
+        log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
 
+    private void checkAccessPermissionAtInstructor(Participation participation) {
+        Course course = findCourseFromParticipation(participation);
+        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
     private void checkAccessPermissionAtLeastTA(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if (!courseService.userHasAtLeastTAPermissions(course)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
+    }
+
+    private Course findCourseFromParticipation(Participation participation) {
+        if (participation.getExercise() != null && participation.getExercise().getCourse() != null) {
+            return participation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 }

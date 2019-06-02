@@ -4,7 +4,7 @@
         ><span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
         <button
-            *ngIf="course"
+            *ngIf="course && course.isAtLeastInstructor"
             id="jh-link-entity"
             class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1"
             [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]"
@@ -15,7 +15,7 @@
             </span>
         </button>
         <button
-            *ngIf="course"
+            *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
             [routerLink]="['/course', courseId, 'programming-exercise', 'new']"
@@ -65,15 +65,30 @@
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.maxScore }}</td>
-                    <td>
-                        <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"
-                            ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
-                        ><br />
-                        <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"
-                            ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
-                        ><br />
-                        <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span
-                        ><br />
+                    <td class="d-flex flex-column">
+                        <div class="d-flex justify-content-between">
+                            <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"
+                                ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
+                            >
+                            <jhi-programming-exercise-instructor-status
+                                *ngIf="programmingExercise.templateParticipation.results && programmingExercise.templateParticipation.results.length"
+                                [participationType]="'TEMPLATE'"
+                                [result]="programmingExercise.templateParticipation.results[0]"
+                            ></jhi-programming-exercise-instructor-status>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"
+                                ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
+                            >
+                            <jhi-programming-exercise-instructor-status
+                                *ngIf="programmingExercise.solutionParticipation.results && programmingExercise.solutionParticipation.results.length"
+                                [participationType]="'SOLUTION'"
+                                [result]="programmingExercise.solutionParticipation.results[0]"
+                            ></jhi-programming-exercise-instructor-status>
+                        </div>
+                        <div>
+                            <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
+                        </div>
                     </td>
                     <td>
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
@@ -92,13 +107,19 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
+                                    *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
                                 </button>
-                                <button type="submit" [routerLink]="['/exercise', programmingExercise.id, 'participation']" class="btn btn-primary btn-sm mr-1 mb-1">
+                                <button
+                                    type="submit"
+                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    [routerLink]="['/exercise', programmingExercise.id, 'participation']"
+                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
                                 </button>
@@ -106,6 +127,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -114,7 +136,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.shortName != null"
+                                    *ngIf="programmingExercise.shortName != null && programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -123,7 +145,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="programmingExercise.shortName == null"
+                                    *ngIf="programmingExercise.shortName == null && programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -134,7 +156,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -145,7 +167,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -158,7 +180,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/reset' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -169,7 +191,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"

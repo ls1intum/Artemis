@@ -1,0 +1,74 @@
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                {{ 'arTeMiSApp.complaint.listOfComplaints.title' | translate }}
+            </h2>
+        </div>
+    </div>
+</div>
+
+<div class="col-12 mt-4">
+    <jhi-alert></jhi-alert>
+
+    <div class="row table-responsive">
+        <table class="table" [hidden]="complaints.length === 0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.exercise' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.submissionId' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentName' | translate }}</th>
+                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.actions' | translate }}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let complaint of complaints">
+                    <td>
+                        {{ complaint.id }}
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.result?.participation?.exercise?.title }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.result?.submission?.id }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.result?.assessor?.login }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.result?.assessor?.firstName }} {{ complaint.result?.assessor?.lastName }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.student?.login }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
+                    </td>
+
+                    <td class="text-center">
+                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
+                            {{ 'arTeMiSApp.tutorExerciseDashboard.showComplaint' | translate }}
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-info" [hidden]="complaints.length !== 0">
+        {{ 'arTeMiSApp.tutorExerciseDashboard.noComplaints' | translate }}
+    </div>
+</div>

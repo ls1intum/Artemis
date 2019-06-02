@@ -119,16 +119,14 @@
                 </div>
 
                 <div class="form-group-narrow" id="field_problemStatement" name="problemStatement">
-                    <label class="form-control-label" for="field_problemStatement" jhiTranslate="arTeMiSApp.programmingExercise.problemStatement"></label>
-                    <jhi-markdown-editor [enableResize]="true" [markdown]="programmingExercise.problemStatement" (markdownChange)="updateProblemStatement($event)">
-                        <jhi-programming-exercise-instructions
-                            *ngIf="problemStatementLoaded"
-                            #preview
-                            [showTemplateParticipation]="true"
-                            [participation]="programmingExercise.templateParticipation"
-                            [(exercise)]="programmingExercise"
-                        ></jhi-programming-exercise-instructions>
-                    </jhi-markdown-editor>
+                    <label class="form-control-label" for="field_problemStatement" jhiTranslate="arTeMiSApp.programmingExercise.problemStatement.title"></label>
+                    <jhi-programming-exercise-editable-instructions
+                        *ngIf="problemStatementLoaded"
+                        #preview
+                        [participation]="programmingExercise.templateParticipation"
+                        [(exercise)]="programmingExercise"
+                        (onProblemStatementChange)="updateProblemStatement($event)"
+                    ></jhi-programming-exercise-editable-instructions>
                 </div>
 
                 <div class="form-group-narrow">

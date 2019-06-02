@@ -76,8 +76,10 @@ export class ModelingAssessmentService {
             return result;
         }
         for (const feedback of result.feedbacks) {
-            feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
-            feedback.referenceId = feedback.reference.split(':')[1];
+            if (feedback.reference) {
+                feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
+                feedback.referenceId = feedback.reference.split(':')[1];
+            }
         }
         return result;
     }

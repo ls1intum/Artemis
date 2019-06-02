@@ -7,8 +7,8 @@
                 <span *ngIf="modelingExercise">{{ modelingExercise.title }}</span>
             </h2>
         </div>
-        <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div>
+        <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
+            <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
@@ -51,13 +51,13 @@
             <p class="mb-3 markdown-preview">
                 <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <span class="background-editor-color">
-                    <span [innerHTML]="problemStatement"></span>
+                    <span [innerHTML]="modelingExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
                 </span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise.maxScore }">
-                <strong>Max. Score: {{ modelingExercise.maxScore }}</strong>
+            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
+                <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
             </p>
         </div>
     </div>
@@ -80,6 +80,11 @@
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.title">Assessment</h4>
+            <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedbackText }}
+            </div>
             <p
                 *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
                 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.noAssessment"

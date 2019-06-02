@@ -76,7 +76,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    private tutor: User;
+    tutor: User;
 
     constructor(
         private exerciseService: ExerciseService,

@@ -1,22 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -30,15 +28,18 @@ abstract class AssessmentService {
 
     private final ParticipationRepository participationRepository;
 
-    private final ObjectMapper objectMapper;
+    private final ResultService resultService;
+
+    private final AuthorizationCheckService authCheckService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.participationRepository = participationRepository;
-        this.objectMapper = objectMapper;
+        this.resultService = resultService;
+        this.authCheckService = authCheckService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -72,7 +73,7 @@ abstract class AssessmentService {
         try {
             // Store the original result with the complaint
             Complaint complaint = complaintResponse.getComplaint();
-            complaint.setResultBeforeComplaint(getOriginalResultAsString(originalResult));
+            complaint.setResultBeforeComplaint(resultService.getOriginalResultAsString(originalResult));
             complaintRepository.save(complaint);
         }
         catch (JsonProcessingException exception) {
@@ -104,31 +105,92 @@ abstract class AssessmentService {
     }
 
     /**
-     * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
-     * the original result of a submission before updating the result due to a complaint.
+     * Checks the assessment for general (without reference) feedback entries. Throws a BadRequestAlertException if there is more than one general feedback.
      *
-     * @param originalResult the original result that was complained about
-     * @return the reduced result as a JSON string
-     * @throws JsonProcessingException when the conversion to JSON string fails
+     * @param assessment the assessment to check
      */
-    private String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
-        Result resultCopy = new Result();
-        resultCopy.setId(originalResult.getId());
-        resultCopy.setResultString(originalResult.getResultString());
-        resultCopy.setCompletionDate(originalResult.getCompletionDate());
-        resultCopy.setSuccessful(originalResult.isSuccessful());
-        resultCopy.setScore(originalResult.getScore());
-        resultCopy.setRated(originalResult.isRated());
-        resultCopy.hasFeedback(originalResult.getHasFeedback());
-        resultCopy.setFeedbacks(originalResult.getFeedbacks());
-        resultCopy.setAssessor(originalResult.getAssessor());
-        resultCopy.setAssessmentType(originalResult.getAssessmentType());
-        resultCopy.setHasComplaint(originalResult.getHasComplaint());
-        return objectMapper.writeValueAsString(resultCopy);
+    void checkGeneralFeedback(List<Feedback> assessment) {
+        final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
+        if (generalFeedbackCount > 1) {
+            throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+        }
+    }
+
+    /**
+     * Tutors are not allowed to override an assessment after the assessment due date. Instructors can submit assessments at any time.
+     */
+    void checkAssessmentDueDate(Exercise exercise) {
+        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
+        }
     }
 
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    }
+
+    /**
+     * Given a courseId, this method creates the tutor leaderboard collecting all the results of the course, checking who is the assessor and if there is any related complaint
+     *
+     * @param courseId - the course we are interested in
+     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
+     */
+    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForCourse(Long courseId) {
+        List<Result> resultsForCourse = resultRepository.findAllByParticipation_Exercise_CourseIdWithEagerAssessor(courseId);
+
+        return createTutorLeaderboardFromResults(resultsForCourse);
+    }
+
+    /**
+     * Given a exerciseId, this method creates the tutor leaderboard collecting all the results of the exercise, checking who is the assessor and if there is any related complaint
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
+     */
+    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForExercise(Long exerciseId) {
+        List<Result> resultsForExercise = resultRepository.findAllByParticipation_Exercise_IdWithEagerAssessor(exerciseId);
+
+        return createTutorLeaderboardFromResults(resultsForExercise);
+    }
+
+    /**
+     * Given a list of results, create a leaderboard counting how many assessments and how many complaints every tutor has
+     *
+     * @param results - the results to iterate over
+     * @return a tutor leaderboard
+     */
+    @NotNull
+    private List<StatsTutorLeaderboardDTO> createTutorLeaderboardFromResults(List<Result> results) {
+        List<StatsTutorLeaderboardDTO> tutorWithNumberAssessmentList = new ArrayList<>();
+
+        results.forEach(result -> {
+            User assessor = result.getAssessor();
+
+            // We count only completed assessments, not draft
+            if (assessor != null && assessor.getLogin() != null && result.getCompletionDate() != null) {
+                Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
+                StatsTutorLeaderboardDTO element;
+
+                if (!existingElement.isPresent()) {
+                    String name = assessor.getFirstName().concat(" ").concat(assessor.getLastName());
+                    element = new StatsTutorLeaderboardDTO(name, assessor.getLogin(), 0, 0, assessor.getId());
+                    tutorWithNumberAssessmentList.add(element);
+                }
+                else {
+                    element = existingElement.get();
+                }
+
+                element.numberOfAssessments += 1;
+
+                Optional<Boolean> hasComplaint = result.getHasComplaint();
+
+                if (hasComplaint.isPresent() && hasComplaint.get()) {
+                    element.numberOfComplaints += 1;
+                }
+            }
+        });
+
+        return tutorWithNumberAssessmentList;
     }
 }

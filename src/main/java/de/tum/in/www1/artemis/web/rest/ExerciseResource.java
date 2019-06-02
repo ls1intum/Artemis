@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,6 +27,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -42,8 +42,6 @@ public class ExerciseResource {
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
     private static final String ENTITY_NAME = "exercise";
-
-    private final ExerciseRepository exerciseRepository;
 
     private final ExerciseService exerciseService;
 
@@ -69,13 +67,17 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final SubmissionRepository submissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
-            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
-        this.exerciseRepository = exerciseRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper,
+            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -88,7 +90,9 @@ public class ExerciseResource {
         this.objectMapper = objectMapper;
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -125,13 +129,20 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
+
+        User student = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(id);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise))
+        if (!authCheckService.isAllowedToSeeExercise(exercise, student))
             return forbidden();
+
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+        if (isStudent) {
+            exercise.filterSensitiveInformation();
+        }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
@@ -185,24 +196,37 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
+        ObjectNode data = populateCommonStatistics(id);
+        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
 
         long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndResult_Assessor_Id(id, user.getId());
         data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
+    }
+
+    /**
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
+     * instructor dashboard
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a object node with the stats
+     */
+    private ObjectNode populateCommonStatistics(@PathVariable Long exerciseId) {
+        ObjectNode data = objectMapper.createObjectNode();
+
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        return data;
     }
 
     /**
@@ -221,19 +245,12 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
-
+        ObjectNode data = populateCommonStatistics(id);
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
         data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+
+        List<StatsTutorLeaderboardDTO> tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForExercise(id);
+        data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
 
         return ResponseEntity.ok(data);
     }
@@ -355,7 +372,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
@@ -373,8 +389,6 @@ public class ExerciseResource {
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);

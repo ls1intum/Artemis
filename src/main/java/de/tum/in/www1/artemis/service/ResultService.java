@@ -8,6 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
@@ -32,23 +36,23 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final FeedbackService feedbackService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final LtiService ltiService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ResultService(UserService userService, ParticipationService participationService, FeedbackService feedbackService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+    private final ObjectMapper objectMapper;
+
+    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
         this.userService = userService;
         this.participationService = participationService;
-        this.feedbackService = feedbackService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
         this.messagingTemplate = messagingTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Result findOne(long id) {
@@ -162,5 +166,82 @@ public class ResultService {
 
     public List<Result> findByCourseId(Long courseId) {
         return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
+    }
+
+    /**
+     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @return a number of assessments for the course
+     */
+    public long countNumberOfAssessments(Long courseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+    }
+
+    /**
+     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @param tutorId  - the tutor we are interested in
+     * @return a number of assessments for the course
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
+    }
+
+    /**
+     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
+    }
+
+    /**
+     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @param tutorId    - the tutor we are interested in
+     * @return a number of assessments for the exercise
+     */
+    @Transactional(readOnly = true)
+    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
+    }
+
+    /**
+     * Creates a copy of the given original result with all properties except for the participation and submission and converts it to a JSON string. This method is used for storing
+     * the original result of a submission before updating the result due to a complaint.
+     *
+     * @param originalResult the original result that was complained about
+     * @return the reduced result as a JSON string
+     * @throws JsonProcessingException when the conversion to JSON string fails
+     */
+    public String getOriginalResultAsString(Result originalResult) throws JsonProcessingException {
+        Result resultCopy = new Result();
+        resultCopy.setId(originalResult.getId());
+        resultCopy.setResultString(originalResult.getResultString());
+        resultCopy.setCompletionDate(originalResult.getCompletionDate());
+        resultCopy.setSuccessful(originalResult.isSuccessful());
+        resultCopy.setScore(originalResult.getScore());
+        resultCopy.setRated(originalResult.isRated());
+        resultCopy.hasFeedback(originalResult.getHasFeedback());
+        resultCopy.setFeedbacks(originalResult.getFeedbacks());
+        resultCopy.setAssessor(originalResult.getAssessor());
+        resultCopy.setAssessmentType(originalResult.getAssessmentType());
+
+        Optional<Boolean> hasComplaint = originalResult.getHasComplaint();
+        if (hasComplaint.isPresent()) {
+            resultCopy.setHasComplaint(originalResult.getHasComplaint().get());
+        }
+        else {
+            resultCopy.setHasComplaint(false);
+        }
+
+        return objectMapper.writeValueAsString(resultCopy);
     }
 }

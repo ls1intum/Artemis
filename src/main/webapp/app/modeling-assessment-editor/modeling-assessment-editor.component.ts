@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeli
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -25,7 +26,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     model: UMLModel;
     modelingExercise: ModelingExercise;
     result: Result;
-    localFeedbacks: Feedback[];
+    generalFeedback: Feedback;
+    referencedFeedback: Feedback[];
     conflicts: Conflict[];
     highlightedElementIds: Set<string>;
     ignoreConflicts = false;
@@ -38,6 +40,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     showBackButton: boolean;
     hasComplaint: boolean;
     canOverride = false;
+    isLoading: boolean;
 
     private cancelConfirmationText: string;
 
@@ -55,6 +58,16 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        this.generalFeedback = new Feedback();
+        this.referencedFeedback = [];
+        this.isLoading = true;
+    }
+
+    get feedback(): Feedback[] {
+        if (!this.referencedFeedback) {
+            return [this.generalFeedback];
+        }
+        return [this.generalFeedback, ...this.referencedFeedback];
     }
 
     ngOnInit() {
@@ -117,9 +130,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
         this.hasComplaint = this.result.hasComplaint;
-        this.localFeedbacks = this.result.feedbacks;
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
+            this.handleFeedback(this.result.feedbacks);
         } else {
             this.result.feedbacks = [];
         }
@@ -134,16 +147,36 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.jhiAlertService.clear();
             this.jhiAlertService.error('modelingAssessmentEditor.messages.noModel');
         }
-        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+        if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('modelingAssessmentEditor.messages.lock');
         }
-        this.checkAuthorization();
+        this.checkPermissions();
         this.validateFeedback();
+        this.isLoading = false;
     }
 
-    private checkAuthorization() {
+    /**
+     * Checks the given feedback list for general feedback (i.e. feedback without a reference). If there is one, it is assigned to the generalFeedback variable and removed from
+     * the original feedback list. The remaining list is then assigned to the referencedFeedback variable containing only feedback elements with a reference and valid score.
+     */
+    private handleFeedback(feedback: Feedback[]): void {
+        if (!feedback || feedback.length === 0) {
+            return;
+        }
+        const generalFeedbackIndex = feedback.findIndex(feedbackElement => feedbackElement.reference == null);
+        if (generalFeedbackIndex >= 0) {
+            this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
+            feedback.splice(generalFeedbackIndex, 1);
+        }
+        this.referencedFeedback = feedback;
+    }
+
+    private checkPermissions(): void {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {
@@ -156,13 +189,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSaveAssessment() {
-        this.removeCircularDependencies();
-        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
-            this.localFeedbacks = [];
-        }
-        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
+                this.handleFeedback(this.result.feedbacks);
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
@@ -174,13 +204,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        this.removeCircularDependencies();
-        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
-            this.localFeedbacks = [];
-        }
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -200,8 +226,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
+                    let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
+                    if (error.error && error.error.entityName && error.error.message) {
+                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
+                    }
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailed');
+                    this.jhiAlertService.error(errorMessage);
                 }
             },
         );
@@ -214,11 +244,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.removeCircularDependencies();
-        if (this.localFeedbacks === undefined || this.localFeedbacks === null) {
-            this.localFeedbacks = [];
-        }
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.localFeedbacks, complaintResponse, this.submission.id).subscribe(
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
@@ -243,8 +269,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    onFeedbackChanged(feedbacks: Feedback[]) {
-        this.localFeedbacks = feedbacks;
+    onFeedbackChanged(feedback: Feedback[]) {
+        this.referencedFeedback = feedback;
         this.validateFeedback();
     }
 
@@ -281,21 +307,20 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Removes the circular dependencies in the nested objects.
-     * Otherwise, we would get a JSON error when trying to send the submission to the server.
+     * Validates the feedback:
+     *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
+     *   - Each reference feedback must have a score that is a valid number
      */
-    private removeCircularDependencies() {
-        this.submission.result.participation = null;
-        this.submission.result.submission = null;
-    }
-
-    private validateFeedback() {
-        if (!this.result.feedbacks) {
+    validateFeedback() {
+        if (
+            (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
+            (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
+        ) {
             this.assessmentsAreValid = false;
             return;
         }
-        for (const feedback of this.result.feedbacks) {
-            if (feedback.credits == null) {
+        for (const feedback of this.referencedFeedback) {
+            if (feedback.credits == null || isNaN(feedback.credits)) {
                 this.assessmentsAreValid = false;
                 return;
             }

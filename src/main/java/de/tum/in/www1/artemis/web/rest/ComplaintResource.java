@@ -6,8 +6,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,14 +16,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -41,23 +36,23 @@ public class ComplaintResource {
 
     private static final String ENTITY_NAME = "complaint";
 
-    private ComplaintRepository complaintRepository;
-
-    private ResultRepository resultRepository;
-
     private AuthorizationCheckService authCheckService;
 
     private ExerciseService exerciseService;
 
     private UserService userService;
 
-    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService,
-            ExerciseService exerciseService, UserService userService) {
-        this.complaintRepository = complaintRepository;
-        this.resultRepository = resultRepository;
+    private ComplaintService complaintService;
+
+    private CourseService courseService;
+
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, ComplaintService complaintService,
+            CourseService courseService) {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.userService = userService;
+        this.complaintService = complaintService;
+        this.courseService = courseService;
     }
 
     /**
@@ -79,38 +74,11 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
-        if (complaintRepository.findByResult_Id(complaint.getResult().getId()).isPresent()) {
+        if (complaintService.getById(complaint.getResult().getId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
         }
 
-        // Do not trust user input
-        Result originalResult = resultRepository.findById(complaint.getResult().getId())
-                .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
-        User originalSubmissor = originalResult.getParticipation().getStudent();
-        Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
-
-        long numberOfUnacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(originalSubmissor.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT) {
-            throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
-                    "toomanycomplaints");
-        }
-        if (originalResult.getCompletionDate().isBefore(ZonedDateTime.now().minusWeeks(1))) {
-            throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
-        }
-        if (!originalSubmissor.getLogin().equals(principal.getName())) {
-            throw new BadRequestAlertException("You can create a complaint only for a result you submitted", ENTITY_NAME, "differentuser");
-        }
-
-        originalResult.setHasComplaint(true);
-
-        complaint.setSubmittedTime(ZonedDateTime.now());
-        complaint.setStudent(originalSubmissor);
-        complaint.setResult(originalResult);
-        complaint.setResultBeforeComplaint(originalResult.getResultString());
-
-        resultRepository.save(originalResult);
-
-        Complaint savedComplaint = complaintRepository.save(complaint);
+        Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
     }
@@ -125,8 +93,7 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Complaint> getComplaint(@PathVariable Long id) {
         log.debug("REST request to get Complaint : {}", id);
-        Optional<Complaint> complaint = complaintRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(complaint);
+        return ResponseUtil.wrapOrNotFound(complaintService.getById(id));
     }
 
     /**
@@ -139,11 +106,8 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
-        Optional<Complaint> complaint = complaintRepository.findByResult_Id(resultId);
-        if (complaint.isPresent()) {
-            return ResponseEntity.ok(complaint.get());
-        }
-        return ResponseEntity.ok().build();
+        Optional<Complaint> complaint = complaintService.getByResultId(resultId);
+        return complaint.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 
     /**
@@ -157,7 +121,7 @@ public class ComplaintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
-        long unacceptedComplaints = complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
+        long unacceptedComplaints = complaintService.countUnacceptedComplaintsByStudentIdAndCourseId(userService.getUser().getId(), courseId);
         return ResponseEntity.ok(Math.max(MAX_COMPLAINT_NUMBER_PER_STUDENT - unacceptedComplaints, 0));
     }
 
@@ -172,32 +136,94 @@ public class ComplaintResource {
     @GetMapping("/complaints/for-tutor-dashboard/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
-        List<Complaint> responseComplaints = new ArrayList<>();
-
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
 
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
+        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId, principal);
+        return ResponseEntity.ok(responseComplaints);
+    }
 
-        if (!databaseComplaints.isPresent()) {
-            return ResponseEntity.ok(responseComplaints);
+    @GetMapping("/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,
+            @RequestParam(required = false) Long courseId) {
+        if (tutorId == null && exerciseId == null && courseId == null) {
+            throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
         }
 
-        databaseComplaints.get().forEach(complaint -> {
-            String submissorName = principal.getName();
-            User assessor = complaint.getResult().getAssessor();
+        // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
+        // to filter by at least exerciseId or courseId, to be sure they are really instructors for that course /
+        // exercise.
+        // Of course tutors cannot ask for complaints about other tutors.
+        // So, if the courseId is null, and the exerciseId is null, we just use the userId of the caller
+        if (exerciseId == null && courseId == null) {
+            User callerUser = userService.getUser();
+            List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(callerUser.getId());
 
-            if (!assessor.getLogin().equals(submissorName)) {
-                // Remove data about the student
-                complaint.getResult().getParticipation().setStudent(null);
-                complaint.setStudent(null);
+            return ResponseEntity.ok(complaints);
+        }
 
-                responseComplaints.add(complaint);
+        if (courseId != null) {
+            // Filtering by courseId
+            Course course = courseService.findOne(courseId);
+
+            if (course == null) {
+                throw new BadRequestAlertException("The requested course does not exist", ENTITY_NAME, "wrongCourseId");
             }
-        });
 
-        return ResponseEntity.ok(responseComplaints);
+            boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, null);
+            boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForCourse(course, null);
+
+            if (!isAtLeastTutor) {
+                throw new AccessForbiddenException("Insufficient permission for these complaints");
+            }
+
+            if (!isAtLeastInstructor) {
+                tutorId = userService.getUser().getId();
+            }
+
+            List<Complaint> complaints;
+
+            if (tutorId == null) {
+                complaints = complaintService.getAllComplaintsByCourseId(courseId, isAtLeastInstructor);
+            }
+            else {
+                complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
+            }
+
+            return ResponseEntity.ok(complaints);
+        }
+
+        // Filtering by exerciseId
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (exercise == null) {
+            throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");
+        }
+
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+
+        if (!isAtLeastTutor) {
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+
+        // Only instructors can access all complaints about a exercise without filtering by tutorId
+        if (!isAtLeastInstructor) {
+            tutorId = userService.getUser().getId();
+        }
+
+        List<Complaint> complaints;
+
+        if (tutorId == null) {
+            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId, isAtLeastInstructor);
+        }
+        else {
+            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId, isAtLeastInstructor);
+        }
+
+        return ResponseEntity.ok(complaints);
     }
 }

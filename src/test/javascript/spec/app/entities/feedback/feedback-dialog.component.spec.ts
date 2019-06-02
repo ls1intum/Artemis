@@ -42,7 +42,7 @@ describe('Component Tests', () => {
                 [],
                 fakeAsync(() => {
                     // GIVEN
-                    const entity = new Feedback(123);
+                    const entity = new Feedback(undefined, undefined, '123');
                     spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({ body: entity })));
                     comp.feedback = entity;
                     // WHEN

@@ -57,7 +57,10 @@ export class ParticipationService {
     findAllParticipationsByExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
-            .get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, { params: options, observe: 'response' })
+            .get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
+                params: options,
+                observe: 'response',
+            })
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
@@ -164,5 +167,32 @@ export class ParticipationService {
             });
         }
         return convertedSubmissions;
+    }
+
+    mergeResultsAndSubmissionsForParticipations(participations: Participation[]): Participation {
+        const combinedParticipation: Participation = new Participation();
+        if (participations && participations.length > 0) {
+            combinedParticipation.id = participations[0].id;
+            combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
+            combinedParticipation.initializationState = participations[0].initializationState;
+            combinedParticipation.initializationDate = participations[0].initializationDate;
+            combinedParticipation.presentationScore = participations[0].presentationScore;
+            combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.student = participations[0].student;
+            combinedParticipation.exercise = participations[0].exercise;
+
+            participations.forEach(participation => {
+                if (participation.results) {
+                    combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
+                }
+                if (participation.submissions) {
+                    combinedParticipation.submissions = combinedParticipation.submissions
+                        ? combinedParticipation.submissions.concat(participation.submissions)
+                        : participation.submissions;
+                }
+            });
+        }
+        return combinedParticipation;
     }
 }

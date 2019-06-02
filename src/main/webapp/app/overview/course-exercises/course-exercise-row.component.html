@@ -30,19 +30,19 @@
                     <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'arTeMiSApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
                 </div>
                 <span *ngSwitchCase="'initialized'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'inactive'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
+                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
                 </span>
             </div>
         </div>

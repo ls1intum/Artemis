@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -37,8 +35,8 @@ public class ModelingAssessmentService extends AssessmentService {
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, objectMapper);
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -71,11 +69,16 @@ public class ModelingAssessmentService extends AssessmentService {
      * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
      */
     @Transactional
-    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
             result = new Result();
         }
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(modelingExercise);
+        }
+        checkGeneralFeedback(modelingAssessment);
 
         result.setHasComplaint(false);
         result.setExampleResult(modelingSubmission.isExampleSubmission());

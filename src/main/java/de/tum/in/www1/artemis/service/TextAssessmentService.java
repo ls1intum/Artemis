@@ -6,20 +6,11 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -32,8 +23,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
             ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            ParticipationRepository participationRepository, ObjectMapper objectMapper) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, objectMapper);
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
@@ -47,10 +38,11 @@ public class TextAssessmentService extends AssessmentService {
      * @param textExercise   the text exercise the assessment belongs to
      * @param textAssessment the assessments as a list
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) {
-        Result result = saveAssessment(resultId, textAssessment);
+    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
+        Result result = saveAssessment(resultId, textAssessment, textExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
         return submitResult(result, textExercise, calculatedScore);
@@ -63,11 +55,26 @@ public class TextAssessmentService extends AssessmentService {
      * @param resultId       the resultId the assessment belongs to
      * @param textAssessment the assessments as string
      * @return the ResponseEntity with result as body
+     * @throws BadRequestAlertException on invalid feedback input
      */
     @Transactional
-    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) {
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment, TextExercise textExercise) throws BadRequestAlertException {
+        checkGeneralFeedback(textAssessment);
+
+        final boolean hasAssessmentWithTooLongReference = textAssessment.stream().filter(Feedback::hasReference)
+                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+        if (hasAssessmentWithTooLongReference) {
+            throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "textAssessment",
+                    "feedbackReferenceTooLong");
+        }
+
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
+
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(textExercise);
+        }
 
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
@@ -107,47 +114,5 @@ public class TextAssessmentService extends AssessmentService {
     // good for text exercises?
     private Double calculateTotalScore(List<Feedback> assessments) {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseId(courseId);
-    }
-
-    /**
-     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
-     *
-     * @param courseId - the course we are interested in
-     * @param tutorId  - the tutor we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseId(tutorId, courseId);
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseId(exerciseId);
-    }
-
-    /**
-     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param tutorId    - the tutor we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseId(tutorId, exerciseId);
     }
 }

@@ -8,6 +8,7 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -19,9 +20,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
         courseService: CourseService,
         translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
@@ -34,8 +36,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
             (res: HttpResponse<FileUploadExercise[]>) => {
                 this.fileUploadExercises = res.body;
                 // reconnect exercise with course
-                this.fileUploadExercises.forEach(fileUploadExercise => {
-                    fileUploadExercise.course = this.course;
+                this.fileUploadExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.fileUploadExercises.length);
             },
