@@ -214,10 +214,20 @@ public class TextSubmissionService {
     }
 
     /**
-     * @param id the exercise we are interested in
-     * @return the number of submitted submissions for the exercise passed as argument
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
      */
-    public long countSubmittedSubmissionsForExerciseId(Long id) {
-        return textSubmissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return textSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return textSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }
