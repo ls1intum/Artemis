@@ -4,7 +4,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -23,6 +23,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     alreadySubmitted: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
+    complaintTypes = ComplaintType;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 

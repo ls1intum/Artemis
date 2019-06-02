@@ -18,7 +18,7 @@ import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService, WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -392,7 +392,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
             response => {
                 this.result = response.body;
-                this.updateParticipationWithResult();
+                if (complaintResponse.complaint.complaintType !== ComplaintType.MORE_FEEDBACK) {
+                    this.updateParticipationWithResult();
+                }
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
             },

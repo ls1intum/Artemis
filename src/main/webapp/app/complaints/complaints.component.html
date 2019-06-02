@@ -18,12 +18,13 @@
             </p>
         </div>
 
-        <!--TODO: uncomment again when the 'request more feedback' feature is implemented-->
-        <!--<div class="col-6">-->
-        <!--<h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>-->
-        <!--<p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>-->
-        <!--<button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>-->
-        <!--</div>-->
+        <div class="col-6">
+            <h3>{{ 'arTeMiSApp.moreFeedback.title' | translate }}</h3>
+            <p>
+                {{ 'arTeMiSApp.moreFeedback.description' | translate }}
+                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.moreFeedback.info' | translate }}" style="color:#ffc107;"></fa-icon>
+            </p>
+        </div>
     </div>
 
     <div class="row">
@@ -43,6 +44,9 @@
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">
                     <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'arTeMiSApp.complaint.submit' | translate }}</button>
+                    <button class="btn btn-default" [disabled]="complaintText.length <= 0" (click)="requestMoreFeedback()">
+                        {{ 'arTeMiSApp.moreFeedback.button' | translate }}
+                    </button>
                 </div>
             </div>
         </div>
