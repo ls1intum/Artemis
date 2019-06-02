@@ -57,15 +57,13 @@ public class ExerciseService {
 
     private final Optional<GitService> gitService;
 
-    private final Optional<ProgrammingExerciseService> programmingExerciseService;
-
     private final QuizStatisticService quizStatisticService;
 
     private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+            QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -73,7 +71,6 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
     }
@@ -327,7 +324,6 @@ public class ExerciseService {
                 Repository repo = gitService.get().getOrCheckoutRepository(participation);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
                 gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
-                programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
@@ -341,8 +337,6 @@ public class ExerciseService {
                 }
                 else {
                     // finish with clean state
-                    gitService.get().checkoutBranch(repo, "master");
-                    gitService.get().deleteLocalBranch(repo, "stager");
                     gitService.get().resetToOriginMaster(repo);
                 }
             }

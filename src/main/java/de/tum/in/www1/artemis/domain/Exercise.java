@@ -113,19 +113,6 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<StudentQuestion> studentQuestions = new HashSet<>();
 
-    // Helpers
-    // variable names must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
-    @Transient
-    private int numberOfParticipationsTransient;
-
-    @Transient
-    private int numberOfAssessmentsTransient;
-
-    @Transient
-    private int numberOfComplaintsTransient;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -198,14 +185,6 @@ public abstract class Exercise implements Serializable {
 
     public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
         this.assessmentDueDate = assessmentDueDate;
-    }
-
-    /**
-     * Checks if the assessment due date is in the past. Also returns true, if no assessment due date is set.
-     */
-    @JsonIgnore
-    public boolean isAssessmentDueDateOver() {
-        return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
     public Double getMaxScore() {
@@ -555,29 +534,5 @@ public abstract class Exercise implements Serializable {
 
     public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
         this.tutorParticipations = tutorParticipations;
-    }
-
-    public int getNumberOfParticipations() {
-        return numberOfParticipationsTransient;
-    }
-
-    public void setNumberOfParticipations(int numberOfParticipations) {
-        this.numberOfParticipationsTransient = numberOfParticipations;
-    }
-
-    public int getNumberOfAssessments() {
-        return numberOfAssessmentsTransient;
-    }
-
-    public void setNumberOfAssessments(int numberOfAssessments) {
-        this.numberOfAssessmentsTransient = numberOfAssessments;
-    }
-
-    public int getNumberOfComplaints() {
-        return numberOfComplaintsTransient;
-    }
-
-    public void setNumberOfComplaints(int numberOfComplaints) {
-        this.numberOfComplaintsTransient = numberOfComplaints;
     }
 }

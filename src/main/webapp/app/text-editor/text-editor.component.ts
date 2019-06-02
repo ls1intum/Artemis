@@ -35,8 +35,7 @@ export class TextEditorComponent implements OnInit {
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled
     resultOlderThanOneWeek: boolean;
-    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
+    formattedProblemStatement: string;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -67,7 +66,6 @@ export class TextEditorComponent implements OnInit {
             (data: Participation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
-                this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
                 if (this.textExercise.course) {
                     this.complaintService.getNumberOfAllowedComplaintsInCourse(this.textExercise.course.id).subscribe((allowedComplaints: number) => {
@@ -75,9 +73,11 @@ export class TextEditorComponent implements OnInit {
                     });
                 }
 
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
+
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
-                    if (this.submission && data.results && this.isAfterAssessmentDueDate) {
+                    if (this.submission && data.results) {
                         this.result = data.results.find(r => r.submission.id === this.submission.id);
                     }
 
@@ -99,11 +99,7 @@ export class TextEditorComponent implements OnInit {
     }
 
     get generalFeedback(): Feedback | null {
-        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            return this.result.feedbacks.find(f => f.reference == null) || null;
-        }
-
-        return null;
+        return this.result.feedbacks.find(f => f.reference == null) || null;
     }
 
     saveText() {

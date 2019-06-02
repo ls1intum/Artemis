@@ -36,6 +36,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     @Output() newResultReceived = new EventEmitter<boolean>();
 
     private resultUpdateListener: Subscription;
+    websocketChannelSubmissions: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -49,16 +50,12 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        if (!this.participation || !this.participation.id) {
-            return;
-        }
-
         if (this.result) {
             const exercise = this.participation.exercise;
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewResults(exercise as ProgrammingExercise);
             }
-        } else {
+        } else if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
@@ -88,7 +85,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     subscribeForNewResults(exercise: Exercise) {
         this.accountService.identity().then(user => {
             // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            const isInstructorInCourse = this.participation.student == null && exercise.course && this.accountService.isAtLeastInstructorInCourse(exercise.course);
+            const isInstructorInCourse = this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course);
             const isSameUser = this.participation.student && user.id === this.participation.student.id;
             const exerciseNotOver = exercise.dueDate == null || (moment(exercise.dueDate).isValid() && moment(exercise.dueDate).isAfter(moment()));
 
@@ -124,6 +121,9 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnDestroy() {
         if (this.resultUpdateListener) {
             this.resultUpdateListener.unsubscribe();
+        }
+        if (this.websocketChannelSubmissions) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
         }
     }
 }

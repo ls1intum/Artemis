@@ -1,5 +1,4 @@
 import * as $ from 'jquery';
-import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
@@ -46,7 +45,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     complaint: Complaint;
     notFound = false;
     userId: number;
-    canOverride = false;
 
     formattedProblemStatement: string;
     formattedSampleSolution: string;
@@ -293,7 +291,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
         this.validateAssessment();
-        this.checkPermissions();
+        this.checkAuthorization();
     }
 
     goToExerciseDashboard() {
@@ -344,11 +342,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.invalidError = null;
     }
 
-    private checkPermissions() {
+    private checkAuthorization() {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
-        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     toggleCollapse($event: any) {
