@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { map, tap } from 'rxjs/operators';
 import { DiagramType, UMLModel } from '@ls1intum/apollon';
@@ -10,13 +10,14 @@ import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diag
     templateUrl: './modeling-editor-dialog.component.html',
 })
 export class ModelingEditorDialogComponent {
+    DiagramType = DiagramType;
     @ViewChild(ModelingEditorComponent) editor: ModelingEditorComponent;
     @Input()
     get diagramId() {
         return this.diagramIdValue;
     }
     @Input()
-    diagramType: DiagramType;
+    diagramType = DiagramType.ClassDiagram;
     @Input()
     readOnly = false;
     @Output()
@@ -36,12 +37,17 @@ export class ModelingEditorDialogComponent {
             .pipe(map(res => res && res.body))
             .subscribe((diagram: ApollonDiagram) => {
                 this.diagram = diagram;
+                this.diagramType = diagram.diagramType;
                 this.umlModel = JSON.parse(diagram.jsonRepresentation);
                 this.isLoading = false;
             });
     }
 
     constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService) {}
+
+    selectDiagramType(diagramType: DiagramType) {
+        this.diagramType = diagramType;
+    }
 
     onSave() {
         this.isSaving = true;

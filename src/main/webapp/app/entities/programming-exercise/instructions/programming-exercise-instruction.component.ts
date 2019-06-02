@@ -29,6 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
+import { ModelingEditorComponent, ModelingEditorDialogComponent } from 'app/modeling-editor';
 
 enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
@@ -305,7 +306,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 .pipe(map(res => res && res.body))
                 .subscribe((diagram: ApollonDiagram) => {
                     if (document.getElementById('apollon-' + diagram.id)) {
-                        // TODO: Insert Modeling Editor readonly component
+                        const componentRef = this.componentFactoryResolver.resolveComponentFactory(ModelingEditorComponent).create(this.injector);
+                        componentRef.instance.readOnly = true;
+                        componentRef.instance.umlModel = JSON.parse(diagram.jsonRepresentation);
+                        this.appRef.attachView(componentRef.hostView);
+                        const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                        const apollonContainer = document.getElementById(`apollon-${diagram.id}`);
+                        apollonContainer.innerHTML = '';
+                        apollonContainer.append(domElem);
                     }
                 }),
         );
@@ -404,14 +412,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const regex = /^\[apollon\](.*)\[\/apollon\]/;
         const match = regex.exec(state.src.slice(state.pos));
         if (match) {
-            this.apollonUMLs = [...this.apollonUMLs, match[1]];
+            this.apollonUMLs = this.apollonUMLs.includes(match[1]) ? this.apollonUMLs : [...this.apollonUMLs, match[1]];
             state.tokens.push({
                 type: 'apollon',
                 level: state.level,
                 lines: [startLine, state.line],
                 content: `apollon-${match[1]}`,
             });
+            state.pos += match[0].length;
+            return true;
         }
+        return false;
     }
 
     /**
