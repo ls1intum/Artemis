@@ -64,6 +64,10 @@ export abstract class Exercise implements BaseEntity {
     public attachments: Attachment[];
     public studentQuestions: StudentQuestion[];
 
+    public numberOfParticipations?: number;
+    public numberOfAssessments?: number;
+    public numberOfComplaints?: number;
+
     // helper attributes
     public isAtLeastTutor = false; // default value
     public isAtLeastInstructor = false; // default value
@@ -71,8 +75,6 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipationsWithRatedResult: number;
     public numberOfSuccessfulParticipations: number;
     public averagePoints: number;
-    public numberOfAssessments: number;
-    public numberOfComplaints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

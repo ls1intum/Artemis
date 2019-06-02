@@ -19,7 +19,7 @@ $titlebar-height: 65px;
 
 .assessment-container {
     display: flex;
-    height: calc(100vh - 173px);
+    min-height: calc(100vh - 173px);
     flex-flow: column nowrap;
 }
 
