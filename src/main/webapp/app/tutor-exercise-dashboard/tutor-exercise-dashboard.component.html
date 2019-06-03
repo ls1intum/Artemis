@@ -30,9 +30,7 @@
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
-                    <div class="col-4">
-                        <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.id }">{{ numberOfComplaints }}</a>
-                    </div>
+                    <div class="col-4">{{ numberOfComplaints }}</div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}</div>

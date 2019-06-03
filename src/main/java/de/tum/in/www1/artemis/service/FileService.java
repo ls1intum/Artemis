@@ -254,10 +254,6 @@ public class FileService {
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
             }
-            // special case for '.gitattributes' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.attributes.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
-            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();

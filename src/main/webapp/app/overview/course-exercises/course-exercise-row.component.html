@@ -39,10 +39,10 @@
                     <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'modeling-exercise'">
-                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
                 <span *ngSwitchCase="'text-exercise'">
-                    <jhi-updating-result [participation]="isAfterAssessmentDueDate ? exercise.participations[0] : null" short="true"></jhi-updating-result>
+                    <jhi-updating-result [participation]="exercise.participations[0]" short="true"></jhi-updating-result>
                 </span>
             </div>
         </div>

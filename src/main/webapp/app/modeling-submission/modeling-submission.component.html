@@ -7,8 +7,8 @@
                 <span *ngIf="modelingExercise">{{ modelingExercise.title }}</span>
             </h2>
         </div>
-        <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
-            <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
+        <div class="col-12 col-lg-4 text-right">
+            <div *ngIf="participation"><jhi-updating-result [participation]="participation"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
@@ -51,13 +51,13 @@
             <p class="mb-3 markdown-preview">
                 <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <span class="background-editor-color">
-                    <span [innerHTML]="modelingExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
+                    <span [innerHTML]="problemStatement"></span>
                 </span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
-                <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
+            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise.maxScore }">
+                <strong>Max. Score: {{ modelingExercise.maxScore }}</strong>
             </p>
         </div>
     </div>

@@ -77,7 +77,7 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise);
 
-        Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
+        Result result = textAssessmentService.saveAssessment(resultId, textAssessments);
         return ResponseEntity.ok(result);
     }
 
@@ -255,4 +255,5 @@ public class TextAssessmentResource extends AssessmentResource {
         validateExercise(textExercise);
         checkAuthorization(textExercise);
     }
+
 }

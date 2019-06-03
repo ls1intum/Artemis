@@ -27,9 +27,7 @@
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
             "dueDate": "Abgabedatum",
-            "dueDateError": "Abgabedatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
             "assessmentDueDate": "Abgabedatum der Bewertung",
-            "assessmentDateError": "Abgabedatum der Bewertung muss nach dem Veröffentlichungs- und Abgabedatum sein. Bitte überprüfe deine Auswahl nochmal",
             "maxScore": "Maximale Punktzahl",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
@@ -62,10 +60,7 @@
             "isModeling": "Das ist eine Modelierungsübung",
             "isQuiz": "Das ist eine Quizübung",
             "isText": "Das ist eine Textübung",
-            "isFileUpload": "Das ist eine Datei-Upload-Übung",
-            "errors": {
-                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
-            }
+            "isFileUpload": "Das ist eine Datei-Upload-Übung"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

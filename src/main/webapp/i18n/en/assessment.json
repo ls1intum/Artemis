@@ -3,8 +3,7 @@
         "assessment": {
             "generalFeedback": "General Feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
-                "assessmentDueDateOver": "The assessment due date of this exercise is over."
+                "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben."
             }
         }
     }

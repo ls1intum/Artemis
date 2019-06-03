@@ -20,7 +20,7 @@
                 You have the lock for this assessment
             </span>
             <div *ngIf="!result?.completionDate">
-                <button class="btn btn-primary ml-3" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
+                <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized">
                     <fa-icon icon="save"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
@@ -46,7 +46,7 @@
     <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
-    <div class="editor-container flex-grow-1">
+    <div class="editor-container">
         <jhi-modeling-assessment
             *ngIf="submission"
             [diagramType]="modelingExercise.diagramType"

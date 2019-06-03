@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -386,11 +385,8 @@ public class Result implements Serializable {
         return hasComplaint;
     }
 
-    /**
-     * `hasComplaint` could be null in the database
-     */
-    public Optional<Boolean> getHasComplaint() {
-        return Optional.ofNullable(hasComplaint);
+    public Boolean getHasComplaint() {
+        return hasComplaint;
     }
 
     public Result hasComplaint(Boolean hasComplaint) {

@@ -67,7 +67,7 @@ public class TypesDiffSerializer {
 
         for (JavaField attribute : typesDiff.attributesDiff) {
             JsonObject attributeJSON = SerializerUtil.createJsonObject(attribute.getName(), new HashSet<>(attribute.getModifiers()), attribute);
-            attributeJSON.addProperty("type", attribute.getType().getValue());
+            attributeJSON.addProperty("type", attribute.getType().getSimpleName());
             attributesJSON.add(attributeJSON);
         }
 

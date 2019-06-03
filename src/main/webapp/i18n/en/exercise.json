@@ -27,9 +27,7 @@
             "shortName": "Short Name",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
-            "dueDateError": "Due Date must be after Release Date. Please check your selection again",
             "assessmentDueDate": "Assessment Due Date",
-            "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "maxScore": "Max Score",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
@@ -62,10 +60,7 @@
             "isModeling": "This is a modeling exercise",
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
-            "isFileUpload": "This is a file upload exercise",
-            "errors": {
-                "exerciseNotFound": "This exercise was not found"
-            }
+            "isFileUpload": "This is a file upload exercise"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

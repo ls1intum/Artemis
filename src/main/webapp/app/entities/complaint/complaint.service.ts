@@ -44,34 +44,6 @@ export class ComplaintService {
         return this.http.put<Complaint>(`${this.resourceUrl}/${complaint.id}`, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findAllByTutorIdForCourseId(tutorId: number, courseId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&tutorId=${tutorId}`;
-
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    findAllByTutorIdForExerciseId(tutorId: number, exerciseId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&tutorId=${tutorId}`;
-
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    findAllByCourseId(courseId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}`;
-
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    findAllByExerciseId(exerciseId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}`;
-
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http.get<Complaint[]>(url, { observe: 'response' }).map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
-    }
-
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
             submittedTime: complaint.submittedTime != null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null,

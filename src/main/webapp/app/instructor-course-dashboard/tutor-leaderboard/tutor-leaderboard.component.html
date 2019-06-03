@@ -12,19 +12,10 @@
         <tbody>
             <tr *ngFor="let tutor of tutorsData | keyvalue: orderByNumberOfAssessments; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.value.name }}</td>
-                <td>{{ tutor.value.login }}</td>
+                <td>{{ tutor.value.tutor.firstName }} {{ tutor.value.tutor.lastName }}</td>
+                <td>{{ tutor.value.tutor.login }}</td>
                 <td>{{ tutor.value.numberOfAssessments }}</td>
-                <td *ngIf="courseId">
-                    <a routerLink="/complaints" [queryParams]="{ courseId: courseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
-                    </a>
-                </td>
-                <td *ngIf="exerciseId">
-                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
-                    </a>
-                </td>
+                <td>{{ tutor.value.numberOfComplaints }}</td>
             </tr>
         </tbody>
     </table>

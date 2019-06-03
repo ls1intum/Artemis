@@ -3,8 +3,7 @@
         "assessment": {
             "generalFeedback": "Allgemeines Feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
-                "assessmentDueDateOver": "Das Fälligkeitsdatum der Bewertung für diese Aufgabe ist vorbei."
+                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment"
             }
         }
     }
