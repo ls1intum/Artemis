@@ -183,7 +183,7 @@ dependencies {
     compile group: "io.github.jhipster", name: "jhipster-framework"
     compile "org.springframework.boot:spring-boot-starter-cache"
     compile "io.micrometer:micrometer-registry-prometheus:1.1.3"
-    compile "net.logstash.logback:logstash-logback-encoder:5.3"
+    compile "net.logstash.logback:logstash-logback-encoder:6.0"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
