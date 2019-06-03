@@ -1,16 +1,54 @@
-import { Component, Input } from '@angular/core';
-import { Result } from 'app/entities/result';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { ParticipationType } from '../programming-exercise-participation.model';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
 })
-export class ProgrammingExerciseInstructorStatusComponent {
+export class ProgrammingExerciseInstructorStatusComponent implements OnChanges {
     ParticipationType = ParticipationType;
 
     @Input()
     participationType: ParticipationType;
     @Input()
-    result: Result;
+    participation: Participation;
+    @Input()
+    exercise: ProgrammingExercise;
+
+    latestResult: Result;
+    resultSubscription: Subscription;
+
+    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+
+    /**
+     * When the participation changes, get the latestResult from it and setup the result subscription for new results.
+     * @param changes
+     */
+    ngOnChanges(changes: SimpleChanges) {
+        if (hasParticipationChanged(changes)) {
+            this.latestResult = this.participation.results.length ? this.participation.results.reduce((currentMax, next) => (next > currentMax ? next : currentMax)) : null;
+            this.updateResultSubscription();
+        }
+    }
+
+    /**
+     * If there is an existing subscription, unsubscribe.
+     * Create a new subscription for the provided participation.
+     */
+    updateResultSubscription() {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+
+        this.participationWebsocketService.addParticipation(this.participation, this.exercise);
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(filter(result => !!result))
+            .subscribe(result => (this.latestResult = result));
+    }
 }
