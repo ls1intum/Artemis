@@ -6,7 +6,7 @@
             Assessment
         </div>
         <jhi-alert></jhi-alert>
-        <div class="control-container row-container" *ngIf="!isLoading">
+        <div class="control-container row-container">
             <span
                 *ngIf="!isAuthorized"
                 class="text-danger ml-3"
@@ -31,7 +31,12 @@
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </div>
-            <button class="btn btn-danger" *ngIf="result?.completionDate && canOverride" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid">
+            <button
+                class="btn btn-danger"
+                *ngIf="result?.completionDate && (isAtLeastInstructor || isAuthorized)"
+                (click)="onSubmitAssessment()"
+                [disabled]="!assessmentsAreValid || !isAtLeastInstructor"
+            >
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
             <button class="btn ml-2 btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">
@@ -46,7 +51,7 @@
     <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
-    <div class="editor-container flex-grow-1">
+    <div class="editor-container">
         <jhi-modeling-assessment
             *ngIf="submission"
             [diagramType]="modelingExercise.diagramType"

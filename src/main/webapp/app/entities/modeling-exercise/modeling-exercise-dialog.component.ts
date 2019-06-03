@@ -18,13 +18,10 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
     templateUrl: './modeling-exercise-dialog.component.html',
-    styles: ['.invalid-feedback { display: block }'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
     modelingExercise: ModelingExercise;
     isSaving: boolean;
-    dueDateError: boolean;
-    assessmentDueDateError: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -43,8 +40,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
-        this.dueDateError = false;
-        this.assessmentDueDateError = false;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
@@ -66,17 +61,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     updateCategories(categories: ExerciseCategory[]) {
         this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
-    }
-
-    validateDate() {
-        this.dueDateError = this.modelingExercise.releaseDate && this.modelingExercise.dueDate ? !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate) : false;
-
-        this.assessmentDueDateError =
-            this.modelingExercise.assessmentDueDate && this.modelingExercise.releaseDate
-                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.releaseDate)
-                : this.modelingExercise.assessmentDueDate && this.modelingExercise.dueDate
-                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.dueDate)
-                : false;
     }
 
     save() {

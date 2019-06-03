@@ -1,9 +1,17 @@
-.editor-container-outer {
-    min-width: 0; // prevent the min-width of the editor from pushing the instructions out the right side of the screen when resizing
-}
-
-.editor-container-inner {
-    min-height: 80vh;
+.editor-container {
+    display: flex;
+    justify-content: space-between;
+    height: 80vh;
+    width: 100%;
+    overflow: auto;
+    jhi-modeling-assessment {
+        min-width: 0;
+        width: 100%;
+    }
+    jhi-modeling-editor {
+        min-width: 0;
+        width: 100%;
+    }
 }
 
 .button-resize {

@@ -35,8 +35,8 @@ public class ModelingAssessmentService extends AssessmentService {
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
+            ParticipationRepository participationRepository, ResultService resultService) {
+        super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -69,14 +69,10 @@ public class ModelingAssessmentService extends AssessmentService {
      * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
      */
     @Transactional
-    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
             result = new Result();
-        }
-        // check the assessment due date if the user tries to override an existing submitted result
-        if (result.getCompletionDate() != null) {
-            checkAssessmentDueDate(modelingExercise);
         }
         checkGeneralFeedback(modelingAssessment);
 

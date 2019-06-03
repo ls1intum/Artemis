@@ -9,7 +9,6 @@ import { AccountService, JhiLanguageHelper, LoginService, User } from '../../cor
 
 import { VERSION } from '../../app.constants';
 import * as moment from 'moment';
-import { ParticipationWebsocketService } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-navbar',
@@ -31,7 +30,6 @@ export class NavbarComponent implements OnInit {
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
-        private participationWebsocketService: ParticipationWebsocketService,
         private router: Router,
     ) {
         this.version = VERSION ? VERSION : '';
@@ -78,7 +76,6 @@ export class NavbarComponent implements OnInit {
     }
 
     logout() {
-        this.participationWebsocketService.resetLocalCache();
         this.currAccount = null;
         this.collapseNavbar();
         this.loginService.logout();

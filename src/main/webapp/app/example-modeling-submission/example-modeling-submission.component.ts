@@ -46,7 +46,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
-    assessmentExplanation: string;
 
     private exampleSubmissionId: number;
 
@@ -109,7 +108,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 }
             }
             this.usedForTutorial = this.exampleSubmission.usedForTutorial;
-            this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
@@ -238,8 +236,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        this.updateAssessmentExplanation();
-
         if (this.feedbacks) {
             this.modelingAssessmentService.saveExampleAssessment(this.feedbacks, this.exampleSubmissionId).subscribe(
                 (result: Result) => {
@@ -254,19 +250,6 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed');
                 },
             );
-        }
-    }
-
-    /**
-     * Updates the example submission with the assessment explanation text from the input field if it is different from the explanation already saved with the example submission.
-     */
-    private updateAssessmentExplanation() {
-        if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
-            this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
-            this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
-                this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
-            });
         }
     }
 

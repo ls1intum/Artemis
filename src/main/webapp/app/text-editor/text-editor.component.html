@@ -8,7 +8,7 @@
         </div>
 
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
+            <div *ngIf="participation"><jhi-updating-result [participation]="participation"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary mr-2" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
@@ -32,13 +32,12 @@
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
             <p class="mb-3 markdown-preview">
-                <b><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>:</b>
-                <span [innerHTML]="textExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
+                <b><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>:</b> <span [innerHTML]="formattedProblemStatement"></span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
             <p>
-                <strong><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
+                <strong><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span>: {{ textExercise.maxScore }}</strong>
             </p>
         </div>
     </div>
