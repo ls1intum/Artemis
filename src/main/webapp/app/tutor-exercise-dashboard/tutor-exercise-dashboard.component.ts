@@ -69,8 +69,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
         },
     };
 
-    statsForTutorStatusComponent: StatsForTutorDashboard;
-
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
     TRAINED = TutorParticipationStatus.TRAINED;
@@ -157,8 +155,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
                 this.numberOfComplaints = res.body.numberOfComplaints;
                 this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
-
-                this.statsForTutorStatusComponent = res.body;
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
