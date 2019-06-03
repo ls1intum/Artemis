@@ -22,13 +22,17 @@ export class ApollonCommand extends DomainTagCommand {
         // xl is an allowed option for the modal size, but missing in the type definitions
         const ref = this.modalService.open(ModelingEditorDialogComponent, { keyboard: true, size: 'xl' });
         if (existingDiagram) {
+            const { matchStart, matchEnd, innerTagContent: diagram } = existingDiagram;
             // If there is an existing diagram, load it.
-            ref.componentInstance.umlModel = JSON.parse(existingDiagram);
+            ref.componentInstance.umlModel = JSON.parse(diagram);
             ref.componentInstance.onModelSave.subscribe((umlModel: UMLModel) => {
                 ref.close();
-                // TODO: Implement method for replacing text within tags
-                ArtemisMarkdown.removeTextAtCursor(this.aceEditorContainer);
-                const text = '\n' + this.getOpeningIdentifier() + JSON.stringify(umlModel) + this.getClosingIdentifier();
+                ArtemisMarkdown.removeTextRange(
+                    { col: matchStart, row: this.aceEditorContainer.getEditor().getCursorPosition().row },
+                    { col: matchEnd, row: this.aceEditorContainer.getEditor().getCursorPosition().row },
+                    this.aceEditorContainer,
+                );
+                const text = this.getOpeningIdentifier() + JSON.stringify(umlModel) + this.getClosingIdentifier();
                 ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
             });
         } else {

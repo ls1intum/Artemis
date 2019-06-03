@@ -9,26 +9,35 @@ export abstract class DomainCommand extends Command {
     abstract getClosingIdentifier(): string; // e.g. [/exp]
 
     /**
+     * Generate a regex that can be used to get the content alone or including the tags.
+     * index 0: Get content with tags around it.
+     * index 1: Get content without the tags.
+     */
+    getTagRegex(): RegExp {
+        const escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier()),
+            escapedClosingIdentifier = escapeStringForUseInRegex(this.getClosingIdentifier());
+        return new RegExp(`${escapedOpeningIdentifier}(.*)${escapedClosingIdentifier}`, 'g');
+    }
+
+    /**
      * Checks if the cursor is placed within the identifiers of a domain command.
      * Returns the content between the identifiers if there is match, otherwise returns null.
      */
-    isCursorWithinTag() {
+    isCursorWithinTag(): { matchStart: number; matchEnd: number; innerTagContent: string } | null {
         const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition(),
             line = this.aceEditorContainer
                 .getEditor()
                 .getSession()
                 .getLine(row),
-            escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier()),
-            escapedClosingIdentifier = escapeStringForUseInRegex(this.getClosingIdentifier()),
-            matchRegex = new RegExp(`${escapedOpeningIdentifier}.*${escapedClosingIdentifier}`, 'g'),
-            extractRegex = new RegExp(`${escapedOpeningIdentifier}(.*)${escapedClosingIdentifier}`);
+            regex = this.getTagRegex();
 
         let match,
-            indexes: Array<[number, number, string]> = [];
-        while ((match = matchRegex.exec(line))) {
-            indexes.push([match.index, match.index + match[0].length, match[0].toString()]);
+            indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
+        // A line can have multiple tags in it, so we need to check for multiple matches.
+        while ((match = regex.exec(line))) {
+            indexes.push({ matchStart: match.index, matchEnd: match.index + match[0].length, innerTagContent: match[1] });
         }
-        const matchOnCursor = indexes.find(([start, end]) => column > start && column < end);
-        return (matchOnCursor && matchOnCursor[2] && matchOnCursor[2].match(extractRegex)[1]) || null;
+        const matchOnCursor = indexes.find(({ matchStart, matchEnd }) => column > matchStart && column <= matchEnd);
+        return matchOnCursor || null;
     }
 }
