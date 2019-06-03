@@ -632,14 +632,12 @@ public class ParticipationService {
         else if (participation.getExercise() instanceof ModelingExercise) {
             conflictService.deleteAllConflictsForParticipation(participation);
         }
-
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
             // For modeling and text exercises students can send complaints about their assessments and we need to remove
             // the complaints and the according responses belonging to a participation before deleting the participation itself.
             complaintResponseRepository.deleteByComplaint_Result_Participation_Id(id);
             complaintRepository.deleteByResult_Participation_Id(id);
         }
-
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());

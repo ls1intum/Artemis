@@ -5,17 +5,15 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { RouterModule } from '@angular/router';
 import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
-import { HomeComponent } from 'app/home';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
 import { JhiMainComponent } from 'app/layouts';
 import { SortByModule } from 'app/components/pipes';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
-import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
@@ -26,20 +24,11 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
         SortByModule,
         ArTEMiSResultModule,
         AssessmentInstructionsModule,
-        ModelingAssessmentModule,
-        FontAwesomeModule,
         ArTEMiSComplaintsForTutorModule,
+        ModelingAssessmentModule,
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
-    entryComponents: [
-        HomeComponent,
-        ResultComponent,
-        ResultDetailComponent,
-        ModelingAssessmentDashboardComponent,
-        JhiMainComponent,
-        ModelingAssessmentEditorComponent,
-        ModelingAssessmentConflictComponent,
-    ],
+    entryComponents: [ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

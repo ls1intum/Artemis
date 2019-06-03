@@ -7,6 +7,7 @@ import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 

@@ -199,7 +199,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     onSubmitAssessment() {
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, true).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -224,6 +224,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 }
             },
         );
+    }
+
+    onShowConflictResolution() {
+        this.modelingAssessmentService.addLocalConflicts(this.submission.id, this.conflicts);
+        this.jhiAlertService.clear();
+        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submission.id, 'assessment', 'conflict']);
     }
 
     /**
