@@ -19,6 +19,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
+    percentageAssessmentProgress = 0;
+
     routerLink: string;
 
     constructor(private router: Router) {}
@@ -30,6 +32,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (courseId && exerciseId) {
             this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
+        }
+
+        if (this.numberOfParticipations !== 0) {
+            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
     }
 
@@ -44,10 +50,14 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
             this.tutorParticipationStatus = this.tutorParticipation.status;
         }
+
+        if (this.numberOfParticipations !== 0) {
+            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
+        }
     }
 
     calculateClasses(step: TutorParticipationStatus): string {
-        if (step === this.tutorParticipationStatus) {
+        if (step === this.tutorParticipationStatus && step !== this.TRAINED) {
             return 'active';
         }
 
@@ -55,7 +65,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             return 'opaque';
         }
 
-        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.COMPLETED].includes(this.tutorParticipationStatus)) {
+        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.TRAINED, this.COMPLETED].includes(this.tutorParticipationStatus)) {
             return 'opaque';
         }
 
@@ -64,16 +74,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
     }
 
-    calculatePercentage(numerator: number, denominator: number): number {
-        if (denominator === 0) {
-            return 0;
-        }
-
-        return Math.round((numerator / denominator) * 100);
-    }
-
-    calculateProgressBarClass(numberOfAssessments: number, length: number): string {
-        const percentage = this.calculatePercentage(numberOfAssessments, length);
+    calculateProgressBarClass(): string {
+        const percentage = this.percentageAssessmentProgress;
 
         if (percentage < 50) {
             return 'bg-danger';
@@ -84,13 +86,23 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         return 'bg-success';
     }
 
-    chooseProgressBarTextColor(numberOfAssessments: number, numberOfSubmissions: number) {
-        const percentage = this.calculatePercentage(numberOfAssessments, numberOfSubmissions);
-
-        if (percentage < 100) {
+    chooseProgressBarTextColor() {
+        if (this.percentageAssessmentProgress < 100) {
             return 'text-dark';
         }
 
         return 'text-white';
+    }
+
+    calculateClassProgressBar() {
+        if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
+            return 'opaque';
+        }
+
+        if (this.tutorParticipationStatus === this.COMPLETED || this.numberOfParticipations === this.numberOfAssessments) {
+            return 'active';
+        }
+
+        return 'orange';
     }
 }
