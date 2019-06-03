@@ -11,7 +11,7 @@ buildscript {
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.0"
+        classpath "org.openapitools:openapi-generator-gradle-plugin:4.0.1"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.0.0"
         classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
         // this allows us to find outdated dependencies via './gradlew dependencyUpdates'
