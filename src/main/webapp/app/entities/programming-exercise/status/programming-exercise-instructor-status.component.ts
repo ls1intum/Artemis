@@ -31,7 +31,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges {
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            this.latestResult = this.participation.results.length ? this.participation.results.reduce((currentMax, next) => (next > currentMax ? next : currentMax)) : null;
+            this.latestResult = this.participation.results.length ? this.participation.results.reduce((currentMax, next) => (next.id > currentMax.id ? next : currentMax)) : null;
             this.updateResultSubscription();
         }
     }
