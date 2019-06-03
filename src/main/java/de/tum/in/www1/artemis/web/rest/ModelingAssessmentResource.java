@@ -65,7 +65,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
             ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
-            SimpMessageSendingOperations messagingTemplate,ModelAssessmentConflictService conflictService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;

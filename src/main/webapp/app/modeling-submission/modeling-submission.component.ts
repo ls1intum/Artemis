@@ -16,7 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-modeling-submission',
