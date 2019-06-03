@@ -108,10 +108,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * Sort the given participations so that FINISHED participations come first.
+     *
+     * Note, that this function directly operates on the array passed as argument and does not return anything.
      */
     private sortParticipationsFinishedFirst(participations: Participation[]) {
         if (participations && participations.length > 1) {
-            this.exercise.participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
+            participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
         }
     }
 
