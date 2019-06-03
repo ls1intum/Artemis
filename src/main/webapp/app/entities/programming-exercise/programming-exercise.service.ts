@@ -62,6 +62,6 @@ export class ProgrammingExerciseService {
     }
 
     getTestCases(id: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}/${id}/test-cases`);
+        return this.http.get<string[]>(`${this.resourceUrl}-test-cases/${id}`);
     }
 }

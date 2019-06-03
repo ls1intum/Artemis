@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -58,16 +57,13 @@ public class ProgrammingExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
-
     private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseTestCaseRepository testCaseRepository) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -77,7 +73,6 @@ public class ProgrammingExerciseResource {
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.groupNotificationService = groupNotificationService;
-        this.testCaseRepository = testCaseRepository;
     }
 
     /**
@@ -372,14 +367,6 @@ public class ProgrammingExerciseResource {
         else {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping(value = "/programming-exercises/{id}/test-cases")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long id) {
-        log.debug("REST request to get test cases for programming exercise {}", id);
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findActiveByExerciseId(id);
-        return ResponseEntity.ok(testCases);
     }
 
     /**

@@ -24,6 +24,8 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     // TODO: Workaround for known bug, should be removed once fixed: https://jira.spring.io/browse/DATAJPA-1357
+    // The issue is that these methods are called from the build result notification of bamboo, so there is no authentication object available.
+    // This doesn't cause problems for out-of-the-box repository methods, but does for custom ones.
     private Authentication getAuthDummy() {
         return new Authentication() {
 
@@ -64,18 +66,37 @@ public class ProgrammingExerciseTestCaseService {
         };
     }
 
+    /**
+     * Returns all test cases for a programming exercise.
+     * 
+     * @param id of a programming exercise.
+     * @return test cases of a programming exercise.
+     */
     public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(getAuthDummy());
         return this.testCaseRepository.findByExerciseId(id);
     }
 
+    /**
+     * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
+     * 
+     * @param id of a programming exercise.
+     * @return active test cases of a programming exercise.
+     */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(getAuthDummy());
         return this.testCaseRepository.findActiveByExerciseId(id);
     }
 
+    /**
+     * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
+     * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
+     * 
+     * @param feedbacks list of build log output.
+     * @param exercise  programming exercise.
+     */
     public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(getAuthDummy());

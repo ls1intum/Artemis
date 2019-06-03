@@ -120,7 +120,8 @@ public class ResultService {
             testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
         }
 
-        // Find out which test cases were executed and calculate the score according to their status and weight
+        // Find out which test cases were executed and calculate the score according to their status and weight.
+        // This needs to be done as some test cases might not have been executed.
         if (result != null && result.getFeedbacks().size() > 0) {
             Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(participation.getExercise().getId());
             if (testCases.size() > 0) {
@@ -135,12 +136,15 @@ public class ResultService {
                 result.addFeedbacks(feedbacksForNotExecutedTestCases);
 
                 long score = 0L;
+                // Recalculate the achieved score by including the test cases individual weight.
                 if (successfulTestCases.size() > 0) {
-                    score = (successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)
-                            / testCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b)) * 100L;
+                    long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b);
+                    long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b);
+                    score = successfulTestScore / maxTestScore * 100L;
                 }
-
                 result.setScore(score);
+
+                // Create a new result string that reflects passed, failed & not executed test cases.
                 if (successfulTestCases.size() < testCases.size()) {
                     result.setResultString(testCases.size() - successfulTestCases.size() - notExecutedTestCases.size() + " of " + testCases.size() + " failed, "
                             + notExecutedTestCases.size() + " not executed");

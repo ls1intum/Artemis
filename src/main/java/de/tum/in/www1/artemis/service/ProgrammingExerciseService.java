@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javassist.NotFoundException;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,10 +42,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -79,6 +77,10 @@ public class ProgrammingExerciseService {
 
     private final ParticipationRepository participationRepository;
 
+    private final UserService userService;
+
+    private final AuthorizationCheckService authCheckService;
+
     private final ResourceLoader resourceLoader;
 
     @Value("${server.url}")
@@ -87,7 +89,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, UserService userService, AuthorizationCheckService authCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -97,6 +99,8 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -328,12 +332,9 @@ public class ProgrammingExerciseService {
         // create the
         // buildPlans then
         // (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        Object templatePlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise
-                                                                                                                                                          // (students)
-        Object solutionPlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the
-                                                                                                                                                              // solution
-                                                                                                                                                              // (instructors) with
-        continuousIntegrationService.get().createTestBuildPlanForExercise(programmingExercise, testRepoName, solutionPlan, templatePlan); // test plan repository
+        Object templatePlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // template build plan
+        Object solutionPlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // solution build plan
+        continuousIntegrationService.get().createTestBuildPlanForExercise(programmingExercise, testRepoName, solutionPlan, templatePlan); // test build plan
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -412,6 +413,29 @@ public class ProgrammingExerciseService {
         templateParticipation.setInitializationState(InitializationState.INITIALIZED);
         solutionParticipation.setInitializationDate(ZonedDateTime.now());
         templateParticipation.setInitializationDate(ZonedDateTime.now());
+    }
+
+    /**
+     * Find a programming exercise by its id.
+     * 
+     * @param id of the programming exercise.
+     * @return
+     * @throws NotFoundException      the programming exercise could not be found.
+     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    public ProgrammingExercise findById(Long id) throws NotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+                throw new IllegalAccessException();
+            }
+            return programmingExercise.get();
+        }
+        else {
+            throw new NotFoundException("programming exercise not found");
+        }
     }
 
     /**

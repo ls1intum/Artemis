@@ -115,6 +115,8 @@ public class BambooBuildPlanService {
         Plan plan = new Plan(createBuildProject(projectName, projectKey), planName, planName).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
                 .planRepositories(createBuildPlanRepository(TEST_REPO_NAME, projectKey, testVcsRepositorySlug))
+                // The test build plan will trigger the template and solution repository on every change.
+                // This is the only purpose of the test repository build plan.
                 .dependencies(new Dependencies().childPlans(templateRepositoryPlan.getIdentifier(), solutionRepositoryPlan.getIdentifier())).triggers(new BitbucketServerTrigger())
                 .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
 
