@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ParticipationType } from '../programming-exercise-participation.model';
@@ -10,7 +10,7 @@ import { Result } from 'app/entities/result';
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
 })
-export class ProgrammingExerciseInstructorStatusComponent implements OnChanges {
+export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
     ParticipationType = ParticipationType;
 
     @Input()
@@ -50,5 +50,11 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges {
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(filter(result => !!result))
             .subscribe(result => (this.latestResult = result));
+    }
+
+    ngOnDestroy(): void {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
     }
 }
