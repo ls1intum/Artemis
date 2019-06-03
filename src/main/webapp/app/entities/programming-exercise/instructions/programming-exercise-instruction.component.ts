@@ -33,6 +33,7 @@ enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
+    NO_RESULT = 'NO_RESULT',
 }
 
 type Step = {
@@ -472,9 +473,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS) {
-            text += '<span class="text-success bold">' + label + '</span>';
-        } else {
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT) {
+            const textColor = done === TestCaseState.SUCCESS ? 'text-success' : 'text-secondary';
+            text += `<span class="${textColor} bold">` + label + '</span>';
+        } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
             const textColor = done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
             text += '<a data-tests="' + tests.toString() + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
@@ -574,7 +576,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         } else {
             // Case 3: There are no results
             const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
-            return [TestCaseState.NOT_EXECUTED, label];
+            return [TestCaseState.NO_RESULT, label];
         }
     }
 
