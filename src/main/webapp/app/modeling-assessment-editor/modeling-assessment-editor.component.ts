@@ -39,6 +39,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     showBackButton: boolean;
     hasComplaint: boolean;
     canOverride = false;
+    isLoading: boolean;
 
     private cancelConfirmationText: string;
 
@@ -58,6 +59,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
+        this.isLoading = true;
     }
 
     get feedback(): Feedback[] {
@@ -150,6 +152,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         this.checkAuthorization();
         this.validateFeedback();
+        this.isLoading = false;
     }
 
     /**
