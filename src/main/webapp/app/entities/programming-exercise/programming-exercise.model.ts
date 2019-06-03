@@ -16,6 +16,7 @@ export class ProgrammingExercise extends Exercise {
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;
     public problemStatement: string;
+    public sequentialTestRuns: boolean | null;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);

@@ -83,10 +83,12 @@ public class BambooBuildPlanService {
 
         Plan plan = null;
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            plan = createJavaBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+            plan = createJavaBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug,
+                    programmingExercise.getSequentialTestRuns());
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.PYTHON) {
-            plan = createPythonBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+            plan = createPythonBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug,
+                    programmingExercise.getSequentialTestRuns());
         }
         bambooServer.publish(plan);
 
@@ -132,26 +134,49 @@ public class BambooBuildPlanService {
     }
 
     private Plan createJavaBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug, boolean sequentialTestRuns) {
 
-        return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                        new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                        new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true))))
-                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        // If sequential test runs is active, run first structural tests and only they are successful also the behavior tests.
+        if (sequentialTestRuns) {
+            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
+                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                            new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                            new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true))))
+                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        }
+        else {
+            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
+                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                            new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true))))
+                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        }
     }
 
     private Plan createPythonBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1"))
-                        .tasks(createCheckoutTask("", "tests"),
-                                new ScriptTask().description("Builds and tests the code")
-                                        .inlineBody("pytest test/structural --junitxml=test-reports/structural-results.xml\nexit 0"),
-                                new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/behavior --junitxml=test-reports/behavior-results.xml\nexit 0"),
-                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                        .requirements(new Requirement("Python3"))))
-                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug, boolean sequentialTestRuns) {
+
+        // If sequential test runs is active, run first structural tests and only they are successful also the behavior tests.
+        if (sequentialTestRuns) {
+            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
+                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
+                            new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/structural --junitxml=test-reports/structural-results.xml\nexit 0"),
+                            new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/behavior --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml")).requirements(new Requirement("Python3"))))
+                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        }
+        else {
+            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug,
+                    vcsTestRepositorySlug)
+                            .stages(new Stage(
+                                    "Default Stage")
+                                            .jobs(new Job("Default Job", new BambooKey("JOB1"))
+                                                    .tasks(createCheckoutTask("", "tests"),
+                                                            new ScriptTask().description("Builds and tests the code")
+                                                                    .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
+                                                    .requirements(new Requirement("Python3"))))
+                            .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement());
+        }
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,

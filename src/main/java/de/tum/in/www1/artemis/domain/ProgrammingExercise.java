@@ -42,6 +42,9 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
+    @Column(name = "sequential_test_runs")
+    private Boolean sequentialTestRuns;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
@@ -264,6 +267,17 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
+    }
+
+    public Boolean getSequentialTestRuns() {
+        if (sequentialTestRuns == null) {
+            return false;
+        }
+        return sequentialTestRuns;
+    }
+
+    public void setSequentialTestRuns(Boolean sequentialTestRuns) {
+        this.sequentialTestRuns = sequentialTestRuns;
     }
 
     /**
