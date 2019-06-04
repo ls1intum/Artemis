@@ -48,11 +48,12 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
-            if (this.conflicts) {
+            if (this.conflicts && this.conflicts.length > 0) {
                 this.initComponent();
                 this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
                 this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
             } else {
+                this.conflicts = undefined;
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
             }
         });
