@@ -344,7 +344,12 @@ public class GitService {
 
             git.close();
 
-            reset(repository, latestCommitBeforeDeadline.getId().getName());
+            if (latestCommitBeforeDeadline == null) {
+                reset(repository, "origin/master");
+            }
+            else {
+                reset(repository, latestCommitBeforeDeadline.getId().getName());
+            }
 
         }
         catch (GitAPIException ex) {
