@@ -27,12 +27,12 @@ import org.junit.runners.Parameterized;
 public class ClassTest extends StructuralTest {
 
     private static final String JSON_PROPERTY_SUPERCLASS = "superclass";
-	private static final String JSON_PROPERTY_INTERFACES = "interfaces";
-	private static final String JSON_PROPERTY_CLASS = "class";
-	private static final String JSON_PROPERTY_PACKAGE = "package";
-	private static final String JSON_PROPERTY_NAME = "name";
+    private static final String JSON_PROPERTY_INTERFACES = "interfaces";
+    private static final String JSON_PROPERTY_CLASS = "class";
+    private static final String JSON_PROPERTY_PACKAGE = "package";
+    private static final String JSON_PROPERTY_NAME = "name";
 
-	public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 
@@ -58,12 +58,12 @@ public class ClassTest extends StructuralTest {
         }
         return testData;
     }
-    
+
     private static boolean hasAdditionalProperties(JSONObject jsonObject) {
-    	List<String> keys = new ArrayList<String>(jsonObject.keySet());
-    	keys.remove(JSON_PROPERTY_NAME);
-    	keys.remove(JSON_PROPERTY_PACKAGE);
-    	return keys.size() > 0;
+        List<String> keys = new ArrayList<String>(jsonObject.keySet());
+        keys.remove(JSON_PROPERTY_NAME);
+        keys.remove(JSON_PROPERTY_PACKAGE);
+        return keys.size() > 0;
     }
 
     /**
