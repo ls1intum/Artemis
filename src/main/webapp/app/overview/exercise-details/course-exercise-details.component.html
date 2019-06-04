@@ -6,7 +6,8 @@
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise"> </jhi-exercise-details-student-actions>
+        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise" [ratedResult]="showResults ? currentResult : null">
+        </jhi-exercise-details-student-actions>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'arTeMiSApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -40,12 +41,12 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row mb-2 align-items-baseline" *ngIf="hasResults">
+            <div class="row mb-2 align-items-baseline" *ngIf="showResults">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.yourResult' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="hasResults && currentResult">
+            <div class="row mb-2" *ngIf="showResults && currentResult">
                 <div class="col-12 col-md-12">
                     <div class="row justify-content-between">
                         <div class="col">
@@ -73,27 +74,27 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="hasResults && !currentResult">
+            <div class="row mb-2" *ngIf="showResults && !currentResult">
                 <div class="col-auto">
                     <h6>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noGradedResult' | translate }}</h6>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="hasResults">
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2 d-none d-md-flex" *ngIf="hasResults">
+            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults">
                 <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxScore"></jhi-result-history>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && hasResults">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.allResults' | translate }}</h3>
                 </div>
             </div>
-            <div class="row" *ngIf="showMoreResults && hasResults">
+            <div class="row" *ngIf="showMoreResults && showResults">
                 <div class="col-12 col-md-12">
                     <div *ngFor="let result of sortedResults">
                         <div class="row justify-content-between">
@@ -121,7 +122,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="hasResults && combinedParticipation.results.length > 1">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && combinedParticipation.results.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
                         showMoreResults
@@ -130,7 +131,7 @@
                     }}</a>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!hasResults">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!showResults">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
                 </div>

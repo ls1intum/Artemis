@@ -127,9 +127,13 @@ public abstract class BehaviorTest {
      * @return The wanted method.
      */
     protected Method getMethod(Class<?> declaringClass, String methodName, Class<?>... parameterTypes) {
-        String failMessage = "Problem: could not retrieve the method '" + methodName + "' with the parameters: "
+        String failMessage = "Problem: could not find the method '" + methodName + "' with the parameters: "
             + getParameterTypesAsString(parameterTypes) + " from the class " + declaringClass.getSimpleName() + " because";
 
+        if (parameterTypes.length == 0) {
+        	failMessage = "Problem: could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
+        }
+        
         try {
             return declaringClass.getMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException nsme) {
