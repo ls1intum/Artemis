@@ -78,7 +78,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
-            assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
+            assessmentIndex.getAssessment(currentElement.getSimilarityID()).ifPresent(assessment -> {
                 List<Feedback> feedbacks = assessment.getFeedbacks(currentElement.getContext());
                 List<Feedback> feedbacksInConflict = feedbacks.stream().filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
                         .collect(Collectors.toList());
@@ -178,6 +178,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             return null;
         }
 
+        // TODO: adjust when supporting other diagram types than class diagrams
         UMLClassDiagram model = modelIndex.getModelMap().get(modelSubmissionId);
         CompassResult compassResult = model.getLastAssessmentCompassResult();
 
@@ -222,6 +223,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     @Override
+    // TODO CZ: do we need the Grade of the models? shouldn't it be enough to return a list of model ids as we do not even use the Grade after calling this method?
     public Map<Long, Grade> getModelsWaitingForAssessment() {
         Map<Long, Grade> optimalModels = new HashMap<>();
         for (long modelId : modelSelector.getModelsWaitingForAssessment()) {
@@ -317,12 +319,12 @@ public class CompassCalculationEngine implements CalculationEngine {
             JsonObject uniqueElement = new JsonObject();
             uniqueElement.addProperty("name", umlElement.getName());
             uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
-            boolean conflict = this.hasConflict(umlElement.getElementID());
+            boolean conflict = this.hasConflict(umlElement.getSimilarityID());
             if (conflict) {
                 conflicts++;
             }
             uniqueElement.addProperty("conflicts", conflict);
-            uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
+            uniqueElements.add(umlElement.getSimilarityID() + "", uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
 
@@ -345,7 +347,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 elements.addAll(umlClass.getMethods());
             }
             for (UMLElement element : elements) {
-                boolean modelConflict = this.hasConflict(element.getElementID());
+                boolean modelConflict = this.hasConflict(element.getSimilarityID());
                 if (modelConflict) {
                     modelConflicts++;
                 }
@@ -383,7 +385,9 @@ public class CompassCalculationEngine implements CalculationEngine {
         Map<String, Feedback> elementIdFeedbackMap = new HashMap<>();
         feedbackList.forEach(feedback -> {
             String jsonElementId = feedback.getReferenceElementId();
-            elementIdFeedbackMap.put(jsonElementId, feedback);
+            if (jsonElementId != null) {
+                elementIdFeedbackMap.put(jsonElementId, feedback);
+            }
         });
         return elementIdFeedbackMap;
     }

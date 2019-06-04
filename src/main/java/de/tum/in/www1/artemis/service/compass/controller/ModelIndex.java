@@ -28,10 +28,10 @@ public class ModelIndex {
     }
 
     /**
-     * Get the internal id for a model element, if the element is similar to an existing one the share the same id
+     * Get the internal "similarity" id for a model element. If the element is similar to an existing one, they share the same id.
      *
      * @param element an element of a model
-     * @return its elementId
+     * @return its similarity id
      */
     int getElementID(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
@@ -40,8 +40,8 @@ public class ModelIndex {
         // element is similar to existing element
         for (UMLElement knownElement : uniqueModelElementList) {
             if (knownElement.similarity(element) > CompassConfiguration.EQUALITY_THRESHOLD) {
-                modelElementMapping.put(element, knownElement.getElementID());
-                return knownElement.getElementID();
+                modelElementMapping.put(element, knownElement.getSimilarityID());
+                return knownElement.getSimilarityID();
             }
         }
         // element does not fit already known element

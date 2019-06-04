@@ -39,14 +39,14 @@ public class AutomaticAssessmentController {
             }
 
             Context context = element.getContext();
-            Optional<Assessment> assessmentOptional = index.getAssessment(element.getElementID());
+            Optional<Assessment> assessmentOptional = index.getAssessment(element.getSimilarityID());
 
             if (assessmentOptional.isPresent()) {
                 assessmentOptional.get().addFeedback(elementIdFeedbackMap.get(jsonElementID), context);
             }
             else {
                 Assessment newAssessment = new Assessment(context, elementIdFeedbackMap.get(jsonElementID));
-                index.addAssessment(element.getElementID(), newAssessment);
+                index.addAssessment(element.getSimilarityID(), newAssessment);
             }
         }
     }
@@ -100,7 +100,7 @@ public class AutomaticAssessmentController {
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
         for (UMLClassRelationship relation : model.getAssociationList()) {
-            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getElementID());
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getSimilarityID());
             totalCount++;
 
             if (!assessmentOptional.isPresent()) {
@@ -139,10 +139,10 @@ public class AutomaticAssessmentController {
 
         int missing = 0;
 
-        Context childContext = new Context(umlClass.getElementID());
+        Context childContext = new Context(umlClass.getSimilarityID());
 
         for (UMLAttribute attribute : umlClass.getAttributes()) {
-            Optional<Assessment> assessmentOptional = index.getAssessment(attribute.getElementID());
+            Optional<Assessment> assessmentOptional = index.getAssessment(attribute.getSimilarityID());
 
             if (!assessmentOptional.isPresent()) {
                 missing++;
@@ -159,7 +159,7 @@ public class AutomaticAssessmentController {
         }
 
         for (UMLMethod method : umlClass.getMethods()) {
-            Optional<Assessment> assessmentOptional = index.getAssessment(method.getElementID());
+            Optional<Assessment> assessmentOptional = index.getAssessment(method.getSimilarityID());
 
             if (!assessmentOptional.isPresent()) {
                 missing++;
@@ -176,7 +176,7 @@ public class AutomaticAssessmentController {
             }
         }
 
-        Optional<Assessment> assessmentOptional = index.getAssessment(umlClass.getElementID());
+        Optional<Assessment> assessmentOptional = index.getAssessment(umlClass.getSimilarityID());
 
         if (!assessmentOptional.isPresent()) {
             missing++;

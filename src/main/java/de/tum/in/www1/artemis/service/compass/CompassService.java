@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.service.compass;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
@@ -76,9 +79,7 @@ public class CompassService {
 
     public boolean isSupported(DiagramType diagramType) {
         // at the moment, we only support class diagrams
-        // TODO CZ: enable class diagrams again
-        // return diagramType == DiagramType.ClassDiagram;
-        return false;
+        return diagramType == DiagramType.ClassDiagram;
     }
 
     /**
@@ -86,6 +87,7 @@ public class CompassService {
      *
      * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
+    // TODO CZ: do we need the Grade of the model? shouldn't it be enough to just return the model id as we do not even use the Grade after calling this method?
     private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
             return null;
@@ -210,8 +212,9 @@ public class CompassService {
     }
 
     /**
-     * Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added it to the corresponding result and
-     * the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
+     * TODO: cleanup + adjust documentation Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added
+     * it to the corresponding result and the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() ==
+     * null).
      *
      * @param modelId    the id of the model/submission that should be updated with an automatic assessment
      * @param exerciseId the id of the corresponding exercise
@@ -226,45 +229,39 @@ public class CompassService {
         Result result = resultRepository.findDistinctBySubmissionId(modelId)
                 .orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // only automatically assess when there is not yet an assessment.
-        if (result.getAssessmentType() == null) {
+        if (result.getAssessmentType() != AssessmentType.MANUAL) {
             Grade grade = engine.getGradeForModel(modelId);
-            // automatic assessment holds confidence and coverage threshold
-            if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
-                /*
-                 * Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
-                 */
-                if (!isSupported(modelingExercise.getDiagramType())) {
-                    return;
-                }
-                // Round compass grades to avoid machine precision errors, make the grades more
-                // readable
-                // and give a slight advantage which makes 100% scores easier reachable
-                // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions
-                // for more
-                // information
-                grade = roundGrades(grade);
-
-                // Save to database
-                List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
-                result.getFeedbacks().addAll(automaticFeedbackAssessments);
-                result.setHasFeedback(false);
-
-                result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
-                result.setAssessmentType(AssessmentType.AUTOMATIC);
-                double maxPoints = modelingExercise.getMaxScore();
-                // biased points
-                double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
-                result.setScore((long) (points * 100 / maxPoints));
-                result.setCompletionDate(ZonedDateTime.now());
-                result.setResultString(points, modelingExercise.getMaxScore());
-
-                resultRepository.save(result);
-                engine.removeModelWaitingForAssessment(modelId, true);
+            if (grade.getCoverage() >= 1) {
+                return;
             }
-            else {
-                log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
+            ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+
+            // Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
+            if (!isSupported(modelingExercise.getDiagramType())) {
+                return;
             }
+            // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable
+            // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
+            grade = roundGrades(grade); // TODO: should we still round the grades?
+
+            // Save to database
+            List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
+            result.getFeedbacks().addAll(automaticFeedbackAssessments);
+            result.setHasFeedback(false);
+
+            // result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            double maxPoints = modelingExercise.getMaxScore();
+            // biased points
+            double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
+            result.setScore((long) (points * 100 / maxPoints));
+            // result.setCompletionDate(ZonedDateTime.now());
+            result.setResultString(points, modelingExercise.getMaxScore());
+
+            // TODO: do we have to set the submission before saving? when the result is loaded from the DB above, the corresponding submission is not contained (as it is lazy)
+            // or do we have to save the submission additionally?
+            resultRepository.save(result);
+            // engine.removeModelWaitingForAssessment(modelId, true);
         }
         else {
             // Make sure next optimal model is in a valid state
@@ -401,13 +398,12 @@ public class CompassService {
     }
 
     // Call every night at 2:00 am to free memory for unused calculation engines (older than 1 day)
-    // TODO reactivate when Compass is active again
-    // @Scheduled(cron = "0 0 2 * * *") // execute this every night at 2:00:00 am
-    // private static void cleanUpCalculationEngines() {
-    // LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
-    // compassCalculationEngines = compassCalculationEngines.entrySet().stream()
-    // .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
-    // .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    // LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
-    // }
+    @Scheduled(cron = "0 0 2 * * *") // execute this every night at 2:00:00 am
+    private static void cleanUpCalculationEngines() {
+        LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
+        compassCalculationEngines = compassCalculationEngines.entrySet().stream()
+                .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
+    }
 }
