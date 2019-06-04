@@ -65,10 +65,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     initComponent() {
-        this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
-        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.conflicts[0].causingConflictingResult.result.feedbacks));
-        this.conflictResolutionStates = new Array<ConflictResolutionState>(this.conflicts.length);
-        this.conflictResolutionStates.fill(ConflictResolutionState.UNHANDLED);
+        this.mergedFeedbacks = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
+        this.currentFeedbacksCopy = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
+        this.conflictResolutionStates = [...this.conflictResolutionStates.map(() => ConflictResolutionState.UNHANDLED)];
         this.updateSelectedConflict();
     }
 
@@ -88,7 +87,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.currentConflict.causingConflictingResult.modelElementId,
             this.currentConflict.causingConflictingResult.result.feedbacks,
         );
-        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.mergedFeedbacks));
+        this.currentFeedbacksCopy = [...this.mergedFeedbacks];
         this.updateCurrentState();
     }
 
@@ -98,7 +97,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.conflictingResult.modelElementId,
             this.conflictingResult.result.feedbacks,
         );
-        this.currentFeedbacksCopy = JSON.parse(JSON.stringify(this.mergedFeedbacks));
+        this.currentFeedbacksCopy = [...this.mergedFeedbacks];
         this.updateCurrentState();
     }
 
