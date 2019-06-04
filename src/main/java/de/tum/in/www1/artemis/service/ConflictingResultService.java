@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,12 +68,11 @@ public class ConflictingResultService {
      */
     @Transactional
     void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
-        Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
+        Set<String> newFeedbacksElementIds = newFeedbacks.stream().map(feedback -> feedback.getReferenceElementId()).collect(Collectors.toSet());
+        Set<ConflictingResult> newResultsInConflictCopy = conflict.getResultsInConflict().stream()
+                .filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId())).collect(Collectors.toSet());
         conflict.getResultsInConflict().clear();
-        Set<String> newFeedbacksElementIds = new HashSet<>();
-        newFeedbacks.forEach(feedback -> newFeedbacksElementIds.add(feedback.getReferenceElementId()));
-        existingConflictingResultsCopy.stream().filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId()))
-                .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
+        newResultsInConflictCopy.forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
     }
 
     /**
@@ -84,12 +83,9 @@ public class ConflictingResultService {
      */
     @Transactional
     void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
-        Set<String> existingConflictingResultsElementIds = new HashSet<>();
-        conflict.getResultsInConflict().forEach(conflictingResult -> existingConflictingResultsElementIds.add(conflictingResult.getModelElementId()));
-        newFeedbacks.forEach(feedback -> {
-            if (!existingConflictingResultsElementIds.contains(feedback.getReferenceElementId())) {
-                conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback));
-            }
-        });
+        Set<String> existingConflictingResultsElementIds = conflict.getResultsInConflict().stream().map(conflictingResult -> conflictingResult.getModelElementId())
+                .collect(Collectors.toSet());
+        newFeedbacks.stream().filter(feedback -> !existingConflictingResultsElementIds.contains(feedback.getReferenceElementId()))
+                .forEach(feedback -> conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback)));
     }
 }
