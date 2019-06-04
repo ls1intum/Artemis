@@ -26,6 +26,10 @@ public class ConflictingResultService {
         this.conflictingResultRepository = conflictingResultRepository;
     }
 
+    /**
+     * Helper method for creating a conflictingResult instance with the elementID and result of the given feedback aswell as the given conflict. Used to create an member of the
+     * resultsInConflict list of the ModelAssessmentConflict object.
+     */
     public ConflictingResult createConflictingResult(ModelAssessmentConflict conflict, Feedback feedback) {
         ConflictingResult conflictingResult = new ConflictingResult();
         conflictingResult.setModelElementId(feedback.getReferenceElementId());
@@ -34,16 +38,19 @@ public class ConflictingResultService {
         return conflictingResult;
     }
 
+    /**
+     * Helper method for creating a ConflictingResult instance with the given modelElementID and result. Used to create the causingConflictingResult instance of the
+     * ModelAssessmentConflict object
+     */
     public ConflictingResult createConflictingResult(String modelElementID, Result result) {
         ConflictingResult conflictingResult = new ConflictingResult();
         conflictingResult.setModelElementId(modelElementID);
         conflictingResult.setResult(result);
-        // conflictingResult.setConflict(conflict);
         return conflictingResult;
     }
 
     /**
-     * Removes
+     * Updates the given conflict's resultsInConflict to match the new list of feedbacks the conflict is in conflict with
      *
      * @param conflict     the conflict object to update
      * @param newFeedbacks represents the current feedbacks that the given conflict object is in conflict with
@@ -53,16 +60,28 @@ public class ConflictingResultService {
         addMissingConflictingResults(conflict, newFeedbacks);
     }
 
+    /**
+     * Removes ConflictingResults from the resultsInConflict list of the given conflkict that are no longer in conflict
+     *
+     * @param conflict     the conflict object to update
+     * @param newFeedbacks represents the current feedbacks that the given conflict object is in conflict with
+     */
     @Transactional
     void removeRemovedConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
         Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
         conflict.getResultsInConflict().clear();
         Set<String> newFeedbacksElementIds = new HashSet<>();
         newFeedbacks.forEach(feedback -> newFeedbacksElementIds.add(feedback.getReferenceElementId()));
-        existingConflictingResultsCopy.stream().filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId()))// TODO remove foreign key fix
+        existingConflictingResultsCopy.stream().filter(conflictingResult -> newFeedbacksElementIds.contains(conflictingResult.getModelElementId()))
                 .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
     }
 
+    /**
+     * Adds ConflictingResults to the resultsInConflict list that are missing according to the newFeedbacks list
+     *
+     * @param conflict     the conflict object to update
+     * @param newFeedbacks represents the current feedbacks that the given conflict object is in conflict with
+     */
     @Transactional
     void addMissingConflictingResults(ModelAssessmentConflict conflict, List<Feedback> newFeedbacks) {
         Set<String> existingConflictingResultsElementIds = new HashSet<>();
@@ -72,13 +91,5 @@ public class ConflictingResultService {
                 conflict.getResultsInConflict().add(createConflictingResult(conflict, feedback));
             }
         });
-    }
-
-    public ModelAssessmentConflict filterDoubleConflictingResults(ModelAssessmentConflict conflict) {
-        Set<ConflictingResult> existingConflictingResultsCopy = new HashSet<>(conflict.getResultsInConflict());
-        conflict.getResultsInConflict().clear();
-        existingConflictingResultsCopy.stream().filter(conflictingResult -> !conflictingResult.getId().equals(conflict.getCausingConflictingResult().getId()))
-                .forEach(conflictingResult -> conflict.getResultsInConflict().add(conflictingResult));
-        return conflict;
     }
 }

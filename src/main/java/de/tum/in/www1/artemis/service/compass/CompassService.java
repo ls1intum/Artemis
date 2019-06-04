@@ -215,8 +215,7 @@ public class CompassService {
             return Collections.EMPTY_LIST;
         }
         else {
-            return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED))
-                    .map(conflictingResultService::filterDoubleConflictingResults).collect(Collectors.toList());
+            return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED)).collect(Collectors.toList());
         }
     }
 
