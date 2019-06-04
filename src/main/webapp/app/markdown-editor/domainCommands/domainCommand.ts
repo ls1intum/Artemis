@@ -31,8 +31,8 @@ export abstract class DomainCommand extends Command {
                 .getLine(row),
             regex = this.getTagRegex();
 
-        let match,
-            indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
+        const indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
+        let match;
         // A line can have multiple tags in it, so we need to check for multiple matches.
         while ((match = regex.exec(line))) {
             indexes.push({ matchStart: match.index, matchEnd: match.index + match[0].length, innerTagContent: match[1] });
