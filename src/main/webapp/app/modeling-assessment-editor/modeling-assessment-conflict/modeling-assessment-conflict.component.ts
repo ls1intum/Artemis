@@ -212,16 +212,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     private updateOverallResolutioState() {
-        for (const state of this.conflictResolutionStates) {
-            if (state === ConflictResolutionState.UNHANDLED) {
-                this.conflictsAllHandled = false;
-                return;
-            }
-        }
-        if (!this.conflictsAllHandled) {
+        const newConflictsAllHandled = this.conflictResolutionStates.every(state => state !== ConflictResolutionState.UNHANDLED);
+        if (newConflictsAllHandled && !this.conflictsAllHandled) {
             this.jhiAlertService.success('modelingAssessmentEditor.messages.conflictsResolved');
         }
-        this.conflictsAllHandled = true;
+        this.conflictsAllHandled = newConflictsAllHandled;
     }
 
     private updateCenteredElement() {}
