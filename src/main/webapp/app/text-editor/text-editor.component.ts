@@ -14,6 +14,8 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
+import { Language } from 'app/entities/tutor-group';
+import * as franc from 'franc';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -142,6 +144,24 @@ export class TextEditorComponent implements OnInit {
         }
 
         this.submission.text = this.answer;
+        const languageProbabilities = franc.all(this.answer);
+
+        for (const languageProbability of languageProbabilities) {
+            if (languageProbability[0] === 'und') {
+                // Language is undetermined
+                break;
+            }
+            if (languageProbability[0] === 'eng') {
+                // Language is english
+                this.submission.language = Language.ENGLISH;
+                break;
+            }
+            if (languageProbability[0] === 'deu' || languageProbability[0] === 'nds') {
+                // Language is german or lower german
+                this.submission.language = Language.GERMAN;
+                break;
+            }
+        }
 
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 

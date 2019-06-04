@@ -912,6 +912,11 @@
   resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.0.tgz#2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7"
   integrity sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==
 
+"@types/franc@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@types/franc/-/franc-4.0.0.tgz#c1acbe0ac6cfce80380a21464931ad325f46786c"
+  integrity sha512-d03BUKEnze6WHX5BRc/ZlvDkhNEvukEAVl6Lz9jD09vFA09YV5J6UAW23qU4DLLZVIuuUQLV/J5y7vMc7zPMCg==
+
 "@types/glob@^7.1.1":
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/@types/glob/-/glob-7.1.1.tgz#aa59a1c6e3fbc421e07ccd31a944c30eba521575"
@@ -2853,6 +2858,11 @@ codelyzer@5.0.1:
     semver-dsl "^1.0.1"
     source-map "^0.5.7"
     sprintf-js "^1.1.2"
+
+collapse-white-space@^1.0.3:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/collapse-white-space/-/collapse-white-space-1.0.5.tgz#c2495b699ab1ed380d29a1091e01063e75dbbe3a"
+  integrity sha512-703bOOmytCYAX9cXYqoikYIx6twmFCXsnzRQheBcTG3nzKYBR4P/+wkYeH+Mvj7qUz8zZDtdyzbxfnEi/kYzRQ==
 
 collection-visit@^1.0.0:
   version "1.0.0"
@@ -4823,6 +4833,13 @@ fragment-cache@^0.2.1:
   integrity sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=
   dependencies:
     map-cache "^0.2.2"
+
+franc@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/franc/-/franc-4.1.0.tgz#81bc0b222ab6c13b972c4254d9002e7a48038539"
+  integrity sha512-GIIncJbjhNO9y+lW0eG4V47XUYtIFBkQlTJHuCYXDIK2nxXvawKY48EifdN0W7MwRzU+5CJXm474gNDK45KNhg==
+  dependencies:
+    trigram-utils "^1.0.0"
 
 fresh@0.5.2, fresh@^0.5.2:
   version "0.5.2"
@@ -8116,6 +8133,11 @@ mute-stream@0.0.7:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
+
+n-gram@^1.0.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/n-gram/-/n-gram-1.1.1.tgz#a374dc176a9063a2388d1be18ed7c35828be2a97"
+  integrity sha512-qibRqvUghLIVsq+RTwVuwOzgOxf0l4DDZKVYAK0bMam5sG9ZzaJ6BUSJyG2Td8kTc7c/HcMUtjiN5ShobZA2bA==
 
 nan@^2.13.2, nan@^2.9.2:
   version "2.13.2"
@@ -12025,6 +12047,15 @@ tree-kill@1.2.1:
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.1.tgz#5398f374e2f292b9dcc7b2e71e30a5c3bb6c743a"
   integrity sha512-4hjqbObwlh2dLyW4tcz0Ymw0ggoaVDMveUB9w8kFSQScdRLo0gxO9J7WFcUBo+W3C1TLdFIEwNOWebgZZ0RH9Q==
 
+trigram-utils@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/trigram-utils/-/trigram-utils-1.0.2.tgz#47574b7fade636e0fc06515788cbbd61786d2292"
+  integrity sha512-4/DmYtegpRAyTHPpL+asfLHfTdrTZ5N0FNaixyb4L6Bx3mi+g1wgsFJNixZ9Ycsjs3+FrK4zJoWW86cdMaL8RA==
+  dependencies:
+    collapse-white-space "^1.0.3"
+    n-gram "^1.0.0"
+    trim "0.0.1"
+
 trim-newlines@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/trim-newlines/-/trim-newlines-1.0.0.tgz#5887966bb582a4503a41eb524f7d35011815a613"
@@ -12039,6 +12070,11 @@ trim-right@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
   integrity sha1-yy4SAwZ+DI3h9hQJS5/kVwTqYAM=
+
+trim@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/trim/-/trim-0.0.1.tgz#5858547f6b290757ee95cccc666fb50084c460dd"
+  integrity sha1-WFhUf2spB1fulczMZm+1AITEYN0=
 
 triple-beam@^1.2.0, triple-beam@^1.3.0:
   version "1.3.0"
