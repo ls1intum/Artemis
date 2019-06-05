@@ -67,7 +67,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     initComponent() {
         this.mergedFeedbacks = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
         this.currentFeedbacksCopy = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
-        this.conflictResolutionStates = [...this.conflictResolutionStates.map(() => ConflictResolutionState.UNHANDLED)];
+        this.conflictResolutionStates = [...this.conflicts.map(() => ConflictResolutionState.UNHANDLED)];
         this.updateSelectedConflict();
     }
 
