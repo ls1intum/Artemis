@@ -39,10 +39,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     @Output() rightButtonPressed = new EventEmitter();
     @Output() rightFeedbacksChanged = new EventEmitter<Feedback[]>();
 
-    constructor(private jhiAlertService: JhiAlertService) {}
+    constructor() {}
 
     ngOnInit() {
-        this.jhiAlertService.clear();
         this.updateHighlightColor();
     }
 

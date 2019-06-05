@@ -14,7 +14,7 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     conflictsAllHandled = false;
 
     @Input() conflicts: Conflict[];
-    @Input() conflictResolutionStates: ConflictResolutionState[];
+    @Input() conflictResolutionStates: ConflictResolutionState[] = [];
     @Output() selectedConflictChanged = new EventEmitter<number>();
     @Output() save = new EventEmitter();
     @Output() submit = new EventEmitter<Conflict[]>();
@@ -26,7 +26,7 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
         if (changes.conflicts) {
             this.conflictIndex = 0;
         }
-        if (changes.conflictResolutionStates) {
+        if (changes.conflictResolutionStates && changes.conflictResolutionStates.currentValue) {
             this.conflictResolutionStates = changes.conflictResolutionStates.currentValue;
             if (!this.conflictsAllHandled) {
                 this.updateOverallResolutionState();
