@@ -39,6 +39,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     conflictingCenteredElementId: string;
 
     @ViewChild('escalationModal') escalationModal: ElementRef;
+
     constructor(
         private route: ActivatedRoute,
         private modelingSubmissionService: ModelingSubmissionService,
@@ -67,12 +68,22 @@ export class InitialConflictResolutionComponent implements OnInit {
             }
         });
     }
+
     initComponent() {
         this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
         this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
         this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
         this.currentModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
+        this.jhiAlertService.clear();
+        this.jhiAlertService.addAlert(
+            {
+                type: 'info',
+                msg: 'modelingAssessmentConflict.messages.conflictResolutionInstructions',
+                timeout: undefined,
+            },
+            [],
+        );
     }
 
     onSave() {
