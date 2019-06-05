@@ -417,11 +417,15 @@ public class ResultResource {
         }
 
         try {
-            if (result.get().getFeedbacks() != null) {
-                return new ResponseEntity<>(result.get().getFeedbacks(), HttpStatus.OK);
+            // There is a difference between an empty list of feedback items & no feedback items at all.
+            // E.g. for a programming exercise no feedback items means the build has failed by a compilation error.
+            // This is why we raise a not found error that the client can handle.
+            List<Feedback> feedbackItems = result.get().getFeedbacks();
+            if (feedbackItems != null) {
+                return new ResponseEntity<>(feedbackItems, HttpStatus.OK);
             }
             else {
-                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+                return notFound();
             }
         }
         catch (Exception e) {
