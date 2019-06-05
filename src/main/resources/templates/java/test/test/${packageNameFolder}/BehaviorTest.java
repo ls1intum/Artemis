@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
+ * @version 2.1 (05.06.2019)
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
  * regularly in the functional tests. Facilitation mainly means automatically handling all the various
@@ -148,11 +148,11 @@ public abstract class BehaviorTest {
     }
 
     /**
-     * Invoke a given method of a given class instance with instances of the parameters.
+     * Invoke a given method of a given object with instances of the parameters.
      * @param object: The instance of the class that should invoke the method.
      * @param method: The method that has to get invoked.
      * @param params: Parameter instances of the method. Do not include if the method has no parameters.
-     * @return The return instance of the method.
+     * @return The return value of the method.
      */
     protected Object invokeMethod(Object object, Method method, Object... params) {
         String failMessage = "Problem: could not invoke the method '" + method.getName() + "' in the class '" + object.getClass().getSimpleName() + "' because";
@@ -167,6 +167,19 @@ public abstract class BehaviorTest {
         }
 
         return null;
+    }
+    
+    /**
+     * Invoke a given method name of a given object with instances of the parameters.
+     * @param object: The instance of the class that should invoke the method.
+     * @param methodName: The method name that has to get invoked.
+     * @param params: Parameter instances of the method. Do not include if the method has no parameters.
+     * @return The return value of the method.
+     */
+    protected Object invokeMethod(Object object, String methodName, Object... params) {
+    	Class<?>[] parameterTypes = getParameterTypes(params);
+    	Method method = getMethod(object, methodName, parameterTypes);
+    	return invokeMethod(object, method, params);
     }
 
     /**
@@ -184,7 +197,8 @@ public abstract class BehaviorTest {
                 Class<?> paramType = param.getClass();
                 parameterTypes[Arrays.asList(params).indexOf(param)] = paramType;
             }
-        } else {
+        } 
+        else {
             parameterTypes = null;
         }
 
@@ -197,9 +211,10 @@ public abstract class BehaviorTest {
      * @return The string representation of the parameter types.
      */
     private String getParameterTypesAsString(Class<?>... parameterTypes) {
-        if(parameterTypes.length == 0) {
+        if(parameterTypes == null || parameterTypes.length == 0) {
             return "[ none ]";
-        } else {
+        } 
+        else {
             String parameterTypesInformation = "[ ";
 
             for(int i = 0; i < parameterTypes.length; i++) {
