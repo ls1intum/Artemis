@@ -106,7 +106,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         const originalElementAssessment = this.currentConflict.causingConflictingResult.result.feedbacks.find(
             feedback => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId,
         );
-        if (elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
+        if (originalElementAssessment && elementAssessmentUpdate && elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
             this.updateCurrentState();
         }
         this.mergedFeedbacks = feedbacks;
@@ -156,13 +156,17 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
-        this.mergedFeedbacks.forEach(feedback => {
-            if (feedback.referenceId === elementIdToUpdate) {
-                feedback.credits = feedbackToUse.credits;
-            }
-            feedbacks.push(feedback);
-        });
-        this.mergedFeedbacks = feedbacks;
+        if (feedbackToUse) {
+            this.mergedFeedbacks.forEach(feedback => {
+                if (feedback.referenceId === elementIdToUpdate) {
+                    feedback.credits = feedbackToUse.credits;
+                }
+                feedbacks.push(feedback);
+            });
+            this.mergedFeedbacks = feedbacks;
+        } else {
+            console.error(`could not find expected feedback with id ${elementIdToUpdateWith} inside source feedback`);
+        }
     }
 
     setSameWidthOnModelingAssessments() {
