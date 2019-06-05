@@ -213,7 +213,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
-                this.highlightConflictingElements();
+                this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
@@ -222,7 +222,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                         this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
                         conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
                     });
-                    this.highlightConflictingElements();
+                    this.updateHighlightedConflictingElements();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
@@ -305,11 +305,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    private highlightConflictingElements() {
+    private updateHighlightedConflictingElements() {
         this.highlightedElementIds = new Set<string>();
-        this.conflicts.forEach((conflict: Conflict) => {
-            this.highlightedElementIds.add(conflict.causingConflictingResult.modelElementId);
-        });
+        if (this.conflicts) {
+            this.conflicts.forEach((conflict: Conflict) => {
+                this.highlightedElementIds.add(conflict.causingConflictingResult.modelElementId);
+            });
+        }
     }
 
     /**

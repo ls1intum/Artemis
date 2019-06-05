@@ -203,7 +203,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     private updateHighlightColor() {
         switch (this.conflictResolutionStates[this.conflictIndex]) {
             case ConflictResolutionState.UNHANDLED:
-                // this.highlightColor = 'rgba(219, 53, 69, 0.6)';
                 this.highlightColor = 'rgba(0, 123, 255, 0.6)';
                 break;
             case ConflictResolutionState.ESCALATED:
@@ -222,6 +221,4 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
         this.conflictsAllHandled = newConflictsAllHandled;
     }
-
-    private updateCenteredElement() {}
 }
