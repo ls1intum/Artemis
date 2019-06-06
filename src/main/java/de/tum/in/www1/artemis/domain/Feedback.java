@@ -123,7 +123,7 @@ public class Feedback implements Serializable {
      */
     @JsonIgnore
     public String getReferenceElementId() {
-        if (!reference.contains(":")) {
+        if (reference == null || !reference.contains(":")) {
             return null;
         }
         return reference.split(":")[1];

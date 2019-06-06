@@ -65,7 +65,6 @@ public class ModelAssessmentConflictService {
             Exercise exercise = conflictsForSubmission.get(0).getCausingConflictingResult().getResult().getParticipation().getExercise();
             return conflictsForSubmission.stream().filter(conflict -> currentUserIsResponsibleForHandling(conflict, exercise)).collect(Collectors.toList());
         }
-
     }
 
     public List<ModelAssessmentConflict> getConflictsForSubmission(Long submissionId) {

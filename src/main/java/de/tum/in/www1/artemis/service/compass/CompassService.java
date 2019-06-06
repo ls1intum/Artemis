@@ -206,7 +206,8 @@ public class CompassService {
 
     public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
+        List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
+        Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
         List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getUnresolvedConflictsForResult(result);
         conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
         conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
@@ -408,6 +409,14 @@ public class CompassService {
             return new JsonObject();
         }
         return compassCalculationEngines.get(exerciseId).getStatistics();
+    }
+
+    /**
+     * @param modelingAssessment List of feedback that gets filtered
+     * @return new list with all feedbacks handed over except the ones without a reference which therefore are considered general feedback
+     */
+    private List<Feedback> filterOutGeneralFeedback(List<Feedback> modelingAssessment) {
+        return modelingAssessment.stream().filter(feedback -> feedback.hasReference()).collect(Collectors.toList());
     }
 
     // Call every night at 2:00 am to free memory for unused calculation engines (older than 1 day)
