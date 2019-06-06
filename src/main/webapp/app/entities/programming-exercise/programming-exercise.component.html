@@ -73,7 +73,8 @@
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.templateParticipation.results && programmingExercise.templateParticipation.results.length"
                                 [participationType]="'TEMPLATE'"
-                                [result]="programmingExercise.templateParticipation.results[0]"
+                                [participation]="programmingExercise.templateParticipation"
+                                [exercise]="programmingExercise"
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div class="d-flex justify-content-between">
@@ -83,7 +84,8 @@
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.solutionParticipation.results && programmingExercise.solutionParticipation.results.length"
                                 [participationType]="'SOLUTION'"
-                                [result]="programmingExercise.solutionParticipation.results[0]"
+                                [participation]="programmingExercise.solutionParticipation"
+                                [exercise]="programmingExercise"
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div>
