@@ -30,7 +30,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     referencedFeedback: Feedback[];
     conflicts: Conflict[];
     highlightedElementIds: Set<string>;
-    ignoreConflicts = false;
 
     assessmentsAreValid = false;
     busy: boolean;
@@ -206,7 +205,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     onSubmitAssessment() {
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, false).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
