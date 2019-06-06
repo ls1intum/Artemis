@@ -289,4 +289,22 @@ public class ModelingSubmissionService {
             modelingSubmissionRepository.save(modelingSubmission);
         }
     }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return modelingSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return modelingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
 }

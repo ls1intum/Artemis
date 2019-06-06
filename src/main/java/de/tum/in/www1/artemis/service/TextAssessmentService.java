@@ -115,46 +115,4 @@ public class TextAssessmentService extends AssessmentService {
     private Double calculateTotalScore(List<Feedback> assessments) {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
-
-    /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
-    }
-
-    /**
-     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @param tutorId  - the tutor we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
-    }
-
-    /**
-     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param tutorId    - the tutor we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
-    }
 }

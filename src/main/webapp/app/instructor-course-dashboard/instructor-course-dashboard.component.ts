@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { Course, CourseService, StatsForInstructorDashboard } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { InitializationState, Participation } from 'app/entities/participation';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
 import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
