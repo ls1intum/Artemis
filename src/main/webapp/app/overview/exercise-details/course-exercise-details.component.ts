@@ -66,26 +66,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         this.exercise = null;
-        const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
-        if (cachedParticipations && cachedParticipations.length > 0) {
-            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body;
-                this.exercise.participations = this.filterParticipations(cachedParticipations);
-                this.mergeResultsAndSubmissionsForParticipations();
-                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.subscribeForNewResults();
-            });
-        } else {
-            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body;
-                this.exercise.participations = this.filterParticipations(this.exercise.participations);
-                this.mergeResultsAndSubmissionsForParticipations();
-                this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.subscribeForNewResults();
-            });
-        }
+        this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.exercise = exerciseResponse.body;
+            this.exercise.participations = this.filterParticipations(this.exercise.participations);
+            this.mergeResultsAndSubmissionsForParticipations();
+            this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
+            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+            this.exercise.participations.forEach(participation => this.participationWebsocketService.addResultsToParticipation(participation, ...participation.results));
+            this.subscribeForNewResults();
+        });
     }
 
     /**

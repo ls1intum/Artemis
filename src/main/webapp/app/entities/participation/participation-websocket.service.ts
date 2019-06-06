@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { uniqBy as _uniqBy } from 'lodash';
 
 import { Participation } from './participation.model';
 import { JhiWebsocketService } from 'app/core';
@@ -130,7 +131,7 @@ export class ParticipationWebsocketService {
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationResultObservable = this.jhiWebsocketService.receive(participationResultTopic);
             participationResultObservable.subscribe((result: Result) => {
-                this.addResultToParticipation(result);
+                this.addResultsToParticipation(result.participation, result);
             });
             this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participation.id}`, participationResultTopic);
         }
@@ -167,26 +168,26 @@ export class ParticipationWebsocketService {
     /**
      * This adds newly received results to the corresponding participation. Then all listeners for the
      * participationObservable will be notified with the complete participation object.
+     * If results are added to the participation that already exist, they will not be added multiple times, but filtered out.
      *
-     * @param result Newly received result object from the websocket message
+     * @param participation participation to which results belong.
+     * @param results to add to the participation
      * @private
      */
-    private addResultToParticipation(result: Result) {
-        const correspondingParticipation = this.cachedParticipations.get(result.participation.id);
+    public addResultsToParticipation(participation: Participation, ...results: Result[]) {
+        const correspondingParticipation = this.cachedParticipations.get(participation.id);
         if (!correspondingParticipation.results) {
             correspondingParticipation.results = [];
         }
-        correspondingParticipation.results = correspondingParticipation.results.map(el => (el.id === result.id ? result : el));
-        if (!correspondingParticipation.results.some(el => el.id === result.id)) {
-            correspondingParticipation.results.push(result);
-        }
+        correspondingParticipation.results = _uniqBy([...results, ...correspondingParticipation.results], 'id');
         this.cachedParticipations.set(correspondingParticipation.id, correspondingParticipation);
         if (this.participationObservable) {
             this.participationObservable.next(correspondingParticipation);
         }
         const resultObservable = this.resultObservables.get(correspondingParticipation.id);
-        if (resultObservable) {
-            resultObservable.next(result);
+        const latestResult = correspondingParticipation.results.reduce((currentMax, res) => (res.completionDate > currentMax.completionDate ? res : currentMax));
+        if (resultObservable && latestResult) {
+            resultObservable.next(latestResult);
         }
     }
 
