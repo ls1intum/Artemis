@@ -9,7 +9,7 @@ import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
 import { Participation } from 'app/entities/participation';
-import { ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -103,5 +103,18 @@ export class ResultService {
             }
         }
         return participation;
+    }
+
+    /**
+     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
+     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    isResultOlderThanOneWeek(result: Result, exercise: Exercise): boolean {
+        const resultCompletionDate = moment(result.completionDate);
+        if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
+            return resultCompletionDate.isBefore(moment().subtract(1, 'week'));
+        }
+        return moment(exercise.assessmentDueDate).isBefore(moment().subtract(1, 'week'));
     }
 }
