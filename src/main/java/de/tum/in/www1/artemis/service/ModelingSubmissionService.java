@@ -95,24 +95,35 @@ public class ModelingSubmissionService {
     /**
      * Given an exercise, find a modeling submission for that exercise which still doesn't have any result. If the diagram type is supported by Compass we get the next optimal
      * submission from Compass, i.e. the submission for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not supported by Compass
-     * we just get a random submission without assessment.
+     * we just get a random submission without assessment. Note, that we cannot use a readonly transaction here as it is making problems when initially loading the calculation
+     * engine and assessing all submissions automatically: we would get an sql exception "Connection is read-only" from hibernate when saving the result in
+     * CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @return a modeling submission without any result
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         // ask Compass for optimal submission to assess if diagram type is supported
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
-            if (!optimalModelSubmissions.isEmpty()) {
+            while (!optimalModelSubmissions.isEmpty()) {
                 // TODO CZ: think about how to handle canceled assessments with Compass as I do not want to receive the same submission again, if I canceled the assessment
-                return modelingSubmissionRepository.findById(optimalModelSubmissions.iterator().next());
+                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findById(optimalModelSubmissions.iterator().next());
+                if (submission.isPresent()) {
+                    return submission;
+                }
+                else {
+                    // TODO CZ: test this (e.g. remove submission from db manually)
+                    compassService.removeModelWaitingForAssessment(modelingExercise.getId(), optimalModelSubmissions.iterator().next());
+                    optimalModelSubmissions.iterator().remove();
+                }
             }
         }
 
         // otherwise return a random submission that is not assessed or an empty optional
         Random r = new Random();
+        // TODO CZ: find participations without manual result instead? as we automatically assign automatic results for every new submission
         List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
                 .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 

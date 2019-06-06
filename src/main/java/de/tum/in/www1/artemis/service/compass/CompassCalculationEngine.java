@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
@@ -40,28 +41,33 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private LocalDateTime lastUsed;
 
-    CompassCalculationEngine(Set<ModelingSubmission> manuallyAssessedSubmissions) {
+    CompassCalculationEngine(Set<ModelingSubmission> modelingSubmissions) {
         lastUsed = LocalDateTime.now();
         modelIndex = new ModelIndex();
         assessmentIndex = new AssessmentIndex();
-
         automaticAssessmentController = new AutomaticAssessmentController();
         modelSelector = new ModelSelector(); // TODO MJ fix Bug where on load of exercise no
         // modelsWaitingForAssessment are added ? No differentiation between
         // submitted and saved assessments!
 
-        for (Submission manuallyAssessedSubmission : manuallyAssessedSubmissions) {
+        for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
             // when iterating over the ModelingSubmissions directly (i.e. for (ModelingSubmission submission : submissions)).
-            ModelingSubmission manuallyAssessedModelingSubmission = (ModelingSubmission) Hibernate.unproxy(manuallyAssessedSubmission);
-            String model = manuallyAssessedModelingSubmission.getModel();
+            ModelingSubmission modelingSubmission = (ModelingSubmission) Hibernate.unproxy(submission);
+
+            String model = modelingSubmission.getModel();
             if (model != null) {
-                buildModel(manuallyAssessedModelingSubmission);
-                buildAssessment(manuallyAssessedModelingSubmission);
-                modelSelector.addAlreadyAssessedModel(manuallyAssessedModelingSubmission.getId());
+                // build the model and add it to Compass
+                buildModel(modelingSubmission);
+
+                // if the submission already has a complete manual assessment also add the assessment to Compass, so that it can be considered for automatic assessments
+                if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
+                        && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+                    buildAssessment(modelingSubmission);
+                    modelSelector.addAlreadyAssessedModel(modelingSubmission.getId());
+                }
             }
         }
-
         assessModelsAutomatically();
     }
 
@@ -120,7 +126,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private void buildAssessment(ModelingSubmission submission) {
         UMLClassDiagram model = modelIndex.getModelMap().get(submission.getId());
-        if (model == null || submission.getResult() == null) {
+        if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }

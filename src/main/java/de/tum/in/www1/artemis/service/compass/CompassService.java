@@ -211,10 +211,10 @@ public class CompassService {
         return conflicts;
     }
 
+    // TODO: cleanup + adjust documentation
     /**
-     * TODO: cleanup + adjust documentation Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added
-     * it to the corresponding result and the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() ==
-     * null).
+     * Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added it to the corresponding result and
+     * the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
      *
      * @param modelId    the id of the model/submission that should be updated with an automatic assessment
      * @param exerciseId the id of the corresponding exercise
@@ -355,6 +355,7 @@ public class CompassService {
 
     /**
      * Loads all the submissions of the given exercise from the database, creates a new calculation engine from the submissions and adds it to the list of calculation engines.
+     * Afterwards, trigger the automatic assessment attempt for every submission.
      *
      * @param exerciseId the exerciseId of the exercise for which the calculation engine should be loaded
      */
@@ -363,25 +364,24 @@ public class CompassService {
             return;
         }
         log.info("Loading Compass calculation engine for exercise " + exerciseId);
-        // get all the submissions for the given exercise that have a manual assessment
-        Set<ModelingSubmission> manuallyAssessedSubmissions = getSubmissionsWithManualAssessmentsForExercise(exerciseId);
-        // load new calculation engine with the submissions and add to list of engines
-        CalculationEngine calculationEngine = new CompassCalculationEngine(manuallyAssessedSubmissions);
+
+        Set<ModelingSubmission> modelingSubmissions = getSubmissionsForExercise(exerciseId);
+        CalculationEngine calculationEngine = new CompassCalculationEngine(modelingSubmissions);
         compassCalculationEngines.put(exerciseId, calculationEngine);
-        // assess models after reload
+
         for (long id : calculationEngine.getModelIds()) {
             assessAutomatically(id, exerciseId);
         }
     }
 
     /**
-     * Get all the modeling submissions of the given exercise that have a manual assessment
+     * Get all the modeling submissions of the given exercise
      *
      * @param exerciseId the id of the exercise for
-     * @return the list of modeling submissions with manual assessment
+     * @return the list of modeling submissions
      */
-    private Set<ModelingSubmission> getSubmissionsWithManualAssessmentsForExercise(long exerciseId) {
-        List<ModelingSubmission> submissions = modelingSubmissionRepository.findByExerciseIdWithEagerResultsWithManualAssessment(exerciseId);
+    private Set<ModelingSubmission> getSubmissionsForExercise(long exerciseId) {
+        List<ModelingSubmission> submissions = modelingSubmissionRepository.findByExerciseIdWithEagerResultsAndFeedback(exerciseId);
         return new HashSet<>(submissions);
     }
 

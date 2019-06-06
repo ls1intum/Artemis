@@ -57,6 +57,7 @@ public class AutomaticAssessmentController {
      * @param modelIndex      manages all models
      * @param assessmentIndex manages all assessments
      */
+    // TODO CZ: only assess models automatically that do not already have a complete manual assessment?
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
 
         totalCoverage = 0;
