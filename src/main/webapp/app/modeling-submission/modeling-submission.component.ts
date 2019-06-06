@@ -118,7 +118,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.result = this.submission.result;
                         }
                         if (this.submission.submitted && this.result && this.result.completionDate) {
-                            this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                            this.resultOlderThanOneWeek = this.isResultOlderThanOneWeek(this.result);
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.prepareAssessmentData();
@@ -199,17 +199,30 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = newResult;
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
                 this.prepareAssessmentData();
-                this.resultOlderThanOneWeek = moment(this.assessmentResult.completionDate).isBefore(moment().subtract(1, 'week'));
+                this.resultOlderThanOneWeek = this.isResultOlderThanOneWeek(this.assessmentResult);
                 this.jhiAlertService.info('arTeMiSApp.modelingEditor.newAssessment');
             }
         });
     }
 
     /**
+     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
+     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    private isResultOlderThanOneWeek(result: Result): boolean {
+        const resultCompletionDate = moment(result.completionDate);
+        if (!this.modelingExercise.assessmentDueDate || resultCompletionDate.isAfter(this.modelingExercise.assessmentDueDate)) {
+            return resultCompletionDate.isBefore(moment().subtract(1, 'week'));
+        }
+        return moment(this.modelingExercise.assessmentDueDate).isBefore(moment().subtract(1, 'week'));
+    }
+
+    /**
      * This function sets and starts an auto-save timer that automatically saves changes
      * to the model after at most 60 seconds.
      */
-    setAutoSaveTimer(): void {
+    private setAutoSaveTimer(): void {
         if (this.submission.submitted) {
             return;
         }

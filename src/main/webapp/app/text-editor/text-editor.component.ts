@@ -85,7 +85,7 @@ export class TextEditorComponent implements OnInit {
                         this.answer = this.submission.text;
                     }
                     if (this.result && this.result.completionDate) {
-                        this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                        this.resultOlderThanOneWeek = this.isResultOlderThanOneWeek(this.result);
                         this.complaintService.findByResultId(this.result.id).subscribe(res => {
                             this.hasComplaint = !!res.body;
                         });
@@ -168,6 +168,19 @@ export class TextEditorComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
+    }
+
+    /**
+     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
+     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    private isResultOlderThanOneWeek(result: Result): boolean {
+        const resultCompletionDate = moment(result.completionDate);
+        if (!this.textExercise.assessmentDueDate || resultCompletionDate.isAfter(this.textExercise.assessmentDueDate)) {
+            return resultCompletionDate.isBefore(moment().subtract(1, 'week'));
+        }
+        return moment(this.textExercise.assessmentDueDate).isBefore(moment().subtract(1, 'week'));
     }
 
     previous() {
