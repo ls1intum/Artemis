@@ -7,7 +7,7 @@
         },
         "questionAnswer": {
             "created": "A new answer is created with identifier {{ param }}",
-            "updated": "A answer is updated with identifier {{ param }",
+            "updated": "A answer is updated with identifier {{ param }}",
             "deleted": "A answer is deleted with identifier {{ param }}"
         }
     }
