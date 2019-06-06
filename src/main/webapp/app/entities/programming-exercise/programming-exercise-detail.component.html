@@ -68,25 +68,27 @@
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.templateParticipation.results" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise?.templateParticipation?.results" class="d-flex align-items-center">
                         <jhi-updating-result [participation]="programmingExercise.templateParticipation" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.templateParticipation.results.length"
+                            *ngIf="programmingExercise.templateParticipation.results?.length"
                             class="repository-status-icon"
                             [participationType]="ParticipationType.TEMPLATE"
-                            [result]="programmingExercise.templateParticipation.results[0]"
+                            [participation]="programmingExercise.templateParticipation"
+                            [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.solutionParticipation.results" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise?.solutionParticipation?.results" class="d-flex align-items-center">
                         <jhi-updating-result [participation]="programmingExercise.solutionParticipation" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.solutionParticipation.results.length"
+                            *ngIf="programmingExercise.solutionParticipation.results?.length"
                             class="repository-status-icon"
                             [participationType]="ParticipationType.SOLUTION"
-                            [result]="programmingExercise.solutionParticipation.results[0]"
+                            [participation]="programmingExercise.solutionParticipation"
+                            [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                     </div>
                 </dd>
