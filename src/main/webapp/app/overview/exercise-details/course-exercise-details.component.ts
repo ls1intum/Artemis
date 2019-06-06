@@ -72,7 +72,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.mergeResultsAndSubmissionsForParticipations();
             this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
             this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-            this.exercise.participations.forEach(participation => this.participationWebsocketService.addResultsToParticipation(participation, ...participation.results));
             this.subscribeForNewResults();
         });
     }
@@ -136,6 +135,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
             this.exercise.participations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
+                this.participationWebsocketService.addResultsToParticipation(participation, ...participation.results);
             });
         } else {
             this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
