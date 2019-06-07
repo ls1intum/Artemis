@@ -45,9 +45,8 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
             this.resultSubscription.unsubscribe();
         }
 
-        this.participationWebsocketService.addParticipation(this.participation, this.exercise);
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .subscribeForLatestResultOfParticipation(this.participation, this.exercise)
             .pipe(filter(result => !!result))
             .subscribe(result => (this.latestResult = result));
     }

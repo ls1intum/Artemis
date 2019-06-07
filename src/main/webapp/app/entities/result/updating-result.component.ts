@@ -93,8 +93,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             const exerciseNotOver = exercise.dueDate == null || (moment(exercise.dueDate).isValid() && moment(exercise.dueDate).isAfter(moment()));
 
             if ((isSameUser && exerciseNotOver) || isInstructorInCourse) {
-                this.participationWebsocketService.addParticipation(this.participation);
-                this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
+                this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation).subscribe((newResult: Result) => {
                     if (newResult) {
                         newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                         this.handleNewResult(newResult);

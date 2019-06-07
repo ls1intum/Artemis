@@ -193,8 +193,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!this.participation && !this.participation.id) {
             return;
         }
-        this.participationWebsocketService.addParticipation(this.participation);
-        this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
+        this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation).subscribe((newResult: Result) => {
             if (newResult && newResult.completionDate) {
                 this.assessmentResult = newResult;
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
