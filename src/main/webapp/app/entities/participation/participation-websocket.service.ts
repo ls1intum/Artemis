@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { Participation } from './participation.model';
 import { JhiWebsocketService } from 'app/core';
@@ -30,23 +30,13 @@ export class ParticipationWebsocketService {
     }
 
     /**
-     * Use with caution: This methods throws away the most recent participation value stored in the BehaviorSubject.
-     * This can be useful if the component using this service wants to store more/different data in a participation.
-     */
-    public resetParticipationObservable() {
-        if (this.participationObservable) {
-            this.jhiWebsocketService.unsubscribe();
-            this.participationObservable.complete();
-            this.participationObservable = new BehaviorSubject<Participation>(null);
-        }
-    }
-
-    /**
      * Notify all participation subscribers with the newest participation value (e.g. if the result has changed).
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
-        if (this.participationObservable) {
+        if (!this.participationObservable) {
+            this.participationObservable = new BehaviorSubject(participation);
+        } else {
             this.participationObservable.next(participation);
         }
     };
@@ -57,7 +47,11 @@ export class ParticipationWebsocketService {
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation.id);
-        resultObservable.next(result);
+        if (!resultObservable) {
+            this.resultObservables.set(result.participation.id, new BehaviorSubject(result));
+        } else {
+            resultObservable.next(result);
+        }
     };
 
     /**
@@ -68,7 +62,7 @@ export class ParticipationWebsocketService {
         const cachedParticipation = this.cachedParticipations.get(result.participation.id);
         if (cachedParticipation) {
             this.cachedParticipations.set(result.participation.id, { ...cachedParticipation, results: [...cachedParticipation.results, result] });
-            return this.cachedParticipations.get(result.participation.id);
+            return of(this.cachedParticipations.get(result.participation.id));
         }
         return of();
     };
@@ -152,7 +146,7 @@ export class ParticipationWebsocketService {
                 // Only store rated results, all other results are currently not relevant.
                 filter(result => result.rated),
                 tap(this.notifyResultSubscribers),
-                map(this.addResultToParticipation),
+                switchMap(this.addResultToParticipation),
                 tap(this.notifyParticipationSubscribers),
             );
         }

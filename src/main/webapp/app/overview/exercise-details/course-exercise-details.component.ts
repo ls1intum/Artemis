@@ -144,7 +144,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     subscribeForNewResults() {
-        this.participationWebsocketService.resetParticipationObservable();
         if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
             this.exercise.participations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
