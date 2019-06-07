@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -191,7 +192,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             result.getParticipation().setStudent(null);
         }
-        if (submit) {
+        if (submit && (result.getParticipation().getExercise().getAssessmentDueDate() == null
+                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);

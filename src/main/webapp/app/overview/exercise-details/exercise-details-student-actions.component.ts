@@ -41,11 +41,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
-    @Input() ratedResult: Result;
     @Input() courseId: number;
 
     @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
+    @Input() showResult: boolean;
 
     public repositoryPassword: string;
     public wasCopied = false;

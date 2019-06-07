@@ -99,6 +99,16 @@ public class ComplaintService {
         return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(studentId, courseId);
     }
 
+    @Transactional(readOnly = true)
+    public long countComplaintsByCourseId(long courseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countComplaintsByExerciseId(long exerciseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+    }
+
     /**
      * Given an exercise id, retrieve all the complaints apart the ones related to whoever is calling the method. Useful for creating a list of complaints a tutor can review.
      *

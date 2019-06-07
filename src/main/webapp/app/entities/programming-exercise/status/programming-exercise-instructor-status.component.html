@@ -2,13 +2,13 @@
     id="instructor-status-template"
     icon="exclamation-triangle"
     class="text-warning"
-    *ngIf="participationType === ParticipationType.TEMPLATE && result && result.score > 0"
+    *ngIf="participationType === ParticipationType.TEMPLATE && latestResult && latestResult.score > 0"
     [ngbTooltip]="'arTeMiSApp.programmingExercise.status.templateFulfillsTest' | translate"
 ></fa-icon>
 <fa-icon
     id="instructor-status-solution"
     icon="exclamation-triangle"
     class="text-warning"
-    *ngIf="participationType === ParticipationType.SOLUTION && result && !result.successful"
+    *ngIf="participationType === ParticipationType.SOLUTION && latestResult && !latestResult.successful"
     [ngbTooltip]="'arTeMiSApp.programmingExercise.status.solutionFailsTest' | translate"
 ></fa-icon>
