@@ -46,7 +46,8 @@
             "exerciseInformation": "Exercise information",
             "numberOfTotalSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
-            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you"
+            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
+            "language": "Language"
         }
     }
 }

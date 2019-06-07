@@ -15,8 +15,9 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
-import { Submission } from 'app/entities/submission';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { Language } from 'app/entities/tutor-group';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -262,6 +263,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
         return 'DRAFT';
     }
 
+    calculateLanguage(submission: Submission) {
+        if (submission.submissionExerciseType !== SubmissionExerciseType.TEXT) {
+            return submission.submissionExerciseType.toUpperCase();
+        }
+        const textSubmission: TextSubmission = submission as TextSubmission;
+        if (textSubmission.language === Language.GERMAN) {
+            return 'GERMAN';
+        }
+        if (textSubmission.language === Language.ENGLISH) {
+            return 'ENGLISH';
+        }
+        return 'UNDEFINED';
+    }
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;

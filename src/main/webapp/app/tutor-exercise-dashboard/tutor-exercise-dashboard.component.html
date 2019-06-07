@@ -153,6 +153,7 @@
                             <th>{{ 'arTeMiSApp.tutorExerciseDashboard.result' | translate }}</th>
                             <th>{{ 'arTeMiSApp.tutorExerciseDashboard.status' | translate }}</th>
                             <th>{{ 'arTeMiSApp.tutorExerciseDashboard.score' | translate }}</th>
+                            <th *ngIf="exercise.type === ExerciseType_TEXT">{{ 'arTeMiSApp.tutorExerciseDashboard.language' | translate }}</th>
                             <th>{{ 'arTeMiSApp.tutorExerciseDashboard.action' | translate }}</th>
                         </tr>
                     </thead>
@@ -168,6 +169,9 @@
                             </td>
                             <td>
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
+                            </td>
+                            <td *ngIf="exercise.type === ExerciseType_TEXT">
+                                {{ calculateLanguage(submission) }}
                             </td>
                             <td>
                                 <button
@@ -190,6 +194,9 @@
                             <td></td>
                             <td>{{ 'arTeMiSApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
+                            <td *ngIf="exercise.type === ExerciseType_TEXT">
+                                {{ calculateLanguage(unassessedSubmission) }}
+                            </td>
                             <td>
                                 <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">
                                     <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'arTeMiSApp.tutorExerciseDashboard.startAssessment' | translate }}
