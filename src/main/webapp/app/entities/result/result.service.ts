@@ -110,11 +110,11 @@ export class ResultService {
      * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
-    isResultOlderThanOneWeek(result: Result, exercise: Exercise): boolean {
+    isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
         const resultCompletionDate = moment(result.completionDate);
         if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
-            return resultCompletionDate.isBefore(moment().subtract(1, 'week'));
+            return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
         }
-        return moment(exercise.assessmentDueDate).isBefore(moment().subtract(1, 'week'));
+        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(1, 'week'));
     }
 }
