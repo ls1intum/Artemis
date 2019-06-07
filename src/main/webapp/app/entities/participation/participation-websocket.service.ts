@@ -165,7 +165,7 @@ export class ParticipationWebsocketService {
             const participationTopic = `/user/topic/exercise/${exerciseId}/participation`;
             this.jhiWebsocketService.subscribe(participationTopic);
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
-            return this.jhiWebsocketService
+            this.jhiWebsocketService
                 .receive(participationTopic)
                 .pipe(
                     tap(this.addParticipation),
