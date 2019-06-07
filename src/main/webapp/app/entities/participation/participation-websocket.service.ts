@@ -82,8 +82,8 @@ export class ParticipationWebsocketService {
         }
         participation.exercise = participation.exercise || exercise;
         this.cachedParticipations.set(participation.id, participation);
-        this.createResultWSConnectionIfNotExisting(participation.id).subscribe();
-        this.createParticipationWSConnectionIfNotExisting(participation.exercise.id).subscribe();
+        this.createResultWSConnectionIfNotExisting(participation.id);
+        this.createParticipationWSConnectionIfNotExisting(participation.exercise.id);
     };
 
     public addExerciseForNewParticipation(exerciseId: number) {
@@ -142,15 +142,15 @@ export class ParticipationWebsocketService {
             const participationResultTopic = `/topic/participation/${participationId}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
-            return this.jhiWebsocketService.receive(participationResultTopic).pipe(
-                // Only store rated results, all other results are currently not relevant.
-                filter(result => result.rated),
-                tap(this.notifyResultSubscribers),
-                switchMap(this.addResultToParticipation),
-                tap(this.notifyParticipationSubscribers),
-            );
+            this.jhiWebsocketService
+                .receive(participationResultTopic)
+                .pipe(
+                    tap(this.notifyResultSubscribers),
+                    switchMap(this.addResultToParticipation),
+                    tap(this.notifyParticipationSubscribers),
+                )
+                .subscribe();
         }
-        return of();
     }
 
     /**
@@ -165,12 +165,14 @@ export class ParticipationWebsocketService {
             const participationTopic = `/user/topic/exercise/${exerciseId}/participation`;
             this.jhiWebsocketService.subscribe(participationTopic);
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
-            return this.jhiWebsocketService.receive(participationTopic).pipe(
-                tap(this.addParticipation),
-                tap(this.notifyParticipationSubscribers),
-            );
+            return this.jhiWebsocketService
+                .receive(participationTopic)
+                .pipe(
+                    tap(this.addParticipation),
+                    tap(this.notifyParticipationSubscribers),
+                )
+                .subscribe();
         }
-        return of();
     }
 
     /**
@@ -196,7 +198,7 @@ export class ParticipationWebsocketService {
      * @param exercise Exercise to which the Participation belongs
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result> {
-        this.createResultWSConnectionIfNotExisting(participationId).subscribe();
+        this.createResultWSConnectionIfNotExisting(participationId);
         let resultObservable = this.resultObservables.get(participationId);
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result>(null);
