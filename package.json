@@ -74,7 +74,7 @@
     },
     "devDependencies": {
         "@angular/cdk": "7.3.7",
-        "@angular/cli": "7.3.9",
+        "@angular/cli": "8.0.2",
         "@angular/compiler-cli": "7.2.15",
         "@angular/language-service": "7.2.15",
         "@ngtools/webpack": "7.3.9",
