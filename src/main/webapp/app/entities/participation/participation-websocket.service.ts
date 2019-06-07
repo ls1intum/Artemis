@@ -35,6 +35,7 @@ export class ParticipationWebsocketService {
      */
     public resetParticipationObservable() {
         if (this.participationObservable) {
+            this.jhiWebsocketService.unsubscribe();
             this.participationObservable.complete();
             this.participationObservable = new BehaviorSubject<Participation>(null);
         }
@@ -60,13 +61,13 @@ export class ParticipationWebsocketService {
     };
 
     /**
-     * Update a cachedParticipation with the given result, meaning that its current result will be replaced.
+     * Update a cachedParticipation with the given result, meaning that the new result will be added to it.
      * @param result
      */
-    private setResultOfCachedParticipation = (result: Result) => {
+    private addResultToParticipation = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.participation.id);
         if (cachedParticipation) {
-            this.cachedParticipations.set(result.participation.id, { ...cachedParticipation, results: [result] });
+            this.cachedParticipations.set(result.participation.id, { ...cachedParticipation, results: [...cachedParticipation.results, result] });
             return this.cachedParticipations.get(result.participation.id);
         }
         return of();
@@ -87,7 +88,7 @@ export class ParticipationWebsocketService {
         }
         participation.exercise = participation.exercise || exercise;
         this.cachedParticipations.set(participation.id, participation);
-        this.createResultWSConnectionIfNotExisting(participation).subscribe();
+        this.createResultWSConnectionIfNotExisting(participation.id).subscribe();
         this.createParticipationWSConnectionIfNotExisting(participation.exercise.id).subscribe();
     };
 
@@ -139,19 +140,19 @@ export class ParticipationWebsocketService {
      * Checks for the given participation if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
-     * @param participation Participation object that has to be checked
+     * @param participationId
      * @private
      */
-    private createResultWSConnectionIfNotExisting(participation: Participation) {
-        if (!this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${participation.id}`)) {
-            const participationResultTopic = `/topic/participation/${participation.id}/newResults`;
+    private createResultWSConnectionIfNotExisting(participationId: number) {
+        if (!this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${participationId}`)) {
+            const participationResultTopic = `/topic/participation/${participationId}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participation.id}`, participationResultTopic);
+            this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
             return this.jhiWebsocketService.receive(participationResultTopic).pipe(
                 // Only store rated results, all other results are currently not relevant.
                 filter(result => result.rated),
                 tap(this.notifyResultSubscribers),
-                map(this.setResultOfCachedParticipation),
+                map(this.addResultToParticipation),
                 tap(this.notifyParticipationSubscribers),
             );
         }
@@ -197,15 +198,15 @@ export class ParticipationWebsocketService {
      *
      * If there is no observable for the participation a new one will be created.
      *
-     * @param participation Participation of which result to subscribe to
+     * @param participationId Id of Participation of which result to subscribe to
      * @param exercise Exercise to which the Participation belongs
      */
-    public subscribeForLatestResultOfParticipation(participation: Participation, exercise?: Exercise): BehaviorSubject<Result> {
-        this.addParticipation(participation, exercise);
-        let resultObservable = this.resultObservables.get(participation.id);
+    public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result> {
+        this.createResultWSConnectionIfNotExisting(participationId).subscribe();
+        let resultObservable = this.resultObservables.get(participationId);
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result>(null);
-            this.resultObservables.set(participation.id, resultObservable);
+            this.resultObservables.set(participationId, resultObservable);
         }
         return resultObservable;
     }

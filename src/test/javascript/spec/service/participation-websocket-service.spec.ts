@@ -66,22 +66,18 @@ describe('ParticipationWebsocketService', () => {
         receiveStub.restore();
     });
 
-    it('should setup a participation & result subscriptions with the websocket service when result subscription is created', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
-        expect(subscribeSpy).to.have.been.calledTwice;
-        expect(receiveStub).to.have.been.calledTwice;
+    it('should setup a result subscriptions with the websocket service on subscribeForLatestResult', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        expect(subscribeSpy).to.have.been.calledOnce;
+        expect(receiveStub).to.have.been.calledOnce;
         expect(unsubscribeSpy).not.to.have.been.called;
 
         expect(subscribeSpy).to.have.been.calledWithExactly(participationResultTopic);
         expect(receiveStub).to.have.been.calledWithExactly(participationResultTopic);
 
-        expect(subscribeSpy).to.have.been.calledWithExactly(participationTopic);
-        expect(receiveStub).to.have.been.calledWithExactly(participationTopic);
+        expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
-        expect(participationWebsocketService.cachedParticipations.size).to.equal(1);
-        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal(participation);
-
-        expect(participationWebsocketService.openWebsocketConnections.size).to.equal(2);
+        expect(participationWebsocketService.openWebsocketConnections.size).to.equal(1);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;
@@ -89,8 +85,8 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.participationObservable).to.be.undefined;
     });
 
-    it('should emit rated result and add it to the participation when received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
+    it('should emit rated result when received through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -98,12 +94,11 @@ describe('ParticipationWebsocketService', () => {
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
 
-        expect(resultSpy).to.have.been.calledOnce;
-        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal({ ...participation, results: [newRatedResult] });
+        expect(resultSpy).to.have.been.calledOnceWithExactly(newRatedResult);
     });
 
-    it('should not emit unrated result and not add it to the participation when received through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
+    it('should not emit unrated result received through websocket', () => {
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id, resultObservable);
@@ -112,11 +107,11 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipationSubject.next(newUnratedResult);
 
         expect(resultSpy).not.to.have.been.called;
-        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal(participation);
     });
 
     it('should also emit participation update with new result when new rated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
@@ -129,12 +124,13 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipationSubject.next(newRatedResult);
 
         expect(resultSpy).to.have.been.calledOnce;
-        expect(participationSpy).to.have.been.calledOnce;
-        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal({ ...participation, results: [newRatedResult] });
+        expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [...participation.results, newRatedResult] });
+        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal({ ...participation, results: [...participation.results, newRatedResult] });
     });
 
     it('should not emit participation update with new result when unrated result arrives through websocket', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.addParticipation(participation);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
@@ -152,8 +148,10 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to right participation if multiple participations are cached', () => {
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation);
-        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id);
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
         participationWebsocketService.subscribeForParticipationChanges();
         const resultObservable = new BehaviorSubject(null);
         const resultSpy = spy(resultObservable, 'next');
@@ -166,10 +164,10 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipationSubject.next(newRatedResult);
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(2);
-        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal({ ...participation, results: [newRatedResult] });
+        expect(participationWebsocketService.cachedParticipations.get(participation.id)).to.deep.equal({ ...participation, results: [...participation.results, newRatedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation2.id)).to.deep.equal(participation2);
 
         expect(resultSpy).to.have.been.calledOnceWithExactly(newRatedResult);
-        expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [newRatedResult] });
+        expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [...participation.results, newRatedResult] });
     });
 });

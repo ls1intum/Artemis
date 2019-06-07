@@ -150,7 +150,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation, this.exercise)
+            .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(filter(participation => !!participation))
             .subscribe((result: Result) => {
                 this.latestResult = result;
