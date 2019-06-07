@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -59,7 +60,7 @@ public class ComplaintService {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
-        if (originalResult.getCompletionDate().isBefore(ZonedDateTime.now().minusWeeks(1))) {
+        if (!isTimeOfComplaintValid(originalResult, originalResult.getParticipation().getExercise())) {
             throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
         }
         if (!originalSubmissor.getLogin().equals(principal.getName())) {
@@ -191,5 +192,17 @@ public class ComplaintService {
         complaints.forEach(this::filterOutStudentFromComplaint);
 
         return complaints;
+    }
+
+    /**
+     * This function checks whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the result. If
+     * the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was submitted
+     * before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    private boolean isTimeOfComplaintValid(Result result, Exercise exercise) {
+        if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
+            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(1));
+        }
+        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(1));
     }
 }
