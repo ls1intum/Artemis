@@ -66,7 +66,8 @@ export class ParticipationWebsocketService {
     private setResultOfCachedParticipation = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.participation.id);
         if (cachedParticipation) {
-            return { ...cachedParticipation, results: [result] };
+            this.cachedParticipations.set(result.participation.id, { ...cachedParticipation, results: [result] });
+            return this.cachedParticipations.get(result.participation.id);
         }
         return of();
     };
