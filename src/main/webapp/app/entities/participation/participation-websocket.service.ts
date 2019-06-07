@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 import { Participation } from './participation.model';
 import { JhiWebsocketService } from 'app/core';
@@ -114,7 +113,7 @@ export class ParticipationWebsocketService {
      * @private
      */
     private checkWebsocketConnection(participation: Participation, exercise: Exercise) {
-        this.checkWebsocketConnectionForNewResults(participation.id);
+        this.checkWebsocketConnectionForNewResults(participation);
         this.checkWebsocketConnectionForNewParticipations(exercise.id);
     }
 
@@ -122,28 +121,18 @@ export class ParticipationWebsocketService {
      * Checks for the given participation if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
-     * @param participationId Participation id that has to be checked
+     * @param participation Participation object that has to be checked
      * @private
      */
-    private checkWebsocketConnectionForNewResults(participationId: number) {
-        if (!this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${participationId}`)) {
-            const participationResultTopic = `/topic/participation/${participationId}/newResults`;
+    private checkWebsocketConnectionForNewResults(participation: Participation) {
+        if (!this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${participation.id}`)) {
+            const participationResultTopic = `/topic/participation/${participation.id}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
             const participationResultObservable = this.jhiWebsocketService.receive(participationResultTopic);
-            participationResultObservable
-                .pipe(
-                    tap((result: Result) => {
-                        const resultObservable = this.resultObservables.get(result.participation.id);
-                        if (resultObservable) {
-                            resultObservable.next(result);
-                        }
-                    }),
-                    tap((result: Result) => {
-                        this.addResultToParticipation(result);
-                    }),
-                )
-                .subscribe();
-            this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
+            participationResultObservable.subscribe((result: Result) => {
+                this.addResultToParticipation(result);
+            });
+            this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participation.id}`, participationResultTopic);
         }
     }
 
@@ -184,18 +173,20 @@ export class ParticipationWebsocketService {
      */
     private addResultToParticipation(result: Result) {
         const correspondingParticipation = this.cachedParticipations.get(result.participation.id);
-        if (correspondingParticipation) {
-            if (!correspondingParticipation.results) {
-                correspondingParticipation.results = [];
-            }
-            correspondingParticipation.results = correspondingParticipation.results.map(el => (el.id === result.id ? result : el));
-            if (!correspondingParticipation.results.some(el => el.id === result.id)) {
-                correspondingParticipation.results.push(result);
-            }
-            this.cachedParticipations.set(correspondingParticipation.id, correspondingParticipation);
-            if (this.participationObservable) {
-                this.participationObservable.next(correspondingParticipation);
-            }
+        if (!correspondingParticipation.results) {
+            correspondingParticipation.results = [];
+        }
+        correspondingParticipation.results = correspondingParticipation.results.map(el => (el.id === result.id ? result : el));
+        if (!correspondingParticipation.results.some(el => el.id === result.id)) {
+            correspondingParticipation.results.push(result);
+        }
+        this.cachedParticipations.set(correspondingParticipation.id, correspondingParticipation);
+        if (this.participationObservable) {
+            this.participationObservable.next(correspondingParticipation);
+        }
+        const resultObservable = this.resultObservables.get(correspondingParticipation.id);
+        if (resultObservable) {
+            resultObservable.next(result);
         }
     }
 
@@ -226,7 +217,6 @@ export class ParticipationWebsocketService {
             resultObservable = new BehaviorSubject<Result>(null);
             this.resultObservables.set(participationId, resultObservable);
         }
-        this.checkWebsocketConnectionForNewResults(participationId);
         return resultObservable;
     }
 }
