@@ -40,19 +40,15 @@ public class ComplaintResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private ComplaintRepository complaintRepository;
+    private final AuthorizationCheckService authCheckService;
 
-    private ResultRepository resultRepository;
+    private final ExerciseService exerciseService;
 
-    private AuthorizationCheckService authCheckService;
+    private final UserService userService;
 
-    private ExerciseService exerciseService;
+    private final ComplaintService complaintService;
 
-    private UserService userService;
-
-    private ComplaintService complaintService;
-
-    private CourseService courseService;
+    private final CourseService courseService;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, ComplaintService complaintService,
             CourseService courseService) {

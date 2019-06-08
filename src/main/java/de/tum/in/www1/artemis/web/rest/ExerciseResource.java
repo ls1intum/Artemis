@@ -45,8 +45,6 @@ public class ExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final ExerciseService exerciseService;
 
     private final UserService userService;
