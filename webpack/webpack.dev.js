@@ -13,10 +13,13 @@ const utils = require('./utils.js');
 const commonConfig = require('./webpack.common.js');
 
 const ENV = 'development';
+const isHot = process.argv.includes('--hot');
 
 module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
     devtool: 'eval-source-map',
     devServer: {
+        hot: isHot,
+        inline: isHot,
         contentBase: './build/resources/main/static/',
         proxy: [{
             context: [

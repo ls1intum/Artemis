@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,7 +94,10 @@ public class TextAssessmentResource extends AssessmentResource {
         checkTextExerciseForRequest(textExercise);
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
-        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        if (result.getParticipation().getExercise().getAssessmentDueDate() == null
+                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        }
         return ResponseEntity.ok(result);
     }
 
