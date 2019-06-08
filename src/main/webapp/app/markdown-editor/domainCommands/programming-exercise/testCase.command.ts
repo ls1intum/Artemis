@@ -9,37 +9,63 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
      * @desc insert selected testCase value into text
      */
     execute(value: string): void {
-        const row = this.aceEditorContainer.getEditor().getCursorPosition().row;
+        const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition();
         const text = `${this.getOpeningIdentifier()}${value}${this.getClosingIdentifier()}`;
         const matchInTag = this.isCursorWithinTag();
 
-        // Check if the cursor is within the tag - if so, replace its content
-        if (matchInTag) {
-            this.aceEditorContainer.getEditor().moveCursorTo(row, matchInTag.matchStart);
-            ArtemisMarkdown.removeTextRange({ col: matchInTag.matchStart, row }, { col: matchInTag.matchEnd, row }, this.aceEditorContainer);
-            ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
-            this.focus();
-            return;
-        }
+        // TODO: refactor
+        const stringReducer = (x: string, acc: Array<{ start: number; end: number; word: string }> = []): Array<{ start: number; end: number; word: string }> => {
+            const nextComma = x.indexOf(', ');
+            if (nextComma === -1) {
+                const lastElement = acc.length ? acc[acc.length - 1] : null;
+                return [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end) || 0) + x.length - 1, word: x }];
+            }
+            const nextWord = x.slice(0, nextComma);
+            const lastElement = acc.length ? acc[acc.length - 1] : null;
+            const newAcc = [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end + 2) || 0) + nextComma - 2, word: nextWord }];
+            const rest = x.slice(nextComma + 2);
+            return stringReducer(rest, newAcc);
+        };
 
-        // Check if there is an occurrence of the test case in the line of the cursor - if so, replace its content
-        const matchInRow = this.isTagInRow(row);
-        if (matchInRow) {
-            this.aceEditorContainer.getEditor().moveCursorTo(row, matchInRow.matchStart);
-            ArtemisMarkdown.removeTextRange(
-                { col: matchInRow.matchStart, row },
-                {
-                    col: matchInRow.matchEnd,
-                    row,
-                },
-                this.aceEditorContainer,
-            );
-            ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
-            this.focus();
-            return;
-        }
+        const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
+            // Check if the cursor is within the tag - if so, add the test to the list
+            if (matchInTag) {
+                // Don't add a test case that is already included
+                if (match.innerTagContent.includes(value)) return;
 
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+                this.aceEditorContainer.getEditor().clearSelection();
+                const validTestCases = matchInTag.innerTagContent.split(', ').filter(test => this.getValues().includes(test));
+
+                const stringPositions = stringReducer(match.innerTagContent);
+                const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
+                if (wordUnderCursor && validTestCases.includes(wordUnderCursor.word)) {
+                    // Case 1: Replace test
+                    return validTestCases.map(test => (test === wordUnderCursor.word ? value : test));
+                } else if (column === match.matchEnd - 1) {
+                    // Case 2: Add test on left side
+                    return [...validTestCases, value];
+                } else if (column === match.matchStart + 1) {
+                    // Case 3: Add test on right side
+                    return [value, ...validTestCases];
+                } else {
+                    return [value];
+                }
+            } else {
+                return [value];
+            }
+        };
+
+        this.aceEditorContainer.getEditor().clearSelection();
+        const newTestCases = `${this.getOpeningIdentifier()}${sortBy(generateTestCases(matchInTag)).join(', ')}${this.getClosingIdentifier()}`;
+        ArtemisMarkdown.removeTextRange(
+            { col: matchInTag.matchStart, row },
+            {
+                col: matchInTag.matchEnd,
+                row,
+            },
+            this.aceEditorContainer,
+        );
+        this.insertText(newTestCases);
         this.focus();
     }
 
