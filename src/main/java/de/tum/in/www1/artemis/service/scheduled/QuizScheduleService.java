@@ -418,6 +418,8 @@ public class QuizScheduleService {
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
 
+            // Set results to null before sending the participation - otherwise the student can find out the solution of the quiz!
+            storedParticipation.setResults(null);
             this.quizSubmissionWebsocketService.sendParticipation(storedParticipation);
 
             // add the participation to the participationHashMap for the send out at the end of the quiz
