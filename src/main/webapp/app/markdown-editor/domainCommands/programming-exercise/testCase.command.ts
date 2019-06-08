@@ -1,8 +1,36 @@
+import { sortBy } from 'lodash';
+import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 export class TestCaseCommand extends DomainMultiOptionCommand {
     buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.testCaseCommand';
+
+    setEditor(aceEditorContainer: AceEditorComponent) {
+        super.setEditor(aceEditorContainer);
+
+        this.aceEditorContainer.getEditor().setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+        });
+
+        const testCaseCompleter = {
+            getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
+                callback(
+                    null,
+                    this.getValues().map(function(word: string) {
+                        return {
+                            caption: word,
+                            value: word,
+                            meta: 'testCase',
+                        };
+                    }),
+                );
+            },
+        };
+
+        this.aceEditorContainer.getEditor().completers = [testCaseCompleter];
+    }
 
     /**
      * @function execute
