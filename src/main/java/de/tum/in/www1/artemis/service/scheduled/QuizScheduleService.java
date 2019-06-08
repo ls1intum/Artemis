@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 @Service
 public class QuizScheduleService {
@@ -61,11 +60,8 @@ public class QuizScheduleService {
 
     private final QuizStatisticService quizStatisticService;
 
-    private final QuizSubmissionWebsocketService quizSubmissionWebsocketService;
-
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, ParticipationRepository participationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService,
-            QuizSubmissionWebsocketService quizSubmissionWebsocketService) {
+            QuizSubmissionRepository quizSubmissionRepository, UserService userService, QuizExerciseService quizExerciseService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
@@ -73,7 +69,6 @@ public class QuizScheduleService {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.quizStatisticService = quizStatisticService;
-        this.quizSubmissionWebsocketService = quizSubmissionWebsocketService;
     }
 
     /**
@@ -414,7 +409,7 @@ public class QuizScheduleService {
             participation.setExercise(quizExercise);
 
             // save participation, result and quizSubmission
-            Participation storedParticipation = participationRepository.save(participation);
+            participationRepository.save(participation);
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
 
