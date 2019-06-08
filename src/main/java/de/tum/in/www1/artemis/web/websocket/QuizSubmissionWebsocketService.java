@@ -84,8 +84,4 @@ public class QuizSubmissionWebsocketService {
         // send updated submission over websocket
         messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", quizSubmission);
     }
-
-    public void sendParticipation(Participation participation) {
-        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation", participation);
-    }
 }

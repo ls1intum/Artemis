@@ -11,6 +11,10 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -418,9 +422,19 @@ public class QuizScheduleService {
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
 
-            // Set results to null before sending the participation - otherwise the student can find out the solution of the quiz!
-            storedParticipation.setResults(null);
-            this.quizSubmissionWebsocketService.sendParticipation(storedParticipation);
+            // Remove result information from the participation
+            ((QuizExercise) storedParticipation.getExercise()).filterForStudentsDuringQuiz();
+            Class view = quizExerciseService.viewForStudentsInQuizExercise((QuizExercise) storedParticipation.getExercise());
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
+                String participationJson = mapper.writerWithView(view).writeValueAsString(participation);
+                messagingTemplate.convertAndSendToUser(storedParticipation.getStudent().getLogin(),
+                        "/topic/exercise/" + storedParticipation.getExercise().getId() + "/participation", participationJson);
+            }
+            catch (JsonProcessingException ex) {
+                log.error("Participation {} could not be send to websocket due to json processing exception: {}", participation.getId(), ex);
+            }
 
             // add the participation to the participationHashMap for the send out at the end of the quiz
             QuizScheduleService.addParticipation(quizExercise.getId(), participation);
