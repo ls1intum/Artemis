@@ -52,10 +52,14 @@ export abstract class DomainCommand extends Command {
                 .getLine(row),
             regex = this.getTagRegex();
 
-        if (!line) return null;
+        if (!line) {
+            return null;
+        }
 
         const match = line.match(regex);
-        if (!match) return null;
+        if (!match) {
+            return null;
+        }
         return { matchStart: match.index, matchEnd: match.index + match[0].length, innerTagContent: match[1] };
     }
 }

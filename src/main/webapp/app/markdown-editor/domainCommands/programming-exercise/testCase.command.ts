@@ -38,29 +38,25 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
      */
     execute(value: string): void {
         const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition();
-        const text = `${this.getOpeningIdentifier()}${value}${this.getClosingIdentifier()}`;
         const matchInTag = this.isCursorWithinTag();
 
         // TODO: refactor
         const stringReducer = (x: string, acc: Array<{ start: number; end: number; word: string }> = []): Array<{ start: number; end: number; word: string }> => {
             const nextComma = x.indexOf(', ');
+            const lastElement = acc.length ? acc[acc.length - 1] : null;
             if (nextComma === -1) {
-                const lastElement = acc.length ? acc[acc.length - 1] : null;
                 return [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end) || 0) + x.length - 1, word: x }];
             }
             const nextWord = x.slice(0, nextComma);
-            const lastElement = acc.length ? acc[acc.length - 1] : null;
             const newAcc = [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end + 2) || 0) + nextComma - 2, word: nextWord }];
             const rest = x.slice(nextComma + 2);
             return stringReducer(rest, newAcc);
         };
 
         const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
-            // Check if the cursor is within the tag - if so, add the test to the list
-            if (matchInTag) {
-                // Don't add a test case that is already included
-                if (match.innerTagContent.includes(value)) return;
-
+            // Check if the cursor is within the tag - if so, add the test to the list.
+            // Also don't add a test case that is already included.
+            if (matchInTag && !match.innerTagContent.includes(value)) {
                 this.aceEditorContainer.getEditor().clearSelection();
                 const validTestCases = matchInTag.innerTagContent.split(', ').filter(test => this.getValues().includes(test));
 
