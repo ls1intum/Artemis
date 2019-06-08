@@ -66,7 +66,7 @@
             [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatus() === QUIZ_FINISHED && ratedResult"
+            *ngIf="participationStatus() === QUIZ_FINISHED && showResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -125,7 +125,7 @@
                     exercise.participations &&
                     exercise.participations.length > 0 &&
                     exercise.participations[0].initializationState === 'FINISHED' &&
-                    (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !ratedResult)
+                    (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !showResult)
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -143,7 +143,7 @@
                     exercise.participations[0].initializationState === 'FINISHED' &&
                     exercise.participations[0].results &&
                     exercise.participations[0].results.length > 0 &&
-                    ratedResult
+                    showResult
                 "
                 routerLink="/modeling-submission/{{ exercise.participations[0].id }}"
             ></button>
@@ -281,7 +281,7 @@
                 exercise.participations &&
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
-                (!exercise.participations[0].results || exercise.participations[0].results.length === 0)
+                (!exercise.participations[0].results || exercise.participations[0].results.length === 0 || !showResult)
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>
@@ -298,7 +298,8 @@
                 exercise.participations.length > 0 &&
                 exercise.participations[0].initializationState === 'FINISHED' &&
                 exercise.participations[0].results &&
-                exercise.participations[0].results.length > 0
+                exercise.participations[0].results.length > 0 &&
+                showResult
             "
             routerLink="/text/{{ exercise.participations[0].id }}"
         ></button>

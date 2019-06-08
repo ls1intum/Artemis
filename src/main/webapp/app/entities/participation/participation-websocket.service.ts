@@ -59,11 +59,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * This adds a participation to the cached data maps. The exercise information is required to find the correct
      * participations for a given exercise.
      *
-     * @param participation The new participation for the cached data maps
+     * @param newParticipation The new participation for the cached data maps
      * @param exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
      * @private
      */
-    private addParticipationToList(participation: Participation, exercise?: Exercise) {
+    private addParticipationToList(newParticipation: Participation, exercise?: Exercise) {
+        // The participation needs to be cloned so that the original object is not modified
+        const participation = { ...newParticipation };
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }
