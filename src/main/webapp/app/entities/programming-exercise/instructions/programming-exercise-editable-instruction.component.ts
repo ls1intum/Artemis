@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { compose, map, sortBy } from 'lodash/fp';
 import { Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { Result } from 'app/entities/result';
@@ -51,8 +52,13 @@ export class ProgrammingExerciseEditableInstructionComponent {
 
     setTestCasesFromResults(result: Result) {
         // If the exercise is created, there is no result available
-        if (result) {
-            this.testCaseCommand.setValues(result.feedbacks.map(({ text }) => text));
-        }
+        const sortedTests =
+            result && result.feedbacks
+                ? compose(
+                      map(({ text }) => text),
+                      sortBy('text'),
+                  )(result.feedbacks)
+                : [];
+        this.testCaseCommand.setValues(sortedTests);
     }
 }
