@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -327,7 +328,7 @@ public class GitService {
      * @param exercise   ProgrammingExercise associated with this repo.
      */
     public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
-        if (exercise.getReleaseDate() == null || exercise.getDueDate() == null) {
+        if (exercise.getDueDate() == null) {
             // No dates set on exercise
             return;
         }
@@ -336,7 +337,7 @@ public class GitService {
             Git git = new Git(repository);
 
             // Get last commit before deadline
-            Date since = Date.from(exercise.getReleaseDate().toInstant());
+            Date since = Date.from(Instant.EPOCH);
             Date until = Date.from(exercise.getDueDate().toInstant());
             RevFilter between = CommitTimeRevFilter.between(since, until);
             Iterable<RevCommit> commits = git.log().setRevFilter(between).call();

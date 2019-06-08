@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
-import { Result } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
@@ -34,7 +34,7 @@ export class TextEditorComponent implements OnInit {
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled
-    resultOlderThanOneWeek: boolean;
+    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
 
@@ -48,6 +48,7 @@ export class TextEditorComponent implements OnInit {
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private complaintService: ComplaintService,
+        private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
@@ -85,7 +86,7 @@ export class TextEditorComponent implements OnInit {
                         this.answer = this.submission.text;
                     }
                     if (this.result && this.result.completionDate) {
-                        this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
                         this.complaintService.findByResultId(this.result.id).subscribe(res => {
                             this.hasComplaint = !!res.body;
                         });
