@@ -2,6 +2,7 @@ import { sortBy } from 'lodash';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { getStringSegmentPositions } from 'app/utils/global.utils';
 
 export class TestCaseCommand extends DomainMultiOptionCommand {
     buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.testCaseCommand';
@@ -33,6 +34,9 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
     }
 
     /**
+     * There are two base cases for this command:
+     * a) The cursor is within the brackets -> add/replace test case in test case list.
+     * b) The cursor is NOT within the brackets -> just paste in a new test case command.
      * @function execute
      * @desc insert selected testCase value into text
      */
@@ -40,47 +44,34 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
         const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition();
         const matchInTag = this.isCursorWithinTag();
 
-        // TODO: refactor
-        const stringReducer = (x: string, acc: Array<{ start: number; end: number; word: string }> = []): Array<{ start: number; end: number; word: string }> => {
-            const nextComma = x.indexOf(', ');
-            const lastElement = acc.length ? acc[acc.length - 1] : null;
-            if (nextComma === -1) {
-                return [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end) || 0) + x.length - 1, word: x }];
-            }
-            const nextWord = x.slice(0, nextComma);
-            const newAcc = [...acc, { start: lastElement ? lastElement.end + 2 : 0, end: ((lastElement && lastElement.end + 2) || 0) + nextComma - 2, word: nextWord }];
-            const rest = x.slice(nextComma + 2);
-            return stringReducer(rest, newAcc);
-        };
-
         const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
             // Check if the cursor is within the tag - if so, add the test to the list.
-            // Also don't add a test case that is already included.
+            // Also don't add a test case again that is already included.
             if (matchInTag && !match.innerTagContent.includes(value)) {
                 this.aceEditorContainer.getEditor().clearSelection();
-                const validTestCases = matchInTag.innerTagContent.split(', ').filter(test => this.getValues().includes(test));
+                const currentTestCases = matchInTag.innerTagContent.split(', ');
 
-                const stringPositions = stringReducer(match.innerTagContent);
+                const stringPositions = getStringSegmentPositions(match.innerTagContent, ', ');
                 const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
-                if (wordUnderCursor && validTestCases.includes(wordUnderCursor.word)) {
+                if (wordUnderCursor) {
                     // Case 1: Replace test
-                    return validTestCases.map(test => (test === wordUnderCursor.word ? value : test));
+                    return currentTestCases.map(test => (test === wordUnderCursor.word ? value : test));
                 } else if (column === match.matchEnd - 1) {
                     // Case 2: Add test on left side
-                    return [...validTestCases, value];
+                    return [...currentTestCases, value];
                 } else if (column === match.matchStart + 1) {
                     // Case 3: Add test on right side
-                    return [value, ...validTestCases];
-                } else {
-                    return [value];
+                    return [value, ...currentTestCases];
                 }
             } else {
+                // Case 4: There is no content yet, just paste the current value in.
                 return [value];
             }
         };
 
         this.aceEditorContainer.getEditor().clearSelection();
-        const newTestCases = `${this.getOpeningIdentifier()}${sortBy(generateTestCases(matchInTag)).join(', ')}${this.getClosingIdentifier()}`;
+        const newTestCaseListSorted = sortBy(generateTestCases(matchInTag));
+        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(', ')}${this.getClosingIdentifier()}`;
         ArtemisMarkdown.removeTextRange(
             { col: matchInTag.matchStart, row },
             {
@@ -89,7 +80,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
             },
             this.aceEditorContainer,
         );
-        this.insertText(newTestCases);
+        this.insertText(newTestCasesStringified);
         this.focus();
     }
 
