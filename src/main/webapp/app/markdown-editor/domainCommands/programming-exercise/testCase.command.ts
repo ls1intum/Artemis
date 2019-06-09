@@ -36,7 +36,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
      * @desc insert selected testCase value into text
      */
     execute(value: string): void {
-        const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition();
+        const { row, column } = this.getCursorPosition();
         const matchInTag = this.isCursorWithinTag();
 
         const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
@@ -68,7 +68,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
             }
         };
 
-        this.aceEditorContainer.getEditor().clearSelection();
+        this.clearSelection();
         const newTestCaseListSorted = sortBy(generateTestCases(matchInTag));
         const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(', ')}${this.getClosingIdentifier()}`;
         if (matchInTag) {

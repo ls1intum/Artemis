@@ -25,6 +25,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
+import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -246,7 +247,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
             let remainingMarkdownText = this.markdown.slice(0);
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
-            const commandIdentifiersString = domainCommandIdentifiersToParse.map(tag => tag.replace('[', '').replace(']', '')).join('|');
+            const commandIdentifiersString = domainCommandIdentifiersToParse
+                .map(tag => tag.replace('[', '').replace(']', ''))
+                .map(escapeStringForUseInRegex)
+                .join('|');
 
             /** create a new regex expression which searches for the domainCommands identifiers
              * (?=   If a command is found, add the command identifier to the result of the split

@@ -24,10 +24,9 @@ export class ArtemisMarkdown {
         aceEditorContainer.getEditor().moveCursorTo(aceEditorContainer.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
         aceEditorContainer.getEditor().insert(text);
         const range = aceEditorContainer.getEditor().selection.getRange();
-        const contentStart = text.match(/(\])/).index + 1;
-        const contentEnd = text.match(/(\[\/)/).index || range.end.col;
-        range.setStart(range.start.row, contentStart);
-        range.setEnd(range.end.row, contentEnd);
+        const commandIdentifier = text.split(']');
+        const offsetRange = commandIdentifier[0].length + 1;
+        range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
 

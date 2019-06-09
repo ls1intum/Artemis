@@ -17,8 +17,7 @@ export class TaskCommand extends DomainTagCommand {
                 callback(null, { caption: 'task', value: this.getTask(), meta: 'insert task' });
             },
         };
-
-        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, taskCommandCompleter];
+        this.addToCompleters(taskCommandCompleter);
     }
 
     private getTask() {
@@ -30,16 +29,11 @@ export class TaskCommand extends DomainTagCommand {
      * @desc add a new task. doesn't use the closing identifier for legacy reasons.
      */
     execute(): void {
-        const cursor = this.aceEditorContainer.getEditor().getCursorPosition();
-        const currentLine = this.aceEditorContainer
-            .getEditor()
-            .getSession()
-            .getLine(cursor.row);
+        const currentLine = this.getCurrentLine();
         const startingNumber = currentLine.match(/(\d+)\..*/);
         const thisLineNumber = startingNumber && startingNumber.length > 1 ? `\n${Number(startingNumber[1]) + 1}.` : '1.';
         const taskText = `${thisLineNumber} ${this.getTask()}`;
-        this.aceEditorContainer.getEditor().clearSelection();
-        this.aceEditorContainer.getEditor().moveCursorTo(cursor.row, currentLine.length);
+        this.moveCursorToEndOfRow();
         this.insertText(taskText);
         this.focus();
     }
