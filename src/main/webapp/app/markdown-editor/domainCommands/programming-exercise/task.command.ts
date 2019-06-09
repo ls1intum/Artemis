@@ -1,3 +1,4 @@
+import { AceEditorComponent } from 'ng2-ace-editor';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 
@@ -8,13 +9,39 @@ export class TaskCommand extends DomainTagCommand {
 
     buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.taskCommand';
 
+    setEditor(aceEditorContainer: AceEditorComponent) {
+        super.setEditor(aceEditorContainer);
+
+        const taskCommandCompleter = {
+            getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
+                callback(null, { caption: 'task', value: this.getTask(), meta: 'insert task' });
+            },
+        };
+
+        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, taskCommandCompleter];
+    }
+
+    private getTask() {
+        return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+    }
+
     /**
      * @function execute
      * @desc add a new task. doesn't use the closing identifier for legacy reasons.
      */
     execute(): void {
-        const text = `\n${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
-        this.insertText(text);
+        const cursor = this.aceEditorContainer.getEditor().getCursorPosition();
+        const currentLine = this.aceEditorContainer
+            .getEditor()
+            .getSession()
+            .getLine(cursor.row);
+        const startingNumber = currentLine.match(/(\d+)\..*/);
+        const thisLineNumber = startingNumber && startingNumber.length > 1 ? `\n${Number(startingNumber[1]) + 1}.` : '1.';
+        const taskText = `${thisLineNumber} ${this.getTask()}`;
+        this.aceEditorContainer.getEditor().clearSelection();
+        this.aceEditorContainer.getEditor().moveCursorTo(cursor.row, currentLine.length);
+        this.insertText(taskText);
+        this.focus();
     }
 
     /**

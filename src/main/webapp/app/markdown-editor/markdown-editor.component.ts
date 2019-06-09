@@ -145,6 +145,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
+        // Commands may want to add custom completers - remove standard completers of the ace editor.
+        this.aceEditorContainer.getEditor().setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+        });
+        this.aceEditorContainer.getEditor().completers = [];
+
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);

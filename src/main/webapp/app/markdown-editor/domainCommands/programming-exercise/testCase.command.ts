@@ -10,11 +10,6 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
     setEditor(aceEditorContainer: AceEditorComponent) {
         super.setEditor(aceEditorContainer);
 
-        this.aceEditorContainer.getEditor().setOptions({
-            enableBasicAutocompletion: true,
-            enableLiveAutocompletion: true,
-        });
-
         const testCaseCompleter = {
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
                 callback(
@@ -30,7 +25,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
             },
         };
 
-        this.aceEditorContainer.getEditor().completers = [testCaseCompleter];
+        this.aceEditorContainer.getEditor().completers = [...this.aceEditorContainer.getEditor().completers, testCaseCompleter];
     }
 
     /**
