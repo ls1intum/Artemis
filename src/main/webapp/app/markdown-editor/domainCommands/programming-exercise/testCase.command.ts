@@ -47,24 +47,28 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
         const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
             // Check if the cursor is within the tag - if so, add the test to the list.
             // Also don't add a test case again that is already included.
-            if (matchInTag && !match.innerTagContent.includes(value)) {
-                this.aceEditorContainer.getEditor().clearSelection();
+            if (match && !match.innerTagContent.includes(value)) {
                 const currentTestCases = matchInTag.innerTagContent.split(', ');
-
                 const stringPositions = getStringSegmentPositions(match.innerTagContent, ', ');
                 const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
                 if (wordUnderCursor) {
-                    // Case 1: Replace test
+                    // Case 1: Replace test.
                     return currentTestCases.map(test => (test === wordUnderCursor.word ? value : test));
-                } else if (column === match.matchEnd - 1) {
-                    // Case 2: Add test on left side
+                } else if (column >= match.matchEnd - 1) {
+                    // Case 2: Add test on left side.
                     return [...currentTestCases, value];
-                } else if (column === match.matchStart + 1) {
-                    // Case 3: Add test on right side
+                } else if (column <= match.matchStart + 1) {
+                    // Case 3: Add test on right side.
                     return [value, ...currentTestCases];
+                } else {
+                    // Case 4: Fallback - replace current.
+                    return [value];
                 }
+            } else if (match && match.innerTagContent.includes(value)) {
+                // Case 5: The test case is already included, do nothing.
+                return matchInTag.innerTagContent.split(', ');
             } else {
-                // Case 4: There is no content yet, just paste the current value in.
+                // Case 6: There is no content yet, just paste the current value in.
                 return [value];
             }
         };
@@ -72,14 +76,16 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
         this.aceEditorContainer.getEditor().clearSelection();
         const newTestCaseListSorted = sortBy(generateTestCases(matchInTag));
         const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(', ')}${this.getClosingIdentifier()}`;
-        ArtemisMarkdown.removeTextRange(
-            { col: matchInTag.matchStart, row },
-            {
-                col: matchInTag.matchEnd,
-                row,
-            },
-            this.aceEditorContainer,
-        );
+        if (matchInTag) {
+            ArtemisMarkdown.removeTextRange(
+                { col: matchInTag.matchStart, row },
+                {
+                    col: matchInTag.matchEnd,
+                    row,
+                },
+                this.aceEditorContainer,
+            );
+        }
         this.insertText(newTestCasesStringified);
         this.focus();
     }
