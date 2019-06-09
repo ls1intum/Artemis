@@ -15,7 +15,10 @@ export class ProgrammingExerciseEditableInstructionComponent {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
+    exerciseTestCases: string[] = [];
+
     taskCommand = new TaskCommand();
+    taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
     domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand];
 
@@ -52,13 +55,13 @@ export class ProgrammingExerciseEditableInstructionComponent {
 
     setTestCasesFromResults(result: Result) {
         // If the exercise is created, there is no result available
-        const sortedTests =
+        this.exerciseTestCases =
             result && result.feedbacks
                 ? compose(
                       map(({ text }) => text),
                       sortBy('text'),
                   )(result.feedbacks)
                 : [];
-        this.testCaseCommand.setValues(sortedTests);
+        this.testCaseCommand.setValues(this.exerciseTestCases);
     }
 }

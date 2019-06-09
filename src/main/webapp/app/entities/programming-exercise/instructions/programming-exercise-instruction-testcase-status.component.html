@@ -1,0 +1,20 @@
+<span *ngIf="invalidTestCases.length + missingTestCases.length > 0">
+    <fa-icon icon="exclamation-triangle" size="2x" class="text-warning" [ngbTooltip]="tooltipContent"></fa-icon>
+</span>
+
+<ng-template #tooltipContent>
+    <div class="text-left w-100">
+        <div *ngIf="invalidTestCases.length">
+            <span>There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span>
+            <ul>
+                <li *ngFor="let test of invalidTestCases">{{ test }}</li>
+            </ul>
+        </div>
+        <div *ngIf="missingTestCases.length" class="text-left">
+            <span>There are {{ missingTestCases.length }} test cases that were found in your test repository but are not part of the the problem statement:</span>
+            <ul>
+                <li *ngFor="let test of missingTestCases">{{ test }}</li>
+            </ul>
+        </div>
+    </div>
+</ng-template>

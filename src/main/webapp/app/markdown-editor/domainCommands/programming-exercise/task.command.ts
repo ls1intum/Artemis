@@ -1,6 +1,7 @@
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
+import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export class TaskCommand extends DomainTagCommand {
     public static readonly identifier = '[task]';
@@ -22,6 +23,11 @@ export class TaskCommand extends DomainTagCommand {
 
     private getTask() {
         return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
+    }
+
+    public getTagRegex(flags = ''): RegExp {
+        const escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier());
+        return new RegExp(`${escapedOpeningIdentifier}(.*)`, flags);
     }
 
     /**

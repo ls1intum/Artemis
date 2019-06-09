@@ -43,8 +43,8 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
             // Check if the cursor is within the tag - if so, add the test to the list.
             // Also don't add a test case again that is already included.
             if (match && !match.innerTagContent.includes(value)) {
-                const currentTestCases = matchInTag.innerTagContent.split(', ');
-                const stringPositions = getStringSegmentPositions(match.innerTagContent, ', ');
+                const currentTestCases = matchInTag.innerTagContent.split(',');
+                const stringPositions = getStringSegmentPositions(match.innerTagContent, ',');
                 const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
                 if (wordUnderCursor) {
                     // Case 1: Replace test.
@@ -61,7 +61,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
                 }
             } else if (match && match.innerTagContent.includes(value)) {
                 // Case 5: The test case is already included, do nothing.
-                return matchInTag.innerTagContent.split(', ');
+                return matchInTag.innerTagContent.split(',');
             } else {
                 // Case 6: There is no content yet, just paste the current value in.
                 return [value];
@@ -70,7 +70,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
 
         this.clearSelection();
         const newTestCaseListSorted = sortBy(generateTestCases(matchInTag));
-        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(', ')}${this.getClosingIdentifier()}`;
+        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(',')}${this.getClosingIdentifier()}`;
         if (matchInTag) {
             ArtemisMarkdown.removeTextRange(
                 { col: matchInTag.matchStart, row },
