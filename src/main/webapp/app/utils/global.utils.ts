@@ -23,15 +23,19 @@ export const getStringSegmentPositions = (stringToSegment: string, delimiter: st
     if (nextComma === -1) {
         return [
             ...result,
-            { start: lastElement ? lastElement.end + delimiter.length : 0, end: ((lastElement && lastElement.end) || 0) + stringToSegment.length - 1, word: stringToSegment },
+            {
+                start: lastElement ? lastElement.end + delimiter.length + 1 : 0,
+                end: ((lastElement && lastElement.end + delimiter.length + 1) || 0) + stringToSegment.length - 1,
+                word: stringToSegment,
+            },
         ];
     }
     const nextWord = stringToSegment.slice(0, nextComma);
     const newResult = [
         ...result,
         {
-            start: lastElement ? lastElement.end + delimiter.length : 0,
-            end: ((lastElement && lastElement.end + delimiter.length) || 0) + nextComma - delimiter.length,
+            start: lastElement ? lastElement.end + delimiter.length + 1 : 0,
+            end: ((lastElement && lastElement.end + delimiter.length + 1) || 0) + nextComma - 1,
             word: nextWord,
         },
     ];

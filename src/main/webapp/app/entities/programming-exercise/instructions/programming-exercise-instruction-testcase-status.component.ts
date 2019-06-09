@@ -7,7 +7,7 @@ import { compose, difference, filter, flatten, intersection, map, uniq } from 'l
 })
 export class ProgrammingExerciseInstructionTestcaseStatusComponent implements OnChanges {
     @Input()
-    exerciseTestCases: string[] = [];
+    exerciseTestCases: string[];
     @Input()
     problemStatement: string;
     @Input()
@@ -17,7 +17,7 @@ export class ProgrammingExerciseInstructionTestcaseStatusComponent implements On
     invalidTestCases: string[] = [];
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.problemStatement || (changes.exerciseTestCases && this.problemStatement && this.taskRegex)) {
+        if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.problemStatement && this.taskRegex) {
             this.analyseTestCases();
         }
     }
@@ -34,9 +34,10 @@ export class ProgrammingExerciseInstructionTestcaseStatusComponent implements On
         const testCasesInMarkdown = compose(
             uniq,
             flatten,
+            filter(test => !!test),
             map((tests: string) => tests.split(',').map(string => string.trim())),
             flatten,
-            filter(m => !!m),
+            filter(match => !!match),
             map((taskMatch: string) => {
                 const testCase = taskMatch.match(/.*\((.*)\)/);
                 return testCase && testCase.length > 1 ? testCase[1] : null;

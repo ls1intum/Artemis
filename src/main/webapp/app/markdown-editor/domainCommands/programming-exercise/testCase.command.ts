@@ -69,8 +69,8 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
         };
 
         this.clearSelection();
-        const newTestCaseListSorted = sortBy(generateTestCases(matchInTag));
-        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCaseListSorted.join(',')}${this.getClosingIdentifier()}`;
+        const newTestCases = generateTestCases(matchInTag);
+        const newTestCasesStringified = `${this.getOpeningIdentifier()}${newTestCases.join(',')}${this.getClosingIdentifier()}`;
         if (matchInTag) {
             ArtemisMarkdown.removeTextRange(
                 { col: matchInTag.matchStart, row },
