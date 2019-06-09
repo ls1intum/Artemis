@@ -217,10 +217,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.sortedResults.find((result: Result) => !!result.completionDate);
         }
 
-        const currentResult = this.combinedParticipation.results.find((result: Result) => result.rated);
-        if (currentResult) {
-            currentResult.participation = this.combinedParticipation;
+        const ratedResults = this.sortedResults.filter((result: Result) => result.rated);
+        const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
+        if (latestResult) {
+            latestResult.participation = this.combinedParticipation;
         }
-        return currentResult;
+        return latestResult;
     }
 }
