@@ -48,7 +48,7 @@ describe('ProgrammingExerciseInstructionTestcaseStatusComponent', () => {
         comp.ngOnChanges(changes);
         fixture.detectChanges();
 
-        expect(debugElement.nativeElement.innerHtml).to.equal('');
+        expect(debugElement.nativeElement.innerHtml).to.be.undefined;
         expect(comp.missingTestCases).to.be.empty;
         expect(comp.invalidTestCases).to.be.empty;
     });

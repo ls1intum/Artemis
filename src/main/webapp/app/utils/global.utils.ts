@@ -17,6 +17,9 @@ type StringPositions = Array<{ start: number; end: number; word: string }>;
  * @param result returns a list of StringPositions
  */
 export const getStringSegmentPositions = (stringToSegment: string, delimiter: string, result: StringPositions = []): StringPositions => {
+    if (stringToSegment === '') {
+        return [...result, { start: 0, end: 0, word: '' }];
+    }
     const nextComma = stringToSegment.indexOf(delimiter);
     const lastElement = result.length ? result[result.length - 1] : null;
     // End condition: the string does not have any more segments.
