@@ -53,19 +53,29 @@
 
             <table class="table" *ngIf="course.exercises.length >= 0">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.exercise' | translate }}</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.dueDate' | translate }}</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.assessmentDueDate' | translate }}</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.submissions' | translate }}</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}</th>
+                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
+                        <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon icon="sort"></fa-icon></th>
+                        <th jhiSortBy="title">
+                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="dueDate">
+                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="assessmentDueDate">
+                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="submissions">
+                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="complaints">
+                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        </th>
                         <th>{{ 'arTeMiSApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
                         <th>{{ 'arTeMiSApp.instructorCourseDashboard.action' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exercise of course.exercises">
+                    <tr *ngFor="let exercise of course.exercises | sortBy: exercisesSortingPredicate:exercisesReverseOrder">
                         <td>
                             {{ exercise.id }}
                             <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
@@ -106,6 +116,6 @@
 
         <h2>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
 
-        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData" [courseId]="course.id"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboard" [courseId]="course.id"></jhi-tutor-leaderboard>
     </div>
 </div>
