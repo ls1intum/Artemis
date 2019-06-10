@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -56,6 +57,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ParticipationRepository participationRepository;
+
     private final GroupNotificationService groupNotificationService;
 
     private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
@@ -64,7 +67,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ParticipationRepository participationRepository,
+            GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -73,6 +77,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.participationRepository = participationRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -390,11 +395,15 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", id);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id, user.getLogin());
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-
             Course course = programmingExercise.getCourse();
+
+            Optional<Participation> assignmentParticipation = participationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
+            Set<Participation> participations = new HashSet<>();
+            assignmentParticipation.ifPresent(participations::add);
+            programmingExercise.setParticipations(participations);
 
             if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
                 return forbidden();
