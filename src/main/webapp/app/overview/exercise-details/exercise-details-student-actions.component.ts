@@ -61,8 +61,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            // Only load password if current user login starts with 'edx'
-            if (user && user.login && user.login.startsWith('edx')) {
+            // Only load password if current user login starts with 'edx_' or 'u4i_'
+            if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
             }
         });
