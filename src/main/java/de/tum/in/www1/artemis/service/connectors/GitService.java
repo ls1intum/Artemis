@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
@@ -166,6 +167,19 @@ public class GitService {
     }
 
     /**
+     * Commits with the given message into the repository.
+     *
+     * @param repo    Local Repository Object.
+     * @param message Commit Message
+     * @throws GitAPIException
+     */
+    public void commit(Repository repo, String message) throws GitAPIException {
+        Git git = new Git(repo);
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
+        git.close();
+    }
+
+    /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
      * @param repo    Local Repository Object.
@@ -256,6 +270,38 @@ public class GitService {
     }
 
     /**
+     * checkout branch
+     *
+     * @param repo Local Repository Object.
+     */
+    public void checkoutBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.checkout().setForceRefUpdate(true).setName("master").call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot checkout branch in repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Remove branch from local repository.
+     *
+     * @param repo Local Repository Object.
+     */
+    public void deleteLocalBranch(Repository repo, String branch) {
+        try {
+            Git git = new Git(repo);
+            git.branchDelete().setBranchNames(branch).setForce(true).call();
+            git.close();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot remove branch " + branch + " from the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Get last commit hash from master
      *
      * @param repoUrl
@@ -282,7 +328,7 @@ public class GitService {
      * @param exercise   ProgrammingExercise associated with this repo.
      */
     public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
-        if (exercise.getReleaseDate() == null || exercise.getDueDate() == null) {
+        if (exercise.getDueDate() == null) {
             // No dates set on exercise
             return;
         }
@@ -291,7 +337,7 @@ public class GitService {
             Git git = new Git(repository);
 
             // Get last commit before deadline
-            Date since = Date.from(exercise.getReleaseDate().toInstant());
+            Date since = Date.from(Instant.EPOCH);
             Date until = Date.from(exercise.getDueDate().toInstant());
             RevFilter between = CommitTimeRevFilter.between(since, until);
             Iterable<RevCommit> commits = git.log().setRevFilter(between).call();

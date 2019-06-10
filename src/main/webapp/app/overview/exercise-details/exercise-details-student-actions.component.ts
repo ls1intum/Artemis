@@ -10,6 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -44,6 +45,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
+    @Input() showResult: boolean;
 
     public repositoryPassword: string;
     public wasCopied = false;
@@ -182,6 +184,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 },
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
+                    this.jhiAlertService.error(`arTeMiSApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
     }

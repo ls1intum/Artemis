@@ -9,7 +9,7 @@ import * as $ from 'jquery';
 import { BuildLogEntryArray } from '../../entities/build-log';
 import { Feedback } from 'app/entities/feedback';
 import { Observable, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, filter, map } from 'rxjs/operators';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 
@@ -105,6 +105,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         }
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(filter(participation => !!participation))
             .subscribe((result: Result) => this.toggleBuildLogs(result));
     }
 

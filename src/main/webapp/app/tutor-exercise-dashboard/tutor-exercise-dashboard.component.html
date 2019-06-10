@@ -8,7 +8,8 @@
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'arTeMiSApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
-            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
+            <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation" [numberOfParticipations]="numberOfSubmissions" [numberOfAssessments]="numberOfAssessments">
+            </jhi-tutor-participation-graph>
         </div>
         <div class="col-4">
             <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">
@@ -30,7 +31,9 @@
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
-                    <div class="col-4">{{ numberOfComplaints }}</div>
+                    <div class="col-4">
+                        <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.id }">{{ numberOfComplaints }}</a>
+                    </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}</div>
