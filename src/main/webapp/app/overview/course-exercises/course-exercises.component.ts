@@ -61,6 +61,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     public groupExercises(selectedOrder: number): void {
+        // set all values to 0
+        this.exerciseCountMap = new Map<string, number>();
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
