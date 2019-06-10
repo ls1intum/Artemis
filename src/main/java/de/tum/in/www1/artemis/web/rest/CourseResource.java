@@ -511,7 +511,7 @@ public class CourseResource {
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.numberOfSubmissions = numberOfSubmissions;
-        stats.numberOfAssessments = resultService.countNumberOfAssessments(course);
+        stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
         log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
         stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);

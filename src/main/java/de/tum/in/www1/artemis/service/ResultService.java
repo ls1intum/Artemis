@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -172,11 +171,11 @@ public class ResultService {
     /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
-     * @param course - the course we are interested in
+     * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
-    public long countNumberOfAssessments(Course course) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(course.getId(), true);
+    public long countNumberOfAssessments(Long courseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
     }
 
     /**
