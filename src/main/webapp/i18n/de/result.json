@@ -15,7 +15,7 @@
             "detail": {
                 "title": "Result"
             },
-            "noResult": "Kein Ergebnis",
+            "noResult": "Kein gewertetes Ergebnis",
             "resultString": "Ergebnis Text",
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",
