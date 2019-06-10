@@ -63,9 +63,9 @@
                 "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
             },
             "testStatusLabels": {
-                "testStatusNoResult": "Keine Ergebnisse",
-                "testStatusTestPassing": "Test bestanden",
-                "testStatusTestFailing": "Test fehlgeschlagen",
+                "noResult": "Keine Ergebnisse",
+                "testPassing": "Test bestanden",
+                "testFailing": "Test fehlgeschlagen",
                 "totalTestsPassing": "{{totalTests}} Tests bestanden",
                 "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen"
             },
