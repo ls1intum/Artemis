@@ -51,6 +51,10 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 @Transactional
 public class LtiService {
 
+    public static final String TUMX = "TUMx";
+
+    public static final String U4I = "U4I";
+
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
 
     @Value("${artemis.lti.oauth-key}")
@@ -59,11 +63,17 @@ public class LtiService {
     @Value("${artemis.lti.oauth-secret}")
     private String OAUTH_SECRET;
 
-    @Value("${artemis.lti.user-prefix}")
-    private String USER_PREFIX = "";
+    @Value("${artemis.lti.user-prefix-edx}")
+    private String USER_PREFIX_EDX = "edx";
 
-    @Value("${artemis.lti.user-group-name}")
-    private String USER_GROUP_NAME = "lti";
+    @Value("${artemis.lti.user-prefix-u4i}")
+    private String USER_PREFIX_U4I = "u4i";
+
+    @Value("${artemis.lti.user-group-name-edx}")
+    private String USER_GROUP_NAME_EDX = "edx";
+
+    @Value("${artemis.lti.user-group-name-u4i}")
+    private String USER_GROUP_NAME_U4I = "u4i";
 
     private final UserService userService;
 
@@ -200,7 +210,16 @@ public class LtiService {
 
         String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary()
                 : launchRequest.getUser_id() + "@lti.artemis.ase.in.tum.de";
-        String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        final String username;
+        if (TUMX.equals(launchRequest.getContext_label())) {
+            username = this.USER_PREFIX_EDX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        }
+        else if (U4I.equals(launchRequest.getContext_label())) {
+            username = this.USER_PREFIX_U4I + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        }
+        else {
+            throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+        }
         String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
         // Check if there is an existing mapping for the user ID
@@ -235,10 +254,20 @@ public class LtiService {
 
             // 4. Case: Create new user
             User user = userRepository.findOneByLogin(username).orElseGet(() -> {
-                User newUser = userService.createUser(username, "", USER_GROUP_NAME, fullname, email, null, "en");
-
-                // add user to LTI group
-                newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME)));
+                final User newUser;
+                if (TUMX.equals(launchRequest.getContext_label())) {
+                    newUser = userService.createUser(username, "", USER_GROUP_NAME_EDX, fullname, email, null, "en");
+                    // add user to edx group
+                    newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME_EDX)));
+                }
+                else if (U4I.equals(launchRequest.getContext_label())) {
+                    newUser = userService.createUser(username, "", USER_GROUP_NAME_U4I, fullname, email, null, "en");
+                    // add user to u4i group
+                    newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME_U4I)));
+                }
+                else {
+                    throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+                }
 
                 // set random password
                 String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
