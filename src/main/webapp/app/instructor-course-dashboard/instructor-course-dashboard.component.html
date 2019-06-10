@@ -7,7 +7,7 @@
     </div>
 
     <div class="container-fluid">
-        <div class="row mt-3" *ngIf="stats">
+        <div class="row mt-3" *ngIf="stats && stats.tutorLeaderboard && stats.tutorLeaderboard.length > 0; else loadingScreen">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -45,6 +45,13 @@
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
             </div>
         </div>
+
+        <ng-template #loadingScreen>
+            <p></p>
+            <h3>
+                <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while loading the statistics!</span></span>
+            </h3>
+        </ng-template>
 
         <div class="row table-responsive mt-3">
             <div *ngIf="course.exercises.length === 0">
