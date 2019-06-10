@@ -18,10 +18,6 @@ body {
     margin: 0;
 }
 .editor-wrapper {
-    display: flex;
-    overflow: hidden;
-    flex-direction: column;
-    max-height: calc(100vh - 100px);
     .navbar {
         border-bottom: 1px solid #ccc;
     }
@@ -52,7 +48,6 @@ body {
 .editor-wrapper > .editor-main {
     flex: 1 1 auto;
     display: flex;
-    overflow: hidden;
 }
 .editor-wrapper > .editor-main > * {
     flex: 0 0 auto;

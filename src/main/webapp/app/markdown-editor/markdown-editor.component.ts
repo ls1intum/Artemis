@@ -28,7 +28,7 @@ import { DomainTagCommand } from './domainCommands/domainTag.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 500,
+    MEDIUM = 350,
     LARGE = 1000,
 }
 
