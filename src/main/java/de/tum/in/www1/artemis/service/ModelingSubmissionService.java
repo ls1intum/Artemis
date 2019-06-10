@@ -226,12 +226,15 @@ public class ModelingSubmissionService {
         if (modelingSubmission.getResult() == null) {
             setNewResult(modelingSubmission);
         }
+
         if (modelingSubmission.getResult().getAssessor() == null) {
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
                 compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
             }
             resultService.setAssessor(modelingSubmission.getResult());
         }
+
+        modelingSubmission.getResult().setAssessmentType(AssessmentType.MANUAL);
     }
 
     /**

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -40,6 +41,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
     Optional<Result> findDistinctBySubmission(Submission submission);
+
+    @EntityGraph(attributePaths = "feedbacks")
+    Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
     List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
 

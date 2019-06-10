@@ -135,7 +135,6 @@ public class CompassService {
      * @param modelingExercise  the corresponding exercise
      * @param modelSubmissionId the id of the model submission which should be marked as unassessed
      */
-    // TODO CZ: test this when enabling Compass again
     public void markModelAsUnassessed(ModelingExercise modelingExercise, long modelSubmissionId) {
         if (!isSupported(modelingExercise.getDiagramType()) || !loadExerciseIfSuspended(modelingExercise.getId())) {
             return;
@@ -226,10 +225,10 @@ public class CompassService {
             log.error("No modeling submission with ID {} could be found.", modelId);
             return;
         }
-        Result result = resultRepository.findDistinctBySubmissionId(modelId)
+        Result result = resultRepository.findDistinctWithFeedbackBySubmissionId(modelId)
                 .orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // only automatically assess when there is not yet an assessment.
-        if (result.getAssessmentType() != AssessmentType.MANUAL) {
+        if (result.getAssessmentType() != AssessmentType.MANUAL && result.getAssessor() == null) {
             Grade grade = engine.getGradeForModel(modelId);
             if (grade.getCoverage() >= 1) {
                 return;
@@ -246,6 +245,7 @@ public class CompassService {
 
             // Save to database
             List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
+            result.getFeedbacks().clear();
             result.getFeedbacks().addAll(automaticFeedbackAssessments);
             result.setHasFeedback(false);
 

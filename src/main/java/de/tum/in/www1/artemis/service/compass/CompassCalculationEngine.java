@@ -64,7 +64,6 @@ public class CompassCalculationEngine implements CalculationEngine {
                 if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
                         && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
                     buildAssessment(modelingSubmission);
-                    modelSelector.addAlreadyAssessedModel(modelingSubmission.getId());
                 }
             }
         }
@@ -134,7 +133,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         // proxy, do we have
         // a session/transaction to unproxy?
         addNewManualAssessment(submission.getResult().getFeedbacks(), model);
-        modelSelector.removeModelWaitingForAssessment(model.getModelSubmissionId());
+        modelSelector.removeModelWaitingForAssessment(submission.getId());
+        modelSelector.addAlreadyAssessedModel(submission.getId());
     }
 
     protected Collection<UMLClassDiagram> getUmlModelCollection() {
