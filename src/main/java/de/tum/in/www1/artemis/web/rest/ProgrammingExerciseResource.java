@@ -388,20 +388,18 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id, user.getLogin());
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
 
-            // Make sure to not return the template/solution participation in the participations array
-            Set<Participation> participations = new HashSet<>();
-            programmingExercise.getParticipations().stream().filter(p -> p.getStudent() != null).findFirst().ifPresent(participations::add);
-            programmingExercise.setParticipations(participations);
-
             Course course = programmingExercise.getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+
+            if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
                 return forbidden();
             }
+
             return ResponseEntity.ok(programmingExercise);
         }
         else {
