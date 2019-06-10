@@ -6,8 +6,7 @@
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise" [ratedResult]="showResults ? currentResult : null">
-        </jhi-exercise-details-student-actions>
+        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult"> </jhi-exercise-details-student-actions>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'arTeMiSApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
@@ -43,20 +42,16 @@
             <!-- RESULTS START -->
             <div class="row mb-2 align-items-baseline" *ngIf="showResults">
                 <div class="col-auto">
-                    <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.yourResult' | translate }}</h3>
+                    <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.yourGradedResult' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="showResults && currentResult">
+            <div class="row mb-2" *ngIf="showResults && currentResult?.rated">
                 <div class="col-12 col-md-12">
                     <div class="row justify-content-between">
                         <div class="col">
                             <h4>
-                                <span class="badge w-100 badge-success" [ngClass]="exerciseRatedBadge(currentResult)">
-                                    {{
-                                        (currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded')
-                                            | translate
-                                            | uppercase
-                                    }}
+                                <span class="badge w-100 badge-success">
+                                    {{ 'arTeMiSApp.courseOverview.exerciseDetails.graded' | translate | uppercase }}
                                 </span>
                             </h4>
                         </div>
@@ -67,26 +62,36 @@
                             <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{ currentResult.completionDate | amTimeAgo }})</h6>
                         </div>
                     </div>
-                    <div class="row mb-2" *ngIf="!currentResult">
-                        <div class="col-auto">
-                            <h6>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noRatedResult' | translate }}</h6>
-                        </div>
-                    </div>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="showResults && !currentResult">
+            <div class="row mb-2" *ngIf="showResults && !currentResult?.rated">
                 <div class="col-auto">
                     <h6>{{ 'arTeMiSApp.courseOverview.exerciseDetails.noGradedResult' | translate }}</h6>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults">
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !currentResult?.rated)">
                 <div class="col-auto">
                     <h3>{{ 'arTeMiSApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults">
+            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult?.length > 1">
                 <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxScore"></jhi-result-history>
+                </div>
+            </div>
+            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && sortedResults?.length === 1">
+                <div class="col">
+                    <h4>
+                        <span class="badge w-100 badge-info">
+                            {{ 'arTeMiSApp.courseOverview.exerciseDetails.notGraded' | translate | uppercase }}
+                        </span>
+                    </h4>
+                </div>
+                <div class="col text-left">
+                    <jhi-result [result]="sortedResults[0]" [participation]="combinedParticipation" showUngradedResults="true" short="true"></jhi-result>
+                </div>
+                <div class="col text-left d-none d-md-flex">
+                    <h6 [ngbTooltip]="sortedResults[0]!.completionDate | date: 'dd/MM/yy HH:mm'">({{ sortedResults[0]!.completionDate | amTimeAgo }})</h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">

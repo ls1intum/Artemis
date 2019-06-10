@@ -25,8 +25,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -53,10 +51,6 @@ public class ExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
-
     private final TutorParticipationService tutorParticipationService;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
@@ -74,17 +68,14 @@ public class ExerciseResource {
     private final ResultService resultService;
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
-            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ObjectMapper objectMapper,
-            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.objectMapper = objectMapper;
