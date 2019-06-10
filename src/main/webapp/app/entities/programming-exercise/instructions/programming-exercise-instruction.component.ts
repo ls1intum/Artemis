@@ -472,7 +472,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param env
      */
     private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
-        const tests = tokens[0].tests;
+        const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
