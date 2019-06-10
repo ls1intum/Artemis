@@ -55,7 +55,7 @@
                 "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal."
             },
             "testStatusLabels": {
-                "testStatusNoResult": "Keine Ergebnisse",
+                "noResult": "Keine Ergebnisse",
                 "testPassing": "Test bestanden",
                 "testFailing": "Test fehlgeschlagen",
                 "testNotExecuted": "Test nicht ausgeführt",
