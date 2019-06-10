@@ -49,6 +49,7 @@
             },
             "errors": {
                 "participationNotFound": "Your participation could not be found.",
+                "exerciseNotFound": "The exercise could not be found.",
                 "saveFailed": "One or more files could not be updated.",
                 "commitFailed": "One or more files could not be commited.",
                 "noPermissions": "You don't have the necessary permissions.",

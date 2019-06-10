@@ -48,6 +48,7 @@
             },
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
+                "exerciseNotFound": "Die Übung konnte nicht gefunden werden.",
                 "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
                 "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
