@@ -11,14 +11,9 @@ const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
 
 export interface IParticipationWebsocketService {
-    setCachedParticipation: (participations: Participation[], exercise?: Exercise) => void;
-    updateParticipation: (participation: Participation, exercise?: Exercise) => void;
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     addExerciseForNewParticipation: (exerciseId: number) => void;
-    getAllParticipations: () => Participation[];
     getAllParticipationsForExercise: (exerciseId: number) => Participation[];
-    removeParticipation: (id: number, exerciseId?: number) => void;
-    getParticipation: (id: number) => Participation;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result>;
 }
