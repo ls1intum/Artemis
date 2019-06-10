@@ -86,7 +86,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     }
 
     /**
-     * Try to retrieve the participation from cache, otherwise do a REST call to fetch it with the latest result.
+     * Load the participation from server with the latest result.
      * @param participationId
      */
     loadParticipationWithLatestResult(participationId: number): Observable<Participation | null> {

@@ -35,14 +35,11 @@ public class RepositoryService {
 
     private AuthorizationCheckService authCheckService;
 
-    private ParticipationService participationService;
-
     private UserService userService;
 
-    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, ParticipationService participationService, UserService userService) {
+    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
-        this.participationService = participationService;
         this.userService = userService;
     }
 
@@ -233,7 +230,7 @@ public class RepositoryService {
     public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
-        boolean hasPermissions = authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
@@ -253,7 +250,7 @@ public class RepositoryService {
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         Course course = exercise.getCourse();
-        boolean hasPermissions = authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }

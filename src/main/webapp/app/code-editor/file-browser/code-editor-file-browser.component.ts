@@ -142,8 +142,6 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
             this.initializeComponent();
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
-            // We need to make sure to not trigger multiple requests on the git repo at the same time.
-            // This is why we first wait until the repository state was checked.
             this.renamingFile = null;
             this.setupTreeview();
         }
@@ -151,6 +149,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
 
     initializeComponent = () => {
         this.isLoadingFiles = true;
+        // We need to make sure to not trigger multiple requests on the git repo at the same time.
+        // This is why we first wait until the repository state was checked and then load the files.
         this.checkIfRepositoryIsClean()
             .pipe(
                 tap(commitState => {

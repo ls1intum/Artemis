@@ -75,6 +75,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         this.isBuilding = false;
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
+        this.fileChange = undefined;
     };
 
     /**

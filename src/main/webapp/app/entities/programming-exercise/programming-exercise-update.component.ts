@@ -84,14 +84,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    /**
-     * Update the problemStatement of the exercise with the data emitted by the markdown editor.
-     * @param problemStatement
-     */
-    updateProblemStatement(problemStatement: string) {
-        this.programmingExercise = { ...this.programmingExercise, problemStatement };
-    }
-
     previousState() {
         window.history.back();
     }
