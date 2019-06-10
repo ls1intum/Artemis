@@ -111,9 +111,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      */
     ngOnChanges(changes: SimpleChanges): void {
         const participationChange = hasParticipationChanged(changes);
+        if (participationChange) {
+            this.setupResultWebsocket();
+        }
         // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
         if (participationChange && this.participation.results && this.participation.results.length) {
-            this.setupResultWebsocket();
             const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
             of(latestResult)
                 .pipe(
