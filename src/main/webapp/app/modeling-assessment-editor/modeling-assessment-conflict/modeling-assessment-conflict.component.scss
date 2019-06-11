@@ -1,21 +1,15 @@
 .conflict-container {
     display: flex;
+    position: relative;
     height: calc(100vh - 140px);
     flex-flow: column nowrap;
 
     .navigation-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        jhi-alert {
-            font-size: initial;
-        }
-    }
-    .control-container {
-        span {
+        button {
             margin: 0 15px;
         }
     }
+
     .conflict-editor {
         display: flex;
         justify-content: center;
@@ -23,15 +17,24 @@
         height: 100%;
         overflow: auto;
         .conflicting-assessment {
+            position: relative;
+            button {
+                position: absolute;
+                bottom: 15px;
+                right: 30px;
+                z-index: 2;
+            }
         }
         .assessment {
+            position: relative;
             flex: 1 1 auto;
             overflow: hidden;
+            button {
+                position: absolute;
+                bottom: 15px;
+                right: 15px;
+                z-index: 2;
+            }
         }
     }
-}
-
-.row-container {
-    display: flex;
-    align-items: center;
 }

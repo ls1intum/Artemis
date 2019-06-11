@@ -1,20 +1,18 @@
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Exercise, ExerciseType } from '../entities/exercise';
-import { ExerciseService } from 'app/entities/exercise';
-import { Course, CourseService } from '../entities/course';
-import { ResultDetailComponent, ResultService } from 'app/entities/result';
-import { DifferencePipe } from 'ngx-moment';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from '../entities/result';
-import { HttpResponse } from '@angular/common/http';
-import { AccountService } from '../core';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
+import { DiagramType } from '@ls1intum/apollon';
+import { Course, CourseService } from 'app/entities/course';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { Subscription } from 'rxjs';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
-import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
-import { retryWhen } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Result, ResultDetailComponent, ResultService } from 'app/entities/result';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core';
+import { HttpResponse } from '@angular/common/http';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { DifferencePipe } from 'ngx-moment';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

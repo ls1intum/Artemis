@@ -2,20 +2,36 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Result } from '../entities/result';
+import { Result } from '../result';
 import { ElementType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import { ComplaintResponse } from 'app/entities/complaint-response';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
+    private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+        this.localSubmissionConflictMap = new Map<number, Conflict[]>();
+    }
+
+    addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
+        return this.localSubmissionConflictMap.set(submissionID, conflicts);
+    }
+
+    getLocalConflicts(submissionID: number) {
+        return this.localSubmissionConflictMap.get(submissionID);
+    }
+
+    escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
+        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
+    }
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
