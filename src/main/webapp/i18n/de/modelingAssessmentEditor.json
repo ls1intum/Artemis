@@ -5,7 +5,7 @@
         "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
         "conflicts": "Konflikt",
         "ownAssessmentTitle": "Deine aktuelle Bewertung",
-        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewerted von",
+        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewertet von",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
             "nextSubmission": "Nächste Abgabe bewerten",
