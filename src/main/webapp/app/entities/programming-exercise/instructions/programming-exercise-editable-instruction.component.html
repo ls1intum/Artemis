@@ -1,3 +1,8 @@
+<jhi-programming-exercise-instruction-testcase-status
+    [exerciseTestCases]="exerciseTestCases"
+    [problemStatement]="exercise.problemStatement"
+    [taskRegex]="taskRegex"
+></jhi-programming-exercise-instruction-testcase-status>
 <jhi-markdown-editor
     [defaultHeight]="markdownEditorHeight"
     [domainCommands]="domainCommands"
@@ -9,6 +14,6 @@
         #preview
         [participation]="participation"
         (resultChange)="setTestCasesFromResults($event)"
-        [(exercise)]="exercise"
+        [exercise]="exercise"
     ></jhi-programming-exercise-instructions>
 </jhi-markdown-editor>
