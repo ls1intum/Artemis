@@ -205,7 +205,26 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     onSubmitAssessment() {
         // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
         // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, false).subscribe(
+        if (this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
+            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+            const confirm = window.confirm(confirmationMessage);
+            if (confirm) {
+                this.submitAssessment();
+            } else {
+                this.highlightedElementIds = [];
+                this.model.elements.forEach((element: UMLElement) => {
+                    if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
+                        this.highlightedElementIds.push(element.id);
+                    }
+                });
+            }
+        } else {
+            this.submitAssessment();
+        }
+    }
+
+    private submitAssessment() {
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, true).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -325,6 +344,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         ) {
             this.assessmentsAreValid = false;
             return;
+        }
+        if (this.highlightedElementIds && this.highlightedElementIds.length > 0) {
+            this.highlightedElementIds = this.highlightedElementIds.filter(element => element !== this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {

@@ -42,8 +42,11 @@ public class BitbucketService implements VersionControlService {
     @Value("${artemis.version-control.secret}")
     private String BITBUCKET_PASSWORD;
 
-    @Value("${artemis.lti.user-prefix}")
-    private String USER_PREFIX = "";
+    @Value("${artemis.lti.user-prefix-edx}")
+    private String USER_PREFIX_EDX = "";
+
+    @Value("${artemis.lti.user-prefix-u4i}")
+    private String USER_PREFIX_U4I = "";
 
     private final UserService userService;
 
@@ -65,7 +68,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void configureRepository(URL repositoryUrl, String username) {
-        if (username.startsWith(USER_PREFIX)) {
+        if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
             // It is an automatically created user
 
             User user = userService.getUserByLogin(username).get();
@@ -83,7 +86,6 @@ public class BitbucketService implements VersionControlService {
                      * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
                      */
                 }
-
             }
             else {
                 log.debug("Bitbucket user {} already exists", username);

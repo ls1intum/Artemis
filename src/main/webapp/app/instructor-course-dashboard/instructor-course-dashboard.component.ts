@@ -3,10 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { Course, CourseService, StatsForInstructorDashboard } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { InitializationState, Participation } from 'app/entities/participation';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
-import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -20,6 +18,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIconTooltip = getIconTooltip;
 
     loading = true;
+    exercisesSortingPredicate = 'assessmentDueDate';
+    exercisesReverseOrder = false;
 
     stats: StatsForInstructorDashboard = {
         numberOfStudents: 0,
@@ -32,8 +32,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
         tutorLeaderboard: [],
     };
     dataForAssessmentPieChart: number[];
-
-    tutorLeaderboardData: TutorLeaderboardData = {};
 
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
@@ -53,10 +51,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
-
-                for (const tutor of this.stats.tutorLeaderboard) {
-                    this.tutorLeaderboardData[tutor.login] = tutor;
-                }
 
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
             },
@@ -84,6 +78,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
         return 'bg-success';
     }
+
+    callback() {}
 
     private onError(error: string) {
         this.jhiAlertService.error(error, null, null);

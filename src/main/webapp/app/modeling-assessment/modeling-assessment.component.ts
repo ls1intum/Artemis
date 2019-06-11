@@ -17,7 +17,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     totalScore = 0;
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
-
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;

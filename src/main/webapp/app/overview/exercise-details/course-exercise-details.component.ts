@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
-import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -70,9 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
-                this.exercise.participations = cachedParticipations.filter(
-                    (participation: Participation) => participation.student && participation.student.id === this.currentUser.id,
-                );
+                this.exercise.participations = this.filterParticipations(cachedParticipations);
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -81,11 +79,41 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body;
+                this.exercise.participations = this.filterParticipations(this.exercise.participations);
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
                 this.subscribeForNewResults();
             });
+        }
+    }
+
+    /**
+     * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
+     * removed from the participations. We also sort the participations so that FINISHED participations come first.
+     */
+    private filterParticipations(participations: Participation[]): Participation[] {
+        if (!participations) {
+            return null;
+        }
+        const filteredParticipations = participations.filter((participation: Participation) => participation.student && participation.student.id === this.currentUser.id);
+        filteredParticipations.forEach((participation: Participation) => {
+            if (participation.results) {
+                participation.results = participation.results.filter((result: Result) => result.completionDate);
+            }
+        });
+        this.sortParticipationsFinishedFirst(filteredParticipations);
+        return filteredParticipations;
+    }
+
+    /**
+     * Sort the given participations so that FINISHED participations come first.
+     *
+     * Note, that this function directly operates on the array passed as argument and does not return anything.
+     */
+    private sortParticipationsFinishedFirst(participations: Participation[]) {
+        if (participations && participations.length > 1) {
+            participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
         }
     }
 
@@ -163,23 +191,37 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get showResults(): boolean {
-        return this.hasResults && this.isAfterAssessmentDueDate;
+        if (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) {
+            return this.hasResults && this.isAfterAssessmentDueDate;
+        }
+        return this.hasResults;
     }
 
     get hasResults(): boolean {
-        const hasParticipations = this.exercise.participations && this.exercise.participations[0];
-        return hasParticipations && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
+        if (!this.exercise || !this.exercise.participations || this.exercise.participations.length === 0) {
+            return false;
+        }
+        return this.exercise.participations.some((participation: Participation) => participation.results && participation.results.length > 0);
     }
 
+    /**
+     * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
+     * For other exercise types it returns a rated result.
+     */
     get currentResult(): Result {
-        if (!this.exercise.participations || !this.exercise.participations[0] || !this.exercise.participations[0].results) {
+        if (!this.hasResults) {
             return null;
         }
-        const results = this.exercise.participations[0].results;
-        const currentResult = results.filter(el => el.rated).pop();
-        if (currentResult) {
-            currentResult.participation = this.exercise.participations[0];
+
+        if (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) {
+            return this.sortedResults.find((result: Result) => !!result.completionDate);
         }
-        return currentResult;
+
+        const ratedResults = this.sortedResults.filter((result: Result) => result.rated);
+        const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
+        if (latestResult) {
+            latestResult.participation = this.combinedParticipation;
+        }
+        return latestResult;
     }
 }

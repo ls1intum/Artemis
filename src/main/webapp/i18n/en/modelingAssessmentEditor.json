@@ -26,7 +26,8 @@
             "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
             "updateAfterComplaintFailed": "Updating the Assessment failed.",
-            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
+            "confirmSubmission": "You have not assessed all model elements. Are you sure you want to submit this assessment? You will not be able to change it afterwards.",
+            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again."
             "noConflicts": "Conflicts could not be loaded",
             "conflictsResolved": "All conflicts have been processed."
         },
