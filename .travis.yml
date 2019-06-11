@@ -15,6 +15,12 @@ jobs:
         jdk: openjdk8
         install: skip
         script: ./gradlew -Pprod compileJava
+      - stage: Test
+        name: "TypeScript"
+        language: node_js
+        node_js: 12.2.0
+        install: yarn install
+        script: yarn test
       - stage: Build
         name: "TypeScript"
         language: node_js
