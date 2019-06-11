@@ -1,19 +1,17 @@
-<jhi-programming-exercise-instruction-testcase-status
-    [exerciseTestCases]="exerciseTestCases"
-    [problemStatement]="exercise.problemStatement"
-    [taskRegex]="taskRegex"
-></jhi-programming-exercise-instruction-testcase-status>
-<jhi-markdown-editor
-    [defaultHeight]="markdownEditorHeight"
-    [domainCommands]="domainCommands"
-    [enableResize]="true"
-    [markdown]="exercise.problemStatement"
-    (markdownChange)="updateProblemStatement($event)"
->
-    <jhi-programming-exercise-instructions
-        #preview
-        [participation]="participation"
-        (resultChange)="setTestCasesFromResults($event)"
-        [exercise]="exercise"
-    ></jhi-programming-exercise-instructions>
-</jhi-markdown-editor>
+<div class="editable-instruction-container">
+    <jhi-programming-exercise-instruction-testcase-status
+        [exerciseTestCases]="exerciseTestCases"
+        [problemStatement]="exercise.problemStatement"
+        [taskRegex]="taskRegex"
+        class="editable-instruction-container__status"
+    ></jhi-programming-exercise-instruction-testcase-status>
+    <jhi-markdown-editor
+        [defaultHeight]="markdownEditorHeight"
+        [domainCommands]="domainCommands"
+        [enableResize]="true"
+        [markdown]="exercise.problemStatement"
+        (markdownChange)="updateProblemStatement($event)"
+    >
+        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"></jhi-programming-exercise-instructions>
+    </jhi-markdown-editor>
+</div>

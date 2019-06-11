@@ -2,7 +2,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
@@ -10,6 +11,8 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
+import { ResultService } from 'app/entities/result';
+import { ParticipationService } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -22,6 +25,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
+    templateParticipationResultLoaded = false;
 
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -36,6 +40,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
+        private resultService: ResultService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
@@ -81,6 +86,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
+            this.resultService
+                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
+                .pipe(
+                    map(({ body }) => body),
+                    tap(result => (this.programmingExercise.templateParticipation.results = [result])),
+                    catchError(() => of(null)),
+                )
+                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 

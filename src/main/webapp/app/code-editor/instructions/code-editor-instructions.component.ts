@@ -33,6 +33,10 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     }
     @Input()
     editable = false;
+    // Only relevant for editable instructions.
+    // TODO: refactor this into a container for the code-editor-instructions component.
+    @Input()
+    templateParticipation: Participation;
     @Output()
     onError = new EventEmitter<string>();
     @Output()

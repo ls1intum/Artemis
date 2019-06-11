@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -14,6 +15,7 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { FileService } from 'app/shared/http/file.service';
+import { ResultService } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-programming-exercise-dialog',
@@ -28,6 +30,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
+    templateParticipationResultLoaded = false;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -35,6 +38,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
         private fileService: FileService,
+        private resultService: ResultService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
     ) {}
@@ -69,6 +73,14 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
+            this.resultService
+                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
+                .pipe(
+                    map(({ body }) => body),
+                    tap(result => (this.programmingExercise.templateParticipation.results = [result])),
+                    catchError(() => of(null)),
+                )
+                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 

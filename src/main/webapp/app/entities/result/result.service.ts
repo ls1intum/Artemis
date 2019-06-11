@@ -77,6 +77,10 @@ export class ResultService implements IResultService {
         return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
     }
 
+    getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
+        return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
+    }
+
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
     }

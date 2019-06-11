@@ -146,6 +146,7 @@
     <jhi-code-editor-instructions
         editorSidebarRight
         [participation]="selectedRepository !== 'TEST' ? selectedParticipation : exercise.templateParticipation"
+        [templateParticipation]="exercise.templateParticipation"
         [exercise]="exercise"
         [editable]="true"
         (onToggleCollapse)="onToggleCollapse($event)"

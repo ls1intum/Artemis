@@ -1,4 +1,7 @@
 import { SimpleChanges } from '@angular/core';
+import { Participation } from 'app/entities/participation/participation.model';
+import { differenceBy as _differenceBy } from 'lodash';
+import { Result } from 'app/entities/result';
 
 export const hasParticipationChanged = (changes: SimpleChanges) => {
     return (
@@ -22,4 +25,8 @@ export const hasSolutionParticipationChanged = (changes: SimpleChanges) => {
         changes.solutionParticipation.currentValue &&
         (!changes.solutionParticipation.previousValue || changes.solutionParticipation.previousValue.id !== changes.solutionParticipation.currentValue.id)
     );
+};
+
+export const getLatestResult = (participation: Participation): Result | null => {
+    return participation.results ? participation.results.reduce((currentMax, result) => (result.id > currentMax.id ? result : currentMax)) : null;
 };
