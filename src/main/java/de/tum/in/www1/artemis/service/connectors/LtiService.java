@@ -428,7 +428,7 @@ public class LtiService {
                 }
             }
             catch (Exception e) {
-                log.error("Reporting to LTI consumer failed: {}", e);
+                log.error("Reporting to LTI consumer failed: {}", e, e);
             }
         });
     }
