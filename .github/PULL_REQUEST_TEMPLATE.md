@@ -2,11 +2,11 @@
 <!-- If your pull request is not ready for review yet, create a draft pull request! -->
 
 ### Checklist
-- [ ] I run `yarn run webpack:build:main`: the project builds without errors.
-- [ ] I run `yarn lint`: the project builds without code style warnings.
-- [ ] I updated the documentation and models.
 - [ ] I tested the changes and all related features on the test server https://artemistest.ase.in.tum.de.
-- [ ] I added (end-to-end) test cases for the new functionality.
+- [ ] I documented my source code using the JavaDoc / JSDoc style.
+- [ ] I added integration test cases for the server (Spring) related to the features
+- [ ] I added integration test cases for the client (Jest) related to the features
+- [ ] I added screenshots/screencast of my UI changes
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
@@ -23,5 +23,5 @@
 3. ...
 
 ### Screenshots
-<!-- If applicable, add screenshots to demonstrate the changes in the UI. -->
+<!-- Add screenshots to demonstrate the changes in the UI. -->
 <!-- Create a GIF file from a screen recording in a docker container https://toub.es/2017/09/11/high-quality-gif-with-ffmpeg-and-docker/ -->
