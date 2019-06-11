@@ -83,6 +83,7 @@ public class ModelingSubmissionIntegrationTest {
         unsubmittedSubmission = generateUnsubmittedSubmission();
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_classDiagram() throws Exception {
@@ -98,6 +99,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_activityDiagram() throws Exception {
@@ -114,6 +116,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_objectDiagram() throws Exception {
@@ -130,6 +133,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_useCaseDiagram() throws Exception {
@@ -146,6 +150,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void updateModelSubmissionAfterSubmit() throws Exception {
@@ -164,6 +169,7 @@ public class ModelingSubmissionIntegrationTest {
         }
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void injectResultOnSubmissionUpdate() throws Exception {
@@ -181,6 +187,7 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(storedSubmission.getResult()).as("submission still unrated").isNull();
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmissionsOfExercise() throws Exception {
@@ -190,6 +197,7 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission2 });
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
@@ -199,6 +207,7 @@ public class ModelingSubmissionIntegrationTest {
         request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
@@ -210,6 +219,7 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission3 });
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "tutor1")
     public void getModelSubmission() throws Exception {
@@ -222,6 +232,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(storedSubmission);
     }
 
+    @Ignore
     @Test
     @WithMockUser(value = "student1")
     public void getModelSubmissionAsStudent() throws Exception {

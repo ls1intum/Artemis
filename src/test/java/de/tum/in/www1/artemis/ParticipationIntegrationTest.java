@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ public class ParticipationIntegrationTest {
         database.addCourseWithDifferentModelingExercises();
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void participateInExercise() throws Exception {
