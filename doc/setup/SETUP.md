@@ -1,4 +1,4 @@
-### Setup Guide for Artemis
+## Setup Guide for Artemis
 
 In this guide you will learn how to setup the development environment for your contribution on Artemis.
 

@@ -16,6 +16,10 @@ Artemis supports the following exercises:
 
 All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
+## Development setup
+
+Find here a guide on [how to set up your local development environment](/doc/setup/SETUP.md).
+
 ## Contributing 
 
 Find here a guide on [how to contribute](/doc/contribute/CONTRIBUTE.md) to Artemis.
