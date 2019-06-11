@@ -340,6 +340,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
             this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
+            this.highlightedElementIds = new Set<string>(this.highlightedElementIds);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {
