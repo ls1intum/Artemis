@@ -21,8 +21,7 @@ The following screenshot shows the online code editor with interactive and dynam
 Tasks and UML diagram elements are referenced by test cases and update their color from red to green after students submit a new version and all test cases associated with a task or diagram element pass.
 This allows the students to immediately recognize which tasks are already fulfilled and is particularly helpful for programming beginners.
 
-![Online Editor](OnlineEditor.png "Online Editor****")
-
+![Online Editor](CodeEditor.png "Online Editor****")
 
 ## Using adapters to support multiple VCS 
 
