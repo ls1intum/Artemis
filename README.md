@@ -95,8 +95,10 @@ artemis:
     id: artemis_lti
     oauth-key: artemis_lti_key
     oauth-secret: <secret>
-    user-prefix: edx_
-    user-group-name: edx
+    user-prefix_edx: edx_
+    user-prefix_u4i: u4i_
+    user-group-name_edx: edx
+    user-group-name_u4i: u4i
   git:
     name: artemis
     email: artemis@in.tum.de

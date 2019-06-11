@@ -10,11 +10,12 @@ import { InstructorCourseDashboardComponent } from './instructor-course-dashboar
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule],
+    imports: [BrowserModule, ArTEMiSSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule],
     declarations: [InstructorCourseDashboardComponent, TutorLeaderboardComponent],
     exports: [TutorLeaderboardComponent],
     entryComponents: [],

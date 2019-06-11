@@ -49,17 +49,25 @@
         </div>
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
-                <tr>
-                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</th>
-                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</th>
-                    <th class="col-xs-3">{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</th>
-                    <th class="col-xs-2">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</th>
-                    <th class="col-xs-1">{{ 'arTeMiSApp.tutorCourseDashboard.actions' | translate }}</th>
+                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
+                    <th jhiSortBy="type">
+                        <a class="th-link">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseType' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="title">
+                        <a class="th-link">{{ 'arTeMiSApp.tutorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th>{{ 'arTeMiSApp.tutorCourseDashboard.yourStatus' | translate }}</th>
+                    <th jhiSortBy="dueDate">
+                        <a class="th-link">{{ 'arTeMiSApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="assessmentDueDate">
+                        <a class="th-link">{{ 'arTeMiSApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th>{{ 'arTeMiSApp.tutorCourseDashboard.actions' | translate }}</th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let exercise of exercises">
+                <tr *ngFor="let exercise of exercises | sortBy: exercisesSortingPredicate:exercisesReverseOrder">
                     <td>
                         <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
                     </td>

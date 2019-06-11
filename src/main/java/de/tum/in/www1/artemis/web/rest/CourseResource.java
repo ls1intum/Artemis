@@ -520,10 +520,9 @@ public class CourseResource {
         stats.numberOfSubmissions = numberOfSubmissions;
         stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
+        log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
         stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
-
-        long end = System.currentTimeMillis();
-        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (end - start) + "ms");
+        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
     }
 
