@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { DiagramType, UMLModel, UMLElement } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -203,20 +203,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
-        // in case he says no, we should potentially highlight the elements that are not yet assessed
         if (this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
             const confirm = window.confirm(confirmationMessage);
             if (confirm) {
                 this.submitAssessment();
             } else {
-                this.highlightedElementIds = [];
-                this.model.elements.forEach((element: UMLElement) => {
-                    if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
-                        this.highlightedElementIds.push(element.id);
-                    }
-                });
+                this.highlightElementsWithMissingFeedback();
             }
         } else {
             this.submitAssessment();
@@ -345,8 +338,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.assessmentsAreValid = false;
             return;
         }
-        if (this.highlightedElementIds && this.highlightedElementIds.length > 0) {
-            this.highlightedElementIds = this.highlightedElementIds.filter(element => element !== this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
+        if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
+            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {
@@ -363,5 +356,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         } else {
             this.location.back();
         }
+    }
+
+    private highlightElementsWithMissingFeedback() {
+        this.highlightedElementIds = new Set<string>();
+        this.model.elements.forEach((element: UMLElement) => {
+            if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
+                this.highlightedElementIds.add(element.id);
+            }
+        });
     }
 }
