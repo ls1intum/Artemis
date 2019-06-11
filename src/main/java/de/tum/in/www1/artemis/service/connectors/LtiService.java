@@ -400,9 +400,7 @@ public class LtiService {
     public void onNewBuildResult(Participation participation) {
 
         // Get the LTI outcome URL
-        Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise());
-
-        ltiOutcomeUrl.ifPresent(ltiOutcomeUrl1 -> {
+        ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
             String score = "0.00";
 
@@ -414,15 +412,15 @@ public class LtiService {
                 score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
             }
 
-            log.debug("Reporting to LTI consumer: Score {} for Participation {}", score, participation);
-
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
-                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl1.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl1.getSourcedId(), score, null, false);
+                log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
+                        ltiOutcomeUrl.getSourcedId());
+                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);
                 String responseString = new BasicResponseHandler().handleResponse(response);
-                log.debug("Response from LTI consumer: {}", responseString);
+                log.info("Response from LTI consumer: {}", responseString);
                 if (response.getStatusLine().getStatusCode() >= 400) {
                     throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
