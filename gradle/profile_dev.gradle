@@ -49,6 +49,6 @@ processResources {
     }
 }
 
-//processResources.dependsOn webpackBuildDev
+processResources.dependsOn webpackBuildDev
 copyIntoStatic.dependsOn processResources
 bootJar.dependsOn copyIntoStatic
