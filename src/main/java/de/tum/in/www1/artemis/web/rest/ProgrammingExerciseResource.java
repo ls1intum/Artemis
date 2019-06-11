@@ -322,7 +322,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isOnlyStudentInCourse(course, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
