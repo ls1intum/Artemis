@@ -146,12 +146,15 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     @Transactional
     public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+        log.info("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+            log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
 
         try {
             String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            log.info("PlanKey for received notifyResultNew is {}", planKey);
             Optional<Participation> optionalParticipation = getParticipation(planKey);
             if (optionalParticipation.isPresent()) {
                 Participation participation = optionalParticipation.get();
@@ -163,15 +166,18 @@ public class ResultResource {
                 }
 
                 resultService.onResultNotifiedNew(participation, requestBody);
+                log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
                 return ResponseEntity.ok().build();
             }
             else {
+                log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
                 // return ok so that Bamboo does not think it was an error
                 return ResponseEntity.ok().build();
             }
 
         }
         catch (Exception e) {
+            log.error("An exception occurred during handling of notifyResultNew", e);
             return badRequest();
         }
 
