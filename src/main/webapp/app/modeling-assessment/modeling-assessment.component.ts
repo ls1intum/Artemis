@@ -81,9 +81,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
-            this.updateElementFeedbackMapping(this.feedbacks);
-            this.updateApollonAssessments(this.feedbacks);
-            this.calculateTotalScore();
             this.applyStateConfiguration();
         }
         if (changes.highlightedElementIds || changes.highlightColor) {
