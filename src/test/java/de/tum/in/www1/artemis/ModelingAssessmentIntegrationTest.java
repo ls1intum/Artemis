@@ -77,6 +77,7 @@ public class ModelingAssessmentIntegrationTest {
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void manualAssessmentSubmitAsStudent() throws Exception {
@@ -92,6 +93,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSave() throws Exception {
@@ -105,6 +107,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSave(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_classDiagram() throws Exception {
@@ -118,6 +121,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_activityDiagram() throws Exception {
@@ -131,6 +135,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_objectDiagram() throws Exception {
@@ -144,6 +149,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_useCaseDiagram() throws Exception {
@@ -157,6 +163,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSaveAndSubmit() throws Exception {
@@ -176,6 +183,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessmentUponModelSubmission() throws Exception {
@@ -197,6 +205,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessmentUponAssessmentSubmission() throws Exception {
@@ -213,6 +222,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testConflictDetection() throws Exception {
