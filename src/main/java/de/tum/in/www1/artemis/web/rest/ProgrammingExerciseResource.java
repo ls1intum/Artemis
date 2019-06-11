@@ -395,7 +395,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", id);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithAllParticipationsById(id);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(id);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();

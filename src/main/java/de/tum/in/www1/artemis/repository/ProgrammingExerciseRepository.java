@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,11 +31,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
 
     // Get an a programmingExercise with template and solution participation, each with the latest result
+    @EntityGraph(attributePaths = { "pe.templateParticipation.results.feedbacks", "pe.solutionParticipation.results.feedbacks" })
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
             + "left join fetch tp.results as tpr left join fetch sp.results as spr "
             + "where pe.id = :#{#exerciseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) "
             + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
-    Optional<ProgrammingExercise> findWithAllParticipationsById(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
     List<ProgrammingExercise> findAllWithEagerParticipations();

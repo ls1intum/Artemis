@@ -396,13 +396,13 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("results/{participationId}/latest-result")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Participation participation = participationService.findOne(participationId);
 
-        if (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user)) {
             return forbidden();
         }
 
