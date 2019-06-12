@@ -374,6 +374,12 @@ public class ProgrammingExerciseResource {
         }
     }
 
+    /**
+     * Squash all commits into one in the template repository of a given exercise.
+     * 
+     * @param id of the exercise
+     * @return
+     */
     @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
@@ -399,12 +405,12 @@ public class ProgrammingExerciseResource {
 
         try {
             URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
-            programmingExerciseService.squashTemplateRepositoryCommits(exerciseRepoURL);
+            programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            return new ResponseEntity<>(HttpStatus.OK);
         }
-        catch (IOException | InterruptedException ex) {
-
+        catch (IOException | IllegalStateException | InterruptedException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**

@@ -424,9 +424,17 @@ public class ProgrammingExerciseService {
         participationRepository.save(templateParticipation);
     }
 
-    public void squashTemplateRepositoryCommits(URL exerciseRepoURL) throws IOException, InterruptedException {
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
-        gitService.squashAllCommitsIntoInitialCommit(exerciseRepository, exerciseRepoURL);
+    /**
+     * Squash all commits of the given repository into one.
+     * 
+     * @param repoUrl of the repository to squash.
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws IllegalStateException
+     */
+    public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException {
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl);
+        gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
     /**

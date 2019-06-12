@@ -518,7 +518,14 @@ public class GitService {
         }
     }
 
-    public void squashAllCommitsIntoInitialCommit(Repository repo, URL exerciseRepoURL) {
+    /**
+     * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
+     * 
+     * @param repo to squash commits for
+     * @throws IOException           on io errors or git exceptions.
+     * @throws IllegalStateException if there is no commit in the git repository.
+     */
+    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IOException, IllegalStateException {
         Git git = new Git(repo);
         try {
             hardResetToRemote(repo);
@@ -528,15 +535,22 @@ public class GitService {
             rw.sort(RevSort.REVERSE);
             rw.markStart(head);
             RevCommit firstCommit = rw.next();
+            // If there is a first commit, squash all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
                 git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                git.push().setForce(true).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+                git.close();
             }
-
+            else {
+                // Normally there always has to be a commit, so we throw an error in case none can be found.
+                throw new IllegalStateException();
+            }
         }
         catch (IOException | GitAPIException ex) {
             log.error("Could not reset repository {} due to exception {}", repo, ex);
+            throw new IOException();
         }
     }
 
