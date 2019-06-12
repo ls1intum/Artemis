@@ -243,7 +243,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         setTimeout(() => {
             // Called once by each build-output, instructions, result & instructor-status
-            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(4);
+            // Called twice by editable instructions - one time for the selected and one time for the templateParticipation
+            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(6);
             done();
         }, 0);
     });
