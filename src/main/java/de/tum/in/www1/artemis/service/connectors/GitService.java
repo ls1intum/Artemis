@@ -27,6 +27,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -490,6 +491,28 @@ public class GitService {
         Git git = new Git(repo);
         Status status = git.status().call();
         return status.isClean();
+    }
+
+    /**
+     * Use with care! Performs a hard reset on the checked out branch ot its remote counterpart. We only have one remote, which is why we can use the first remote from the list.
+     * This reset will remote all changes from commits that are not part of the remote AND all staged and unstaged changes. Exceptions are not thrown here, as calling classes might
+     * just want to continue when this operation fails.
+     * 
+     * @param repo git repository to reset to remote.
+     */
+    public void hardResetToRemote(Repository repo) {
+        Git git = new Git(repo);
+        try {
+            String branchName = repo.getBranch();
+            Optional<String> remoteName = git.remoteList().call().stream().findFirst().map(RemoteConfig::getName);
+            if (remoteName.isPresent()) {
+                String remoteBranch = remoteName.get() + "/" + branchName;
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(remoteBranch).call();
+            }
+        }
+        catch (IOException | GitAPIException ex) {
+            log.error("Could not reset repository {} due to exception {}", repo, ex);
+        }
     }
 
     /**

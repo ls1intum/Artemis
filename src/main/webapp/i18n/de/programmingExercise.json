@@ -33,6 +33,7 @@
             "templateResult": "Ergebnis Vorlage",
             "solutionResult": "Ergebnis Lösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
+            "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",

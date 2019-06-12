@@ -441,8 +441,11 @@ public class ProgrammingExerciseService {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
 
+        gitService.hardResetToRemote(solutionRepository);
         gitService.pull(solutionRepository);
+        gitService.hardResetToRemote(exerciseRepository);
         gitService.pull(exerciseRepository);
+        gitService.hardResetToRemote(testRepository);
         gitService.pull(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
