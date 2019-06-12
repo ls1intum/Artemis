@@ -506,6 +506,7 @@ public class GitService {
     public void hardResetToRemote(Repository repo) {
         Git git = new Git(repo);
         try {
+            git.fetch().call();
             String branchName = repo.getBranch();
             Optional<String> remoteName = git.remoteList().call().stream().findFirst().map(RemoteConfig::getName);
             if (remoteName.isPresent()) {
