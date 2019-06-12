@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -371,6 +372,39 @@ public class ProgrammingExerciseResource {
         else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+
+        if (id == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        if (!programmingExerciseOptional.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        try {
+            URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
+            programmingExerciseService.squashTemplateRepositoryCommits(exerciseRepoURL);
+        }
+        catch (IOException | InterruptedException ex) {
+
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**

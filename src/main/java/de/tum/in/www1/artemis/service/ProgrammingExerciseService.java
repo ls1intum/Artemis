@@ -424,6 +424,11 @@ public class ProgrammingExerciseService {
         participationRepository.save(templateParticipation);
     }
 
+    public void squashTemplateRepositoryCommits(URL exerciseRepoURL) throws IOException, InterruptedException {
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
+        gitService.squashAllCommitsIntoInitialCommit(exerciseRepository, exerciseRepoURL);
+    }
+
     /**
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.

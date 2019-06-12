@@ -20,10 +20,13 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -509,6 +512,28 @@ public class GitService {
                 String remoteBranch = remoteName.get() + "/" + branchName;
                 git.reset().setMode(ResetCommand.ResetType.HARD).setRef(remoteBranch).call();
             }
+        }
+        catch (IOException | GitAPIException ex) {
+            log.error("Could not reset repository {} due to exception {}", repo, ex);
+        }
+    }
+
+    public void squashAllCommitsIntoInitialCommit(Repository repo, URL exerciseRepoURL) {
+        Git git = new Git(repo);
+        try {
+            hardResetToRemote(repo);
+            ObjectId headId = repo.resolve(Constants.HEAD);
+            RevWalk rw = new RevWalk(repo);
+            RevCommit head = rw.parseCommit(headId);
+            rw.sort(RevSort.REVERSE);
+            rw.markStart(head);
+            RevCommit firstCommit = rw.next();
+            if (firstCommit != null) {
+                git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
+                git.add().addFilepattern(".").call();
+                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+            }
+
         }
         catch (IOException | GitAPIException ex) {
             log.error("Could not reset repository {} due to exception {}", repo, ex);

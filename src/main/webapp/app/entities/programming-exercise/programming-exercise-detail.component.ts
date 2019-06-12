@@ -50,6 +50,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         window.history.back();
     }
 
+    squashTemplateCommits() {
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe();
+    }
+
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
             res => {
