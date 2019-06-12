@@ -30,7 +30,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
-    templateParticipationResultLoaded = false;
+    templateParticipationResultLoaded = true;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -73,6 +73,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
+            this.templateParticipationResultLoaded = false;
             this.resultService
                 .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
                 .pipe(
