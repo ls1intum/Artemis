@@ -6,7 +6,7 @@ import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, of, throwError, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -37,7 +37,7 @@ import {
 import { ArTEMiSResultModule, Result, ResultService, UpdatingResultComponent } from 'app/entities/result';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { getLatestResult, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
@@ -74,6 +74,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let commitStub: SinonStub;
     let findWithLatestResultStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
+    let getLatestResultWithFeedbacksStub: SinonStub;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
@@ -145,6 +146,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 getFeedbackDetailsForResultStub = stub(resultService, 'getFeedbackDetailsForResult');
+                getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks').returns(throwError('no result'));
                 getBuildLogsStub = stub(buildLogService, 'getBuildLogs');
                 getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
@@ -171,6 +173,7 @@ describe('CodeEditorInstructorIntegration', () => {
         commitStub.restore();
         findWithLatestResultStub.restore();
         findWithParticipationsStub.restore();
+        getLatestResultWithFeedbacksStub.restore();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
@@ -190,16 +193,21 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should load the exercise and select the template participation if no participation id is provided', (done: any) => {
+        jest.resetModules();
         const exercise = {
             id: 1,
             problemStatement,
             participations: [{ id: 2 }],
-            templateParticipation: { id: 3, results: [{ id: 9, successful: true }] },
+            templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
         } as ProgrammingExercise;
         exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
         exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
+
+        const templateParticipationResult = { id: 9, successful: true };
+
+        getLatestResultWithFeedbacksStub.returns(of({ body: templateParticipationResult }));
 
         getFeedbackDetailsForResultStub.returns(of([]));
         const setDomainSpy = spy(domainService, 'setDomain');
@@ -214,8 +222,10 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.templateParticipation]);
-        expect(container.exercise).to.deep.equal(exercise);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+        expect(setDomainSpy).to.have.been.calledOnce;
+        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, { ...exercise.templateParticipation, results: [templateParticipationResult] }]);
+        expect(container.exercise).to.deep.equal({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [templateParticipationResult] } });
         expect(container.selectedRepository).to.equal(container.REPOSITORY.TEMPLATE);
         expect(container.selectedParticipation).to.deep.equal(container.selectedParticipation);
         expect(container.loadingState).to.equal(container.LOADING_STATE.CLEAR);
@@ -237,14 +247,13 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.fileBrowser).to.exist;
         expect(container.actions).to.exist;
         expect(container.instructions).to.exist;
-        expect(container.instructions.participation).to.deep.equal(exercise.templateParticipation);
+        expect(container.instructions.participation.id).to.deep.equal(exercise.templateParticipation.id);
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
 
         setTimeout(() => {
-            // Called once by each build-output, instructions, result & instructor-status
-            // Called twice by editable instructions - one time for the selected and one time for the templateParticipation
-            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(6);
+            // Called once by each build-output, instructions, result, instructor-status & by the editable instructions wrapper (= templateParticipation)
+            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
             done();
         }, 0);
     });
