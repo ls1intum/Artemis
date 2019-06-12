@@ -21,6 +21,7 @@ export interface IResultService {
     findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
     findResultsForParticipation: (courseId: number, exerciseId: number, participationId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getLatestResultWithFeedbacks: (particpationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (resultId: number) => Observable<HttpResponse<Feedback[]>>;
     delete: (id: number) => Observable<HttpResponse<void>>;
 }

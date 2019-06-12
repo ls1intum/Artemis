@@ -26,7 +26,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     testCaseCommand = new TestCaseCommand();
     domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand];
 
-    resultSubscription: Subscription;
     templateResultSubscription: Subscription;
 
     @Input()
@@ -63,7 +62,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                 this.setTestCasesFromResult(getLatestResult(this.templateParticipation));
             }
             if (this.templateResultSubscription) {
-                this.resultSubscription.unsubscribe();
+                this.templateResultSubscription.unsubscribe();
             }
 
             this.templateResultSubscription = this.participationWebsocketService
@@ -77,28 +76,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                 )
                 .subscribe();
         }
-
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
-        }
-
-        this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(
-                filter(result => !!result),
-                tap(result => {
-                    this.participation.results = [...this.participation.results, result];
-                }),
-            )
-            .subscribe();
     }
 
     ngOnDestroy(): void {
-        if (this.templateParticipation.results) {
-            this.setTestCasesFromResult(getLatestResult(this.templateParticipation));
-        }
-        if (this.resultSubscription) {
-            this.resultSubscription.unsubscribe();
+        if (this.templateResultSubscription) {
+            this.templateResultSubscription.unsubscribe();
         }
     }
 
@@ -106,7 +88,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
         this.exercise = { ...this.exercise, problemStatement };
     }
 
-    setTestCasesFromResult(result: Result) {
+    setTestCasesFromResult = (result: Result) => {
         // If the exercise is created, there is no result available
         this.exerciseTestCases =
             result && result.feedbacks
@@ -116,5 +98,5 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                   )(result.feedbacks)
                 : [];
         this.testCaseCommand.setValues(this.exerciseTestCases);
-    }
+    };
 }

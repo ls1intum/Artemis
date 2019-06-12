@@ -13,4 +13,7 @@ export class MockResultService implements IResultService {
     getFeedbackDetailsForResult = (resultId: number) => of();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => of();
     update = (result: Result) => of();
+    getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
+        return of();
+    }
 }
