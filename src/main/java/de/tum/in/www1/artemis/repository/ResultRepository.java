@@ -51,6 +51,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
+    @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
+    Optional<Result> findByIdWithEagerSubmissionAndFeedbacksAndAssessor(@Param("resultId") Long id);
+
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation. This prevents multiple (concurrent) inserts with the same
      * participation_id and rated = 0. It is used in ModelingSubmissionService.save(). It is needed because when saving a modeling submission the first time, the create REST call

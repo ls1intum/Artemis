@@ -157,7 +157,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        log.debug("REST request to get data for tutors text assessment: {}", exerciseId, submissionId);
+        log.debug("REST request to get data for tutors text assessment exercise: {}, submission: {}", exerciseId, submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise);
 
@@ -173,12 +173,17 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
 
+            // TODO: this does not work if we have multiple submissions / results for the same participation
+            // this happens some and then, I guess because students press the save/submit button simultaneously multiple times, we actually have about 100 cases in the database
             if (participation.findLatestSubmission().isPresent()) {
                 Result latestResult = participation.findLatestSubmission().get().getResult();
                 User assessor = latestResult.getAssessor();
 
+                if (authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+                    // skip this case as, because instructors are allowed to override assessments
+                }
                 // Another tutor started assessing this submission and hasn't finished yet
-                if (!assessor.getLogin().equals(user.getLogin()) && latestResult.getCompletionDate() == null) {
+                else if (assessor != null && !assessor.getLogin().equals(user.getLogin()) && latestResult.getCompletionDate() == null) {
                     throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
                 }
             }

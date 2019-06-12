@@ -51,6 +51,12 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    ModelAssessmentConflictRepository conflictRepo;
+
+    @Autowired
+    ConflictingResultRepository conflictingResultRepo;
+
+    @Autowired
     FeedbackRepository feedbackRepo;
 
     @Autowired
@@ -63,6 +69,8 @@ public class DatabaseUtilService {
     ObjectMapper mapper;
 
     public void resetDatabase() {
+        conflictRepo.deleteAll();
+        conflictingResultRepo.deleteAll();
         feedbackRepo.deleteAll();
         resultRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
@@ -136,10 +144,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(4);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(4);
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(0))).as("course contains the class exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(1))).as("course contains the activity exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(2))).as("course contains the object exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(3))).as("course contains the use case exercise").isTrue();
+        assertThat(courseRepoContent.get(0).getExercises()).as("Contains all exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
     /**
@@ -157,8 +162,9 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        submission.getParticipation().addResult(result);
+        participation.addResult(result);
         resultRepo.save(result);
+        participationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         return submission;
     }

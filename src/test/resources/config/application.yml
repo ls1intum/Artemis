@@ -1,4 +1,5 @@
 artemis:
+    version: #project.version#
     repo-clone-path: ./repos/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
     result-retrieval-delay: 5000
@@ -76,6 +77,13 @@ spring:
 server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
+
+# Properties to be exposed on the /info management endpoint
+info:
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: "dev"
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
 
 jhipster:
     http:
