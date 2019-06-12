@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { compose, map, sortBy } from 'lodash/fp';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { MarkdownEditorHeight } from 'app/markdown-editor';
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements OnChanges {
+export class ProgrammingExerciseEditableInstructionComponent implements OnChanges, OnDestroy {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
@@ -91,6 +91,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                 }),
             )
             .subscribe();
+    }
+
+    ngOnDestroy(): void {
+        if (this.templateParticipation.results) {
+            this.setTestCasesFromResult(getLatestResult(this.templateParticipation));
+        }
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
     }
 
     updateProblemStatement(problemStatement: string) {

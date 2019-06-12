@@ -55,7 +55,7 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    findWithParticipations(id: number): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(id: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));

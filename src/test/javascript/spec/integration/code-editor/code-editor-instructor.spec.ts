@@ -151,7 +151,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 commitStub = stub(codeEditorRepositoryService, 'commit');
                 findWithLatestResultStub = stub(participationService, 'findWithLatestResult');
 
-                findWithParticipationsStub = stub(programmingExerciseService, 'findWithParticipations');
+                findWithParticipationsStub = stub(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
                 findWithParticipationsStub.returns(findWithParticipationsSubject);
 
                 subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);

@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ParticipationType, ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
@@ -15,11 +15,10 @@ import {
     CodeEditorActionsComponent,
     CodeEditorBuildOutputComponent,
     CodeEditorFileBrowserComponent,
-    CodeEditorGridComponent,
     CodeEditorInstructionsComponent,
     CodeEditorSessionService,
 } from 'app/code-editor';
-import { UpdatingResultComponent } from 'app/entities/result';
+import { ResultService, UpdatingResultComponent } from 'app/entities/result';
 
 enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -75,6 +74,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     constructor(
         private router: Router,
         private exerciseService: ProgrammingExerciseService,
+        private resultService: ResultService,
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
         participationService: ParticipationService,
@@ -189,7 +189,17 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
-            : this.exerciseService.findWithParticipations(exerciseId).pipe(map(({ body }) => body));
+            : this.exerciseService.find(exerciseId).pipe(
+                  map(({ body }) => body),
+                  // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
+                  switchMap(exercise =>
+                      this.resultService.getLatestResultWithFeedbacks(exercise.templateParticipation.id).pipe(
+                          map(({ body }) => body),
+                          map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
+                          catchError(() => of(exercise)),
+                      ),
+                  ),
+              );
     }
 
     /**

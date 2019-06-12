@@ -12,7 +12,6 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/entities/result';
-import { ParticipationService } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
