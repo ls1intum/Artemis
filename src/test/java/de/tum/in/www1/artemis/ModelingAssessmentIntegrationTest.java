@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -243,6 +244,7 @@ public class ModelingAssessmentIntegrationTest {
         causeConflict("tutor1", submission1, submission2);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testResolvePartConflictByCausingTutorOnUpdate() throws Exception {
