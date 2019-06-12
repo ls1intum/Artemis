@@ -244,6 +244,7 @@ public class ModelingAssessmentIntegrationTest {
         causeConflict("tutor1", submission1, submission2);
     }
 
+    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testResolvePartConflictByCausingTutorOnUpdate() throws Exception {
