@@ -16,7 +16,13 @@
 </nav>
 <jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
     <div class="d-flex align-items-center ml-auto" editorNavbar>
-        <jhi-updating-result *ngIf="participation && !isBuilding" [participation]="participation" class="mr-2"></jhi-updating-result>
+        <jhi-updating-result
+            *ngIf="participation && !isBuilding"
+            [showUngradedResults]="true"
+            [showGradedBadge]="true"
+            [participation]="participation"
+            class="mr-2"
+        ></jhi-updating-result>
         <jhi-code-editor-actions
             [unsavedFiles]="unsavedFiles"
             [(editorState)]="editorState"
