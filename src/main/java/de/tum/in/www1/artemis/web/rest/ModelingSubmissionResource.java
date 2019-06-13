@@ -7,15 +7,12 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -53,8 +49,6 @@ public class ModelingSubmissionResource {
 
     private final CourseService courseService;
 
-    private final ResultRepository resultRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final CompassService compassService;
@@ -64,13 +58,12 @@ public class ModelingSubmissionResource {
     private final UserService userService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-            ParticipationService participationService, CourseService courseService, ResultRepository resultRepository, AuthorizationCheckService authCheckService,
-            CompassService compassService, ExerciseService exerciseService, UserService userService) {
+            ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
+            ExerciseService exerciseService, UserService userService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
         this.courseService = courseService;
-        this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.exerciseService = exerciseService;
@@ -282,7 +275,7 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOneWithEagerSubmissions(participationId); // TODO CZ: also load results eagerly here
+        Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID."))
                     .body(null);
@@ -303,19 +296,9 @@ public class ModelingSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        // users can only see their own models (to prevent cheating), TAs, instructors and admins can
-        // see all models
-        if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
-            // continue
-        }
-        else {
+        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
+        if (!(authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse()))) {
             return forbidden();
-        }
-
-        // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-            participation.setResults(new HashSet<>(results));
         }
 
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
@@ -333,10 +316,11 @@ public class ModelingSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        if (modelingSubmission.getResult() instanceof HibernateProxy) {
-            modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
+        // do not send the result to the client if the assessment is not finished
+        if (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null) {
+            modelingSubmission.setResult(null);
         }
-        // TODO CZ: remove result, if not finished
+
         return ResponseEntity.ok(modelingSubmission);
     }
 
