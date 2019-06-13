@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { orderBy as _orderBy } from 'lodash';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
@@ -61,25 +62,12 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
         } else {
             const exercise = this.participation.exercise;
 
-            if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise && exercise.type === ExerciseType.MODELING) {
-                    // sort results by completionDate descending to ensure the newest result is shown
-                    // this is important for modeling exercises since students can have multiple tries
-                    // think about if this should be used for all types of exercises
-                    this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate > r2.completionDate) {
-                            return -1;
-                        }
-                        if (r1.completionDate < r2.completionDate) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                }
-                // Make sure result and participation are connected
-                this.result = this.participation.results[0];
-                this.result.participation = this.participation;
-            }
+            // Sort participation results by completionDate desc.
+            this.participation.results = this.participation.results && _orderBy(this.participation.results, 'completionDate', 'desc');
+            // The active result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
+            this.result = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
+            // Make sure that the participation result is connected to the newest result.
+            this.result.participation = this.participation;
 
             this.subscribeForNewResults(exercise);
         }
