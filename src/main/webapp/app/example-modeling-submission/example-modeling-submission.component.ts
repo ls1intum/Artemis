@@ -15,8 +15,8 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
