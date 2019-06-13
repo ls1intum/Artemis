@@ -29,7 +29,7 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 500,
+    MEDIUM = 350,
     LARGE = 1000,
 }
 
@@ -52,7 +52,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() markdown: string;
+    @Input()
+    markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
 
@@ -103,9 +104,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** Resizable constants **/
     @Input()
+    defaultHeight = MarkdownEditorHeight.SMALL;
+    @Input()
     enableResize = false;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input()
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
@@ -189,7 +193,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top

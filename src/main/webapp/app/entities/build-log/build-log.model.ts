@@ -1,7 +1,7 @@
 import { safeUnescape } from 'app/shared';
 import { AnnotationArray } from '../ace-editor';
 
-type BuildLogEntry = {
+export type BuildLogEntry = {
     time: any;
     log: string;
 };
@@ -16,9 +16,10 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
      * Filters compilation errors from build log and groups them by filename.
      * Safely unescapes messages within the build log to avoid vulnerability to injection.
      */
-    extractErrors() {
-        return (
-            this
+    extractErrors(): { errors: { [fileName: string]: AnnotationArray }; timestamp: number } {
+        if (this.length) {
+            const timestamp = Date.parse(this[0].time);
+            const errors = this
                 // Parse build logs
                 .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
                 // Remove entries that could not be parsed, are too short or not errors
@@ -39,7 +40,10 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                         [fileName]: new AnnotationArray(...(buildLogErrors[fileName] || []), rest),
                     }),
                     {},
-                )
-        );
+                );
+            return { timestamp, errors };
+        } else {
+            return { timestamp: Date.now(), errors: {} };
+        }
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
+@ActiveProfiles("artemis, bamboo")
 public class ModelingAssessmentIntegrationTest {
 
     @Autowired
@@ -71,6 +74,9 @@ public class ModelingAssessmentIntegrationTest {
     @Autowired
     ParticipationService participationService;
 
+    @Autowired
+    ContinuousIntegrationService continuousIntegrationService;
+
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;
@@ -90,7 +96,6 @@ public class ModelingAssessmentIntegrationTest {
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void manualAssessmentSubmitAsStudent() throws Exception {
@@ -106,7 +111,6 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSave() throws Exception {
@@ -120,7 +124,6 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSave(storedResult, assessor);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_classDiagram() throws Exception {
@@ -134,7 +137,6 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_activityDiagram() throws Exception {
@@ -148,7 +150,6 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_objectDiagram() throws Exception {
@@ -162,7 +163,6 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_useCaseDiagram() throws Exception {
@@ -176,7 +176,6 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSaveAndSubmit() throws Exception {
@@ -196,6 +195,7 @@ public class ModelingAssessmentIntegrationTest {
         checkResultAfterSubmit(storedResult, assessor);
     }
 
+    // TODO: Fix defective test
     @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
@@ -218,6 +218,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
+    // TODO: Fix defective test
     @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
@@ -235,6 +236,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
+    // TODO: Fix defective test
     @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
@@ -244,6 +246,7 @@ public class ModelingAssessmentIntegrationTest {
         causeConflict("tutor1", submission1, submission2);
     }
 
+    // TODO: Fix defective test
     @Ignore
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")

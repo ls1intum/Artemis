@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SERVER_API_URL } from '../app.constants';
+import { SERVER_API_URL } from '../../app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
 

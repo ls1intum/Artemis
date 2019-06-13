@@ -1,24 +1,23 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryFileService } from 'app/entities/repository';
-import { Participation } from 'app/entities/participation';
-import { CodeEditorFileBrowserComponent } from 'app/code-editor';
+import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
+import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
     templateUrl: './code-editor-file-browser-delete.html',
+    providers: [CodeEditorRepositoryFileService],
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
-    @Input() participation: Participation;
     @Input() fileNameToDelete: string;
     @Input() parent: CodeEditorFileBrowserComponent;
     @Input() fileType: FileType;
 
     isLoading: boolean;
 
-    constructor(public activeModal: NgbActiveModal, private repositoryFileService: RepositoryFileService) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
      * @function ngOnInit
@@ -36,7 +35,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
-            this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe(
+            this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe(
                 () => {
                     this.closeModal();
                     this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
