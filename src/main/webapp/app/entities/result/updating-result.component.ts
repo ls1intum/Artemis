@@ -69,7 +69,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
             this.result = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
-            this.result.participation = this.participation;
+            this.result = this.result && { ...this.result, participation: this.participation };
 
             this.subscribeForNewResults(exercise);
         }
