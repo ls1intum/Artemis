@@ -33,14 +33,15 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory.
+     * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory. Also checks that the ../ operator is not
+     * used to traverse up directories on the server.
      *
      * @param file
      * @return
      */
     public boolean isValidFile(java.io.File file) {
 
-        if (file == null)
+        if (file == null || file.getPath().contains("../"))
             return false;
 
         if (file.equals(this.localPath.toFile()))

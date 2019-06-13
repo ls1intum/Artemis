@@ -1,10 +1,16 @@
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, Subscription } from 'rxjs';
+import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 
-import { BuildLogEntryArray } from '../../entities/build-log';
+import { BuildLogEntry, BuildLogEntryArray } from '../../entities/build-log';
 import { SERVER_API_URL } from '../../app.constants';
+import { FileType } from '../ace-editor/file-change.model';
+import { Participation } from '../participation';
+import { ProgrammingExercise } from '../programming-exercise';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
@@ -24,19 +30,34 @@ export class RepositoryService {
         return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
 
-    buildlogs(participationId: number): Observable<BuildLogEntryArray> {
-        return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/${participationId}/buildlogs`);
+    buildlogs(participationId: number): Observable<BuildLogEntry[]> {
+        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
 }
 
+export interface IRepositoryFileService {
+    query: (participationId: number) => Observable<{ [fileName: string]: FileType }>;
+    get: (participationId: number, fileName: string) => Observable<any>;
+
+    update: (participationId: number, fileName: string, fileContent: string) => Observable<any>;
+
+    createFile: (participationId: number, fileName: string) => Observable<void>;
+
+    createFolder: (participationId: number, folderName: string) => Observable<void>;
+
+    rename: (participationId: number, currentFilePath: string, newFilename: string) => Observable<void>;
+
+    delete: (participationId: number, fileName: string) => Observable<void>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class RepositoryFileService {
+export class RepositoryFileService implements IRepositoryFileService {
     private resourceUrl = SERVER_API_URL + 'api/repository';
 
     constructor(private http: HttpClient) {}
 
-    query(participationId: number): Observable<{ [fileName: string]: boolean }> {
-        return this.http.get<{ [fileName: string]: boolean }>(`${this.resourceUrl}/${participationId}/files`);
+    query(participationId: number): Observable<{ [fileName: string]: FileType }> {
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.resourceUrl}/${participationId}/files`);
     }
 
     get(participationId: number, fileName: string): Observable<any> {

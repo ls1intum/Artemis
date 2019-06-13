@@ -29,6 +29,7 @@
             "loadingFile": "Loading selected file",
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
+            "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
             "fileBrowser": {
                 "deleteFileTitle": "Delete file",
                 "deleteFolderTitle": "Delete folder",
@@ -47,13 +48,20 @@
                 "compressTree": "Combine empty folders"
             },
             "errors": {
-                "participationNotFound": "Your participation could not be found. Please try again shortly or contact your tutor.",
-                "saveFailed": "One or more files could not be updated. Please try again shortly or contact your tutor.",
+                "participationNotFound": "Your participation could not be found.",
+                "exerciseNotFound": "The exercise could not be found.",
+                "saveFailed": "One or more files could not be updated.",
+                "commitFailed": "One or more files could not be commited.",
                 "noPermissions": "You don't have the necessary permissions.",
-                "checkoutFailed": "The checkout of your git repository failed. Please try again shortly or contact your tutor.",
+                "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
                 "unsupportedFile": "File with this extension not supported.",
-                "fileOperationFailed": "File operation could not be executed. Please try again later."
+                "fileOperationFailed": "File operation could not be executed. Please try again later.",
+                "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
+                "participationCouldNotBeCreated": "Participation could not be created.",
+                "couldNotBeRetrieved": "The repository status could not be retrieved.",
+                "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
+                "failedToLoadBuildLogs": "The build logs could not be retrieved."
             },
             "testStatusLabels": {
                 "noResult": "No results",
@@ -61,6 +69,22 @@
                 "testFailing": "Test failing",
                 "totalTestsPassing": "{{totalTests}} tests passing",
                 "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing"
+            },
+            "repoSelect": {
+                "assignmentRepo": "Assignment Repository",
+                "createAssignmentRepo": "Create Assignment Repository",
+                "resetAssignmentRepo": "Reset Assignment Repository",
+                "templateRepo": "Template Repository",
+                "solutionRepo": "Solution Repository",
+                "testRepo": "Test Repository",
+                "loadingExercise": "Loading Exercise",
+                "solutionWarning": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue in the Solution Repository.",
+                "solutionSuccess": "The Solution Repository fulfills all test cases.",
+                "solutionInfo": "No result found for the Solution Repository.",
+                "templateWarning": "The Template Repository does already fulfill one or more test cases. This could indicate an issue in the Template Repository.",
+                "templateSuccess": "The Template Repository fulfills no test case.",
+                "templateInfo": "No result found for the Template Repository.",
+                "exerciseHasNoIssues": "No issues were identified in the repositories."
             }
         }
     }

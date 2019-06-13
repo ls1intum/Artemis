@@ -1,19 +1,46 @@
 <div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card-body card resizable-instructions p-0 border-0" [ngStyle]="{ 'width.vw': 40, overflow: 'inherit' }">
-    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
+    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <span id="instructions-status" *ngIf="editable">
+                <fa-icon *ngIf="!unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
+                <fa-icon *ngIf="unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
+            </span>
             <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
+            <button
+                id="save-instructions-button"
+                *ngIf="editable"
+                [disabled]="savingInstructions || !unsavedChanges"
+                (click)="saveInstructions($event)"
+                class="btn btn-sm btn-light"
+            >
+                <fa-icon *ngIf="!savingInstructions" icon="save" class="mr-2"></fa-icon>
+                <fa-icon *ngIf="savingInstructions" icon="circle-notch" [spin]="true" class="mr-2"></fa-icon>
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
         </h3>
     </div>
     <jhi-programming-exercise-instructions
+        *ngIf="!editable; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
-        [exercise]="participation?.exercise"
+        [exercise]="exercise"
         [participation]="participation"
         [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
         [ngStyle]="{ overflow: 'inherit' }"
     >
     </jhi-programming-exercise-instructions>
+    <ng-template #markdownEditorInstructions>
+        <jhi-programming-exercise-editable-instructions
+            [(exercise)]="exercise"
+            [(participation)]="participation"
+            [templateParticipation]="templateParticipation"
+            [markdownEditorHeight]="MarkdownEditorHeight.MEDIUM"
+            [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
+            [ngStyle]="{ overflow: 'inherit' }"
+        >
+        </jhi-programming-exercise-editable-instructions>
+    </ng-template>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>
