@@ -3,6 +3,21 @@
         <div class="mt-3 position-relative" *ngIf="course">
             <div class="exercise-controls d-none d-sm-block" *ngIf="course?.exercises.length > 0">
                 <div ngbDropdown placement="bottom-right" class="d-inline-block">
+                    <button class="btn btn-outline-primary" id="dropdownFilter" ngbDropdownToggle>
+                        <i class="fas fa-filter"></i>
+                        <div ngbDropdownMenu aria-labelledby="dropdownFilter">
+                            <button class="dropdown-item" (click)="filterByAlreadyGraded()">
+                                <fa-icon [icon]="'check-double'"></fa-icon>
+                                {{ 'artemisApp.courseOverview.exerciseList.alreadyGraded' | translate }}
+                            </button>
+                            <button class="dropdown-item">
+                                <fa-icon [icon]="'clock'"></fa-icon>
+                                {{ 'artemisApp.courseOverview.exerciseList.overdue' | translate }}
+                            </button>
+                        </div>
+                    </button>
+                </div>
+                <div ngbDropdown placement="bottom-right" class="d-inline-block">
                     <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                         {{ 'artemisApp.courseOverview.exerciseList.sortExercises' | translate }}
                     </button>

@@ -60,14 +60,22 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
-    public groupExercises(selectedOrder: number): void {
+    filterByAlreadyGraded() {
+        const courseExercises = [...this.course!.exercises].filter(
+            exercise =>
+                !!exercise.numberOfParticipations && exercise.numberOfParticipations > 0 && exercise.numberOfParticipationsWithRatedResult === exercise.participations.length,
+        );
+
+        this.groupExercisesBy(this.DUE_DATE_DESC, courseExercises);
+    }
+
+    private groupExercisesBy(selectedOrder: number, courseExercises: Exercise[]) {
         // set all values to 0
         this.exerciseCountMap = new Map<string, number>();
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const courseExercises = [...this.course!.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
@@ -126,6 +134,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.weeklyExercisesGrouped = groupedExercises;
             this.weeklyIndexKeys = indexKeys;
         }
+    }
+
+    public groupExercises(selectedOrder: number): void {
+        this.groupExercisesBy(selectedOrder, [...this.course!.exercises]);
     }
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {

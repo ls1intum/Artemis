@@ -27,6 +27,8 @@
                 "lectures": "Lectures"
             },
             "exerciseList": {
+                "alreadyGraded": "Grading complete",
+                "overdue": "Overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
                 "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",

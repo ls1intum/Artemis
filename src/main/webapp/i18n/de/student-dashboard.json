@@ -27,6 +27,8 @@
                 "lectures": "Vorlesungen"
             },
             "exerciseList": {
+                "alreadyGraded": "Benotung abgeschlossen",
+                "overdue": "Überfällig",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
