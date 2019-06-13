@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
 import * as chai from 'chai';
 import { CodeEditorStatusComponent } from 'app/code-editor';
-import { CommitState, EditorState } from 'app/entities/ace-editor';
+import { CommitState, EditorState } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';

@@ -7,15 +7,15 @@ import { RouterModule } from '@angular/router';
 import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
 import { HomeComponent } from 'app/home';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
-import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { JhiMainComponent } from 'app/layouts';
 import { SortByModule } from 'app/components/pipes';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
-import { ModelingAssessmentConflictComponent } from './modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
+import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 

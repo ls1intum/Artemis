@@ -15,17 +15,21 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
-import de.tum.in.www1.artemis.service.compass.conflict.ConflictingResult;
+import de.tum.in.www1.artemis.service.ConflictingResultService;
+import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
@@ -41,6 +45,10 @@ public class CompassService {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     private final ParticipationRepository participationRepository;
+
+    private final ModelAssessmentConflictService conflictService;
+
+    private final ConflictingResultService conflictingResultService;
 
     /**
      * Map exerciseId to compass CalculationEngines
@@ -70,11 +78,13 @@ public class CompassService {
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.participationRepository = participationRepository;
+        this.conflictService = conflictService;
+        this.conflictingResultService = conflictingResultService;
     }
 
     public boolean isSupported(DiagramType diagramType) {
@@ -194,20 +204,20 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
+    public List<ModelAssessmentConflict> getConflicts(ModelingSubmission modelingSubmission, long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(modelingSubmission, modelingAssessment);
-        List<Conflict> conflicts = new LinkedList<>();
-        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
-            Set<ConflictingResult> elementResultMap = new HashSet<>();
-            feedbacks.forEach(feedback -> elementResultMap.add(new ConflictingResult(feedback.getReferenceElementId(), feedback.getResult())));
-            Conflict conflict = new Conflict();
-            conflict.setModelElementId(elementID);
-            conflict.setResult(result);
-            conflict.setConflictingResults(elementResultMap);
-            conflicts.add(conflict);
-        });
-        return conflicts;
+        List<Feedback> assessmentWithoutGeneralFeedback = filterOutGeneralFeedback(modelingAssessment);
+        Map<String, List<Feedback>> conflictingFeedbacks = engine.getConflictingFeedbacks(modelingSubmission, assessmentWithoutGeneralFeedback);
+        List<ModelAssessmentConflict> existingUnresolvedConflicts = conflictService.getUnresolvedConflictsForResult(result);
+        conflictService.updateExistingConflicts(existingUnresolvedConflicts, conflictingFeedbacks);
+        conflictService.addMissingConflicts(result, existingUnresolvedConflicts, conflictingFeedbacks);
+        conflictService.saveConflicts(existingUnresolvedConflicts);
+        if (conflictingFeedbacks.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        else {
+            return existingUnresolvedConflicts.stream().filter(conflict -> conflict.getState().equals(EscalationState.UNHANDLED)).collect(Collectors.toList());
+        }
     }
 
     // TODO: cleanup + adjust documentation
@@ -395,6 +405,14 @@ public class CompassService {
             return new JsonObject();
         }
         return compassCalculationEngines.get(exerciseId).getStatistics();
+    }
+
+    /**
+     * @param modelingAssessment List of feedback that gets filtered
+     * @return new list with all feedbacks handed over except the ones without a reference which therefore are considered general feedback
+     */
+    private List<Feedback> filterOutGeneralFeedback(List<Feedback> modelingAssessment) {
+        return modelingAssessment.stream().filter(feedback -> feedback.hasReference()).collect(Collectors.toList());
     }
 
     // Call every night at 2:00 am to free memory for unused calculation engines (older than 1 day)

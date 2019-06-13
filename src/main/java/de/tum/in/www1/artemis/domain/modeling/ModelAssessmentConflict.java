@@ -45,7 +45,7 @@ public class ModelAssessmentConflict {
     /**
      * Already persisted results (i.e. element assessments) that are in conflict with the new assessment in causingConflictingResult
      */
-    @OneToMany(mappedBy = "conflict", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "conflict", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Column(name = "conflictingResults")
     private Set<ConflictingResult> resultsInConflict;
 
@@ -57,11 +57,11 @@ public class ModelAssessmentConflict {
         this.id = id;
     }
 
-    public ConflictingResult getCausingResult() {
+    public ConflictingResult getCausingConflictingResult() {
         return causingConflictingResult;
     }
 
-    public void setCausingResult(ConflictingResult causingResult) {
+    public void setCausingConflictingResult(ConflictingResult causingResult) {
         this.causingConflictingResult = causingResult;
     }
 
@@ -95,5 +95,10 @@ public class ModelAssessmentConflict {
 
     public void setResultsInConflict(Set<ConflictingResult> resultsInConflict) {
         this.resultsInConflict = resultsInConflict;
+    }
+
+    public boolean isResolved() {
+        return (state == EscalationState.RESOLVED_BY_CAUSER || state == EscalationState.RESOLVED_BY_OTHER_TUTORS || state == EscalationState.RESOLVED_BY_INSTRUCTOR)
+                && resolutionDate != null;
     }
 }
