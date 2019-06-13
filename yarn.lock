@@ -8211,6 +8211,11 @@ ng-jhipster@0.9.3:
   dependencies:
     tslib "^1.9.0"
 
+ng-mocks@^7.7.2:
+  version "7.7.2"
+  resolved "https://registry.yarnpkg.com/ng-mocks/-/ng-mocks-7.7.2.tgz#2b1d897142c63db217782b66793b77d8d884a968"
+  integrity sha512-O6QBDv3U30uJFdb5OdE5vsjKUuab7WnF21ICSKxIjNOQNeTxNB6eXhQgdJlVlqqh73jcCwFGiye+NDZEMHMCXA==
+
 ng-pick-datetime@7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/ng-pick-datetime/-/ng-pick-datetime-7.0.0.tgz#c78d1cfaee183691a4a44cd4f39c98f9c1d1595f"

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.websocket.repository;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -23,15 +24,14 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 @Controller
 @SuppressWarnings("unused")
-public class RepositoryWebsocketService {
+public class RepositoryWebsocketResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
@@ -45,13 +45,23 @@ public class RepositoryWebsocketService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public RepositoryWebsocketService(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            Optional<GitService> gitService, SimpMessageSendingOperations messagingTemplate) {
+    private final RepositoryService repositoryService;
+
+    private final Optional<VersionControlService> versionControlService;
+
+    private final ExerciseService exerciseService;
+
+    public RepositoryWebsocketResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            Optional<GitService> gitService, SimpMessageSendingOperations messagingTemplate, RepositoryService repositoryService,
+            Optional<VersionControlService> versionControlService, ExerciseService exerciseService) {
         this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.messagingTemplate = messagingTemplate;
+        this.repositoryService = repositoryService;
+        this.versionControlService = versionControlService;
+        this.exerciseService = exerciseService;
     }
 
     @Nullable
@@ -76,9 +86,8 @@ public class RepositoryWebsocketService {
      * Retrieve the file from repository and update its content with the submission's content. Throws exceptions if the user doesn't have permissions, the file can't be retrieved
      * or it can't be updated.
      * 
-     * @param participationId id of participation to which the file belongs
-     * @param submission      information about file update
-     * @param principal       used to check if the user can update the file
+     * @param submission information about file update
+     * @param repository repository in which to fetch and update the file
      * @throws InterruptedException
      * @throws IOException
      * @throws NoPermissionException
@@ -102,7 +111,7 @@ public class RepositoryWebsocketService {
      * @param principal       used to check if the user can update the files
      */
     @MessageMapping("/topic/repository/{participationId}/files")
-    public void updateFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
+    public void updateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
         Participation participation = participationService.findOne(participationId);
         // User must have the necessary permissions to update a file
         if (!checkParticipation(participation, principal)) {
@@ -132,5 +141,46 @@ public class RepositoryWebsocketService {
             }
         });
         messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", fileSaveResult);
+    }
+
+    /**
+     * Update a list of files in a test repository based on the submission's content.
+     *
+     * @param exerciseId  of exercise to which the files belong
+     * @param submissions information about the file updates
+     * @param principal   used to check if the user can update the files
+     */
+    @MessageMapping("/topic/test-repository/{exerciseId}/files")
+    public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
+        URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+
+        Repository repository;
+        try {
+            repository = repositoryService.checkoutRepositoryByName(principal, exercise, testsRepoUrl);
+        }
+        catch (IllegalAccessException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", error);
+            return;
+        }
+        catch (IOException | InterruptedException ex) {
+            FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", error);
+            return;
+        }
+        // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
+        HashMap<String, String> fileSaveResult = new HashMap<>();
+        submissions.forEach((submission) -> {
+            try {
+                fetchAndUpdateFile(submission, repository);
+                fileSaveResult.put(submission.getFileName(), null);
+            }
+            catch (IOException ex) {
+                fileSaveResult.put(submission.getFileName(), ex.getMessage());
+            }
+        });
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", fileSaveResult);
     }
 }

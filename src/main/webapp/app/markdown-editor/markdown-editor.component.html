@@ -45,7 +45,12 @@
                     </div>
                 </ng-container>
             </div>
-            <div class="card border-0 markdown-editor markdown-editor__small">
+            <div
+                class="card border-0 markdown-editor "
+                [class.markdown-editor__small]="defaultHeight === MarkdownEditorHeight.SMALL"
+                [class.markdown-editor__medium]="defaultHeight === MarkdownEditorHeight.MEDIUM"
+                [class.markdown-editor__large]="defaultHeight === MarkdownEditorHeight.LARGE"
+            >
                 <ace-editor
                     #aceEditor
                     [mode]="aceEditorOptions.mode"

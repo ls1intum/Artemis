@@ -390,6 +390,27 @@ public class ResultResource {
     }
 
     /**
+     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the latest result.
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
+    @GetMapping("results/{participationId}/latest-result")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
+        log.debug("REST request to get latest result for participation : {}", participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Participation participation = participationService.findOne(participationId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user)) {
+            return forbidden();
+        }
+
+        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        return result.map(ResponseEntity::ok).orElse(notFound());
+    }
+
+    /**
      * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
      * or build errors)
      *
