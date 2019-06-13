@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
+@ActiveProfiles("artemis, bamboo")
 public class ParticipationIntegrationTest {
 
     @Autowired
@@ -53,7 +54,6 @@ public class ParticipationIntegrationTest {
         database.addCourseWithDifferentModelingExercises();
     }
 
-    @Ignore
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void participateInExercise() throws Exception {

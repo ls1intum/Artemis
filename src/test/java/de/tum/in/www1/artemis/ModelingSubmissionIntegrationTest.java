@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.util.*;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
+@ActiveProfiles("artemis, bamboo")
 public class ModelingSubmissionIntegrationTest {
 
     @Autowired
@@ -83,7 +85,6 @@ public class ModelingSubmissionIntegrationTest {
         unsubmittedSubmission = generateUnsubmittedSubmission();
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_classDiagram() throws Exception {
@@ -99,7 +100,6 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_activityDiagram() throws Exception {
@@ -116,7 +116,6 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_objectDiagram() throws Exception {
@@ -133,7 +132,6 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_useCaseDiagram() throws Exception {
@@ -150,6 +148,7 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission);
     }
 
+    // TODO: Fix defective test
     @Ignore
     @Test
     @WithMockUser(value = "student2", roles = "USER")
@@ -169,7 +168,6 @@ public class ModelingSubmissionIntegrationTest {
         }
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void injectResultOnSubmissionUpdate() throws Exception {
@@ -187,7 +185,6 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(storedSubmission.getResult()).as("submission still unrated").isNull();
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmissionsOfExercise() throws Exception {
@@ -197,7 +194,6 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission2 });
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
@@ -207,7 +203,6 @@ public class ModelingSubmissionIntegrationTest {
         request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
@@ -219,7 +214,6 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission3 });
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "tutor1")
     public void getModelSubmission() throws Exception {
@@ -232,7 +226,6 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(storedSubmission);
     }
 
-    @Ignore
     @Test
     @WithMockUser(value = "student1")
     public void getModelSubmissionAsStudent() throws Exception {
