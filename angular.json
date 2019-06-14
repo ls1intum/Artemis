@@ -30,7 +30,7 @@
                   "production": {
                       "fileReplacements": [
                       ],
-                      "optimization": true,
+                      "optimization": false,
                       "outputHashing": "all",
                       "sourceMap": true,
                       "extractCss": true,
