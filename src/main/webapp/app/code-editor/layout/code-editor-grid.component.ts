@@ -13,9 +13,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
     providers: [JhiAlertService, WindowRef, CourseService],
 })
 export class CodeEditorGridComponent {
-    @ContentChild('editorSidebarRight') editorSidebarRight: ElementRef;
-    @ContentChild('editorSidebarLeft') editorSidebarLeft: ElementRef;
-    @ContentChild('editorBottomArea') editorBottomArea: ElementRef;
+    @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
+    @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
+    @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
 
     @Input()
     exerciseTitle: string;

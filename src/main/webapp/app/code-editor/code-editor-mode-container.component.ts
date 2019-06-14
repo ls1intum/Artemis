@@ -16,7 +16,7 @@ import { CodeEditorGridComponent } from 'app/code-editor/layout';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
-    @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
+    @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile: string;
     unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
