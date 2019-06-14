@@ -230,19 +230,18 @@ public class CompassService {
      */
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(modelId);
-        if (!modelingSubmission.isPresent()) {
+
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(modelId);
+        if (!optionalModelingSubmission.isPresent()) {
             log.error("No modeling submission with ID {} could be found.", modelId);
             return;
         }
+        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
+
         Result result = resultRepository.findDistinctWithFeedbackBySubmissionId(modelId)
-                .orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
-        // only automatically assess when there is not yet an assessment.
+                .orElse(new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation()));
+        // only assess automatically when there is no manual assessment yet
         if (result.getAssessmentType() != AssessmentType.MANUAL && result.getAssessor() == null) {
-            Grade grade = engine.getGradeForModel(modelId);
-            if (grade.getCoverage() >= 1) {
-                return;
-            }
             ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
 
             // Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
@@ -251,7 +250,7 @@ public class CompassService {
             }
             // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable
             // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
-            grade = roundGrades(grade); // TODO: should we still round the grades?
+            Grade grade = roundGrades(engine.getGradeForModel(modelId)); // TODO: should we still round the grades?
 
             // Save to database
             List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
@@ -268,14 +267,31 @@ public class CompassService {
             // result.setCompletionDate(ZonedDateTime.now());
             result.setResultString(points, modelingExercise.getMaxScore());
 
-            // TODO: do we have to set the submission before saving? when the result is loaded from the DB above, the corresponding submission is not contained (as it is lazy)
-            // or do we have to save the submission additionally?
-            resultRepository.save(result);
+            saveResult(result, modelingSubmission);
             // engine.removeModelWaitingForAssessment(modelId, true);
         }
         else {
             // Make sure next optimal model is in a valid state
             engine.removeModelWaitingForAssessment(modelId, true);
+        }
+    }
+
+    /**
+     * Saves the given result to the database. If the result is new (i.e. no ID), the result is additionally assigned to the given submission which is then saved to the database as
+     * well.
+     *
+     * @param result             the result that should be saved
+     * @param modelingSubmission the corresponding modeling submission
+     */
+    private void saveResult(Result result, ModelingSubmission modelingSubmission) {
+        boolean isNewResult = result.getId() == null;
+
+        resultRepository.save(result);
+
+        if (isNewResult) {
+            modelingSubmission.setResult(result);
+            modelingSubmission.getParticipation().addResult(result);
+            modelingSubmissionRepository.save(modelingSubmission);
         }
     }
 
