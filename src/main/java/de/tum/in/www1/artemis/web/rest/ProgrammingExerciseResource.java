@@ -2,14 +2,14 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,11 +23,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -60,6 +58,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ParticipationRepository participationRepository;
+
     private final GroupNotificationService groupNotificationService;
 
     private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
@@ -68,7 +68,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, ParticipationRepository participationRepository,
+            GroupNotificationService groupNotificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -77,6 +78,7 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
+        this.participationRepository = participationRepository;
         this.groupNotificationService = groupNotificationService;
     }
 
@@ -303,6 +305,41 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
+     *
+     * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
+     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, or with status 400 (Bad Request) if the programmingExercise is not valid, or with
+     *         status 500 (Internal Server Error) if the programmingExercise couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PatchMapping("/programming-exercises-problem")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate) throws URISyntaxException {
+        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
+        // fetch course from database to make sure client didn't change groups
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+        if (errorResponse != null) {
+            return errorResponse;
+        }
+
+        programmingExercise.setProblemStatement(problemStatementUpdate.getProblemStatement());
+
+        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getTitle())).body(result);
+    }
+
+    /**
      * GET /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -345,6 +382,39 @@ public class ProgrammingExerciseResource {
             }
         }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises-with-participations/:id : get the "id" programmingExercise.
+     *
+     * @param id the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/programming-exercises-with-participations/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
+        log.debug("REST request to get ProgrammingExercise : {}", id);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(id);
+        if (programmingExerciseOpt.isPresent()) {
+            ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
+            Course course = programmingExercise.getCourse();
+
+            Optional<Participation> assignmentParticipation = participationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
+            Set<Participation> participations = new HashSet<>();
+            assignmentParticipation.ifPresent(participations::add);
+            programmingExercise.setParticipations(participations);
+
+            if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
+                return forbidden();
+            }
+
+            return ResponseEntity.ok(programmingExercise);
+        }
+        else {
+            return notFound();
+        }
     }
 
     /**

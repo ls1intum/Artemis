@@ -47,9 +47,21 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    updateProblemStatement(programmingExerciseId: number, problemStatement: string) {
+        return this.http
+            .patch<ProgrammingExercise>(`${this.resourceUrl}-problem`, { exerciseId: programmingExerciseId, problemStatement }, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
+    findWithTemplateAndSolutionParticipation(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}-with-participations/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
@@ -69,12 +81,13 @@ export class ProgrammingExerciseService {
 
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = this.exerciseService.convertDateFromClient(exercise);
-        // Remove exercise from template & solution participation to avoid circular dependency issues
+        // Remove exercise from template & solution participation to avoid circular dependency issues.
+        // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, 'exercise') as Participation;
+            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as Participation;
         }
         if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, 'exercise') as Participation;
+            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as Participation;
         }
 
         return copy;
