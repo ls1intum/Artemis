@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -20,13 +22,10 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevSort;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -502,16 +501,12 @@ public class GitService {
      * @throws IOException           on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.
      */
-    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IOException, IllegalStateException {
+    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException {
         Git git = new Git(repo);
         try {
             resetToOriginMaster(repo);
-            ObjectId headId = repo.resolve(Constants.HEAD);
-            RevWalk rw = new RevWalk(repo);
-            RevCommit head = rw.parseCommit(headId);
-            rw.sort(RevSort.REVERSE);
-            rw.markStart(head);
-            RevCommit firstCommit = rw.next();
+            List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
+            RevCommit firstCommit = commits.get(commits.size() - 1);
             // If there is a first commit, squash all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
@@ -525,9 +520,12 @@ public class GitService {
                 throw new IllegalStateException();
             }
         }
-        catch (IOException | JGitInternalException | GitAPIException ex) {
-            log.error("Could not reset repository {} due to exception {}", repo, ex);
-            throw new IOException();
+        // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
+        catch (JGitInternalException ex) {
+            log.debug("Did not squash the repository {} as there were no changes to commit.", repo);
+        }
+        catch (GitAPIException ex) {
+            log.error("Could not squash repository {} due to exception: {}", repo, ex);
         }
     }
 
