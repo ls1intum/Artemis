@@ -337,7 +337,8 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {

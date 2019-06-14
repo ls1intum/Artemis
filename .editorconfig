@@ -10,6 +10,8 @@ root = true
 indent_style = space
 indent_size = 4
 
+[*.{ts,tsx,js,jsx,json,css,scss,yml}]
+
 # We recommend you to keep these unchanged
 end_of_line = lf
 charset = utf-8

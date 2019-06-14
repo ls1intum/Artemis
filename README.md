@@ -3,9 +3,9 @@
 ![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
 ![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)
 
-This application was generated using JHipster 6.0.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.0.1](http://www.jhipster.tech/documentation-archive/v6.0.1).
+This application was generated using JHipster 6.1.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.1.0](http://www.jhipster.tech/documentation-archive/v6.1.0).
 
-**Current version:** 3.1.6
+**Current version:** 3.2.0
 
 ## Main features
 Artemis supports the following exercises:
@@ -41,7 +41,7 @@ While Artemis includes generic adapters to these three external systems with a d
 To optimize the Artemis application for production, run:
 
 ```
-./gradlew -Pprod bootWar
+./gradlew -Pprod -Pwar clean bootWar
 ```
 
 This will compile the TypeScript into JavaScript files, concatenate and minify them and the CSS files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:

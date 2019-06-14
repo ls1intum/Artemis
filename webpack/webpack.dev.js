@@ -40,7 +40,8 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
         watchOptions: {
             ignored: /node_modules/
         },
-        https: options.tls
+        https: options.tls,
+        historyApiFallback: true
     },
     entry: {
         polyfills: './src/main/webapp/app/polyfills',

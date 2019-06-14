@@ -22,10 +22,9 @@ buildscript {
 plugins {
     id "java"
     id "maven"
-    id "war"
     id "idea"
     id "jacoco"
-    id "com.google.cloud.tools.jib" version "1.2.0"
+    id "com.google.cloud.tools.jib" version "1.3.0"
     id "com.gorylenko.gradle-git-properties" version "2.0.0"
     id "com.github.node-gradle.node" version "1.4.0"
     id "net.ltgt.apt-eclipse" version "0.21"
@@ -40,8 +39,6 @@ plugins {
 
 sourceCompatibility=1.8
 targetCompatibility=1.8
-// Until JHipster supports JDK 9
-//assert System.properties['java.specification.version'] == '1.8'
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'propdeps'
@@ -60,6 +57,10 @@ if (project.hasProperty("prod")) {
 
 if (project.hasProperty("zipkin")) {
     apply from: "gradle/zipkin.gradle"
+}
+
+if (project.hasProperty("war")) {
+    apply from: "gradle/war.gradle"
 }
 
 idea {
@@ -81,24 +82,31 @@ spotless {
     }
 }
 
+// See https://virgo47.wordpress.com/2018/09/14/classpath-too-long-with-spring-boot-and-gradle/ for details
+// https://github.com/jhipster/generator-jhipster/issues/9713
+if (OperatingSystem.current().isWindows()) {
+    task classpathJar(type: Jar) {
+        inputs.files sourceSets.main.runtimeClasspath
+
+        archiveName = "runboot-classpath.jar"
+        doFirst {
+            manifest {
+                def classpath = sourceSets.test.runtimeClasspath.files
+                attributes "Class-Path": classpath.collect {f -> f.toURI().toString()}.join(" ")
+            }
+        }
+    }
+
+    bootRun {
+        classpath = classpathJar.outputs.files
+    }
+}
+
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '3.1.6'
+version = '3.2.0'
 description = 'Automated Assessment Management System for Interactive Learning'
-
-bootWar {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
-    includes = ["WEB-INF/**", "META-INF/**"]
-}
-// Command for production build: './gradlew -Pprod bootWar'
-
-war {
-    webAppDirName = "build/resources/main/static/"
-    enabled = true
-    extension = "war.original"
-    includes = ["WEB-INF/**", "META-INF/**"]
-}
 
 springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
@@ -156,7 +164,7 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.1.201904271842-r'
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.2.201906051522-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     implementation "org.imsglobal:basiclti-util:1.2.0"

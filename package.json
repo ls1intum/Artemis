@@ -1,6 +1,6 @@
 {
     "name": "Artemis",
-    "version": "3.1.6",
+    "version": "3.2.0",
     "description": "Automated Assessment Management System for Interactive Learning",
     "private": true,
     "license": "MIT",
@@ -148,7 +148,7 @@
         "tslint": "5.17.0",
         "tslint-config-prettier": "1.18.0",
         "tslint-loader": "3.6.0",
-        "typescript": "3.5.2",
+        "typescript": "3.4.5",
         "webpack": "4.34.0",
         "webpack-cli": "3.3.4",
         "webpack-dev-server": "3.7.1",

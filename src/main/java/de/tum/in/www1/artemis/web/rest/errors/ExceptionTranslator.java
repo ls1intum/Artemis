@@ -21,6 +21,7 @@ import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
 import org.zalando.problem.Status;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
+import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
 import io.github.jhipster.web.util.HeaderUtil;
@@ -30,7 +31,7 @@ import io.github.jhipster.web.util.HeaderUtil;
  * (https://tools.ietf.org/html/rfc7807)
  */
 @ControllerAdvice
-public class ExceptionTranslator implements ProblemHandling {
+public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
 
     private static final String FIELD_ERRORS_KEY = "fieldErrors";
 
