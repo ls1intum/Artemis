@@ -30,7 +30,6 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -497,29 +496,6 @@ public class GitService {
     }
 
     /**
-     * Use with care! Performs a hard reset on the checked out branch ot its remote counterpart. We only have one remote, which is why we can use the first remote from the list.
-     * This reset will remote all changes from commits that are not part of the remote AND all staged and unstaged changes. Exceptions are not thrown here, as calling classes might
-     * just want to continue when this operation fails.
-     * 
-     * @param repo git repository to reset to remote.
-     */
-    public void hardResetToRemote(Repository repo) {
-        Git git = new Git(repo);
-        try {
-            git.fetch().call();
-            String branchName = repo.getBranch();
-            Optional<String> remoteName = git.remoteList().call().stream().findFirst().map(RemoteConfig::getName);
-            if (remoteName.isPresent()) {
-                String remoteBranch = remoteName.get() + "/" + branchName;
-                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(remoteBranch).call();
-            }
-        }
-        catch (IOException | GitAPIException ex) {
-            log.error("Could not reset repository {} due to exception {}", repo, ex);
-        }
-    }
-
-    /**
      * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
      * 
      * @param repo to squash commits for
@@ -529,7 +505,7 @@ public class GitService {
     public void squashAllCommitsIntoInitialCommit(Repository repo) throws IOException, IllegalStateException {
         Git git = new Git(repo);
         try {
-            hardResetToRemote(repo);
+            resetToOriginMaster(repo);
             ObjectId headId = repo.resolve(Constants.HEAD);
             RevWalk rw = new RevWalk(repo);
             RevCommit head = rw.parseCommit(headId);
@@ -549,7 +525,7 @@ public class GitService {
                 throw new IllegalStateException();
             }
         }
-        catch (IOException | GitAPIException ex) {
+        catch (IOException | JGitInternalException | GitAPIException ex) {
             log.error("Could not reset repository {} due to exception {}", repo, ex);
             throw new IOException();
         }
