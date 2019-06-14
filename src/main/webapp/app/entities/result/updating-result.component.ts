@@ -57,31 +57,19 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     }
 
     subscribeForNewResults() {
-        // TODO: I don't think we need to check the users identity here.
-        // If it could be the case that the result passed into the component would not belong to the user,
-        // it would still be shown in html. Only the result subscription would not be instantiated.
-        this.accountService.identity().then(user => {
-            const { exercise, student } = this.participation;
-            // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            const isInstructorInCourse = student == null && exercise.course && this.accountService.isAtLeastInstructorInCourse(exercise.course);
-            const isSameUser = student && user.id === student.id;
-
-            if (isSameUser || isInstructorInCourse) {
-                if (this.resultUpdateListener) {
-                    this.resultUpdateListener.unsubscribe();
-                }
-                this.resultUpdateListener = this.participationWebsocketService
-                    .subscribeForLatestResultOfParticipation(this.participation.id)
-                    .pipe(
-                        // Ignore initial null result of subscription
-                        filter(result => !!result),
-                        // Ignore ungraded results if ungraded results are supposed to be ignored.
-                        filter(result => this.showUngradedResults || result.rated === true),
-                        map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
-                        tap(result => (this.result = result)),
-                    )
-                    .subscribe();
-            }
-        });
+        if (this.resultUpdateListener) {
+            this.resultUpdateListener.unsubscribe();
+        }
+        this.resultUpdateListener = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(
+                // Ignore initial null result of subscription
+                filter(result => !!result),
+                // Ignore ungraded results if ungraded results are supposed to be ignored.
+                filter(result => this.showUngradedResults || result.rated === true),
+                map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
+                tap(result => (this.result = result)),
+            )
+            .subscribe();
     }
 }

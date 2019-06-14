@@ -86,7 +86,6 @@ describe('UpdatingResultComponent', () => {
         };
         comp.ngOnChanges(changes);
         fixture.detectChanges();
-        return new Promise(resolve => resolve());
     };
 
     const cleanInitializeUngraded = (participation = initialParticipation) => {
@@ -97,7 +96,6 @@ describe('UpdatingResultComponent', () => {
         };
         comp.ngOnChanges(changes);
         fixture.detectChanges();
-        return new Promise(resolve => resolve());
     };
 
     it('should not try to subscribe for new results if no participation is provided', () => {
@@ -111,20 +109,20 @@ describe('UpdatingResultComponent', () => {
         expect(comp.result).to.be.undefined;
     });
 
-    it('should use the newest rated result of the provided participation and subscribe for new results', async () => {
-        await cleanInitializeGraded();
+    it('should use the newest rated result of the provided participation and subscribe for new results', () => {
+        cleanInitializeGraded();
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
         expect(comp.result.id).to.equal(gradedResult2.id);
     });
 
-    it('should use the newest (un)rated result of the provided participation and subscribe for new results', async () => {
-        await cleanInitializeUngraded();
+    it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
+        cleanInitializeUngraded();
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(initialParticipation.id);
         expect(comp.result.id).to.equal(ungradedResult2.id);
     });
 
-    it('should react to rated, but not to unrated results if showUngradedResults is false', async () => {
-        await cleanInitializeGraded();
+    it('should react to rated, but not to unrated results if showUngradedResults is false', () => {
+        cleanInitializeGraded();
         const currentResult = comp.result;
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
         expect(comp.result.id).to.equal(currentResult.id);
@@ -133,18 +131,18 @@ describe('UpdatingResultComponent', () => {
     });
 
     it('should react to both rated and unrated results if showUngradedResults is true', async () => {
-        await cleanInitializeUngraded();
+        cleanInitializeUngraded();
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
         expect(comp.result.id).to.equal(newUngradedResult.id);
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
         expect(comp.result.id).to.equal(newGradedResult.id);
     });
 
-    it('should update result and establish new websocket connection on participation change', async () => {
-        await cleanInitializeGraded();
+    it('should update result and establish new websocket connection on participation change', () => {
+        cleanInitializeGraded();
         const unsubscribeSpy = spy(comp.resultUpdateListener, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, results: [{ id: 1, rated: true }] } as Participation;
-        await cleanInitializeGraded(newParticipation);
+        cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).to.have.been.calledOnce;
         expect(comp.result.id).to.equal(newParticipation.results[0].id);
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledTwice;
