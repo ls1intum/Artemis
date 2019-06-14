@@ -17,8 +17,9 @@ import * as moment from 'moment';
 })
 
 /**
- * When using the result component make sure that the reference to the participation input is changed if the result changes
- * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
+ * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
+ * If the participation changes, the newest result from its result array will be used.
+ * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() participation: Participation;
