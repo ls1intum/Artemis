@@ -42,7 +42,7 @@
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                         <div class="alert alert-danger">
                             <div *ngFor="let e of shortName.errors | keyvalue | removekeys: ['required']">
-                                <div jhiDynamicTranslate="arTeMiSApp.course.form.shortname" dynamicLookup="{{ e.key }}"></div>
+                                <div [jhiTranslate]="'arTeMiSApp.course.form.shortname' + '.' + e.key"></div>
                             </div>
                         </div>
                     </ng-container>
