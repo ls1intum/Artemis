@@ -231,7 +231,7 @@ public class CompassService {
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
 
-        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(modelId);
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndParticipationResults(modelId);
         if (!optionalModelingSubmission.isPresent()) {
             log.error("No modeling submission with ID {} could be found.", modelId);
             return;
