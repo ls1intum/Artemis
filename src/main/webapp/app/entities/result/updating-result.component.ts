@@ -28,7 +28,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge: boolean;
 
-    private resultUpdateListener: Subscription;
+    public resultUpdateListener: Subscription;
 
     constructor(private accountService: AccountService, private participationWebsocketService: ParticipationWebsocketService) {}
 
