@@ -34,7 +34,7 @@ public class ModelSelector {
 
         List<UMLClassDiagram> partiallyAssessed = new ArrayList<>();
         for (UMLClassDiagram umlModel : modelIndex.getModelCollection()) {
-            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId()) && !umlModel.isEntirelyAssessed()) {
+            if (!alreadyAssessedModels.contains(umlModel.getModelSubmissionId())) {
                 partiallyAssessed.add(umlModel);
             }
         }

@@ -241,11 +241,11 @@ public class CompassCalculationEngine implements CalculationEngine {
     @Override
     public void removeModelWaitingForAssessment(long modelSubmissionId, boolean isAssessed) {
         modelSelector.removeModelWaitingForAssessment(modelSubmissionId);
-        if (!isAssessed && (modelIndex.getModelMap().get(modelSubmissionId) == null || !modelIndex.getModelMap().get(modelSubmissionId).isEntirelyAssessed())) {
-            modelSelector.removeAlreadyAssessedModel(modelSubmissionId);
-        }
-        else if (isAssessed) {
+        if (isAssessed) {
             modelSelector.addAlreadyAssessedModel(modelSubmissionId);
+        }
+        else {
+            modelSelector.removeAlreadyAssessedModel(modelSubmissionId);
         }
     }
 

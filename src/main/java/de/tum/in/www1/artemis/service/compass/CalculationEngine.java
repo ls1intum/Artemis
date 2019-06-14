@@ -48,6 +48,13 @@ public interface CalculationEngine {
 
     Map<Long, Grade> getModelsWaitingForAssessment();
 
+    /**
+     * Removes the model with the given id from the list of models that should be assessed next. The isAssessed flag indicates if the corresponding model still needs an assessment
+     * or not, i.e. if the flag is true, the model will no longer be considered for assessment by Compass.
+     *
+     * @param modelId    the id of the model
+     * @param isAssessed a flag indicating if the model still needs an assessment or not
+     */
     void removeModelWaitingForAssessment(long modelId, boolean isAssessed);
 
     /**

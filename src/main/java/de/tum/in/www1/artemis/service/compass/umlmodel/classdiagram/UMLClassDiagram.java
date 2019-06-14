@@ -109,6 +109,7 @@ public class UMLClassDiagram extends UMLDiagram {
      *
      * @return isEntirelyAssessed
      */
+    // TODO CZ: remove as it is not needed anymore?
     public boolean isEntirelyAssessed() {
         if (isUnassessed() || lastAssessmentCompassResult.getCoverage() != 1) {
             return false;
