@@ -121,8 +121,6 @@ public class AutomaticSubmissionService {
                 ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
                 // notify compass about new submission
                 modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
-                // check if compass could assess automatically
-                modelingSubmissionService.checkAutomaticResult(modelingSubmission, modelingExercise);
             }
             // set participation state to finished and persist it
             participation.setInitializationState(InitializationState.FINISHED);

@@ -197,8 +197,11 @@ public class ModelingSubmissionService {
 
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
-            checkAutomaticResult(modelingSubmission, modelingExercise);
             participation.setInitializationState(InitializationState.FINISHED);
+            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
+            // database by saving the participation to the DB below since the results are not persisted with the participation.
+            participation.setResults(
+                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
@@ -282,6 +285,7 @@ public class ModelingSubmissionService {
      *
      * @param modelingSubmission the modeling submission that should be updated with the automatic assessment
      */
+    // TODO CZ: remove this as we do not need it anymore?
     public void checkAutomaticResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         if (!compassService.isSupported(modelingExercise.getDiagramType())) {
             return;
