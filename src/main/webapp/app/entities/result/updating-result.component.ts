@@ -36,11 +36,15 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
             // Sort participation results by completionDate desc.
-            this.participation.results = this.participation.results && _orderBy(this.participation.results, 'completionDate', 'desc');
+            if (this.participation.results) {
+                this.participation.results = _orderBy(this.participation.results, 'completionDate', 'desc');
+            }
             // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-            this.result = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
-            // Make sure that the participation result is connected to the newest result.
-            this.result = this.result && { ...this.result, participation: this.participation };
+            const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
+            if (latestResult) {
+                // Make sure that the participation result is connected to the newest result.
+                this.result = { ...latestResult, participation: this.participation };
+            }
 
             this.subscribeForNewResults();
         }
