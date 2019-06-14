@@ -108,7 +108,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
         super.cancelAssessmentOfSubmission(modelingSubmission);
         ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
-        compassService.markModelAsUnassessed(modelingExercise, modelingSubmission.getId());
+        compassService.cancelAssessmentForSubmission(modelingExercise, modelingSubmission.getId());
     }
 
     /**

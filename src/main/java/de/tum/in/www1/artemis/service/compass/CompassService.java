@@ -140,16 +140,18 @@ public class CompassService {
     }
 
     /**
-     * Mark a model as unassessed, i.e. indicating that it (still) needs to be assessed. By that it is not locked anymore and can be returned for assessment by Compass again.
+     * Mark a model as unassessed, i.e. indicate that it (still) needs to be assessed. By that it is not locked anymore and can be returned for assessment by Compass again.
+     * Afterwards, the automatic assessment is triggered for the submission of the cancelled assessment so that the next tutor might get a partially assessed model.
      *
      * @param modelingExercise  the corresponding exercise
      * @param modelSubmissionId the id of the model submission which should be marked as unassessed
      */
-    public void markModelAsUnassessed(ModelingExercise modelingExercise, long modelSubmissionId) {
+    public void cancelAssessmentForSubmission(ModelingExercise modelingExercise, long modelSubmissionId) {
         if (!isSupported(modelingExercise.getDiagramType()) || !loadExerciseIfSuspended(modelingExercise.getId())) {
             return;
         }
         compassCalculationEngines.get(modelingExercise.getId()).markModelAsUnassessed(modelSubmissionId);
+        assessAutomatically(modelSubmissionId, modelingExercise.getId());
     }
 
     /**
