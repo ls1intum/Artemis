@@ -317,7 +317,7 @@ public class ModelingSubmissionResource {
         participation.setResults(null);
 
         // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null) {
+        if (modelingSubmission.getResult() != null && (modelingSubmission.getResult().getCompletionDate() == null || modelingSubmission.getResult().getAssessor() == null)) {
             modelingSubmission.setResult(null);
         }
 
