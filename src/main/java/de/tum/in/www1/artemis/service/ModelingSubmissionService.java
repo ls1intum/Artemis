@@ -109,7 +109,7 @@ public class ModelingSubmissionService {
             Set<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
             for (Long submissionId : modelsWaitingForAssessment) {
                 // TODO CZ: think about how to handle canceled assessments with Compass as I do not want to receive the same submission again, if I canceled the assessment
-                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findById(submissionId);
+                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId);
                 if (submission.isPresent()) {
                     return submission;
                 }
