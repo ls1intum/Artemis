@@ -119,6 +119,9 @@ public class CompassService {
     }
 
     /**
+     * Get the (cached) list of models that need to be assessed next. If the number of models in the list is smaller than the configured NUMBER_OF_OPTIMAL_MODELS a new "optimal"
+     * model is added to the list. The models in the list are optimal in the sense of knowledge gain for Compass, helping to automatically assess as many other models as possible.
+     *
      * @param exerciseId the exerciseId
      * @return List of model Ids waiting for an assessment by an assessor
      */
@@ -127,8 +130,6 @@ public class CompassService {
             return new HashSet<>();
         }
 
-        // TODO: double check that the returned modelSubmissions (respectively their ids) do not have a result yet
-
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
         if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS) {
             Map.Entry<Long, Grade> optimalModel = this.getNextOptimalModel(exerciseId);
@@ -136,7 +137,25 @@ public class CompassService {
                 optimalModels.put(optimalModel.getKey(), optimalModel.getValue());
             }
         }
+        removeManuallyAssessedModels(optimalModels, exerciseId);
         return optimalModels.keySet();
+    }
+
+    /**
+     * Check for every model in the given list of optimal models if there is a manually saved or finished assessment for the corresponding modeling submission. If there is, the
+     * model gets removed from the list of optimal models. This check should not be necessary as there should only be models in the list that have no or only an automatic
+     * assessment. We better double check here as we want to make sure that no models with finished or manual assessments get sent to other users than the assessor.
+     */
+    private void removeManuallyAssessedModels(Map<Long, Grade> optimalModels, long exerciseId) {
+        Iterator<Long> iterator = optimalModels.keySet().iterator();
+        while (iterator.hasNext()) {
+            Long modelId = iterator.next();
+            Optional<Result> result = resultRepository.findDistinctBySubmissionId(modelId);
+            if (result.isPresent() && (result.get().getCompletionDate() != null || AssessmentType.MANUAL.equals(result.get().getAssessmentType()))) {
+                removeModelWaitingForAssessment(exerciseId, modelId);
+                iterator.remove();
+            }
+        }
     }
 
     /**
