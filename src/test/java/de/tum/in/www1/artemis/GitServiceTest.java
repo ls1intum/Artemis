@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.StreamSupport;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.After;
@@ -66,7 +66,7 @@ public class GitServiceTest {
     }
 
     @Test
-    public void squashAllCommitsIntoInitialCommitTest() throws IOException {
+    public void squashAllCommitsIntoInitialCommitTest() throws GitAPIException {
         String newFileContent1 = "lorem ipsum";
         String newFileContent2 = "lorem ipsum solet";
         String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
@@ -98,8 +98,8 @@ public class GitServiceTest {
         });
     }
 
-    @Test(expected = IOException.class)
-    public void squashAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws IOException {
+    @Test
+    public void squashAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
         String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1);
         String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2);
         String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);

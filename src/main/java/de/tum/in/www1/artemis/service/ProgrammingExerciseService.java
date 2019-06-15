@@ -432,7 +432,7 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException
      * @throws IllegalStateException
      */
-    public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException {
+    public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }

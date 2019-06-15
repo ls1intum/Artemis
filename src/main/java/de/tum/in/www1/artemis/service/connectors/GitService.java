@@ -501,7 +501,7 @@ public class GitService {
      * @throws IOException           on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.
      */
-    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException {
+    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
         Git git = new Git(repo);
         try {
             resetToOriginMaster(repo);
@@ -526,6 +526,7 @@ public class GitService {
         }
         catch (GitAPIException ex) {
             log.error("Could not squash repository {} due to exception: {}", repo, ex);
+            throw (ex);
         }
     }
 
