@@ -1,22 +1,22 @@
 <div *ngIf="exercise">
     <h2>
         {{ exercise.course.title }} - {{ exercise.title }}
-        <small jhiTranslate="arTeMiSApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
+        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
     <div>
         <div class="button-toolbar float-right">
             <button type="submit" routerLink="/exercise/{{ exercise.id }}/participation" class="btn btn-primary btn-sm mr-1">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
             </button>
             <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                 <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.exportNames">Export Names</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
             </button>
             <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
                 <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.exportResults">Export Results</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
             </button>
             <button
                 *ngIf="exercise.type === PROGRAMMING"
@@ -30,21 +30,21 @@
             </button>
             <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
                 <fa-icon [icon]="'sync'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.refresh">Refresh</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
             </button>
         </div>
 
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'" />
-            {{ 'arTeMiSApp.exercise.showUnsuccessful' | translate }}
+            {{ 'artemisApp.exercise.showUnsuccessful' | translate }}
         </label>
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'" />
-            {{ 'arTeMiSApp.exercise.showSuccessful' | translate }}
+            {{ 'artemisApp.exercise.showSuccessful' | translate }}
         </label>
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
-            {{ 'arTeMiSApp.exercise.showAll' | translate }}
+            {{ 'artemisApp.exercise.showAll' | translate }}
         </label>
     </div>
     <div class="table-responsive" *ngIf="results">
@@ -53,22 +53,22 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                     <th></th>
                     <th jhiSortBy="participation.student.firstName">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="completionDate">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="successful">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionCount">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="score">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="duration">
-                        <a class="th-link">{{ 'arTeMiSApp.exercise.duration' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.exercise.duration' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th *ngIf="exercise.type !== QUIZ"></th>
                 </tr>

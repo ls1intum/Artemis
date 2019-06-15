@@ -43,7 +43,7 @@
             </button>
         </div>
     </h3>
-    <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
+    <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="artemisApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
     <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAuthorized && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
@@ -63,7 +63,7 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
     <div class="row mt-3">
-        <h4 class="col-12" jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</h4>
+        <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-6">
             <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
         </div>

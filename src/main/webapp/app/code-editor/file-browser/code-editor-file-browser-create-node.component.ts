@@ -11,7 +11,7 @@ import { FileType } from 'app/entities/ace-editor/file-change.model';
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     FileType = FileType;
 
-    @ViewChild('creatingInput') creatingInput: ElementRef;
+    @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
     @Input() createFileType: FileType;
     @Input() folder: string;

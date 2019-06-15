@@ -12,7 +12,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
-    @ViewChild('titleInput') titleInput: ElementRef;
+    @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
 
     constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private jhiAlertService: JhiAlertService) {}
 
@@ -30,7 +30,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
                 this.router.navigate(['apollon-diagrams', newDiagram.id]);
             },
             response => {
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+                this.jhiAlertService.error('artemisApp.apollonDiagram.create.error');
             },
         );
     }

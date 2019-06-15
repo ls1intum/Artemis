@@ -82,7 +82,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
-                if (error.headers.get('X-arTeMiSApp-error') === 'CAPTCHA required') {
+                if (error.headers.get('X-artemisApp-error') === 'CAPTCHA required') {
                     this.captchaRequired = true;
                 } else {
                     this.captchaRequired = false;

@@ -1,6 +1,6 @@
 <div *ngIf="participations">
     <h2>
-        <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="arTeMiSApp.participation.home.title">Participations</span>
+        <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
     </h2>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
@@ -14,27 +14,27 @@
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="repositoryUrl">
-                        <span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span>
+                        <span jhiTranslate="artemisApp.participation.repositoryUrl">Repository Url</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="buildPlanId">
-                        <span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span>
+                        <span jhiTranslate="artemisApp.participation.buildPlanId">Build Plan Id</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="initializationState">
-                        <span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span>
+                        <span jhiTranslate="artemisApp.participation.initializationState">Initialization State</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="initializationDate">
-                        <span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span>
+                        <span jhiTranslate="artemisApp.participation.initializationDate">Initialization Date</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="student.firstName">
-                        <span jhiTranslate="arTeMiSApp.participation.student">Student</span>
+                        <span jhiTranslate="artemisApp.participation.student">Student</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="presentationScore">
-                        <span jhiTranslate="arTeMiSApp.participation.presentationScore">Presentation Score</span>
+                        <span jhiTranslate="artemisApp.participation.presentationScore">Presentation Score</span>
                         <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th></th>
@@ -54,7 +54,7 @@
                             ><a href="https://bamboobruegge.in.tum.de/browse/{{ participation.buildPlanId }}" target="_blank">{{ participation.buildPlanId }}</a></span
                         >
                     </td>
-                    <td>{{ 'arTeMiSApp.InitializationState.' + participation.initializationState | translate }}</td>
+                    <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
                     <td>{{ participation.initializationDate | date: 'medium' }}</td>
                     <td>
                         <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
@@ -99,7 +99,7 @@
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon icon="file-powerpoint"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.participation.addPresentation.label">Add presentation</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                             </button>
                             <button
                                 *ngIf="exercise.isAtLeastTutor && participation.presentationScore == 1"
@@ -107,7 +107,7 @@
                                 class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon icon="file-powerpoint"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.participation.removePresentation.label">Remove presentation</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
                         </div>
                     </td>

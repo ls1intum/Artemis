@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" id="myTextExerciseLabel" jhiTranslate="arTeMiSApp.textExercise.home.createOrEditLabel">Create or edit a Text Exercise</h4>
+        <h4 class="modal-title" id="myTextExerciseLabel" jhiTranslate="artemisApp.textExercise.home.createOrEditLabel">Create or edit a Text Exercise</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
@@ -10,11 +10,11 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
             <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
         </div>
         <div class="form-group position-relative">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
                 [exerciseCategories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -22,7 +22,7 @@
             ></jhi-category-selector>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
                 <jhi-difficulty-picker [exercise]="textExercise"></jhi-difficulty-picker>
             </div>
@@ -30,24 +30,24 @@
         <div class="d-flex">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
-                    labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate }}"
+                    labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="textExercise.releaseDate"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
             <div class="form-group flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker labelName="{{ 'artemisApp.exercise.dueDate' | translate }}" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
             </div>
         </div>
         <div class="form-group">
             <jhi-date-time-picker
-                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
+                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
                 [(ngModel)]="textExercise.assessmentDueDate"
                 name="assessmentDueDate"
             ></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input
                 required
                 type="number"
@@ -61,7 +61,7 @@
             />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="textExercise.course">
                 <option [ngValue]="null"></option>
                 <option [ngValue]="course.id === textExercise.course?.id ? textExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{
@@ -70,19 +70,19 @@
             </select>
         </div>
         <div class="form-group" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <jhi-markdown-editor [(markdown)]="textExercise.problemStatement"></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_sampleSolution">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
             <jhi-markdown-editor [(markdown)]="textExercise.sampleSolution"></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_gradingInstructions">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
             <jhi-markdown-editor [(markdown)]="textExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <span jhiTranslate="arTeMiSApp.textExercise.exampleSubmissions">Example submissions</span>
+            <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
@@ -93,7 +93,7 @@
                         *ngIf="exampleSubmission.usedForTutorial"
                         icon="chalkboard-teacher"
                         style="margin-left: 10px"
-                        [title]="'arTeMiSApp.exampleSubmission.usedForTutorial' | translate"
+                        [title]="'artemisApp.exampleSubmission.usedForTutorial' | translate"
                     ></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
@@ -106,12 +106,12 @@
                 *ngIf="textExercise.id"
                 class="btn btn-primary"
                 routerLink="text-exercise/{{ textExercise.id }}/example-submission/new"
-                jhiTranslate="arTeMiSApp.textExercise.createExampleSubmissions"
+                jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
             </button>
 
-            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="arTeMiSApp.textExercise.exampleSubmissionsRequireExercise">
+            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
         </div>

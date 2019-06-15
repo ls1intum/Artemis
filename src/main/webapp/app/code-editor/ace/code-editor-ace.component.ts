@@ -28,7 +28,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     providers: [JhiAlertService, WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
-    @ViewChild('editor')
+    @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
 
     @Input()

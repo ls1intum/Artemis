@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
@@ -38,6 +39,9 @@ public class ModelingSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String GET_200_SUBMISSIONS_REASON = "";
 
@@ -277,23 +281,25 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID."))
-                    .body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
         ModelingExercise modelingExercise;
         if (participation.getExercise() instanceof ModelingExercise) {
             modelingExercise = (ModelingExercise) participation.getExercise();
             if (modelingExercise == null) {
                 return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                        .body(null);
             }
 
             // make sure sensitive information are not sent to the client
             modelingExercise.filterSensitiveInformation();
         }
         else {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
+                    .body(null);
         }
 
         // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.

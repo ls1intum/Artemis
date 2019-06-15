@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "complaint": {
             "title": "Complaint",
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",

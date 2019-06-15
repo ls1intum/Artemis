@@ -11,7 +11,7 @@ import { CodeEditorFileBrowserNodeComponent } from 'app/code-editor/file-browser
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
-    @ViewChild('renamingInput') renamingInput: ElementRef;
+    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
     @Input() onCollapseExpand: () => void;
     @Input() isCompressed = false;

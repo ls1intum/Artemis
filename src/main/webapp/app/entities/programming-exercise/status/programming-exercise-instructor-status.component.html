@@ -3,12 +3,12 @@
     icon="exclamation-triangle"
     class="text-warning"
     *ngIf="participationType === ParticipationType.TEMPLATE && latestResult && latestResult.score > 0"
-    [ngbTooltip]="'arTeMiSApp.programmingExercise.status.templateFulfillsTest' | translate"
+    [ngbTooltip]="'artemisApp.programmingExercise.status.templateFulfillsTest' | translate"
 ></fa-icon>
 <fa-icon
     id="instructor-status-solution"
     icon="exclamation-triangle"
     class="text-warning"
     *ngIf="participationType === ParticipationType.SOLUTION && latestResult && !latestResult.successful"
-    [ngbTooltip]="'arTeMiSApp.programmingExercise.status.solutionFailsTest' | translate"
+    [ngbTooltip]="'artemisApp.programmingExercise.status.solutionFailsTest' | translate"
 ></fa-icon>

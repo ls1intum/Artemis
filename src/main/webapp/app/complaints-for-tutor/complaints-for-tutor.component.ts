@@ -63,7 +63,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // If the complaint was rejected, just the complaint response is created.
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
-                    this.jhiAlertService.success('arTeMiSApp.textAssessment.complaintResponse.created');
+                    this.jhiAlertService.success('artemisApp.textAssessment.complaintResponse.created');
                     this.complaintResponse = response.body;
                 },
                 (err: HttpErrorResponse) => {

@@ -42,6 +42,9 @@ public class ResultResource {
 
     private static final String ENTITY_NAME = "result";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     @Value("${artemis.bamboo.authentication-token}")
     private String CI_AUTHENTICATION_TOKEN = "";
 
@@ -114,7 +117,8 @@ public class ResultResource {
 
         resultService.createNewResult(result, true);
 
-        return ResponseEntity.created(new URI("/api/results/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -221,7 +225,7 @@ public class ResultResource {
         }
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -470,7 +474,7 @@ public class ResultResource {
             if (!userHasPermissions(course))
                 return forbidden();
             resultRepository.deleteById(resultId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, resultId.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
         }
         return ResponseEntity.notFound().build();
     }
