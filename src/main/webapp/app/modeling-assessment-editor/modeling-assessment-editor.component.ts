@@ -116,7 +116,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.goToExerciseDashboard();
-                    this.jhiAlertService.info('arTeMiSApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else {
                     this.onError();
                 }
@@ -239,7 +239,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 } else {
                     let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
                     if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
+                        errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                     }
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error(errorMessage);

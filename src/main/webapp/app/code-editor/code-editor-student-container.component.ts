@@ -23,11 +23,11 @@ import { CodeEditorAceComponent } from 'app/code-editor/ace';
     templateUrl: './code-editor-student-container.component.html',
 })
 export class CodeEditorStudentContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorFileBrowserComponent) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorInstructionsComponent) instructions: CodeEditorInstructionsComponent;
-    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
+    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
+    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
+    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
+    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
     paramSub: Subscription;
     participation: Participation;

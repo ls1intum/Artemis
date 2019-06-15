@@ -5,7 +5,7 @@ export class HintCommand extends DomainTagCommand {
     public static readonly identifier = '[hint]';
     public static readonly text = ' Add a hint here (visible during the quiz via ?-Button)';
 
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addHint';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addHint';
 
     /**
      * @function execute

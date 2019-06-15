@@ -4,10 +4,10 @@
     <table class="table exercise-table" [hidden]="exercises.length === 0">
         <thead>
             <tr>
-                <th class="col-xs-3" jhiTranslate="arTeMiSApp.exercise.exercise">Exercise</th>
-                <th class="col-xs-2" jhiTranslate="arTeMiSApp.exercise.dueDate">Due date</th>
-                <th class="col-xs-6" jhiTranslate="arTeMiSApp.exercise.results">Results</th>
-                <th class="col-xs-1" jhiTranslate="arTeMiSApp.exercise.actions">Actions</th>
+                <th class="col-xs-3" jhiTranslate="artemisApp.exercise.exercise">Exercise</th>
+                <th class="col-xs-2" jhiTranslate="artemisApp.exercise.dueDate">Due date</th>
+                <th class="col-xs-6" jhiTranslate="artemisApp.exercise.results">Results</th>
+                <th class="col-xs-1" jhiTranslate="artemisApp.exercise.actions">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -71,7 +71,7 @@
                     <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | date: 'MMM d, y H:mm' }}">{{ exercise.dueDate | amTimeAgo }}</span>
                 </td>
                 <td [ngSwitch]="exercise.participationStatus">
-                    <span class="text-muted" *ngSwitchCase="'uninitialized'" jhiTranslate="arTeMiSApp.exercise.notStarted">You have not started this exercise yet.</span>
+                    <span class="text-muted" *ngSwitchCase="'uninitialized'" jhiTranslate="artemisApp.exercise.notStarted">You have not started this exercise yet.</span>
                     <span *ngSwitchCase="'initialized'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
                     <span *ngSwitchCase="'inactive'"><jhi-updating-result [participation]="exercise.participations[0]"></jhi-updating-result></span>
                     <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>

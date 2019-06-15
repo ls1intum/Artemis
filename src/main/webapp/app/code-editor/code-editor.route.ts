@@ -11,7 +11,7 @@ export const codeEditorRoute: Routes = [
         component: CodeEditorStudentContainerComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.editor.home.title',
+            pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
@@ -24,7 +24,7 @@ export const codeEditorRoute: Routes = [
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
-            pageTitle: 'arTeMiSApp.editor.home.title',
+            pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
@@ -37,7 +37,7 @@ export const codeEditorRoute: Routes = [
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
-            pageTitle: 'arTeMiSApp.editor.home.title',
+            pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},
@@ -50,7 +50,7 @@ export const codeEditorRoute: Routes = [
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
-            pageTitle: 'arTeMiSApp.editor.home.title',
+            pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
             repositoryCache: {},

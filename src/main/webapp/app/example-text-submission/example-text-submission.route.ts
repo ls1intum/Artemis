@@ -9,7 +9,7 @@ export const exampleTextSubmissionRoute: Routes = [
         component: ExampleTextSubmissionComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.exampleSubmission.home.title',
+            pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

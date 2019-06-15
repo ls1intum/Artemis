@@ -134,7 +134,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countMultipleChoice() {
         this.submittedAnswerCorrectValues();
-        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
+        const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.checkForCorrectAnswers.length;
@@ -162,7 +162,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      * counts the variables for Drag and Drop Questions
      */
     private countDragAndDrop() {
-        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
+        const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const dndQuestion = this.question as DragAndDropQuestion;
         this.dragAndDropZones = dndQuestion.dropLocations.length;
         this.wronglyMappedDragAndDropItems = this.dragAndDropZones - this.correctlyMappedDragAndDropItems;
@@ -185,7 +185,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      * counts the variables for Short Answer Questions
      */
     private countShortAnswer() {
-        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
+        const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const shortAnswer = this.question as ShortAnswerQuestion;
         this.shortAnswerSpots = shortAnswer.spots.length;
         this.shortAnswerCorrectAnswers = this.shortAnswerText.filter(option => option.isCorrect).length;
@@ -209,7 +209,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      * Checks the score of the question and the score the student has achieved, depending on that write either point or points
      */
     private checkForSingleOrPluralPoints() {
-        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
+        const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         if (this.question.score === 1) {
             this.questionPoint = this.translateService.instant(translationBasePath + 'point');
         } else {

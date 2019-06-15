@@ -1,23 +1,23 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" id="myApollonDiagramLabel" jhiTranslate="arTeMiSApp.apollonDiagram.home.createLabel">Create or edit a Apollon Diagram</h4>
+        <h4 class="modal-title" id="myApollonDiagramLabel" jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create or edit a Apollon Diagram</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.apollonDiagram.title" for="field_title">Title</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title">Title</label>
             <input #titleInput type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
             <select class="form-control" name="diagramType" [(ngModel)]="apollonDiagram.diagramType" id="field_diagramType">
-                <option value="ClassDiagram">{{ 'arTeMiSApp.DiagramType.ClassDiagram' | translate }}</option>
-                <option value="ActivityDiagram">{{ 'arTeMiSApp.DiagramType.ActivityDiagram' | translate }}</option>
-                <option value="ObjectDiagram">{{ 'arTeMiSApp.DiagramType.ObjectDiagram' | translate }}</option>
-                <option value="UseCaseDiagram">{{ 'arTeMiSApp.DiagramType.UseCaseDiagram' | translate }}</option>
-                <option value="CommunicationDiagram">{{ 'arTeMiSApp.DiagramType.CommunicationDiagram' | translate }}</option>
-                <option value="ComponentDiagram">{{ 'arTeMiSApp.DiagramType.ComponentDiagram' | translate }}</option>
-                <option value="DeploymentDiagram">{{ 'arTeMiSApp.DiagramType.DeploymentDiagram' | translate }}</option>
+                <option value="ClassDiagram">{{ 'artemisApp.DiagramType.ClassDiagram' | translate }}</option>
+                <option value="ActivityDiagram">{{ 'artemisApp.DiagramType.ActivityDiagram' | translate }}</option>
+                <option value="ObjectDiagram">{{ 'artemisApp.DiagramType.ObjectDiagram' | translate }}</option>
+                <option value="UseCaseDiagram">{{ 'artemisApp.DiagramType.UseCaseDiagram' | translate }}</option>
+                <option value="CommunicationDiagram">{{ 'artemisApp.DiagramType.CommunicationDiagram' | translate }}</option>
+                <option value="ComponentDiagram">{{ 'artemisApp.DiagramType.ComponentDiagram' | translate }}</option>
+                <option value="DeploymentDiagram">{{ 'artemisApp.DiagramType.DeploymentDiagram' | translate }}</option>
             </select>
         </div>
     </div>

@@ -5,7 +5,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { getStringSegmentPositions } from 'app/utils/global.utils';
 
 export class TestCaseCommand extends DomainMultiOptionCommand {
-    buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.testCaseCommand';
+    buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.testCaseCommand';
 
     setEditor(aceEditorContainer: AceEditorComponent) {
         super.setEditor(aceEditorContainer);

@@ -2,7 +2,7 @@ import { Command } from './command';
 
 export class OrderedListCommand extends Command {
     buttonIcon = 'list-ol';
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.orderedList';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.orderedList';
 
     /**
      * @function execute

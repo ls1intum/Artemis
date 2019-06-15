@@ -4,13 +4,13 @@
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
             <fa-icon icon="circle-notch" spin="true"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.fetchingParticipation">
+            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
                 Your participation is being loaded...
             </span>
         </span>
         <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
             <fa-icon icon="times-circle" class="text-danger"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+            <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
         </span>
     </div>
 </nav>
@@ -33,16 +33,16 @@
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
                     >
-                        <span jhiTranslate="arTeMiSApp.editor.repoSelect.templateRepo">Template Repository</span>
+                        <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
                     </button>
                     <button
                         [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo"
+                        jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                     >
-                        <span jhiTranslate="arTeMiSApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
+                        <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
                     </button>
                     <button
                         [disabled]="
@@ -55,7 +55,7 @@
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="arTeMiSApp.editor.repoSelect.assignmentRepo"
+                        jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
                     >
                         Assignment Participation
                     </button>
@@ -64,7 +64,7 @@
                         (click)="selectTestRepository()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
-                        jhiTranslate="arTeMiSApp.editor.repoSelect.testRepo"
+                        jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     >
                         Test Repository
                     </button>
@@ -80,7 +80,7 @@
                 >
                     <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="plus" class="text-white mr-2"></fa-icon>
                     <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
-                    <span jhiTranslate="arTeMiSApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
+                    <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
                 </button>
                 <button
                     *ngIf="exercise.participations && exercise.participations.length"
@@ -99,7 +99,7 @@
                         [spin]="true"
                         class="text-white mr-2"
                     ></fa-icon>
-                    <span jhiTranslate="arTeMiSApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
+                    <span jhiTranslate="artemisApp.editor.repoSelect.resetAssignmentRepo">Reset assignment participation</span>
                 </button>
             </div>
         </div>

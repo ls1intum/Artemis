@@ -10,7 +10,7 @@ export const courseListRoute: Routes = [
         component: CourseListComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -19,7 +19,7 @@ export const courseListRoute: Routes = [
         component: CourseListComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -28,7 +28,7 @@ export const courseListRoute: Routes = [
         component: CourseScoreCalculationComponent,
         data: {
             authorities: ['ROLE_USER', 'ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -5,7 +5,7 @@ import { FileType } from 'app/entities/ace-editor/file-change.model';
 export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
     FileType = FileType;
 
-    @ViewChild('renamingInput') renamingInput: ElementRef;
+    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 
     @Input() item: TreeviewItem;
     @Input() hasError = false;

@@ -25,7 +25,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 })
 // TODO CZ: move assessment stuff to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild(ModelingEditorComponent)
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
     private subscription: Subscription;
@@ -91,7 +91,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.modelingSubmissionService.getDataForModelingEditor(params['participationId']).subscribe(
                     modelingSubmission => {
                         if (!modelingSubmission) {
-                            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noSubmission');
+                            this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
                         }
                         // reconnect participation <--> result
                         if (modelingSubmission.result) {
@@ -180,7 +180,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.prepareAssessmentData();
                     });
                 }
-                this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
+                this.jhiAlertService.info('artemisApp.modelingEditor.autoSubmit');
                 this.isActive = false;
             }
         });
@@ -200,7 +200,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
                 this.prepareAssessmentData();
                 this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.assessmentResult, this.modelingExercise);
-                this.jhiAlertService.info('arTeMiSApp.modelingEditor.newAssessment');
+                this.jhiAlertService.info('artemisApp.modelingEditor.newAssessment');
             }
         });
     }
@@ -246,11 +246,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                 },
                 error => {
                     this.isSaving = false;
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
                 },
             );
         } else {
@@ -259,12 +259,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = submission.body;
                     this.result = this.submission.result;
                     this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                     this.subscribeToAutomaticSubmissionWebsocket();
                 },
                 error => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
                     this.isSaving = false;
                 },
             );
@@ -277,7 +277,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.updateSubmissionModel();
         if (this.isModelEmpty(this.submission.model)) {
-            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
+            this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
         }
 
@@ -302,12 +302,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.assessmentResult = assessmentResult;
                             this.prepareAssessmentData();
                         });
-                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessfulWithAssessment');
                     } else {
                         if (this.isActive) {
-                            this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                         } else {
-                            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
                         }
                     }
                     this.retryStarted = false;
@@ -317,7 +317,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
                 },
                 err => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
                     this.submission.submitted = false;
                 },
             );
