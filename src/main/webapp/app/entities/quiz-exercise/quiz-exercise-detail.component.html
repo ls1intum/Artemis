@@ -1,11 +1,11 @@
 <div class="container-fluid" *ngIf="quizExercise">
     <h4>
-        <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="arTeMiSApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
-        <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="arTeMiSApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
+        <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
+        <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
         <span class="badge badge-info align-text-top float-right">
-            <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
+            <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
             <span class="badge badge-light">{{ calculateMaxExerciseScore() }}</span>
-            <span class="sr-only" jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>
+            <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
         </span>
     </h4>
     <hr />
@@ -14,7 +14,7 @@
         <div class="row col-12">
             <div class="col-12 col-md-6">
                 <div class="form-group-narrow">
-                    <label for="quiz-title" jhiTranslate="arTeMiSApp.exercise.title">Title</label>
+                    <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
                     <input
                         id="quiz-title"
                         name="quiz-title"
@@ -25,7 +25,7 @@
                     />
                 </div>
                 <div class="form-group-narrow position-relative">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                     <jhi-category-selector
                         [exerciseCategories]="exerciseCategories"
                         [existingCategories]="existingCategories"
@@ -34,7 +34,7 @@
                     ></jhi-category-selector>
                 </div>
                 <div class="form-group-narrow">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
                     <div>
                         <jhi-difficulty-picker (ngModelChange)="cacheValidation()" [exercise]="quizExercise"></jhi-difficulty-picker>
                     </div>
@@ -42,7 +42,7 @@
             </div>
             <div class="col-12 col-md-6">
                 <div class="form-group-narrow">
-                    <label jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</label>
+                    <label jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
                     <div class="d-flex align-items-center">
                         <input
                             id="quiz-duration-minutes"
@@ -56,7 +56,7 @@
                             [(ngModel)]="duration.minutes"
                             (blur)="onDurationChange()"
                         />
-                        <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
                         <input
                             id="quiz-duration-seconds"
                             style="width: 70px;"
@@ -69,10 +69,10 @@
                             [(ngModel)]="duration.seconds"
                             (blur)="onDurationChange()"
                         />
-                        <span jhiTranslate="arTeMiSApp.quizExercise.seconds"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                     </div>
                     <div class="form-group-narrow">
-                        <label jhiTranslate="arTeMiSApp.quizExercise.options">Options</label>
+                        <label jhiTranslate="artemisApp.quizExercise.options">Options</label>
                         <div class="form-check custom-control custom-checkbox">
                             <input
                                 type="checkbox"
@@ -81,7 +81,7 @@
                                 [(ngModel)]="quizExercise.randomizeQuestionOrder"
                                 (ngModelChange)="cacheValidation()"
                             />
-                            <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder"> </label>
+                            <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
                         <div class="form-check custom-control custom-checkbox">
                             <input
@@ -91,7 +91,7 @@
                                 [(ngModel)]="quizExercise.isPlannedToStart"
                                 (ngModelChange)="cacheValidation()"
                             />
-                            <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="arTeMiSApp.quizExercise.startTime"> </label>
+                            <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
                         </div>
                         <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
                             <div class="flex-grow-1">
@@ -108,7 +108,7 @@
             </div>
             <div class="col-12 text-left mt-1 mb-1">
                 <h4>
-                    <span jhiTranslate="arTeMiSApp.quizExercise.questions"> </span>
+                    <span jhiTranslate="artemisApp.quizExercise.questions"> </span>
                 </h4>
             </div>
             <div class="question card" *ngFor="let question of quizExercise.quizQuestions; let i = index">
@@ -147,25 +147,25 @@
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
                         <fa-icon icon="plus"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.addMultipleChoiceQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
                         <fa-icon icon="plus"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.addDragAndDropQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
                         <fa-icon icon="plus"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.quizExercise.addShortAnswerQuestion"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.addShortAnswerQuestion"></span>
                     </button>
                 </div>
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
                     <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{ 'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions }">
                         <fa-icon icon="plus"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.addExistingQuestions"></span>
                     </button>
                 </div>
             </div>
@@ -174,7 +174,7 @@
             <hr />
             <div class="question-options row d-flex justify-content-start" *ngIf="!showExistingQuestions">
                 <div class="col-3">
-                    <span jhiTranslate="arTeMiSApp.quizExercise.importJSON" class="colon-suffix no-flex-shrink"> </span>
+                    <span jhiTranslate="artemisApp.quizExercise.importJSON" class="colon-suffix no-flex-shrink"> </span>
                 </div>
                 <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10">
                     <div class="custom-file">
@@ -191,30 +191,30 @@
             <div class="container">
                 <div class="edit-quiz-footer-content">
                     <div class="form-group">
-                        <span jhiTranslate="arTeMiSApp.quizExercise.status" class="colon-suffix"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
                         <select *ngIf="showDropdown === 'isOpenForPractice'" class="form-control" [(ngModel)]="quizExercise.isOpenForPractice" title="status">
                             <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
-                                <span *ngIf="option.key === true">{{ 'arTeMiSApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
-                                <span *ngIf="option.key === false">{{ 'arTeMiSApp.quizExercise.quizStatus.closed' | translate }}</span>
+                                <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
+                                <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | translate }}</span>
                             </option>
                         </select>
                         <select *ngIf="showDropdown === 'isVisibleBeforeStart'" class="form-control" [(ngModel)]="quizExercise.isVisibleBeforeStart" title="status">
                             <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
-                                <span *ngIf="option.key === true">{{ 'arTeMiSApp.quizExercise.quizStatus.visible' | translate }}</span>
-                                <span *ngIf="option.key === false">{{ 'arTeMiSApp.quizExercise.quizStatus.hidden' | translate }}</span>
+                                <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | translate }}</span>
+                                <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | translate }}</span>
                             </option>
                         </select>
                         <select *ngIf="showDropdown === 'active'" class="form-control" title="status" disabled>
                             <option *ngFor="let option of statusOptionsActive" [value]="option.key">
-                                {{ 'arTeMiSApp.quizExercise.quizStatus.active' | translate }}
+                                {{ 'artemisApp.quizExercise.quizStatus.active' | translate }}
                             </option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <span *ngIf="!pendingChangesCache && !isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.saved" class="badge badge-success"> </span>
-                        <span *ngIf="pendingChangesCache && quizIsValid && !isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges" class="badge badge-secondary">
+                        <span *ngIf="!pendingChangesCache && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
+                        <span *ngIf="pendingChangesCache && quizIsValid && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-secondary">
                         </span>
-                        <span *ngIf="isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.saving" class="badge badge-secondary"> </span>
+                        <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge badge-secondary"> </span>
                         <ng-template #tooltipTranslate>
                             <div *ngFor="let reason of computeInvalidReasons()">
                                 <p
@@ -237,11 +237,11 @@
                         </ng-template>
                         <span *ngIf="!quizIsValid" class="badge badge-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
                             <fa-icon icon="exclamation-circle"></fa-icon>
-                            <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
+                            <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                             <span>({{ computeInvalidReasons().length }})</span>
                         </span>
                         <span *ngIf="warningQuizCache" class="badge badge-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
-                            <span jhiTranslate="arTeMiSApp.quizExercise.edit.warning"></span>
+                            <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                             <span>({{ computeInvalidWarnings().length }})</span>
                         </span>
                         <button
@@ -270,7 +270,7 @@
     <div *ngIf="hasSavedQuizStarted">
         <div class="quiz-is-active-background"></div>
         <div class="quiz-is-active-overlay alert alert-warning">
-            <span jhiTranslate="arTeMiSApp.quizExercise.edit.quizHasStarted"></span>
+            <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
         </div>
     </div>
     <ng-template #existingQuestionsTemplate>
@@ -281,7 +281,7 @@
                     <tbody>
                         <tr>
                             <td width="30%">
-                                <span jhiTranslate="arTeMiSApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
+                                <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
                             </td>
                             <td colspan="3" width="70%">
                                 <select class="form-control" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width:100%;">
@@ -296,28 +296,28 @@
                             <td>
                                 <div class="form-check custom-control custom-checkbox">
                                     <input type="checkbox" id="cbDnDFilter" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
-                                    <label class="form-check-label custom-control-label" for="cbDnDFilter" jhiTranslate="arTeMiSApp.quizExercise.filter.dnd"> </label>
+                                    <label class="form-check-label custom-control-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check custom-control custom-checkbox">
                                     <input type="checkbox" id="cbMCFilter" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
-                                    <label class="form-check-label custom-control-label" for="cbMCFilter" jhiTranslate="arTeMiSApp.quizExercise.filter.mcq"> </label>
+                                    <label class="form-check-label custom-control-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-check custom-control custom-checkbox">
                                     <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                                    <label class="form-check-label custom-control-label" for="cbShortAnswerFilter" jhiTranslate="arTeMiSApp.quizExercise.filter.sa"> </label>
+                                    <label class="form-check-label custom-control-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
                                 </div>
                             </td>
                             <td align="right">
-                                <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="arTeMiSApp.quizExercise.filter.applyFilter">eq</button>
+                                <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter">eq</button>
                             </td>
                         </tr>
                         <tr *ngIf="allExistingQuestions.length === 0 && selectedCourseId != null">
                             <td>&nbsp;</td>
-                            <td colspan="3" jhiTranslate="arTeMiSApp.quizExercise.noQuestionsFound"></td>
+                            <td colspan="3" jhiTranslate="artemisApp.quizExercise.noQuestionsFound"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -327,13 +327,13 @@
                     <thead class="thead-dark">
                         <tr>
                             <th width="55%">
-                                <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Short Question Title</span>
+                                <span jhiTranslate="artemisApp.quizExercise.export.questionTitle">Short Question Title</span>
                             </th>
                             <th width="30%">
-                                <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                                <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
                             </th>
                             <th width="10%">
-                                <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
+                                <span jhiTranslate="artemisApp.exercise.type">Type</span>
                             </th>
                             <th width="5%">
                                 <span jhiTranslate="entity.action.add">Add</span>
@@ -366,14 +366,14 @@
             </div>
             <div
                 *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null"
-                jhiTranslate="arTeMiSApp.quizExercise.noMatchingQuestionsFound"
+                jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
                 class="ml-3"
             ></div>
             <button
                 class="btn btn-outline-primary"
                 (click)="addExistingQuestions()"
                 *ngIf="existingQuestions.length !== 0"
-                jhiTranslate="arTeMiSApp.quizExercise.addSelectedQuestions"
+                jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"
             ></button>
         </div>
     </ng-template>

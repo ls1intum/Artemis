@@ -58,12 +58,14 @@
                     </span>
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
+                    <!--
+                    Removed until user management is working again in the production build
                     <li>
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
                         </a>
-                    </li>
+                    </li>-->
                     <li>
                         <a class="dropdown-item" routerLink="admin/notification-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>

@@ -2,7 +2,7 @@
     <div class="modal-header">
         <h5 class="modal-title">
             <span
-                jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTitle"
+                jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
                 [translateValues]="{ paramTitle: this.question.title, paramIndex: this.questionIndex }"
             ></span>
         </h5>
@@ -11,21 +11,21 @@
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
         <span class="show-explanation"
-            ><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span
-            ><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span
+            ><span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span
+            ><span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span
         ><br />
 
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
             <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -43,14 +43,14 @@
         <div *ngIf="this.question.type === DRAG_AND_DROP">
             <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
             <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0)">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -68,14 +68,14 @@
         <div *ngIf="this.question.type === SHORT_ANSWER">
             <span *ngIf="!(this.shortAnswerWrongAnswers > 0)">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
             <span *ngIf="this.shortAnswerWrongAnswers > 0">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -93,14 +93,14 @@
 
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
         <span class="show-explanation"
-            ><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportional"></span
-            ><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span
+            ><span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span
+            ><span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span
         ><br />
 
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
@@ -112,7 +112,7 @@
                 "
             >
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -130,7 +130,7 @@
                         this.question.score
                     }}/{{ this.multipleChoiceAnswerOptions }} = {{ this.score }}</b
                 >
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
 
             <span
@@ -140,7 +140,7 @@
                 "
             >
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -158,22 +158,22 @@
                         this.question.score
                     }}/{{ this.multipleChoiceAnswerOptions }} = 0
                 </b>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
         </div>
 
         <div *ngIf="this.question.type === DRAG_AND_DROP">
             <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
             <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop >= 0">
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -191,12 +191,12 @@
                         this.question.score
                     }}/{{ this.dragAndDropZones }} = {{ this.score }}</b
                 >
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
 
             <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop < 0">
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.dragAndDropProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -214,22 +214,22 @@
                         this.question.score
                     }}/{{ this.dragAndDropZones }} = 0
                 </b>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
         </div>
 
         <div *ngIf="this.question.type === SHORT_ANSWER">
             <span *ngIf="!(this.shortAnswerWrongAnswers > 0)">
                 <span
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect"
                     [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
                 ></span
             ></span>
 
             <span *ngIf="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer >= 0">
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -248,12 +248,12 @@
                     }}
                     = {{ this.score }}</b
                 >
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
 
             <span *ngIf="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer < 0">
                 <p
-                    jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp"
+                    jhiTranslate="artemisApp.quizExercise.explanationText.shortAnswerProp"
                     [translateValues]="{
                         paramScore: this.score,
                         paramQuestionScore: this.question.score,
@@ -272,8 +272,8 @@
                     }}
                     = 0
                 </b>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p>
-                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
+                <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
             </span>
         </div>
     </div>

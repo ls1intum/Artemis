@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,9 @@ public class LtiUserIdResource {
 
     private static final String ENTITY_NAME = "ltiUserId";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private LtiUserIdRepository ltiUserIdRepository;
 
     public LtiUserIdResource(LtiUserIdRepository ltiUserIdRepository) {
@@ -42,11 +46,12 @@ public class LtiUserIdResource {
     public ResponseEntity<LtiUserId> createLtiUserId(@RequestBody LtiUserId ltiUserId) throws URISyntaxException {
         log.debug("REST request to save LtiUserId : {}", ltiUserId);
         if (ltiUserId.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new ltiUserId cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new ltiUserId cannot already have an ID"))
+                    .body(null);
         }
         LtiUserId result = ltiUserIdRepository.save(ltiUserId);
-        return ResponseEntity.created(new URI("/api/lti-user-ids/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/lti-user-ids/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -64,7 +69,7 @@ public class LtiUserIdResource {
             return createLtiUserId(ltiUserId);
         }
         LtiUserId result = ltiUserIdRepository.save(ltiUserId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, ltiUserId.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, ltiUserId.getId().toString())).body(result);
     }
 
     /**
@@ -90,6 +95,6 @@ public class LtiUserIdResource {
     public ResponseEntity<Void> deleteLtiUserId(@PathVariable Long id) {
         log.debug("REST request to delete LtiUserId : {}", id);
         ltiUserIdRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

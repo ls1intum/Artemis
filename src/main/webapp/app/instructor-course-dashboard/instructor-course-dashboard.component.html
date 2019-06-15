@@ -2,8 +2,8 @@
     <jhi-alert></jhi-alert>
 
     <div class="course-info-bar">
-        <h3>{{ 'arTeMiSApp.instructorCourseDashboard.pageHeader' | translate }} {{ course.title }}</h3>
-        <h4>{{ course.description || ('arTeMiSApp.instructorCourseDashboard.noDescription' | translate) }}</h4>
+        <h3>{{ 'artemisApp.instructorCourseDashboard.pageHeader' | translate }} {{ course.title }}</h3>
+        <h4>{{ course.description || ('artemisApp.instructorCourseDashboard.noDescription' | translate) }}</h4>
     </div>
 
     <div class="container-fluid">
@@ -11,30 +11,30 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="card-title">{{ 'arTeMiSApp.instructorCourseDashboard.informationAboutCourse' | translate }}</h4>
+                        <h4 class="card-title">{{ 'artemisApp.instructorCourseDashboard.informationAboutCourse' | translate }}</h4>
                     </div>
                     <div class="card-body">
                         <ul>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
                             </li>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
                             </li>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.numberOfTutors }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.numberOfTutors }}
                             </li>
                             <li>
-                                <b>{{ 'arTeMiSApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
                                     stats.numberOfSubmissions - stats.numberOfAssessments
                                 }}
-                                {{ 'arTeMiSApp.instructorCourseDashboard.open' | translate }})
+                                {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>
                             <li>
                                 <a routerLink="/complaints" [queryParams]="{ courseId: course.id }">
-                                    <b>{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
                                 </a>
-                                ({{ stats.numberOfOpenComplaints }} {{ 'arTeMiSApp.instructorCourseDashboard.openComplaint' | translate }})
+                                ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                         </ul>
                     </div>
@@ -55,7 +55,7 @@
 
         <div class="row table-responsive mt-3">
             <div *ngIf="course.exercises.length === 0">
-                {{ 'arTeMiSApp.instructorCourseDashboard.noExercise' | translate }}
+                {{ 'artemisApp.instructorCourseDashboard.noExercise' | translate }}
             </div>
 
             <table class="table" *ngIf="course.exercises.length >= 0">
@@ -63,22 +63,22 @@
                     <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
                         <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon icon="sort"></fa-icon></th>
                         <th jhiSortBy="title">
-                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
                         <th jhiSortBy="dueDate">
-                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
                         <th jhiSortBy="assessmentDueDate">
-                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
                         <th jhiSortBy="submissions">
-                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
                         <th jhiSortBy="complaints">
-                            <a class="th-link">{{ 'arTeMiSApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                         </th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
-                        <th>{{ 'arTeMiSApp.instructorCourseDashboard.action' | translate }}</th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.action' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -113,7 +113,7 @@
                         </td>
                         <td>
                             <button class="btn btn-primary" routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/instructor-dashboard">
-                                {{ 'arTeMiSApp.instructorCourseDashboard.exerciseDashboard' | translate }}
+                                {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
                             </button>
                         </td>
                     </tr>
@@ -121,7 +121,7 @@
             </table>
         </div>
 
-        <h2>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
+        <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
 
         <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboard" [courseId]="course.id"></jhi-tutor-leaderboard>
     </div>

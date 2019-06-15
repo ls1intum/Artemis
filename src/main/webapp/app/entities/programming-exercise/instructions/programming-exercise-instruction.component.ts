@@ -528,7 +528,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param tests
      */
     private statusForTests(tests: string[]): [TestCaseState, string] {
-        const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
+        const translationBasePath = 'artemisApp.editor.testStatusLabels.';
         const totalTests = tests.length;
 
         if (this.latestResult && this.latestResult.successful) {
@@ -560,7 +560,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             }
         } else {
             // Case 3: There are no results
-            const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
+            const label = this.translateService.instant('artemisApp.editor.testStatusLabels.noResult');
             return [TestCaseState.UNDEFINED, label];
         }
     }

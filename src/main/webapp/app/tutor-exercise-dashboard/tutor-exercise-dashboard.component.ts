@@ -242,7 +242,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body;
             this.tutorParticipationStatus = this.tutorParticipation.status;
-            this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
+            this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
 

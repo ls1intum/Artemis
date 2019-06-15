@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,9 @@ public class StudentQuestionAnswerResource {
     private final Logger log = LoggerFactory.getLogger(StudentQuestionAnswerResource.class);
 
     private static final String ENTITY_NAME = "questionAnswer";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
@@ -78,8 +82,8 @@ public class StudentQuestionAnswerResource {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
         }
-        return ResponseEntity.created(new URI("/api/question-answers/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/question-answers/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -98,7 +102,7 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
     /**
@@ -148,7 +152,7 @@ public class StudentQuestionAnswerResource {
         if (hasCourseTAAccess || isUserAuthor) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
             studentQuestionAnswerRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         else {
             return forbidden();

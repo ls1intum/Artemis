@@ -21,8 +21,8 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     FileType = FileType;
 
-    @ViewChild('status') status: CodeEditorStatusComponent;
-    @ViewChild('treeview') treeview: TreeviewComponent;
+    @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
+    @ViewChild('treeview', { static: false }) treeview: TreeviewComponent;
 
     @Input()
     exerciseTitle: string;
@@ -59,8 +59,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     compressFolders = true;
     compressedTreeItems: string[];
 
-    @ViewChild('renamingInput') renamingInput: ElementRef;
-    @ViewChild('creatingInput') creatingInput: ElementRef;
+    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
+    @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
     // Triple: [filePath, fileName, fileType]
     renamingFile: [string, string, FileType] | null = null;

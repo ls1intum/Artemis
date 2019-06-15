@@ -14,7 +14,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
     styleUrls: ['./example-modeling-solution.component.scss'],
 })
 export class ExampleModelingSolutionComponent implements OnInit {
-    @ViewChild(ModelingEditorComponent)
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
     exercise: ModelingExercise;
@@ -61,7 +61,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 if (this.exercise.sampleSolutionModel) {
                     this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
                 }
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
                 console.error(error);

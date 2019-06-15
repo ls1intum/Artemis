@@ -12,7 +12,7 @@ export const modelingExerciseRoute: Routes = [
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -21,7 +21,7 @@ export const modelingExerciseRoute: Routes = [
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -30,7 +30,7 @@ export const modelingExerciseRoute: Routes = [
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -39,7 +39,7 @@ export const modelingExerciseRoute: Routes = [
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -51,7 +51,7 @@ export const modelingExercisePopupRoute: Routes = [
         component: ModelingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -61,7 +61,7 @@ export const modelingExercisePopupRoute: Routes = [
         component: ModelingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -71,7 +71,7 @@ export const modelingExercisePopupRoute: Routes = [
         component: ModelingExerciseDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

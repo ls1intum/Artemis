@@ -71,7 +71,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 jhiAlert.msg = res;
             },
             error => {
-                const errorMessage = error.headers.get('X-arTeMiSApp-alert');
+                const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;
