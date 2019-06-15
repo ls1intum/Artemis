@@ -152,7 +152,12 @@ public class AttachmentResource {
         if (attachment.getLecture() != null) {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
-            this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
+            try {
+                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
+            }
+            catch (RuntimeException exception) {
+                // this catch is required for deleting wrongly formatted attachment database entries
+            }
         }
         else if (attachment.getExercise() != null) {
             course = attachment.getExercise().getCourse();

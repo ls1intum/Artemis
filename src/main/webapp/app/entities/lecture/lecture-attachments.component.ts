@@ -33,6 +33,7 @@ export class LectureAttachmentsComponent implements OnInit {
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink: string;
     notificationText: string;
+    erroredFile: File;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -111,6 +112,7 @@ export class LectureAttachmentsComponent implements OnInit {
             this.resetAttachment();
         }
         this.attachmentToBeCreated = null;
+        this.erroredFile = null;
     }
 
     resetAttachment() {
@@ -155,6 +157,7 @@ export class LectureAttachmentsComponent implements OnInit {
      */
     setLectureAttachment($event: any): void {
         if ($event.target.files.length) {
+            this.erroredFile = null;
             const fileList: FileList = $event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
@@ -178,6 +181,7 @@ export class LectureAttachmentsComponent implements OnInit {
         }
 
         this.isUploadingAttachment = true;
+        this.erroredFile = null;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {
                 this.attachmentToBeCreated.link = result.path;
@@ -187,6 +191,8 @@ export class LectureAttachmentsComponent implements OnInit {
             },
             error => {
                 console.error('Error during file upload in uploadBackground()', error.message);
+                this.erroredFile = file;
+                this.attachmentToBeCreated.link = null;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
                 this.resetAttachment();
