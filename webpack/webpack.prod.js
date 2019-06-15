@@ -84,7 +84,7 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
                 cache: true,
                 sourceMap: true, // Enable source maps. Please note that this will slow down the build
                 terserOptions: {
-                    ecma: 6,
+                    ecma: 8,
                     ie8: false,
                     toplevel: true,
                     module: true,
@@ -101,14 +101,14 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
                         if_return: true,
                         inline: true,
                         join_vars: true,
-                        ecma: 6,
+                        ecma: 8,
                         module: true,
                     },
                     output: {
                         comments: false,
                         beautify: false,
                         indent_level: 2,
-                        ecma: 6
+                        ecma: 8
                     },
                     mangle: {
                         module: true,
