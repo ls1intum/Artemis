@@ -34,7 +34,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean {
-        return this.markdownEditor.previewMode;
+        return this.markdownEditor && this.markdownEditor.previewMode;
     }
     showMultipleChoiceQuestionPreview = true;
 
