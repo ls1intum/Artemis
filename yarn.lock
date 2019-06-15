@@ -3316,10 +3316,10 @@ core-js@3.0.1:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.0.1.tgz#1343182634298f7f38622f95e73f54e48ddf4738"
   integrity sha512-sco40rF+2KlE0ROMvydjkrVMMG1vYilP2ALoRXcYR4obqbYIuV3Bg+51GEDW+HF8n7NRA+iaA4qD0nD9lo9mew==
 
-core-js@3.1.3:
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.1.3.tgz#95700bca5f248f5f78c0ec63e784eca663ec4138"
-  integrity sha512-PWZ+ZfuaKf178BIAg+CRsljwjIMRV8MY00CbZczkR6Zk5LfkSkjGoaab3+bqRQWVITNZxQB7TFYz+CFcyuamvA==
+core-js@3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.1.4.tgz#3a2837fc48e582e1ae25907afcd6cf03b0cc7a07"
+  integrity sha512-YNZN8lt82XIMLnLirj9MhKDFZHalwzzrL9YLt6eb0T5D0EDl4IQ90IGkua8mHbnxNrkj1d8hbdizMc0Qmg1WnQ==
 
 core-js@^2.4.0:
   version "2.6.5"
@@ -8509,10 +8509,10 @@ ng2-material-dropdown@0.10.1:
   dependencies:
     tslib "^1.9.0"
 
-ngx-cacheable@1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/ngx-cacheable/-/ngx-cacheable-1.2.3.tgz#cbabb7e664d68b8fdaaa0525c317d6b361814a37"
-  integrity sha512-+9NbqIzhb/+W0EE71Y17IP2T13kFffx78v36+CB+ZKZeN5CsVYnzOMYWZFvindNbL/21lqkYZ3thT337M5UI7A==
+ngx-cacheable@1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/ngx-cacheable/-/ngx-cacheable-1.2.4.tgz#7957fdea2b00a5b4d632f7064e5e5223adc1b535"
+  integrity sha512-m6enhTvLPY+iHrsncIDqSVlGYVf4ii5iW6w531HRiNZbtIG8BUw5PN/Jr4OInlSRCc6vJIOMqQFLuFLe665RPg==
 
 ngx-chips@2.0.2:
   version "2.0.2"
@@ -12562,10 +12562,10 @@ ts-loader@6.0.2:
     micromatch "^4.0.0"
     semver "^6.0.0"
 
-ts-node@8.2.0:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-8.2.0.tgz#4a89754b00560bb24cd54526e1685fa38c45f240"
-  integrity sha512-m8XQwUurkbYqXrKqr3WHCW310utRNvV5OnRVeISeea7LoCWVcdfeB/Ntl8JYWFh+WRoUAdBgESrzKochQt7sMw==
+ts-node@8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-8.3.0.tgz#e4059618411371924a1fb5f3b125915f324efb57"
+  integrity sha512-dyNS/RqyVTDcmNM4NIBAeDMpsAdaQ+ojdf0GOLqE6nwJOgzEkdRNzJywhDfwnuvB10oa6NLVG1rUJQCpRN7qoQ==
   dependencies:
     arg "^4.1.0"
     diff "^4.0.1"
