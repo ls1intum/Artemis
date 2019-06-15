@@ -71,8 +71,8 @@ public class DatabaseUtilService {
     public void resetDatabase() {
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
-        feedbackRepo.deleteAll();
         resultRepo.deleteAll();
+        feedbackRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
