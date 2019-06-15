@@ -4,10 +4,10 @@
             <div class="headline">
                 <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage"> </jhi-secured-image>
                 <div *ngIf="!croppedImage" class="no-image"></div>
-                <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="arTeMiSApp.course.home.createLabel">
+                <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">
                     Create new Course
                 </h4>
-                <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="arTeMiSApp.course.home.editLabel">Edit Course</h4>
+                <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel">Edit Course</h4>
             </div>
             <hr />
             <div>
@@ -20,13 +20,13 @@
                 <div class="row">
                     <div class="col">
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.title" for="field_title">Title</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title">Title</label>
                             <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required />
                         </div>
                     </div>
                     <div class="col-2">
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.color" for="field_title">Color</label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title">Color</label>
                             <div
                                 class="color-preview form-control"
                                 [ngStyle]="{ backgroundColor: courseForm.get('color').value || ARTEMIS_DEFAULT_COLOR }"
@@ -37,18 +37,18 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                         <div class="alert alert-danger">
                             <div *ngFor="let e of shortName.errors | keyvalue | removekeys: ['required']">
-                                <div jhiDynamicTranslate="arTeMiSApp.course.form.shortname" dynamicLookup="{{ e.key }}"></div>
+                                <div [jhiTranslate]="'artemisApp.course.form.shortname' + '.' + e.key"></div>
                             </div>
                         </div>
                     </ng-container>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.courseIcon" for="field_shortName">Course Icon</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>
                     <div class="input-group background-file">
                         <div class="custom-file">
                             <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
@@ -78,45 +78,45 @@
                         </div>
                         <div *ngIf="showCropper" class="col-3">
                             <button class="btn btn-outline-primary icon-upload" (click)="uploadCourseImage()" [disabled]="isUploadingCourseImage || !courseImageFileName">
-                                <span *ngIf="isUploadingCourseImage" jhiTranslate="arTeMiSApp.course.uploading"></span>
-                                <span *ngIf="!isUploadingCourseImage" jhiTranslate="arTeMiSApp.course.upload"></span>
+                                <span *ngIf="isUploadingCourseImage" jhiTranslate="artemisApp.course.uploading"></span>
+                                <span *ngIf="!isUploadingCourseImage" jhiTranslate="artemisApp.course.upload"></span>
                             </button>
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
                     <input required type="text" class="form-control" name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName"
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName"
                         >Teaching Assistant Group Name</label
                     >
                     <input type="text" class="form-control" name="teachingAssistantGroupName" id="field_teachingAssistantGroupName" formControlName="teachingAssistantGroupName" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
                     <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" required />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.description" for="field_description">Course Description</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description">Course Description</label>
                     <input type="text" class="form-control" name="description" id="field_description" formControlName="description" />
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
-                        <jhi-date-time-picker labelName="{{ 'arTeMiSApp.course.startDate' | translate }}" formControlName="startDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | translate }}" formControlName="startDate"></jhi-date-time-picker>
                     </div>
                     <div class="form-group flex-grow-1 ml-3">
-                        <jhi-date-time-picker labelName="{{ 'arTeMiSApp.course.endDate' | translate }}" formControlName="endDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | translate }}" formControlName="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" name="onlineCourse" id="field_onlineCourse" formControlName="onlineCourse" />
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.onlineCourse" for="field_onlineCourse">Online Course</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourse" for="field_onlineCourse">Online Course</label>
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" name="registrationEnabled" id="field_registrationEnabled" formControlName="registrationEnabled" />
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.registrationEnabled" for="field_registrationEnabled">Registration Enabled</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled" for="field_registrationEnabled">Registration Enabled</label>
                 </div>
             </div>
             <div class="mt-3 d-flex">

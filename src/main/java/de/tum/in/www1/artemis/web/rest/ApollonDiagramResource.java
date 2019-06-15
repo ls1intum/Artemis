@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,9 @@ public class ApollonDiagramResource {
     private final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
 
     private static final String ENTITY_NAME = "apollonDiagram";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final ApollonDiagramRepository apollonDiagramRepository;
 
@@ -49,8 +53,8 @@ public class ApollonDiagramResource {
             throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idexists");
         }
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -69,7 +73,7 @@ public class ApollonDiagramResource {
             return createApollonDiagram(apollonDiagram);
         }
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
     }
 
     /**
@@ -109,6 +113,6 @@ public class ApollonDiagramResource {
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
         apollonDiagramRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

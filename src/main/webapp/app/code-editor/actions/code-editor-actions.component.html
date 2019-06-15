@@ -9,8 +9,8 @@
         data-placement="left"
         title="Save all unsaved changes in your files."
     >
-        <span *ngIf="editorState === EditorState.SAVING"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.saving">Saving</span></span>
-        <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.saveFiles">Save Files</span></span>
+        <span *ngIf="editorState === EditorState.SAVING"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span>
+        <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
     </button>
     <button
         id="submit_button"
@@ -22,7 +22,7 @@
         data-placement="left"
         title="Stage, commit, push, build and test your changes."
     >
-        <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building</span></span>
-        <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.submit">Submit</span></span>
+        <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building</span></span>
+        <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="artemisApp.editor.submit">Submit</span></span>
     </button>
 </div>

@@ -1,12 +1,12 @@
 <h2>
-    <span jhiTranslate="arTeMiSApp.apollonDiagram.home.title">Apollon Diagrams</span>
+    <span jhiTranslate="artemisApp.apollonDiagram.home.title">Apollon Diagrams</span>
 </h2>
 
 <jhi-alert></jhi-alert>
 
 <button (click)="openCreateDiagramDialog()" class="btn btn-primary">
     <fa-icon icon="plus"></fa-icon>
-    <span jhiTranslate="arTeMiSApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+    <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
 </button>
 
 <div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
@@ -14,9 +14,9 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="diagramType"><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                <th jhiTranslate="arTeMiSApp.exercise.actions">Actions</th>
+                <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -25,7 +25,7 @@
                     <a [routerLink]="['/apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
-                <td jhiTranslate="{{ 'arTeMiSApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
+                <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                 <td>
                     <button class="btn btn-primary mr-1" (click)="goToDetailsPage(apollonDiagram.id)" jhiTranslate="entity.action.open">Open</button>
                     <button
