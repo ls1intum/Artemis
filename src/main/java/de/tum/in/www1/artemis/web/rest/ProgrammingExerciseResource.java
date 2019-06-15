@@ -475,19 +475,13 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
-        if (id == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
-        }
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
         if (!programmingExerciseOptional.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+            return notFound();
         }
-
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
