@@ -119,8 +119,13 @@ public class AutomaticSubmissionService {
             if (submission instanceof ModelingSubmission) {
                 ModelingExercise modelingExercise = (ModelingExercise) exercise;
                 ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                // notify compass about new submission
-                modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
+                try {
+                    // notify compass about new submission
+                    modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
+                }
+                catch (Exception ex) {
+                    log.error("Exception while notifying Compass about a new (automatic) submission:\n{}", ex.getMessage(), ex);
+                }
             }
             // set participation state to finished and persist it
             participation.setInitializationState(InitializationState.FINISHED);
