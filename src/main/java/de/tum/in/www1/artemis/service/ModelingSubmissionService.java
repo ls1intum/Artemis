@@ -104,11 +104,13 @@ public class ModelingSubmissionService {
      */
     @Transactional
     public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
-        // ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess if the diagram type is supported
+        // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            Set<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
+            List<Long> modelsWaitingForAssessment = new ArrayList<>(compassService.getModelsWaitingForAssessment(modelingExercise.getId()));
+            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
+            Collections.shuffle(modelsWaitingForAssessment);
+
             for (Long submissionId : modelsWaitingForAssessment) {
-                // TODO CZ: think about how to handle canceled assessments with Compass as I do not want to receive the same submission again, if I canceled the assessment
                 Optional<ModelingSubmission> submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId);
                 if (submission.isPresent()) {
                     return submission;
