@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
@@ -28,9 +29,12 @@ import io.github.jhipster.web.util.ResponseUtil;
 @RequestMapping("/api")
 public class ExampleSubmissionResource {
 
+    private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
+
     private static final String ENTITY_NAME = "exampleSubmission";
 
-    private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
@@ -44,7 +48,7 @@ public class ExampleSubmissionResource {
     /**
      * POST /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
      *
-     * @param exerciseId        the id of the corresponding exercise
+     * @param exerciseId        the id of the corresponding exercise for which to init a participation
      * @param exampleSubmission the exampleSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
@@ -61,7 +65,8 @@ public class ExampleSubmissionResource {
     }
 
     /**
-     * PUT /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission.
+     * PUT /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission. This function is called by the text editor for saving and submitting text
+     * submissions. The submit specific handling occurs in the ExampleSubmissionService.save() function.
      *
      * @param exerciseId        the id of the corresponding exercise
      * @param exampleSubmission the exampleSubmission to update
@@ -135,6 +140,6 @@ public class ExampleSubmissionResource {
 
         exampleSubmissionService.deleteById(exampleSubmission.get().getId());
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

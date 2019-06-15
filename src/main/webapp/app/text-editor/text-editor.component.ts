@@ -55,13 +55,13 @@ export class TextEditorComponent implements OnInit {
         translateService: TranslateService,
     ) {
         this.isSaving = false;
-        translateService.get('arTeMiSApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
+        translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('arTeMiSApp.textExercise.error', null, null);
+            return this.jhiAlertService.error('artemisApp.textExercise.error', null, null);
         }
 
         this.textService.get(participationId).subscribe(
@@ -125,13 +125,13 @@ export class TextEditorComponent implements OnInit {
                 if (response) {
                     this.submission = response.body;
                     this.result = this.submission.result;
-                    this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
+                    this.jhiAlertService.success('artemisApp.textExercise.saveSuccessful');
 
                     this.isSaving = false;
                 }
             },
             e => {
-                this.jhiAlertService.error('arTeMiSApp.textExercise.error');
+                this.jhiAlertService.error('artemisApp.textExercise.error');
                 this.isSaving = false;
             },
         );
@@ -154,13 +154,13 @@ export class TextEditorComponent implements OnInit {
                     this.result = this.submission.result;
 
                     if (this.isActive) {
-                        this.jhiAlertService.success('arTeMiSApp.textExercise.submitSuccessful');
+                        this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
                     } else {
-                        this.jhiAlertService.warning('arTeMiSApp.textExercise.submitDeadlineMissed');
+                        this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
                     }
                 },
                 err => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
                     this.submission.submitted = false;
                 },
             );

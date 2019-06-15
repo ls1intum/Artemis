@@ -3,7 +3,7 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
-                {{ 'arTeMiSApp.complaint.listOfComplaints.title' | translate }}
+                {{ 'artemisApp.complaint.listOfComplaints.title' | translate }}
             </h2>
         </div>
     </div>
@@ -17,13 +17,13 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.exercise' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.submissionId' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentName' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.actions' | translate }}</th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
+                    <th *ngIf="hasStudentInformation">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | translate }}</th>
                 </tr>
             </thead>
 
@@ -60,7 +60,7 @@
                     <td class="text-center">
                         <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
-                            {{ 'arTeMiSApp.tutorExerciseDashboard.showComplaint' | translate }}
+                            {{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}
                         </button>
                     </td>
                 </tr>
@@ -69,6 +69,6 @@
     </div>
 
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
-        {{ 'arTeMiSApp.tutorExerciseDashboard.noComplaints' | translate }}
+        {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
     </div>
 </div>

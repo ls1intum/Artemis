@@ -42,6 +42,9 @@ public class ResultResource {
 
     private static final String ENTITY_NAME = "result";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     @Value("${artemis.bamboo.authentication-token}")
     private String CI_AUTHENTICATION_TOKEN = "";
 
@@ -114,7 +117,8 @@ public class ResultResource {
 
         resultService.createNewResult(result, true);
 
-        return ResponseEntity.created(new URI("/api/results/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -221,7 +225,7 @@ public class ResultResource {
         }
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -390,6 +394,27 @@ public class ResultResource {
     }
 
     /**
+     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the latest result.
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
+    @GetMapping("results/{participationId}/latest-result")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
+        log.debug("REST request to get latest result for participation : {}", participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Participation participation = participationService.findOne(participationId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user)) {
+            return forbidden();
+        }
+
+        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        return result.map(ResponseEntity::ok).orElse(notFound());
+    }
+
+    /**
      * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
      * or build errors)
      *
@@ -449,7 +474,7 @@ public class ResultResource {
             if (!userHasPermissions(course))
                 return forbidden();
             resultRepository.deleteById(resultId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, resultId.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
         }
         return ResponseEntity.notFound().build();
     }

@@ -259,7 +259,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 this.checkScoreBoundaries();
 
                 if (bothCompleted) {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
+                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
                 }
                 bothCompleted = true;
             }, this.onError);
@@ -274,7 +274,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 this.location.go(newUrl);
 
                 if (bothCompleted) {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
+                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
                 }
                 bothCompleted = true;
             }, this.onError);
@@ -290,7 +290,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.textSubmission = submissionResponse.body;
 
             if (hasOneFinished) {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
             } else {
                 hasOneFinished = true;
             }
@@ -300,7 +300,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.exampleSubmission = exampleSubmissionResponse.body;
 
             if (hasOneFinished) {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
             } else {
                 hasOneFinished = true;
             }
@@ -348,14 +348,14 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     public saveAssessments(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
             this.result = response.body;
             this.areNewAssessments = false;
-            this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+            this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
         });
     }
 
@@ -373,7 +373,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     checkAssessment() {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -383,15 +383,15 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             (res: HttpResponse<TutorParticipation>) => {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.assessScore.success');
+                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
                 if (errorType === 'error.tooLow') {
-                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooLow');
+                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
                 } else if (errorType === 'error.tooHigh') {
-                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooHigh');
+                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                 } else {
                     this.onError(error.message);
                 }
@@ -401,7 +401,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

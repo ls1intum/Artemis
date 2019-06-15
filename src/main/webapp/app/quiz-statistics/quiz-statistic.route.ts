@@ -13,7 +13,7 @@ export const quizStatisticRoute: Routes = [
         component: QuizStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -22,7 +22,7 @@ export const quizStatisticRoute: Routes = [
         component: QuizPointStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -31,7 +31,7 @@ export const quizStatisticRoute: Routes = [
         component: MultipleChoiceQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -40,7 +40,7 @@ export const quizStatisticRoute: Routes = [
         component: DragAndDropQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -49,7 +49,7 @@ export const quizStatisticRoute: Routes = [
         component: ShortAnswerQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

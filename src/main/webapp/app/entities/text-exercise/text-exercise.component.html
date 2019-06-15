@@ -1,14 +1,14 @@
 <div>
     <h4>
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="textExercises && showHeading">{{ getAmountOfExercisesString(textExercises) }} </span>
-        <span jhiTranslate="arTeMiSApp.textExercise.home.title">Text Exercises</span>
+        <span jhiTranslate="artemisApp.textExercise.home.title">Text Exercises</span>
         <button
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-text-exercise"
             [routerLink]="['/', { outlets: { popup: ['course', course.id, 'text-exercise-new'] } }]"
         >
             <fa-icon icon="plus"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.textExercise.home.createLabel">
+            <span jhiTranslate="artemisApp.textExercise.home.createLabel">
                 Create Text Exercise
             </span>
         </button>
@@ -21,11 +21,11 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="problemStatement"><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="problemStatement"><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th></th>
                 </tr>
             </thead>
@@ -57,7 +57,7 @@
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </button>
                             <button *ngIf="textExercise.isAtLeastInstructor" type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
                                 <fa-icon icon="eye"></fa-icon>

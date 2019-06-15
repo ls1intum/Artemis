@@ -2,7 +2,7 @@
     <div class="col">
         <h3>
             {{
-                'arTeMiSApp.studentDashboard.exerciseTitle'
+                'artemisApp.studentDashboard.exerciseTitle'
                     | translate
                         : {
                               date: nextRelevantExercise.dueDate | date: 'dd/MM/yy HH:mm',
@@ -26,7 +26,7 @@
 </div>
 <div class="row mb-3 align-items-center">
     <div class="col-12 col-sm">
-        <h3 jhiTranslate="arTeMiSApp.studentDashboard.title">Your current courses</h3>
+        <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
     <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
