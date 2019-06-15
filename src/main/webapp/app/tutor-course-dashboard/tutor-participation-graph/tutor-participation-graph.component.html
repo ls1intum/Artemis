@@ -1,15 +1,15 @@
 <div class="row">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
-        <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.readGradingInstructions' | translate">
+        <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'artemisApp.tutorCourseDashboard.readGradingInstructions' | translate">
             <fa-icon icon="book"></fa-icon>
         </li>
-        <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
+        <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'artemisApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
             <fa-icon icon="chalkboard-teacher"></fa-icon>
         </li>
 
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
-            <div class="progress position-relative" [ngbTooltip]="'arTeMiSApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
+            <div class="progress position-relative" [ngbTooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
                 <div
                     class="progress-bar"
                     role="progressbar"

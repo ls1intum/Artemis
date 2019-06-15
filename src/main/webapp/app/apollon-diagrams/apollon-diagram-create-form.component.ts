@@ -30,7 +30,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
                 this.router.navigate(['apollon-diagrams', newDiagram.id]);
             },
             response => {
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+                this.jhiAlertService.error('artemisApp.apollonDiagram.create.error');
             },
         );
     }

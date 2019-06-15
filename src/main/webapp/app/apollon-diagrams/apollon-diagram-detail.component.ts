@@ -55,7 +55,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.initializeApollonEditor(model);
                 },
                 () => {
-                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.detail.error.loading');
+                    this.jhiAlertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
             );
         });
@@ -100,7 +100,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonDiagramService.update(updatedDiagram).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.update.error');
+                this.jhiAlertService.error('artemisApp.apollonDiagram.update.error');
             },
         );
     }
@@ -123,10 +123,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         try {
             const result = await modalRef.result;
             if (result) {
-                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.create.success', { title: result.title });
+                this.jhiAlertService.success('artemisApp.apollonDiagram.create.success', { title: result.title });
             }
         } catch (error) {
-            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+            this.jhiAlertService.error('artemisApp.apollonDiagram.create.error');
             throw error;
         }
     }

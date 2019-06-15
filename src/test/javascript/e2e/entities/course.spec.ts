@@ -27,7 +27,7 @@ describe('course', function() {
     });
 
     it('should load course list', async function() {
-        const expect1 = 'arTeMiSApp.course.home.title';
+        const expect1 = 'artemisApp.course.home.title';
         const value1 = await element(by.id('course-page-heading')).getAttribute('jhiTranslate');
         expect(value1).to.eq(expect1);
     });

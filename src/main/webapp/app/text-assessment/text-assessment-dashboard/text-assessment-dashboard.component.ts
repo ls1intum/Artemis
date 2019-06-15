@@ -70,8 +70,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
     public assessmentTypeTranslationKey(result?: Result): string {
         if (result) {
-            return `arTeMiSApp.AssessmentType.${result.assessmentType}`;
+            return `artemisApp.AssessmentType.${result.assessmentType}`;
         }
-        return 'arTeMiSApp.AssessmentType.null';
+        return 'artemisApp.AssessmentType.null';
     }
 }

@@ -143,7 +143,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(`arTeMiSApp.editor.errors.${error}`);
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
     /**

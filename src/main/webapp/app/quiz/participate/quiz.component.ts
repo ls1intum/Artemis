@@ -868,7 +868,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * This function is called when the user clicks the 'Submit' button
      */
     onSubmit() {
-        const translationBasePath = 'arTeMiSApp.quizExercise.';
+        const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;
 

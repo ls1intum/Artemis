@@ -9,7 +9,7 @@ export const exampleModelingSolutionRoute: Routes = [
         component: ExampleModelingSolutionComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.modelingExercise.exampleSolution',
+            pageTitle: 'artemisApp.modelingExercise.exampleSolution',
         },
         canActivate: [UserRouteAccessService],
     },

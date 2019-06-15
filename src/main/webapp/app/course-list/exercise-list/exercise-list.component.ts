@@ -195,12 +195,12 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
                 error => {
                     console.log('Error: ' + error);
-                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                    this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
     }
@@ -217,12 +217,12 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
                 error => {
                     console.log('Error: ' + error);
-                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                    this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
     }

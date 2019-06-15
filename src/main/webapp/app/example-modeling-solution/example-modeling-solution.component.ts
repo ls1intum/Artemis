@@ -61,7 +61,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 if (this.exercise.sampleSolutionModel) {
                     this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
                 }
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
                 console.error(error);

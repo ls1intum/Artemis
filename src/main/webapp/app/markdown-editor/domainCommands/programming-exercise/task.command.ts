@@ -8,7 +8,7 @@ export class TaskCommand extends DomainTagCommand {
     public static readonly taskPlaceholder = 'Task Short Description';
     public static readonly testCasePlaceholder = 'testCaseName';
 
-    buttonTranslationString = 'arTeMiSApp.programmingExercise.problemStatement.taskCommand';
+    buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
     setEditor(aceEditorContainer: AceEditorComponent) {
         super.setEditor(aceEditorContainer);

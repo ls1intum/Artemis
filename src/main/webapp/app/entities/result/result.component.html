@@ -3,15 +3,15 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <span *ngIf="!result || (!result.score && result.score !== 0)">
-    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.result.noResult">No results</span></span>
+    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.result.noResult">No results</span></span>
     <span class="text-primary" *ngIf="isBuilding"
-        ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="arTeMiSApp.editor.building">&nbsp;Building...</span></span
+        ><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon><span jhiTranslate="artemisApp.editor.building">&nbsp;Building...</span></span
     >
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">
         <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-        <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="arTeMiSApp.result.score">Score:</span> {{ result.score }}%, </span>
+        <span class="score">&nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
         <span *ngIf="hasFeedback">
             <span class="result" (click)="showDetails(result)">{{ resultString }}</span>
         </span>
@@ -21,10 +21,10 @@
     </span>
     <span *ngIf="result.buildArtifact && !short">
         <a (click)="downloadBuildResult(participation.id)">
-            &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.downloadBuildResult">Download Build Result</span></a
+            &nbsp; <fa-icon icon="file"></fa-icon> <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span></a
         >
     </span>
     <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
-        {{ (result.rated ? 'arTeMiSApp.result.graded' : 'arTeMiSApp.result.notGraded') | translate | uppercase }}
+        {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | translate | uppercase }}
     </span>
 </ng-container>
