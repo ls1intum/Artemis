@@ -31,6 +31,7 @@
             "noConflicts": "Konflikte konnten nicht geladen werden",
             "conflictsResolved": "Es wurden alle Konflikte bearbeitet."
         },
-        "reviewComplaint": "Beschwerde überprüfen"
+        "reviewComplaint": "Beschwerde überprüfen",
+        "automaticAssessmentAvailable": "Herzlichen Glückwunsch! Um dir etwas Zeit zu sparen, wurden Teile dieses Modells bereits automatisch bewertet. Bitte überprüfe die automatische Bewertung und bewerte anschließend den Rest des Modells. Mit der Abgabe der Bewertung bestätigst du auch die automatische Bewertung. Bitte beachte, dass du für die gesamte Bewertung verantwortlich bist."
     }
 }

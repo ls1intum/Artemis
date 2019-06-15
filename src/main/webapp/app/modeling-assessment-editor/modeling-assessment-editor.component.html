@@ -46,6 +46,10 @@
     <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
         You find the complaint at the end of the page
     </div>
+    <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAuthorized && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
+        Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By submitting
+        the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
+    </div>
     <div class="editor-container flex-grow-1">
         <jhi-modeling-assessment
             *ngIf="submission"

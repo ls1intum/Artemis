@@ -10,7 +10,7 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback, FeedbackType } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -40,6 +40,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     hasComplaint: boolean;
     canOverride = false;
     isLoading: boolean;
+    hasAutomaticFeedback = false;
 
     private cancelConfirmationText: string;
 
@@ -158,6 +159,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     /**
      * Checks the given feedback list for general feedback (i.e. feedback without a reference). If there is one, it is assigned to the generalFeedback variable and removed from
      * the original feedback list. The remaining list is then assigned to the referencedFeedback variable containing only feedback elements with a reference and valid score.
+     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly.
      */
     private handleFeedback(feedback: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
@@ -169,6 +171,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             feedback.splice(generalFeedbackIndex, 1);
         }
         this.referencedFeedback = feedback;
+        this.hasAutomaticFeedback = feedback.some(feedbackItem => feedbackItem.type === FeedbackType.AUTOMATIC);
     }
 
     private checkPermissions(): void {
