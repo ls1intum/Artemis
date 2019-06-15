@@ -45,7 +45,7 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, TreeviewModule.forRoot(), ArTEMiSSharedModule, MomentModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, ArTEMiSSharedModule, MomentModule],
             declarations: [UpdatingResultComponent, ResultComponent],
             providers: [
                 JhiLanguageHelper,
