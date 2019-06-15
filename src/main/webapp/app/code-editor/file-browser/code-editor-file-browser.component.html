@@ -13,7 +13,7 @@
             [disabled]="isLoadingFiles"
             class="btn btn-primary"
             (click)="setCreatingFileInRoot(FileType.FILE)"
-            title="{{ 'arTeMiSApp.editor.fileBrowser.createFileRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
         >
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="file" class="ml-1"></fa-icon>
@@ -22,7 +22,7 @@
             [disabled]="isLoadingFiles"
             class="btn btn-primary ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
-            title="{{ 'arTeMiSApp.editor.fileBrowser.createFolderRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
         >
             <fa-icon icon="plus"></fa-icon>
             <fa-icon icon="folder" class="ml-1"></fa-icon>
@@ -31,7 +31,7 @@
             [disabled]="isLoadingFiles"
             class="btn btn-secondary ml-auto"
             (click)="toggleTreeCompress($event)"
-            title="{{ 'arTeMiSApp.editor.fileBrowser.compressTree' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
         >
             <fa-icon [icon]="compressFolders ? ['fa', 'angle-double-up'] : ['fa', 'angle-double-down']"></fa-icon>
         </button>
@@ -52,7 +52,7 @@
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
             <fa-icon icon="circle-notch" spin="true"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.loadingFiles">Loading file</span>
+            <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
     <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>

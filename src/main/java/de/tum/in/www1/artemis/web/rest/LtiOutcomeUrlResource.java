@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,9 @@ public class LtiOutcomeUrlResource {
     private final Logger log = LoggerFactory.getLogger(LtiOutcomeUrlResource.class);
 
     private static final String ENTITY_NAME = "ltiOutcomeUrl";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
@@ -47,8 +51,8 @@ public class LtiOutcomeUrlResource {
             throw new BadRequestAlertException("A new ltiOutcomeUrl cannot already have an ID", ENTITY_NAME, "idexists");
         }
         LtiOutcomeUrl result = ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
-        return ResponseEntity.created(new URI("/api/lti-outcome-urls/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/lti-outcome-urls/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -66,7 +70,7 @@ public class LtiOutcomeUrlResource {
             return createLtiOutcomeUrl(ltiOutcomeUrl);
         }
         LtiOutcomeUrl result = ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, ltiOutcomeUrl.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, ltiOutcomeUrl.getId().toString())).body(result);
     }
 
     /**
@@ -103,6 +107,6 @@ public class LtiOutcomeUrlResource {
     public ResponseEntity<Void> deleteLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to delete LtiOutcomeUrl : {}", id);
         ltiOutcomeUrlRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

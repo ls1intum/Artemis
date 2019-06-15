@@ -16,7 +16,7 @@ import { CodeEditorGridComponent } from 'app/code-editor/layout';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
-    @ViewChild(CodeEditorGridComponent) grid: CodeEditorGridComponent;
+    @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile: string;
     unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
@@ -143,7 +143,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
      * The error must already be provided translated by the emitting component.
      */
     onError(error: string) {
-        this.jhiAlertService.error(`arTeMiSApp.editor.errors.${error}`);
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
     /**

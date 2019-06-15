@@ -3,14 +3,14 @@
         <span class="float-right "><fa-icon icon="chevron-down"></fa-icon></span>
         <h3 class="card-title">
             <fa-icon icon="terminal"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.buildOutput"> &nbsp; Build Output</span>
+            <span jhiTranslate="artemisApp.editor.buildOutput"> &nbsp; Build Output</span>
         </h3>
     </div>
     <div class="card-body">
         <p class="text-center is-building" *ngIf="isBuilding">
-            <fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building...</span>
+            <fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </p>
-        <p class="text-center no-buildoutput" *ngIf="!isBuilding && !rawBuildLogs.length" jhiTranslate="arTeMiSApp.editor.noBuildOutput">No build results available</p>
+        <p class="text-center no-buildoutput" *ngIf="!isBuilding && !rawBuildLogs.length" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
 
         <div class="buildoutput d-flex flex-column" *ngIf="!isBuilding && rawBuildLogs.length">
             <span *ngFor="let logEntry of rawBuildLogs" class="buildoutput__entry">

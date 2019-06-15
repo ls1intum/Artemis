@@ -9,5 +9,5 @@ import { CodeEditorFileBrowserNodeComponent } from 'app/code-editor/file-browser
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
-    @ViewChild('renamingInput') renamingInput: ElementRef;
+    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
 }

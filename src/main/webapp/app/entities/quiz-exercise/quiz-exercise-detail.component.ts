@@ -614,7 +614,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                   .map((question, index) => {
                       if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions.some(option => !option.explanation)) {
                           return {
-                              translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
+                              translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                               translateValues: { index: index + 1 },
                           };
                       }
@@ -636,25 +636,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         if (!this.quizExercise.title || this.quizExercise.title === '') {
             invalidReasons.push({
-                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
+                translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitle',
                 translateValues: {},
             });
         }
         if (this.quizExercise.title.length >= 250) {
             invalidReasons.push({
-                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitleLength',
+                translateKey: 'artemisApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {},
             });
         }
         if (!this.quizExercise.duration) {
             invalidReasons.push({
-                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizDuration',
+                translateKey: 'artemisApp.quizExercise.invalidReasons.quizDuration',
                 translateValues: {},
             });
         }
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
             invalidReasons.push({
-                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
+                translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {},
             });
         }
@@ -662,7 +662,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (this.quizExercise.isPlannedToStart) {
             if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
                 invalidReasons.push({
-                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
                     translateValues: {},
                 });
             }
@@ -670,7 +670,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
                 if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.startTimeInPast',
                         translateValues: {},
                     });
                 }
@@ -679,7 +679,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
                 invalidReasons.push({
-                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
                     translateValues: { index: index + 1 },
                 });
             }
@@ -687,20 +687,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (!mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== '')) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 },
                     });
                 }
             }
             if (question.title.length >= 250) {
                 invalidReasons.push({
-                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
+                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitleLength',
                     translateValues: { index: index + 1 },
                 });
             }
@@ -709,18 +709,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 const dndQuestion = question as DragAndDropQuestion;
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionUnsolvable',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
                 }
@@ -729,48 +729,48 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 const shortAnswerQuestion = question as ShortAnswerQuestion;
                 if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
                 } /*else if (this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion, []).length === 0) {
                     reasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 } */
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!(shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 },
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
                     invalidReasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
                         translateValues: { index: index + 1 },
                     });
                 }
@@ -980,7 +980,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     private onSaveError = (error?: HttpErrorResponse): void => {
         console.error('Saving Quiz Failed! Please try again later.');
-        this.jhiAlertService.error('arTeMiSApp.quizExercise.saveError');
+        this.jhiAlertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
         this.changeDetector.detectChanges();
     };

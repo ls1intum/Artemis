@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,6 +37,9 @@ public class StudentQuestionResource {
     private final Logger log = LoggerFactory.getLogger(StudentQuestionResource.class);
 
     private static final String ENTITY_NAME = "studentQuestion";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final StudentQuestionRepository studentQuestionRepository;
 
@@ -77,8 +81,8 @@ public class StudentQuestionResource {
         if (question.getLecture() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForLecture(question);
         }
-        return ResponseEntity.created(new URI("/api/student-questions/" + question.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, question.getId().toString()))
-                .body(question);
+        return ResponseEntity.created(new URI("/api/student-questions/" + question.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, question.getId().toString())).body(question);
     }
 
     /**
@@ -97,7 +101,7 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         StudentQuestion result = studentQuestionRepository.save(studentQuestion);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, studentQuestion.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
     }
 
     /**
@@ -168,7 +172,7 @@ public class StudentQuestionResource {
         if (hasCourseTAAccess || isUserAuthor) {
             log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
             studentQuestionRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         else {
             return forbidden();

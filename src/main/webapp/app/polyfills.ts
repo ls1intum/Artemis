@@ -35,6 +35,7 @@ import 'core-js/features/weak-map';
 import 'core-js/features/set';
 /** Evergreen browsers require these. **/
 import 'core-js/features/reflect';
+import 'core-js/proposals/reflect-metadata';
 /***************************************************************************************************
  * Zone JS is required by Angular itself.
  */

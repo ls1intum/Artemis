@@ -21,9 +21,9 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
-    @ViewChild('clickLayer')
+    @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
-    @ViewChild('markdownEditor')
+    @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
 
     @Input()
