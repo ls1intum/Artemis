@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ProgrammingExercise } from './programming-exercise.model';
+import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
 import { Participation } from 'app/entities/participation';
@@ -73,10 +73,6 @@ export class ProgrammingExerciseService {
         params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
         params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
-    }
-
-    getTestCases(id: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}-test-cases/${id}`);
     }
 
     convertDataFromClient(exercise: ProgrammingExercise) {

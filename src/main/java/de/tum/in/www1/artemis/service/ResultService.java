@@ -153,6 +153,7 @@ public class ResultService {
                     result.setResultString(testCases.size() + " passed");
                 }
             }
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
         }
         notifyUser(participation, result);
     }

@@ -1,14 +1,16 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { compose, map, sortBy } from 'lodash/fp';
+import { compose, filter, map, sortBy } from 'lodash/fp';
 import { Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { getLatestResult, hasTemplateParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { tap } from 'rxjs/operators';
+import { Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from '../programming-exercise.model';
-import { Result } from 'app/entities/result';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { hasExerciseChanged } from 'app/entities/exercise';
+import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -26,13 +28,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     testCaseCommand = new TestCaseCommand();
     domainCommands: DomainCommand[] = [this.taskCommand, this.testCaseCommand];
 
-    templateResultSubscription: Subscription;
+    testCaseSubscription: Subscription;
 
     @Input()
     get participation() {
         return this.participationValue;
     }
-    @Input() templateParticipation: Participation;
     @Output() participationChange = new EventEmitter<Participation>();
 
     set participation(participation: Participation) {
@@ -54,33 +55,24 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
         this.exerciseChange.emit(this.exerciseValue);
     }
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private programmingExerciseTestCaseService: ProgrammingExerciseTestCaseService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (hasTemplateParticipationChanged(changes)) {
-            if (this.templateParticipation.results) {
-                this.setTestCasesFromResult(getLatestResult(this.templateParticipation));
-            }
-            if (this.templateResultSubscription) {
-                this.templateResultSubscription.unsubscribe();
+        if (hasExerciseChanged(changes)) {
+            if (this.testCaseSubscription) {
+                this.testCaseSubscription.unsubscribe();
             }
 
-            this.templateResultSubscription = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
-                .pipe(
-                    filter(result => !!result),
-                    tap(result => {
-                        this.templateParticipation.results = [...this.templateParticipation.results, result];
-                    }),
-                    tap(this.setTestCasesFromResult),
-                )
+            this.testCaseSubscription = this.programmingExerciseTestCaseService
+                .subscribeForTestCases(this.exercise.id)
+                .pipe(tap(this.setTestCasesFromResult))
                 .subscribe();
         }
     }
 
     ngOnDestroy(): void {
-        if (this.templateResultSubscription) {
-            this.templateResultSubscription.unsubscribe();
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
         }
     }
 
@@ -88,15 +80,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
         this.exercise = { ...this.exercise, problemStatement };
     }
 
-    setTestCasesFromResult = (result: Result) => {
+    setTestCasesFromResult = (testCases: ProgrammingExerciseTestCase[]) => {
         // If the exercise is created, there is no result available
-        this.exerciseTestCases =
-            result && result.feedbacks
-                ? compose(
-                      map(({ text }) => text),
-                      sortBy('text'),
-                  )(result.feedbacks)
-                : [];
+        this.exerciseTestCases = compose(
+            map(({ testName }) => testName),
+            filter(({ active }) => active),
+            sortBy('testName'),
+        )(testCases);
         this.testCaseCommand.setValues(this.exerciseTestCases);
     };
 }

@@ -105,16 +105,22 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1).exercise(exercise).active(true)).collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.
-        Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream()
-                .filter(testCase -> existingTestCases.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase))).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::equals))
+                .collect(Collectors.toSet());
+        // Get test cases which activate state flag changed.
+        Set<ProgrammingExerciseTestCase> activationStateChanges = existingTestCases.stream().filter(existing -> {
+            Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::equals).findFirst();
+            return matchingText.isPresent() && !matchingText.get().isActive().equals(existing.isActive());
+        }).collect(Collectors.toSet());
         // Get test cases that were removed from test files, set them to inactive.
         Set<ProgrammingExerciseTestCase> removedTestCases = existingTestCases.stream()
-                .filter(testCase -> testCase.isActive() && testCasesFromFeedbacks.stream().noneMatch(existingTestCase -> testCase.equals(existingTestCase)))
-                .map(testCase -> testCase.active(false)).collect(Collectors.toSet());
+                .filter(testCase -> testCase.isActive() && testCasesFromFeedbacks.stream().noneMatch(testCase::equals)).map(testCase -> testCase.active(false))
+                .collect(Collectors.toSet());
 
         Set<ProgrammingExerciseTestCase> toSave = new HashSet<>();
         toSave.addAll(newTestCases);
         toSave.addAll(removedTestCases);
+        toSave.addAll(activationStateChanges);
         if (toSave.size() > 0) {
             testCaseRepository.saveAll(toSave);
         }

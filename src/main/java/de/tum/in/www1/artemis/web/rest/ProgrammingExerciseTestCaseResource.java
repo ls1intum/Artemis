@@ -38,13 +38,13 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     @GetMapping(value = "/programming-exercises-test-cases/{exerciseId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         try {
             // Retrieve programming exercise to check availability & permissions.
             programmingExerciseService.findById(exerciseId);
-            Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findActiveByExerciseId(exerciseId);
+            Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
             return ResponseEntity.ok(testCases);
         }
         catch (IllegalAccessException ex) {

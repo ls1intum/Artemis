@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { IProgrammingExercise, ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Service Tests', () => {
