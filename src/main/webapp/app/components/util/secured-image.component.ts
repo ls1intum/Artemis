@@ -63,7 +63,6 @@ export class SecuredImageComponent implements OnChanges {
     }
 
     private loadImage(url: string): Observable<any> {
-        console.log('drag and drop: ', this.dragAndDrop);
         return this.httpClient
             .get(url, { responseType: 'blob' })
             .map(e => {
