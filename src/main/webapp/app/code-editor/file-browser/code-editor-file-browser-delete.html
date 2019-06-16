@@ -1,20 +1,20 @@
 <form #deleteForm="ngForm" name="deleteForm" (ngSubmit)="deleteFile()">
     <div class="modal-header">
-        <h4 *ngIf="fileType === 'FILE'" class="modal-title" jhiTranslate="arTeMiSApp.editor.fileBrowser.deleteFileTitle">Delete file</h4>
-        <h4 *ngIf="fileType === 'FOLDER'" class="modal-title" jhiTranslate="arTeMiSApp.editor.fileBrowser.deleteFolderTitle">Delete folder</h4>
+        <h4 *ngIf="fileType === 'FILE'" class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFileTitle">Delete file</h4>
+        <h4 *ngIf="fileType === 'FOLDER'" class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFolderTitle">Delete folder</h4>
         <button type="button" class="close" data-dismiss="modal" (click)="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p *ngIf="fileType === 'FILE'" class="text-danger" [innerHtml]="'arTeMiSApp.editor.fileBrowser.deleteFileConfirm' | translate: {filename: fileNameToDelete}"></p>
-        <p *ngIf="fileType === 'FOLDER'" class="text-danger" [innerHtml]="'arTeMiSApp.editor.fileBrowser.deleteFolderConfirm' | translate: {filename: fileNameToDelete}"></p>
+        <p *ngIf="fileType === 'FILE'" class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | translate: {filename: fileNameToDelete}"></p>
+        <p *ngIf="fileType === 'FOLDER'" class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | translate: {filename: fileNameToDelete}"></p>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="closeModal()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
-            <fa-icon icon="trash-alt"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.editor.fileBrowser.delete">Delete file</span>
+            <fa-icon icon="trash-alt"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete">Delete file</span>
         </button>
     </div>
 </form>

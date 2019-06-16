@@ -45,7 +45,7 @@
                     />
                     <div
                         *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid"
-                        [ngbTooltip]="'arTeMiSApp.shortAnswerSpot.invalidSpot' | translate"
+                        [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | translate"
                     >
                         <!-- class="short-answer-question-display" -->
                         <input
@@ -71,14 +71,14 @@
             <br />
         </div>
     </div>
-    <span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
+    <span style="color:red;" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
+            <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
         <br />
         <ng-template #renderedExplanation>
@@ -86,15 +86,15 @@
         </ng-template>
         <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <fa-icon icon="exclamation-circle"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.quizQuestion.explanation"></span>
+            <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
     </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
-        <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
+        <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
         <span>{{ question.score }}</span>
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.score }">
-        <span jhiTranslate="arTeMiSApp.quizQuestion.yourScore" class="colon-suffix"></span>
+        <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
         <span class="show-explanation">{{ score || 0 }}/{{ question.score }}</span>
         <span class="show-explanation">
             <jhi-quiz-scoring-infostudent-modal
@@ -109,10 +109,10 @@
     <br />
     <div *ngIf="showResult && !forceSampleSolution">
         <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-            {{ 'arTeMiSApp.quizQuestion.showSampleSolution' | translate }}
+            {{ 'artemisApp.quizQuestion.showSampleSolution' | translate }}
         </div>
         <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-            {{ 'arTeMiSApp.quizQuestion.hideSampleSolution' | translate }}
+            {{ 'artemisApp.quizQuestion.hideSampleSolution' | translate }}
         </div>
     </div>
 </div>

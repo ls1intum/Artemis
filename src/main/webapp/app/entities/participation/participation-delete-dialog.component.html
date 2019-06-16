@@ -5,17 +5,17 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="arTeMiSApp.participation.delete.question" [translateValues]="{ student: participation.student.firstName }">
+        <p jhiTranslate="artemisApp.participation.delete.question" [translateValues]="{ student: participation.student.firstName }">
             Are you sure you want to delete this Participation?
         </p>
         <div *ngIf="participation.exercise.type === PROGRAMMING">
             <div class="form-check">
                 <input type="checkbox" name="deleteBuildPlan" id="field_deleteBuildPlan" [(ngModel)]="deleteBuildPlan" />
-                <label class="form-check-label" for="field_deleteBuildPlan" jhiTranslate="arTeMiSApp.participation.deleteBuildPlan">Delete build plan</label>
+                <label class="form-check-label" for="field_deleteBuildPlan" jhiTranslate="artemisApp.participation.deleteBuildPlan">Delete build plan</label>
             </div>
             <div class="form-check">
                 <input type="checkbox" name="deleteRepository" id="field_deleteRepository" [(ngModel)]="deleteRepository" />
-                <label class="form-check-label" for="field_deleteRepository" jhiTranslate="arTeMiSApp.participation.deleteRepository">Delete repository</label>
+                <label class="form-check-label" for="field_deleteRepository" jhiTranslate="artemisApp.participation.deleteRepository">Delete repository</label>
             </div>
         </div>
     </div>

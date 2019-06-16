@@ -12,16 +12,13 @@
         "suppressImplicitAnyIndexErrors": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
-        "outDir": "build/www/app",
+        "outDir": "build/resources/main/static/app",
         "lib": ["es2018", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
         "baseUrl": "./",
         "paths": {
-            "@angular/*": [
-                "../node_modules/@angular/*"
-            ],
             "app/*": ["src/main/webapp/app/*"]
         },
         "importHelpers": true

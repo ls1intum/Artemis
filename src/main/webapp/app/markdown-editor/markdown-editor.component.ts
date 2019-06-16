@@ -29,7 +29,7 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 500,
+    MEDIUM = 350,
     LARGE = 1000,
 }
 
@@ -43,16 +43,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
-    @ViewChild('aceEditor')
+    @ViewChild('aceEditor', { static: false })
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
         autoUpdateContent: true,
         mode: 'markdown',
     };
-    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() markdown: string;
+    @Input()
+    markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
 
@@ -99,13 +100,16 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
-    @ContentChild('preview') previewChild: ElementRef;
+    @ContentChild('preview', { static: false }) previewChild: ElementRef;
 
     /** Resizable constants **/
+    @Input()
+    defaultHeight = MarkdownEditorHeight.SMALL;
     @Input()
     enableResize = false;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input()
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
@@ -189,7 +193,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top

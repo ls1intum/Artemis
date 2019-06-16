@@ -1,10 +1,12 @@
-import org.gradle.internal.os.OperatingSystem
-
-apply plugin: 'org.springframework.boot'
-apply plugin: 'com.moowork.node'
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
 
 dependencies {
-    compile "org.springframework.boot:spring-boot-devtools"
+    developmentOnly "org.springframework.boot:spring-boot-devtools"
 }
 
 def profiles = 'dev'
@@ -15,40 +17,40 @@ if (project.hasProperty('tls')) {
     profiles += ',tls'
 }
 
+springBoot {
+    buildInfo {
+        properties {
+            time = null
+        }
+    }
+}
+
 bootRun {
     args = []
 }
 
 task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
     inputs.dir("src/main/webapp/")
-    inputs.files(fileTree('src/main/webapp/'))
-    outputs.dir("build/www/")
-    outputs.file("build/www/app/main.bundle.js")
+
+    def webpackDevFiles = fileTree("webpack//")
+    webpackDevFiles.exclude("webpack.prod.js")
+    inputs.files(webpackDevFiles)
+
+    outputs.dir("build/resources/main/static/")
+
     args = ["run", "webpack:build"]
 }
 
-war {
-    webAppDirName = 'build/www/'
-}
-
-task copyIntoStatic (type: Copy) {
-    from 'build/www/'
-    into 'build/resources/main/static'
-}
-
 processResources {
-    filesMatching('**/application.yml') {
+    filesMatching("**/application.yml") {
         filter {
-            it.replace('#project.version#', version)
+            it.replace("#project.version#", version)
         }
-    }
-    filesMatching('**/bootstrap.yml') {
         filter {
-            it.replace('#spring.profiles.active#', profiles)
+            it.replace("#spring.profiles.active#", profiles)
         }
     }
 }
 
 processResources.dependsOn webpackBuildDev
-copyIntoStatic.dependsOn processResources
-bootJar.dependsOn copyIntoStatic
+bootJar.dependsOn processResources

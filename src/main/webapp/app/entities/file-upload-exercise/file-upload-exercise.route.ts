@@ -12,7 +12,7 @@ export const fileUploadExerciseRoute: Routes = [
         component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -21,7 +21,7 @@ export const fileUploadExerciseRoute: Routes = [
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -30,7 +30,7 @@ export const fileUploadExerciseRoute: Routes = [
         component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title',
+            pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -39,7 +39,7 @@ export const fileUploadExerciseRoute: Routes = [
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title',
+            pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -51,7 +51,7 @@ export const fileUploadExercisePopupRoute: Routes = [
         component: FileUploadExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -61,7 +61,7 @@ export const fileUploadExercisePopupRoute: Routes = [
         component: FileUploadExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -71,7 +71,7 @@ export const fileUploadExercisePopupRoute: Routes = [
         component: FileUploadExerciseDeletePopupComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.fileUploadExercise.home.title',
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

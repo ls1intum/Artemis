@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "studentQuestion": {
             "created": "A new question is created with identifier {{ param }}",
             "updated": "A question is updated with identifier {{ param }}",

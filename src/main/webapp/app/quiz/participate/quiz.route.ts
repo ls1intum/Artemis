@@ -9,7 +9,7 @@ export const quizRoute: Routes = [
         component: QuizComponent,
         data: {
             authorities: [],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'default',
         },
         canActivate: [UserRouteAccessService],
@@ -19,7 +19,7 @@ export const quizRoute: Routes = [
         component: QuizComponent,
         data: {
             authorities: [],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'practice',
         },
         canActivate: [UserRouteAccessService],
@@ -29,7 +29,7 @@ export const quizRoute: Routes = [
         component: QuizComponent,
         data: {
             authorities: [],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
         canActivate: [UserRouteAccessService],
@@ -39,7 +39,7 @@ export const quizRoute: Routes = [
         component: QuizComponent,
         data: {
             authorities: [],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },
         canActivate: [UserRouteAccessService],

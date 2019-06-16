@@ -50,6 +50,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         window.history.back();
     }
 
+    squashTemplateCommits() {
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+            },
+        );
+    }
+
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
             res => {
@@ -57,7 +68,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 jhiAlert.msg = res;
             },
             error => {
-                const errorMessage = error.headers.get('X-arTeMiSApp-alert');
+                const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;

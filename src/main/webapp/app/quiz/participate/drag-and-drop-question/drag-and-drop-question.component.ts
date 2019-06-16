@@ -29,7 +29,7 @@ window.addEventListener('touchmove', function() {}, { passive: false });
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     /** needed to trigger a manual reload of the drag and drop background picture */
-    @ViewChild(SecuredImageComponent)
+    @ViewChild(SecuredImageComponent, { static: false })
     secureImageComponent: SecuredImageComponent;
 
     _question: DragAndDropQuestion;
