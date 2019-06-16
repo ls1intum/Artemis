@@ -72,7 +72,7 @@ public class ClassStructuralTest extends StructuralTest {
      */
     @Test(timeout = 1000)
     public void testClass() {
-        Class<?> observedClass = findClassForTestType("hierarchy");
+        Class<?> observedClass = findClassForTestType("class");
 
         JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
 

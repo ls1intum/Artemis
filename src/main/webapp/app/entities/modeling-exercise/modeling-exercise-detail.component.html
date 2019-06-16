@@ -1,43 +1,43 @@
 <div *ngIf="modelingExercise">
-    <h2><span jhiTranslate="arTeMiSApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
+    <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
     <hr />
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details markdown-preview">
-        <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{ modelingExercise.title }}</span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{ modelingExercise.releaseDate | date: 'medium' }}</span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
         <dd>
             <span>{{ modelingExercise.dueDate | date: 'medium' }}</span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
         <dd>
             <span>{{ modelingExercise.maxScore }}</span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></dt>
+        <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
         <dd>
-            <span jhiTranslate="{{ 'arTeMiSApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
+            <span jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.course">Course</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
         <dd>
             <div *ngIf="modelingExercise.course">
                 <a [routerLink]="['/course', modelingExercise.course?.id]">{{ modelingExercise.course?.title }}</a>
             </div>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
         <dd class="editor-outline-background">
             <span [innerHTML]="problemStatement"></span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
         <dd class="editor-outline-background">
             <span [innerHTML]="gradingInstructions"></span>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
+        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
         <dd>
             <span>{{ modelingExercise.maxScore }}</span>
         </dd>

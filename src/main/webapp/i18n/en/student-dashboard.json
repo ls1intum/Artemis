@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "studentDashboard": {
             "title": "Your current courses",
             "exerciseTitle": "Current exercise of \"{{ course }}\" active till {{ date }}:",

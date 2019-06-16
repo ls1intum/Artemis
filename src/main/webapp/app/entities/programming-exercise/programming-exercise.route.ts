@@ -32,7 +32,7 @@ export const programmingExerciseRoute: Routes = [
         component: ProgrammingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -44,7 +44,7 @@ export const programmingExerciseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -56,7 +56,7 @@ export const programmingExerciseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -68,7 +68,7 @@ export const programmingExerciseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -80,7 +80,7 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -90,7 +90,7 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -103,7 +103,7 @@ export const programmingExercisePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title',
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

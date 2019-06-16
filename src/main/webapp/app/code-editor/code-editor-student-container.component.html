@@ -1,0 +1,66 @@
+<jhi-alert></jhi-alert>
+<jhi-alert-error></jhi-alert-error>
+<nav *ngIf="loadingParticipation || participationCouldNotBeFetched" class="card">
+    <div class="card-body">
+        <span *ngIf="loadingParticipation">
+            <fa-icon icon="circle-notch" spin="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
+                Your participation is being loaded...
+            </span>
+        </span>
+        <span *ngIf="participationCouldNotBeFetched">
+            <fa-icon icon="times-circle" class="text-danger"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+        </span>
+    </div>
+</nav>
+<jhi-code-editor-grid *ngIf="!loadingParticipation && !participationCouldNotBeFetched" #grid [exerciseTitle]="exercise?.title">
+    <div class="d-flex align-items-center ml-auto" editorNavbar>
+        <jhi-updating-result *ngIf="participation && !isBuilding" [participation]="participation" class="mr-2"></jhi-updating-result>
+        <jhi-code-editor-actions
+            [unsavedFiles]="unsavedFiles"
+            [(editorState)]="editorState"
+            [(commitState)]="commitState"
+            [(isBuilding)]="isBuilding"
+            (onSavedFiles)="onSavedFiles($event)"
+            (onError)="onError($event)"
+        ></jhi-code-editor-actions>
+    </div>
+    <jhi-code-editor-file-browser
+        editorSidebarLeft
+        [exerciseTitle]="exercise?.title"
+        [unsavedFiles]="unsavedFiles | keys"
+        [errorFiles]="buildLogErrors ? (buildLogErrors.errors | keys) : []"
+        [editorState]="editorState"
+        [toggleCollapse]="grid.toggleCollapse"
+        [(selectedFile)]="selectedFile"
+        [(commitState)]="commitState"
+        (onFileChange)="onFileChange($event)"
+        (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
+    ></jhi-code-editor-file-browser>
+    <jhi-code-editor-ace
+        editorCenter
+        [selectedFile]="selectedFile"
+        [fileChange]="fileChange"
+        [commitState]="commitState"
+        [(buildLogErrors)]="buildLogErrors"
+        (onFileContentChange)="onFileContentChange($event)"
+        (onError)="onError($event)"
+    ></jhi-code-editor-ace>
+    <jhi-code-editor-instructions
+        editorSidebarRight
+        [participation]="participation"
+        [exercise]="exercise"
+        (onToggleCollapse)="onToggleCollapse($event)"
+        (onError)="onError($event)"
+    ></jhi-code-editor-instructions>
+    <jhi-code-editor-build-output
+        editorBottomArea
+        [participation]="participation"
+        [(isBuilding)]="isBuilding"
+        [(buildLogErrors)]="buildLogErrors"
+        (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event)"
+    ></jhi-code-editor-build-output>
+</jhi-code-editor-grid>

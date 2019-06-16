@@ -12,7 +12,7 @@ export const participationRoute: Routes = [
         component: ParticipationComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.participation.home.title',
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -21,7 +21,7 @@ export const participationRoute: Routes = [
         component: ParticipationComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.participation.home.title',
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -33,7 +33,7 @@ export const participationPopupRoute: Routes = [
         component: ParticipationDeletePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.participation.home.title',
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -43,7 +43,7 @@ export const participationPopupRoute: Routes = [
         component: ParticipationCleanupBuildPlanPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.participation.home.title',
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -53,7 +53,7 @@ export const participationPopupRoute: Routes = [
         component: InstructorDashboardResultPopupComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.participation.home.title',
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

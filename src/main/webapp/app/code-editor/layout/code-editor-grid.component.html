@@ -1,0 +1,30 @@
+<div class="editor-wrapper">
+    <!-- Top bar -->
+    <nav class="navbar navbar-light navbar-expand-sm jh-navbar d-flex">
+        <!-- Exercise title -->
+        <div class="jh-logo-container float-left editor-top-left">
+            <span>{{ exerciseTitle }}</span>
+        </div>
+        <ng-content select="[editorNavbar]"> </ng-content>
+    </nav>
+
+    <div class="editor-main">
+        <!-- File browser -->
+        <div class="editor-sidebar-left">
+            <ng-content select="[editorSidebarLeft]"></ng-content>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-center">
+            <ng-content select="[editorCenter]"></ng-content>
+        </div>
+
+        <!-- Instructions -->
+        <div class="editor-sidebar-right">
+            <ng-content select="[editorSidebarRight]"></ng-content>
+        </div>
+    </div>
+    <div class="editor-bottom">
+        <ng-content select="[editorBottomArea]"></ng-content>
+    </div>
+</div>

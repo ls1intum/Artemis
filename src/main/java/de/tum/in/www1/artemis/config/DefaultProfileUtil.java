@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.core.env.Environment;
 
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -32,19 +31,5 @@ public final class DefaultProfileUtil {
          */
         defProperties.put(SPRING_PROFILE_DEFAULT, JHipsterConstants.SPRING_PROFILE_DEVELOPMENT);
         app.setDefaultProperties(defProperties);
-    }
-
-    /**
-     * Get the profiles that are applied else get default profiles.
-     *
-     * @param env spring environment
-     * @return profiles
-     */
-    public static String[] getActiveProfiles(Environment env) {
-        String[] profiles = env.getActiveProfiles();
-        if (profiles.length == 0) {
-            return env.getDefaultProfiles();
-        }
-        return profiles;
     }
 }

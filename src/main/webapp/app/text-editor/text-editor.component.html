@@ -32,13 +32,13 @@
     <div class="row" *ngIf="textExercise">
         <div class="col-9">
             <p class="mb-3 markdown-preview">
-                <b><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>:</b>
+                <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
                 <span [innerHTML]="textExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
             <p>
-                <strong><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
+                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
             </p>
         </div>
     </div>
@@ -50,13 +50,13 @@
 
         <ng-template #hasFeedback>
             <div class="col-md-12 col-lg-10 col-xl-8">
-                <b><span jhiTranslate="arTeMiSApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
+                <b><span jhiTranslate="artemisApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
                 <br />
                 <jhi-text-result [result]="result"></jhi-text-result>
             </div>
 
             <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
-                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
                 <br />
                 {{ generalFeedback.detailText }}
             </div>
@@ -69,10 +69,10 @@
             [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
             (click)="showComplaintForm = !showComplaintForm"
             [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
-            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
             <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
-            {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}
+            {{ 'artemisApp.complaint.moreInfo_temp' | translate }}
         </button>
     </div>
 

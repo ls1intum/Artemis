@@ -1,0 +1,12 @@
+<li class="list-group-item border-0">
+    <fa-icon aria-hidden="true" [icon]="createFileType === FileType.FILE ? 'file' : 'folder'" [fixedWidth]="true"></fa-icon>
+    <span class="ml-1"
+        ><input
+            #creatingInput
+            value=""
+            (keyup.enter)="createFile($event)"
+            (focusout)="createFile($event)"
+            (keyup.esc)="onClearCreatingFile.emit($event)"
+            class="list-group-item__input"
+    /></span>
+</li>

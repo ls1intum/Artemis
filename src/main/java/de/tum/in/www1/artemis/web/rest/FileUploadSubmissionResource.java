@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,9 @@ public class FileUploadSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
     private static final String ENTITY_NAME = "fileUploadSubmission";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -49,7 +53,7 @@ public class FileUploadSubmissionResource {
         }
         FileUploadSubmission result = fileUploadSubmissionRepository.save(fileUploadSubmission);
         return ResponseEntity.created(new URI("/api/file-upload-submissions/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -67,7 +71,7 @@ public class FileUploadSubmissionResource {
             return createFileUploadSubmission(fileUploadSubmission);
         }
         FileUploadSubmission result = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, fileUploadSubmission.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fileUploadSubmission.getId().toString())).body(result);
     }
 
     /**
@@ -104,6 +108,6 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadSubmission : {}", id);
         fileUploadSubmissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

@@ -8,4 +8,7 @@ export abstract class DomainMultiOptionCommand extends DomainCommand {
     setValues(values: string[]) {
         this.values = values;
     }
+    getValues() {
+        return this.values;
+    }
 }

@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "programmingExercise": {
             "home": {
                 "title": "Programmieraufgaben",
@@ -44,6 +44,10 @@
             "status": {
                 "solutionFailsTest": "Das Solution Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution Repository oder den Testfällen hinweisen.",
                 "templateFulfillsTest": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template Repository oder den Testfällen hinweisen."
+            },
+            "testCaseAnalysis": {
+                "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
+                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:"
             }
         }
     }

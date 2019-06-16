@@ -165,6 +165,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editInEditor": "Edit in editor",
             "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",
             "open": "Open",

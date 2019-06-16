@@ -1,9 +1,9 @@
 <div>
     <h4>
-        <span id="course-page-heading" jhiTranslate="arTeMiSApp.course.home.title">Courses</span>
+        <span id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</span>
         <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/course/new']">
             <fa-icon [icon]="'plus'"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.course.home.createLabel">
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel">
                 Create new Course
             </span>
         </button>
@@ -19,19 +19,19 @@
                         <span>{{ 'global.field.id' | translate }}</span>
                     </th>
                     <th>
-                        <span>{{ 'arTeMiSApp.course.title' | translate }}</span>
+                        <span>{{ 'artemisApp.course.title' | translate }}</span>
                     </th>
                     <th>
-                        <span>{{ 'arTeMiSApp.course.accessGroups' | translate }}</span>
+                        <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
                     </th>
                     <th>
-                        <span>{{ 'arTeMiSApp.course.startDate' | translate }}</span>
+                        <span>{{ 'artemisApp.course.startDate' | translate }}</span>
                     </th>
                     <th>
-                        <span>{{ 'arTeMiSApp.course.endDate' | translate }}</span>
+                        <span>{{ 'artemisApp.course.endDate' | translate }}</span>
                     </th>
                     <th>
-                        <span>{{ 'arTeMiSApp.course.onlineCourse' | translate }}</span>
+                        <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span>
                     </th>
                     <th></th>
                 </tr>
@@ -44,19 +44,19 @@
                     <td>
                         <span class="bold">{{ course.title }}</span
                         ><br /><span *ngIf="course.shortName"
-                            ><span class="bold">{{ 'arTeMiSApp.course.shortName' | translate }}:</span> {{ course.shortName }}</span
+                            ><span class="bold">{{ 'artemisApp.course.shortName' | translate }}:</span> {{ course.shortName }}</span
                         >
                     </td>
                     <td>
-                        <span class="bold">{{ 'arTeMiSApp.course.students' | translate }}:</span> {{ course.studentGroupName }}<br />
-                        <span class="bold">{{ 'arTeMiSApp.course.tutors' | translate }}:</span> {{ course.teachingAssistantGroupName }}<br />
-                        <span class="bold">{{ 'arTeMiSApp.course.instructors' | translate }}:</span> {{ course.instructorGroupName }}
+                        <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span> {{ course.studentGroupName }}<br />
+                        <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span> {{ course.teachingAssistantGroupName }}<br />
+                        <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span> {{ course.instructorGroupName }}
                     </td>
                     <td>{{ course.startDate | date: 'medium' }}</td>
                     <td>{{ course.endDate | date: 'medium' }}</td>
                     <td>
-                        <span *ngIf="course.onlineCourse">{{ 'arTeMiSApp.course.onlineCourseTrue' | translate }}</span>
-                        <span *ngIf="!course.onlineCourse">{{ 'arTeMiSApp.course.onlineCourseFalse' | translate }}</span>
+                        <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
+                        <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
@@ -98,7 +98,7 @@
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'th-list'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'arTeMiSApp.course.instructorDashboard' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">

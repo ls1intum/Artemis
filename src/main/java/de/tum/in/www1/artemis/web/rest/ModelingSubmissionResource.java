@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
@@ -37,6 +38,9 @@ public class ModelingSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String GET_200_SUBMISSIONS_REASON = "";
 

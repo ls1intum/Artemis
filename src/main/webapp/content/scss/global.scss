@@ -201,7 +201,7 @@ Custom alerts for notification
         }
     }
 
-    .toast {
+    .jhi-toast {
         position: fixed;
         width: 100%;
 
@@ -224,7 +224,7 @@ Custom alerts for notification
 }
 
 @media screen and (min-width: 480px) {
-    .alerts .toast {
+    .alerts .jhi-toast {
         width: 50%;
     }
 }
