@@ -2,7 +2,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 
 export class CorrectOptionCommand extends DomainTagCommand {
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
 
     /**
      * @function execute

@@ -10,7 +10,7 @@ export const modelingAssessmentRoutes: Routes = [
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -19,7 +19,7 @@ export const modelingAssessmentRoutes: Routes = [
         component: ModelingAssessmentConflictComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

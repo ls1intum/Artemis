@@ -9,7 +9,7 @@ export const modelingSubmissionRoute: Routes = [
         component: ModelingSubmissionComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.modelingExercise.home.title',
+            pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],

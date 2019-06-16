@@ -1,10 +1,10 @@
 <form name="generate-quiz-exercise" role="form" (ngSubmit)="save()" novalidate>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="arTeMiSApp.apollonDiagram.detail.createLabel">Generate a Quiz Exercise</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.detail.createLabel">Generate a Quiz Exercise</h4>
     </div>
 
     <div class="modal-body">
-        <label for="generate-quiz-exercise-course" class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course">Course</label>
+        <label for="generate-quiz-exercise-course" class="form-control-label" jhiTranslate="artemisApp.exercise.course">Course</label>
         <select id="generate-quiz-exercise-course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
             <option *ngFor="let course of courses" [ngValue]="course">{{ course.title }}</option>
         </select>
@@ -17,7 +17,7 @@
         </button>
         <button id="generate-quiz-exercise-save" type="submit" class="btn btn-success">
             <fa-icon icon="save"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.apollonDiagram.detail.generate">Generate</span>
+            <span jhiTranslate="artemisApp.apollonDiagram.detail.generate">Generate</span>
         </button>
     </div>
 </form>

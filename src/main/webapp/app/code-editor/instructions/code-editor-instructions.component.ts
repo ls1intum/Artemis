@@ -22,8 +22,8 @@ import { MarkdownEditorHeight } from 'app/markdown-editor';
 export class CodeEditorInstructionsComponent implements AfterViewInit {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
-    @ViewChild(ProgrammingExerciseInstructionComponent) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
-    @ViewChild(ProgrammingExerciseEditableInstructionComponent) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     @Input()
     participation: Participation;

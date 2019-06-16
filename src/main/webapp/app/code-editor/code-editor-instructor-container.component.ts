@@ -40,12 +40,12 @@ enum LOADING_STATE {
     templateUrl: './code-editor-instructor-container.component.html',
 })
 export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorFileBrowserComponent) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorInstructionsComponent) instructions: CodeEditorInstructionsComponent;
-    @ViewChild(CodeEditorAceComponent) aceEditor: CodeEditorAceComponent;
-    @ViewChild(UpdatingResultComponent) resultComp: UpdatingResultComponent;
+    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
+    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
+    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
+    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
+    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
+    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
 
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
