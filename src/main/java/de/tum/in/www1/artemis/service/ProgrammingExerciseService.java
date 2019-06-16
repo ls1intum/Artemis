@@ -361,8 +361,8 @@ public class ProgrammingExerciseService {
             }
             // there is no need in python to replace package names
 
-            fileTargets.add("${exerciseNameCompact}");
-            fileReplacements.add(programmingExercise.getShortName().toLowerCase()); // Used e.g. in artifactId
+            fileTargets.add("${exerciseNamePomXml}");
+            fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
 
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());

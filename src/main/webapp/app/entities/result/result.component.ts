@@ -98,7 +98,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     buildResultString() {
         if (this.result.resultString === 'No tests found') {
-            return this.translate.instant('arTeMiSApp.editor.buildFailed');
+            return this.translate.instant('artemisApp.editor.buildFailed');
         }
         return this.result.resultString;
     }

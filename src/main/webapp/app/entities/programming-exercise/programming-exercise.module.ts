@@ -19,6 +19,7 @@ import {
     ProgrammingExerciseService,
     ProgrammingExerciseUpdateComponent,
     ProgrammingExerciseInstructorStatusComponent,
+    ProgrammingExerciseInstructionTestcaseStatusComponent,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -27,6 +28,7 @@ import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/
 import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -52,6 +54,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseInstructionTestcaseStatusComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -61,9 +65,15 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
         FaIconComponent,
     ],
-    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent, ProgrammingExerciseEditableInstructionComponent],
+    exports: [
+        ProgrammingExerciseComponent,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseEditableInstructionComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+    ],
     providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

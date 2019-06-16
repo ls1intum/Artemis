@@ -14,12 +14,6 @@ $titlebar-height: 65px;
     align-items: center;
 }
 
-.control-container {
-    button {
-        margin-left: 15px;
-    }
-}
-
 .assessment-container {
     display: flex;
     min-height: calc(100vh - 173px);
@@ -36,14 +30,4 @@ $titlebar-height: 65px;
         min-width: 0;
         width: 100%;
     }
-}
-.custom-control {
-    display: flex;
-    label {
-        font-size: 1rem;
-    }
-}
-
-.conflict {
-    background-color: rgb(248, 214, 217);
 }

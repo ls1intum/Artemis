@@ -3,7 +3,7 @@
     <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
         <div class="col-12 col-lg-8">
             <h2>
-                <span *ngIf="!modelingExercise" jhiTranslate="arTeMiSApp.modelingSubmission.modelingEditor">Modeling Editor</span>
+                <span *ngIf="!modelingExercise" jhiTranslate="artemisApp.modelingSubmission.modelingEditor">Modeling Editor</span>
                 <span *ngIf="modelingExercise">{{ modelingExercise.title }}</span>
             </h2>
         </div>
@@ -49,14 +49,14 @@
     <div class="row" *ngIf="modelingExercise">
         <div [ngClass]="{ 'col-12': submission?.submitted, 'col-9': !submission?.submitted }">
             <p class="mb-3 markdown-preview">
-                <span jhiTranslate="arTeMiSApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
+                <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <span class="background-editor-color">
                     <span [innerHTML]="modelingExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
                 </span>
             </p>
         </div>
         <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p jhiTranslate="arTeMiSApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
+            <p jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
                 <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
             </p>
         </div>
@@ -79,27 +79,27 @@
             <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
-            <h4 jhiTranslate="arTeMiSApp.modelingSubmission.assessment.title">Assessment</h4>
+            <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
             <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
-                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
                 <br />
                 {{ generalFeedbackText }}
             </div>
             <p
                 *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0"
-                jhiTranslate="arTeMiSApp.modelingSubmission.assessment.noAssessment"
+                jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"
             >
                 There is no assessment available yet.
             </p>
             <ng-container *ngIf="assessmentResult?.feedbacks?.length > 0">
-                <p jhiTranslate="arTeMiSApp.modelingSubmission.assessment.instructions">
+                <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions">
                     Select elements in the editor to filter the assessment.
                 </p>
                 <table class="table">
                     <thead class="thead-light">
                         <tr>
-                            <th jhiTranslate="arTeMiSApp.modelingSubmission.assessment.element">Element</th>
-                            <th class="text-center" jhiTranslate="arTeMiSApp.modelingSubmission.assessment.score">Score</th>
+                            <th jhiTranslate="artemisApp.modelingSubmission.assessment.element">Element</th>
+                            <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score">Score</th>
                         </tr>
                     </thead>
                     <tbody *ngIf="assessmentsNames">
@@ -127,13 +127,13 @@
     <div class="row mt-2 ml-0" *ngIf="result && result.completionDate && !hasComplaint">
         <button
             class="btn btn-primary"
-            [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
+            [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
             (click)="showComplaintForm = !showComplaintForm"
-            [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
-            title="{{ numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
+            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
             <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
-            {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}
+            {{ 'artemisApp.complaint.moreInfo_temp' | translate }}
         </button>
     </div>
 </div>

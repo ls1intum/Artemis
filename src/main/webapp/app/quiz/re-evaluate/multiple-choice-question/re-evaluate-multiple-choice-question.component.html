@@ -29,12 +29,12 @@
     </div>
     <div class="question-options">
         <div class="form-group">
-            <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
             <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
-                <option value="ALL_OR_NOTHING">{{ 'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
-                <option value="PROPORTIONAL_WITH_PENALTY">{{ 'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
+                <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
+                <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
             </select>
-            <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
+            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
             <span>{{ question.score }}</span>
         </div>
         <div class="form-group">
@@ -43,7 +43,7 @@
                 <label
                     class="form-check-label custom-control-label"
                     for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
-                    jhiTranslate="arTeMiSApp.multipleChoiceQuestion.randomizeOrder"
+                    jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
                 >
                 </label>
             </div>
@@ -52,13 +52,13 @@
             class="btn btn-outline-secondary"
             [hidden]="question.invalid"
             (click)="question.invalid = true"
-            jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setQuestionInvalid"
+            jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
         ></button>
         <button
             class="btn btn-outline-secondary"
             [hidden]="!question.invalid"
             [disabled]="question.invalid"
-            jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.questionIsInvalid"
+            jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
         ></button>
     </div>
     <div class="markupEditorArea">
@@ -94,13 +94,13 @@
                         class="btn btn-outline-secondary"
                         [hidden]="isAnswerInvalid(answer)"
                         (click)="setAnswerInvalid(answer)"
-                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setAnswerInvalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
                     ></button>
                     <button
                         class="btn btn-outline-secondary"
                         [hidden]="!isAnswerInvalid(answer)"
                         [disabled]="isAnswerInvalid(answer)"
-                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.answerIsInvalid"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
                     ></button
                     >&nbsp;
                     <span class="re-evaluate-button" (click)="resetAnswer(answer)">

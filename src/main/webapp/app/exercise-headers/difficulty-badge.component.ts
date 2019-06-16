@@ -30,21 +30,21 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     private setBadgeAttributes() {
         switch (this.exercise.difficulty) {
             case DifficultyLevel.EASY:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.easy');
+                this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.easy');
                 this.badgeClass = 'badge-success';
                 break;
             case DifficultyLevel.MEDIUM:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.medium');
+                this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.medium');
                 this.badgeClass = 'badge-warning';
                 break;
             case DifficultyLevel.HARD:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.hard');
+                this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.hard');
                 this.badgeClass = 'badge-danger';
                 break;
             default:
                 if (this.showNoLevel) {
                     this.badgeClass = 'badge-info';
-                    this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.noLevel');
+                    this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.noLevel');
                 }
         }
     }

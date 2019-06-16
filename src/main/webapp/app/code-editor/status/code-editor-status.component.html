@@ -2,42 +2,42 @@
     <div id="editor_state" [ngSwitch]="editorState">
         <div *ngSwitchCase="'CLEAN'">
             <fa-icon [icon]="['fas', 'check-circle']" class="text-success mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.changesSaved' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.changesSaved' | translate }}</span>
         </div>
         <div *ngSwitchCase="'UNSAVED_CHANGES'">
             <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.unsavedChanges' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.unsavedChanges' | translate }}</span>
         </div>
         <div *ngSwitchCase="'SAVING'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.savingChanges' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.savingChanges' | translate }}</span>
         </div>
     </div>
     <hr />
     <div id="commit_state" [ngSwitch]="commitState">
         <div *ngSwitchCase="'UNDEFINED'">
             <fa-icon [icon]="['fas', 'circle-notch']" [spin]="true" class="text-info mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.changesUndefined' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.changesUndefined' | translate }}</span>
         </div>
         <div *ngSwitchCase="'COULD_NOT_BE_RETRIEVED'">
             <fa-icon [icon]="['fas', 'times-circle']" class="text-danger mr-1"></fa-icon>
-            <span class="text-danger">{{ 'arTeMiSApp.editor.changesError' | translate }}</span>
+            <span class="text-danger">{{ 'artemisApp.editor.changesError' | translate }}</span>
         </div>
         <div *ngSwitchCase="'CLEAN'">
             <fa-icon [icon]="['fas', 'check-circle']" class="text-success mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.changesSubmitted' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.changesSubmitted' | translate }}</span>
         </div>
         <div *ngSwitchCase="'UNCOMMITTED_CHANGES'">
             <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning mr-1"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.unsubmittedChanges' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.unsubmittedChanges' | translate }}</span>
         </div>
         <div *ngSwitchCase="'WANTS_TO_COMMIT'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.preparingForSubmit' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.preparingForSubmit' | translate }}</span>
         </div>
         <div *ngSwitchCase="'COMMITTING'">
             <fa-icon [icon]="['fas', 'circle-notch']" class="text-info mr-1" [spin]="true"></fa-icon>
-            <span class="text-info">{{ 'arTeMiSApp.editor.submittingChanges' | translate }}</span>
+            <span class="text-info">{{ 'artemisApp.editor.submittingChanges' | translate }}</span>
         </div>
     </div>
 </div>

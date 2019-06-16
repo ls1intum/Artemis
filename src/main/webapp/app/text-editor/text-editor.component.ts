@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
-import { Result } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
@@ -36,7 +36,7 @@ export class TextEditorComponent implements OnInit {
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled
-    resultOlderThanOneWeek: boolean;
+    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
 
@@ -50,19 +50,20 @@ export class TextEditorComponent implements OnInit {
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private complaintService: ComplaintService,
+        private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
         translateService: TranslateService,
     ) {
         this.isSaving = false;
-        translateService.get('arTeMiSApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
+        translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('arTeMiSApp.textExercise.error', null, null);
+            return this.jhiAlertService.error('artemisApp.textExercise.error', null, null);
         }
 
         this.textService.get(participationId).subscribe(
@@ -87,7 +88,7 @@ export class TextEditorComponent implements OnInit {
                         this.answer = this.submission.text;
                     }
                     if (this.result && this.result.completionDate) {
-                        this.resultOlderThanOneWeek = moment(this.result.completionDate).isBefore(moment().subtract(1, 'week'));
+                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
                         this.complaintService.findByResultId(this.result.id).subscribe(res => {
                             this.hasComplaint = !!res.body;
                         });
@@ -126,13 +127,13 @@ export class TextEditorComponent implements OnInit {
                 if (response) {
                     this.submission = response.body;
                     this.result = this.submission.result;
-                    this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
+                    this.jhiAlertService.success('artemisApp.textExercise.saveSuccessful');
 
                     this.isSaving = false;
                 }
             },
             e => {
-                this.jhiAlertService.error('arTeMiSApp.textExercise.error');
+                this.jhiAlertService.error('artemisApp.textExercise.error');
                 this.isSaving = false;
             },
         );
@@ -173,13 +174,13 @@ export class TextEditorComponent implements OnInit {
                     this.result = this.submission.result;
 
                     if (this.isActive) {
-                        this.jhiAlertService.success('arTeMiSApp.textExercise.submitSuccessful');
+                        this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
                     } else {
-                        this.jhiAlertService.warning('arTeMiSApp.textExercise.submitDeadlineMissed');
+                        this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
                     }
                 },
                 err => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
                     this.submission.submitted = false;
                 },
             );

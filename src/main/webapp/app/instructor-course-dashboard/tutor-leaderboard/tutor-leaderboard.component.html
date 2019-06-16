@@ -1,28 +1,36 @@
 <div class="row table-responsive mt-3">
     <table class="table">
         <thead>
-            <tr>
+            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="callback">
                 <th>#</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.username' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaints' | translate }}</th>
+                <th jhiSortBy="name">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="login">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.username' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfAssessments">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfComplaints">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of tutorsData | keyvalue: orderByNumberOfAssessments; let i = index">
+            <tr *ngFor="let tutor of tutorsData | sortBy: sortPredicate:reverseOrder; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.value.name }}</td>
-                <td>{{ tutor.value.login }}</td>
-                <td>{{ tutor.value.numberOfAssessments }}</td>
+                <td>{{ tutor.name }}</td>
+                <td>{{ tutor.login }}</td>
+                <td>{{ tutor.numberOfAssessments }}</td>
                 <td *ngIf="courseId">
-                    <a routerLink="/complaints" [queryParams]="{ courseId: courseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
+                    <a routerLink="/complaints" [queryParams]="{ courseId: courseId, tutorId: tutor.tutorId }">
+                        {{ tutor.numberOfComplaints }}
                     </a>
                 </td>
                 <td *ngIf="exerciseId">
-                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
+                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.tutorId }">
+                        {{ tutor.numberOfComplaints }}
                     </a>
                 </td>
             </tr>

@@ -9,7 +9,7 @@ export const listOfComplaintsRoute: Routes = [
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.complaint.listOfComplaints.title',
+            pageTitle: 'artemisApp.complaint.listOfComplaints.title',
         },
         canActivate: [UserRouteAccessService],
     },

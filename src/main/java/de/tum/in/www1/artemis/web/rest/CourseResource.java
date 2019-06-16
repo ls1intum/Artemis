@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -52,6 +53,9 @@ public class CourseResource {
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private static final String ENTITY_NAME = "course";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final Environment env;
 
@@ -136,15 +140,16 @@ public class CourseResource {
             // Check if course shortname matches regex
             Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
             if (!shortNameMatcher.matches()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
             }
             checkIfGroupsExists(course);
             Course result = courseService.save(course);
-            return ResponseEntity.created(new URI("/api/courses/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle())).body(result);
+            return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
         }
         catch (ArtemisAuthenticationException ex) {
             // a specified group does not exist, notify the client
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
         }
     }
 
@@ -176,15 +181,15 @@ public class CourseResource {
                 // Check if course shortname matches regex
                 Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
                 if (!shortNameMatcher.matches()) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
                 Course result = courseService.save(updatedCourse);
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle())).body(result);
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }
             catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(ex.getMessage(), "groupNotFound")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, ex.getMessage(), "groupNotFound")).body(null);
             }
         }
         else {
@@ -230,11 +235,13 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
                     .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
                     .body(null);
         }
         artemisAuthenticationProvider.get().registerUserForCourse(user, course);
@@ -513,10 +520,9 @@ public class CourseResource {
         stats.numberOfSubmissions = numberOfSubmissions;
         stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
+        log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
         stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
-
-        long end = System.currentTimeMillis();
-        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (end - start) + "ms");
+        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
     }
 
@@ -554,7 +560,7 @@ public class CourseResource {
         }
         String title = course.getTitle();
         courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
     }
 
     /**

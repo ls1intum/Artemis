@@ -61,8 +61,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            // Only load password if current user login starts with 'edx'
-            if (user && user.login && user.login.startsWith('edx')) {
+            // Only load password if current user login starts with 'edx_' or 'u4i_'
+            if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
             }
         });
@@ -156,12 +156,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
                 error => {
                     console.log('Error: ' + error);
-                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                    this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
     }
@@ -184,7 +184,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 },
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
-                    this.jhiAlertService.error(`arTeMiSApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                    this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
     }

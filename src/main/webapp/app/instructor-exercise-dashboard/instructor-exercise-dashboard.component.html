@@ -1,5 +1,5 @@
 <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="back.bind(this)">
-    <span pagetitle>{{ 'arTeMiSApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
+    <span pagetitle>{{ 'artemisApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
@@ -8,21 +8,21 @@
     <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-8">
-                <jhi-side-panel [panelHeader]="'arTeMiSApp.tutorExerciseDashboard.exerciseInformation' | translate">
+                <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
                         <div class="col-4">{{ stats.numberOfSubmissions }}</div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAssessedSubmissions' | translate }}</div>
                         <div class="col-4">{{ stats.numberOfAssessments }} ({{ totalAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
                         <div class="col-4">{{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'arTeMiSApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
                         <div class="col-4">
                             <a routerLink="/complaints" [queryParams]="{ exerciseId: exercise.id }">{{ stats.numberOfComplaints }}</a>
                         </div>
@@ -35,8 +35,8 @@
             </div>
         </div>
 
-        <h2>{{ 'arTeMiSApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
+        <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
 
-        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData" [exerciseId]="exercise.id"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboard" [exerciseId]="exercise.id"></jhi-tutor-leaderboard>
     </div>
 </div>

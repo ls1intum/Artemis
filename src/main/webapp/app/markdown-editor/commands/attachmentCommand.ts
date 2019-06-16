@@ -2,7 +2,7 @@ import { Command } from './command';
 
 export class AttachmentCommand extends Command {
     buttonIcon = 'image';
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.imageUpload';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.imageUpload';
 
     /**
      * @function execute

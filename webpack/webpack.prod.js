@@ -15,7 +15,7 @@ const sass = require('sass');
 
 module.exports = webpackMerge(commonConfig({ env: ENV }), {
     // Enable source maps. Please note that this will slow down the build.
-    // You have to enable it in UglifyJSPlugin config below and in tsconfig-aot.json as well
+    // You have to enable it in Terser config below and in tsconfig-aot.json as well
     devtool: 'source-map',
     entry: {
         polyfills: './src/main/webapp/app/polyfills',
@@ -23,7 +23,7 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
         main: './src/main/webapp/app/app.main'
     },
     output: {
-        path: utils.root('build/resources/main/public'),
+        path: utils.root('build/resources/main/static/'),
         filename: 'app/[name].[hash].bundle.js',
         chunkFilename: 'app/[id].[hash].chunk.js'
     },
@@ -43,7 +43,12 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
             {
                 test: /(vendor\.scss|global\.scss)/,
                 use: [
-                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            publicPath: '../'
+                        }
+                    },
                     'css-loader',
                     'postcss-loader',
                     {
@@ -60,7 +65,12 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
             {
                 test: /(vendor\.css|global\.css)/,
                 use: [
-                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            publicPath: '../'
+                        }
+                    },
                     'css-loader',
                     'postcss-loader'
                 ]
@@ -68,22 +78,16 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
     },
     optimization: {
         runtimeChunk: false,
-        splitChunks: {
-            cacheGroups: {
-                commons: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all'
-                }
-            }
-        },
         minimizer: [
             new TerserPlugin({
                 parallel: true,
                 cache: true,
+                sourceMap: true, // Enable source maps. Please note that this will slow down the build
                 terserOptions: {
+                    ecma: 8,
                     ie8: false,
-                    sourceMap: true, // Enable source maps. Please note that this will slow down the build
+                    toplevel: true,
+                    module: true,
                     compress: {
                         dead_code: true,
                         warnings: false,
@@ -96,12 +100,19 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
                         toplevel: true,
                         if_return: true,
                         inline: true,
-                        join_vars: true
+                        join_vars: true,
+                        ecma: 8,
+                        module: true,
                     },
                     output: {
                         comments: false,
                         beautify: false,
-                        indent_level: 2
+                        indent_level: 2,
+                        ecma: 8
+                    },
+                    mangle: {
+                        module: true,
+                        toplevel: true
                     }
                 }
             }),
@@ -112,7 +123,7 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
         new MiniCssExtractPlugin({
             // Options similar to the same options in webpackOptions.output
             // both options are optional
-            filename: '[name].[contenthash].css',
+            filename: 'content/[name].[contenthash].css',
             chunkFilename: '[id].css'
         }),
         new MomentLocalesPlugin({

@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import { CodeEditorService } from 'app/code-editor/code-editor.service';
+import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
@@ -29,7 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
-enum TestCaseState {
+export enum TestCaseState {
     UNDEFINED = 'UNDEFINED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
@@ -45,6 +45,8 @@ type Step = {
     templateUrl: './programming-exercise-instruction.component.html',
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    TestCaseState = TestCaseState;
+
     private markdown: Remarkable;
 
     @Input()
@@ -57,7 +59,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public resultChange = new EventEmitter<Result>();
 
-    private participationSubscription: Subscription;
+    public problemStatement: string;
+    public participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
@@ -105,13 +108,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
-        const exerciseHasChanged = hasExerciseChanged(changes);
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
         }
         // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-        if (!this.isLoading && this.exercise && (this.isInitial || participationHasChanged || exerciseHasChanged)) {
+        if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
             this.isLoading = true;
             this.loadInstructions()
                 .pipe(
@@ -120,12 +122,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         if (!problemStatement) {
                             this.onNoInstructionsAvailable.emit();
                             this.isLoading = false;
+                            this.isInitial = false;
                             return Observable.of(null);
                         }
                     }),
                     filter(problemStatement => !!problemStatement),
-                    tap(problemStatement => (this.exercise.problemStatement = problemStatement)),
-                    switchMap(() => (this.isInitial && this.exercise.id ? this.loadInitialResult() : Observable.of(null))),
+                    tap(problemStatement => (this.problemStatement = problemStatement)),
+                    switchMap(() => this.loadInitialResult()),
                     map(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
                         this.updateMarkdown();
@@ -134,9 +137,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }),
                 )
                 .subscribe();
-        } else if (problemStatementHasChanged(changes)) {
+        } else if (this.exercise && problemStatementHasChanged(changes)) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
+            this.problemStatement = this.exercise.problemStatement;
             this.updateMarkdown();
         }
     }
@@ -149,7 +153,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
         }
-        this.participationWebsocketService.addParticipation(this.participation, this.exercise);
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(filter(participation => !!participation))
@@ -166,6 +169,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
+            if (!latestResult) {
+                return Observable.of(null);
+            }
             return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -181,7 +187,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown() {
         this.steps = [];
         this.plantUMLs = {};
-        this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+        this.renderedMarkdown = this.markdown.render(this.problemStatement);
         // Wait for re-render of component
         setTimeout(() => {
             this.loadAndInsertPlantUmls();
@@ -215,12 +221,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            catchError(() => Observable.of(null)),
             map(res => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
             }),
+            catchError(() => Observable.of(result)),
         );
     }
 
@@ -231,7 +237,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
     loadInstructions(): Observable<string> {
-        if (this.exercise.problemStatement) {
+        if (this.exercise.problemStatement !== null && this.exercise.problemStatement !== undefined) {
             return Observable.of(this.exercise.problemStatement);
         } else {
             if (!this.participation.id) {
@@ -278,18 +284,21 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * Existing icons will be removed.
      */
     private setUpTaskIcons() {
-        this.steps.forEach(({ done }, i) => {
-            const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
-            componentRef.instance.size = 'lg';
-            componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
-            componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
-            componentRef.instance.ngOnChanges({});
-            this.appRef.attachView(componentRef.hostView);
-            const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-            const iconContainer = document.getElementById(`step-icon-${i}`);
-            iconContainer.innerHTML = '';
-            iconContainer.append(domElem);
-        });
+        // E.g. when the instructions are used in an editor, the steps area might not be rendered, so check first
+        if (document.getElementsByClassName('stepwizard').length) {
+            this.steps.forEach(({ done }, i) => {
+                const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
+                componentRef.instance.size = 'lg';
+                componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
+                componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
+                componentRef.instance.ngOnChanges({});
+                this.appRef.attachView(componentRef.hostView);
+                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                const iconContainer = document.getElementById(`step-icon-${i}`);
+                iconContainer.innerHTML = '';
+                iconContainer.append(domElem);
+            });
+        }
     }
 
     /**
@@ -462,7 +471,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param env
      */
     private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
-        const tests = tokens[0].tests;
+        const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
@@ -519,7 +528,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param tests
      */
     private statusForTests(tests: string[]): [TestCaseState, string] {
-        const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
+        const translationBasePath = 'artemisApp.editor.testStatusLabels.';
         const totalTests = tests.length;
 
         if (this.latestResult && this.latestResult.successful) {
@@ -551,7 +560,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             }
         } else {
             // Case 3: There are no results
-            const label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
+            const label = this.translateService.instant('artemisApp.editor.testStatusLabels.noResult');
             return [TestCaseState.UNDEFINED, label];
         }
     }

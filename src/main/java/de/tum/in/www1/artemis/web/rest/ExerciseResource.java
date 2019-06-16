@@ -9,6 +9,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,9 @@ public class ExerciseResource {
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
 
     private static final String ENTITY_NAME = "exercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final ExerciseService exerciseService;
 
@@ -262,7 +266,7 @@ public class ExerciseResource {
                 return forbidden();
             exerciseService.delete(exercise, true, false);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**
@@ -279,7 +283,7 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
             return forbidden();
         exerciseService.reset(exercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", id.toString())).build();
     }
 
     /**
@@ -298,7 +302,7 @@ public class ExerciseResource {
             return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
     }
 
     /**
@@ -316,7 +320,7 @@ public class ExerciseResource {
             return forbidden();
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(
+            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName,
                     "There was an error on the server and the zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.",
                     "")).build();
         }
@@ -343,12 +347,14 @@ public class ExerciseResource {
 
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if (studentList.isEmpty() || studentList == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed", "")).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
+                    .build();
         }
 
         File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
         if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", "")).build();
+            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
+                    .build();
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 

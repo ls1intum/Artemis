@@ -3,9 +3,16 @@
         "assessment": "Bewertung",
         "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
         "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
+        "conflicts": "Konflikt",
+        "ownAssessmentTitle": "Deine aktuelle Bewertung",
+        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewertet von",
         "button": {
             "overrideAssessment": "Bewertung überschreiben",
-            "nextSubmission": "Nächste Abgabe bewerten"
+            "nextSubmission": "Nächste Abgabe bewerten",
+            "resolveConflict": "Konflikte behandeln",
+            "applyChanges": "Änderungen übernehmen",
+            "keepYours": "Beibehalten",
+            "acceptTheirs": "Übernehmen"
         },
         "messages": {
             "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
@@ -19,7 +26,10 @@
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung."
+            "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+            "noConflicts": "Konflikte konnten nicht geladen werden",
+            "conflictsResolved": "Es wurden alle Konflikte bearbeitet."
         },
         "reviewComplaint": "Beschwerde überprüfen"
     }

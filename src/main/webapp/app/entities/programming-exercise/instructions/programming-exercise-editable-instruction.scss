@@ -1,0 +1,8 @@
+.editable-instruction-container {
+    position: relative;
+    &__status {
+        position: absolute;
+        right: 2px;
+        top: 5px;
+    }
+}

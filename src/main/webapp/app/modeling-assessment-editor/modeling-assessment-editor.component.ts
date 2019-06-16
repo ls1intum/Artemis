@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { DiagramType, UMLModel, UMLElement } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -10,11 +10,11 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -30,7 +30,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     referencedFeedback: Feedback[];
     conflicts: Conflict[];
     highlightedElementIds: Set<string>;
-    ignoreConflicts = false;
 
     assessmentsAreValid = false;
     busy: boolean;
@@ -117,7 +116,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.goToExerciseDashboard();
-                    this.jhiAlertService.info('arTeMiSApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else {
                     this.onError();
                 }
@@ -204,31 +203,43 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
-        // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
+        if (this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
+            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+            const confirm = window.confirm(confirmationMessage);
+            if (confirm) {
+                this.submitAssessment();
+            } else {
+                this.highlightElementsWithMissingFeedback();
+            }
+        } else {
+            this.submitAssessment();
+        }
+    }
+
+    private submitAssessment() {
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, true).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                 this.conflicts = undefined;
-                this.ignoreConflicts = false;
+                this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
                     this.conflicts = error.error as Conflict[];
                     this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.result);
-                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
+                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
                     });
-                    this.highlightConflictingElements();
+                    this.updateHighlightedConflictingElements();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
                     let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
                     if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
+                        errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                     }
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error(errorMessage);
@@ -255,6 +266,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         );
+    }
+
+    onShowConflictResolution() {
+        this.modelingAssessmentService.addLocalConflicts(this.submission.id, this.conflicts);
+        this.jhiAlertService.clear();
+        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submission.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -299,11 +316,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    private highlightConflictingElements() {
+    private updateHighlightedConflictingElements() {
         this.highlightedElementIds = new Set<string>();
-        this.conflicts.forEach((conflict: Conflict) => {
-            this.highlightedElementIds.add(conflict.modelElementId);
-        });
+        if (this.conflicts) {
+            this.conflicts.forEach((conflict: Conflict) => {
+                this.highlightedElementIds.add(conflict.causingConflictingResult.modelElementId);
+            });
+        }
     }
 
     /**
@@ -318,6 +337,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         ) {
             this.assessmentsAreValid = false;
             return;
+        }
+        if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
+            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
+            this.highlightedElementIds = new Set<string>(this.highlightedElementIds);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {
@@ -334,5 +357,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         } else {
             this.location.back();
         }
+    }
+
+    private highlightElementsWithMissingFeedback() {
+        this.highlightedElementIds = new Set<string>();
+        this.model.elements.forEach((element: UMLElement) => {
+            if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
+                this.highlightedElementIds.add(element.id);
+            }
+        });
     }
 }

@@ -4,13 +4,11 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
-
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,10 +33,9 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 // @formatter:off
-@Configuration
-@Import(SecurityProblemSupport.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@Import(SecurityProblemSupport.class)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -63,25 +60,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
-    @PostConstruct
-    public void init() {
-        try {
-            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
-        }
-        catch (Exception e) {
-            throw new BeanInitializationException("Security configuration failed", e);
-        }
-    }
-
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
-
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -101,11 +81,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
         // @formatter:off
-        web.ignoring()
-            .antMatchers(HttpMethod.OPTIONS, "/**")
-            .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/i18n/**").antMatchers("/content/**")
-            .antMatchers("/test/**");
+        web.ignoring().antMatchers(HttpMethod.OPTIONS, "/**").antMatchers("/app/**/*.{js,html}").antMatchers("/i18n/**").antMatchers("/content/**").antMatchers("/test/**");
 
         web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
         web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
