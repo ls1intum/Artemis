@@ -68,11 +68,8 @@ public class BambooBuildPlanService {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
-        // Bamboo build plan
-        final String planName = planKey; // Must be unique within the project
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
-
-        // Bamboo build project
+        ;
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
@@ -81,15 +78,9 @@ public class BambooBuildPlanService {
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
 
-        Plan plan = null;
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            plan = createJavaBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug,
-                    programmingExercise.getSequentialTestRuns());
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.PYTHON) {
-            plan = createPythonBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug,
-                    programmingExercise.getSequentialTestRuns());
-        }
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug)
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getSequentialTestRuns()));
+        ;
         bambooServer.publish(plan);
 
         final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
@@ -133,58 +124,47 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Plan createJavaBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug, boolean sequentialTestRuns) {
-
-        // If sequential test runs is active, run first structural tests and only they are successful also the behavior tests.
-        if (sequentialTestRuns) {
-            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                            new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                            new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true))))
-                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
-        }
-        else {
-            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                            new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true))))
-                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
-        }
+    // TODO: This should be moved to a separate class
+    private String generatePlanDescription(String planKey, ProgrammingExercise programmingExercise) {
+        // Bamboo build plan
+        return planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
     }
 
-    private Plan createPythonBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug, boolean sequentialTestRuns) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                    new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.JAVA && sequentialBuildRuns) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                    new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON && !sequentialBuildRuns) {
+            return new Stage("Default Stage")
+                    .jobs(new Job("Default Job", new BambooKey("JOB1"))
+                            .tasks(createCheckoutTask("", "tests"),
+                                    new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
+                            .requirements(new Requirement("Python3")));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON && sequentialBuildRuns) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
+                    new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/structural --junitxml=test-reports/structural-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/behavior --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml")).requirements(new Requirement("Python3")));
+        }
 
-        // If sequential test runs is active, run first structural tests and only they are successful also the behavior tests.
-        if (sequentialTestRuns) {
-            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                    .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
-                            new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/structural --junitxml=test-reports/structural-results.xml\nexit 0"),
-                            new ScriptTask().description("Builds and tests the code").inlineBody("pytest test/behavior --junitxml=test-reports/behavior-results.xml\nexit 0"),
-                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml")).requirements(new Requirement("Python3"))))
-                    .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
-        }
-        else {
-            return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug,
-                    vcsTestRepositorySlug)
-                            .stages(new Stage(
-                                    "Default Stage")
-                                            .jobs(new Job("Default Job", new BambooKey("JOB1"))
-                                                    .tasks(createCheckoutTask("", "tests"),
-                                                            new ScriptTask().description("Builds and tests the code")
-                                                                    .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                                                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                                                    .requirements(new Requirement("Python3"))))
-                            .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement());
-        }
+        return null;
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        return new Plan(createBuildProject(projectName, projectKey), planName, planKey).description(planDescription)
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String vcsAssignmentRepositorySlug,
+            String vcsTestRepositorySlug) {
+        return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-                .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
-                        createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug));
+                .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, vcsAssignmentRepositorySlug),
+                        createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug))
+                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
