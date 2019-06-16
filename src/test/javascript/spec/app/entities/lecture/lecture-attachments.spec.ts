@@ -153,10 +153,7 @@ describe('LectureAttachmentsComponent', () => {
 
         fixture.detectChanges();
         tick();
-        // setTimeout(()=> {
         expect(comp.attachments.length).to.equal(3);
-        // done();
-        // }, 4000);
     }));
 
     it('should not accept too large file', fakeAsync(done => {
