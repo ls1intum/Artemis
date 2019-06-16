@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpClient } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
@@ -25,6 +25,7 @@ import * as moment from 'moment';
     ],
 })
 export class LectureAttachmentsComponent implements OnInit {
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     lecture: Lecture;
     attachments: Attachment[] = [];
     attachmentToBeCreated: Attachment;
@@ -192,6 +193,7 @@ export class LectureAttachmentsComponent implements OnInit {
             error => {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.erroredFile = file;
+                this.fileInput.nativeElement.value = '';
                 this.attachmentToBeCreated.link = null;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
