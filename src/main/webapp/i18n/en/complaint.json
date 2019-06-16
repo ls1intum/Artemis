@@ -43,7 +43,8 @@
                 "status": "Status",
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
-                "rejected": "Rejected"
+                "rejected": "Rejected",
+                "showAddressedComplaints": "Show addressed complaints"
             }
         }
     }

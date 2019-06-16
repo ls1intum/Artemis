@@ -23,6 +23,8 @@ export class ListOfComplaintsComponent implements OnInit {
 
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
+    complaintsToShow: Complaint[] = [];
+    showAddressedComplaints = false;
 
     constructor(
         private complaintService: ComplaintService,
@@ -58,6 +60,7 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe(
             res => {
                 this.complaints = res.body;
+                this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
 
                 if (this.complaints.length > 0 && this.complaints[0].student) {
                     this.hasStudentInformation = true;
@@ -101,4 +104,14 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     callback() {}
+
+    triggerAddressedComplaints() {
+        this.showAddressedComplaints = !this.showAddressedComplaints;
+
+        if (this.showAddressedComplaints) {
+            this.complaintsToShow = this.complaints;
+        } else {
+            this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
+        }
+    }
 }

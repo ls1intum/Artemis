@@ -13,7 +13,20 @@
     <jhi-alert></jhi-alert>
 
     <div class="row table-responsive">
-        <table class="table" [hidden]="complaints.length === 0">
+        <div class="form-check col-6 align-baseline">
+            <input
+                type="checkbox"
+                name="showAddressedComplaint"
+                id="field_showAddressedComplaint"
+                [ngModel]="showAddressedComplaints"
+                (ngModelChange)="triggerAddressedComplaints()"
+            />
+            <label class="form-check-label" for="field_showAddressedComplaint">
+                {{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | translate }}
+            </label>
+        </div>
+
+        <table class="table" [hidden]="complaintsToShow.length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" [callback]="callback">
                     <th jhiSortBy="id"><a class="th-link">#</a><fa-icon icon="sort"></fa-icon></th>
@@ -50,7 +63,7 @@
             </thead>
 
             <tbody>
-                <tr *ngFor="let complaint of complaints | sortBy: complaintsSortingPredicate:complaintsReverseOrder">
+                <tr *ngFor="let complaint of complaintsToShow | sortBy: complaintsSortingPredicate:complaintsReverseOrder">
                     <td>
                         {{ complaint.id }}
                     </td>
@@ -71,11 +84,11 @@
                         <span>{{ complaint.result?.assessor?.firstName }} {{ complaint.result?.assessor?.lastName }}</span>
                     </td>
 
-                    <td>
+                    <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.login }}</span>
                     </td>
 
-                    <td>
+                    <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
                     </td>
 
