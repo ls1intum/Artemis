@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { TreeviewModule } from 'ngx-treeview';
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../test.module';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { Lecture, LectureAttachmentsComponent } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
@@ -156,7 +156,7 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachments.length).to.equal(3);
     }));
 
-    it('should not accept too large file', fakeAsync(done => {
+    it('should not accept too large file', fakeAsync((done: Function) => {
         fixture.detectChanges();
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
         expect(comp.attachmentToBeCreated).to.be.undefined;
