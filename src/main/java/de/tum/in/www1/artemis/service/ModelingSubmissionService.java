@@ -77,6 +77,13 @@ public class ModelingSubmissionService {
         return submissions;
     }
 
+    /**
+     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param submissionId     the id of the modeling submission
+     * @param modelingExercise the corresponding exercise
+     * @return the locked modeling submission
+     */
     @Transactional
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedback(submissionId);
@@ -84,6 +91,12 @@ public class ModelingSubmissionService {
         return modelingSubmission;
     }
 
+    /**
+     * Get a modeling submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param modelingExercise the exercise the submission should belong to
+     * @return a locked modeling submission that needs an assessment
+     */
     @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutResult(modelingExercise)
