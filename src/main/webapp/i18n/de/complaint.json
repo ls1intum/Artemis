@@ -39,7 +39,11 @@
                 "studentLogin": "Schüler-Login",
                 "studentName": "Schüler-Name",
                 "actions": "Aktionen",
-                "title": "Liste der Beschwerden"
+                "title": "Liste der Beschwerden",
+                "status": "Status",
+                "noReply": "Noch keine Antwort",
+                "accepted": "Angenommen",
+                "rejected": "Abgelehnt"
             }
         }
     }

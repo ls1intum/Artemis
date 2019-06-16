@@ -21,6 +21,9 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
 
+    complaintsSortingPredicate = 'id';
+    complaintsReverseOrder = false;
+
     constructor(
         private complaintService: ComplaintService,
         private jhiAlertService: JhiAlertService,
@@ -96,4 +99,6 @@ export class ListOfComplaintsComponent implements OnInit {
     back() {
         this.location.back();
     }
+
+    callback() {}
 }

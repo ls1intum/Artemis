@@ -15,20 +15,42 @@
     <div class="row table-responsive">
         <table class="table" [hidden]="complaints.length === 0">
             <thead>
-                <tr>
-                    <th>#</th>
-                    <th>{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</th>
-                    <th>{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</th>
-                    <th>{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
-                    <th>{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</th>
+                <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" [callback]="callback">
+                    <th jhiSortBy="id"><a class="th-link">#</a><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="result.participation.exercise.title">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.submission.id">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.login">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.firstName">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="student.firstName" *ngIf="hasStudentInformation">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="accepted">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | translate }}</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let complaint of complaints">
+                <tr *ngFor="let complaint of complaints | sortBy: complaintsSortingPredicate:complaintsReverseOrder">
                     <td>
                         {{ complaint.id }}
                     </td>
@@ -55,6 +77,12 @@
 
                     <td>
                         <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
+                    </td>
+
+                    <td>
+                        <span class="text-warning" *ngIf="complaint.accepted == undefined">{{ 'artemisApp.complaint.listOfComplaints.noReply' | translate }}</span>
+                        <span class="text-success" *ngIf="complaint.accepted == true">{{ 'artemisApp.complaint.listOfComplaints.accepted' | translate }}</span>
+                        <span class="text-danger" *ngIf="complaint.accepted == false">{{ 'artemisApp.complaint.listOfComplaints.rejected' | translate }}</span>
                     </td>
 
                     <td class="text-center">

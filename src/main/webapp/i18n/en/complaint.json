@@ -39,7 +39,11 @@
                 "studentLogin": "Student's Login",
                 "studentName": "Student's Name",
                 "actions": "Actions",
-                "title": "List of complaints"
+                "title": "List of complaints",
+                "status": "Status",
+                "noReply": "No reply yet",
+                "accepted": "Accepted",
+                "rejected": "Rejected"
             }
         }
     }
