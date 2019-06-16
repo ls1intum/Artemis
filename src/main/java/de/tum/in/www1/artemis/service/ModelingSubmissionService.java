@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,18 +36,21 @@ public class ModelingSubmissionService {
 
     private final ParticipationService participationService;
 
+    private final UserService userService;
+
     private final ParticipationRepository participationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository,
+            CompassService compassService, ParticipationService participationService, UserService userService, ParticipationRepository participationRepository,
             SimpMessageSendingOperations messagingTemplate) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
+        this.userService = userService;
         this.participationRepository = participationRepository;
         this.messagingTemplate = messagingTemplate;
     }
@@ -227,6 +232,12 @@ public class ModelingSubmissionService {
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        long numberOfLockedSubmissions = modelingSubmissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(),
+                modelingExercise.getCourse().getId());
+        if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
+            throw new BadRequestAlertException("The limit of locked submissions has been reached", "modelingSubmission", "lockedSubmissionsLimitReached");
+        }
+
         if (modelingSubmission.getResult() == null) {
             setNewResult(modelingSubmission);
         }

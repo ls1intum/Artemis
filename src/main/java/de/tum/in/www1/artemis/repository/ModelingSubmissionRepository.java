@@ -51,4 +51,15 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      */
     @Query("SELECT COUNT (DISTINCT submission) FROM ModelingSubmission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
+     * assessment.
+     *
+     * @param userId   the id of the user
+     * @param courseId the id of the course
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("SELECT COUNT (DISTINCT submission) FROM ModelingSubmission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 }
