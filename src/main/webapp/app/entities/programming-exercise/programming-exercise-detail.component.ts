@@ -50,6 +50,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         window.history.back();
     }
 
+    squashTemplateCommits() {
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+            },
+        );
+    }
+
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
             res => {
