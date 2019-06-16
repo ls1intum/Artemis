@@ -18,6 +18,10 @@ public interface ContinuousIntegrationService<P> {
         INACTIVE, QUEUED, BUILDING
     }
 
+    P createTemplateBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName);
+
+    P createSolutionBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName, P templateRepositoryPlan);
+
     /**
      * Creates the base build plan for the given programming exercise
      * 

@@ -328,16 +328,10 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
 
-        // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then
-        // (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        if (!programmingExercise.getSequentialTestRuns()) {
-            continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // template build plan
-            continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // solution build plan
-        }
-        else {
-            Object templatePlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // template build plan
-            Object solutionPlan = continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // solution build
-                                                                                                                                                                  // plan
+        Object templatePlan = continuousIntegrationService.get().createTemplateBuildPlan(programmingExercise, exerciseRepoName, testRepoName); // template build plan
+        Object solutionPlan = continuousIntegrationService.get().createSolutionBuildPlan(programmingExercise, solutionRepoName, testRepoName, templatePlan); // solution build plan
+
+        if (programmingExercise.getSequentialTestRuns()) {
             continuousIntegrationService.get().createTestBuildPlanForExercise(programmingExercise, testRepoName, solutionPlan, templatePlan); // test build plan
         }
 

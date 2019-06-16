@@ -87,9 +87,19 @@ public class BambooService implements ContinuousIntegrationService<Plan> {
         this.bambooBuildPlanService = bambooBuildPlanService;
     }
 
+
     @Override
-    public Plan createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
-        return bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+    public Plan createTemplateBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName) {
+        return bambooBuildPlanService.createTemplateBuildPlan(programmingExercise, repositoryName, testRepositoryName);
+    }
+    @Override
+    public Plan createSolutionBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName, Plan templateRepositoryPlan){
+        return bambooBuildPlanService.createSolutionBuildPlan(programmingExercise, repositoryName, testRepositoryName, templateRepositoryPlan);
+    }
+
+    @Override
+    public Plan createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
+        return bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
     }
 
     @Override
