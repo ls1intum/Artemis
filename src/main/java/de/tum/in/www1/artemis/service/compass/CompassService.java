@@ -142,16 +142,18 @@ public class CompassService {
     }
 
     /**
-     * Check for every model in the given list of optimal models if there is a manually saved or finished assessment for the corresponding modeling submission. If there is, the
-     * model gets removed from the list of optimal models. This check should not be necessary as there should only be models in the list that have no or only an automatic
-     * assessment. We better double check here as we want to make sure that no models with finished or manual assessments get sent to other users than the assessor.
+     * Check for every model in the given list of optimal models if it is locked by another user (assessor) or if there is a manually saved or finished assessment for the
+     * corresponding modeling submission. If there is, the model gets removed from the list of optimal models. This check should not be necessary as there should only be models in
+     * the list that have no or only an automatic assessment. We better double check here as we want to make sure that no models with finished or manual assessments get sent to
+     * other users than the assessor.
      */
     private void removeManuallyAssessedModels(Map<Long, Grade> optimalModels, long exerciseId) {
         Iterator<Long> iterator = optimalModels.keySet().iterator();
         while (iterator.hasNext()) {
             Long modelId = iterator.next();
-            Optional<Result> result = resultRepository.findDistinctBySubmissionId(modelId);
-            if (result.isPresent() && (result.get().getCompletionDate() != null || AssessmentType.MANUAL.equals(result.get().getAssessmentType()))) {
+            Optional<Result> result = resultRepository.findDistinctWithAssessorBySubmissionId(modelId);
+            if (result.isPresent()
+                    && (result.get().getAssessor() != null || result.get().getCompletionDate() != null || AssessmentType.MANUAL.equals(result.get().getAssessmentType()))) {
                 removeModelWaitingForAssessment(exerciseId, modelId);
                 iterator.remove();
             }

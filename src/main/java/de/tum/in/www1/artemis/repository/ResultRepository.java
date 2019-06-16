@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -44,7 +43,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
-    Optional<Result> findDistinctBySubmission(Submission submission);
+    @EntityGraph(attributePaths = "assessor")
+    Optional<Result> findDistinctWithAssessorBySubmissionId(Long submissionId);
 
     @EntityGraph(attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
