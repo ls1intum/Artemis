@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -459,6 +461,39 @@ public class ProgrammingExerciseResource {
         }
         else {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Squash all commits into one in the template repository of a given exercise.
+     * 
+     * @param id of the exercise
+     * @return
+     */
+    @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        if (!programmingExerciseOptional.isPresent()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        try {
+            URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
+            programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        catch (IOException | IllegalStateException | InterruptedException | GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
