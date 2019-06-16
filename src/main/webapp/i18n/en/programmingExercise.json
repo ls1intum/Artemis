@@ -37,6 +37,7 @@
             "squashTemplateCommits": "Squash Template Commits",
             "squashTemplateCommitsWarning": "This action squashes all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
             "squashTemplateCommitsError": "Template repository commits could not be squashed.",
+            "squashTemplateCommitsSuccess": "Template repository commits have been successfully squashed.",
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "[task] Task",

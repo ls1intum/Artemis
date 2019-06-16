@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
@@ -53,15 +51,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     }
 
     squashTemplateCommits() {
-        this.programmingExerciseService
-            .squashTemplateRepositoryCommits(this.programmingExercise.id)
-            .pipe(
-                catchError(() => {
-                    this.jhiAlertService.error('arTeMiSApp.programmingExercise.squashTemplateCommitsError');
-                    return of();
-                }),
-            )
-            .subscribe();
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+            },
+        );
     }
 
     generateStructureOracle() {

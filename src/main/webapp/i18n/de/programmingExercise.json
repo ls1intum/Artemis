@@ -37,6 +37,7 @@
             "squashTemplateCommits": "Template Commits zusammenführen",
             "squashTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "squashTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
+            "squashTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
