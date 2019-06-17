@@ -111,6 +111,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
+        if (this.loadingState === 'success') {
+            this.resizeImage();
+        }
     }
 
     preventDefault(event: any) {
@@ -281,5 +284,13 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
+    }
+
+    resizeImage() {
+        setTimeout(() => {
+            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+        }, 0);
     }
 }

@@ -21,10 +21,10 @@ export const enum QuizEmitStatus {
 @Component({
     selector: 'jhi-secured-image',
     template: `
-        <ng-template [ngIf]="this.dragAndDrop === undefined || this.dragAndDrop !== true">
+        <ng-template [ngIf]="!this.dragAndDrop">
             <img [attr.src]="dataUrl$ | async" />
         </ng-template>
-        <ng-template [ngIf]="this.dragAndDrop === true">
+        <ng-template [ngIf]="this.dragAndDrop">
             <img [attr.src]="dataUrl$ | async" class="dnd-drag-start" draggable="true" dnd-draggable />
         </ng-template>
     `,
