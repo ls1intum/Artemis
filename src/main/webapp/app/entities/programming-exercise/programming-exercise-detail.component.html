@@ -112,10 +112,18 @@
             <button type="button" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
-
-            <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA" (click)="generateStructureOracle()" class="btn btn-secondary mr-1">
-                <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
-            </button>
+            <span class="mr-1">
+                <button type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.squashTemplateCommits">Squash Template Commits</span>
+                </button>
+                <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
+            </span>
+            <span class="mr-1">
+                <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA" (click)="generateStructureOracle()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
+                </button>
+                <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>
+            </span>
         </div>
     </div>
 </div>

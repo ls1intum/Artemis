@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.1 (05.06.2019)
+ * @version 2.2 (17.06.2019)
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
  * regularly in the functional tests. Facilitation mainly means automatically handling all the various
@@ -55,25 +55,23 @@ public abstract class BehaviorTest {
         String failMessage = "Problem: could not instantiate the class '" + className + "' because";
         try {
             Constructor<?> constructor = clazz.getConstructor(constructorArgTypes);
+            return constructor.newInstance(constructorArgs);
 
-            try {
-                return constructor.newInstance(constructorArgs);
-            } catch (IllegalAccessException iae) {
-                fail(failMessage += " access to its constructor with the parameters: " + getParameterTypesAsString(constructorArgTypes) + " was denied."
-                    + " Please check the modifiers of the constructor.");
-            } catch (IllegalArgumentException iae) {
-                fail(failMessage += " the actual constructor or none of the actual constructors of this class match the expected one."
-                    + " We expect, amongst others, one with " + constructorArgs.length + " arguments."
-                    + " Please implement this constructor correctly.");
-            } catch (InstantiationException ie) {
-                fail(failMessage += " the class is abstract and should not have a constructor."
-                    + " Please remove the constructor of the class.");
-            } catch (InvocationTargetException ite) {
-                fail(failMessage += " the constructor with " + constructorArgs.length + " parameters threw an exception and could not be initialized."
-                    + " Please check the constructor implementation.");
-            } catch (ExceptionInInitializerError eiie) {
-                fail(failMessage += " the constructor with " + constructorArgs.length + " parameters could not be initialized.");
-            }
+        } catch (IllegalAccessException iae) {
+            fail(failMessage += " access to its constructor with the parameters: " + getParameterTypesAsString(constructorArgTypes) + " was denied."
+                + " Please check the modifiers of the constructor.");
+        } catch (IllegalArgumentException iae) {
+            fail(failMessage += " the actual constructor or none of the actual constructors of this class match the expected one."
+                + " We expect, amongst others, one with " + constructorArgs.length + " arguments."
+                + " Please implement this constructor correctly.");
+        } catch (InstantiationException ie) {
+            fail(failMessage += " the class is abstract and should not have a constructor."
+                + " Please remove the constructor of the class.");
+        } catch (InvocationTargetException ite) {
+            fail(failMessage += " the constructor with " + constructorArgs.length + " parameters threw an exception and could not be initialized."
+                + " Please check the constructor implementation.");
+        } catch (ExceptionInInitializerError eiie) {
+            fail(failMessage += " the constructor with " + constructorArgs.length + " parameters could not be initialized.");
         } catch (NoSuchMethodException nsme) {
             fail(failMessage += " the class does not have a constructor with the arguments: "
                 + getParameterTypesAsString(constructorArgTypes) + ". Please implement this constructor properly.");
@@ -130,7 +128,7 @@ public abstract class BehaviorTest {
         String failMessage = "Problem: could not find the method '" + methodName + "' with the parameters: "
             + getParameterTypesAsString(parameterTypes) + " from the class " + declaringClass.getSimpleName() + " because";
 
-        if (parameterTypes.length == 0) {
+        if (parameterTypes == null || parameterTypes.length == 0) {
         	failMessage = "Problem: could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
         }
         

@@ -36,6 +36,10 @@ export class ProgrammingExerciseService {
         return this.http.get(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }
 
+    squashTemplateRepositoryCommits(exerciseId: number) {
+        return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
+    }
+
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
         return this.http
