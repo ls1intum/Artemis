@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "instructorCourseDashboard": {
             "title": "Instructor Course Dashboard",
             "pageHeader": "Instructor Course Dashboard for",
@@ -9,7 +9,8 @@
             "submissions": "Submissions",
             "tutors": "Tutors",
             "assessments": "Assessments",
-            "open": "open",
+            "open": "submissions not assessed",
+            "openComplaint": "complaints not reviewed",
             "noExercise": "There isn't any exercise for this course",
             "exercise": "Exercise",
             "dueDate": "Due date",

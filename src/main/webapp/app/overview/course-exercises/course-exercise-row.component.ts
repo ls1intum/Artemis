@@ -1,9 +1,11 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit, OnDestroy } from '@angular/core';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import * as moment from 'moment';
+import { Subscription } from 'rxjs/Subscription';
+
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course';
 import { AccountService, WindowRef } from 'app/core';
@@ -16,7 +18,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
     templateUrl: './course-exercise-row.component.html',
     styleUrls: ['./course-exercise-row.scss'],
 })
-export class CourseExerciseRowComponent implements OnInit {
+export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -30,6 +32,9 @@ export class CourseExerciseRowComponent implements OnInit {
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
     public exerciseCategories: ExerciseCategory[];
+    isAfterAssessmentDueDate: boolean;
+
+    participationUpdateListener: Subscription;
 
     constructor(
         private accountService: AccountService,
@@ -40,15 +45,33 @@ export class CourseExerciseRowComponent implements OnInit {
         private httpClient: HttpClient,
         private router: Router,
         private route: ActivatedRoute,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
     ngOnInit() {
+        const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exercise.id);
+        if (cachedParticipations && cachedParticipations.length > 0) {
+            this.exercise.participations = cachedParticipations;
+        }
+        this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
+            if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
+                this.exercise.participations =
+                    this.exercise.participations && this.exercise.participations.length > 0
+                        ? this.exercise.participations.map(el => {
+                              return el.id === changedParticipation.id ? changedParticipation : el;
+                          })
+                        : [changedParticipation];
+                this.participationStatus(this.exercise);
+            }
+        });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
         if (this.exercise.participations.length > 0) {
             this.exercise.participations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
@@ -57,6 +80,12 @@ export class CourseExerciseRowComponent implements OnInit {
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+    }
+
+    ngOnDestroy() {
+        if (this.participationUpdateListener) {
+            this.participationUpdateListener.unsubscribe();
+        }
     }
 
     getUrgentClass(date: Moment | null): string | null {

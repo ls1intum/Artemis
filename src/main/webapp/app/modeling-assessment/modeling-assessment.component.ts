@@ -16,14 +16,16 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
-    @ViewChild('editorContainer') editorContainer: ElementRef;
-    @ViewChild('resizeContainer') resizeContainer: ElementRef;
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
+    @Input() highlightColor = 'rgba(219, 53, 69,0.6)';
+    @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
-    @Input() assessor: User;
+    @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Input() enablePopups = true;
@@ -37,8 +39,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.initializeApollonEditor();
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
-            // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);
         }
+        this.applyStateConfiguration();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -73,18 +75,29 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
-            this.apollonEditor.model = changes.model.currentValue;
+            this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
+            this.applyStateConfiguration();
         }
-        if (changes.highlightedElementIds) {
-            if (this.apollonEditor !== null) {
-                this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+        if (changes.highlightedElementIds || changes.highlightColor) {
+            if (changes.highlightColor) {
+                this.highlightColor = changes.highlightColor.currentValue;
             }
-            // this.scrollIntoView(changes.highlightedElementId.currentValue);
+            if (changes.highlightedElementIds) {
+                this.highlightedElementIds = changes.highlightedElementIds.currentValue;
+            }
+            if (this.apollonEditor !== null) {
+                this.applyStateConfiguration();
+            }
+        }
+        if (changes.centeredElementId) {
+            if (this.centeredElementId) {
+                this.scrollIntoView(this.centeredElementId);
+            }
         }
     }
 
@@ -117,6 +130,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.calculateTotalScore();
                 this.feedbackChanged.emit(this.feedbacks);
             });
+        }
+    }
+
+    private applyStateConfiguration() {
+        if (this.highlightedElementIds) {
+            this.updateHighlightedElements(this.highlightedElementIds);
+        }
+        if (this.centeredElementId) {
+            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
         }
     }
 
@@ -192,22 +214,24 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!newElementIDs) {
             newElementIDs = new Set<string>();
         }
-        const model: UMLModel = this.apollonEditor!.model;
-        for (const element of model.elements) {
-            if (newElementIDs.has(element.id)) {
-                element.highlight = 'red';
-            } else {
-                element.highlight = undefined;
+        if (this.apollonEditor !== null) {
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                if (newElementIDs.has(element.id)) {
+                    element.highlight = this.highlightColor;
+                } else {
+                    element.highlight = undefined;
+                }
             }
-        }
-        for (const relationship of model.relationships) {
-            if (newElementIDs.has(relationship.id)) {
-                relationship.highlight = 'red';
-            } else {
-                relationship.highlight = undefined;
+            for (const relationship of model.relationships) {
+                if (newElementIDs.has(relationship.id)) {
+                    relationship.highlight = this.highlightColor;
+                } else {
+                    relationship.highlight = undefined;
+                }
             }
+            this.apollonEditor!.model = model;
         }
-        this.apollonEditor!.model = model;
     }
 
     private scrollIntoView(elementId: string) {
@@ -237,7 +261,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             };
         });
         if (this.apollonEditor) {
-            this.apollonEditor.model = this.model;
+            this.apollonEditor!.model = this.model;
         }
     }
 

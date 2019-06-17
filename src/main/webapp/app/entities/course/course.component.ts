@@ -20,7 +20,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     loadAll() {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
+                // show the newest courses first and the oldest last
+                this.courses = res.body!.reverse();
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

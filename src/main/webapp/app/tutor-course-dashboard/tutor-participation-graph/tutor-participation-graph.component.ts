@@ -10,12 +10,16 @@ import * as _ from 'lodash';
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
+    @Input() public numberOfParticipations: number;
+    @Input() public numberOfAssessments: number;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
+
+    percentageAssessmentProgress = 0;
 
     routerLink: string;
 
@@ -28,6 +32,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (courseId && exerciseId) {
             this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
+        }
+
+        if (this.numberOfParticipations !== 0) {
+            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
     }
 
@@ -42,10 +50,14 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
             this.tutorParticipationStatus = this.tutorParticipation.status;
         }
+
+        if (this.numberOfParticipations !== 0) {
+            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
+        }
     }
 
     calculateClasses(step: TutorParticipationStatus): string {
-        if (step === this.tutorParticipationStatus) {
+        if (step === this.tutorParticipationStatus && step !== this.TRAINED) {
             return 'active';
         }
 
@@ -53,7 +65,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             return 'opaque';
         }
 
-        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.COMPLETED].includes(this.tutorParticipationStatus)) {
+        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.TRAINED, this.COMPLETED].includes(this.tutorParticipationStatus)) {
             return 'opaque';
         }
 
@@ -62,5 +74,37 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
 
         return '';
+    }
+
+    calculateProgressBarClass(): string {
+        const percentage = this.percentageAssessmentProgress;
+
+        if (percentage < 50) {
+            return 'bg-danger';
+        } else if (percentage < 100) {
+            return 'bg-warning';
+        }
+
+        return 'bg-success';
+    }
+
+    chooseProgressBarTextColor() {
+        if (this.percentageAssessmentProgress < 100) {
+            return 'text-dark';
+        }
+
+        return 'text-white';
+    }
+
+    calculateClassProgressBar() {
+        if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
+            return 'opaque';
+        }
+
+        if (this.tutorParticipationStatus === this.COMPLETED || this.numberOfParticipations === this.numberOfAssessments) {
+            return 'active';
+        }
+
+        return 'orange';
     }
 }

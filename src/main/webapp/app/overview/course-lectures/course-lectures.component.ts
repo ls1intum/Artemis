@@ -110,7 +110,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.weeklyLecturesGrouped = {
                 ...groupedLectures,
                 noDate: {
-                    label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
+                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
                     isCollapsed: false,
                     isCurrentWeek: false,
                     lectures: notAssociatedLectures,

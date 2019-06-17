@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -29,7 +30,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -50,6 +53,9 @@ public class CourseResource {
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private static final String ENTITY_NAME = "course";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final Environment env;
 
@@ -81,16 +87,20 @@ public class CourseResource {
 
     private final NotificationService notificationService;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    private final ComplaintService complaintService;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, LectureService lectureService, NotificationService notificationService,
-            TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
+            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -106,8 +116,10 @@ public class CourseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
-        this.textSubmissionRepository = textSubmissionRepository;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
+        this.complaintService = complaintService;
     }
 
     /**
@@ -128,15 +140,16 @@ public class CourseResource {
             // Check if course shortname matches regex
             Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
             if (!shortNameMatcher.matches()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
             }
             checkIfGroupsExists(course);
             Course result = courseService.save(course);
-            return ResponseEntity.created(new URI("/api/courses/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle())).body(result);
+            return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
         }
         catch (ArtemisAuthenticationException ex) {
             // a specified group does not exist, notify the client
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
         }
     }
 
@@ -168,15 +181,15 @@ public class CourseResource {
                 // Check if course shortname matches regex
                 Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
                 if (!shortNameMatcher.matches()) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
                 Course result = courseService.save(updatedCourse);
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle())).body(result);
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }
             catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(ex.getMessage(), "groupNotFound")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, ex.getMessage(), "groupNotFound")).body(null);
             }
         }
         else {
@@ -222,11 +235,13 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
                     .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
                     .body(null);
         }
         artemisAuthenticationProvider.get().registerUserForCourse(user, course);
@@ -337,6 +352,18 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
+            long numberOfSubmissions = 0;
+            if (exercise instanceof TextExercise) {
+                numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else {
+                numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+
+            exercise.setNumberOfParticipations((int) numberOfSubmissions);
+            exercise.setNumberOfAssessments((int) numberOfAssessments);
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
@@ -364,18 +391,21 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = textSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
-        numberOfSubmissions += modelingSubmissionRepository.countByParticipation_Exercise_Course_IdAndSubmitted(courseId, true);
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+        long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
 
-        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutor(courseId, user.getId());
+        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
     }
@@ -423,6 +453,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
+        long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
 
         if (!userHasPermission(course)) {
@@ -434,15 +465,23 @@ public class CourseResource {
 
         course.setExercises(interestingExercises);
 
-        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId, true, true);
-
         for (Exercise exercise : interestingExercises) {
-            Set<Participation> participationsForExercise = participations.stream().filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
-                    .collect(Collectors.toSet());
+            long numberOfParticipations = 0;
+            if (exercise instanceof TextExercise) {
+                numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else {
+                numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
 
-            exercise.setParticipations(participationsForExercise);
+            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            exercise.setNumberOfParticipations((int) numberOfParticipations);
+            exercise.setNumberOfAssessments((int) numberOfAssessments);
+            exercise.setNumberOfComplaints((int) numberOfComplaints);
         }
-
+        long end = System.currentTimeMillis();
+        log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
@@ -450,7 +489,7 @@ public class CourseResource {
      * GET /courses/:id/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
-     * assessments - number of complaints - number of open complaints
+     * assessments - number of complaints - number of open complaints - tutor leaderboard data
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
@@ -459,7 +498,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
-
+        long start = System.currentTimeMillis();
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -475,6 +514,15 @@ public class CourseResource {
         stats.numberOfComplaints = numberOfComplaints;
         stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
 
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+
+        stats.numberOfSubmissions = numberOfSubmissions;
+        stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+
+        log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
+        stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
+        log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
     }
 
@@ -512,7 +560,7 @@ public class CourseResource {
         }
         String title = course.getTitle();
         courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
     }
 
     /**

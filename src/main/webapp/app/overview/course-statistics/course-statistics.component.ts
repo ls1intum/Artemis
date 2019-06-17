@@ -54,23 +54,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
     public exerciseTitles: object = {
         quiz: {
-            name: this.translateService.instant('arTeMiSApp.course.quizExercises'),
+            name: this.translateService.instant('artemisApp.course.quizExercises'),
             color: QUIZ_EXERCISE_COLOR,
         },
         modeling: {
-            name: this.translateService.instant('arTeMiSApp.course.modelingExercises'),
+            name: this.translateService.instant('artemisApp.course.modelingExercises'),
             color: MODELING_EXERCISE_COLOR,
         },
         programming: {
-            name: this.translateService.instant('arTeMiSApp.course.programmingExercises'),
+            name: this.translateService.instant('artemisApp.course.programmingExercises'),
             color: PROGRAMMING_EXERCISE_COLOR,
         },
         text: {
-            name: this.translateService.instant('arTeMiSApp.course.textExercises'),
+            name: this.translateService.instant('artemisApp.course.textExercises'),
             color: TEXT_EXERCISE_COLOR,
         },
         'file-upload': {
-            name: this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
+            name: this.translateService.instant('artemisApp.course.fileUploadExercises'),
             color: FILE_UPLOAD_EXERCISE_COLOR,
         },
     };
@@ -187,23 +187,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.translationSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.exerciseTitles = {
                 quiz: {
-                    name: this.translateService.instant('arTeMiSApp.course.quizExercises'),
+                    name: this.translateService.instant('artemisApp.course.quizExercises'),
                     color: QUIZ_EXERCISE_COLOR,
                 },
                 modeling: {
-                    name: this.translateService.instant('arTeMiSApp.course.modelingExercises'),
+                    name: this.translateService.instant('artemisApp.course.modelingExercises'),
                     color: MODELING_EXERCISE_COLOR,
                 },
                 programming: {
-                    name: this.translateService.instant('arTeMiSApp.course.programmingExercises'),
+                    name: this.translateService.instant('artemisApp.course.programmingExercises'),
                     color: PROGRAMMING_EXERCISE_COLOR,
                 },
                 text: {
-                    name: this.translateService.instant('arTeMiSApp.course.textExercises'),
+                    name: this.translateService.instant('artemisApp.course.textExercises'),
                     color: TEXT_EXERCISE_COLOR,
                 },
                 'file-upload': {
-                    name: this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
+                    name: this.translateService.instant('artemisApp.course.fileUploadExercises'),
                     color: FILE_UPLOAD_EXERCISE_COLOR,
                 },
             };

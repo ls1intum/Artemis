@@ -18,9 +18,9 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     providers: [ArtemisMarkdown],
 })
 export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
-    @ViewChild('questionEditor')
+    @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
-    @ViewChild('clickLayer')
+    @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
 
     @Input()
@@ -365,7 +365,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
         const wrapperDiv = document.getElementById('test')!;
-        const child = window.getSelection().baseNode;
+        const selection = window.getSelection()!;
+        const child = selection.anchorNode;
 
         if (!wrapperDiv.contains(child)) {
             return;
@@ -373,19 +374,16 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
-        const selectedTextRowColumn = window
-            .getSelection()
-            .focusNode.parentNode!.parentElement!.id.split('-')
-            .slice(1);
+        const selectedTextRowColumn = selection.focusNode!.parentNode!.parentElement!.id.split('-').slice(1);
 
         if (selectedTextRowColumn.length === 0) {
             return;
         }
 
         // get the right range for text with markdown
-        const range = window.getSelection().getRangeAt(0);
+        const range = selection.getRangeAt(0);
         const preCaretRange = range.cloneRange();
-        const element = window.getSelection().focusNode.parentNode!.parentElement!.firstElementChild!;
+        const element = selection.focusNode!.parentNode!.parentElement!.firstElementChild!;
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);
 
@@ -394,8 +392,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         container.appendChild(preCaretRange.cloneContents());
         const htmlContent = container.innerHTML;
 
-        const startOfRange = this.artemisMarkdown.markdownForHtml(htmlContent).length - window.getSelection().toString().length;
-        const endOfRange = startOfRange + window.getSelection().toString().length;
+        const startOfRange = this.artemisMarkdown.markdownForHtml(htmlContent).length - selection.toString().length;
+        const endOfRange = startOfRange + selection.toString().length;
 
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         const markedText = this.artemisMarkdown.markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);

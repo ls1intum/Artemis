@@ -3,8 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { Result, ResultService } from 'app/entities/result';
-import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { ResultService } from 'app/entities/result';
 import { StatsForInstructorDashboard } from 'app/entities/course';
 
 @Component({
@@ -23,10 +22,11 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         numberOfAssessments: 0,
         numberOfComplaints: 0,
         numberOfOpenComplaints: 0,
+
+        tutorLeaderboard: [],
     };
 
     dataForAssessmentPieChart: number[];
-    tutorLeaderboardData: TutorLeaderboardData = {};
     totalAssessmentPercentage: number;
 
     constructor(
@@ -51,29 +51,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         this.exerciseService
             .find(exerciseId)
             .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body), (response: HttpErrorResponse) => this.onError(response.message));
-
-        this.resultService.getResultsForExercise(this.courseId, exerciseId, { withAssessors: true }).subscribe((res: HttpResponse<Result[]>) => {
-            const results = res.body!;
-
-            for (const result of results) {
-                if (result.rated && result.assessor) {
-                    const tutorId = result.assessor.id!;
-                    if (!this.tutorLeaderboardData[tutorId]) {
-                        this.tutorLeaderboardData[tutorId] = {
-                            tutor: result.assessor,
-                            numberOfAssessments: 0,
-                            numberOfComplaints: 0,
-                        };
-                    }
-
-                    this.tutorLeaderboardData[tutorId].numberOfAssessments++;
-
-                    if (result.hasComplaint) {
-                        this.tutorLeaderboardData[tutorId].numberOfComplaints++;
-                    }
-                }
-            }
-        });
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {

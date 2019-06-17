@@ -1,15 +1,15 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result.participation">
     <div class="modal-header">
         <h4 class="modal-title" id="myResultLabel">
-            <span jhiTranslate="arTeMiSApp.result.createManual">Create manual result for </span> {{ result.participation?.student.firstName }}
+            <span jhiTranslate="artemisApp.result.createManual">Create manual result for </span> {{ result.participation?.student.firstName }}
             {{ result.participation?.student.lastName }} ({{ result.participation?.exercise.title }})
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
         <div *ngIf="isOpenForSubmission" class="alert alert-warning">
-            <strong jhiTranslate="arTeMiSApp.result.exerciseStillOpen">Exercise is still open for submissions!</strong>
-            <span jhiTranslate="arTeMiSApp.result.studentOverride"
+            <strong jhiTranslate="artemisApp.result.exerciseStillOpen">Exercise is still open for submissions!</strong>
+            <span jhiTranslate="artemisApp.result.studentOverride"
                 >The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.</span
             >
         </div>
@@ -19,9 +19,9 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="result.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" jhiTranslate="arTeMiSApp.result.resultString">Result Text</label>
+            <label class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</label>
             <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
-            <span class="text-danger" *ngIf="resultString.invalid && resultString?.errors?.required" jhiTranslate="arTeMiSApp.result.resultStringRequired"
+            <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired"
                 >Result text is required.</span
             >
         </div>
@@ -30,7 +30,7 @@
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
-                <label class="control-label" jhiTranslate="arTeMiSApp.result.scorePercentage">Score (in %)</label>
+                <label class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</label>
                 <input
                     type="number"
                     max="100"
@@ -42,11 +42,11 @@
                     (ngModelChange)="result.score === 100 ? (result.successful = true) : (result.successful = false)"
                     #score="ngModel"
                 />
-                <span class="text-danger" *ngIf="score.dirty && score.invalid" jhiTranslate="arTeMiSApp.result.invalidScore">Score is required and should be a number.</span>
+                <span class="text-danger" *ngIf="score.dirty && score.invalid" jhiTranslate="artemisApp.result.invalidScore">Score is required and should be a number.</span>
             </div>
             <div class="checkbox col-md-6">
                 <label class="artemis-label">
-                    <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="arTeMiSApp.result.successful"
+                    <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="artemisApp.result.successful"
                         >Successful</span
                     >
                 </label>
@@ -54,14 +54,14 @@
         </div>
         <br />
         <div class="form-group">
-            <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="arTeMiSApp.result.addFeedback">Add feedback</a>
+            <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">Add feedback</a>
         </div>
         <div *ngIf="feedbacks.length > 0">
             <div *ngFor="let feedback of feedbacks; let i = index">
                 <div class="form-group">
                     <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"> Feedback #{{ i + 1 }} Text </label>
                     <input type="text" class="form-control" name="feedbackText{{ i }}" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
-                    <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="arTeMiSApp.result.feedbackTextRequired"
+                    <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired"
                         >Feedback text is required.</span
                     >
                 </div>
@@ -74,7 +74,7 @@
                     </div>
                     <div class="checkbox col-md-6">
                         <label class="artemis-label">
-                            <input type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />&nbsp;<span jhiTranslate="arTeMiSApp.result.positive">Positive</span>
+                            <input type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />&nbsp;<span jhiTranslate="artemisApp.result.positive">Positive</span>
                         </label>
                     </div>
                 </div>
@@ -82,9 +82,9 @@
             </div>
         </div>
         <div class="form-group" *ngIf="feedbacks.length > 0">
-            <a (click)="pushFeedback()" jhiTranslate="arTeMiSApp.result.addFeedback">More feedback</a>
+            <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
             &nbsp;
-            <a (click)="popFeedback()" jhiTranslate="arTeMiSApp.result.deleteFeedback">Less feedback</a>
+            <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
         </div>
     </div>
     <div class="modal-footer">

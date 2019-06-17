@@ -10,7 +10,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
     providers: [ArtemisMarkdown],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
-    @ViewChild('questionEditor')
+    @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
 
     @ViewChildren(AceEditorComponent)

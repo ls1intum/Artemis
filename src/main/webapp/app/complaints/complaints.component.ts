@@ -63,7 +63,7 @@ export class ComplaintsComponent implements OnInit {
             },
             (err: HttpErrorResponse) => {
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('arTeMiSApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
+                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
                 } else {
                     this.onError(err.message);
                 }

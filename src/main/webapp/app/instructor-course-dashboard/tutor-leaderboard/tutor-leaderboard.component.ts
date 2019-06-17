@@ -1,15 +1,11 @@
-import { User } from 'app/core';
 import { Component, Input } from '@angular/core';
-import { KeyValue } from '@angular/common';
 
-interface TutorLeaderboardElement {
-    tutor: User;
+export interface TutorLeaderboardElement {
+    name: string;
+    login: string;
     numberOfAssessments: number;
     numberOfComplaints: number;
-}
-
-export interface TutorLeaderboardData {
-    [key: string]: TutorLeaderboardElement;
+    tutorId: number;
 }
 
 @Component({
@@ -17,9 +13,12 @@ export interface TutorLeaderboardData {
     templateUrl: './tutor-leaderboard.component.html',
 })
 export class TutorLeaderboardComponent {
-    @Input() public tutorsData: TutorLeaderboardData = {};
+    @Input() public tutorsData: TutorLeaderboardElement[] = [];
+    @Input() public courseId?: number;
+    @Input() public exerciseId?: number;
 
-    orderByNumberOfAssessments(firstElement: KeyValue<number, TutorLeaderboardElement>, secondElement: KeyValue<number, TutorLeaderboardElement>) {
-        return secondElement.value.numberOfAssessments - firstElement.value.numberOfAssessments;
-    }
+    sortPredicate = 'numberOfAssessments';
+    reverseOrder = false;
+
+    callback() {}
 }

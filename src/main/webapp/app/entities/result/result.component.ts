@@ -30,7 +30,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() short = false;
     @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
-    @Input() showBadge = false;
+    @Input() showGradedBadge = false;
 
     textColorClass: string;
     hasFeedback: boolean;
@@ -98,7 +98,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
-            return this.translate.instant('arTeMiSApp.editor.buildFailed');
+            return this.translate.instant('artemisApp.editor.buildFailed');
         }
         return this.result!.resultString;
     }

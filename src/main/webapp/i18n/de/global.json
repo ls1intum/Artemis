@@ -163,6 +163,7 @@
             "download": "Herunterladen",
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
+            "editInEditor": "In Editor bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "editLink": "Link bearbeiten",
             "open": "Öffnen",

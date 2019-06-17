@@ -9,8 +9,21 @@ import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';
 
+export interface IWebsocketService {
+    stompFailureCallback(): void;
+    connect(): void;
+    disconnect(): void;
+    receive(): Observable<any>;
+    subscribe(): void;
+    unsubscribe(): void;
+    bind(event: string, callback: () => void): void;
+    unbind(event: string, callback: () => void): void;
+    enableReconnect(): void;
+    disableReconnect(): void;
+}
+
 @Injectable({ providedIn: 'root' })
-export class JhiWebsocketService implements OnDestroy {
+export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompClient: Stomp.Client | null;
     subscribers: { [key: string]: Stomp.Subscription } = {};
     connection: Promise<void>;

@@ -3,6 +3,7 @@ import { Exercise } from '../exercise';
 import { Moment } from 'moment';
 import { Lecture } from 'app/entities/lecture';
 import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorLeaderboardElement } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 export class Course implements BaseEntity {
     public id: number;
@@ -41,6 +42,8 @@ export type StatsForInstructorDashboard = {
     numberOfAssessments: number;
     numberOfComplaints: number;
     numberOfOpenComplaints: number;
+
+    tutorLeaderboard: TutorLeaderboardElement[];
 };
 
 export type StatsForTutorDashboard = {

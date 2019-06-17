@@ -307,7 +307,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         if (!this.participationChannel) {
             this.participationWebsocketService.addExerciseForNewParticipation(this.quizId);
             this.participationChannel = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
-                if (changedParticipation) {
+                if (changedParticipation && this.quizExercise && changedParticipation.exercise.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
                         this.applyParticipationFull(changedParticipation);
@@ -869,7 +869,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * This function is called when the user clicks the 'Submit' button
      */
     onSubmit() {
-        const translationBasePath = 'arTeMiSApp.quizExercise.';
+        const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;
 

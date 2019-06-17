@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain.modeling;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
+import com.fasterxml.jackson.annotation.*;
+import de.tum.in.www1.artemis.domain.*;
 
 /**
  * Representing a model element and the corresponding result that is in conflict
@@ -30,6 +30,7 @@ public class ConflictingResult {
     @ManyToOne
     private Result result;
 
+    @JsonIgnore
     @ManyToOne
     private ModelAssessmentConflict conflict;
 
@@ -70,5 +71,13 @@ public class ConflictingResult {
 
     public void setUpdatedFeedback(Feedback updatedFeedback) {
         this.updatedFeedback = updatedFeedback;
+    }
+
+    public ModelAssessmentConflict getConflict() {
+        return conflict;
+    }
+
+    public void setConflict(ModelAssessmentConflict conflict) {
+        this.conflict = conflict;
     }
 }

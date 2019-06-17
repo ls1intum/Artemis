@@ -5,7 +5,7 @@
     </div>
 
     <div class="col-12 col-lg-7">
-        <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
+        <h2 jhiTranslate="artemisApp.modelingExercise.exampleSolutionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
             Example Solution for Modeling Exercise {{ exercise?.title }}
         </h2>
     </div>
@@ -13,7 +13,7 @@
     <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
         <button (click)="saveExampleSolution()" class="btn btn-primary px-5">
             <fa-icon icon="save"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleSolution">Save example solution</span>
+            <span jhiTranslate="artemisApp.modelingExercise.saveExampleSolution">Save example solution</span>
         </button>
     </div>
 
@@ -21,7 +21,7 @@
         <p
             *ngIf="formattedProblemStatement"
             class="my-3"
-            jhiTranslate="arTeMiSApp.modelingExercise.problemStatement"
+            jhiTranslate="artemisApp.modelingExercise.problemStatement"
             [translateValues]="{ problemStatement: formattedProblemStatement }"
         >
             <strong>Problem Statement:</strong> {{ formattedProblemStatement }}<br />

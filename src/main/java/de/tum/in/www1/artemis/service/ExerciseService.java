@@ -57,13 +57,15 @@ public class ExerciseService {
 
     private final Optional<GitService> gitService;
 
+    private final Optional<ProgrammingExerciseService> programmingExerciseService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -71,6 +73,7 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
     }
@@ -126,9 +129,17 @@ public class ExerciseService {
             exercises = exerciseRepository.findByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
+
+            if (course.isOnlineCourse() && withLtiOutcomeUrlExisting) {
+                // students in only courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal);
+            }
+            else {
+                exercises = exerciseRepository.findByCourseId(course.getId());
+            }
+
             // user is student for this course and might not have the right to see it so we have to filter
-            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal)
-                    : exerciseRepository.findByCourseId(course.getId());
+
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
@@ -324,6 +335,7 @@ public class ExerciseService {
                 Repository repo = gitService.get().getOrCheckoutRepository(participation);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
                 gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
+                programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
                 gitService.get().squashAfterInstructor(repo, (ProgrammingExercise) exercise);
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.get().zipRepository(repo);
@@ -337,6 +349,8 @@ public class ExerciseService {
                 }
                 else {
                     // finish with clean state
+                    gitService.get().checkoutBranch(repo, "master");
+                    gitService.get().deleteLocalBranch(repo, "stager");
                     gitService.get().resetToOriginMaster(repo);
                 }
             }

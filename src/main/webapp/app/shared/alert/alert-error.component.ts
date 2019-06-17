@@ -23,7 +23,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
         /* tslint:enable */
         this.alerts = [];
 
-        this.cleanHttpErrorListener = eventManager.subscribe('arTeMiSApp.httpError', (response: any) => {
+        this.cleanHttpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             let i;
             const httpErrorResponse = response.content;
             switch (httpErrorResponse.status) {
@@ -55,7 +55,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                             }
                             // convert 'something[14].other[4].id' to 'something[].other[].id' so translations can be written to it
                             const convertedField = fieldError.field.replace(/\[\d*\]/g, '[]');
-                            const fieldName = translateService.instant('arTeMiSApp.' + fieldError.objectName + '.' + convertedField);
+                            const fieldName = translateService.instant('artemisApp.' + fieldError.objectName + '.' + convertedField);
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.message) {
@@ -81,7 +81,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
 
     setClasses(alert: any) {
         return {
-            toast: !!alert.toast,
+            'jhi-toast': alert.toast,
             [alert.position]: true,
         };
     }

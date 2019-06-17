@@ -9,7 +9,7 @@ export const apollonDiagramsRoutes: Routes = [
         component: ApollonDiagramListComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.home.title',
+            pageTitle: 'artemisApp.apollonDiagram.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -18,7 +18,7 @@ export const apollonDiagramsRoutes: Routes = [
         component: ApollonDiagramDetailComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

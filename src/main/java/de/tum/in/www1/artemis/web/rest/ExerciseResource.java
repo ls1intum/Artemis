@@ -9,6 +9,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -42,7 +42,8 @@ public class ExerciseResource {
 
     private static final String ENTITY_NAME = "exercise";
 
-    private final ExerciseRepository exerciseRepository;
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final ExerciseService exerciseService;
 
@@ -54,10 +55,6 @@ public class ExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
-
     private final TutorParticipationService tutorParticipationService;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
@@ -68,26 +65,29 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final SubmissionRepository submissionRepository;
+    private final TextSubmissionService textSubmissionService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService, UserService userService,
-            CourseService courseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, SubmissionRepository submissionRepository) {
-        this.exerciseRepository = exerciseRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final ResultService resultService;
+
+    public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, CourseService courseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ObjectMapper objectMapper, TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.objectMapper = objectMapper;
         this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -191,24 +191,37 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
+        ObjectNode data = populateCommonStatistics(id);
+        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutorInExercise(id, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
 
         long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndResult_Assessor_Id(id, user.getId());
         data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
+    }
+
+    /**
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
+     * instructor dashboard
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a object node with the stats
+     */
+    private ObjectNode populateCommonStatistics(@PathVariable Long exerciseId) {
+        ObjectNode data = objectMapper.createObjectNode();
+
+        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        return data;
     }
 
     /**
@@ -227,19 +240,12 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
-        long numberOfSubmissions = submissionRepository.countBySubmittedAndParticipation_Exercise_Id(true, id);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessmentsForExercise(id);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
-
+        ObjectNode data = populateCommonStatistics(id);
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(id);
         data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+
+        List<StatsTutorLeaderboardDTO> tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForExercise(id);
+        data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
 
         return ResponseEntity.ok(data);
     }
@@ -260,7 +266,7 @@ public class ExerciseResource {
                 return forbidden();
             exerciseService.delete(exercise, true, false);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**
@@ -277,7 +283,7 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
             return forbidden();
         exerciseService.reset(exercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", id.toString())).build();
     }
 
     /**
@@ -296,7 +302,7 @@ public class ExerciseResource {
             return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
     }
 
     /**
@@ -314,7 +320,7 @@ public class ExerciseResource {
             return forbidden();
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(
+            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName,
                     "There was an error on the server and the zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.",
                     "")).build();
         }
@@ -341,12 +347,14 @@ public class ExerciseResource {
 
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if (studentList.isEmpty() || studentList == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed", "")).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
+                    .build();
         }
 
         File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
         if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", "")).build();
+            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName, "There was an error on the server and the zip file could not be created", ""))
+                    .build();
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
@@ -378,8 +386,6 @@ public class ExerciseResource {
             exercise.setParticipations(new HashSet<>());
 
             for (Participation participation : participations) {
-                // Removing not needed properties
-                participation.setStudent(null);
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);

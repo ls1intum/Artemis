@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,6 +35,9 @@ public class AttachmentResource {
     private final Logger log = LoggerFactory.getLogger(AttachmentResource.class);
 
     private static final String ENTITY_NAME = "attachment";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final AttachmentRepository attachmentRepository;
 
@@ -76,8 +80,8 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
-        return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -101,7 +105,7 @@ public class AttachmentResource {
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, attachment.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
     }
 
     /**
@@ -165,7 +169,7 @@ public class AttachmentResource {
         if (hasCourseInstructorAccess) {
             log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         else {
             return forbidden();

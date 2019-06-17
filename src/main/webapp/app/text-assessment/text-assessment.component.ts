@@ -1,4 +1,5 @@
 import * as $ from 'jquery';
+import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
@@ -45,6 +46,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     complaint: Complaint;
     notFound = false;
     userId: number;
+    canOverride = false;
 
     formattedProblemStatement: string | null;
     formattedSampleSolution: string | null;
@@ -78,7 +80,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.assessmentsAreValid = false;
-        translateService.get('arTeMiSApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
@@ -201,7 +203,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public save(): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -209,9 +211,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             response => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -222,7 +224,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -230,9 +232,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             response => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.submitSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -291,7 +293,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
         this.validateAssessment();
-        this.checkAuthorization();
+        this.checkPermissions();
     }
 
     goToExerciseDashboard() {
@@ -318,7 +320,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.feedbackReferenceTooLong';
+            this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
             return;
         }
@@ -326,13 +328,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidScoreMustBeNumber';
+            this.invalidError = 'artemisApp.textAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
             return;
         }
 
         if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidNeedScoreOrFeedback';
+            this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
             return;
         }
@@ -342,8 +344,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.invalidError = null;
     }
 
-    private checkAuthorization() {
+    private checkPermissions() {
         this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     toggleCollapse($event: any) {
@@ -363,7 +368,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     public get headingTranslationKey(): string {
-        const baseKey = 'arTeMiSApp.textAssessment.heading.';
+        const baseKey = 'artemisApp.textAssessment.heading.';
 
         if (this.submission && this.submission.exampleSubmission) {
             return baseKey + 'exampleAssessment';
@@ -380,7 +385,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
@@ -389,11 +394,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
             },
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('arTeMiSApp.textAssessment.updateAfterComplaintFailed');
+                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
             },
         );
     }

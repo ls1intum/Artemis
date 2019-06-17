@@ -34,7 +34,7 @@ export const courseRoute: Routes = [
         component: CourseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -46,7 +46,7 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -58,7 +58,7 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -70,7 +70,7 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -82,7 +82,7 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -97,7 +97,7 @@ export const coursePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title',
+            pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

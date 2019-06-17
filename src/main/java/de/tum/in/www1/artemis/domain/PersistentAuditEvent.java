@@ -18,6 +18,8 @@ import javax.validation.constraints.NotNull;
 @Table(name = "jhi_persistent_audit_event")
 public class PersistentAuditEvent implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")

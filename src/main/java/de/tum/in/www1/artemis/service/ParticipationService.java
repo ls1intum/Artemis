@@ -22,13 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -81,11 +75,13 @@ public class ParticipationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final ModelAssessmentConflictService conflictService;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -99,6 +95,7 @@ public class ParticipationService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
+        this.conflictService = conflictService;
     }
 
     /**
@@ -127,7 +124,8 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (participation == null || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+        boolean isNewParticipation = participation == null;
+        if (isNewParticipation || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
             // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
@@ -137,7 +135,6 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -171,6 +168,11 @@ public class ParticipationService {
         }
 
         participation = save(participation);
+
+        if (isNewParticipation) {
+            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
+        }
+
         return participation;
     }
 
@@ -186,7 +188,7 @@ public class ParticipationService {
     public Participation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
-            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAndFinished(quizExercise.getId(), username);
 
             if (!optionalParticipation.isPresent()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
@@ -458,6 +460,19 @@ public class ParticipationService {
     }
 
     /**
+     * Get one finished participation by its student and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Optional<Participation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+        return participationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
+    }
+
+    /**
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
      * @param exerciseId the project key of the exercise
@@ -611,7 +626,7 @@ public class ParticipationService {
         Participation participation = participationRepository.findById(id).get();
         log.debug("Request to delete Participation : {}", participation);
 
-        if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
+        if (participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
@@ -631,6 +646,9 @@ public class ParticipationService {
             catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
+        }
+        else if (participation.getExercise() instanceof ModelingExercise) {
+            conflictService.deleteAllConflictsForParticipation(participation);
         }
 
         if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
@@ -681,4 +699,7 @@ public class ParticipationService {
         }
     }
 
+    public Participation findOneWithEagerCourse(Long participationId) {
+        return participationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
 }
