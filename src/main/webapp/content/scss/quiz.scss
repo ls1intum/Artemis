@@ -479,7 +479,7 @@
 
     .instructions {
         margin: 10px 0;
-        font-weight: bold;
+        font-weight: 500;
     }
 
     .drag-items {
@@ -506,7 +506,7 @@
     .background-area {
         @media (orientation: landscape) {
             float: left;
-            width: 78%;
+            width: 79%;
         }
 
         .click-layer {
@@ -537,13 +537,10 @@
         @media (orientation: landscape) {
             float: right;
             margin-top: -5px;
-            width: 20%;
+            width: 19%;
         }
 
         .instructions {
-            @media (max-width: 812px) {
-                display: none;
-            }
             @media (orientation: landscape) {
                 margin: 0 0 10px 0;
             }
