@@ -118,17 +118,15 @@ export class CourseScoreCalculationService {
             }
 
             // sorting in descending order to have the last result at the beginning
-            resultsArray.sort(
-                (result1, result2): number => {
-                    if (result1.completionDate! > result2.completionDate!) {
-                        return -1;
-                    }
-                    if (result1.completionDate! < result2.completionDate!) {
-                        return 1;
-                    }
-                    return 0;
-                },
-            );
+            resultsArray.sort((result1, result2): number => {
+                if (result1.completionDate! > result2.completionDate!) {
+                    return -1;
+                }
+                if (result1.completionDate! < result2.completionDate!) {
+                    return 1;
+                }
+                return 0;
+            });
 
             const gracePeriodInSeconds = 10;
             if (dueDate === null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
