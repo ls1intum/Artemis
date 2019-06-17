@@ -64,6 +64,10 @@ export abstract class Exercise implements BaseEntity {
     public attachments: Attachment[];
     public studentQuestions: StudentQuestion[];
 
+    public numberOfParticipations?: number;
+    public numberOfAssessments?: number;
+    public numberOfComplaints?: number;
+
     // helper attributes
     public isAtLeastTutor = false; // default value
     public isAtLeastInstructor = false; // default value
@@ -71,8 +75,6 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipationsWithRatedResult: number;
     public numberOfSuccessfulParticipations: number;
     public averagePoints: number;
-    public numberOfAssessments: number;
-    public numberOfComplaints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
@@ -93,11 +95,11 @@ export function getIcon(exerciseType: ExerciseType): string {
 
 export function getIconTooltip(exerciseType: ExerciseType): string {
     const tooltips = {
-        [ExerciseType.PROGRAMMING]: 'arTeMiSApp.exercise.isProgramming',
-        [ExerciseType.MODELING]: 'arTeMiSApp.exercise.isModeling',
-        [ExerciseType.QUIZ]: 'arTeMiSApp.exercise.isQuiz',
-        [ExerciseType.TEXT]: 'arTeMiSApp.exercise.isText',
-        [ExerciseType.FILE_UPLOAD]: 'arTeMiSApp.exercise.isFileUpload',
+        [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',
+        [ExerciseType.MODELING]: 'artemisApp.exercise.isModeling',
+        [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
+        [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
+        [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
     };
 
     return tooltips[exerciseType];

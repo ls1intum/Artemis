@@ -40,6 +40,9 @@ public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     @Value("${artemis.lti.id}")
     private String LTI_ID;
 

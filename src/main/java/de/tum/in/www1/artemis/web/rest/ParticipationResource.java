@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -58,6 +59,11 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
+    private static final String ENTITY_NAME = "participation";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final ParticipationService participationService;
 
     private final QuizExerciseService quizExerciseService;
@@ -71,8 +77,6 @@ public class ParticipationResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private static final String ENTITY_NAME = "participation";
 
     private final TextSubmissionService textSubmissionService;
 
@@ -111,8 +115,8 @@ public class ParticipationResource {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Participation result = participationService.save(participation);
-        return ResponseEntity.created(new URI("/api/participations/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -134,9 +138,8 @@ public class ParticipationResource {
         }
         if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
             // participation already exists
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
-                    .body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
+                    "There is already a participation for the given exercise and user.")).body(null);
         }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
@@ -165,21 +168,35 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise;
+        try {
+            exercise = exerciseService.findOne(exerciseId);
+        }
+        catch (EntityNotFoundException e) {
+            log.info("Request to resume participation of non-existing Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
+        }
+
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if (participation == null) {
+            log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);
+            throw new BadRequestAlertException("No participation was found for the given exercise and user.", "editor", "participationNotFound");
+        }
+
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(exercise, participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                        .body(participation);
             }
         }
         log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notProgrammingExercise",
+        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
                 "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
 
@@ -230,7 +247,7 @@ public class ParticipationResource {
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }
 
     /**
@@ -466,6 +483,9 @@ public class ParticipationResource {
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // avoid problems due to bidirectional associations between submission and result during serialization
+            if (participation == null) {
+                return null;
+            }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
                     result.getSubmission().setResult(null);
@@ -514,7 +534,7 @@ public class ParticipationResource {
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
                 deleteBuildPlan, deleteRepository, principal.getName());
         participationService.delete(id, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
 
     /**
@@ -534,25 +554,33 @@ public class ParticipationResource {
     }
 
     private void checkAccessPermissionAtInstructor(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionAtLeastTA(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(Participation participation) {
-        Course course = participation.getExercise().getCourse();
+        Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if (!courseService.userHasAtLeastTAPermissions(course)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
+    }
+
+    private Course findCourseFromParticipation(Participation participation) {
+        if (participation.getExercise() != null && participation.getExercise().getCourse() != null) {
+            return participation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 }

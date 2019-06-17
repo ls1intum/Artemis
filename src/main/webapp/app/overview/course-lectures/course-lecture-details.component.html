@@ -9,7 +9,7 @@
                 </h3>
                 <h4>
                     <span class="mr-2" *ngIf="lecture!.startDate && lecture!.endDate">
-                        {{ 'arTeMiSApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | date: 'dd.MM.yy HH:mm' }} - {{ lecture!.endDate | date: 'HH:mm' }}
+                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | date: 'dd.MM.yy HH:mm' }} - {{ lecture!.endDate | date: 'HH:mm' }}
                     </span>
                 </h4>
             </div>
@@ -21,7 +21,7 @@
         <div class="col-sm-12 col-md-10 col-lg-8">
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
-                    <h3>{{ 'arTeMiSApp.courseOverview.lectureDetails.description' | translate }}</h3>
+                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | translate }}</h3>
                 </div>
             </div>
             <div class="row mb-2" *ngIf="lecture!.description">
@@ -31,7 +31,7 @@
             </div>
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
-                    <h3>{{ 'arTeMiSApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
+                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
                 </div>
             </div>
             <div class="row mb-2" *ngIf="lecture!.attachments">
@@ -45,19 +45,19 @@
                                 {{ attachmentExtension(attachment) | uppercase }}
                             </span>
                             <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
-                                {{ 'arTeMiSApp.courseOverview.lectureDetails.notReleased' | translate }}
+                                {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | translate }}
                             </span>
                         </h5>
                         <h6 class="text-black-50 mb-0 lecture-attachment-details">
-                            ({{ 'arTeMiSApp.courseOverview.lectureDetails.version' | translate }}: {{ attachment.version }} -
-                            {{ 'arTeMiSApp.courseOverview.lectureDetails.date' | translate }}: {{ attachment.uploadDate! | date: 'dd.MM.yy HH:mm' }})
+                            ({{ 'artemisApp.courseOverview.lectureDetails.version' | translate }}: {{ attachment.version }} -
+                            {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }}: {{ attachment.uploadDate | date: 'dd.MM.yy HH:mm' }})
                         </h6>
                     </li>
                 </ul>
             </div>
             <div class="row mb-2" *ngIf="!lecture!.attachments">
                 <div class="col-12 col-md-12">
-                    {{ 'arTeMiSApp.courseOverview.lectureDetails.noAttachments' | translate }}
+                    {{ 'artemisApp.courseOverview.lectureDetails.noAttachments' | translate }}
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
 import { AccountService, User } from 'app/core';
 import * as moment from 'moment';
@@ -22,7 +22,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
 
-    constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService) {}
+    constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
 
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
@@ -70,7 +70,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         studentQuestion.author = this.currentUser;
         studentQuestion.visibleForStudents = true;
         if (this.exercise) {
-            studentQuestion.exercise = Object.assign({}, this.exercise, {});
+            studentQuestion.exercise = Object.assign({}, this.exerciseService.convertExerciseForServer(this.exercise), {});
         } else {
             studentQuestion.lecture = Object.assign({}, this.lecture, {});
             delete studentQuestion.lecture.attachments;

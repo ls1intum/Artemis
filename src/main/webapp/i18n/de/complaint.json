@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "complaint": {
             "title": "Beschwerde",
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
@@ -30,6 +30,16 @@
                 "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
                 "rejectComplaint": "Beschwerde zurückweisen",
                 "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
+            },
+            "listOfComplaints": {
+                "exercise": "Übung",
+                "submissionId": "Einreichung ID",
+                "reviewerLogin": "Prüfer-Login",
+                "reviewerName": "Prüfer-Name",
+                "studentLogin": "Schüler-Login",
+                "studentName": "Schüler-Name",
+                "actions": "Aktionen",
+                "title": "Liste der Beschwerden"
             }
         }
     }

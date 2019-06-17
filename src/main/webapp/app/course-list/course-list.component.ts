@@ -70,7 +70,7 @@ export class CourseListComponent implements OnInit {
     showWelcomeAlert() {
         // show alert after timeout to fix translation not loaded
         setTimeout(() => {
-            this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
+            this.jhiAlertService.info('artemisApp.exercise.welcome');
         }, 500);
     }
 }

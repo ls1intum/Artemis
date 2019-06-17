@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
             "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
@@ -106,7 +106,7 @@
                     "statistics": "Statistiken"
                 },
                 "notParticipated": "Nicht teilgenommen",
-                "yourResult": "Deine Ergebnisse:",
+                "yourGradedResult": "Dein gewertetes Ergebnis:",
                 "recentResults": "Aktuelle Ergebnisse:",
                 "noGradedResult": "Du hast noch kein gewertetes Ergebnis.",
                 "allResults": "Alle Ergebnisse:",

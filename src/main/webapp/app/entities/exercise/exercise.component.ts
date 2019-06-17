@@ -51,7 +51,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     public getAmountOfExercisesString<T>(exercises: Array<T>): string {
         if (exercises.length === 0) {
-            return this.translateService.instant('arTeMiSApp.createExercise.noExercises');
+            return this.translateService.instant('artemisApp.createExercise.noExercises');
         } else {
             return exercises.length.toString();
         }

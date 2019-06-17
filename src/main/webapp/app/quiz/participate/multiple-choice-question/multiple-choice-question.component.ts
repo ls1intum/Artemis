@@ -2,6 +2,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
+import { SubmittedAnswer } from 'app/entities/submitted-answer';
+import { Result } from 'app/entities/result';
+import { QuizExercise } from 'app/entities/quiz-exercise';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -33,6 +36,10 @@ export class MultipleChoiceQuestionComponent {
     forceSampleSolution: boolean;
     @Input()
     fnOnSelection: any;
+    @Input()
+    submittedResult: Result;
+    @Input()
+    submittedQuizExercise: QuizExercise;
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();

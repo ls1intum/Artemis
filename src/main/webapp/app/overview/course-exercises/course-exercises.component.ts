@@ -61,6 +61,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     public groupExercises(selectedOrder: number): void {
+        // set all values to 0
+        this.exerciseCountMap = new Map<string, number>();
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
@@ -113,7 +115,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.weeklyExercisesGrouped = {
                 ...groupedExercises,
                 noDate: {
-                    label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
+                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
                     isCollapsed: false,
                     isCurrentWeek: false,
                     exercises: notAssociatedExercises,

@@ -1,6 +1,6 @@
 <div class="container" *ngIf="quizExercise">
     <h1>
-        <span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title }"> </span>
+        <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title }"> </span>
     </h1>
     <hr />
 
@@ -16,16 +16,16 @@
         <br />
         <div class="quiz-options">
             <div class="form-group">
-                <span jhiTranslate="arTeMiSApp.quizExercise.duration" class="colon-suffix"></span>
+                <span jhiTranslate="artemisApp.quizExercise.duration" class="colon-suffix"></span>
                 <span>{{ durationString() }}</span>
-                <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
+                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
             </div>
             <div class="form-group form-check custom-control custom-checkbox">
                 <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise.randomizeQuestionOrder" />
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder"> </label>
+                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
             </div>
             <div class="form-group">
-                <span jhiTranslate="arTeMiSApp.quizExercise.startTime" class="colon-suffix"></span>
+                <span jhiTranslate="artemisApp.quizExercise.startTime" class="colon-suffix"></span>
                 <span>{{ quizExercise.releaseDate | date: 'yyyy-MM-dd HH:mm:ss' }}</span>
             </div>
         </div>
@@ -71,15 +71,15 @@
             <div class="edit-quiz-footer-content">
                 <div></div>
                 <div class="form-group ">
-                    <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.saved" class="badge badge-success"> </span>
-                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges" class="badge badge-primary"> </span>
-                    <span *ngIf="isSaving" jhiTranslate="arTeMiSApp.quizExercise.edit.saving" class="badge badge-primary"> </span>
-                    <span *ngIf="!validQuiz()" jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput" class="badge badge-danger"> </span>
+                    <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
+                    <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-primary"> </span>
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge badge-primary"> </span>
+                    <span *ngIf="!validQuiz()" jhiTranslate="artemisApp.quizExercise.edit.invalidInput" class="badge badge-danger"> </span>
                     <button
                         class="btn btn-warning"
                         (click)="resetAll()"
                         [disabled]="!pendingChanges() || !validQuiz() || isSaving"
-                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.resetQuiz"
+                        jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                     ></button>
                     <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
                     <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !validQuiz() || isSaving" jhiTranslate="entity.action.save"></button>

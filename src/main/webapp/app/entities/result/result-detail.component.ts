@@ -3,7 +3,7 @@ import { Result, ResultService } from './';
 import { RepositoryService } from 'app/entities/repository';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
-import { BuildLogEntryArray } from 'app/entities/build-log';
+import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
 
 // Modal -> Result details view
 @Component({
@@ -30,7 +30,7 @@ export class ResultDetailComponent implements OnInit {
             this.feedbackList = res.body!;
             if (!this.feedbackList || this.feedbackList.length === 0) {
                 // If we don't have received any feedback, we fetch the buid log outputs
-                this.repositoryService.buildlogs(this.result.participation!.id).subscribe(repoResult => {
+                this.repositoryService.buildlogs(this.result.participation!.id).subscribe((repoResult: BuildLogEntry[]) => {
                     this.buildLogs = new BuildLogEntryArray(...repoResult);
                     this.isLoading = false;
                 });

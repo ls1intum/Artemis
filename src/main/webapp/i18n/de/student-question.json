@@ -1,0 +1,14 @@
+{
+    "artemisApp": {
+        "studentQuestion": {
+            "created": "Frage erstellt mit ID {{ param }}",
+            "updated": "Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Frage gelöscht mit ID {{ param }}"
+        },
+        "questionAnswer": {
+            "created": "Antwort erstellt mit ID {{ param }}",
+            "updated": "Antwort aktualisiert mit ID {{ param }}",
+            "deleted": "Antwort gelöscht mit ID {{ param }}"
+        }
+    }
+}

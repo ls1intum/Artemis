@@ -70,7 +70,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('arTeMiSApp.participation.addPresentation.error');
+                this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
             },
         );
     }
@@ -80,7 +80,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('arTeMiSApp.participation.removePresentation.error');
+                this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
             },
         );
     }

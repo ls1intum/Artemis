@@ -21,7 +21,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
     styleUrls: ['./course-update.component.scss'],
 })
 export class CourseUpdateComponent implements OnInit {
-    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
     course: Course;
@@ -160,7 +160,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-arTeMiSApp-alert')!;
+        const errorMessage = error.headers.get('X-artemisApp-alert')!;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;

@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "result": {
             "home": {
                 "title": "Results",
@@ -15,7 +15,7 @@
             "detail": {
                 "title": "Result"
             },
-            "noResult": "No result",
+            "noResult": "No graded result",
             "resultString": "Result Text",
             "completionDate": "Completion Date",
             "successful": "Successful",

@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -16,11 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -33,6 +35,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class); // TODO MJ add logging or remove unused logger
 
     private static final String ENTITY_NAME = "modelingAssessment";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with existing assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
 
@@ -58,19 +63,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final ModelAssessmentConflictService conflictService;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
             ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
         this.courseService = courseService;
-        this.exampleSubmissionService = exampleSubmissionService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.messagingTemplate = messagingTemplate;
+        this.exampleSubmissionService = exampleSubmissionService;
+        this.conflictService = conflictService;
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -154,7 +162,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
-            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
+            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
@@ -164,10 +172,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
+
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
-            List<Conflict> conflicts = new ArrayList<>();
+            List<ModelAssessmentConflict> conflicts = new ArrayList<>();
             if (compassService.isSupported(modelingExercise.getDiagramType())) {
                 try {
                     conflicts = compassService.getConflicts(modelingSubmission, exerciseId, result, result.getFeedbacks());
@@ -177,6 +186,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 }
             }
             if (!conflicts.isEmpty() && !ignoreConflict) {
+                conflictService.loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(conflicts);
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             }
             else {
@@ -190,7 +200,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             result.getParticipation().setStudent(null);
         }
-        if (submit) {
+        if (submit && (result.getParticipation().getExercise().getAssessmentDueDate() == null
+                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
@@ -199,7 +210,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
-            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List") })
+            @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
@@ -208,7 +219,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise);
-        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
         return ResponseEntity.ok(result);
     }
 

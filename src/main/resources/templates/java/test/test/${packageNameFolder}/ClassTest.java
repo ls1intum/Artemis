@@ -17,7 +17,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 2.0 (24.02.2019)
+ * @version 2.1 (02.06.2019)
  *
  * This test evaluates the hierarchy of the class, i.e. if the class is abstract
  * or an interface or an enum and also if the class extends another class and if
@@ -26,7 +26,13 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class ClassTest extends StructuralTest {
 
-    public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    private static final String JSON_PROPERTY_SUPERCLASS = "superclass";
+	private static final String JSON_PROPERTY_INTERFACES = "interfaces";
+	private static final String JSON_PROPERTY_CLASS = "class";
+	private static final String JSON_PROPERTY_PACKAGE = "package";
+	private static final String JSON_PROPERTY_NAME = "name";
+
+	public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 
@@ -41,18 +47,23 @@ public class ClassTest extends StructuralTest {
 
         for (int i = 0; i < structureOracleJSON.length(); i++) {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
-            JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
+            JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
 
-            // Only test the classes that have properties defined in the structure oracle.
-            // TODO: there are cases where we define the class, but we don't want it to be tested. Should we just remove the name then?
-            // Or should we better declare this explicitly with another attribute in json?
-            if (expectedClassPropertiesJSON.has("name")) {
-                String expectedClassName = expectedClassPropertiesJSON.getString("name");
-                String expectedPackageName = expectedClassPropertiesJSON.getString("package");
+            // Only test the classes that have additional properties (except name and package) defined in the structure oracle.
+            if (expectedClassPropertiesJSON.has(JSON_PROPERTY_NAME) && expectedClassPropertiesJSON.has(JSON_PROPERTY_PACKAGE) && hasAdditionalProperties(expectedClassPropertiesJSON)) {
+                String expectedClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_NAME);
+                String expectedPackageName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_PACKAGE);
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
         }
         return testData;
+    }
+    
+    private static boolean hasAdditionalProperties(JSONObject jsonObject) {
+    	List<String> keys = new ArrayList<String>(jsonObject.keySet());
+    	keys.remove(JSON_PROPERTY_NAME);
+    	keys.remove(JSON_PROPERTY_PACKAGE);
+    	return keys.size() > 0;
     }
 
     /**
@@ -61,9 +72,9 @@ public class ClassTest extends StructuralTest {
      */
     @Test(timeout = 1000)
     public void testClass() {
-        Class<?> observedClass = findClassForTestType("hierarchy");
+        Class<?> observedClass = findClassForTestType("class");
 
-        JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
+        JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject(JSON_PROPERTY_CLASS);
 
         if (expectedClassPropertiesJSON.has("isAbstract")) {
             assertTrue("Problem: the class '" + expectedClassName + "' is not abstract as it is expected.",
@@ -75,7 +86,7 @@ public class ClassTest extends StructuralTest {
                 (observedClass.isEnum()));
         }
 
-        if (expectedClassPropertiesJSON.has("isInterfaceDifferent")) {
+        if (expectedClassPropertiesJSON.has("isInterface")) {
             assertTrue("Problem: the type '" + expectedClassName + "' is not an interface as it is expected.",
                 Modifier.isInterface(observedClass.getModifiers()));
         }
@@ -85,10 +96,10 @@ public class ClassTest extends StructuralTest {
                 observedClass.isEnum());
         }
 
-        if(expectedClassPropertiesJSON.has("superclass")) {
+        if(expectedClassPropertiesJSON.has(JSON_PROPERTY_SUPERCLASS)) {
             // Filter out the enums, since there is a separate test for them
-            if(!expectedClassPropertiesJSON.getString("superclass").equals("Enum")) {
-                String expectedSuperClassName = expectedClassPropertiesJSON.getString("superclass");
+            if(!expectedClassPropertiesJSON.getString(JSON_PROPERTY_SUPERCLASS).equals("Enum")) {
+                String expectedSuperClassName = expectedClassPropertiesJSON.getString(JSON_PROPERTY_SUPERCLASS);
                 String actualSuperClassName = observedClass.getSuperclass().getSimpleName();
 
                 String failMessage = "Problem: the class '" + expectedClassName + "' is not a subclass of the class '"
@@ -97,8 +108,8 @@ public class ClassTest extends StructuralTest {
             }
         }
 
-        if(expectedClassPropertiesJSON.has("interfaces")) {
-            JSONArray expectedInterfaces = expectedClassPropertiesJSON.getJSONArray("interfaces");
+        if(expectedClassPropertiesJSON.has(JSON_PROPERTY_INTERFACES)) {
+            JSONArray expectedInterfaces = expectedClassPropertiesJSON.getJSONArray(JSON_PROPERTY_INTERFACES);
             Class<?>[] observedInterfaces = observedClass.getInterfaces();
 
             for (int i = 0; i < expectedInterfaces.length(); i++) {
@@ -118,6 +129,5 @@ public class ClassTest extends StructuralTest {
                 }
             }
         }
-
     }
 }

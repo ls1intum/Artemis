@@ -70,6 +70,6 @@ export class TextResultComponent {
     public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
-        return this.translateService.instant(`arTeMiSApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
+        return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
     }
 }
