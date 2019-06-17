@@ -28,6 +28,8 @@ public class ModelingSubmissionService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     private final ResultService resultService;
 
     private final ResultRepository resultRepository;
@@ -42,10 +44,11 @@ public class ModelingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, UserService userService, ParticipationRepository participationRepository,
-            SimpMessageSendingOperations messagingTemplate) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
+            ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
+            ParticipationRepository participationRepository, SimpMessageSendingOperations messagingTemplate) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
@@ -234,7 +237,7 @@ public class ModelingSubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = modelingSubmissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }

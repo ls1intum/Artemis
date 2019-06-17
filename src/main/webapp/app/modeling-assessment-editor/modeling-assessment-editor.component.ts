@@ -196,7 +196,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
         this.jhiAlertService.clear();
         this.jhiAlertService.error(error);
-        setTimeout(() => this.goToExerciseDashboard(), 4000);
+        setTimeout(() => {
+            this.goToExerciseDashboard();
+            this.jhiAlertService.clear();
+        }, 4000);
     }
 
     onSaveAssessment() {

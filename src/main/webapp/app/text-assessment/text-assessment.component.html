@@ -1,6 +1,6 @@
 <jhi-alert></jhi-alert>
 
-<div class="course-info-bar">
+<div class="course-info-bar" *ngIf="!hasErrors">
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
@@ -108,7 +108,7 @@
     <div class="col-12 resizing-bar-bottom"><span></span></div>
 </div>
 
-<ng-container *ngIf="!busy && !notFound">
+<ng-container *ngIf="!busy && !notFound && !hasErrors">
     <div class="row mt-3">
         <h4 class="col-12" jhiTranslate="artemisApp.textAssessment.detail.feedback">Feedback</h4>
         <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>

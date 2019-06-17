@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -19,7 +21,9 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -28,21 +32,34 @@ public class TextSubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     private final ParticipationRepository participationRepository;
 
     private final ParticipationService participationService;
 
     private final ResultRepository resultRepository;
 
+    private final UserService userService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, ParticipationRepository participationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate) {
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository, ParticipationRepository participationRepository,
+            ParticipationService participationService, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
         this.textSubmissionRepository = textSubmissionRepository;
+        this.submissionRepository = submissionRepository;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.userService = userService;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    public void checkSubmissionLockLimit(long courseId) {
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
+            throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
+        }
     }
 
     /**
