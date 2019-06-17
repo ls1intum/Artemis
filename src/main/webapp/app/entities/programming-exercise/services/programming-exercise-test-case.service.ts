@@ -6,8 +6,12 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
 
+export interface IProgrammingExerciseTestCaseService {
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseTestCaseService implements OnDestroy {
+export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService, OnDestroy {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};

@@ -29,7 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 
-enum TestCaseState {
+export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',

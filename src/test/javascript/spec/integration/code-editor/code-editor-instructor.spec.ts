@@ -252,8 +252,8 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.buildOutput).to.exist;
 
         setTimeout(() => {
-            // Called once by each build-output, instructions, result, instructor-status & by the editable instructions wrapper (= templateParticipation)
-            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
+            // Called once by each build-output, instructions, result, instructor-status
+            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(4);
             done();
         }, 0);
     });

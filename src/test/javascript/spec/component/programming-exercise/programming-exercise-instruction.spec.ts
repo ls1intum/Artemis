@@ -2,14 +2,14 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChanges, SimpleChange } from '@angular/core';
+import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { spy, stub, SinonStub } from 'sinon';
-import { of, Subscription, Subject, throwError } from 'rxjs';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { AceEditorModule } from 'ng2-ace-editor';
+import * as moment from 'moment';
+import { SinonStub, spy, stub } from 'sinon';
+import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
@@ -20,9 +20,8 @@ import { MockResultService } from '../../mocks/mock-result.service';
 import { ProgrammingExercise, ProgrammingExerciseInstructionComponent, TestCaseState } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementHtml } from '../../sample/problemStatement.json';
+import { problemStatement, problemStatementBubbleSortFailsHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
 
@@ -254,7 +253,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should create the steps task icons for the tasks in problem statement markdown', fakeAsync(() => {
         const result = {
             id: 1,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: 0 }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: 1 }],
+            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
         openModalStub.returns({ componentInstance: {} });
@@ -270,7 +270,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementHtml);
+        expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortFailsHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
