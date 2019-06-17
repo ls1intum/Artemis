@@ -264,7 +264,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
             this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
             this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
             });
         }

@@ -127,7 +127,7 @@ export class ResultService implements IResultService {
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
-        const resultCompletionDate = moment(result.completionDate);
+        const resultCompletionDate = moment(result.completionDate!);
         if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
             return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
         }

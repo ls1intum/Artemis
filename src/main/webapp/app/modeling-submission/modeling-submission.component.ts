@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -418,14 +419,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(modelElementId: string, type: ElementType): boolean {
+    isSelected(feedback: Feedback): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
-        if (type in UMLRelationshipType) {
-            return this.selectedRelationships.indexOf(modelElementId) > -1;
+        if (feedback.referenceType! in UMLRelationshipType) {
+            return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
         } else {
-            return this.selectedEntities.indexOf(modelElementId) > -1;
+            return this.selectedEntities.indexOf(feedback.referenceId!) > -1;
         }
     }
 

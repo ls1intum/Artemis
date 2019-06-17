@@ -14,8 +14,8 @@ export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
     addExerciseForNewParticipation: (exerciseId: number) => void;
     getAllParticipationsForExercise: (exerciseId: number) => Participation[];
-    subscribeForParticipationChanges: () => BehaviorSubject<Participation>;
-    subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result>;
+    subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
+    subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
 }
 
 @Injectable({ providedIn: 'root' })

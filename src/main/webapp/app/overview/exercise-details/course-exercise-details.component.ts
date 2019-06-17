@@ -70,7 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                this.exercise.participations = this.filterParticipations(cachedParticipations);
+                this.exercise.participations = this.filterParticipations(cachedParticipations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -79,7 +79,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
-                this.exercise.participations = this.filterParticipations(this.exercise.participations);
+                this.exercise.participations = this.filterParticipations(this.exercise.participations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -92,7 +92,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
      * removed from the participations. We also sort the participations so that FINISHED participations come first.
      */
-    private filterParticipations(participations: Participation[]): Participation[] {
+    private filterParticipations(participations: Participation[]): Participation[] | null {
         if (!participations) {
             return null;
         }

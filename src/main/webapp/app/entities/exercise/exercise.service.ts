@@ -160,8 +160,10 @@ export class ExerciseService {
     convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
-        delete copy.course.exercises;
-        delete copy.course.lectures;
+        if (copy.course) {
+            delete copy.course.exercises;
+            delete copy.course.lectures;
+        }
         delete copy.participations;
         return copy;
     }

@@ -121,7 +121,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
-                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer)),
+                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
                         const buildLogErrors = this.rawBuildLogs.extractErrors();

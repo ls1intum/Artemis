@@ -13,9 +13,9 @@ export interface IWebsocketService {
     stompFailureCallback(): void;
     connect(): void;
     disconnect(): void;
-    receive(): Observable<any>;
-    subscribe(): void;
-    unsubscribe(): void;
+    receive(channel: string): Observable<any>;
+    subscribe(channel: string): void;
+    unsubscribe(channel: string): void;
     bind(event: string, callback: () => void): void;
     unbind(event: string, callback: () => void): void;
     enableReconnect(): void;
