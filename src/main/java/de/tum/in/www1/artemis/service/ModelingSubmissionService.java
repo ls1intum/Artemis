@@ -224,6 +224,19 @@ public class ModelingSubmissionService {
     }
 
     /**
+     * Check if the limit of simultaneously locked submissions (i.e. unfinished assessments) has been reached for the current user in the given course. Throws a
+     * BadRequestAlertException if the limit has been reached.
+     *
+     * @param courseId the id of the course
+     */
+    public void checkSubmissionLockLimit(long courseId) {
+        long numberOfLockedSubmissions = modelingSubmissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
+        if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
+            throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
+        }
+    }
+
+    /**
      * Soft lock the submission to prevent other tutors from receiving and assessing it. We remove the model from the models waiting for assessment in Compass to prevent other
      * tutors from retrieving it in the first place. Additionally, we set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
      * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
@@ -232,12 +245,6 @@ public class ModelingSubmissionService {
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        long numberOfLockedSubmissions = modelingSubmissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(),
-                modelingExercise.getCourse().getId());
-        if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
-            throw new BadRequestAlertException("The limit of locked submissions has been reached", "modelingSubmission", "lockedSubmissionsLimitReached");
-        }
-
         if (modelingSubmission.getResult() == null) {
             setNewResult(modelingSubmission);
         }

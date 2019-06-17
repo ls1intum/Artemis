@@ -206,6 +206,9 @@ public class ModelingSubmissionResource {
             return notFound();
         }
 
+        // Check if the limit of simultaneously locked submissions has been reached
+        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
