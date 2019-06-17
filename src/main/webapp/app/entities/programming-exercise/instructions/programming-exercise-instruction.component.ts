@@ -112,20 +112,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const exerciseHasChanged = hasExerciseChanged(changes);
         // It is possible that the exercise does not have an id in case it is being created now.
         if (exerciseHasChanged && this.exercise.id) {
-            if (this.testCaseSubscription) {
-                this.testCaseSubscription.unsubscribe();
-            }
-
-            this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exercise.id)
-                .pipe(
-                    filter(testCases => !!testCases),
-                    tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
-                    tap((testCases: ProgrammingExerciseTestCase[]) => {
-                        this.exerciseTestCases = testCases.filter(({ active }) => active).map(({ testName }) => testName);
-                    }),
-                )
-                .subscribe();
+            this.setupTestCaseSubscription();
         }
         if (participationHasChanged) {
             this.isInitial = true;
@@ -162,6 +149,23 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.problemStatement = this.exercise.problemStatement;
             this.updateMarkdown();
         }
+    }
+
+    private setupTestCaseSubscription() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+
+        this.testCaseSubscription = this.testCaseService
+            .subscribeForTestCases(this.exercise.id)
+            .pipe(
+                filter(testCases => !!testCases),
+                tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
+                tap((testCases: ProgrammingExerciseTestCase[]) => {
+                    this.exerciseTestCases = testCases.filter(({ active }) => active).map(({ testName }) => testName);
+                }),
+            )
+            .subscribe();
     }
 
     /**

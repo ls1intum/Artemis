@@ -54,12 +54,13 @@ export class ProgrammingExerciseEditableInstructionComponent {
     }
 
     updateTestCases = (testCases: ProgrammingExerciseTestCase[]) => {
-        // If the exercise is created, there is no result available
-        this.exerciseTestCases = compose(
-            map(({ testName }) => testName),
-            filter(({ active }) => active),
-            sortBy('testName'),
-        )(testCases);
-        this.testCaseCommand.setValues(this.exerciseTestCases);
+        setTimeout(() => {
+            this.exerciseTestCases = compose(
+                map(({ testName }) => testName),
+                filter(({ active }) => active),
+                sortBy('testName'),
+            )(testCases);
+            this.testCaseCommand.setValues(this.exerciseTestCases);
+        }, 0);
     };
 }

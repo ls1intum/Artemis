@@ -53,15 +53,19 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
                 MockComponent(MarkdownEditorComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
+                ProgrammingExerciseInstructionComponent,
                 SafeHtmlPipe,
             ],
-            providers: [{ provide: ResultService, useClass: MockResultService }, { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService }],
+            providers: [
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+            ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
@@ -80,57 +84,49 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         subscribeForTestCaseSpy.restore();
     });
 
-    it('should not have any test cases if the test case service emits an empty array', () => {
+    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, comp.exercise, true),
-        };
-        comp.ngOnChanges(changes);
         fixture.detectChanges();
+        tick();
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
-    });
+    }));
 
-    it('should have test cases according to the result of the test case service if it does not return an empty array', () => {
+    it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, comp.exercise, true),
-        };
-        comp.ngOnChanges(changes);
         fixture.detectChanges();
+        tick();
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
-    });
+    }));
 
-    it('should update test cases if a new test case result comes in', () => {
+    it('should update test cases if a new test case result comes in', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases);
 
-        const changes: SimpleChanges = {
-            exercise: new SimpleChange(undefined, comp.exercise, true),
-        };
-        comp.ngOnChanges(changes);
         fixture.detectChanges();
+        tick();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(2);
         expect(comp.exerciseTestCases).to.deep.equal(['test1', 'test2']);
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next([{ testName: 'testX' }]);
         fixture.detectChanges();
+        tick();
 
         expect(comp.exerciseTestCases).to.be.empty;
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
-    });
+    }));
 });
