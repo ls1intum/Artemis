@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "editor": {
             "home": {
                 "title": "Editor"
@@ -29,6 +29,7 @@
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
+            "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "fileBrowser": {
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
@@ -46,13 +47,20 @@
                 "compressTree": "Leere Verzeichnisse zusammenfassen"
             },
             "errors": {
-                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
+                "exerciseNotFound": "Die Übung konnte nicht gefunden werden.",
+                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
+                "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
-                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
                 "unsupportedFile": "Datei mit dieser Endung wird nicht unterstützt.",
-                "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal."
+                "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal.",
+                "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
+                "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
+                "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
+                "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
+                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
@@ -60,6 +68,22 @@
                 "testFailing": "Test fehlgeschlagen",
                 "totalTestsPassing": "{{totalTests}} Tests bestanden",
                 "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen"
+            },
+            "repoSelect": {
+                "assignmentRepo": "Assignment Repository",
+                "createAssignmentRepo": "Assignment Repository erstellen",
+                "resetAssignmentRepo": "Assignment Repository zurücksetzen",
+                "templateRepo": "Template Repository",
+                "solutionRepo": "Solution Repository",
+                "testRepo": "Test Repository",
+                "loadingExercise": "Aufgabe wird geladen",
+                "solutionWarning": "Das Solution Repository erfüllt einen oder mehreren Testfälle nicht. Das könnte auf ein Problem im Solution Repository hinweisen.",
+                "solutionSuccess": "Das Solution Repository erfüllt alle Testfälle",
+                "solutionInfo": "Kein Ergebnis verfügbar.",
+                "templateWarning": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem im Template Repository hinweisen.",
+                "templateSuccess": "Das Template Repository erfüllt keinen Testfall.",
+                "templateInfo": "Kein Ergebnis verfügbar.",
+                "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             }
         }
     }

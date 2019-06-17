@@ -3,8 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { Result, ResultService } from 'app/entities/result';
-import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { ResultService } from 'app/entities/result';
 import { StatsForInstructorDashboard } from 'app/entities/course';
 
 @Component({
@@ -28,7 +27,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     };
 
     dataForAssessmentPieChart: number[];
-    tutorLeaderboardData: TutorLeaderboardData = {};
     totalAssessmentPercentage: number;
 
     constructor(
@@ -59,10 +57,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
                 if (this.stats.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.stats.numberOfAssessments / this.stats.numberOfSubmissions) * 100);
-                }
-
-                for (const tutor of this.stats.tutorLeaderboard) {
-                    this.tutorLeaderboardData[tutor.login] = tutor;
                 }
 
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];

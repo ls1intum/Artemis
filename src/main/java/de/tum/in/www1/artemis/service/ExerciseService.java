@@ -129,9 +129,17 @@ public class ExerciseService {
             exercises = exerciseRepository.findByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
+
+            if (course.isOnlineCourse() && withLtiOutcomeUrlExisting) {
+                // students in only courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal);
+            }
+            else {
+                exercises = exerciseRepository.findByCourseId(course.getId());
+            }
+
             // user is student for this course and might not have the right to see it so we have to filter
-            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal)
-                    : exerciseRepository.findByCourseId(course.getId());
+
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }

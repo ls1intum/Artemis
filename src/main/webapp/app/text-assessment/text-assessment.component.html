@@ -11,7 +11,7 @@
 
         <div class="col-4 text-right">
             <h5 class="text-white">
-                <strong>{{ 'arTeMiSApp.exercise.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }} / {{ exercise?.maxScore }}
+                <strong>{{ 'artemisApp.exercise.score' | translate }}:</strong> {{ totalScore | number: '1.0-2' }} / {{ exercise?.maxScore }}
             </h5>
 
             <button
@@ -19,7 +19,7 @@
                 (click)="save()"
                 [disabled]="!assessmentsAreValid || !isAuthorized"
                 *ngIf="!result || !result.completionDate"
-                jhiTranslate="arTeMiSApp.textAssessment.save"
+                jhiTranslate="artemisApp.textAssessment.save"
             >
                 Save Assessment
             </button>
@@ -28,7 +28,7 @@
                 (click)="submit()"
                 [disabled]="!assessmentsAreValid || !isAuthorized || !result.id"
                 *ngIf="!result || !result.completionDate"
-                jhiTranslate="arTeMiSApp.textAssessment.submit"
+                jhiTranslate="artemisApp.textAssessment.submit"
             >
                 Submit Assessment
             </button>
@@ -37,7 +37,7 @@
                 (click)="cancelAssessment()"
                 [disabled]="!isAuthorized"
                 *ngIf="result && !result.completionDate"
-                jhiTranslate="arTeMiSApp.textAssessment.cancel"
+                jhiTranslate="artemisApp.textAssessment.cancel"
             >
                 Cancel Assessment
             </button>
@@ -46,7 +46,7 @@
                 (click)="submit()"
                 [disabled]="!assessmentsAreValid"
                 *ngIf="result?.completionDate && canOverride"
-                jhiTranslate="arTeMiSApp.textAssessment.override"
+                jhiTranslate="artemisApp.textAssessment.override"
             >
                 Override Assessment
             </button>
@@ -65,31 +65,31 @@
 </div>
 
 <div *ngIf="notFound" class="alert alert-warning text-center mt-4" role="alert">
-    <p jhiTranslate="arTeMiSApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+    <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
 </div>
 
 <div class="row justify-content-end mt-4">
     <div class="col text-right">
         <span *ngIf="result && participation && showResult"><jhi-updating-result [participation]="participation"></jhi-updating-result></span>
         <h6 *ngIf="result && result.assessor" style="color:red">
-            {{ 'arTeMiSApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
-            <span>- {{ 'arTeMiSApp.textAssessment.submissionLocked' | translate }}</span>
+            {{ 'artemisApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
+            <span>- {{ 'artemisApp.textAssessment.submissionLocked' | translate }}</span>
         </h6>
     </div>
 </div>
 
 <h2>
-    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.textAssessment.loading"></span></span>
+    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.loading"></span></span>
 </h2>
 
-<div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="arTeMiSApp.complaint.hint">
+<div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="artemisApp.complaint.hint">
     You find the complaint at the end of the page
 </div>
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
     <div class="row flex-nowrap col-12">
         <div class="card flex-grow-1 resizable-submission mr-4">
-            <div class="card-header text-white bg-primary" jhiTranslate="arTeMiSApp.textAssessment.studentSubmission">
+            <div class="card-header text-white bg-primary" jhiTranslate="artemisApp.textAssessment.studentSubmission">
                 Student submission
             </div>
             <div class="card-body">
@@ -120,12 +120,12 @@
 
 <ng-container *ngIf="!busy && !notFound">
     <div class="row mt-3">
-        <h4 class="col-12" jhiTranslate="arTeMiSApp.textAssessment.detail.feedback">Feedback</h4>
+        <h4 class="col-12" jhiTranslate="artemisApp.textAssessment.detail.feedback">Feedback</h4>
         <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
         <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
             <div class="alert alert-secondary text-center" role="alert">
-                <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
-                <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
+                <p jhiTranslate="artemisApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+                <a class="alert-link" jhiTranslate="artemisApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
             </div>
         </div>
         <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
@@ -138,7 +138,7 @@
         </div>
     </div>
     <div class="row mt-2">
-        <h4 class="col-12" jhiTranslate="arTeMiSApp.assessment.generalFeedback">General Feedback</h4>
+        <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-8 col-xl-6">
             <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
         </div>

@@ -137,7 +137,20 @@ abstract class AssessmentService {
      * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
      */
     public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForCourse(Long courseId) {
+
+        // TODO: this is still very slow for large courses. What we are interested in, can be calculated much faster and this is basically number of assessments and number of
+        // complaints for each tutor
         List<Result> resultsForCourse = resultRepository.findAllByParticipation_Exercise_CourseIdWithEagerAssessor(courseId);
+
+        // TODO: stat to develop a better approach
+        List<User> tutors = new ArrayList<>();
+        // TODO add all tutors into this list
+
+        for (User tutor : tutors) {
+            // TODO count number of results for the given course in which this tutor is the assessor and which are completed
+
+            // TODO count number of complaints for the given course in which this tutor has reviewed the corresponding result
+        }
 
         return createTutorLeaderboardFromResults(resultsForCourse);
     }

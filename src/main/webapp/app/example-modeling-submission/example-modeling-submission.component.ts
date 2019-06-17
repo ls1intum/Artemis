@@ -15,8 +15,8 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -24,9 +24,9 @@ import { ModelingAssessmentComponent } from 'app/modeling-assessment';
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
 export class ExampleModelingSubmissionComponent implements OnInit {
-    @ViewChild(ModelingEditorComponent)
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
-    @ViewChild(ModelingAssessmentComponent)
+    @ViewChild(ModelingAssessmentComponent, { static: false })
     assessmentEditor: ModelingAssessmentComponent;
 
     isNewSubmission: boolean;
@@ -156,7 +156,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
@@ -197,7 +197,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 }
                 this.isNewSubmission = false;
 
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
                 console.error(error);
@@ -234,7 +234,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.modelingAssessment.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
 
@@ -311,7 +311,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         window.scroll(0, 0);
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.modelingAssessment.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
 
@@ -321,15 +321,15 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
             (res: HttpResponse<TutorParticipation>) => {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.assessScore.success');
+                this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
                 if (errorType === 'error.tooLow') {
-                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooLow');
+                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooLow');
                 } else if (errorType === 'error.tooHigh') {
-                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooHigh');
+                    this.jhiAlertService.error('artemisApp.exampleSubmission.assessScore.tooHigh');
                 } else {
                     console.error(error);
                     this.jhiAlertService.error(error.message);
@@ -340,7 +340,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
     }

@@ -383,7 +383,9 @@ public class CompassCalculationEngine implements CalculationEngine {
         Map<String, Feedback> elementIdFeedbackMap = new HashMap<>();
         feedbackList.forEach(feedback -> {
             String jsonElementId = feedback.getReferenceElementId();
-            elementIdFeedbackMap.put(jsonElementId, feedback);
+            if (jsonElementId != null) {
+                elementIdFeedbackMap.put(jsonElementId, feedback);
+            }
         });
         return elementIdFeedbackMap;
     }

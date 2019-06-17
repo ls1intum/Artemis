@@ -10,8 +10,16 @@ import { Exercise } from 'app/entities/exercise';
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
 
+export interface IParticipationWebsocketService {
+    addParticipation: (participation: Participation, exercise?: Exercise) => void;
+    addExerciseForNewParticipation: (exerciseId: number) => void;
+    getAllParticipationsForExercise: (exerciseId: number) => Participation[];
+    subscribeForParticipationChanges: () => BehaviorSubject<Participation>;
+    subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class ParticipationWebsocketService {
+export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, Participation> = new Map<number, Participation>();
     openWebsocketConnections: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result>> = new Map<number, BehaviorSubject<Result>>();

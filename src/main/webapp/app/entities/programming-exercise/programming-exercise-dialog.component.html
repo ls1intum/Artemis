@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="arTeMiSApp.programmingExercise.home.linkLabel">Create or edit a Programming Exercise</h4>
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.programmingExercise.home.linkLabel">Create or edit a Programming Exercise</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
@@ -11,11 +11,11 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
             <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="programmingExercise.title" />
         </div>
         <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
                 [exerciseCategories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -23,7 +23,7 @@
             ></jhi-category-selector>
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
                 <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
             </div>
@@ -31,17 +31,17 @@
         <div class="d-flex">
             <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker
-                    labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate }}"
+                    labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="programmingExercise.releaseDate"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
             <div class="form-group-narrow flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}" [(ngModel)]="programmingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker labelName="{{ 'artemisApp.exercise.dueDate' | translate }}" [(ngModel)]="programmingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
             </div>
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input
                 required
                 type="number"
@@ -55,7 +55,7 @@
             />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="programmingExercise.course">
                 <option [ngValue]="null"></option>
                 <option [ngValue]="course.id === programmingExercise.course?.id ? programmingExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{
@@ -64,18 +64,18 @@
             </select>
 
             <div class="form-group-narrow" id="field_problemStatement" name="problemStatement">
-                <label class="form-control-label" for="field_problemStatement" jhiTranslate="arTeMiSApp.programmingExercise.problemStatement.title"></label>
+                <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
                 <jhi-programming-exercise-editable-instructions
                     *ngIf="problemStatementLoaded"
                     #preview
                     [participation]="programmingExercise.templateParticipation"
+                    [templateParticipation]="programmingExercise.templateParticipation"
                     [(exercise)]="programmingExercise"
-                    (onProblemStatementChange)="updateProblemStatement($event)"
                 ></jhi-programming-exercise-editable-instructions>
             </div>
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.templateRepositoryUrl" for="field_templateRepositoryUrl">Template Repository Url</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl" for="field_templateRepositoryUrl">Template Repository Url</label>
             <input
                 required
                 type="text"
@@ -86,11 +86,11 @@
             />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl" for="field_testRepositoryUrl">Test Repository Url (optional)</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl" for="field_testRepositoryUrl">Test Repository Url (optional)</label>
             <input type="text" class="form-control" name="testRepositoryUrl" id="field_testRepositoryUrl" [(ngModel)]="programmingExercise.testRepositoryUrl" />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl" for="field_solutionRepositoryUrl"
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl" for="field_solutionRepositoryUrl"
                 >Solution Repository Url (optional)</label
             >
             <input
@@ -102,7 +102,7 @@
             />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.templateBuildPlanId" for="field_templateBuildPlanId">Template Build Plan Id</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId" for="field_templateBuildPlanId">Template Build Plan Id</label>
             <input
                 required
                 type="text"
@@ -113,7 +113,7 @@
             />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId" for="field_solutionBuildPlanId">Solution Build Plan Id (optional)</label>
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId" for="field_solutionBuildPlanId">Solution Build Plan Id (optional)</label>
             <input type="text" class="form-control" name="solutionBuildPlanId" id="field_solutionBuildPlanId" [(ngModel)]="programmingExercise.solutionParticipation.buildPlanId" />
         </div>
         <div class="form-group-narrow">
@@ -127,7 +127,7 @@
                         [(ngModel)]="programmingExercise.allowOnlineEditor"
                         checked
                     />
-                    <span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>
                 </label>
             </div>
         </div>
@@ -142,7 +142,7 @@
                         [(ngModel)]="programmingExercise.publishBuildPlanUrl"
                         checked
                     />
-                    <span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
+                    <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
                 </label>
             </div>
         </div>

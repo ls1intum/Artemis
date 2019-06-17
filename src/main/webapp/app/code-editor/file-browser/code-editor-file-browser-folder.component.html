@@ -1,0 +1,31 @@
+<!--Folder-->
+<li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="mr-1" size="xs"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
+    <span class="ml-1 list-group-item__fileName" *ngIf="!isBeingRenamed">{{ item.text }}</span>
+    <!-- Renaming folder tree item -->
+    <span class="ml-1" *ngIf="isBeingRenamed"
+        ><input
+            #renamingInput
+            value="{{ item.text }}"
+            (keyup.enter)="renameNode($event)"
+            (focusout)="renameNode($event)"
+            (keyup.esc)="clearRenamingNode($event)"
+            class="list-group-item__input"
+    /></span>
+    <!-- Folder level actions -->
+    <span class="file-icons">
+        <button (click)="setCreatingNodeInFolder($event, FileType.FILE)" class="btn btn-small">
+            <fa-icon [icon]="['fa', 'file']" title="{{ 'artemisApp.editor.fileBrowser.createFile' | translate }}"></fa-icon>
+        </button>
+        <button (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
+            <fa-icon [icon]="['fa', 'folder']" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | translate }}"></fa-icon>
+        </button>
+        <button [disabled]="isCompressed && item.children && item.children.length" (click)="setRenamingNode($event)" class="btn btn-small">
+            <fa-icon [icon]="['fa', 'edit']" title="{{ 'artemisApp.editor.fileBrowser.renameFolder' | translate }}"></fa-icon>
+        </button>
+        <button (click)="deleteNode($event)" class="btn btn-small">
+            <fa-icon [icon]="['fa', 'trash']" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | translate }}"></fa-icon>
+        </button>
+    </span>
+</li>

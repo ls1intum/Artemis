@@ -2,7 +2,7 @@ import { Command } from './command';
 
 export class UnderlineCommand extends Command {
     buttonIcon = 'underline';
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.underline';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.underline';
 
     /**
      * @function execute

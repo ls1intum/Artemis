@@ -6,7 +6,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-courses',
@@ -29,6 +28,9 @@ export class TutorCourseDashboardComponent implements OnInit {
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+
+    exercisesSortingPredicate = 'assessmentDueDate';
+    exercisesReverseOrder = false;
 
     tutor: User;
 
@@ -54,12 +56,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
-                    this.unfinishedExercises = this.course.exercises
-                        .filter(exercise => exercise.numberOfAssessments < exercise.numberOfParticipations)
-                        .sort(this.sortByAssessmentDueDate);
-                    this.finishedExercises = this.course.exercises
-                        .filter(exercise => exercise.numberOfAssessments === exercise.numberOfParticipations)
-                        .sort(this.sortByAssessmentDueDate);
+                    this.unfinishedExercises = this.course.exercises.filter(exercise => exercise.numberOfAssessments < exercise.numberOfParticipations); // TODO: I think we should use a different criterion how to filter unfinished exercises
+                    this.finishedExercises = this.course.exercises.filter(exercise => exercise.numberOfAssessments === exercise.numberOfParticipations); // TODO: I think we should use a different criterion how to filter finished exercises
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
                 }
@@ -93,23 +91,6 @@ export class TutorCourseDashboardComponent implements OnInit {
         }
     }
 
-    private sortByAssessmentDueDate(firstEl: Exercise, secondEl: Exercise): number {
-        if (!firstEl.assessmentDueDate && !secondEl.assessmentDueDate) {
-            return firstEl.id - secondEl.id;
-        }
-
-        // Priority to the assessment with an assessment date
-        if (!firstEl.assessmentDueDate) {
-            return 1;
-        }
-
-        if (!secondEl.assessmentDueDate) {
-            return -1;
-        }
-
-        return moment(firstEl.assessmentDueDate).diff(secondEl.assessmentDueDate);
-    }
-
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
@@ -118,4 +99,6 @@ export class TutorCourseDashboardComponent implements OnInit {
     back() {
         this.location.back();
     }
+
+    callback() {}
 }

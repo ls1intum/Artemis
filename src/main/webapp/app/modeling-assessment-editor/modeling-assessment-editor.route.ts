@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
 import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard.component';
+import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 import { ModelingAssessmentConflictComponent } from 'app/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
 
 export const modelingAssessmentRoutes: Routes = [
@@ -10,7 +10,7 @@ export const modelingAssessmentRoutes: Routes = [
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -19,7 +19,7 @@ export const modelingAssessmentRoutes: Routes = [
         component: ModelingAssessmentConflictComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title',
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

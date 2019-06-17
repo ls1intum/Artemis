@@ -1,4 +1,5 @@
 artemis:
+    version: #project.version#
     repo-clone-path: ./repos/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
     result-retrieval-delay: 5000
@@ -77,9 +78,16 @@ server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
 
+# Properties to be exposed on the /info management endpoint
+info:
+    # Comma separated list of profiles that will trigger the ribbon to show
+    display-ribbon-on-profiles: "dev"
+    sentry:
+        dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+
 jhipster:
-    http:
-        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
+    clientApp:
+        name: 'artemisApp'
     cache: # Cache configuration
         ehcache: # Ehcache configuration
             time-to-live-seconds: 3600 # By default objects stay 1 hour in the cache
