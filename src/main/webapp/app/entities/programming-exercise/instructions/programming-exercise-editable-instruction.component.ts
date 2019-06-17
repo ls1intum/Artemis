@@ -58,7 +58,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     constructor(private programmingExerciseTestCaseService: ProgrammingExerciseTestCaseService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
+        // It is possible that the exercise does not have an id in case it is being created now.
+        if (hasExerciseChanged(changes) && this.exercise.id) {
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
