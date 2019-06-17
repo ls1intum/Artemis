@@ -21,10 +21,10 @@ export const enum QuizEmitStatus {
 @Component({
     selector: 'jhi-secured-image',
     template: `
-        <ng-template [ngIf]="!this.dragAndDrop">
+        <ng-template [ngIf]="!this.mobileDragAndDrop">
             <img [attr.src]="dataUrl$ | async" />
         </ng-template>
-        <ng-template [ngIf]="this.dragAndDrop">
+        <ng-template [ngIf]="this.mobileDragAndDrop">
             <img [attr.src]="dataUrl$ | async" class="dnd-drag-start" draggable="true" dnd-draggable />
         </ng-template>
     `,
@@ -34,7 +34,7 @@ export class SecuredImageComponent implements OnChanges {
     // this makes sure that we can handle it when the src changes
     // or even when the component gets destroyed
     @Input()
-    dragAndDrop: boolean;
+    mobileDragAndDrop: boolean;
     @Input()
     private src: string;
     private src$ = new BehaviorSubject(this.src);
