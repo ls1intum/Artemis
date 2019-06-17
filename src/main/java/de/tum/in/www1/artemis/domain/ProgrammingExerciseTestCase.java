@@ -101,7 +101,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public ProgrammingExerciseTestCase clone() {
-        ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive());
+        ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive()).exercise(this.exercise);
         clone.setId(this.getId());
         return clone;
     }

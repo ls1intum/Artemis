@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -120,39 +118,14 @@ public class ResultService {
             testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
         }
 
+        if (participation.getExercise() instanceof ProgrammingExercise) {
+            result = testCaseService.updateResultFromTestCases(result, (ProgrammingExercise) participation.getExercise());
+        }
+
         // Find out which test cases were executed and calculate the score according to their status and weight.
         // This needs to be done as some test cases might not have been executed.
-        if (result != null && result.getFeedbacks().size() > 0) {
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(participation.getExercise().getId());
-            if (testCases.size() > 0) {
-                Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
-                        .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
-                        .collect(Collectors.toSet());
-                Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCases.stream()
-                        .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
-                List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
-                        .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed."))
-                        .collect(Collectors.toList());
-                result.addFeedbacks(feedbacksForNotExecutedTestCases);
-
-                long score = 0L;
-                // Recalculate the achieved score by including the test cases individual weight.
-                if (successfulTestCases.size() > 0) {
-                    long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b);
-                    long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).map(Long::new).reduce(0L, (a, b) -> a + b);
-                    score = successfulTestScore / maxTestScore * 100L;
-                }
-                result.setScore(score);
-
-                // Create a new result string that reflects passed, failed & not executed test cases.
-                if (successfulTestCases.size() < testCases.size()) {
-                    result.setResultString(testCases.size() - successfulTestCases.size() - notExecutedTestCases.size() + " of " + testCases.size() + " failed, "
-                            + notExecutedTestCases.size() + " not executed");
-                }
-                else {
-                    result.setResultString(testCases.size() + " passed");
-                }
-            }
+        if (participation.getExercise() instanceof ProgrammingExercise && result != null && result.getFeedbacks().size() > 0) {
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
             messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
         }
         notifyUser(participation, result);

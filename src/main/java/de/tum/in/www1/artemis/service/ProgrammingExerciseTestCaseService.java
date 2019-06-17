@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 
 @Service
@@ -120,5 +122,38 @@ public class ProgrammingExerciseTestCaseService {
         if (toSave.size() > 0) {
             testCaseRepository.saveAll(toSave);
         }
+    }
+
+    public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
+        if (testCases.size() > 0) {
+            Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
+                    .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
+                    .collect(Collectors.toSet());
+            Set<ProgrammingExerciseTestCase> notExecutedTestCases = testCases.stream()
+                    .filter(testCase -> result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals(testCase.getTestName()))).collect(Collectors.toSet());
+            List<Feedback> feedbacksForNotExecutedTestCases = notExecutedTestCases.stream()
+                    .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+            result.addFeedbacks(feedbacksForNotExecutedTestCases);
+
+            long score = 0L;
+            // Recalculate the achieved score by including the test cases individual weight.
+            if (successfulTestCases.size() > 0) {
+                long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+                long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
+                score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+            }
+            result.setScore(score);
+
+            // Create a new result string that reflects passed, failed & not executed test cases.
+            if (successfulTestCases.size() < testCases.size()) {
+                result.setResultString(testCases.size() - successfulTestCases.size() - notExecutedTestCases.size() + " of " + testCases.size() + " failed, "
+                        + notExecutedTestCases.size() + " not executed");
+            }
+            else {
+                result.setResultString(testCases.size() + " passed");
+            }
+        }
+        return result;
     }
 }
