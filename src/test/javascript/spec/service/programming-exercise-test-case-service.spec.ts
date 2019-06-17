@@ -16,7 +16,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/p
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ParticipationWebsocketService', () => {
+describe('ProgrammingExerciseTestCaseService', () => {
     let websocketService: IWebsocketService;
     let httpService: MockHttpService;
     let exercise1TestCaseSubject: Subject<Result>;
@@ -75,7 +75,7 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should fetch the test cases via REST call if there is nothing stored yet for a given exercise', () => {
-        let testCases = testCases1;
+        let testCases;
         testCaseService
             .subscribeForTestCases(exercise1.id)
             .pipe(tap(newTestCases => (testCases = newTestCases)))
@@ -91,5 +91,20 @@ describe('ParticipationWebsocketService', () => {
 
         expect(getStub).to.have.been.calledTwice;
         expect(testCases).to.equal(testCases2);
+    });
+
+    it('should reuse the same subject when there already is a connection established and not call the REST endpoint', () => {
+        let testCases;
+        testCaseService
+            .subscribeForTestCases(exercise1.id)
+            .pipe(tap(newTestCases => (testCases = newTestCases)))
+            .subscribe();
+        testCaseService
+            .subscribeForTestCases(exercise1.id)
+            .pipe(tap(newTestCases => (testCases = newTestCases)))
+            .subscribe();
+
+        expect(getStub).to.have.been.calledOnce;
+        expect(testCases).to.equal(testCases1);
     });
 });
