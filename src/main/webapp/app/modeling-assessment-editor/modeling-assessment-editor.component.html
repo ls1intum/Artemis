@@ -1,12 +1,12 @@
 <div class="assessment-container">
     <h3 class="top-container">
         <!--back button only used in tutor dashboard-->
-        <div class="row-container mr-2">
+        <div class="row-container mr-2" *ngIf="!hasErrors">
             <fa-icon *ngIf="showBackButton" [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
             <span jhiTranslate="modelingAssessmentEditor.assessment">Assessment</span>
         </div>
         <jhi-alert></jhi-alert>
-        <div class="row-container" *ngIf="!isLoading">
+        <div class="row-container" *ngIf="!isLoading && !hasErrors">
             <span
                 *ngIf="!isAuthorized"
                 class="text-danger ml-3"
@@ -56,9 +56,9 @@
             [highlightedElementIds]="highlightedElementIds"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
+        <jhi-assessment-instructions *ngIf="modelingExercise && !hasErrors" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
-    <div class="row mt-3">
+    <div class="row mt-3" *ngIf="!hasErrors">
         <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-6">
             <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>

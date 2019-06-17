@@ -241,6 +241,9 @@ public class ModelingSubmissionResource {
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+        // Check if the limit of simultaneously locked submissions has been reached
+        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             // ask Compass for optimal submission to assess if diagram type is supported
             Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);

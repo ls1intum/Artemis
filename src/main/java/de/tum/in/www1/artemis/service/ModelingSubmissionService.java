@@ -83,7 +83,8 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
+     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
+     * submission lock limit has been reached.
      *
      * @param submissionId     the id of the modeling submission
      * @param modelingExercise the corresponding exercise
@@ -92,6 +93,9 @@ public class ModelingSubmissionService {
     @Transactional
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedback(submissionId);
+        if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
+            checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+        }
         lockSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
