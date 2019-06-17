@@ -7,7 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -16,8 +16,9 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -167,47 +168,38 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
-    // TODO CZ: too much duplicated code
     private getSubmissions(): void {
+        let submissionsObservable: Observable<HttpResponse<Submission[]>>;
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textSubmissionService
-                .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-                .map((response: HttpResponse<TextSubmission[]>) =>
-                    response.body.map((submission: TextSubmission) => {
-                        if (submission.result) {
-                            // reconnect some associations
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
-                        }
-
-                        return submission;
-                    }),
-                )
-                .subscribe((submissions: TextSubmission[]) => {
-                    this.submissions = submissions;
-                });
+            submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.modelingSubmissionService
-                .getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-                .map((response: HttpResponse<ModelingSubmission[]>) =>
-                    response.body.map((submission: ModelingSubmission) => {
-                        if (submission.result) {
-                            // reconnect some associations
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
-                        }
-
-                        return submission;
-                    }),
-                )
-                .subscribe((submissions: ModelingSubmission[]) => {
-                    this.submissions = submissions;
-                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
-                });
+            submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         }
+
+        submissionsObservable
+            .pipe(
+                map(res => res.body),
+                map(this.reconnectEntities),
+            )
+            .subscribe((submissions: Submission[]) => {
+                this.submissions = submissions;
+            });
     }
+
+    /**
+     * Reconnect submission, result and participation for all submissions in the given array.
+     */
+    private reconnectEntities = (submissions: Submission[]) => {
+        return submissions.map((submission: Submission) => {
+            if (submission.result) {
+                // reconnect some associations
+                submission.result.submission = submission;
+                submission.result.participation = submission.participation;
+                submission.participation.results = [submission.result];
+            }
+            return submission;
+        });
+    };
 
     private getSubmissionWithoutAssessment(): void {
         let submissionObservable: Observable<Submission>;
