@@ -44,7 +44,7 @@
                 </div>
                 <div class="collapsed"></div>
             </div>
-            <div *ngIf="!course.lectures">
+            <div *ngIf="!course?.lectures">
                 <div class="row">
                     <div class="col">
                         {{ 'artemisApp.courseOverview.lectureList.noLectures' | translate }}
@@ -63,11 +63,11 @@
                 <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalAttachments' | translate }}</div>
                 <div class="col-4">{{ getTotalAttachments() }}</div>
             </div>
-            <div class="row mb-1" *ngIf="course.startDate">
+            <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
                 <div class="col-4">{{ course?.startDate | date: 'dd/MM/yy' }}</div>
             </div>
-            <div class="row" *ngIf="course.endDate">
+            <div class="row" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | translate }}</div>
                 <div class="col-4">{{ course?.endDate | date: 'dd/MM/yy' }}</div>
             </div>

@@ -78,7 +78,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
                 .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
                 .pipe(
                     map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result])),
+                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
                     catchError(() => of(null)),
                 )
                 .subscribe(() => (this.templateParticipationResultLoaded = true));
