@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,13 +20,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class ModelingSubmissionService {
+public class ModelingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
-
-    private final SubmissionRepository submissionRepository;
 
     private final ResultService resultService;
 
@@ -38,8 +34,6 @@ public class ModelingSubmissionService {
 
     private final ParticipationService participationService;
 
-    private final UserService userService;
-
     private final ParticipationRepository participationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -47,13 +41,12 @@ public class ModelingSubmissionService {
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
             ParticipationRepository participationRepository, SimpMessageSendingOperations messagingTemplate) {
+        super(submissionRepository, userService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
-        this.userService = userService;
         this.participationRepository = participationRepository;
         this.messagingTemplate = messagingTemplate;
     }
@@ -228,19 +221,6 @@ public class ModelingSubmissionService {
 
         log.debug("return model: " + modelingSubmission.getModel());
         return modelingSubmission;
-    }
-
-    /**
-     * Check if the limit of simultaneously locked submissions (i.e. unfinished assessments) has been reached for the current user in the given course. Throws a
-     * BadRequestAlertException if the limit has been reached.
-     *
-     * @param courseId the id of the course
-     */
-    public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
-        if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
-            throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
-        }
     }
 
     /**
