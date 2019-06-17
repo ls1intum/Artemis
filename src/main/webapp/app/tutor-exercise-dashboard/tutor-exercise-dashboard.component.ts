@@ -17,6 +17,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { Observable } from 'rxjs';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -208,38 +209,29 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
     }
 
-    // TODO CZ: too much duplicated code
     private getSubmissionWithoutAssessment(): void {
+        let submissionObservable: Observable<Submission>;
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-                (response: HttpResponse<TextSubmission>) => {
-                    this.unassessedSubmission = response.body;
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                    } else {
-                        this.onError(error.message);
-                    }
-                },
-            );
+            submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
         } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-                (response: ModelingSubmission) => {
-                    this.unassessedSubmission = response;
-                    this.submissionLockLimitReached = false;
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                    } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.submissionLockLimitReached = true;
-                    } else {
-                        this.onError(error.message);
-                    }
-                },
-            );
+            submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
         }
+
+        submissionObservable.subscribe(
+            (submission: Submission) => {
+                this.unassessedSubmission = submission;
+                this.submissionLockLimitReached = false;
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.submissionLockLimitReached = true;
+                } else {
+                    this.onError(error.message);
+                }
+            },
+        );
     }
 
     readInstruction() {
