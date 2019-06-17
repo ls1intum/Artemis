@@ -291,6 +291,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
             const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
             clickLayer.style.width = image.width + 'px';
-        }, 0);
+        }, 500);
     }
 }
