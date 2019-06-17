@@ -16,6 +16,7 @@ import {
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
+import { intersection as _intersection } from 'lodash';
 import { faCheckCircle, faTimesCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
@@ -28,6 +29,8 @@ import { Participation, hasParticipationChanged, ParticipationWebsocketService }
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -59,18 +62,23 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public onNoInstructionsAvailable = new EventEmitter();
     @Output()
     public resultChange = new EventEmitter<Result>();
+    @Output() public exerciseTestCasesChange = new EventEmitter();
+
+    exerciseTestCases: string[] = [];
 
     public problemStatement: string;
     public participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue: Result | null;
+    public latestResult: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
+
+    testCaseSubscription: Subscription;
 
     constructor(
         private editorService: CodeEditorService,
@@ -78,6 +86,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private testCaseService: ProgrammingExerciseTestCaseService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -93,15 +102,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
-    get latestResult() {
-        return this.latestResultValue;
-    }
-
-    set latestResult(result: Result) {
-        this.latestResultValue = result;
-        this.resultChange.emit(result);
-    }
-
     /**
      * If the participation changes, the participation's instructions need to be loaded and the
      * subscription for the participation's result needs to be set up.
@@ -109,6 +109,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
+        const exerciseHasChanged = hasExerciseChanged(changes);
+        // It is possible that the exercise does not have an id in case it is being created now.
+        if (exerciseHasChanged && this.exercise.id) {
+            if (this.testCaseSubscription) {
+                this.testCaseSubscription.unsubscribe();
+            }
+
+            this.testCaseSubscription = this.testCaseService
+                .subscribeForTestCases(this.exercise.id)
+                .pipe(
+                    filter(testCases => !!testCases),
+                    tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
+                    tap((testCases: ProgrammingExerciseTestCase[]) => {
+                        this.exerciseTestCases = testCases.filter(({ active }) => active).map(({ testName }) => testName);
+                    }),
+                )
+                .subscribe();
+        }
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
@@ -274,7 +292,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 } else {
                     tests = event.target.parentElement.getAttribute('data-tests');
                 }
-                this.showDetailsForTests(this.latestResult, tests);
+                if (tests.length) {
+                    this.showDetailsForTests(this.latestResult, tests);
+                }
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
@@ -474,18 +494,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
+        const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
+        const validTestCases = _intersection(tests, this.exerciseTestCases).toString();
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT) {
-            const textColor = done === TestCaseState.SUCCESS ? 'text-success' : 'text-secondary';
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !validTestCases.length) {
             text += `<span class="${textColor} bold">` + label + '</span>';
         } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
-            const textColor = done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-            text += '<a data-tests="' + tests.toString() + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
+            text += '<a data-tests="' + validTestCases + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
         text += '<br>';
 
@@ -593,6 +613,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps = [];
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
+        }
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
         }
     }
 }
