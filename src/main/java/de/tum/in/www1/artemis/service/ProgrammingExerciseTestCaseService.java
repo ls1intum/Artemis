@@ -110,16 +110,12 @@ public class ProgrammingExerciseTestCaseService {
         // Get test cases which activate state flag changed.
         Set<ProgrammingExerciseTestCase> activationStateChanges = existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::equals).findFirst();
-            return matchingText.isPresent() && !matchingText.get().isActive().equals(existing.isActive());
-        }).collect(Collectors.toSet());
-        // Get test cases that were removed from test files, set them to inactive.
-        Set<ProgrammingExerciseTestCase> removedTestCases = existingTestCases.stream()
-                .filter(testCase -> testCase.isActive() && testCasesFromFeedbacks.stream().noneMatch(testCase::equals)).map(testCase -> testCase.active(false))
-                .collect(Collectors.toSet());
+            // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
+            return !matchingText.isPresent() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
+        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
 
         Set<ProgrammingExerciseTestCase> toSave = new HashSet<>();
         toSave.addAll(newTestCases);
-        toSave.addAll(removedTestCases);
         toSave.addAll(activationStateChanges);
         if (toSave.size() > 0) {
             testCaseRepository.saveAll(toSave);

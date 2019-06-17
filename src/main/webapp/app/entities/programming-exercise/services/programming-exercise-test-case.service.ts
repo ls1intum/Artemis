@@ -39,10 +39,13 @@ export class ProgrammingExerciseTestCaseService implements OnDestroy {
         this.jhiWebsocketService.subscribe(testCaseTopic);
         this.connections[exerciseId] = testCaseTopic;
         this.subjects[exerciseId] = new BehaviorSubject(initialValue);
-        this.jhiWebsocketService.receive(testCaseTopic).pipe(
-            filter(testCases => !!testCases),
-            tap(testCases => this.notifySubscribers(exerciseId, testCases)),
-        );
+        this.jhiWebsocketService
+            .receive(testCaseTopic)
+            .pipe(
+                filter(testCases => !!testCases),
+                tap(testCases => this.notifySubscribers(exerciseId, testCases)),
+            )
+            .subscribe();
         return this.subjects[exerciseId];
     }
 
