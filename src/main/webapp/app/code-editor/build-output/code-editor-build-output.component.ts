@@ -80,8 +80,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput')
             .resizable({
-                // Enable resize from top edge; triggered by class rg-top
-                edges: { left: false, right: false, bottom: false, top: '.rg-top' },
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
                 // Set min and max height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },

@@ -1,24 +1,62 @@
 import * as $ from 'jquery';
-import { Component, ContentChild, ElementRef, Input } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { CourseService } from 'app/entities/course';
 import { WindowRef } from 'app/core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     providers: [JhiAlertService, WindowRef, CourseService],
 })
-export class CodeEditorGridComponent {
+export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
 
     @Input()
     exerciseTitle: string;
+
+    resizableMinHeight = 400;
+    resizableMaxHeight = 1200;
+    interactResizable: Interactable;
+
+    constructor(private $window: WindowRef) {}
+
+    /**
+     * @function ngAfterViewInit
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     */
+    ngAfterViewInit(): void {
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
+        this.interactResizable = interact('.resizable-buildoutput')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+            });
+    }
 
     /**
      * @function toggleCollapse
