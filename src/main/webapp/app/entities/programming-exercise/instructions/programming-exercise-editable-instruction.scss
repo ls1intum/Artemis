@@ -2,7 +2,12 @@
     position: relative;
     &__status {
         position: absolute;
-        right: 2px;
+        left: 155px;
         top: 5px;
+    }
+    &__save {
+        position: absolute;
+        top: 1px;
+        right: 0;
     }
 }

@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { JhiAlertService } from 'ng-jhipster';
 import { compose, map, sortBy } from 'lodash/fp';
-import { Subscription } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
+import { filter, catchError, tap } from 'rxjs/operators';
 import { getLatestResult, hasTemplateParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { Result } from 'app/entities/result';
@@ -9,6 +10,7 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -28,33 +30,42 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
 
     templateResultSubscription: Subscription;
 
+    savingInstructions = false;
+    unsavedChanges = false;
+
+    @Input() showSaveButton = false;
     @Input()
     get participation() {
         return this.participationValue;
     }
+    @Input()
+    get exercise() {
+        return this.exerciseValue;
+    }
     @Input() templateParticipation: Participation;
     @Output() participationChange = new EventEmitter<Participation>();
+
+    @Input() markdownEditorHeight = MarkdownEditorHeight.SMALL;
+    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+
+    set exercise(exercise: ProgrammingExercise) {
+        if (this.exerciseValue && exercise.problemStatement !== this.exerciseValue.problemStatement) {
+            this.unsavedChanges = true;
+        }
+        this.exerciseValue = exercise;
+        this.exerciseChange.emit(this.exerciseValue);
+    }
 
     set participation(participation: Participation) {
         this.participationValue = participation;
         this.participationChange.emit(this.participationValue);
     }
 
-    @Input()
-    get exercise() {
-        return this.exerciseValue;
-    }
-    @Input() markdownEditorHeight = MarkdownEditorHeight.SMALL;
-
-    @Output()
-    exerciseChange = new EventEmitter<ProgrammingExercise>();
-
-    set exercise(exercise: ProgrammingExercise) {
-        this.exerciseValue = exercise;
-        this.exerciseChange.emit(this.exerciseValue);
-    }
-
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private programmingExerciseService: ProgrammingExerciseService,
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasTemplateParticipationChanged(changes)) {
@@ -84,8 +95,34 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
         }
     }
 
+    /* Save the problem statement on the server.
+     * @param $event
+     */
+    saveInstructions($event: any) {
+        $event.stopPropagation();
+        this.savingInstructions = true;
+        return this.programmingExerciseService
+            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement)
+            .pipe(
+                tap(() => {
+                    this.unsavedChanges = false;
+                }),
+                catchError(() => {
+                    // TODO: move to programming exercise translations
+                    this.jhiAlertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.savingInstructions = false;
+            });
+    }
+
     updateProblemStatement(problemStatement: string) {
-        this.exercise = { ...this.exercise, problemStatement };
+        if (this.exercise.problemStatement !== problemStatement) {
+            this.exercise = { ...this.exercise, problemStatement };
+            this.unsavedChanges = true;
+        }
     }
 
     setTestCasesFromResult = (result: Result) => {

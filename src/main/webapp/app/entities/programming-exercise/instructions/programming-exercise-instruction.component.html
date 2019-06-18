@@ -1,4 +1,12 @@
 <div id="programming-exercise-instructions-content" class="card" *ngIf="!isLoading; else loadingInstructions">
+    <div class="card-header text-white bg-primary">
+        <h3 class="card-title">
+            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <!--            move to programming exercise translations-->
+            <span jhiTranslate="artemisApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
+        </h3>
+        <ng-content select="[instructionStatus]"> </ng-content>
+    </div>
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">

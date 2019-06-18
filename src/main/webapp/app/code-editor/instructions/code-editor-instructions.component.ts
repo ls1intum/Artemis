@@ -1,18 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { catchError, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Participation } from '../../entities/participation';
 import { WindowRef } from '../../core/websocket/window.service';
-import {
-    ProgrammingExercise,
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionComponent,
-    ProgrammingExerciseService,
-} from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
@@ -25,41 +18,20 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
-    @Input()
-    participation: Participation;
-    @Input()
-    get exercise() {
-        return this.exerciseValue;
-    }
-    @Input()
-    editable = false;
-    // Only relevant for editable instructions.
-    // TODO: refactor this into a container for the code-editor-instructions component.
-    @Input()
-    templateParticipation: Participation;
-    @Output()
-    onError = new EventEmitter<string>();
+    @Input() participation: Participation;
+    @Input() exercise: ProgrammingExercise;
+    @Input() editable = false;
+    @Input() templateParticipation: Participation;
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
 
-    exerciseValue: ProgrammingExercise;
-    set exercise(exercise: ProgrammingExercise) {
-        if (this.exercise && exercise.problemStatement !== this.exercise.problemStatement) {
-            this.unsavedChanges = true;
-        }
-        this.exerciseValue = exercise;
-    }
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
     noInstructionsAvailable = false;
 
-    // Only relevant if instructions are editable
-    savingInstructions = false;
-    unsavedChanges = false;
-
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private programmingExerciseService: ProgrammingExerciseService) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
 
     /**
      * @function ngAfterViewInit
@@ -100,33 +72,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param newProblemStatement
      */
     onProblemStatementEditorUpdate(newProblemStatement: string) {
-        if (newProblemStatement !== this.exercise.problemStatement) {
-            this.unsavedChanges = true;
-            this.exercise = { ...this.exercise, problemStatement: newProblemStatement };
-        }
-    }
-
-    /**
-     * Save the problem statement on the server.
-     * @param $event
-     */
-    saveInstructions($event: any) {
-        $event.stopPropagation();
-        this.savingInstructions = true;
-        return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement)
-            .pipe(
-                tap(() => {
-                    this.unsavedChanges = false;
-                }),
-                catchError(() => {
-                    this.onError.emit('problemStatementCouldNotBeUpdated');
-                    return of(null);
-                }),
-            )
-            .subscribe(() => {
-                this.savingInstructions = false;
-            });
+        this.exercise = { ...this.exercise, problemStatement: newProblemStatement };
     }
 
     /**
