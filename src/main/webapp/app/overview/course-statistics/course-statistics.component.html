@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="col-12 col-md-8">
-            <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
+            <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises" id="{{ exerciseGroup.type }}-wrapper">
                 <div class="col-12 mb-1 d-flex align-items-center">
                     <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
                     <h2>
@@ -47,10 +47,10 @@
                     ></canvas>
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
-                    <h4>{{ 'artemisApp.courseOverview.statistics.absoluteScore' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.maxScore' | translate: { number: exerciseGroup.totalMaxScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.relativeScore' | translate: { number: exerciseGroup.relativeScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}</h4>
+                    <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.absoluteScore' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
+                    <h4 id="max-score">{{ 'artemisApp.courseOverview.statistics.maxScore' | translate: { number: exerciseGroup.totalMaxScore } }}</h4>
+                    <h4 id="relative-score">{{ 'artemisApp.courseOverview.statistics.relativeScore' | translate: { number: exerciseGroup.relativeScore } }}</h4>
+                    <h4 id="presentation-score">{{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}</h4>
                 </div>
             </div>
         </div>
