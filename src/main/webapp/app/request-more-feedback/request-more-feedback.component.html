@@ -2,10 +2,10 @@
     <jhi-alert></jhi-alert>
     <div class="row">
         <div class="col-12">
-            <h3>{{ 'arTeMiSApp.moreFeedback.title' | translate }}</h3>
+            <h3>{{ 'artemisApp.moreFeedback.title' | translate }}</h3>
             <p>
-                {{ 'arTeMiSApp.moreFeedback.description' | translate }}
-                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.moreFeedback.info' | translate }}" style="color:#ffc107;"></fa-icon>
+                {{ 'artemisApp.moreFeedback.description' | translate }}
+                <fa-icon icon="info-circle" title="{{ 'artemisApp.moreFeedback.info' | translate }}" style="color:#ffc107;"></fa-icon>
             </p>
         </div>
     </div>
@@ -13,13 +13,13 @@
     <div class="row">
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted">
-                {{ 'arTeMiSApp.complaint.beDescriptive' | translate }}
+                {{ 'artemisApp.complaint.beDescriptive' | translate }}
             </p>
 
             <p *ngIf="alreadySubmitted" class="mt-4">
-                {{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}:
-                <span *ngIf="handled && accepted" class="text-light bg-success"> &nbsp;{{ 'arTeMiSApp.complaint.acceptedLong' | translate }}&nbsp; </span>
-                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'arTeMiSApp.complaint.rejectedLong' | translate }}&nbsp; </span>
+                {{ 'artemisApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}:
+                <span *ngIf="handled && accepted" class="text-light bg-success"> &nbsp;{{ 'artemisApp.complaint.acceptedLong' | translate }}&nbsp; </span>
+                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejectedLong' | translate }}&nbsp; </span>
             </p>
 
             <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
@@ -27,7 +27,7 @@
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">
                     <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="requestMoreFeedback()">
-                        {{ 'arTeMiSApp.moreFeedback.button' | translate }}
+                        {{ 'artemisApp.moreFeedback.button' | translate }}
                     </button>
                 </div>
             </div>
@@ -35,7 +35,7 @@
 
         <div class="col-12 col-md-6">
             <p class="col-12" *ngIf="complaintResponse" class="mt-4">
-                {{ 'arTeMiSApp.complaint.responseExists' | translate }} {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br />
+                {{ 'artemisApp.complaint.responseExists' | translate }} {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br />
             </p>
 
             <textarea class="col-12 px-1" rows="4" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true"></textarea>
