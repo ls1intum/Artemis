@@ -34,7 +34,7 @@ export class LectureAttachmentsComponent implements OnInit {
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink: string | null;
     notificationText: string;
-    erroredFile: File;
+    erroredFile: File | null;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -194,7 +194,7 @@ export class LectureAttachmentsComponent implements OnInit {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.erroredFile = file;
                 this.fileInput.nativeElement.value = '';
-                this.attachmentToBeCreated.link = null;
+                this.attachmentToBeCreated!.link = null;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
                 this.resetAttachment();
