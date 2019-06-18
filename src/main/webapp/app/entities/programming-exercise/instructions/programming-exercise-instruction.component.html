@@ -11,7 +11,8 @@
                         class="btn btn-light btn-circle stepwizard-circle"
                         [class.stepwizard-step--success]="step.done === TestCaseState.SUCCESS"
                         [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
-                        [class.stepwizard-step--no-result]="step.done === TestCaseState.NOT_EXECUTED"
+                        [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
+                        [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
                         (click)="triggerTestStatusClick(i)"
                     >
                         <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
