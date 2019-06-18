@@ -270,7 +270,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
                         // there are no unassessed submission, nothing we have to worry about
-                        this.jhiAlertService.error('arTeMiSApp.textAssessment.noSubmissions');
+                        this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
                     } else {
                         this.onError(error.message);
                     }
