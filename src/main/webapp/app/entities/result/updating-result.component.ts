@@ -5,7 +5,6 @@ import { filter, map, tap } from 'rxjs/operators';
 import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
-import { AccountService } from '../../core';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
@@ -31,7 +30,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     public resultUpdateListener: Subscription;
 
-    constructor(private accountService: AccountService, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
