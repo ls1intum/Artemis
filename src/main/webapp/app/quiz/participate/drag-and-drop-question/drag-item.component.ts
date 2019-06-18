@@ -11,7 +11,7 @@ export class DragItemComponent implements OnInit {
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
     @Input() invalid: boolean;
-    deviceInfo: DeviceInfo = null;
+    deviceInfo: DeviceInfo;
     isMobile = false;
 
     constructor(private deviceService: DeviceDetectorService) {}
