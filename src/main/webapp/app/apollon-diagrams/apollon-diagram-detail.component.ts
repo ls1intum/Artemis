@@ -19,6 +19,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
+    /**  */
+    autoSaveInterval: number;
+
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
 
@@ -53,6 +56,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
                     const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(model);
+                    this.setAutoSaveTimer();
                 },
                 () => {
                     this.jhiAlertService.error('artemisApp.apollonDiagram.detail.error.loading');
@@ -68,6 +72,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        clearInterval(this.autoSaveInterval);
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -97,12 +102,18 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram).subscribe(
-            () => {},
-            () => {
-                this.jhiAlertService.error('artemisApp.apollonDiagram.update.error');
-            },
-        );
+        this.apollonDiagramService.update(updatedDiagram).subscribe(() => this.setAutoSaveTimer(), () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'));
+    }
+
+    /**
+     * This function sets and starts an auto-save timer that automatically saves changes
+     * to the model after 30 seconds.
+     */
+    private setAutoSaveTimer(): void {
+        clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = window.setInterval(() => {
+            this.saveDiagram();
+        }, 30000);
     }
 
     /**
