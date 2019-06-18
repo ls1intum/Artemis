@@ -11,7 +11,7 @@ export const enum AttachmentType {
 export class Attachment implements BaseEntity {
     id: number;
     name: string;
-    link: string;
+    link: string | null;
     releaseDate: Moment | null;
     version: number;
     uploadDate: Moment | null;
