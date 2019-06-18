@@ -12,7 +12,7 @@
     <jhi-markdown-editor
         [defaultHeight]="markdownEditorHeight"
         [domainCommands]="domainCommands"
-        [enableResize]="true"
+        [enableResize]="enableResize"
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"
     >

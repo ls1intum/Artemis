@@ -33,6 +33,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     savingInstructions = false;
     unsavedChanges = false;
 
+    @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input()
     get participation() {

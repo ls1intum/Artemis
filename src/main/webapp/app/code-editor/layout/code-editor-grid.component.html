@@ -23,10 +23,11 @@
         <div class="editor-sidebar-right">
             <ng-content select="[editorSidebarRight]"></ng-content>
         </div>
+
+        <!-- Required for resizing; don't remove empty span -->
+        <div class="rg-bottom"><span></span></div>
     </div>
     <div class="editor-bottom">
-        <ng-content select="[editorBottomArea]"></ng-content>
+        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
     </div>
-    <!-- Required for resizing; don't remove empty span -->
-    <div class="rg-bottom"><span></span></div>
 </div>

@@ -1,20 +1,43 @@
+.nav.nav-tabs {
+    background: #f5f5f5;
+}
+
 .markdown-editor {
     touch-action: none;
-    &__small {
+    &--small {
         min-height: 200px;
         .markdown-editor__content {
             min-height: 200px;
         }
     }
-    &__medium {
-        min-height: 350px;
+    &--medium {
+        min-height: 500px;
         .markdown-editor__content {
-            min-height: 350px;
+            min-height: 500px;
         }
     }
-    .markdown-editor__content {
+    &--large {
+        min-height: 1000px;
+        .markdown-editor__content {
+            min-height: 1000px;
+        }
+    }
+    &__content {
         width: 100%;
         overflow: auto;
-        margin-top: 5px;
+    }
+    &__commands {
+        margin: 0 5px 5px 5px;
+        &-default,
+        &-domain {
+            display: flex;
+            flex-flow: row wrap;
+            > *:not(:last-child) {
+                margin-right: 5px;
+            }
+            > * {
+                margin-top: 5px;
+            }
+        }
     }
 }
