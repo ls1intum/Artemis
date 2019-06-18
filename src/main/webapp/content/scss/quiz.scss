@@ -505,7 +505,7 @@
     overflow: auto;
 
     .background-area {
-        @media (orientation: landscape) {
+        @media (orientation: landscape) and (min-width: 1100px) {
             float: left;
             width: 79%;
         }
@@ -535,14 +535,14 @@
     }
 
     .drag-and-drop-items {
-        @media (orientation: landscape) {
+        @media (orientation: landscape) and (min-width: 1100px) {
             float: right;
             margin-top: -5px;
             width: 19%;
         }
 
         .instructions {
-            @media (orientation: landscape) {
+            @media (orientation: landscape) and (min-width: 1100px) {
                 margin: 0 0 10px 0;
             }
         }
@@ -550,7 +550,7 @@
         .drag-items {
             width: 100%;
 
-            @media (orientation: landscape) {
+            @media (orientation: landscape) and (min-width: 1100px) {
                 margin: 0;
             }
 

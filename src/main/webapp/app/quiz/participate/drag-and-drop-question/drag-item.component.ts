@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DragItem } from '../../../entities/drag-item';
+import { DeviceInfo, DeviceDetectorService } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-drag-item',
@@ -10,13 +11,13 @@ export class DragItemComponent implements OnInit {
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
     @Input() invalid: boolean;
+    deviceInfo: DeviceInfo = null;
     isMobile = false;
 
-    constructor() {}
+    constructor(private deviceService: DeviceDetectorService) {}
 
     ngOnInit(): void {
-        if (window.screen.width <= 1024) {
-            this.isMobile = true;
-        }
+        this.deviceInfo = this.deviceService.getDeviceInfo();
+        this.isMobile = this.deviceService.isMobile();
     }
 }
