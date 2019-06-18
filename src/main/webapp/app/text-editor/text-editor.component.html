@@ -63,20 +63,31 @@
         </ng-template>
     </div>
 
-    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint">
+    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
             [class.not-allowed]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
-            (click)="showComplaintForm = !showComplaintForm"
+            (click)="toggleComplaintForm()"
             [disabled]="numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek"
             title="{{ numberOfAllowedComplaints <= 0 || resultOlderThanOneWeek ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
         >
-            <!--TODO: use the non-temp message when the 'request more feedback' feature is implemented-->
-            {{ 'arTeMiSApp.complaint.moreInfo_temp' | translate }}
+            {{ 'arTeMiSApp.complaint.moreInfo' | translate }}
+        </button>
+        <button
+            class="btn btn-primary"
+            [class.not-allowed]="resultOlderThanOneWeek"
+            (click)="toggleRequestMoreFeedbackForm()"
+            [disabled]="resultOlderThanOneWeek"
+            title="{{ resultOlderThanOneWeek ? ('arTeMiSApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+        >
+            {{ 'arTeMiSApp.moreFeedback.button' | translate }}
         </button>
     </div>
 
     <div class="row" *ngIf="showComplaintForm || hasComplaint">
         <jhi-complaint-form class="flex-grow-1" [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
+    </div>
+    <div class="row" *ngIf="showRequestMoreFeedbackForm || hasRequestMoreFeedback">
+        <jhi-request-more-feedback-form class="flex-grow-1" [resultId]="result.id"></jhi-request-more-feedback-form>
     </div>
 </div>

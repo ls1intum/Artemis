@@ -2,19 +2,10 @@
     <jhi-alert></jhi-alert>
     <div class="row">
         <div class="col-12">
-            <h3>{{ 'arTeMiSApp.complaint.title' | translate }}</h3>
+            <h3>{{ 'arTeMiSApp.moreFeedback.title' | translate }}</h3>
             <p>
-                <span
-                    *ngIf="allowedComplaints === undefined"
-                    jhiTranslate="arTeMiSApp.complaint.description"
-                    [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent }"
-                ></span>
-                <span
-                    *ngIf="allowedComplaints >= 0"
-                    jhiTranslate="arTeMiSApp.complaint.descriptionExtended"
-                    [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent, allowedComplaints: allowedComplaints }"
-                ></span>
-                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.complaint.info' | translate }}" style="color:#ffc107;"></fa-icon>
+                {{ 'arTeMiSApp.moreFeedback.description' | translate }}
+                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.moreFeedback.info' | translate }}" style="color:#ffc107;"></fa-icon>
             </p>
         </div>
     </div>
@@ -35,7 +26,9 @@
 
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">
-                    <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'arTeMiSApp.complaint.submit' | translate }}</button>
+                    <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="requestMoreFeedback()">
+                        {{ 'arTeMiSApp.moreFeedback.button' | translate }}
+                    </button>
                 </div>
             </div>
         </div>

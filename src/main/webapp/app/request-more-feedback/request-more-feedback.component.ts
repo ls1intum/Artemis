@@ -9,13 +9,12 @@ import { ComplaintResponseService } from 'app/entities/complaint-response/compla
 import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
-    selector: 'jhi-complaint-form',
-    templateUrl: './complaints.component.html',
+    selector: 'jhi-request-more-feedback-form',
+    templateUrl: './request-more-feedback.component.html',
     providers: [JhiAlertService],
 })
-export class ComplaintsComponent implements OnInit {
+export class RequestMoreFeedbackComponent implements OnInit {
     @Input() resultId: number;
-    @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
@@ -23,10 +22,7 @@ export class ComplaintsComponent implements OnInit {
     handled: boolean;
     complaintResponse: ComplaintResponse;
 
-    readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
-
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
-
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
@@ -49,25 +45,20 @@ export class ComplaintsComponent implements OnInit {
         );
     }
 
-    createComplaint(): void {
+    requestMoreFeedback(): void {
         const complaint = new Complaint();
         complaint.complaintText = this.complaintText;
         complaint.result = new Result();
         complaint.result.id = this.resultId;
-        complaint.complaintType = ComplaintType.COMPLAINT;
+        complaint.complaintType = ComplaintType.MORE_FEEDBACK;
 
         this.complaintService.create(complaint).subscribe(
             res => {
                 this.submittedDate = res.body.submittedTime;
                 this.alreadySubmitted = true;
-                this.allowedComplaints--;
             },
             (err: HttpErrorResponse) => {
-                if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('arTeMiSApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
-                } else {
-                    this.onError(err.message);
-                }
+                this.onError(err.message);
             },
         );
     }
