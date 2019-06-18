@@ -33,11 +33,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
-        this.interactResizable = interact('.resizable-buildoutput')
+        this.interactResizable = interact('.editor-main')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
+                edges: { left: false, right: false, bottom: '.rg-main-bottom', top: false },
                 // Set min and max height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },

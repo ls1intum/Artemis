@@ -46,9 +46,10 @@ body {
     padding-top: 10px;
 }
 .editor-wrapper > .editor-main {
-    flex: 1 1 auto;
-    display: flex;
-    min-height: 350px;
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    grid-column-gap: 10px;
+    grid-template-rows: minmax(350px, 100%) 5px;
 }
 .editor-wrapper > .editor-main > * {
     flex: 0 0 auto;
@@ -286,6 +287,11 @@ Required for resize-element-handler
     transition: none !important;
 }
 
+.rg-main-bottom {
+    cursor: row-resize;
+    grid-column: 1 / 4;
+}
+
 .rg-bottom,
 .rg-left,
 .rg-right,
@@ -303,6 +309,7 @@ Required for resize-element-handler
     background: 0 0;
 }
 
+.rg-main-bottom span,
 .rg-bottom span,
 .rg-left span,
 .rg-right span,
@@ -322,6 +329,7 @@ Required for resize-element-handler
     width: 7px;
 }
 
+.rg-main-bottom span,
 .rg-bottom span,
 .rg-top span {
     border-width: 1px 0;
@@ -361,6 +369,9 @@ Required for resize-element-handler
     left: 0;
     top: 0;
     margin-left: -14px;
+}
+
+.rg-main-bottom {
 }
 
 /* ==========================================================================
