@@ -108,8 +108,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         if (this.router.url.endsWith('/test')) {
                             this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         } else {
-                            // Template participation is default when no participationId is provided
-                            this.selectParticipationDomainById(participationId || this.exercise.templateParticipation.id);
+                            this.selectParticipationDomainById(participationId);
                         }
                     }),
                     tap(() => {
