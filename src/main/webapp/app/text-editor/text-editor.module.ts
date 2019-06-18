@@ -11,13 +11,14 @@ import { TextEditorScoreCardComponent } from './text-editor-score-card/text-edit
 import { TextSharedModule } from 'app/text-shared/text-shared.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 import { TextResultComponent } from './text-result/text-result.component';
+import { ArTEMiSRequestMoreFeedbackModule } from 'app/request-more-feedback';
 
 const ENTITY_STATES = [...textEditorRoute];
 
 @NgModule({
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
     entryComponents: [TextEditorComponent],
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsModule, ArTEMiSRequestMoreFeedbackModule],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSTextModule {
