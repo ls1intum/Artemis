@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -79,6 +79,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         this.countCorrectMappings();
     }
@@ -116,6 +120,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
         }
     }
 
+    /**
+     * Prevent scrolling when dragging elements on mobile devices
+     * @param event
+     */
     preventDefault(event: any) {
         event.mouseEvent.preventDefault();
         return false;
