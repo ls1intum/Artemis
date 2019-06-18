@@ -168,6 +168,7 @@ public class TextSubmissionService {
             TextSubmission textSubmission = new TextSubmission();
 
             result.setSubmission(null);
+            textSubmission.setLanguage(submission.getLanguage());
             textSubmission.setResult(result);
             textSubmission.setParticipation(submission.getParticipation());
             textSubmission.setId(submission.getId());

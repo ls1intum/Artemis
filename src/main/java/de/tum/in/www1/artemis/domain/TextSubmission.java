@@ -5,8 +5,6 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-
 /**
  * A TextSubmission.
  */
@@ -19,10 +17,6 @@ public class TextSubmission extends Submission implements Serializable {
     @Column(name = "text")
     @Lob
     private String text;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "language")
-    private Language language;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -39,18 +33,6 @@ public class TextSubmission extends Submission implements Serializable {
         this.text = text;
     }
 
-    public Language getLanguage() {
-        return language;
-    }
-
-    public TextSubmission language(Language language) {
-        this.language = language;
-        return this;
-    }
-
-    public void setLanguage(Language language) {
-        this.language = language;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

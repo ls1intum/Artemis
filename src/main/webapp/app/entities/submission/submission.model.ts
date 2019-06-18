@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
+import { Language } from 'app/entities/tutor-group';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -27,6 +28,8 @@ export abstract class Submission implements BaseEntity {
 
     public result: Result;
     public participation: Participation;
+
+    public language: Language;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
