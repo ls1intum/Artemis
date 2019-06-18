@@ -29,7 +29,7 @@ import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 350,
+    MEDIUM = 500,
     LARGE = 1000,
 }
 

@@ -45,7 +45,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     @Input() templateParticipation: Participation;
     @Output() participationChange = new EventEmitter<Participation>();
 
-    @Input() markdownEditorHeight = MarkdownEditorHeight.SMALL;
+    @Input() markdownEditorHeight = MarkdownEditorHeight.MEDIUM;
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     set exercise(exercise: ProgrammingExercise) {
