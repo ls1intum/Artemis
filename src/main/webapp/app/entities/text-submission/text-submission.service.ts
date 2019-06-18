@@ -48,12 +48,7 @@ export class TextSubmissionService {
     }
 
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<TextSubmission> {
-        return this.http
-            .get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`, {
-                observe: 'response',
-            })
-            .map((res: EntityResponseType) => this.convertResponse(res))
-            .map((res: EntityResponseType) => res.body);
+        return this.http.get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
