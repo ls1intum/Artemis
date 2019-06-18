@@ -256,13 +256,13 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
         }
     }
 
-    // Create all mapping permutations for textual based elements within the same parent
+    // Create all mapping permutations for textual based elements within the same parent and same type
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
         const dragElement = textualElements.find(element => element.id === dragItemElementId);
         if (!dragElement || !dragElement.owner) {
             continue;
         }
-        const dragElementSiblings = textualElements.filter(element => element.owner === dragElement.owner);
+        const dragElementSiblings = textualElements.filter(element => element.owner === dragElement.owner && element.type === dragElement.type);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
