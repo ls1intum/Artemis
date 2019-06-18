@@ -4,7 +4,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
-import { ProfileService } from 'app/layouts';
+import { ProfileService } from '../profiles/profile.service';
 import { AccountService, JhiLanguageHelper, LoginService, User } from 'app/core';
 
 import { VERSION } from 'app/app.constants';
