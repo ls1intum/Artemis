@@ -24,7 +24,7 @@ export class OverviewCourseCardComponent implements OnInit {
 
     displayTotalRelativeScore(): number {
         if (this.course.exercises.length > 0) {
-            return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore');
+            return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore')!;
         } else {
             return 0;
         }

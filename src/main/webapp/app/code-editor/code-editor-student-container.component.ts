@@ -62,8 +62,8 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap(participationWithResults => {
-                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                        this.participation = participationWithResults;
+                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
+                        this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                     }),
                 )

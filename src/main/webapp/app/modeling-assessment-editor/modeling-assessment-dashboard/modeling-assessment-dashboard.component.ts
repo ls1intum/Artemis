@@ -68,14 +68,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
-                this.course = res.body;
+                this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                if (res.body.type === this.MODELING) {
+                if (res.body!.type === this.MODELING) {
                     this.modelingExercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
                 } else {
@@ -99,7 +99,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.modelingSubmissionService.getModelingSubmissionsForExercise(this.modelingExercise.id, { submittedOnly: true }).subscribe((res: HttpResponse<ModelingSubmission[]>) => {
             // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
             // the server should have filtered these submissions already
-            this.submissions = res.body.filter(submission => submission.submitted);
+            this.submissions = res.body!.filter(submission => submission.submitted);
             this.submissions.forEach(submission => {
                 if (submission.result) {
                     // reconnect some associations

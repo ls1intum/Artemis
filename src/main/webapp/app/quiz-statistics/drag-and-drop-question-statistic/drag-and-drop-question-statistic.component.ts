@@ -58,7 +58,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string;
+    questionTextRendered: string | null;
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -83,7 +83,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
+                    this.loadQuiz(res.body!, false);
                 });
             }
 
@@ -98,10 +98,10 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
             // add Axes-labels based on selected language
             this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
             this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
     }
@@ -244,9 +244,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => {
-                return dropLocation.id === dlCounter.dropLocation.id;
-            });
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => dropLocation.id === dlCounter.dropLocation.id)!;
             this.ratedData.push(dropLocationCounter.ratedCounter);
             this.unratedData.push(dropLocationCounter.unRatedCounter);
         });
@@ -357,7 +355,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
+        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter(mapping => mapping.dropLocation!.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
         } else {

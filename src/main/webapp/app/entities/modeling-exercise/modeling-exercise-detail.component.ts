@@ -16,8 +16,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-    problemStatement: string;
-    gradingInstructions: string;
+    problemStatement: string | null;
+    gradingInstructions: string | null;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -35,7 +35,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(id: number) {
         this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.modelingExercise = modelingExerciseResponse.body;
+            this.modelingExercise = modelingExerciseResponse.body!;
             this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.gradingInstructions);
         });

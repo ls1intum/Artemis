@@ -44,21 +44,21 @@ export interface ExerciseCategory {
 
 export abstract class Exercise implements BaseEntity {
     public id: number;
-    public problemStatement: string;
+    public problemStatement: string | null;
     public gradingInstructions: string;
     public title: string;
     public shortName: string;
-    public releaseDate: Moment;
-    public dueDate: Moment;
-    public assessmentDueDate: Moment;
+    public releaseDate: Moment | null;
+    public dueDate: Moment | null;
+    public assessmentDueDate: Moment | null;
     public maxScore: number;
-    public difficulty: DifficultyLevel;
+    public difficulty: DifficultyLevel | null;
     public categories: string[];
     public type: ExerciseType;
 
     public participations: Participation[];
     public tutorParticipations: TutorParticipation[];
-    public course: Course;
+    public course: Course | null;
     public participationStatus: ParticipationStatus;
     public exampleSubmissions: ExampleSubmission[];
     public attachments: Attachment[];

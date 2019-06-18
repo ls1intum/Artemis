@@ -48,6 +48,7 @@ export class JhiMainComponent implements OnInit {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
             }
             if (event instanceof NavigationError && event.error.status === 404) {
+                // noinspection JSIgnoredPromiseFromCall
                 this.router.navigate(['/404']);
             }
         });

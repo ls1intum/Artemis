@@ -6,8 +6,8 @@ import { SERVER_API_URL } from '../../app.constants';
 import { JhiAlertService } from 'ng-jhipster';
 
 export interface Credentials {
-    username: string;
-    password: string;
+    username: string | null;
+    password: string | null;
     rememberMe: boolean;
 }
 

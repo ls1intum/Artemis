@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <h2>
-        {{ exercise.course.title }} - {{ exercise.title }}
+        {{ exercise.course?.title }} - {{ exercise.title }}
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
     </h2>
     <jhi-alert></jhi-alert>

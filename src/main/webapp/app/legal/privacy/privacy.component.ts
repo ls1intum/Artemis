@@ -12,7 +12,10 @@ export class PrivacyComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.route.params.subscribe(params => {
             try {
-                document.querySelector('#' + params['fragment']).scrollIntoView();
+                const fragment = document.querySelector('#' + params['fragment']);
+                if (fragment !== null) {
+                    fragment.scrollIntoView();
+                }
             } catch (e) {}
         });
     }
