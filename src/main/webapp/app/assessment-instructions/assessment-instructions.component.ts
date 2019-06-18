@@ -12,8 +12,8 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
 
-    formattedProblemStatement: string;
-    formattedGradingCriteria: string;
+    formattedProblemStatement: string | null;
+    formattedGradingCriteria: string | null;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 

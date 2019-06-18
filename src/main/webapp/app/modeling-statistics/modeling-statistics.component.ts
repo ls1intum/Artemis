@@ -22,7 +22,7 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.modelingExerciseService.getStatistics(params['exerciseId']).subscribe((res: HttpResponse<ModelingStatistic>) => {
-                this.statistics = res.body;
+                this.statistics = res.body!;
                 for (const key of Object.keys(this.statistics.models)) {
                     this.modelIds.push(key);
                 }

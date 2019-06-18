@@ -53,7 +53,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.currentAccount = user;
+            this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
         });
@@ -87,7 +87,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body, res.headers), (res: HttpErrorResponse) => this.onError(res));
+            .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
 
     trackIdentity(index: number, item: User) {
@@ -95,7 +95,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     }
 
     isNotificationActive(systemNotification: SystemNotification) {
-        return systemNotification.notificationDate.isBefore(moment()) && systemNotification.expireDate.isAfter(moment());
+        return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
     }
 
     sort() {
@@ -124,12 +124,12 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     }
 
     private onSuccess(data: SystemNotification[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = headers.get('X-Total-Count');
+        this.links = this.parseLinks.parse(headers.get('link')!);
+        this.totalItems = headers.get('X-Total-Count')!;
         this.notifications = data;
     }
 
     private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, null);
+        this.alertService.error(error.error, error.message, undefined);
     }
 }

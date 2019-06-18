@@ -36,7 +36,7 @@ export class TutorGroupDeleteDialogComponent {
     template: '',
 })
 export class TutorGroupDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
+    protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 
