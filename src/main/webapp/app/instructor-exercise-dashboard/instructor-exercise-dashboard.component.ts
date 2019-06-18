@@ -12,7 +12,7 @@ import { StatsForInstructorDashboard } from 'app/entities/course';
     providers: [JhiAlertService],
 })
 export class InstructorExerciseDashboardComponent implements OnInit {
-    exercise: Exercise;
+    exercise: Exercise | null;
     courseId: number;
 
     stats: StatsForInstructorDashboard = {
@@ -38,8 +38,9 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.courseId = +this.route.snapshot.paramMap.get('courseId');
-        this.loadExercise(+this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.loadExercise(exerciseId);
     }
 
     back() {
@@ -66,6 +67,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

@@ -114,7 +114,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
         $event.stopPropagation();
         this.savingInstructions = true;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement)
+            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement!)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;

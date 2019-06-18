@@ -6,6 +6,6 @@ export class TextExercise extends Exercise {
 
     constructor(course?: Course) {
         super(ExerciseType.TEXT);
-        this.course = course;
+        this.course = course || null;
     }
 }

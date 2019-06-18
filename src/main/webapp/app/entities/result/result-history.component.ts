@@ -31,7 +31,7 @@ export class ResultHistoryComponent {
         }
     }
 
-    absoluteResult(result: Result): number {
+    absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;
         }

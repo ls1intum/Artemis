@@ -6,7 +6,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 })
 export class HtmlForMarkdownPipe implements PipeTransform {
     constructor(private markdownService: ArtemisMarkdown) {}
-    transform(markdown: string): string {
+    transform(markdown: string): string | null {
         return this.markdownService.htmlForMarkdown(markdown);
     }
 }

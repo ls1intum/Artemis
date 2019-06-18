@@ -1,6 +1,6 @@
 <div class="quiz-header container" *ngIf="quizExercise">
     <h2 [ngSwitch]="mode">
-        {{ quizExercise.course.title }} - {{ quizExercise.title }}
+        {{ quizExercise.course!.title }} - {{ quizExercise.title }}
         <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
         <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
@@ -182,6 +182,6 @@
         <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
         <span class="text-bold">{{ timeUntilStart }}</span>
         <br />
-        <span>({{ quizExercise.releaseDate.format('LT') }})</span>
+        <span>({{ quizExercise.releaseDate!.format('LT') }})</span>
     </div>
 </div>

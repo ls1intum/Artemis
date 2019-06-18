@@ -107,10 +107,10 @@ export class ModelingAssessmentService {
     getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
         for (const feedback of result.feedbacks) {
-            const referencedModelType = feedback.referenceType;
-            const referencedModelId = feedback.referenceId;
+            const referencedModelType = feedback.referenceType!;
+            const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
-                const element = model.elements.find(elem => elem.id === referencedModelId);
+                const element = model.elements.find(elem => elem.id === referencedModelId)!;
                 const name = element.name;
                 let type: string;
                 switch (element.type) {
@@ -159,9 +159,9 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = { type, name };
             } else if (referencedModelType in UMLRelationshipType) {
-                const relationship = model.relationships.find(rel => rel.id === referencedModelId);
-                const source = model.elements.find(element => element.id === relationship.source.element).name;
-                const target = model.elements.find(element => element.id === relationship.target.element).name;
+                const relationship = model.relationships.find(rel => rel.id === referencedModelId)!;
+                const source = model.elements.find(element => element.id === relationship.source.element)!.name;
+                const target = model.elements.find(element => element.id === relationship.target.element)!.name;
                 const relationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;

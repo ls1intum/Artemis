@@ -41,16 +41,16 @@
                         pattern="^[_'.@A-Za-z0-9-]*$"
                     />
                     <div *ngIf="login.dirty && login.invalid">
-                        <small class="form-text text-danger" *ngIf="login.errors.required" jhiTranslate="register.messages.validate.login.required">
+                        <small class="form-text text-danger" *ngIf="login.errors?.required" jhiTranslate="register.messages.validate.login.required">
                             Your username is required.
                         </small>
-                        <small class="form-text text-danger" *ngIf="login.errors.minlength" jhiTranslate="register.messages.validate.login.minlength">
+                        <small class="form-text text-danger" *ngIf="login.errors?.minlength" jhiTranslate="register.messages.validate.login.minlength">
                             Your username is required to be at least 1 character.
                         </small>
-                        <small class="form-text text-danger" *ngIf="login.errors.maxlength" jhiTranslate="register.messages.validate.login.maxlength">
+                        <small class="form-text text-danger" *ngIf="login.errors?.maxlength" jhiTranslate="register.messages.validate.login.maxlength">
                             Your username cannot be longer than 50 characters.
                         </small>
-                        <small class="form-text text-danger" *ngIf="login.errors.pattern" jhiTranslate="register.messages.validate.login.pattern">
+                        <small class="form-text text-danger" *ngIf="login.errors?.pattern" jhiTranslate="register.messages.validate.login.pattern">
                             Your username can only contain letters and digits.
                         </small>
                     </div>
@@ -71,16 +71,16 @@
                         required
                     />
                     <div *ngIf="email.dirty && email.invalid">
-                        <small class="form-text text-danger" *ngIf="email.errors.required" jhiTranslate="global.messages.validate.email.required">
+                        <small class="form-text text-danger" *ngIf="email.errors?.required" jhiTranslate="global.messages.validate.email.required">
                             Your email is required.
                         </small>
-                        <small class="form-text text-danger" *ngIf="email.errors.invalid" jhiTranslate="global.messages.validate.email.invalid">
+                        <small class="form-text text-danger" *ngIf="email.errors?.invalid" jhiTranslate="global.messages.validate.email.invalid">
                             Your email is invalid.
                         </small>
-                        <small class="form-text text-danger" *ngIf="email.errors.minlength" jhiTranslate="global.messages.validate.email.minlength">
+                        <small class="form-text text-danger" *ngIf="email.errors?.minlength" jhiTranslate="global.messages.validate.email.minlength">
                             Your email is required to be at least 5 characters.
                         </small>
-                        <small class="form-text text-danger" *ngIf="email.errors.maxlength" jhiTranslate="global.messages.validate.email.maxlength">
+                        <small class="form-text text-danger" *ngIf="email.errors?.maxlength" jhiTranslate="global.messages.validate.email.maxlength">
                             Your email cannot be longer than 100 characters.
                         </small>
                     </div>
@@ -100,13 +100,13 @@
                         required
                     />
                     <div *ngIf="password.dirty && password.invalid">
-                        <small class="form-text text-danger" *ngIf="password.errors.required" jhiTranslate="global.messages.validate.newpassword.required">
+                        <small class="form-text text-danger" *ngIf="password.errors?.required" jhiTranslate="global.messages.validate.newpassword.required">
                             Your password is required.
                         </small>
-                        <small class="form-text text-danger" *ngIf="password.errors.minlength" jhiTranslate="global.messages.validate.newpassword.minlength">
+                        <small class="form-text text-danger" *ngIf="password.errors?.minlength" jhiTranslate="global.messages.validate.newpassword.minlength">
                             Your password is required to be at least 4 characters.
                         </small>
-                        <small class="form-text text-danger" *ngIf="password.errors.maxlength" jhiTranslate="global.messages.validate.newpassword.maxlength">
+                        <small class="form-text text-danger" *ngIf="password.errors?.maxlength" jhiTranslate="global.messages.validate.newpassword.maxlength">
                             Your password cannot be longer than 50 characters.
                         </small>
                     </div>
@@ -127,13 +127,13 @@
                         required
                     />
                     <div *ngIf="confirmPasswordInput.dirty && confirmPasswordInput.invalid">
-                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors.required" jhiTranslate="global.messages.validate.confirmpassword.required">
+                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors?.required" jhiTranslate="global.messages.validate.confirmpassword.required">
                             Your confirmation password is required.
                         </small>
-                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors.minlength" jhiTranslate="global.messages.validate.confirmpassword.minlength">
+                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors?.minlength" jhiTranslate="global.messages.validate.confirmpassword.minlength">
                             Your confirmation password is required to be at least 4 characters.
                         </small>
-                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors.maxlength" jhiTranslate="global.messages.validate.confirmpassword.maxlength">
+                        <small class="form-text text-danger" *ngIf="confirmPasswordInput.errors?.maxlength" jhiTranslate="global.messages.validate.confirmpassword.maxlength">
                             Your confirmation password cannot be longer than 50 characters.
                         </small>
                     </div>
