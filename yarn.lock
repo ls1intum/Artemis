@@ -973,11 +973,6 @@
   resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.0.tgz#2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7"
   integrity sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==
 
-"@types/franc@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@types/franc/-/franc-4.0.0.tgz#c1acbe0ac6cfce80380a21464931ad325f46786c"
-  integrity sha512-d03BUKEnze6WHX5BRc/ZlvDkhNEvukEAVl6Lz9jD09vFA09YV5J6UAW23qU4DLLZVIuuUQLV/J5y7vMc7zPMCg==
-
 "@types/glob@^7.1.1":
   version "7.1.1"
   resolved "https://registry.yarnpkg.com/@types/glob/-/glob-7.1.1.tgz#aa59a1c6e3fbc421e07ccd31a944c30eba521575"
@@ -5061,6 +5056,13 @@ fragment-cache@^0.2.1:
   integrity sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=
   dependencies:
     map-cache "^0.2.2"
+
+franc-min@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/franc-min/-/franc-min-4.1.0.tgz#d23e6945fbfe7a1ebcfe61791db904201ac1a793"
+  integrity sha512-Rlkc3QaVNNnvWjEhhcLs6PnwH4CqSAxxStUSSly6XNYWTSRRYqSLvQmIDBOBz6cP5uOKFwU1b7rk8rQDn85IrQ==
+  dependencies:
+    trigram-utils "^1.0.0"
 
 franc@^4.1.0:
   version "4.1.0"

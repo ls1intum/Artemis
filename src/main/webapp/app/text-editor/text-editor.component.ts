@@ -15,7 +15,6 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { Language } from 'app/entities/tutor-group';
-import * as franc from 'franc';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -143,7 +142,7 @@ export class TextEditorComponent implements OnInit {
         if (!this.submission) {
             return;
         }
-
+        const franc = require('franc-min');
         this.submission.text = this.answer;
         const languageProbabilities = franc.all(this.answer);
 
