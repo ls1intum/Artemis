@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef, HostListener } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
@@ -128,6 +128,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
+    }
+
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
     }
 
     /**
@@ -828,5 +832,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     prepareForSave(): void {
         this.cleanupQuestion();
         this.markdownEditor.parse();
+    }
+
+    resizeImage() {
+        setTimeout(() => {
+            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+        }, 500);
     }
 }
