@@ -11,7 +11,7 @@
     <div class="card-second-header">
         <button
             [disabled]="isLoadingFiles"
-            class="btn btn-primary"
+            class="btn btn-light"
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
         >
@@ -20,7 +20,7 @@
         </button>
         <button
             [disabled]="isLoadingFiles"
-            class="btn btn-primary ml-2"
+            class="btn btn-light ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
         >
@@ -29,7 +29,7 @@
         </button>
         <button
             [disabled]="isLoadingFiles"
-            class="btn btn-secondary ml-auto"
+            class="btn btn-light ml-auto"
             (click)="toggleTreeCompress($event)"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
         >
