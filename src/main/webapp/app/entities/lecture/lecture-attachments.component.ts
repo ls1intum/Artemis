@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpClient } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
@@ -25,6 +25,7 @@ import * as moment from 'moment';
     ],
 })
 export class LectureAttachmentsComponent implements OnInit {
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     lecture: Lecture;
     attachments: Attachment[] = [];
     attachmentToBeCreated: Attachment | null;
@@ -33,6 +34,7 @@ export class LectureAttachmentsComponent implements OnInit {
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink: string | null;
     notificationText: string;
+    erroredFile: File;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -111,6 +113,7 @@ export class LectureAttachmentsComponent implements OnInit {
             this.resetAttachment();
         }
         this.attachmentToBeCreated = null;
+        this.erroredFile = null;
     }
 
     resetAttachment() {
@@ -155,6 +158,7 @@ export class LectureAttachmentsComponent implements OnInit {
      */
     setLectureAttachment($event: any): void {
         if ($event.target.files.length) {
+            this.erroredFile = null;
             const fileList: FileList = $event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
@@ -178,6 +182,7 @@ export class LectureAttachmentsComponent implements OnInit {
         }
 
         this.isUploadingAttachment = true;
+        this.erroredFile = null;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {
                 this.attachmentToBeCreated!.link = result.path;
@@ -187,6 +192,9 @@ export class LectureAttachmentsComponent implements OnInit {
             },
             error => {
                 console.error('Error during file upload in uploadBackground()', error.message);
+                this.erroredFile = file;
+                this.fileInput.nativeElement.value = '';
+                this.attachmentToBeCreated.link = null;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
                 this.resetAttachment();
