@@ -126,7 +126,7 @@ public class ProgrammingExerciseTestCaseService {
 
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
-        if (testCases.size() > 0) {
+        if (testCases.size() > 0 && result.getFeedbacks() != null) {
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
                     .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
                     .collect(Collectors.toSet());
