@@ -10,9 +10,10 @@
         "removeComments": true,
         "noImplicitAny": true,
         "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
-        "outDir": "build/www/app",
+        "outDir": "build/resources/main/static/app",
         "lib": ["es2018", "dom"],
         "typeRoots": [
             "node_modules/@types"
@@ -24,7 +25,7 @@
         "importHelpers": true
     },
     "angularCompilerOptions": {
-        "genDir": "build/aot",
+        "genDir": "build/resources/main/aot",
         "skipMetadataEmit" : true,
         "fullTemplateTypeCheck": true,
         "preserveWhitespaces": true
