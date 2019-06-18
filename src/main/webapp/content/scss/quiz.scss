@@ -504,61 +504,65 @@
 .dnd-question {
     overflow: auto;
 
-    .background-area {
-        @media (orientation: landscape) and (min-width: 1100px) {
-            float: left;
-            width: 79%;
+    .drag-and-drop-area {
+        display: flex;
+        justify-content: center;
+
+        @media (max-width: 900px) {
+            display: block;
         }
 
-        .click-layer {
-            .drop-location {
-                .drag-item {
-                    .drag-item-text {
-                        @media (max-width: 812px) {
-                            padding: 0;
+        .background-area {
+            .click-layer {
+                .drop-location {
+                    .drag-item {
+                        .drag-item-text {
+                            @media (max-width: 812px) {
+                                padding: 0;
+                            }
                         }
-                    }
-                    div {
-                        @media (max-width: 812px) {
-                            padding: 0 !important;
-                        }
+                        div {
+                            @media (max-width: 812px) {
+                                padding: 0 !important;
+                            }
 
-                        span {
-                            @media (max-width: 480px) {
-                                font-size: 12px;
+                            span {
+                                @media (max-width: 480px) {
+                                    font-size: 12px;
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    .drag-and-drop-items {
-        @media (orientation: landscape) and (min-width: 1100px) {
-            float: right;
-            margin-top: -5px;
-            width: 19%;
-        }
-
-        .instructions {
-            @media (orientation: landscape) and (min-width: 1100px) {
-                margin: 0 0 10px 0;
-            }
-        }
-
-        .drag-items {
-            width: 100%;
-
-            @media (orientation: landscape) and (min-width: 1100px) {
-                margin: 0;
+        .drag-and-drop-items {
+            @media (orientation: landscape) and (min-width: 900px) {
+                margin: -5px 0 0 20px;
+                max-width: 200px;
+                width: 20%;
             }
 
-            .drag-item {
-                height: auto;
+            .instructions {
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0 0 10px 0;
+                }
+            }
 
-                .drag-item-picture {
-                    height: 160px;
+            .drag-items {
+                width: 100%;
+
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0;
+                }
+
+                .drag-item {
+                    height: auto;
+
+                    .drag-item-picture {
+                        height: 160px;
+                    }
                 }
             }
         }
