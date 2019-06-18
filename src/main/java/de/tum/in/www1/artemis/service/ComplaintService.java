@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -97,7 +98,7 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countUnacceptedComplaintsByStudentIdAndCourseId(long studentId, long courseId) {
-        return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(studentId, courseId);
+        return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(studentId, courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
