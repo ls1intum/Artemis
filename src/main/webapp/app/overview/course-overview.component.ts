@@ -32,14 +32,12 @@ export class CourseOverviewComponent implements OnInit {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course === undefined) {
+        if (!this.course) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.adjustCourseDescription();
             });
-        } else {
-            this.course = this.courseCalculationService.getCourse(this.courseId);
         }
         this.adjustCourseDescription();
     }
