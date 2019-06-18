@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { Result } from 'app/entities/result';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Moment } from 'moment';
@@ -54,6 +54,7 @@ export class ComplaintsComponent implements OnInit {
         complaint.complaintText = this.complaintText;
         complaint.result = new Result();
         complaint.result.id = this.resultId;
+        complaint.complaintType = ComplaintType.COMPLAINT;
 
         this.complaintService.create(complaint).subscribe(
             res => {
@@ -69,10 +70,6 @@ export class ComplaintsComponent implements OnInit {
                 }
             },
         );
-    }
-
-    requestMoreFeedback(): void {
-        // TODO: implement
     }
 
     private onError(error: string) {
