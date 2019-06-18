@@ -47,7 +47,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
             this.apollonDiagramService.find(id).subscribe(
                 response => {
-                    const diagram = response.body;
+                    const diagram = response.body!;
 
                     this.apollonDiagram = diagram;
 
@@ -81,7 +81,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
-            type: this.apollonDiagram.diagramType,
+            type: this.apollonDiagram!.diagramType,
             locale: this.languageService.currentLang as Locale,
         });
     }
@@ -91,7 +91,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const umlModel = this.apollonEditor.model;
+        const umlModel = this.apollonEditor!.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram,
             jsonRepresentation: JSON.stringify(umlModel),
@@ -117,8 +117,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
-        modalComponentInstance.apollonEditor = this.apollonEditor;
-        modalComponentInstance.diagramTitle = this.apollonDiagram.title;
+        modalComponentInstance.apollonEditor = this.apollonEditor!;
+        modalComponentInstance.diagramTitle = this.apollonDiagram!.title;
 
         try {
             const result = await modalRef.result;
@@ -141,8 +141,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const selection = [...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships];
-        const svg = this.apollonEditor.exportAsSVG({
+        const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
+        const svg = this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });
@@ -160,7 +160,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         document.body.appendChild(anchor);
         const url = window.URL.createObjectURL(file);
         anchor.href = url;
-        anchor.download = `${this.apollonDiagram.title}.png`;
+        anchor.download = `${this.apollonDiagram!.title}.png`;
         anchor.click();
 
         // Async revoke of ObjectURL to prevent failure on larger files.

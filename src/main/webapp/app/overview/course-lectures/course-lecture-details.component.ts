@@ -15,8 +15,8 @@ import { Attachment } from 'app/entities/attachment';
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
-    public lecture: Lecture;
-    public isDownloadingLink: string;
+    public lecture: Lecture | null;
+    public isDownloadingLink: string | null;
 
     constructor(
         private $location: Location,
@@ -28,7 +28,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         private router: Router,
     ) {
         const navigation = this.router.getCurrentNavigation();
-        if (navigation.extras.state) {
+        if (navigation && navigation.extras.state) {
             const stateLecture = navigation.extras.state.lecture as Lecture;
             if (stateLecture && stateLecture.startDate) {
                 stateLecture.startDate = moment(stateLecture.startDate);
@@ -40,7 +40,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
                 this.lecture = null;
@@ -51,37 +51,37 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
     }
 
-    backToCourse() {
+    backToCourse(): void {
         this.$location.back();
     }
 
-    attachmentNotReleased(attachment: Attachment) {
-        return attachment.releaseDate && !moment(attachment.releaseDate).isBefore(moment());
+    attachmentNotReleased(attachment: Attachment): boolean {
+        return attachment.releaseDate != null && !moment(attachment.releaseDate).isBefore(moment())!;
     }
 
-    attachmentExtension(attachment: Attachment) {
+    attachmentExtension(attachment: Attachment): string {
         if (!attachment.link) {
             return 'N/A';
         }
 
-        return attachment.link.split('.').pop();
+        return attachment.link.split('.').pop()!;
     }
 
-    downloadAttachment(downloadUrl: string) {
+    downloadAttachment(downloadUrl: string): void {
         this.isDownloadingLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {
-                const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename'));
+                link.setAttribute('download', response.headers.get('filename')!);
                 document.body.appendChild(link); // Required for FF
                 link.click();
                 window.URL.revokeObjectURL(url);

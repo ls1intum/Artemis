@@ -120,7 +120,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                     May be null if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
         if (dropLocation) {
@@ -181,7 +181,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation));
+            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation!, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {
@@ -204,7 +204,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     getUnassignedDragItems() {
         return this.question.dragItems.filter(dragItem => {
             return !this.mappings.some(mapping => {
-                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
+                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
         }, this);
     }
@@ -262,7 +262,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const dragAndDropQuestionUtil = this.dragAndDropQuestionUtil;
         const mapping = this.sampleSolutionMappings.find(function(solutionMapping) {
-            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation, dropLocation);
+            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation!, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;

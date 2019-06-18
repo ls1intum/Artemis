@@ -29,7 +29,7 @@
                             <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title">Color</label>
                             <div
                                 class="color-preview form-control"
-                                [ngStyle]="{ backgroundColor: courseForm.get('color').value || ARTEMIS_DEFAULT_COLOR }"
+                                [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
                                 (click)="openColorSelector($event)"
                             ></div>
                             <jhi-color-selector (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
@@ -41,7 +41,7 @@
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                         <div class="alert alert-danger">
-                            <div *ngFor="let e of shortName.errors | keyvalue | removekeys: ['required']">
+                            <div *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
                                 <div [jhiTranslate]="'artemisApp.course.form.shortname' + '.' + e.key"></div>
                             </div>
                         </div>

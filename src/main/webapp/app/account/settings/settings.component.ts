@@ -7,8 +7,8 @@ import { Account, AccountService, JhiLanguageHelper } from '../../core';
     templateUrl: './settings.component.html',
 })
 export class SettingsComponent implements OnInit {
-    error: string;
-    success: string;
+    error: string | null;
+    success: string | null;
     settingsAccount: Account;
     languages: string[];
 
@@ -16,7 +16,7 @@ export class SettingsComponent implements OnInit {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.settingsAccount = this.copyAccount(user);
+            this.settingsAccount = this.copyAccount(user!);
         });
         this.languageHelper.getAll().then(languages => {
             this.languages = languages;
@@ -29,10 +29,10 @@ export class SettingsComponent implements OnInit {
                 this.error = null;
                 this.success = 'OK';
                 this.accountService.identity(true).then(user => {
-                    this.settingsAccount = this.copyAccount(user);
+                    this.settingsAccount = this.copyAccount(user!);
                 });
                 this.languageService.getCurrent().then(current => {
-                    if (this.settingsAccount.langKey !== current) {
+                    if (this.settingsAccount.langKey !== null && this.settingsAccount.langKey !== current) {
                         this.languageService.changeLanguage(this.settingsAccount.langKey);
                     }
                 });
@@ -44,7 +44,16 @@ export class SettingsComponent implements OnInit {
         );
     }
 
-    copyAccount(account: Account) {
-        return new Account(account.activated, account.authorities, account.email, account.firstName, account.langKey, account.lastName, account.login, account.imageUrl);
+    copyAccount(account: Account): Account {
+        return new Account(
+            account.activated || undefined,
+            account.authorities || undefined,
+            account.email || undefined,
+            account.firstName || undefined,
+            account.langKey || undefined,
+            account.lastName || undefined,
+            account.login || undefined,
+            account.imageUrl || undefined,
+        );
     }
 }

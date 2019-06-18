@@ -27,11 +27,11 @@ import * as moment from 'moment';
 export class LectureAttachmentsComponent implements OnInit {
     lecture: Lecture;
     attachments: Attachment[] = [];
-    attachmentToBeCreated: Attachment;
-    attachmentBackup: Attachment;
+    attachmentToBeCreated: Attachment | null;
+    attachmentBackup: Attachment | null;
     attachmentFile: any;
     isUploadingAttachment: boolean;
-    isDownloadingAttachmentLink: string;
+    isDownloadingAttachmentLink: string | null;
     notificationText: string;
 
     constructor(
@@ -45,7 +45,7 @@ export class LectureAttachmentsComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.attachmentService.findAllByLectureId(this.lecture.id).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-                this.attachments = attachmentsResponse.body;
+                this.attachments = attachmentsResponse.body!;
             });
         });
     }
@@ -65,26 +65,26 @@ export class LectureAttachmentsComponent implements OnInit {
 
     saveAttachment() {
         if (!this.attachmentToBeCreated) {
-            this.attachmentToBeCreated.version = 0;
+            return this.addAttachment();
         }
-        this.attachmentToBeCreated.version++;
-        this.attachmentToBeCreated.uploadDate = moment();
+        this.attachmentToBeCreated!.version++;
+        this.attachmentToBeCreated!.uploadDate = moment();
 
-        if (this.attachmentToBeCreated.id) {
+        if (this.attachmentToBeCreated!.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(this.attachmentToBeCreated, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
+            this.attachmentService.update(this.attachmentToBeCreated!, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
                 this.attachments = this.attachments.map(el => {
-                    return el.id === attachmentRes.body.id ? attachmentRes.body : el;
+                    return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
                 });
             });
         } else {
-            this.attachmentService.create(this.attachmentToBeCreated).subscribe((attachmentRes: HttpResponse<Attachment>) => {
-                this.attachments.push(attachmentRes.body);
+            this.attachmentService.create(this.attachmentToBeCreated!).subscribe((attachmentRes: HttpResponse<Attachment>) => {
+                this.attachments.push(attachmentRes.body!);
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
             });
@@ -116,7 +116,7 @@ export class LectureAttachmentsComponent implements OnInit {
     resetAttachment() {
         if (this.attachmentBackup) {
             this.attachments = this.attachments.map(attachment => {
-                if (attachment.id === this.attachmentBackup.id) {
+                if (attachment.id === this.attachmentBackup!.id) {
                     attachment = this.attachmentBackup as Attachment;
                 }
                 return attachment;
@@ -133,11 +133,11 @@ export class LectureAttachmentsComponent implements OnInit {
         this.isDownloadingAttachmentLink = downloadUrl;
         this.httpClient.get(downloadUrl, { observe: 'response', responseType: 'blob' }).subscribe(
             response => {
-                const blob = new Blob([response.body], { type: response.headers.get('content-type') });
+                const blob = new Blob([response.body!], { type: response.headers.get('content-type')! });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename'));
+                link.setAttribute('download', response.headers.get('filename')!);
                 document.body.appendChild(link); // Required for FF
                 link.click();
                 window.URL.revokeObjectURL(url);
@@ -158,7 +158,7 @@ export class LectureAttachmentsComponent implements OnInit {
             const fileList: FileList = $event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
-            this.attachmentToBeCreated.link = attachmentFile['name'];
+            this.attachmentToBeCreated!.link = attachmentFile['name'];
         }
     }
 
@@ -169,18 +169,18 @@ export class LectureAttachmentsComponent implements OnInit {
     uploadLectureAttachmentAndSave(): void {
         const file = this.attachmentFile;
 
-        if (!file && this.attachmentToBeCreated.link) {
+        if (!file && this.attachmentToBeCreated!.link) {
             return this.saveAttachment();
         }
 
-        if (!this.attachmentToBeCreated.name || !file) {
+        if (!this.attachmentToBeCreated!.name || !file) {
             return;
         }
 
         this.isUploadingAttachment = true;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {
-                this.attachmentToBeCreated.link = result.path;
+                this.attachmentToBeCreated!.link = result.path;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
                 this.saveAttachment();

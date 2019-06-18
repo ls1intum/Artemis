@@ -41,7 +41,7 @@ export class ExampleSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ExampleSubmission = this.convertItemFromServer(res.body);
+        const body: ExampleSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 

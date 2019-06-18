@@ -51,9 +51,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     userId: number;
     canOverride = false;
 
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
+    formattedGradingInstructions: string | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -96,7 +96,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -213,7 +213,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
             },
@@ -234,7 +234,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.submitSuccessful');
             },
@@ -282,7 +282,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.loadFeedbacks(response.body.feedbacks || []);
+                this.loadFeedbacks(response.body!.feedbacks || []);
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
@@ -348,7 +348,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.reference && f.reference.length <= 2000)) {
+        if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
             this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
             return;
@@ -362,13 +362,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText && f.detailText.length > 0))) {
+        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }
@@ -420,7 +420,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
@@ -434,6 +434,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

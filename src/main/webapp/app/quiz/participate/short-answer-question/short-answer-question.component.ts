@@ -55,7 +55,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
     sampleSolutions: ShortAnswerSolution[] = [];
-    textParts: string[][];
+    textParts: (string | null)[][];
 
     constructor(private artemisMarkdown: ArtemisMarkdown, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
@@ -69,8 +69,8 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.rendered = new ShortAnswerQuestion();
 
         // new way
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
@@ -87,10 +87,10 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         for (const textpart of this.textParts) {
             let j = 0;
             for (const element of textpart) {
-                if (this.shortAnswerQuestionUtil.isInputField(element)) {
+                if (this.shortAnswerQuestionUtil.isInputField(element!)) {
                     const submittedText = new ShortAnswerSubmittedText();
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
-                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question);
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.question);
                     this.submittedTexts.push(submittedText);
                 }
                 j++;

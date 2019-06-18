@@ -8,12 +8,12 @@ import { Feedback } from 'app/entities/feedback';
     styleUrls: ['./text-assessment-editor.component.scss'],
 })
 export class TextAssessmentEditorComponent {
-    public hostRectangle: SelectionRectangle;
+    public hostRectangle: SelectionRectangle | null;
     @Input() public submissionText: string;
     @Input() public assessments: Feedback[];
     @Input() public disabled = false;
     @Output() public assessedText = new EventEmitter<string>();
-    private selectedText: string;
+    private selectedText: string | null;
 
     didSelectSolutionText(event: TextSelectEvent): void {
         if (this.disabled) {
@@ -32,13 +32,13 @@ export class TextAssessmentEditorComponent {
     }
 
     deselectText(): void {
-        document.getSelection().removeAllRanges();
+        document.getSelection()!.removeAllRanges();
         this.hostRectangle = null;
         this.selectedText = null;
     }
 
     assessSelection(): void {
-        if (this.disabled) {
+        if (this.disabled || this.selectedText == null) {
             return;
         }
 

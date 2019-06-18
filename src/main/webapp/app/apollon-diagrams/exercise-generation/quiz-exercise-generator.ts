@@ -48,9 +48,12 @@ export async function generateDragAndDropQuizExercise(
     // Create Drag Items and Drop Locations
     for (const elementId of interactiveElements) {
         const element = elements.find(elem => elem.id === elementId);
+        if (element == null) {
+            continue;
+        }
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
-        dragItems.set(element.id, dragItem);
-        dropLocations.set(element.id, dropLocation);
+        dragItems.set(element.id, dragItem!);
+        dropLocations.set(element.id, dropLocation!);
     }
 
     // Create all possible correct mappings between drag items and drop locations
@@ -268,8 +271,8 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
                 continue;
             }
             if (mappings.has(dragElementSibling.id)) {
-                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id));
-                mappings.set(dragItemElementId, [...mappings.get(dragItemElementId), mapping]);
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id)!);
+                mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
             }
         }
     }
@@ -288,14 +291,14 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
                 continue;
             }
             if (intermediateMappings.has(dropLocationElementId)) {
-                const currentMappings = [...intermediateMappings.get(dropLocationElementId)];
+                const currentMappings = [...intermediateMappings.get(dropLocationElementId)!];
                 for (const currentMapping of currentMappings) {
                     const mapping = new DragAndDropMapping(dragItem, currentMapping.dropLocation);
-                    mappings.set(dragItemElementId, [...mappings.get(dragItemElementId), mapping]);
+                    mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
                 }
             }
         }
     }
 
-    return [].concat(...mappings.values());
+    return new Array<DragAndDropMapping>().concat(...mappings.values());
 }
