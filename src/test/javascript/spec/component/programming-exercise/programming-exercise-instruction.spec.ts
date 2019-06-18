@@ -282,7 +282,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortNotExecutedHtml);
 
-        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--no-result'));
+        const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
         expect(bubbleSortStep).to.exist;
         expect(mergeSortStep).to.exist;
