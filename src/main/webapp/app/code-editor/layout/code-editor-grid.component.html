@@ -9,21 +9,19 @@
     </nav>
 
     <div class="editor-main">
-        <div>
-            <!-- File browser -->
-            <div class="editor-sidebar-left">
-                <ng-content select="[editorSidebarLeft]"></ng-content>
-            </div>
+        <!-- File browser -->
+        <div class="editor-sidebar-left">
+            <ng-content select="[editorSidebarLeft]"></ng-content>
+        </div>
 
-            <!-- Editor -->
-            <div class="editor-center">
-                <ng-content select="[editorCenter]"></ng-content>
-            </div>
+        <!-- Editor -->
+        <div class="editor-center">
+            <ng-content select="[editorCenter]"></ng-content>
+        </div>
 
-            <!-- Instructions -->
-            <div class="editor-sidebar-right">
-                <ng-content select="[editorSidebarRight]"></ng-content>
-            </div>
+        <!-- Instructions -->
+        <div class="editor-sidebar-right">
+            <ng-content select="[editorSidebarRight]"></ng-content>
         </div>
 
         <!-- Required for resizing; don't remove empty span -->
