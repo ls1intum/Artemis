@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && groupedExercises.length > 0; else noStatistics">
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | translate }}</h2>
             <div class="chart-container" style="margin-bottom: 20px">
@@ -55,9 +55,11 @@
             </div>
         </div>
     </div>
-    <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
-        <div class="col mt-3">
-            {{ 'artemisApp.courseOverview.statistics.noStatistics' | translate }}
+    <ng-template #noStatistics>
+        <div class="row">
+            <div class="col mt-3">
+                {{ 'artemisApp.courseOverview.statistics.noStatistics' | translate }}
+            </div>
         </div>
-    </div>
+    </ng-template>
 </div>
