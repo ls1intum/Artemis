@@ -262,7 +262,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
                 exercise.participations.forEach(participation => {
                     if (participation.results && participation.results.length > 0) {
-                        const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate);
+                        const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                         if (participationResult) {
                             const participationScore = participationResult.score;
                             const missedScore = 100 - participationScore;
@@ -284,7 +284,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                                 if (exercise.maxScore) {
                                     groupedExercises[index].missedScores.tooltips.push(
                                         this.translateService.instant('artemisApp.courseOverview.statistics.exerciseMissedScore', {
-                                            points: exercise.maxScore - this.absoluteResult(participationResult),
+                                            points: exercise.maxScore - this.absoluteResult(participationResult)!,
                                             percentage: missedScore,
                                         }),
                                     );
@@ -298,7 +298,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                             }
                         }
                     } else {
-                        if (participation.initializationDate.isBefore(exercise.dueDate)) {
+                        if (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!)) {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
                         } else {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
@@ -335,7 +335,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return chartElement;
     }
 
-    absoluteResult(result: Result): number {
+    absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;
         }
