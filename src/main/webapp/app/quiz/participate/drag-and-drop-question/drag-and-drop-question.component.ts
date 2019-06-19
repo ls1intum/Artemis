@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -20,7 +20,7 @@ polyfill({
     event.preventDefault();
 };
 
-window.addEventListener('touchmove', function() {});
+window.addEventListener('touchmove', function() {}, { passive: false });
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -79,6 +79,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         this.countCorrectMappings();
     }
@@ -111,6 +115,18 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
+        if (this.loadingState === 'success') {
+            this.resizeImage();
+        }
+    }
+
+    /**
+     * Prevent scrolling when dragging elements on mobile devices
+     * @param event
+     */
+    preventDefault(event: any) {
+        event.mouseEvent.preventDefault();
+        return false;
     }
 
     /**
@@ -276,5 +292,14 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
+    }
+
+    resizeImage() {
+        setTimeout(() => {
+            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+            clickLayer.style.height = image.height + 'px';
+        }, 500);
     }
 }
