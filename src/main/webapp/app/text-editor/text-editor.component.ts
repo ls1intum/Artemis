@@ -142,27 +142,23 @@ export class TextEditorComponent implements OnInit {
         if (!this.submission) {
             return;
         }
-        const franc = require('franc-min');
         this.submission.text = this.answer;
-        const languageProbabilities = franc.all(this.answer);
-
-        for (const languageProbability of languageProbabilities) {
-            if (languageProbability[0] === 'und') {
+        const franc = require('franc-min');
+        const languageProbabilities = franc.all(this.submission.text, { only: ['eng', 'deu', 'und', 'nds'] });
+        switch (languageProbabilities[0][0]) {
+            case 'und':
                 // Language is undetermined
                 break;
-            }
-            if (languageProbability[0] === 'eng') {
+            case 'eng':
                 // Language is english
                 this.submission.language = Language.ENGLISH;
                 break;
-            }
-            if (languageProbability[0] === 'deu' || languageProbability[0] === 'nds') {
+            case 'deu':
+            case 'nds':
                 // Language is german or lower german
                 this.submission.language = Language.GERMAN;
                 break;
-            }
         }
-
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {
