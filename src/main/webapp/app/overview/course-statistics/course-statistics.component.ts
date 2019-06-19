@@ -342,6 +342,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (result.resultString && result.resultString.indexOf('failed') !== -1) {
             return null;
         }
+        if (result.resultString && result.resultString.indexOf('passed') !== -1) {
+            return null;
+        }
+        if (result.resultString && result.resultString.indexOf('No tests found') !== -1) {
+            return null;
+        }
         if (result.resultString.indexOf('of') === -1) {
             if (result.resultString.indexOf('points') === -1) {
                 return 0;

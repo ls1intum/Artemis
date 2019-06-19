@@ -16,6 +16,7 @@ import { By } from '@angular/platform-browser';
 import { Course, CourseScoreCalculationService } from 'app/entities/course';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { MockSyncStorage } from '../../../mocks';
+import { Result } from 'app/entities/result';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -202,5 +203,18 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate']);
         expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseNotParticipated']);
         expect(comp.groupedExercises[0].missedScores.tooltips).to.include.members(['artemisApp.courseOverview.statistics.exerciseMissedScore']);
+    });
+
+    it('should transform results correctly', () => {
+        const result1 = { resultString: '9 of 26 failed' } as Result;
+        expect(comp.absoluteResult(result1)).to.be.null;
+        const result2 = { resultString: 'No tests found' } as Result;
+        expect(comp.absoluteResult(result2)).to.be.null;
+        const result3 = { resultString: null } as Result;
+        expect(comp.absoluteResult(result3)).to.equal(0);
+        const result4 = { resultString: '15 passed' } as Result;
+        expect(comp.absoluteResult(result4)).to.be.null;
+        const result5 = { resultString: '20 of 20 points' } as Result;
+        expect(comp.absoluteResult(result5)).to.equal(20);
     });
 });
