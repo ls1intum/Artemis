@@ -5064,13 +5064,6 @@ franc-min@^4.1.0:
   dependencies:
     trigram-utils "^1.0.0"
 
-franc@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/franc/-/franc-4.1.0.tgz#81bc0b222ab6c13b972c4254d9002e7a48038539"
-  integrity sha512-GIIncJbjhNO9y+lW0eG4V47XUYtIFBkQlTJHuCYXDIK2nxXvawKY48EifdN0W7MwRzU+5CJXm474gNDK45KNhg==
-  dependencies:
-    trigram-utils "^1.0.0"
-
 fresh@0.5.2, fresh@^0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
