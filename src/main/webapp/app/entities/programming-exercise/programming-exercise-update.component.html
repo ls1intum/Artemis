@@ -160,6 +160,10 @@
                         </label>
                     </div>
                 </div>
+                <div class="form-group-narrow" *ngIf="programmingExercise.id">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+                    <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+                </div>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary mr-1" (click)="previousState()">

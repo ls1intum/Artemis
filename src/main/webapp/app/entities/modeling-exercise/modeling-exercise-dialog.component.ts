@@ -28,6 +28,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    notificationText: string;
 
     courses: Course[];
 
@@ -45,6 +46,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.dueDateError = false;
         this.assessmentDueDateError = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
@@ -82,7 +84,11 @@ export class ModelingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
         }

@@ -23,9 +23,12 @@ export class FileUploadExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    update(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
+    update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        return this.http.put<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http
+            .put<FileUploadExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {

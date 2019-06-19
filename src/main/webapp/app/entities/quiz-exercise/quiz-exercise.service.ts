@@ -6,6 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { QuizExercise } from './quiz-exercise.model';
 import { ExerciseService } from 'app/entities/exercise';
 import { QuizQuestion } from 'app/entities/quiz-question';
+import { createRequestOption } from 'app/shared';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -31,9 +32,12 @@ export class QuizExerciseService {
         return this.http.post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    update(quizExercise: QuizExercise): Observable<EntityResponseType> {
+    update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        return this.http.put<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http
+            .put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {

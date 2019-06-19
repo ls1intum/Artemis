@@ -101,7 +101,8 @@ public class FileUploadExerciseResource {
      */
     @PutMapping("/file-upload-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
+    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() == null) {
             return createFileUploadExercise(fileUploadExercise);
@@ -119,7 +120,9 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getId().toString())).body(result);
     }
 
