@@ -27,7 +27,7 @@
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.notificationDate | date: 'medium' }}</td>
                     <td>
-                        <button class="btn btn-primary" *ngIf="getTargetMessage(notification.target)" (click)="notificationService.interpretNotification(notification)">
+                        <button class="btn btn-block btn-primary" *ngIf="getTargetMessage(notification.target)" (click)="notificationService.interpretNotification(notification)">
                             {{ 'notificationManagement.' + getTargetMessage(notification.target) | translate }}
                         </button>
                     </td>

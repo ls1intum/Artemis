@@ -93,7 +93,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "noNotifications": "Keine Mitteilungen verfügbar"
+            "noNotifications": "Keine neuen Mitteilungen verfügbar",
+            "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
         "form": {
             "username": "Benutzername",

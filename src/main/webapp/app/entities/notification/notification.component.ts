@@ -35,7 +35,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
     reverse: boolean;
 
     constructor(
-        protected notificationService: NotificationService,
+        private notificationService: NotificationService,
         private route: ActivatedRoute,
         protected jhiAlertService: JhiAlertService,
         private router: Router,
