@@ -13,10 +13,10 @@ import { User } from '../../core';
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
-    doNotMatch: string;
-    error: string;
-    errorEmailExists: string;
-    errorUserExists: string;
+    doNotMatch: string | null;
+    error: string | null;
+    errorEmailExists: string | null;
+    errorUserExists: string | null;
     registerAccount: User;
     success: boolean;
     modalRef: NgbModalRef;
@@ -53,7 +53,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     private processError(response: HttpErrorResponse) {
-        this.success = null;
+        this.success = false;
         if (response.status === 400 && response.error.type === LOGIN_ALREADY_USED_TYPE) {
             this.errorUserExists = 'ERROR';
         } else if (response.status === 400 && response.error.type === EMAIL_ALREADY_USED_TYPE) {

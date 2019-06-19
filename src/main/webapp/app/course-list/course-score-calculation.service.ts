@@ -28,9 +28,9 @@ export class CourseScoreCalculationService {
         for (const exercise of courseExercises) {
             if (exercise.maxScore != null && (!exercise.dueDate || exercise.dueDate.isBefore(moment()))) {
                 maxScore = maxScore + exercise.maxScore;
-                const participation: Participation = this.getParticipationForExercise(exercise);
+                const participation = this.getParticipationForExercise(exercise);
                 if (participation !== null) {
-                    const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
+                    const result = this.getResultForParticipation(participation, exercise.dueDate!);
                     if (result !== null) {
                         let score = result.score;
                         if (score === null) {
@@ -79,11 +79,11 @@ export class CourseScoreCalculationService {
         this.courses = courses;
     }
 
-    getCourse(courseId: number): Course {
-        return this.courses.find(course => course.id === courseId);
+    getCourse(courseId: number): Course | null {
+        return this.courses.find(course => course.id === courseId) || null;
     }
 
-    getParticipationForExercise(exercise: Exercise): Participation {
+    getParticipationForExercise(exercise: Exercise): Participation | null {
         if (exercise.participations != null && exercise.participations.length > 0) {
             const exerciseParticipation: Participation = exercise.participations[0];
             return this.convertDateForParticipationFromServer(exerciseParticipation);
@@ -92,7 +92,7 @@ export class CourseScoreCalculationService {
         }
     }
 
-    getResultForParticipation(participation: Participation, dueDate: Moment): Result {
+    getResultForParticipation(participation: Participation, dueDate: Moment): Result | null {
         if (participation === null) {
             return null;
         }
@@ -119,20 +119,20 @@ export class CourseScoreCalculationService {
 
             // sorting in descending order to have the last result at the beginning
             resultsArray.sort((result1, result2): number => {
-                if (result1.completionDate > result2.completionDate) {
+                if (result1.completionDate! > result2.completionDate!) {
                     return -1;
                 }
-                if (result1.completionDate < result2.completionDate) {
+                if (result1.completionDate! < result2.completionDate!) {
                     return 1;
                 }
                 return 0;
             });
 
             const gracePeriodInSeconds = 10;
-            if (dueDate === null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate) {
+            if (dueDate === null || dueDate.add(gracePeriodInSeconds, 'seconds') >= resultsArray[0].completionDate!) {
                 // find the first result that is before the due date
                 chosenResult = resultsArray[0];
-            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate) {
+            } else if (dueDate.add(gracePeriodInSeconds, 'seconds') < resultsArray[0].completionDate!) {
                 chosenResult = new Result();
                 chosenResult.score = 0;
             } else {

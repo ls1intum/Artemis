@@ -425,6 +425,19 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Squash all commits of the given repository into one.
+     * 
+     * @param repoUrl of the repository to squash.
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws IllegalStateException
+     */
+    public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException, GitAPIException {
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl);
+        gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
+    }
+
+    /**
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
@@ -441,8 +454,11 @@ public class ProgrammingExerciseService {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
 
+        gitService.resetToOriginMaster(solutionRepository);
         gitService.pull(solutionRepository);
+        gitService.resetToOriginMaster(exerciseRepository);
         gitService.pull(exerciseRepository);
+        gitService.resetToOriginMaster(testRepository);
         gitService.pull(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();

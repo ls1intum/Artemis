@@ -8,8 +8,8 @@ export class Lecture implements BaseEntity {
     id: number;
     title: string;
     description: string;
-    startDate: Moment;
-    endDate: Moment;
+    startDate: Moment | null;
+    endDate: Moment | null;
     attachments: Attachment[];
     studentQuestions: StudentQuestion[];
     course: Course;

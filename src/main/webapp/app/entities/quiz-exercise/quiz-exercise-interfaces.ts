@@ -1,6 +1,6 @@
 export class Option {
-    key: boolean | string;
-    label: string;
+    key?: boolean | string;
+    label?: string;
 
     constructor(key?: boolean | string, label?: string) {
         this.key = key;
@@ -9,8 +9,8 @@ export class Option {
 }
 
 export class Duration {
-    minutes: number;
-    seconds: number;
+    minutes?: number;
+    seconds?: number;
 
     constructor(minutes?: number, seconds?: number) {
         this.minutes = minutes;

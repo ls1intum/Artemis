@@ -15,7 +15,7 @@ export class FileUploaderService {
         const fileExtension = fileName
             ? fileName
                   .split('.')
-                  .pop()
+                  .pop()!
                   .toLocaleLowerCase()
             : file['name']
                   .split('.')
@@ -50,7 +50,7 @@ export class FileUploaderService {
             'temp' +
             filePath
                 .split('/')
-                .pop()
+                .pop()!
                 .split('#')[0]
                 .split('?')[0];
         const formData = new FormData();

@@ -42,7 +42,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
     }
 
     isClean = () => {
-        return this.http.get<any>(this.restResourceUrl).map(data => ({ isClean: data.isClean }));
+        return this.http.get<any>(this.restResourceUrl!).map(data => ({ isClean: data.isClean }));
     };
 
     commit = () => {

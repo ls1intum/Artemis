@@ -14,7 +14,7 @@ export class ModelingExercise extends Exercise {
 
     constructor(diagramType: DiagramType, course?: Course) {
         super(ExerciseType.MODELING);
-        this.course = course;
+        this.course = course || null;
         this.diagramType = diagramType;
     }
 }

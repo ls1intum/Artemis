@@ -60,7 +60,7 @@ export class TextAssessmentsService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body);
+        const body: Result = this.convertItemFromServer(res.body!);
 
         if (body.completionDate) {
             body.completionDate = moment(body.completionDate);
