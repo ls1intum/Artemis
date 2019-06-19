@@ -12,7 +12,7 @@ export class ExpandableSampleSolutionComponent implements OnInit {
     @Input() exercise: ModelingExercise;
     @Input() isCollapsed = false;
 
-    formattedSampleSolutionExplanation: string;
+    formattedSampleSolutionExplanation: string | null;
     sampleSolution: UMLModel;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}

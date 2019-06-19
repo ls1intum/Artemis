@@ -22,13 +22,13 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
-    submission: ModelingSubmission;
-    model: UMLModel;
-    modelingExercise: ModelingExercise;
-    result: Result;
+    submission: ModelingSubmission | null;
+    model: UMLModel | null;
+    modelingExercise: ModelingExercise | null;
+    result: Result | null;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
-    conflicts: Conflict[];
+    conflicts: Conflict[] | null;
     highlightedElementIds: Set<string>;
 
     assessmentsAreValid = false;
@@ -73,7 +73,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -114,7 +114,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
@@ -179,7 +179,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private checkPermissions(): void {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAuthorized = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
@@ -187,10 +187,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onError(error?: string): void {
         this.hasErrors = true;
-        this.submission = undefined;
-        this.modelingExercise = undefined;
-        this.result = undefined;
-        this.model = undefined;
+        this.submission = null;
+        this.modelingExercise = null;
+        this.result = null;
+        this.model = null;
         if (!error) {
             error = 'modelingAssessmentEditor.messages.loadSubmissionFailed';
         }
@@ -203,7 +203,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSaveAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
@@ -218,7 +218,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        if (this.referencedFeedback.length < this.model.elements.length || !this.assessmentsAreValid) {
+        if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
             const confirm = window.confirm(confirmationMessage);
             if (confirm) {
@@ -232,13 +232,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private submitAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
             (result: Result) => {
-                result.participation.results = [result];
+                result.participation!.results = [result];
                 this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.conflicts = undefined;
+                this.conflicts = null;
                 this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
@@ -270,7 +270,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission.id).subscribe(
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
@@ -284,9 +284,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onShowConflictResolution() {
-        this.modelingAssessmentService.addLocalConflicts(this.submission.id, this.conflicts);
+        this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
         this.jhiAlertService.clear();
-        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submission.id, 'assessment', 'conflict']);
+        this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -295,7 +295,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
                 this.goToExerciseDashboard();
             });
         }
@@ -308,7 +308,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     assessNextOptimal() {
         this.busy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
             (optimal: number[]) => {
                 this.busy = false;
                 if (optimal.length === 0) {
@@ -320,7 +320,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
                 }
             },
             (error: HttpErrorResponse) => {
@@ -358,7 +358,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             return;
         }
         if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
-            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId);
+            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId!);
             this.highlightedElementIds = new Set<string>(this.highlightedElementIds);
         }
         for (const feedback of this.referencedFeedback) {
@@ -380,7 +380,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     private highlightElementsWithMissingFeedback() {
         this.highlightedElementIds = new Set<string>();
-        this.model.elements.forEach((element: UMLElement) => {
+        this.model!.elements.forEach((element: UMLElement) => {
             if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
                 this.highlightedElementIds.add(element.id);
             }

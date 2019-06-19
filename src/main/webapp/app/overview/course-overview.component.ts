@@ -14,7 +14,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
 export class CourseOverviewComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
-    public course: Course;
+    public course: Course | null;
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
@@ -32,14 +32,12 @@ export class CourseOverviewComponent implements OnInit {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course === undefined) {
+        if (!this.course) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body);
+                this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.adjustCourseDescription();
             });
-        } else {
-            this.course = this.courseCalculationService.getCourse(this.courseId);
         }
         this.adjustCourseDescription();
     }
@@ -57,12 +55,12 @@ export class CourseOverviewComponent implements OnInit {
     }
 
     showLongDescription() {
-        this.courseDescription = this.course.description;
+        this.courseDescription = this.course!.description;
         this.longTextShown = true;
     }
 
     showShortDescription() {
-        this.courseDescription = this.course.description.substr(0, 50) + '...';
+        this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;
     }
 }

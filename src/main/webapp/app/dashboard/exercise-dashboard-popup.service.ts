@@ -13,7 +13,7 @@ import * as moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseDashboardPopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private datePipe: DatePipe,
@@ -27,21 +27,20 @@ export class ExerciseDashboardPopupService {
 
     open(component: Component, id: number | any, exercisePopup: boolean): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef !== null) {
                 resolve(this.ngbModalRef);
             }
 
             if (id) {
                 if (exercisePopup) {
                     this.exerciseService.find(id).subscribe((res: HttpResponse<Exercise>) => {
-                        const exercise: Exercise = res.body;
+                        const exercise: Exercise = res.body!;
                         this.ngbModalRef = this.exerciseModalRef(component, exercise);
                         resolve(this.ngbModalRef);
                     });
                 } else {
                     this.participationService.find(id).subscribe(res => {
-                        const participation: Participation = res.body;
+                        const participation: Participation = res.body!;
                         this.ngbModalRef = this.resultModalRef(component, participation);
                         resolve(this.ngbModalRef);
                     });

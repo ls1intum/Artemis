@@ -46,7 +46,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     private loadCourse(courseId: number) {
         this.courseService
             .findWithExercisesAndParticipations(courseId)
-            .subscribe((res: HttpResponse<Course>) => (this.course = res.body), (response: HttpErrorResponse) => this.onError(response.message));
+            .subscribe((res: HttpResponse<Course>) => (this.course = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
@@ -82,6 +82,6 @@ export class InstructorCourseDashboardComponent implements OnInit {
     callback() {}
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

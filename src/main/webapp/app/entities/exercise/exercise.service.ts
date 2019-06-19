@@ -71,24 +71,26 @@ export class ExerciseService {
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInDays, 'day')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInHours, 'hours')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
@@ -128,7 +130,7 @@ export class ExerciseService {
     }
 
     checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body) {
+        if (res.body && res.body.course) {
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }
@@ -158,8 +160,10 @@ export class ExerciseService {
     convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
-        delete copy.course.exercises;
-        delete copy.course.lectures;
+        if (copy.course) {
+            delete copy.course.exercises;
+            delete copy.course.lectures;
+        }
         delete copy.participations;
         return copy;
     }

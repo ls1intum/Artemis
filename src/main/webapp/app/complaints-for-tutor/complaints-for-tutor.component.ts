@@ -39,7 +39,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 this.loading = false;
 
                 if (this.handled) {
-                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
+                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
                 }
             },
             (err: HttpErrorResponse) => {
@@ -64,7 +64,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 response => {
                     this.jhiAlertService.success('artemisApp.textAssessment.complaintResponse.created');
-                    this.complaintResponse = response.body;
+                    this.complaintResponse = response.body!;
                 },
                 (err: HttpErrorResponse) => {
                     this.onError(err.message);
@@ -75,6 +75,6 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private onError(error: string): void {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

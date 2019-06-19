@@ -371,7 +371,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (newFileName.split('.').length > 1 && !textFileExtensions.includes(newFileName.split('.').pop())) {
+        } else if (newFileName.split('.').length > 1 && !textFileExtensions.includes(newFileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         }
@@ -409,7 +409,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         }
         const [folderPath, fileType] = this.creatingFile;
 
-        if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop())) {
+        if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
@@ -472,7 +472,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                     filter(([filename]) => {
                         const fileSplit = filename.split('.');
                         // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop());
+                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop()!);
                     }),
                     toPairs,
                 )(files),

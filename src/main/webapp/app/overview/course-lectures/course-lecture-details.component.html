@@ -1,15 +1,15 @@
 <div *ngIf="lecture">
     <!-- HEADER INFORMATION START -->
-    <div class="course-info-bar" *ngIf="lecture">
+    <div class="course-info-bar">
         <div class="row">
             <div class="col general-info">
                 <h3>
                     <fa-icon [icon]="'arrow-left'" (click)="backToCourse()" class="back-button mr-2"></fa-icon>
-                    <span>{{ lecture.title }}</span>
+                    <span>{{ lecture!.title }}</span>
                 </h3>
                 <h4>
-                    <span class="mr-2" *ngIf="lecture.startDate && lecture.endDate">
-                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture.startDate | date: 'dd.MM.yy HH:mm' }} - {{ lecture.endDate | date: 'HH:mm' }}
+                    <span class="mr-2" *ngIf="lecture!.startDate && lecture!.endDate">
+                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | date: 'dd.MM.yy HH:mm' }} - {{ lecture!.endDate | date: 'HH:mm' }}
                     </span>
                 </h4>
             </div>
@@ -24,9 +24,9 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="lecture.description">
+            <div class="row mb-2" *ngIf="lecture!.description">
                 <div class="col-12 col-md-12">
-                    {{ lecture.description }}
+                    {{ lecture!.description }}
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline">
@@ -34,9 +34,9 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="lecture.attachments">
+            <div class="row mb-2" *ngIf="lecture!.attachments">
                 <ul>
-                    <li class="mb-3" *ngFor="let attachment of lecture.attachments">
+                    <li class="mb-3" *ngFor="let attachment of lecture!.attachments">
                         <h5 class="mb-1">
                             <a href="{{ attachment.link }}" target="_blank">
                                 {{ attachment.name }}
@@ -55,7 +55,7 @@
                     </li>
                 </ul>
             </div>
-            <div class="row mb-2" *ngIf="!lecture.attachments">
+            <div class="row mb-2" *ngIf="!lecture!.attachments">
                 <div class="col-12 col-md-12">
                     {{ 'artemisApp.courseOverview.lectureDetails.noAttachments' | translate }}
                 </div>
@@ -63,7 +63,7 @@
         </div>
         <!-- LECTURE END -->
         <div class="col-sm-12 col-md-4 col-lg-4">
-            <jhi-student-questions [lecture]="lecture"></jhi-student-questions>
+            <jhi-student-questions [lecture]="lecture!"></jhi-student-questions>
         </div>
     </div>
 </div>

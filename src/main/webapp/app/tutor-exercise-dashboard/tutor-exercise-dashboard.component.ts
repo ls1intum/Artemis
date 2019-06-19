@@ -54,9 +54,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     complaints: Complaint[];
     submissionLockLimitReached = false;
 
-    formattedGradingInstructions: string;
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
+    formattedGradingInstructions: string | null;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
@@ -77,7 +77,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor: User;
+    tutor: User | null;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -104,12 +104,13 @@ export class TutorExerciseDashboardComponent implements OnInit {
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
+                this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
 
                 if (this.exercise.type === this.ExerciseType_TEXT) {
-                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                    const textExercise = this.exercise as TextExercise;
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
                 } else if (this.exercise.type === this.ExerciseType_MODELING) {
                     this.modelingExercise = this.exercise as ModelingExercise;
                     if (this.modelingExercise.sampleSolutionModel) {
@@ -149,15 +150,16 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.complaintService
             .getForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForTutorDashboard>) => {
-                this.numberOfSubmissions = res.body.numberOfSubmissions;
-                this.numberOfAssessments = res.body.numberOfAssessments;
-                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
-                this.numberOfComplaints = res.body.numberOfComplaints;
-                this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
+                const stats = res.body!;
+                this.numberOfSubmissions = stats.numberOfSubmissions;
+                this.numberOfAssessments = stats.numberOfAssessments;
+                this.numberOfTutorAssessments = stats.numberOfTutorAssessments;
+                this.numberOfComplaints = stats.numberOfComplaints;
+                this.numberOfTutorComplaints = stats.numberOfTutorComplaints;
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
@@ -228,7 +230,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.tutorParticipation = res.body;
+            this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status;
             this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
@@ -239,7 +241,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     calculateStatus(submission: Submission) {
@@ -273,7 +275,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         const queryParams: any = {};
-        let route: string;
+        let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
             submission = 'new';

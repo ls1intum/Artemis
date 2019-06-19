@@ -22,13 +22,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     currentFeedbacksCopy: Feedback[];
     modelHighlightedElementIds: Set<string>;
     highlightColor: string;
-    user: User;
+    user: User | null;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
     conflictingModelHighlightedElementIds: Set<string>;
-    conflicts: Conflict[];
+    conflicts?: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
     conflictsAllHandled = false;
@@ -51,7 +51,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             if (this.conflicts && this.conflicts.length > 0) {
                 this.initComponent();
                 this.model = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
-                this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
+                this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation!.exercise as ModelingExercise;
             } else {
                 this.conflicts = undefined;
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
@@ -65,14 +65,14 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     initComponent() {
-        this.mergedFeedbacks = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
-        this.currentFeedbacksCopy = [...this.conflicts[0].causingConflictingResult.result.feedbacks];
-        this.conflictResolutionStates = [...this.conflicts.map(() => ConflictResolutionState.UNHANDLED)];
+        this.mergedFeedbacks = [...this.conflicts![0].causingConflictingResult.result.feedbacks];
+        this.currentFeedbacksCopy = [...this.conflicts![0].causingConflictingResult.result.feedbacks];
+        this.conflictResolutionStates = [...this.conflicts!.map(() => ConflictResolutionState.UNHANDLED)];
         this.updateSelectedConflict();
     }
 
     onNextConflict() {
-        this.conflictIndex = this.conflictIndex < this.conflicts.length - 1 ? ++this.conflictIndex : this.conflictIndex;
+        this.conflictIndex = this.conflictIndex < this.conflicts!.length - 1 ? ++this.conflictIndex : this.conflictIndex;
         this.updateSelectedConflict();
     }
 
@@ -125,7 +125,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         const escalatedConflicts: Conflict[] = [];
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
             if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
-                escalatedConflicts.push(this.conflicts[i]);
+                escalatedConflicts.push(this.conflicts![i]);
             }
         }
         this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(value => {
@@ -172,11 +172,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     setSameWidthOnModelingAssessments() {
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
-        $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+        $('.resizable').css('width', ((conflictEditorWidth || 0) - (instructionsWidth || 0)) / 2 + 15);
     }
 
     private updateSelectedConflict() {
-        this.currentConflict = this.conflicts[this.conflictIndex];
+        this.currentConflict = this.conflicts![this.conflictIndex];
         this.conflictingResult = this.currentConflict.resultsInConflict[0];
         this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
@@ -189,8 +189,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     private updateCurrentState() {
-        const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId);
-        const conflictingFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId);
+        const mergedFeedback = this.mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId)!;
+        const conflictingFeedback = this.conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === this.conflictingResult.modelElementId)!;
         if (mergedFeedback.credits !== conflictingFeedback.credits) {
             this.conflictResolutionStates[this.conflictIndex] = ConflictResolutionState.ESCALATED;
         } else {

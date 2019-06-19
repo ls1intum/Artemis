@@ -52,12 +52,12 @@ export class TextSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = this.convertItemFromServer(res.body);
+        const body: TextSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
-        const jsonResponse: TextSubmission[] = res.body;
+        const jsonResponse: TextSubmission[] = res.body!;
         const body: TextSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

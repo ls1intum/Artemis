@@ -37,15 +37,15 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
-    invalidError: string;
+    invalidError: string | null;
     exercise: TextExercise;
     isAtLeastInstructor = false;
     readOnly: boolean;
     toComplete: boolean;
 
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
+    formattedGradingInstructions: string | null;
 
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
@@ -84,7 +84,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             this.isNewSubmission = true;
             this.exampleSubmissionId = -1;
         } else {
-            this.exampleSubmissionId = +exampleSubmissionId;
+            this.exampleSubmissionId = +exampleSubmissionId!;
         }
 
         // Be sure to close the text exercise popup
@@ -114,7 +114,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -138,7 +138,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -161,7 +161,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';
@@ -171,12 +171,12 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
-            this.exercise = exerciseResponse.body;
+            this.exercise = exerciseResponse.body!;
             this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
         });
 
         if (this.isNewSubmission) {
@@ -184,7 +184,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
+            this.exampleSubmission = exampleSubmissionResponse.body!;
             this.textSubmission = this.exampleSubmission.submission as TextSubmission;
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
@@ -213,7 +213,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     toggleCollapse($event: any, resizable: string) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
-        let $card;
+        let $card: any;
 
         if (resizable === 'submission') {
             $card = $(target).closest('#instructions');
@@ -245,7 +245,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         newSubmission.exampleSubmission = true;
 
         this.textSubmissionService.create(newSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body;
+            this.textSubmission = submissionResponse.body!;
 
             const newExampleSubmission = this.exampleSubmission;
             newExampleSubmission.submission = this.textSubmission;
@@ -265,7 +265,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             }, this.onError);
 
             this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmissionId = this.exampleSubmission.id;
                 this.isNewSubmission = false;
 
@@ -287,7 +287,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         let hasOneFinished = false;
 
         this.textSubmissionService.update(this.textSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body;
+            this.textSubmission = submissionResponse.body!;
 
             if (hasOneFinished) {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
@@ -297,7 +297,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }, this.onError);
 
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
+            this.exampleSubmission = exampleSubmissionResponse.body!;
 
             if (hasOneFinished) {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
@@ -310,7 +310,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     public addAssessment(assessmentText: string): void {
         const assessment = new Feedback();
         assessment.reference = assessmentText;
-        assessment.credits = 0;
         this.assessments.push(assessment);
         this.checkScoreBoundaries();
     }
@@ -340,7 +339,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }
@@ -353,14 +352,14 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
-            this.result = response.body;
+            this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
         });
     }
 
     async back() {
-        const courseId = this.exercise.course.id;
+        const courseId = this.exercise.course!.id;
 
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
@@ -408,6 +407,6 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

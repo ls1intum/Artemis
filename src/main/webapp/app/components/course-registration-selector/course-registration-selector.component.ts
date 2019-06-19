@@ -15,7 +15,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     @Input() courses: Course[];
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
-    public courseToRegister: Course = null;
+    public courseToRegister: Course | null;
     public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
@@ -25,12 +25,12 @@ export class CourseRegistrationSelectorComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            this.isTumStudent = !!user.login.match(TUM_REGEX);
+            this.isTumStudent = !!user!.login!.match(TUM_REGEX);
         });
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     trackCourseById(index: number, item: Course) {
@@ -40,8 +40,8 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     loadAndFilterCourses() {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
-                (registerRes: HttpResponse<Course[]>) => {
-                    this.coursesToSelect = registerRes.body.filter(course => {
+                registerRes => {
+                    this.coursesToSelect = registerRes.body!.filter(course => {
                         return !this.courses.find(el => el.id === course.id);
                     });
                     resolve();

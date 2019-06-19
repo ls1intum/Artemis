@@ -8,9 +8,9 @@ import { PasswordService } from './password.service';
     templateUrl: './password.component.html',
 })
 export class PasswordComponent implements OnInit {
-    doNotMatch: string;
-    error: string;
-    success: string;
+    doNotMatch: string | null;
+    error: string | null;
+    success: string | null;
     user: User;
     currentPassword: string;
     newPassword: string;
@@ -20,7 +20,7 @@ export class PasswordComponent implements OnInit {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.user = user;
+            this.user = user!;
         });
     }
 
