@@ -1,7 +1,7 @@
 {
     "name": "Artemis",
     "version": "3.2.0",
-    "description": "Automated Assessment Management System for Interactive Learning",
+    "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
     "cacheDirectories": [

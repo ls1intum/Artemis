@@ -8537,6 +8537,13 @@ ngx-cookie@4.1.2:
   dependencies:
     tslib "^1.9.0"
 
+ngx-device-detector@1.3.6:
+  version "1.3.6"
+  resolved "https://registry.yarnpkg.com/ngx-device-detector/-/ngx-device-detector-1.3.6.tgz#2e538e2885851a80f08f153a62199ec9a334e6af"
+  integrity sha512-sJQcVVRjmt+mIg8URta6+/71B/jW77ZFqoqMuiur7vcto8SmLQ1rOz24ez2XZLIuHN1XURS6VnHHg8B46k7rSg==
+  dependencies:
+    tslib "^1.9.0"
+
 ngx-image-cropper@1.3.11:
   version "1.3.11"
   resolved "https://registry.yarnpkg.com/ngx-image-cropper/-/ngx-image-cropper-1.3.11.tgz#b9078f45d9d4b5e4698e5c863558ebda919acdaa"
