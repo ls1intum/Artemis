@@ -17,7 +17,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface ExampleSubmissionQueryParams {
@@ -171,14 +171,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private getSubmissions(): void {
-        let submissionsObservable: Observable<HttpResponse<Submission[]>>;
+        let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
             submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         }
 
-        submissionsObservable!
+        submissionsObservable
             .pipe(
                 map(res => res.body),
                 map(this.reconnectEntities),
@@ -204,14 +204,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
     };
 
     private getSubmissionWithoutAssessment(): void {
-        let submissionObservable: Observable<Submission>;
+        let submissionObservable: Observable<Submission> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
             submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
         } else if (this.exercise.type === ExerciseType.MODELING) {
             submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
         }
 
-        submissionObservable!.subscribe(
+        submissionObservable.subscribe(
             (submission: Submission) => {
                 this.unassessedSubmission = submission;
                 this.submissionLockLimitReached = false;

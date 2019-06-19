@@ -47,7 +47,6 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     notFound = false;
     userId: number;
     canOverride = false;
-    hasErrors = false;
 
     formattedProblemStatement: string | null;
     formattedSampleSolution: string | null;
@@ -113,7 +112,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                     if (error.status === 404) {
                         this.notFound = true;
                     } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.onError(`artemisApp.${error.error.entityName}.${error.error.errorKey}`);
+                        this.goToExerciseDashboard();
                     } else {
                         this.onError(error.message);
                     }
@@ -407,12 +406,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private onError(error: string) {
-        this.hasErrors = true;
         console.error(error);
         this.jhiAlertService.error(error, null, undefined);
-        setTimeout(() => {
-            this.goToExerciseDashboard();
-            this.jhiAlertService.clear();
-        }, 4000);
     }
 }

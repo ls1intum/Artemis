@@ -40,7 +40,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     hasComplaint: boolean;
     canOverride = false;
     isLoading: boolean;
-    hasErrors = false;
 
     private cancelConfirmationText: string;
 
@@ -100,7 +99,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.onError(`artemisApp.${error.error.entityName}.${error.error.errorKey}`);
+                    this.goToExerciseDashboard();
                 } else {
                     this.onError();
                 }
@@ -123,7 +122,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.goToExerciseDashboard();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.onError(`artemisApp.${error.error.entityName}.${error.error.errorKey}`);
+                    this.goToExerciseDashboard();
                 } else {
                     this.onError();
                 }
@@ -185,21 +184,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
-    onError(error?: string): void {
-        this.hasErrors = true;
+    onError(): void {
         this.submission = null;
         this.modelingExercise = null;
         this.result = null;
         this.model = null;
-        if (!error) {
-            error = 'modelingAssessmentEditor.messages.loadSubmissionFailed';
-        }
         this.jhiAlertService.clear();
-        this.jhiAlertService.error(error);
-        setTimeout(() => {
-            this.goToExerciseDashboard();
-            this.jhiAlertService.clear();
-        }, 4000);
+        this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
     onSaveAssessment() {
