@@ -41,7 +41,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     assessmentsAreValid = false;
     result: Result;
     totalScore: number;
-    invalidError: string;
+    invalidError: string | null;
     exercise: ModelingExercise;
     isAtLeastInstructor = false;
     readOnly: boolean;
@@ -74,7 +74,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.exampleSubmissionId = -1;
         } else {
             // (+) converts string 'id' to a number
-            this.exampleSubmissionId = +exampleSubmissionId;
+            this.exampleSubmissionId = +exampleSubmissionId!;
         }
 
         // if one of the flags is set, we navigated here from the tutor dashboard which means that we are not
@@ -91,8 +91,8 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.exercise = exerciseResponse.body;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.exercise = exerciseResponse.body!;
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
         });
 
         if (this.isNewSubmission) {
@@ -101,7 +101,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
+            this.exampleSubmission = exampleSubmissionResponse.body!;
             if (this.exampleSubmission.submission) {
                 this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
                 if (this.modelingSubmission.model) {
@@ -146,7 +146,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe(
             (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmissionId = this.exampleSubmission.id;
                 if (this.exampleSubmission.submission) {
                     this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
@@ -187,7 +187,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
 
         this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
             (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmissionId = this.exampleSubmission.id;
                 if (this.exampleSubmission.submission) {
                     this.modelingSubmission = this.exampleSubmission.submission as ModelingSubmission;
@@ -264,7 +264,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation) {
             this.exampleSubmission.assessmentExplanation = this.assessmentExplanation;
             this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.assessmentExplanation = this.exampleSubmission.assessmentExplanation;
             });
         }
@@ -290,13 +290,13 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }
 
     async back() {
-        const courseId = this.exercise.course.id;
+        const courseId = this.exercise.course!.id;
 
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);

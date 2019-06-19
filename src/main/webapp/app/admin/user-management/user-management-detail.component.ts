@@ -22,7 +22,7 @@ export class UserMgmtDetailComponent implements OnInit, OnDestroy {
 
     load(login: string) {
         this.userService.find(login).subscribe(response => {
-            this.user = response.body;
+            this.user = response.body!;
         });
     }
 

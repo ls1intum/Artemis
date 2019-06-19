@@ -7,7 +7,7 @@ export class ComplaintResponse implements BaseEntity {
     public id: number;
 
     public responseText: string;
-    public submittedTime: Moment;
+    public submittedTime: Moment | null;
     public complaint: Complaint;
     public reviewer: User;
 

@@ -21,7 +21,7 @@ export const enum SubmissionExerciseType {
 export abstract class Submission implements BaseEntity {
     public id: number;
     public submitted = false; // default value
-    public submissionDate: Moment;
+    public submissionDate: Moment | null;
     public type: SubmissionType;
     public exampleSubmission: boolean;
     public submissionExerciseType: SubmissionExerciseType;

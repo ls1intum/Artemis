@@ -152,7 +152,7 @@ export class DragAndDropQuestionUtil {
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         const that = this;
         return mappings.find(function(mapping: DragAndDropMapping) {
-            return that.isSameDropLocation(dropLocation, mapping.dropLocation) && that.isSameDragItem(dragItem, mapping.dragItem);
+            return that.isSameDropLocation(dropLocation, mapping.dropLocation!) && that.isSameDragItem(dragItem, mapping.dragItem!);
         }, this);
     }
 
@@ -164,13 +164,7 @@ export class DragAndDropQuestionUtil {
      * @return {Array} the resulting drop locations
      */
     getAllDropLocationsForDragItem(mappings: DragAndDropMapping[], dragItem: DragItem): DropLocation[] {
-        return mappings
-            .filter(function(mapping) {
-                return this.isSameDragItem(mapping.dragItem, dragItem);
-            }, this)
-            .map(function(mapping) {
-                return mapping.dropLocation;
-            });
+        return mappings.filter(mapping => this.isSameDragItem(mapping.dragItem!, dragItem)).map(mapping => mapping.dropLocation!);
     }
 
     /**
@@ -209,7 +203,7 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDropLocation(a: DropLocation, b: DropLocation): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 
     /**
@@ -220,6 +214,6 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDragItem(a: DragItem, b: DragItem): boolean {
-        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID != null && b.tempID != null && a.tempID === b.tempID)));
     }
 }

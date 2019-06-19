@@ -1,4 +1,4 @@
-# Artemis: Automated Assessment Management System 
+# Artemis: Interactive Learning with Individual Feedback 
 
 ![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
 ![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)

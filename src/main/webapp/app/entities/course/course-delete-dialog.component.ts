@@ -36,7 +36,7 @@ export class CourseDeleteDialogComponent {
     template: '',
 })
 export class CourseDeletePopupComponent implements OnInit, OnDestroy {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 

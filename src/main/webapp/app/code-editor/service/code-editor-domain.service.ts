@@ -19,14 +19,14 @@ export type DomainChange = DomainParticipationChange | DomainTestRepositoryChang
 @Injectable({ providedIn: 'root' })
 export class DomainService {
     protected domain: DomainChange;
-    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange>(null);
+    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | null>(null);
 
     public setDomain(domain: DomainChange) {
         this.domain = domain;
         this.subject.next(domain);
     }
 
-    public subscribeDomainChange(): Observable<DomainChange> {
+    public subscribeDomainChange(): Observable<DomainChange | null> {
         return this.subject;
     }
 }
@@ -68,10 +68,10 @@ export abstract class DomainDependent implements OnDestroy {
  */
 export abstract class DomainDependentEndpoint extends DomainDependent {
     private restResourceUrlBase = `${SERVER_API_URL}/api`;
-    protected restResourceUrl: string;
+    protected restResourceUrl: string | null;
     private websocketResourceUrlBase = '/topic';
-    protected websocketResourceUrlSend: string;
-    protected websocketResourceUrlReceive: string;
+    protected websocketResourceUrlSend: string | null;
+    protected websocketResourceUrlReceive: string | null;
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
