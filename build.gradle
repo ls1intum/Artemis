@@ -106,7 +106,7 @@ defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
 version = '3.2.0'
-description = 'Automated Assessment Management System for Interactive Learning'
+description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
