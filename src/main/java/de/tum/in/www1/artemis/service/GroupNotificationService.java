@@ -114,12 +114,11 @@ public class GroupNotificationService {
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise) {
+    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        String title = "Exercise updated";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" was updated.";
+        String title = "Exercise \"" + exercise.getTitle() + "\" updated";
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 

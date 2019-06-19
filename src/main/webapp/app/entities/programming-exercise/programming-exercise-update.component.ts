@@ -25,6 +25,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isSaving: boolean;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
+    notificationText: string | null;
 
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -45,6 +46,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
         });
@@ -108,7 +110,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
