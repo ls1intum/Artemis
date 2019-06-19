@@ -36,7 +36,8 @@
                 "newAttachment": "New Attachment",
                 "editAttachment": "Edit Attachment",
                 "notificationText": "Notification Text",
-                "notificationPlaceholder": "Optional: Notification about changes"
+                "notificationPlaceholder": "Optional: Notification about changes",
+                "error": "The file {{ fileName }} is too large. The maximum filesize is 10MB"
             }
         }
     }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
@@ -11,7 +11,7 @@ import { QuizExercise } from 'app/entities/quiz-exercise';
     templateUrl: './multiple-choice-question.component.html',
     providers: [ArtemisMarkdown],
 })
-export class MultipleChoiceQuestionComponent implements OnChanges {
+export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -19,7 +19,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         this._question = question;
         this.watchCollection();
     }
-    get question() {
+    get question(): MultipleChoiceQuestion {
         return this._question;
     }
     @Input()
@@ -44,20 +44,18 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
-    rendered: MultipleChoiceQuestion;
+    rendered?: MultipleChoiceQuestion;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    ngOnChanges(changes: SimpleChanges): void {}
-
-    watchCollection() {
+    watchCollection(): void {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new MultipleChoiceQuestion();
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
-        this.rendered.answerOptions = this.question.answerOptions.map(function(answerOption) {
+        this.rendered.answerOptions = this.question.answerOptions!.map(answerOption => {
             const renderedAnswerOption = new AnswerOption();
             renderedAnswerOption.text = artemisMarkdown.htmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdown(answerOption.hint);
@@ -66,15 +64,13 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         });
     }
 
-    toggleSelection(answerOption: AnswerOption) {
+    toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled) {
             // Do nothing
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter(function(selectedAnswerOption) {
-                return selectedAnswerOption.id !== answerOption.id;
-            });
+            this.selectedAnswerOptions = this.selectedAnswerOptions.filter(selectedAnswerOption => selectedAnswerOption.id !== answerOption.id);
         } else {
             this.selectedAnswerOptions.push(answerOption);
         }
@@ -85,9 +81,9 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         }
     }
 
-    isAnswerOptionSelected(answerOption: AnswerOption) {
+    isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            !!this.selectedAnswerOptions &&
+            this.selectedAnswerOptions != null &&
             this.selectedAnswerOptions.findIndex(function(selected) {
                 return selected.id === answerOption.id;
             }) !== -1

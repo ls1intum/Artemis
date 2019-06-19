@@ -25,7 +25,7 @@
                         <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0" jhiSortBy="pointsPerExerciseType.{{ exerciseType }}">
+                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="pointsPerExerciseType.{{ exerciseType }}">
                             <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span><fa-icon icon="sort"></fa-icon>
                         </th>
                     </ng-container>
@@ -37,7 +37,7 @@
                     <th>{{ exercises.length }}</th>
                     <th>{{ exercises.length }}</th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
+                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
                     </ng-container>
                     <th>{{ maxNumberOfOverallPoints }}</th>
                 </tr>
@@ -47,9 +47,9 @@
                     <th>{{ averageNumberOfParticipatedExercises | number: '1.0-1' }} ({{ (averageNumberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</th>
                     <th>{{ averageNumberOfSuccessfulExercises | number: '1.0-1' }} ({{ (averageNumberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1' }}%)</th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">
-                            {{ averageNumberOfPointsPerExerciseTypes.get(exerciseType) | number: '1.0-1' }} ({{
-                                (averageNumberOfPointsPerExerciseTypes.get(exerciseType) / maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100 | number: '1.0-1'
+                        <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
+                            {{ averageNumberOfPointsPerExerciseTypes.get(exerciseType)! | number: '1.0-1' }} ({{
+                                (averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100 | number: '1.0-1'
                             }}%)
                         </th>
                     </ng-container>
@@ -63,9 +63,9 @@
                     <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>
                     <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
-                        <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">
-                            {{ student.pointsPerExerciseType.get(exerciseType) | number: '1.0-1' }} ({{
-                                (student.pointsPerExerciseType.get(exerciseType) / maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100 | number: '1.0-1'
+                        <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
+                            {{ student.pointsPerExerciseType.get(exerciseType)! | number: '1.0-1' }} ({{
+                                (student.pointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100 | number: '1.0-1'
                             }}%)
                         </td>
                     </ng-container>

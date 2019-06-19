@@ -54,12 +54,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (params['courseId']) {
                 const courseId = params['courseId'];
                 this.courseService.find(courseId).subscribe(res => {
-                    const course = res.body;
+                    const course = res.body!;
                     this.programmingExercise.course = course;
                     this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
                     this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
                         (categoryRes: HttpResponse<string[]>) => {
-                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body);
+                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                         },
                         (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                     );
@@ -68,7 +68,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -92,7 +92,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
                 .pipe(
                     map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result])),
+                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
                     catchError(() => of(null)),
                 )
                 .subscribe(() => (this.templateParticipationResultLoaded = true));
@@ -130,7 +130,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-artemisApp-alert');
+        const errorMessage = error.headers.get('X-artemisApp-alert')!;
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;

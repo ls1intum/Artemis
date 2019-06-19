@@ -13,7 +13,7 @@ import { Exercise } from 'app/entities/exercise';
 export class CourseGradeBookComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
-    private course: Course;
+    private course: Course | null;
     public exercises: Exercise[];
 
     constructor(
@@ -24,14 +24,14 @@ export class CourseGradeBookComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.parent.params.subscribe(params => {
+        this.subscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (this.course === undefined) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body);
+                this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }

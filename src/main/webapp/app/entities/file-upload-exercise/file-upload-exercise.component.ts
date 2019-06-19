@@ -34,7 +34,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     protected loadExercises(): void {
         this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<FileUploadExercise[]>) => {
-                this.fileUploadExercises = res.body;
+                this.fileUploadExercises = res.body!;
                 // reconnect exercise with course
                 this.fileUploadExercises.forEach(exercise => {
                     exercise.course = this.course;

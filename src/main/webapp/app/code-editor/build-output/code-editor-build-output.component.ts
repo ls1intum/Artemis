@@ -33,7 +33,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         return this.buildLogErrorsValue;
     }
     @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number; resizableMinHeight: number }>();
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
     @Output()
     buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
@@ -121,7 +121,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
-                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer)),
+                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
                         const buildLogErrors = this.rawBuildLogs.extractErrors();
@@ -207,7 +207,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Else -> show build logs.
      * @param result
      */
-    fetchBuildResults(result: Result): Observable<BuildLogEntry[] | null> {
+    fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
         if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
             return of([]);
         } else {

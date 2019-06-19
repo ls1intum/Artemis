@@ -10,11 +10,11 @@ import { PasswordResetFinishService } from './password-reset-finish.service';
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
-    doNotMatch: string;
-    error: string;
+    doNotMatch: string | null;
+    error: string | null;
     keyMissing: boolean;
     resetAccount: any;
-    success: string;
+    success: string | null;
     modalRef: NgbModalRef;
     key: string;
 

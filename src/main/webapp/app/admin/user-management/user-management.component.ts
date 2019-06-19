@@ -17,8 +17,8 @@ import { UserMgmtDeleteDialogComponent } from 'app/admin';
 export class UserMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;
     users: User[];
-    error: string;
-    success: string;
+    error: string | null;
+    success: string | null;
     routeData: Subscription;
     links: any;
     totalItems: string;
@@ -49,7 +49,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.accountService.identity().then(user => {
-            this.currentAccount = user;
+            this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
         });
@@ -85,7 +85,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body, res.headers), (res: HttpErrorResponse) => this.onError(res));
+            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
 
     trackIdentity(index: number, item: User) {
@@ -131,12 +131,12 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     }
 
     private onSuccess(data: User[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = headers.get('X-Total-Count');
+        this.links = this.parseLinks.parse(headers.get('link')!);
+        this.totalItems = headers.get('X-Total-Count')!;
         this.users = data;
     }
 
     private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, null);
+        this.alertService.error(error.error, error.message, undefined);
     }
 }

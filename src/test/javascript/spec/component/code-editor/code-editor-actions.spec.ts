@@ -1,3 +1,4 @@
+/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
