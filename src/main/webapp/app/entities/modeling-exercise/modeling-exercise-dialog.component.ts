@@ -28,7 +28,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    notificationText: string;
+    notificationText: string | null;
 
     courses: Course[];
 

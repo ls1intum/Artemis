@@ -59,7 +59,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     course: Course;
     quizExercise: QuizExercise;
     courseRepository: CourseService;
-    notificationText: string;
+    notificationText: string | null;
 
     entity: QuizExercise;
     savedEntity: QuizExercise;

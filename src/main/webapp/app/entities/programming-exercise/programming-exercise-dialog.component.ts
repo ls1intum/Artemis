@@ -31,7 +31,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
-    notificationText: string;
+    notificationText: string | null;
 
     constructor(
         public activeModal: NgbActiveModal,
