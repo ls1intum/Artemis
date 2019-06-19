@@ -178,7 +178,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         }
 
-        submissionsObservable
+        submissionsObservable!
             .pipe(
                 map(res => res.body),
                 map(this.reconnectEntities),
@@ -211,7 +211,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
         }
 
-        submissionObservable.subscribe(
+        submissionObservable!.subscribe(
             (submission: Submission) => {
                 this.unassessedSubmission = submission;
                 this.submissionLockLimitReached = false;
