@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Notification, NotificationService, NotificationType } from 'app/entities/notification';
+import { Notification, NotificationService } from 'app/entities/notification';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService, User, UserService } from 'app/core';
 import * as moment from 'moment';
@@ -52,7 +52,7 @@ export class NotificationContainerComponent implements OnInit {
 
     updateNotifications() {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
-            return moment(b.notificationDate).valueOf() - moment(a.notificationDate).valueOf();
+            return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
         });
         this.updateNotificationCount();
     }
@@ -64,14 +64,14 @@ export class NotificationContainerComponent implements OnInit {
         if (!this.currentUser) {
             return (this.notificationCount = this.notifications.length);
         }
-        this.notificationCount = this.notifications.filter((el: Notification) => el.notificationDate.isAfter(this.currentUser.lastNotificationRead)).length;
+        this.notificationCount = this.notifications.filter((el: Notification) => el.notificationDate!.isAfter(this.currentUser.lastNotificationRead!)).length;
     }
 
     updateNotificationDate() {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
-            res.body.lastNotificationRead = moment();
+            res.body!.lastNotificationRead = moment();
             setTimeout(() => {
-                this.currentUser = res.body;
+                this.currentUser = res.body!;
                 this.updateNotifications();
             }, 1500);
         });

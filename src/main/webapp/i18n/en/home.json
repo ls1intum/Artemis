@@ -2,12 +2,11 @@
     "home": {
         "title": "Welcome to Artemis!",
         "login": "Login",
-        "subtitle": "Interactive Learning with an Automated Assessment Management System",
+        "subtitle": "Interactive Learning with Individual Feedback",
         "please": "Please",
-        "pleaseSignIn": "Please sign in using your TUM credentials.",
-        "usingTUMcredentials": "using your TUM credentials",
+        "pleaseSignIn": "Please sign in with your TUM account.",
         "logged": {
-            "message": "You are logged in as user \"{{username}}\". Go to your <a class=\"alert-link\" routerLink=\"courses\">courses</a> to get started."
+            "message": "You are logged in as user \"{{username}}\"."
         },
         "errors": {
             "failedToLogin": "<span class='bold'>Failed to sign in!</span> Please check your username and password and try again.",

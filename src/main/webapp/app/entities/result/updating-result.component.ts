@@ -65,7 +65,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 // Ignore initial null result of subscription
                 filter(result => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
-                filter(result => this.showUngradedResults || result.rated === true),
+                filter((result: Result) => this.showUngradedResults || result.rated === true),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
                 tap(result => (this.result = result)),
             )

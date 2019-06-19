@@ -22,14 +22,14 @@ export class JhiHealthService {
         return response;
     }
 
-    getBaseName(name: string): string {
+    getBaseName(name: string): string | undefined {
         if (name) {
             const split = name.split('.');
             return split[0];
         }
     }
 
-    getSubSystemName(name: string): string {
+    getSubSystemName(name: string): string | undefined {
         if (name) {
             const split = name.split('.');
             split.splice(0, 1);
