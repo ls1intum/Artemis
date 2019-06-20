@@ -170,6 +170,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
+    /**
+     * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
+     * in the exercise dashboard.
+     */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
@@ -203,6 +207,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
         });
     };
 
+    /**
+     * Get a submission from the server that does not have an assessment yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
+     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
+     * the server will respond with a BAD REQUEST response here.
+     */
     private getSubmissionWithoutAssessment(): void {
         let submissionObservable: Observable<Submission> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
