@@ -20,7 +20,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
     @Input()
     exercise: ProgrammingExercise;
 
-    latestResult: Result;
+    latestResult: Result | null;
     resultSubscription: Subscription;
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}

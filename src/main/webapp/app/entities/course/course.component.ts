@@ -12,16 +12,22 @@ import { CourseService } from './course.service';
     styles: ['.course-table {padding-bottom: 5rem}'],
 })
 export class CourseComponent implements OnInit, OnDestroy {
+    predicate: string;
+    reverse: boolean;
+
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {}
+    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+        this.predicate = 'id';
+        // show the newest courses first and the oldest last
+        this.reverse = false;
+    }
 
     loadAll() {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                // show the newest courses first and the oldest last
-                this.courses = res.body.reverse();
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -46,4 +52,6 @@ export class CourseComponent implements OnInit, OnDestroy {
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
+
+    callback() {}
 }

@@ -193,7 +193,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     ...this.buildLogErrors,
                     errors: {
                         ...this.buildLogErrors.errors,
-                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change), this.buildLogErrors.errors[this.selectedFile]),
+                        [this.selectedFile]: this.editorChangeLog.reduce((errors, change) => errors.update(change)!, this.buildLogErrors.errors[this.selectedFile]),
                     },
                 };
             }

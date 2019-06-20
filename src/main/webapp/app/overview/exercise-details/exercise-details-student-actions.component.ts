@@ -71,19 +71,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     participationStatus(): ParticipationStatus {
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
+            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
             } else if (
                 !this.hasParticipations(this.exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
                 quizExercise.visibleToStudents
             ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate).isAfter(moment())) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate).isAfter(moment())) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(this.exercise.participations[0])) {
@@ -116,7 +116,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
-        return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate).isBefore(moment());
+        return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
     }
 
     isOnlineEditorAllowed(): boolean {

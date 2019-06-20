@@ -51,7 +51,7 @@ export class CodeEditorFileService {
             return testRegex.test(fileName) ? fileName.replace(replaceRegex, fileChange.newFileName) : fileName;
         } else if (fileChange instanceof DeleteFileChange) {
             const testRegex = new RegExp(`^${fileChange.fileName}($|/.*)`);
-            return testRegex.test(fileName) ? null : fileName;
+            return testRegex.test(fileName) ? undefined : fileName;
         } else {
             return fileName;
         }

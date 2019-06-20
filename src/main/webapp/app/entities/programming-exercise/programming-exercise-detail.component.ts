@@ -32,22 +32,30 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             this.programmingExercise.solutionParticipation.exercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.exercise = this.programmingExercise;
 
-            this.resultService
-                .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id)
-                .subscribe(results => {
-                    this.programmingExercise.solutionParticipation.results = results.body;
-                });
+            const course = this.programmingExercise.course!;
+            this.resultService.findResultsForParticipation(course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id).subscribe(results => {
+                this.programmingExercise.solutionParticipation.results = results.body!;
+            });
 
-            this.resultService
-                .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id)
-                .subscribe(results => {
-                    this.programmingExercise.templateParticipation.results = results.body;
-                });
+            this.resultService.findResultsForParticipation(course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id).subscribe(results => {
+                this.programmingExercise.templateParticipation.results = results.body!;
+            });
         });
     }
 
     previousState() {
         window.history.back();
+    }
+
+    squashTemplateCommits() {
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+            },
+        );
     }
 
     generateStructureOracle() {

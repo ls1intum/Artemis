@@ -106,7 +106,7 @@ defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
 version = '3.2.0'
-description = 'Automated Assessment Management System for Interactive Learning'
+description = 'Interactive Learning with Individual Feedback'
 
 springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
@@ -164,7 +164,7 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.2.201906051522-r'
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.4.0.201906121030-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     implementation "org.imsglobal:basiclti-util:1.2.0"

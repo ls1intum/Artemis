@@ -53,10 +53,10 @@
     <div class="editor-container flex-grow-1">
         <jhi-modeling-assessment
             *ngIf="submission"
-            [diagramType]="modelingExercise.diagramType"
-            [maxScore]="modelingExercise.maxScore"
+            [diagramType]="modelingExercise?.diagramType"
+            [maxScore]="modelingExercise?.maxScore"
             [model]="model"
-            [feedbacks]="result.feedbacks"
+            [feedbacks]="result?.feedbacks"
             [highlightedElementIds]="highlightedElementIds"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
@@ -74,8 +74,8 @@
         Review Complaint
     </h2>
     <jhi-complaints-for-tutor-form
-        [resultId]="result.id"
-        [isAllowedToRespond]="result.assessor.id !== userId"
+        [resultId]="result?.id"
+        [isAllowedToRespond]="result?.assessor.id !== userId"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
     </jhi-complaints-for-tutor-form>

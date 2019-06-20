@@ -89,9 +89,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         /** Array with all answer option Ace Editors
          *  Note: we filter out the question Editor (identified by his width)
          **/
-        const answerEditors: AceEditorComponent[] = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
+        const answerEditors = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
 
-        this.question.answerOptions.forEach((answer, index) => {
+        this.question.answerOptions!.forEach((answer, index) => {
             requestAnimationFrame(
                 function() {
                     answerEditors[index].setTheme('chrome');
@@ -246,12 +246,12 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const backupAnswer = this.backupQuestion.answerOptions.find(answerBackup => answer.id === answerBackup.id);
+        const backupAnswer = this.backupQuestion.answerOptions!.find(answerBackup => answer.id === answerBackup.id)!;
         // Find current index of our AnswerOption
-        const answerIndex = this.question.answerOptions.indexOf(answer);
+        const answerIndex = this.question.answerOptions!.indexOf(answer);
         // Remove current answerOption at given index and insert the backup at the same position
-        this.question.answerOptions.splice(answerIndex, 1);
-        this.question.answerOptions.splice(answerIndex, 0, backupAnswer);
+        this.question.answerOptions!.splice(answerIndex, 1);
+        this.question.answerOptions!.splice(answerIndex, 0, backupAnswer);
     }
 
     /**
@@ -260,8 +260,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption} the Answer which should be deleted
      */
     deleteAnswer(answer: AnswerOption) {
-        const index = this.question.answerOptions.indexOf(answer);
-        this.question.answerOptions.splice(index, 1);
+        const index = this.question.answerOptions!.indexOf(answer);
+        this.question.answerOptions!.splice(index, 1);
     }
 
     /**
@@ -270,7 +270,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param  answer {AnswerOption} the Answer which should be deleted
      */
     setAnswerInvalid(answer: AnswerOption) {
-        this.question.answerOptions[this.question.answerOptions.indexOf(answer)].invalid = true;
+        const answerIndex = this.question.answerOptions!.indexOf(answer);
+        this.question.answerOptions![answerIndex].invalid = true;
         this.questionUpdated.emit();
     }
 

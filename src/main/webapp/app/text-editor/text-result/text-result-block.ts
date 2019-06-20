@@ -22,15 +22,14 @@ export class TextResultBlock {
     }
 
     get feedbackType(): FeedbackType {
-        if (!this.feedback) {
-            return null;
+        if (!this.feedback || this.feedback.credits === 0 || this.feedback.credits == null) {
+            return FeedbackType.NEUTRAL;
         } else if (this.feedback.credits > 0) {
             return FeedbackType.POSITIVE;
         } else if (this.feedback.credits < 0) {
             return FeedbackType.NEGATIVE;
-        } else {
-            return FeedbackType.NEUTRAL;
         }
+        return FeedbackType.NEUTRAL;
     }
 
     get cssClass(): string {
@@ -42,7 +41,8 @@ export class TextResultBlock {
             return 'check';
         } else if (this.feedbackType === FeedbackType.NEGATIVE) {
             return 'times';
-        } else if (this.feedbackType === FeedbackType.NEUTRAL) {
+        } else {
+            // if (this.feedbackType === FeedbackType.NEUTRAL)
             return 'dot';
         }
     }
@@ -56,7 +56,8 @@ export class TextResultBlock {
             return 'alert alert-success';
         } else if (this.feedbackType === FeedbackType.NEGATIVE) {
             return 'alert alert-danger';
-        } else if (this.feedbackType === FeedbackType.NEUTRAL) {
+        } else {
+            // if (this.feedbackType === FeedbackType.NEUTRAL)
             return 'alert alert-secondary';
         }
     }
