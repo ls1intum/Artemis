@@ -7,6 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -25,6 +26,8 @@ export class ListOfComplaintsComponent implements OnInit {
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
     showAddressedComplaints = false;
+
+    loading = true;
 
     constructor(
         private complaintService: ComplaintService,
@@ -67,6 +70,7 @@ export class ListOfComplaintsComponent implements OnInit {
                 }
             },
             (err: HttpErrorResponse) => this.onError(err.message),
+            () => (this.loading = false),
         );
     }
 
@@ -113,5 +117,19 @@ export class ListOfComplaintsComponent implements OnInit {
         } else {
             this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
         }
+    }
+
+    shouldHighlightComplaint(complaint: Complaint) {
+        // Reviewed complaints shouldn't be highlight
+        if (complaint.accepted !== undefined) {
+            return false;
+        }
+
+        const complaintSubmittedTime = complaint.submittedTime;
+        if (complaintSubmittedTime) {
+            return moment().diff(complaintSubmittedTime, 'days') > 7; // We highlight complaints older than a week
+        }
+
+        return false;
     }
 }

@@ -44,7 +44,8 @@
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
                 "rejected": "Rejected",
-                "showAddressedComplaints": "Show addressed complaints"
+                "showAddressedComplaints": "Show addressed complaints",
+                "noComplaintsToShow": "There isn't any complaint to show at the moment"
             }
         }
     }

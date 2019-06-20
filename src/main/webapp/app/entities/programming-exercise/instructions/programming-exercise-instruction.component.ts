@@ -118,7 +118,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.isLoading = true;
             this.loadInstructions()
                 .pipe(
-                    // If no instructions can be loaded, abort pipe and hide the instruction panel
+                    // If no instructions TestBed.configureTestingModulecan be loaded, abort pipe and hide the instruction panel
                     tap(problemStatement => {
                         if (!problemStatement) {
                             this.onNoInstructionsAvailable.emit();

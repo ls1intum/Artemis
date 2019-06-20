@@ -44,7 +44,8 @@
                 "noReply": "Noch keine Antwort",
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
-                "showAddressedComplaints": "Adressierte Beschwerden anzeigen"
+                "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
+                "noComplaintsToShow": "Es gibt im Moment keine Beschwerden zu zeigen."
             }
         }
     }
