@@ -348,7 +348,7 @@ public class ParticipationResource {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
         checkAccessPermissionOwner(participation);
-        Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
+        Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
             results.add(result);

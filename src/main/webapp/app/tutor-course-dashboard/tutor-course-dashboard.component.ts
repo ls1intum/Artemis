@@ -56,7 +56,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
-                    this.unfinishedExercises = this.course.exercises.filter(exercise => (exercise.numberOfAssessments || 0) < (exercise.numberOfParticipations || 0)); // TODO: I think we should use a different criterion how to filter unfinished exercises
+                    this.unfinishedExercises = this.course.exercises.filter(exercise => (exercise.numberOfAssessments || 0) < (exercise.numberOfParticipations || 0));
+                    // TODO: I think we should use a different criterion how to filter unfinished exercises
                     this.finishedExercises = this.course.exercises.filter(exercise => exercise.numberOfAssessments === exercise.numberOfParticipations); // TODO: I think we should use a different criterion how to filter finished exercises
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));

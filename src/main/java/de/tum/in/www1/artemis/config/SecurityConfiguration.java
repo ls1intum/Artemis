@@ -32,6 +32,8 @@ import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
+import javax.annotation.PostConstruct;
+
 // @formatter:off
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -60,6 +62,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
+    @PostConstruct
+    public void init() {
+        try {
+            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
+        }
+        catch (Exception e) {
+            throw new BeanInitializationException("Security configuration failed", e);
+        }
+    }
+
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
@@ -82,7 +95,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity web) {
         // @formatter:off
         web.ignoring().antMatchers(HttpMethod.OPTIONS, "/**").antMatchers("/app/**/*.{js,html}").antMatchers("/i18n/**").antMatchers("/content/**").antMatchers("/test/**");
-
         web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
         web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
