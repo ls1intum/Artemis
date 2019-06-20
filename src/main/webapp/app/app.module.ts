@@ -8,7 +8,6 @@ import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgJhipsterModule } from 'ng-jhipster';
 import { Angulartics2Module } from 'angulartics2';
-import { GuidedTourModule, GuidedTourService } from 'ngx-guided-tour';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
@@ -75,7 +74,6 @@ import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
         BrowserModule,
         BrowserAnimationsModule,
         ArTEMiSAppRoutingModule,
-        GuidedTourModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
@@ -153,7 +151,6 @@ import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
         JhiWebsocketService,
         ParticipationDataProvider,
         PendingChangesGuard,
-        GuidedTourService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

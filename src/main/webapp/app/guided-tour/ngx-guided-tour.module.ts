@@ -1,21 +1,19 @@
 import { GuidedTourService } from './guided-tour.service';
 import { GuidedTourComponent } from './guided-tour.component';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModuleWithProviders } from '@angular/compiler/src/core';
-import { ArTEMiSSharedModule } from 'app/shared';
 
 @NgModule({
     declarations: [GuidedTourComponent],
-    imports: [CommonModule, ArTEMiSSharedModule],
+    imports: [CommonModule],
     exports: [GuidedTourComponent],
     entryComponents: [GuidedTourComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class GuidedTourModule {
+export class NgxGuidedTourModule {
     public static forRoot(): ModuleWithProviders {
         return {
-            ngModule: GuidedTourModule,
+            ngModule: NgxGuidedTourModule,
             providers: [ErrorHandler, GuidedTourService],
         };
     }

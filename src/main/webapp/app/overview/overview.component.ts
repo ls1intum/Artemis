@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
-import { TUM_REGEX } from 'app/app.constants';
+import { cloneDeep } from 'lodash';
+import { GuidedTour, Orientation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -15,12 +17,42 @@ export class OverviewComponent {
     public courses: Course[];
     public nextRelevantCourse: Course;
 
+    public overviewTour: GuidedTour = {
+        tourId: 'overview-tour',
+        useOrb: false,
+        steps: [
+            {
+                title: 'Welcome to Artemis',
+                selector: '.navbar-brand',
+                content: "<p>Please click on this <a href='#'>link</a></p>",
+                orientation: Orientation.Right,
+            },
+            {
+                title: 'Course Overview',
+                selector: '#overview-menu',
+                content: 'On this page you can see an overview of all courses which you are signed up for.',
+                orientation: Orientation.BottomLeft,
+            },
+            {
+                title: 'Course Overview',
+                selector: '#course-admin-menu',
+                content: 'Navigate here to see the course administration',
+                orientation: Orientation.Bottom,
+            },
+            {
+                title: 'General page step',
+                content: 'We have the concept of general page steps so that a you can introduce a user to a page or non specific instructions',
+            },
+        ],
+    };
+
     constructor(
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
+        private guidedTourService: GuidedTourService,
     ) {
         this.loadAndFilterCourses();
     }
@@ -56,5 +88,9 @@ export class OverviewComponent {
             });
         }
         return relevantExercise;
+    }
+
+    public startTour(): void {
+        this.guidedTourService.startTour(this.overviewTour);
     }
 }

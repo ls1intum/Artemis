@@ -1,0 +1,281 @@
+@import 'dot-navigation';
+
+$tour-zindex: 1081 !default;
+$tour-step-color: #ffffff !default;
+$tour-text-color: #231f1f !default;
+$tour-next-button-color: #17a2b8 !default;
+$tour-next-button-hover: #117a8b !default;
+$tour-back-button-color: #17a2b8 !default;
+$tour-back-button-hover: #117a8b !default;
+$tour-disabled-button-color: #f2f2f2 !default;
+$tour-button-text-color: #ffffff !default;
+$tour-button-text-disabled: #a3a3a3 !default;
+$tour-orb-color: #625aff !default;
+$tour-shadow-color: #4c4c4c !default;
+
+body.tour-open {
+    overflow: hidden;
+}
+
+@mixin tour-triangle($direction, $color: currentColor, $size: 1rem) {
+    @if not index(top right bottom left, $direction) {
+        @error 'Direction must be either `top`, `right`, `bottom` or `left`.';
+    }
+
+    $opposite-direction: top;
+    @if $direction==top {
+        $opposite-direction: bottom;
+    }
+    @if $direction==bottom {
+        $opposite-direction: top;
+    }
+    @if $direction==right {
+        $opposite-direction: left;
+    }
+    @if $direction==left {
+        $opposite-direction: right;
+    }
+
+    width: 0;
+    height: 0;
+    content: '';
+    z-index: 2;
+    border-#{$opposite-direction}: $size solid $color;
+    $perpendicular-borders: $size solid transparent;
+    @if $direction==top or $direction==bottom {
+        border-left: $perpendicular-borders;
+        border-right: $perpendicular-borders;
+    } @else if $direction==right or $direction==left {
+        border-bottom: $perpendicular-borders;
+        border-top: $perpendicular-borders;
+    }
+}
+
+jhi-guided-tour {
+    .guided-tour-user-input-mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: block;
+        height: 100%;
+        width: 100%;
+        max-height: 100vh;
+        text-align: center;
+        opacity: 0;
+        z-index: $tour-zindex;
+    }
+
+    .guided-tour-spotlight-overlay {
+        position: fixed;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.2), 0 0 1.5rem rgba(0, 0, 0, 0.2);
+        z-index: $tour-zindex + 1;
+    }
+
+    .tour-orb {
+        background-color: $tour-orb-color;
+        border-radius: 50%;
+        box-shadow: 0 0 0.3rem 0.1rem $tour-orb-color;
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        z-index: $tour-zindex - 2;
+
+        .tour-orb-ring {
+            width: 35px;
+            height: 35px;
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s linear infinite;
+
+            &:after {
+                border: 1rem solid $tour-orb-color;
+                box-shadow: 0 0 0.1rem 0.1rem $tour-orb-color;
+                content: '';
+                display: inline-block;
+                height: 100%;
+                width: 100%;
+                border-radius: 50%;
+            }
+        }
+
+        @keyframes pulse {
+            from {
+                transform: translate(-50%, -50%) scale(0.45);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+    }
+
+    .tour-step {
+        min-width: 400px;
+        position: fixed;
+        z-index: $tour-zindex + 2;
+
+        &.page-tour-step {
+            max-width: 400px;
+            width: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tour-block {
+            background-color: $tour-step-color;
+            box-shadow: 0 0.4rem 0.6rem $tour-shadow-color;
+            color: $tour-text-color;
+            padding: 25px 20px 20px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+
+            .tour-title {
+                font-size: 14px;
+                text-transform: uppercase;
+                padding-bottom: 30px;
+
+                fa-icon {
+                    padding-right: 10px;
+                }
+            }
+
+            .tour-content {
+                min-height: 80px;
+                padding-bottom: 30px;
+                font-size: 15px;
+            }
+
+            .tour-buttons {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                overflow: hidden;
+
+                button {
+                    cursor: pointer;
+                    float: right;
+                    font-size: 14px;
+                    border: none;
+                    outline: none;
+                    padding: 8px 15px;
+
+                    &:disabled {
+                        color: $tour-button-text-disabled !important;
+                        background-color: $tour-disabled-button-color !important;
+                        cursor: default;
+
+                        fa-icon {
+                            color: $tour-button-text-disabled !important;
+                        }
+                    }
+
+                    &.back-button {
+                        background-color: $tour-back-button-color;
+                        color: $tour-button-text-color;
+
+                        &:hover {
+                            background-color: $tour-back-button-hover;
+                            color: $tour-button-text-color;
+                        }
+
+                        fa-icon {
+                            padding-right: 10px;
+                        }
+                    }
+
+                    &.next-button {
+                        background-color: $tour-next-button-color;
+                        color: $tour-button-text-color;
+
+                        &:hover {
+                            background-color: $tour-next-button-hover;
+                            color: $tour-button-text-color;
+                        }
+
+                        fa-icon {
+                            padding-left: 10px;
+                        }
+                    }
+                }
+            }
+        }
+
+        &.tour-bottom,
+        &.tour-bottom-right,
+        &.tour-bottom-left {
+            .tour-arrow::before {
+                @include tour-triangle(top, $tour-step-color);
+                position: absolute;
+            }
+            .tour-block {
+                margin-top: 15px;
+            }
+        }
+
+        &.tour-top,
+        &.tour-top-right,
+        &.tour-top-left {
+            .tour-arrow::before {
+                @include tour-triangle(bottom, $tour-step-color);
+                position: absolute;
+                bottom: 0;
+            }
+            .tour-block {
+                margin-bottom: 15px;
+            }
+        }
+
+        &.tour-bottom,
+        &.tour-top {
+            .tour-arrow::before {
+                transform: translateX(-50%);
+                left: 50%;
+            }
+        }
+
+        &.tour-bottom-right,
+        &.tour-top-right {
+            .tour-arrow::before {
+                transform: translateX(-100%);
+                left: calc(100% - 5px);
+            }
+        }
+
+        &.tour-bottom-left,
+        &.tour-top-left {
+            .tour-arrow::before {
+                left: 15px;
+            }
+        }
+
+        &.tour-left {
+            .tour-arrow::before {
+                @include tour-triangle(right, $tour-step-color);
+                position: absolute;
+                left: 100%;
+                transform: translateX(-100%);
+                top: 5px;
+            }
+            .tour-block {
+                margin-right: 15px;
+            }
+        }
+
+        &.tour-right {
+            .tour-arrow::before {
+                @include tour-triangle(left, $tour-step-color);
+                position: absolute;
+                left: 0;
+                top: 15px;
+            }
+            .tour-block {
+                margin-left: 15px;
+            }
+        }
+    }
+}

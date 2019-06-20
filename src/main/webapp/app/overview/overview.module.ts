@@ -30,6 +30,8 @@ import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.mod
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArTEMiSCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -46,6 +48,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSCourseRegistrationSelector,
+        GuidedTourModule.forRoot(),
     ],
     declarations: [
         OverviewComponent,
@@ -63,7 +66,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseDetailsStudentActionsComponent,
     ],
     entryComponents: [],
-    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [GuidedTourService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     exports: [],
 })
