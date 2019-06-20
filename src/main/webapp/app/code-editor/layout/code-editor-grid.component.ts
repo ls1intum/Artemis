@@ -20,7 +20,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
     @Input()
     exerciseTitle: string;
 
-    resizableMinHeight = 400;
+    resizableMinHeight = 500;
     resizableMaxHeight = 1200;
     interactResizable: Interactable;
 
@@ -69,23 +69,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
     toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
-        const $card = $(target).closest('.card');
+        const $card = $(target).closest('.collapsable');
+        const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
 
-        if ($card.hasClass('collapsed')) {
-            $card.removeClass('collapsed');
+        if ($card.hasClass(collapsed)) {
+            $card.removeClass(collapsed);
             interactResizable.resizable({ enabled: true });
-
-            // Reset min width if argument was provided
-            if (minWidth) {
-                $card.width(minWidth + 'px');
-            }
-            // Reset min height if argument was provided
-            if (minHeight) {
-                $card.height(minHeight + 'px');
-            }
         } else {
-            $card.addClass('collapsed');
-            horizontal ? $card.width('55px') : $card.height('35px');
+            $card.addClass(collapsed);
             interactResizable.resizable({ enabled: false });
         }
     }

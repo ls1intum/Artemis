@@ -1,6 +1,6 @@
 <div class="editor-wrapper">
     <!-- Top bar -->
-    <nav class="navbar navbar-light navbar-expand-sm jh-navbar d-flex">
+    <nav class="editor-statusbar">
         <!-- Exercise title -->
         <div class="jh-logo-container float-left editor-top-left">
             <span>{{ exerciseTitle }}</span>
@@ -10,7 +10,7 @@
 
     <div class="editor-main">
         <!-- File browser -->
-        <div class="editor-sidebar-left">
+        <div class="editor-sidebar-left collapsable">
             <ng-content select="[editorSidebarLeft]"></ng-content>
         </div>
 
@@ -20,14 +20,14 @@
         </div>
 
         <!-- Instructions -->
-        <div class="editor-sidebar-right">
+        <div class="editor-sidebar-right collapsable">
             <ng-content select="[editorSidebarRight]"></ng-content>
         </div>
-
-        <!-- Required for resizing; don't remove empty span -->
-        <div class="rg-main-bottom"><span></span></div>
     </div>
-    <div class="editor-bottom">
+    <!-- Required for resizing; don't remove empty span -->
+    <div class="rg-main-bottom"><span></span></div>
+
+    <div class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
     </div>
 </div>

@@ -16,19 +16,18 @@
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"
     >
-        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise">
-            <div instructionStatus>
-                <jhi-programming-exercise-instruction-testcase-status
-                    [exerciseTestCases]="exerciseTestCases"
-                    [problemStatement]="exercise.problemStatement"
-                    [taskRegex]="taskRegex"
-                    class="editable-instruction-container__status"
-                ></jhi-programming-exercise-instruction-testcase-status>
-                <span id="instructions-status">
-                    <fa-icon *ngIf="!unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
-                    <fa-icon *ngIf="unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
-                </span>
-            </div>
-        </jhi-programming-exercise-instructions>
+        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"> </jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
+    <div class="card-footer">
+        <jhi-programming-exercise-instruction-testcase-status
+            [exerciseTestCases]="exerciseTestCases"
+            [problemStatement]="exercise.problemStatement"
+            [taskRegex]="taskRegex"
+            class="editable-instruction-container__status"
+        ></jhi-programming-exercise-instruction-testcase-status>
+        <span id="instructions-status">
+            <fa-icon *ngIf="!unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
+            <fa-icon *ngIf="unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
+        </span>
+    </div>
 </div>

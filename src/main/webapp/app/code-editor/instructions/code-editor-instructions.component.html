@@ -1,4 +1,4 @@
-<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card instructions resizable-instructions p-0 border border-lightgrey">
+<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="instructions card resizable-instructions">
     <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
@@ -11,7 +11,7 @@
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
         [exercise]="exercise"
         [participation]="participation"
-        class="card-body p-0"
+        class="card-body p-0 instructions__content"
     >
     </jhi-programming-exercise-instructions>
     <ng-template #markdownEditorInstructions>
@@ -21,7 +21,7 @@
             [templateParticipation]="templateParticipation"
             [markdownEditorHeight]="MarkdownEditorHeight.MEDIUM"
             [enableResize]="false"
-            class="card-body p-0"
+            class="card-body p-0 instructions__content"
         >
         </jhi-programming-exercise-editable-instructions>
     </ng-template>
