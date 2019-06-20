@@ -85,6 +85,10 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
                 tempResults.forEach(result => {
                     result.participation!.results = [result];
                     result.participation!.exercise = this.exercise;
+                    result.durationInMinutes = this.durationInMinutes(
+                        result.completionDate!,
+                        result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
+                    );
                 });
                 this.allResults = tempResults;
                 this.filterResults();
@@ -102,7 +106,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    durationString(completionDate: Moment, initializationDate: Moment) {
+    durationInMinutes(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 

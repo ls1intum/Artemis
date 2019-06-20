@@ -14,30 +14,35 @@
     <div class="table-responsive" *ngIf="courses">
         <table class="table table-striped">
             <thead>
-                <tr>
-                    <th>
-                        <span>{{ 'global.field.id' | translate }}</span>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                    <th jhiSortBy="id">
+                        <span>{{ 'global.field.id' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th>
-                        <span>{{ 'artemisApp.course.title' | translate }}</span>
+                    <th jhiSortBy="title">
+                        <span>{{ 'artemisApp.course.title' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
                     </th>
                     <th>
                         <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
                     </th>
-                    <th>
-                        <span>{{ 'artemisApp.course.startDate' | translate }}</span>
+                    <th jhiSortBy="startDate">
+                        <span>{{ 'artemisApp.course.startDate' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th>
-                        <span>{{ 'artemisApp.course.endDate' | translate }}</span>
+                    <th jhiSortBy="endDate">
+                        <span>{{ 'artemisApp.course.endDate' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th>
-                        <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span>
+                    <th jhiSortBy="onlineCourse">
+                        <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span
+                        ><fa-icon icon="sort"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let course of courses; trackBy: trackId">
+                <tr *ngFor="let course of courses | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
                         <a [routerLink]="['/course', course.id, 'view']">{{ course.id }}</a>
                     </td>
