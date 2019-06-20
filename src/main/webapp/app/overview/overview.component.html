@@ -35,5 +35,7 @@
         <jhi-overview-course-card [course]="course"></jhi-overview-course-card>
     </div>
 </div>
-<button (click)="startTour()">Start Tour</button>
-<jhi-guided-tour [tourSteps]="overviewTour.steps"></jhi-guided-tour>
+<div class="guided-tour-button" (click)="startTour()">
+    <fa-icon icon="info"></fa-icon>
+</div>
+<jhi-guided-tour [steps]="this.overviewTour.steps"></jhi-guided-tour>

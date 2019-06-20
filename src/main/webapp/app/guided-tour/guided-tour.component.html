@@ -25,19 +25,17 @@
     >
         <div *ngIf="currentTourStep.selector" class="tour-arrow"></div>
         <div class="tour-block">
-            <h3 class="tour-title" *ngIf="currentTourStep.title && currentTourStep.selector">
-                {{ currentTourStep.title }}
-            </h3>
-            <h3 class="tour-title" *ngIf="currentTourStep.title && !currentTourStep.selector">
-                {{ currentTourStep.title }}
-            </h3>
+            <div class="headline">
+                <h3 class="tour-title" *ngIf="currentTourStep.title && currentTourStep.selector">
+                    {{ currentTourStep.title }}
+                </h3>
+                <h3 class="tour-title" *ngIf="currentTourStep.title && !currentTourStep.selector">
+                    {{ currentTourStep.title }}
+                </h3>
+                <div class="close" (click)="guidedTourService.skipTour()"></div>
+            </div>
             <div class="tour-content" [innerHTML]="currentTourStep.content"></div>
             <div class="tour-buttons">
-                <!--button *ngIf="!guidedTourService.onResizeMessage"
-                        (click)="guidedTourService.skipTour()"
-                        class="skip-button">
-                    {{ skipText }}
-                </button-->
                 <button [disabled]="guidedTourService.onFirstStep || guidedTourService.onResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span>{{ backText }}</span>

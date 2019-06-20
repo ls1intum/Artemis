@@ -51,6 +51,31 @@ body.tour-open {
     }
 }
 
+.guided-tour-button {
+    background-color: $tour-next-button-color;
+    border-radius: 50%;
+    cursor: pointer;
+    float: right;
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    padding: 11px;
+
+    &:hover {
+        background-color: $tour-next-button-hover;
+    }
+
+    fa-icon {
+        color: $tour-step-color;
+        font-size: 20px;
+        vertical-align: middle;
+
+        svg {
+            width: 100%;
+        }
+    }
+}
+
 jhi-guided-tour {
     .guided-tour-user-input-mask {
         position: fixed;
@@ -67,7 +92,7 @@ jhi-guided-tour {
 
     .guided-tour-spotlight-overlay {
         position: fixed;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.2), 0 0 1.5rem rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3), 0 0 1.5rem rgba(0, 0, 0, 0.3);
         z-index: $tour-zindex + 1;
     }
 
@@ -99,17 +124,6 @@ jhi-guided-tour {
                 border-radius: 50%;
             }
         }
-
-        @keyframes pulse {
-            from {
-                transform: translate(-50%, -50%) scale(0.45);
-                opacity: 1;
-            }
-            to {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 0;
-            }
-        }
     }
 
     .tour-step {
@@ -134,20 +148,53 @@ jhi-guided-tour {
             -webkit-border-radius: 5px;
             -moz-border-radius: 5px;
 
-            .tour-title {
-                font-size: 14px;
-                text-transform: uppercase;
-                padding-bottom: 30px;
+            .headline {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
 
-                fa-icon {
-                    padding-right: 10px;
+                .tour-title {
+                    font-size: 20px;
+                    text-transform: uppercase;
+                    padding-bottom: 20px;
+
+                    fa-icon {
+                        padding-right: 10px;
+                    }
+                }
+
+                .close {
+                    width: 20px;
+                    height: 20px;
+                    margin: 1px -10px;
+                    opacity: 0.3;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+
+                    &:before,
+                    &:after {
+                        background-color: #231f1f;
+                        content: ' ';
+                        height: 20px;
+                        width: 2px;
+                        position: absolute;
+                    }
+
+                    &:before {
+                        transform: rotate(45deg);
+                    }
+                    &:after {
+                        transform: rotate(-45deg);
+                    }
                 }
             }
 
             .tour-content {
                 min-height: 80px;
-                padding-bottom: 30px;
-                font-size: 15px;
+                font-size: 16px;
+                padding-bottom: 28px;
             }
 
             .tour-buttons {
@@ -259,7 +306,7 @@ jhi-guided-tour {
                 position: absolute;
                 left: 100%;
                 transform: translateX(-100%);
-                top: 5px;
+                top: 15px;
             }
             .tour-block {
                 margin-right: 15px;

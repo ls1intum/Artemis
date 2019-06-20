@@ -61,6 +61,7 @@ import {
     faHdd,
     faHeart,
     faHome,
+    faInfo,
     faInfoCircle,
     faList,
     faListAlt,
@@ -189,6 +190,7 @@ library.add(faUnlink);
 library.add(faFolder);
 library.add(faFolderOpen);
 library.add(faPlayCircle);
+library.add(faInfo);
 library.add(faInfoCircle);
 library.add(faGraduationCap);
 library.add(faChartPie);

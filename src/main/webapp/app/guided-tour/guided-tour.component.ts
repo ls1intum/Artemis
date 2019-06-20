@@ -18,7 +18,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @Input() public doneText? = 'Done';
     @Input() public closeText? = 'Close';
     @Input() public backText? = 'Back';
-    @Input() public tourSteps: any[];
+    @Input() public tourSteps: TourStep[];
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
     public highlightPadding = 4;
     public currentTourStep: TourStep = null;
@@ -240,7 +240,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
 
         if (this.currentTourStep.orientation === Orientation.Left) {
-            return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment;
+            return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment - 100;
         }
 
         if (this.currentTourStep.orientation === Orientation.Right) {
@@ -251,7 +251,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     public get leftPosition(): number {
-        if (this.calculatedLeftPosition >= 0) {
+        if (this.calculatedLeftPosition === 0) {
+            return 5;
+        }
+        if (this.calculatedLeftPosition > 0) {
             return this.calculatedLeftPosition;
         }
         const adjustment = Math.max(0, -this.calculatedLeftPosition);
