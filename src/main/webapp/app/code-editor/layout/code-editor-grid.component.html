@@ -9,23 +9,27 @@
     </nav>
 
     <div class="editor-main">
-        <!-- File browser -->
-        <div class="editor-sidebar-left collapsable">
-            <ng-content select="[editorSidebarLeft]"></ng-content>
-        </div>
+        <div class="editor-main__content">
+            <!-- File browser -->
+            <div class="editor-sidebar-left collapsable">
+                <ng-content select="[editorSidebarLeft]"></ng-content>
+                <!-- Required for resizing; don't remove empty span -->
+                <div class="rg-sidebar-left"><span></span></div>
+            </div>
 
-        <!-- Editor -->
-        <div class="editor-center">
-            <ng-content select="[editorCenter]"></ng-content>
-        </div>
+            <!-- Editor -->
+            <div class="editor-center">
+                <ng-content select="[editorCenter]"></ng-content>
+            </div>
 
-        <!-- Instructions -->
-        <div class="editor-sidebar-right collapsable">
-            <ng-content select="[editorSidebarRight]"></ng-content>
+            <!-- Instructions -->
+            <div class="editor-sidebar-right collapsable">
+                <ng-content select="[editorSidebarRight]"></ng-content>
+            </div>
         </div>
+        <!-- Required for resizing; don't remove empty span -->
+        <div class="rg-main-bottom"><span></span></div>
     </div>
-    <!-- Required for resizing; don't remove empty span -->
-    <div class="rg-main-bottom"><span></span></div>
 
     <div class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>

@@ -20,9 +20,13 @@ export class CodeEditorGridComponent implements AfterViewInit {
     @Input()
     exerciseTitle: string;
 
-    resizableMinHeight = 500;
-    resizableMaxHeight = 1200;
-    interactResizable: Interactable;
+    interactResizableMain: Interactable;
+    resizableMinHeightMain: number;
+    resizableMaxHeightMain = 1200;
+
+    interactResizableLeft: Interactable;
+    resizableMinWidthLeft: number;
+    resizableMaxWidthLeft = 1200;
 
     constructor(private $window: WindowRef) {}
 
@@ -33,14 +37,15 @@ export class CodeEditorGridComponent implements AfterViewInit {
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        this.interactResizable = interact('.editor-main')
+        this.resizableMinHeightMain = this.$window.nativeWindow.screen.height / 3;
+        this.interactResizableMain = interact('.editor-main')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
                 edges: { left: false, right: false, bottom: '.rg-main-bottom', top: false },
                 // Set min and max height
                 restrictSize: {
-                    min: { height: this.resizableMinHeight },
-                    max: { height: this.resizableMaxHeight },
+                    min: { height: this.resizableMinHeightMain },
+                    max: { height: this.resizableMaxHeightMain },
                 },
                 inertia: true,
             })
@@ -54,6 +59,30 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
+            });
+
+        this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 6;
+        this.interactResizableLeft = interact('.editor-sidebar-left')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: 'rg-sidebar-left', bottom: false, top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { width: this.resizableMinWidthLeft },
+                    max: { width: this.resizableMaxWidthLeft },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.width = event.rect.width + 'px';
             });
     }
 
