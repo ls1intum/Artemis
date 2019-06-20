@@ -392,9 +392,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
             response => {
                 this.result = response.body!;
-                if (complaintResponse.complaint.complaintType !== ComplaintType.MORE_FEEDBACK) {
-                    this.updateParticipationWithResult();
-                }
+                this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
             },
