@@ -10,14 +10,14 @@ import { GuidedTourService } from './guided-tour.service';
     encapsulation: ViewEncapsulation.None,
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
-    @Input() public topOfPageAdjustment? = 0;
-    @Input() public tourStepWidth? = 300;
-    @Input() public minimalTourStepWidth? = 200;
-    @Input() public skipText? = 'Skip';
-    @Input() public nextText? = 'Next';
-    @Input() public doneText? = 'Done';
-    @Input() public closeText? = 'Close';
-    @Input() public backText? = 'Back';
+    @Input() public topOfPageAdjustment = 0;
+    @Input() public tourStepWidth = 300;
+    @Input() public minimalTourStepWidth = 200;
+    @Input() public skipText = 'Skip';
+    @Input() public nextText = 'Next';
+    @Input() public doneText = 'Done';
+    @Input() public closeText = 'Close';
+    @Input() public backText = 'Back';
     @Input() public tourSteps: TourStep[];
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
     public highlightPadding = 4;
