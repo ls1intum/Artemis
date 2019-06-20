@@ -28,11 +28,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -95,12 +96,20 @@ public class CourseResource {
 
     private final ComplaintService complaintService;
 
+    private final TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository;
+
+    private final TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository;
+
+    private final TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
             TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService) {
+            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService,
+            TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository, TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
+            TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +129,9 @@ public class CourseResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
+        this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
+        this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
+        this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
     }
 
     /**
@@ -387,8 +399,9 @@ public class CourseResource {
         ObjectNode data = objectMapper.createObjectNode();
 
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course))
+        if (!userHasPermission(course)) {
             return forbidden();
+        }
         User user = userService.getUserWithGroupsAndAuthorities();
 
         long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
@@ -521,7 +534,15 @@ public class CourseResource {
         stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
         log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
-        stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
+        // stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
+
+        long startT = System.currentTimeMillis();
+        List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(courseId);
+        List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(courseId);
+        List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByCourseId(courseId);
+        log.info("Finished TutorLeaderboard in " + (System.currentTimeMillis() - startT) + "ms");
+        log.info(tutorLeaderboardAssessments.toString());
+
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
     }
