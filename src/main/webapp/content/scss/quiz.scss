@@ -136,13 +136,7 @@
     left: 0;
     right: 0;
     z-index: 10;
-
-    @media (min-width: 320px) and (max-width: 480px) {
-        height: 150px;
-    }
-
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-
     background: white;
 
     .container {
@@ -213,10 +207,6 @@
 
 .quiz-footer {
     height: 100px;
-
-    @media (min-width: 320px) and (max-width: 480px) {
-        height: 150px;
-    }
 }
 
 .edit-quiz-footer-content,
@@ -458,7 +448,6 @@
 .sa-question {
     .background-area {
         position: relative;
-
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
@@ -484,21 +473,20 @@
         }
 
         img {
+            max-width: fit-content;
             width: 100%;
         }
     }
 
     .instructions {
         margin: 10px 0;
-        font-weight: bold;
+        font-weight: 500;
     }
 
     .drag-items {
         margin: 6px 0;
-
         width: 100%;
         min-height: 180px;
-
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -510,6 +498,74 @@
         /* Required for text-overflow to do anything */
         white-space: nowrap;
         overflow: hidden;
+    }
+}
+
+.dnd-question {
+    overflow: auto;
+
+    .drag-and-drop-area {
+        display: flex;
+        justify-content: center;
+
+        @media (max-width: 900px) {
+            display: block;
+        }
+
+        .background-area {
+            .click-layer {
+                .drop-location {
+                    .drag-item {
+                        .drag-item-text {
+                            @media (max-width: 812px) {
+                                padding: 0;
+                            }
+                        }
+                        div {
+                            @media (max-width: 812px) {
+                                padding: 0 !important;
+                            }
+
+                            span {
+                                @media (max-width: 480px) {
+                                    font-size: 12px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .drag-and-drop-items {
+            @media (orientation: landscape) and (min-width: 900px) {
+                margin: -5px 0 0 20px;
+                max-width: 200px;
+                width: 20%;
+            }
+
+            .instructions {
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0 0 10px 0;
+                }
+            }
+
+            .drag-items {
+                width: 100%;
+
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0;
+                }
+
+                .drag-item {
+                    height: auto;
+
+                    .drag-item-picture {
+                        height: 160px;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -771,6 +827,7 @@
                         span {
                             border: none;
                             padding: 0;
+                            vertical-align: middle;
                         }
                     }
                 }
@@ -896,8 +953,8 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        width: 100%;
         height: 100%;
+        width: 100%;
         white-space: pre-wrap;
 
         span {
@@ -1221,10 +1278,8 @@ table.answer-options-result {
 
     .drag-items {
         margin: 6px 0;
-
         width: 100%;
         min-height: 180px;
-
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;

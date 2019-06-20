@@ -7,6 +7,7 @@
 - [ ] I added integration test cases for the server (Spring) related to the features
 - [ ] I added integration test cases for the client (Jest) related to the features
 - [ ] I added screenshots/screencast of my UI changes
+- [ ] I translated all the newly inserted strings
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->

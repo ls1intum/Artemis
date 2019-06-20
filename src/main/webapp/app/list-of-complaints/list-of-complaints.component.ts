@@ -59,7 +59,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
         complaintResponse.subscribe(
             res => {
-                this.complaints = res.body;
+                this.complaints = res.body!;
                 this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
 
                 if (this.complaints.length > 0 && this.complaints[0].student) {
@@ -91,12 +91,12 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
             queryParams.showBackButton = true;
         }
-        this.router.navigate([route], { queryParams });
+        this.router.navigate([route!], { queryParams });
     }
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error('error.http.400', null, null);
+        this.jhiAlertService.error('error.http.400', null, undefined);
     }
 
     back() {

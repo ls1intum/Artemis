@@ -30,7 +30,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+            this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
         }
     }
 }

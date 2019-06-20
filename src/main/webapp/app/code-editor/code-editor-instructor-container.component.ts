@@ -8,7 +8,7 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { CodeEditorFileService, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
 import {
     CodeEditorAceComponent,
@@ -146,6 +146,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             .subscribeDomainChange()
             .pipe(
                 filter(domain => !!domain),
+                map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
                     this.initializeProperties();
                     if (domainType === DomainType.PARTICIPATION) {
@@ -190,11 +191,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
             : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(
-                  map(({ body }) => body),
+                  map(({ body }) => body!),
                   // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
                   switchMap(exercise =>
                       this.resultService.getLatestResultWithFeedbacks(exercise.templateParticipation.id).pipe(
-                          map(({ body }) => body),
+                          map(({ body }) => body!),
                           map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
                           catchError(() => of(exercise)),
                       ),
@@ -240,7 +241,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.exercise.course.id, this.exercise.id)
+            .startExercise(this.exercise.course!.id, this.exercise.id)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {

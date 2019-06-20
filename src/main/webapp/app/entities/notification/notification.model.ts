@@ -15,7 +15,7 @@ export class Notification implements BaseEntity {
     public notificationType: NotificationType;
     public title: string;
     public text: string;
-    public notificationDate: Moment;
+    public notificationDate: Moment | null;
     public target: string;
     public author: User;
 

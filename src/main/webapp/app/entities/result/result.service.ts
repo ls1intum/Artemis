@@ -97,7 +97,7 @@ export class ResultService implements IResultService {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-                result.participation = this.convertParticipationDateFromServer(result.participation);
+                result.participation = this.convertParticipationDateFromServer(result.participation!);
             });
         }
         return res;
@@ -106,7 +106,7 @@ export class ResultService implements IResultService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation!);
         }
         return res;
     }
@@ -127,7 +127,7 @@ export class ResultService implements IResultService {
      * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
-        const resultCompletionDate = moment(result.completionDate);
+        const resultCompletionDate = moment(result.completionDate!);
         if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
             return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
         }

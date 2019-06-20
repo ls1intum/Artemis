@@ -80,6 +80,9 @@
                                 height: dropLocation.height / 2 + '%'
                             }"
                             (onDropSuccess)="onDragDrop(dropLocation, $event)"
+                            (onDragEnter)="preventDefault($event)"
+                            (onDragOver)="preventDefault($event)"
+                            (onDragLeave)="preventDefault($event)"
                             dnd-droppable
                         >
                             <jhi-drag-item
@@ -203,12 +206,19 @@
                     </div>
                 </div>
             </div>
-            <div *ngIf="!showResult">
-                <hr />
+            <div class="drag-and-drop-items" *ngIf="!showResult">
                 <div class="instructions">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
-                <div class="drag-items" [ngClass]="dropAllowed ? 'drop-allowed' : ''" (onDropSuccess)="onDragDrop(null, $event)" dnd-droppable>
+                <div
+                    class="drag-items"
+                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                    (onDropSuccess)="onDragDrop(null, $event)"
+                    (onDragEnter)="preventDefault($event)"
+                    (onDragOver)="preventDefault($event)"
+                    (onDragLeave)="preventDefault($event)"
+                    dnd-droppable
+                >
                     <jhi-drag-item
                         (dragenter)="drag()"
                         (dragend)="drop()"

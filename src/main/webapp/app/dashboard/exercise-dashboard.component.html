@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <h2>
-        {{ exercise.course.title }} - {{ exercise.title }}
+        {{ exercise.course?.title }} - {{ exercise.title }}
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
@@ -58,16 +58,16 @@
                     <th jhiSortBy="completionDate">
                         <a class="th-link">{{ 'artemisApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="successful">
+                    <th jhiSortBy="score">
                         <a class="th-link">{{ 'artemisApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link">{{ 'artemisApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="score">
                         <a class="th-link">{{ 'artemisApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
-                    <th jhiSortBy="duration">
+                    <th jhiSortBy="submissionCount">
+                        <a class="th-link">{{ 'artemisApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="durationInMinutes">
                         <a class="th-link">{{ 'artemisApp.exercise.duration' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th *ngIf="exercise.type !== QUIZ"></th>
@@ -78,15 +78,13 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
                     <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
-                    <td>
-                        <jhi-updating-result [participation]="result.participation"></jhi-updating-result>
-                    </td>
-                    <td>{{ result.submissionCount }}</td>
+                    <td><jhi-updating-result [participation]="result.participation"></jhi-updating-result></td>
                     <td>
                         <span *ngIf="result.score != null">{{ result.score }}%</span>
                     </td>
+                    <td>{{ result.submissionCount }}</td>
                     <td>
-                        {{ durationString(result.completionDate, result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate) }}
+                        {{ result.durationInMinutes }}
                         minutes
                     </td>
                     <td *ngIf="exercise.type !== QUIZ">

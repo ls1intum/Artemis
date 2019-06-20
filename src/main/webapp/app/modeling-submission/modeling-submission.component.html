@@ -51,7 +51,7 @@
             <p class="mb-3 markdown-preview">
                 <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <span class="background-editor-color">
-                    <span [innerHTML]="modelingExercise!.problemStatement | htmlForMarkdown | safeHtml"></span>
+                    <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown | safeHtml"></span>
                 </span>
             </p>
         </div>
@@ -104,10 +104,7 @@
                     </thead>
                     <tbody *ngIf="assessmentsNames">
                         <!--TODO CZ: replace function call 'isSelected' in html-->
-                        <tr
-                            *ngFor="let feedback of assessmentResult.feedbacks"
-                            [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)"
-                        >
+                        <tr *ngFor="let feedback of assessmentResult?.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback)">
                             <td>
                                 <span>{{ assessmentsNames[feedback.referenceId]['type'] }} </span>
                                 <code class="text-primary">{{ assessmentsNames[feedback.referenceId]['name'] }}</code
@@ -139,5 +136,5 @@
 </div>
 
 <div *ngIf="showComplaintForm || hasComplaint">
-    <jhi-complaint-form class="row" [resultId]="result.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
+    <jhi-complaint-form class="row" [resultId]="result?.id" [allowedComplaints]="numberOfAllowedComplaints"></jhi-complaint-form>
 </div>

@@ -13,7 +13,7 @@ export class AnnotationArray extends Array<Annotation> {
      * Similar to map/reduce doesn't mutate the data structure but returns a new one.
      * @param change
      */
-    update(change: TextChange): AnnotationArray {
+    update(change: TextChange): AnnotationArray | null {
         const {
             start: { row: rowStart, column: columnStart },
             end: { row: rowEnd, column: columnEnd },
@@ -32,5 +32,7 @@ export class AnnotationArray extends Array<Annotation> {
             });
             return new AnnotationArray(...updatedAnnotations);
         }
+
+        return null;
     }
 }

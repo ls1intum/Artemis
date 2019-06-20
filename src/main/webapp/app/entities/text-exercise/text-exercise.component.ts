@@ -36,7 +36,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     protected loadExercises(): void {
         this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
+                this.textExercises = res.body!;
 
                 // reconnect exercise with course
                 this.textExercises.forEach(exercise => {
@@ -50,7 +50,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         );
     }
 
-    convertMarkdownToHtml(text: string): string {
+    convertMarkdownToHtml(text: string): string | null {
         return this.artemisMarkdown.htmlForMarkdown(text);
     }
 

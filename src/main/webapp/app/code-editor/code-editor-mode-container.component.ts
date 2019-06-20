@@ -1,6 +1,6 @@
 import { HostListener, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { compose, filter, fromPairs, map, tap, toPairs } from 'lodash/fp';
+import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 import Interactable from '@interactjs/core/Interactable';
@@ -18,10 +18,10 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    selectedFile: string;
+    selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
     // This variable is used to inform components that a file has changed its filename, e.g. because of renaming
-    fileChange: FileChange;
+    fileChange?: FileChange;
     buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
     /** Code Editor State Variables **/
@@ -94,11 +94,11 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         } else if (fileChange instanceof RenameFileChange) {
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
-            this.selectedFile = this.fileService.updateFileReference(this.selectedFile, fileChange);
+            this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
         } else if (fileChange instanceof DeleteFileChange) {
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.buildLogErrors = { errors: this.fileService.updateFileReferences(this.buildLogErrors.errors, fileChange), timestamp: this.buildLogErrors.timestamp };
-            this.selectedFile = this.fileService.updateFileReference(this.selectedFile, fileChange);
+            this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
             // If unsavedFiles are deleted, this can mean that the editorState becomes clean
             if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
                 this.editorState = EditorState.CLEAN;
