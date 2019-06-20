@@ -141,7 +141,7 @@
                     </ul>
                 </div>
             </div>
-            <div class="alert alert-danger" *ngIf="submissionLockLimitReached">
+            <div class="alert alert-danger" *ngIf="submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS">
                 {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
             </div>
             <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
