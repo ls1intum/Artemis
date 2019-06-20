@@ -22,7 +22,7 @@
                 <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejectedLong' | translate }}&nbsp; </span>
             </p>
 
-            <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
+            <textarea id="complainTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
 
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">

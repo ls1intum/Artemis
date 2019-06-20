@@ -7,11 +7,17 @@ import * as moment from 'moment';
 
 import { Complaint } from 'app/entities/complaint/complaint.model';
 
-type EntityResponseType = HttpResponse<Complaint>;
-type EntityResponseTypeArray = HttpResponse<Complaint[]>;
+export type EntityResponseType = HttpResponse<Complaint>;
+export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
+export interface IComplaintService {
+    create: (complaint: Complaint) => Observable<EntityResponseType>;
+    find: (id: number) => Observable<EntityResponseType>;
+    findByResultId: (resultId: number) => Observable<EntityResponseType>;
+    getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
+}
 @Injectable({ providedIn: 'root' })
-export class ComplaintService {
+export class ComplaintService implements IComplaintService {
     private resourceUrl = SERVER_API_URL + 'api/complaints';
 
     constructor(private http: HttpClient) {}
@@ -39,7 +45,7 @@ export class ComplaintService {
         return this.http.get<number>(SERVER_API_URL + `api/${courseId}/allowed-complaints`);
     }
 
-    updateComplaint(complaint: Complaint) {
+    updateComplaint(complaint: Complaint): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaint);
         return this.http.put<Complaint>(`${this.resourceUrl}/${complaint.id}`, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
