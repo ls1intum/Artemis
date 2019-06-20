@@ -22,7 +22,7 @@ export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
 
-            const scale = 3;
+            const scale = 1.5;
             canvas.width = width * scale;
             canvas.height = height * scale;
 
