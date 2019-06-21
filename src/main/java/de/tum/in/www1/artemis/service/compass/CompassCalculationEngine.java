@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.controller.*;
-import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
@@ -158,18 +157,9 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return id of the next optimal model or null if all models are completely assessed
      */
     @Override
-    public Map.Entry<Long, Grade> getNextOptimalModel() {
+    public Long getNextOptimalModel() {
         lastUsed = LocalDateTime.now();
-        Long optimalModelSubmissionId = modelSelector.selectNextModel(modelIndex);
-        if (optimalModelSubmissionId == null) {
-            return null;
-        }
-        Grade grade = getGradeForModel(optimalModelSubmissionId);
-        // Should never happen
-        if (grade == null) {
-            grade = new CompassGrade();
-        }
-        return new AbstractMap.SimpleEntry<>(optimalModelSubmissionId, grade);
+        return modelSelector.selectNextModel(modelIndex);
     }
 
     @Override
@@ -224,13 +214,8 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     @Override
-    // TODO CZ: do we need the Grade of the models? shouldn't it be enough to return a list of model ids as we do not even use the Grade after calling this method?
-    public Map<Long, Grade> getModelsWaitingForAssessment() {
-        Map<Long, Grade> optimalModels = new HashMap<>();
-        for (long modelId : modelSelector.getModelsWaitingForAssessment()) {
-            optimalModels.put(modelId, getGradeForModel(modelId));
-        }
-        return optimalModels;
+    public List<Long> getModelsWaitingForAssessment() {
+        return modelSelector.getModelsWaitingForAssessment();
     }
 
     @Override

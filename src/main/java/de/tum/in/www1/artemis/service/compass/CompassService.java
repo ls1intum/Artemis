@@ -97,8 +97,7 @@ public class CompassService {
      *
      * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
-    // TODO CZ: do we need the Grade of the model? shouldn't it be enough to just return the model id as we do not even use the Grade after calling this method?
-    private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
+    private Long getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
             return null;
         }
@@ -130,15 +129,15 @@ public class CompassService {
             return new ArrayList<>();
         }
 
-        Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS) {
-            Map.Entry<Long, Grade> optimalModel = this.getNextOptimalModel(exerciseId);
-            if (optimalModel != null) {
-                optimalModels.put(optimalModel.getKey(), optimalModel.getValue());
+        List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
+        if (optimalModelIds.size() < NUMBER_OF_OPTIMAL_MODELS) {
+            Long nextOptimalModelId = getNextOptimalModel(exerciseId);
+            if (nextOptimalModelId != null) {
+                optimalModelIds.add(nextOptimalModelId);
             }
         }
-        removeManuallyAssessedModels(optimalModels, exerciseId);
-        return new ArrayList<>(optimalModels.keySet());
+        removeManuallyAssessedModels(optimalModelIds, exerciseId);
+        return new ArrayList<>(optimalModelIds);
     }
 
     /**
@@ -147,8 +146,8 @@ public class CompassService {
      * the list that have no or only an automatic assessment. We better double check here as we want to make sure that no models with finished or manual assessments get sent to
      * other users than the assessor.
      */
-    private void removeManuallyAssessedModels(Map<Long, Grade> optimalModels, long exerciseId) {
-        Iterator<Long> iterator = optimalModels.keySet().iterator();
+    private void removeManuallyAssessedModels(List<Long> optimalModelIds, long exerciseId) {
+        Iterator<Long> iterator = optimalModelIds.iterator();
         while (iterator.hasNext()) {
             Long modelId = iterator.next();
             Optional<Result> result = resultRepository.findDistinctWithAssessorBySubmissionId(modelId);
@@ -184,8 +183,8 @@ public class CompassService {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
         }
-        Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        for (long modelSubmissionId : optimalModels.keySet()) {
+        List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
+        for (long modelSubmissionId : optimalModelIds) {
             compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelSubmissionId, false);
         }
     }
