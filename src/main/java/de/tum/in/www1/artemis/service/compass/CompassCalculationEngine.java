@@ -46,9 +46,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelIndex = new ModelIndex();
         assessmentIndex = new AssessmentIndex();
         automaticAssessmentController = new AutomaticAssessmentController();
-        modelSelector = new ModelSelector(); // TODO MJ fix Bug where on load of exercise no
-        // modelsWaitingForAssessment are added ? No differentiation between
-        // submitted and saved assessments!
+        modelSelector = new ModelSelector();
 
         for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
@@ -129,9 +127,6 @@ public class CompassCalculationEngine implements CalculationEngine {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
-        // TODO: are we sure that Result.feedbacks is not a proxy? And in case it is a
-        // proxy, do we have
-        // a session/transaction to unproxy?
         addNewManualAssessment(submission.getResult().getFeedbacks(), model);
         modelSelector.removeModelWaitingForAssessment(submission.getId());
         modelSelector.addAlreadyAssessedModel(submission.getId());

@@ -243,10 +243,11 @@ public class CompassService {
         }
     }
 
-    // TODO: cleanup + adjust documentation
     /**
-     * Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added it to the corresponding result and
-     * the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
+     * Get the assessment for a given model from the calculation engine, create an automatic result from it and save it to the database. This is done only if the submission is not
+     * manually assessed already, i.e. the assessment type is not MANUAL and the assessor is not set. Note, that Compass tries to automatically assess every model as much as
+     * possible, but does not submit any automatic assessment to the student. A user has to review every(!) automatic assessment before completing and submitting the assessment
+     * manually, even if Compass could assess 100% of the model automatically.
      *
      * @param modelId    the id of the model/submission that should be updated with an automatic assessment
      * @param exerciseId the id of the corresponding exercise
@@ -265,7 +266,8 @@ public class CompassService {
                 .orElse(new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation()));
         // only assess automatically when there is no manual assessment yet
         if (result.getAssessmentType() != AssessmentType.MANUAL && result.getAssessor() == null) {
-            ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+            ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId())
+                    .orElseThrow(() -> new IllegalStateException("Exercise referenced in participation could not be found"));
 
             // Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
             if (!isSupported(modelingExercise.getDiagramType())) {
@@ -275,23 +277,14 @@ public class CompassService {
             // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
             Grade grade = roundGrades(engine.getGradeForModel(modelId)); // TODO: should we still round the grades?
 
-            // Save to database
+            // Set feedback and assessment type of result
             List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
             result.getFeedbacks().clear();
             result.getFeedbacks().addAll(automaticFeedbackAssessments);
             result.setHasFeedback(false);
-
-            // result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
             result.setAssessmentType(AssessmentType.AUTOMATIC);
-            double maxPoints = modelingExercise.getMaxScore();
-            // biased points
-            double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
-            result.setScore((long) (points * 100 / maxPoints));
-            // result.setCompletionDate(ZonedDateTime.now());
-            result.setResultString(points, modelingExercise.getMaxScore());
 
             saveResult(result, modelingSubmission);
-            // engine.removeModelWaitingForAssessment(modelId, true);
         }
         else {
             // Make sure next optimal model is in a valid state
@@ -335,20 +328,15 @@ public class CompassService {
         for (Map.Entry<String, Double> entry : jsonIdPointsMapping.entrySet()) {
             BigDecimal point = new BigDecimal(entry.getValue());
             boolean isNegative = point.doubleValue() < 0;
-            // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 ->
-            // 0.35 or -1.5 ->
-            // -0.65)
+            // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 -> 0.35 or -1.5 -> -0.65)
             double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
             // remove the fractional part of the entry score (e.g. 1.5 -> 1 or -1.5 -> -1)
             point = point.setScale(0, RoundingMode.DOWN);
 
             if (isNegative) {
-                // for negative values subtract 1 to get the lower integer value (e.g. -1.5 ->
-                // -1 -> -2)
+                // for negative values subtract 1 to get the lower integer value (e.g. -1.5 -> -1 -> -2)
                 point = point.subtract(BigDecimal.ONE);
-                // and add 1 to the fractional part to get it into the same positive range as we
-                // have for
-                // positive values (e.g. -1.5 -> -0.5 -> 0.5)
+                // and add 1 to the fractional part to get it into the same positive range as we have for positive values (e.g. -1.5 -> -0.5 -> 0.5)
                 fractionalPart += 1;
             }
 
@@ -424,7 +412,7 @@ public class CompassService {
     }
 
     /**
-     * Get all the modeling submissions of the given exercise
+     * Get all the modeling submissions with result and feedback of the given exercise
      *
      * @param exerciseId the id of the exercise for
      * @return the list of modeling submissions

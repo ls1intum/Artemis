@@ -31,7 +31,7 @@
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </div>
-            <button class="btn btn-danger" *ngIf="result?.completionDate && canOverride" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid">
+            <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid">
                 <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
             <button class="btn ml-2 btn-success" [hidden]="!conflicts" (click)="onShowConflictResolution()">

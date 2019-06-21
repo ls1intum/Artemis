@@ -283,33 +283,6 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Check if Compass could create an automatic assessment (i.e. Result). If an automatic assessment could be found, the corresponding Result and ModelingSubmission entities are
-     * updated accordingly. This method is called after Compass is notified about a new model which triggers the automatic assessment attempt.
-     *
-     * @param modelingSubmission the modeling submission that should be updated with the automatic assessment
-     */
-    // TODO CZ: remove this as we do not need it anymore?
-    public void checkAutomaticResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (!compassService.isSupported(modelingExercise.getDiagramType())) {
-            return;
-        }
-        Participation participation = modelingSubmission.getParticipation();
-        Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
-        boolean automaticAssessmentAvailable = optionalAutomaticResult.isPresent() && optionalAutomaticResult.get().getAssessmentType().equals(AssessmentType.AUTOMATIC);
-
-        if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
-            // use the automatic result if available
-            Result result = optionalAutomaticResult.get();
-            result.submission(modelingSubmission).participation(participation); // TODO CZ: do we really need to update the result? this is already done in
-                                                                                // CompassService#assessAutomatically
-            modelingSubmission.setResult(result);
-            participation.addResult(modelingSubmission.getResult()); // TODO CZ: does this even do anything?
-            resultRepository.save(result); // TODO CZ: is this necessary? isn't the result saved together with the modeling submission in the next line anyway?
-            modelingSubmissionRepository.save(modelingSubmission);
-        }
-    }
-
-    /**
      * @param courseId the course we are interested in
      * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
      */
