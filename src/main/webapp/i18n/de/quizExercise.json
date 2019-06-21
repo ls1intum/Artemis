@@ -25,7 +25,7 @@
                 "pendingChanges": "Ungespeicherte Änderungen",
                 "saving": "Speichern...",
                 "saved": "Gespeichert!",
-                "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehen Sie zurück zur Übersicht und klicken Sie auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)"
+                "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehe zurück zur Übersicht und klicke auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)"
             },
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "new": {
@@ -77,8 +77,8 @@
             "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
             "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
-            "selectCourse": "Wählen Sie einen Kurs",
-            "selectQuizExercise": "Wählen Sie eine Quiz Übung aus",
+            "selectCourse": "Wähle einen Kurs",
+            "selectQuizExercise": "Wähle eine Quiz Übung aus",
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
@@ -161,7 +161,7 @@
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",
                 "shortAnswerQuestionEverySpotHasASolution": "Frage {{index}}: Es gibt mindestens ein Eingabefeld, dass keine Lösung besitzt.",
                 "shortAnswerQuestionEveryMappedSolutionHasASpot": "Frage {{index}}: Es fehlt mindestes ein Eingabfeld, um eine Kombination an korrekten Zuordnungen zu erhalten.",
-                "shortAnswerQuestionUnsolvable": "Frage {{index}}: Diese Frage kann nicht richtig beantwortet werden. Bitte überprüfen Sie Ihre zugeordneten Lösungen",
+                "shortAnswerQuestionUnsolvable": "Frage {{index}}: Diese Frage kann nicht richtig beantwortet werden. Bitte überprüfe die zugeordneten Lösungen",
                 "shortAnswerQuestionSolutionHasNoValue": "Frage {{index}}: Es gibt mindestens eine Lösung die keinen Wert besitzt.",
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
                 "questionTitleLength": "Frage {{index}}: Die Frage ist länger als 250 Zeichen. Bitte kürzen!",

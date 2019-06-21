@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && groupedExercises.length > 0; else noStatistics">
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | translate }}</h2>
             <div class="chart-container" style="margin-bottom: 20px">
@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="col-12 col-md-8">
-            <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
+            <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises" id="{{ exerciseGroup.type }}-wrapper">
                 <div class="col-12 mb-1 d-flex align-items-center">
                     <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
                     <h2>
@@ -47,17 +47,19 @@
                     ></canvas>
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
-                    <h4>{{ 'artemisApp.courseOverview.statistics.absoluteScore' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.maxScore' | translate: { number: exerciseGroup.totalMaxScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.relativeScore' | translate: { number: exerciseGroup.relativeScore } }}</h4>
-                    <h4>{{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}</h4>
+                    <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.absoluteScore' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
+                    <h4 id="max-score">{{ 'artemisApp.courseOverview.statistics.maxScore' | translate: { number: exerciseGroup.totalMaxScore } }}</h4>
+                    <h4 id="relative-score">{{ 'artemisApp.courseOverview.statistics.relativeScore' | translate: { number: exerciseGroup.relativeScore } }}</h4>
+                    <h4 id="presentation-score">{{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}</h4>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
-        <div class="col mt-3">
-            {{ 'artemisApp.courseOverview.statistics.noStatistics' | translate }}
+    <ng-template #noStatistics>
+        <div class="row">
+            <div class="col mt-3">
+                {{ 'artemisApp.courseOverview.statistics.noStatistics' | translate }}
+            </div>
         </div>
-    </div>
+    </ng-template>
 </div>

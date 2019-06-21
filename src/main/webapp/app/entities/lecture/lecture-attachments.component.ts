@@ -33,7 +33,7 @@ export class LectureAttachmentsComponent implements OnInit {
     attachmentFile: any;
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink: string | null;
-    notificationText: string;
+    notificationText: string | null;
     erroredFile: File | null;
 
     constructor(
@@ -44,6 +44,7 @@ export class LectureAttachmentsComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.notificationText = null;
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.attachmentService.findAllByLectureId(this.lecture.id).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
@@ -80,6 +81,7 @@ export class LectureAttachmentsComponent implements OnInit {
             this.attachmentService.update(this.attachmentToBeCreated!, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
+                this.notificationText = null;
                 this.attachments = this.attachments.map(el => {
                     return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
                 });

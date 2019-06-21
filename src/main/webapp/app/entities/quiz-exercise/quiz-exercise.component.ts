@@ -138,6 +138,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
             const exercise = res.body!;
+            exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course!);
+            exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course!);
             exercise.status = this.quizExerciseService.statusForQuiz(exercise);
             if (index === -1) {
                 this.quizExercises.push(exercise);
