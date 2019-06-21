@@ -81,7 +81,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param assessorId - the id of the assessor
      * @return a list of complaints
      */
-    @EntityGraph(attributePaths = { "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
 
     /**
@@ -90,7 +90,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(attributePaths = { "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Participation_Exercise_Id(Long exerciseId);
 
     /**
@@ -99,7 +99,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId - the id of the course
      * @return a list of complaints
      */
-    @EntityGraph(attributePaths = { "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     /**
@@ -109,7 +109,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(attributePaths = { "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(Long assessorId, Long exerciseId);
 
     /**
@@ -119,6 +119,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId   - the id of the course
      * @return a list of complaints
      */
-    @EntityGraph(attributePaths = { "result.participation", "result.submission" })
+    @EntityGraph(attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
 }
