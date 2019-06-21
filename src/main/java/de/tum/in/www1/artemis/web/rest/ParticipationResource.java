@@ -296,8 +296,11 @@ public class ParticipationResource {
         if (!(exercise instanceof TextExercise)) {
             return badRequest();
         }
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
+        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
         if (!textSubmissionWithoutAssessment.isPresent()) {
             // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
