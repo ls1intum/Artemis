@@ -63,7 +63,7 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe(
             res => {
                 this.complaints = res.body!;
-                this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
+                this.complaintsToShow = this.complaints.filter(complaint => complaint.accepted === undefined);
 
                 if (this.complaints.length > 0 && this.complaints[0].student) {
                     this.hasStudentInformation = true;
@@ -115,7 +115,7 @@ export class ListOfComplaintsComponent implements OnInit {
         if (this.showAddressedComplaints) {
             this.complaintsToShow = this.complaints;
         } else {
-            this.complaintsToShow = this.complaints.filter(c => c.accepted === undefined);
+            this.complaintsToShow = this.complaints.filter(complaint => complaint.accepted === undefined);
         }
     }
 
