@@ -7,10 +7,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
@@ -236,24 +236,29 @@ public class ModelingSubmissionResource {
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             // ask Compass for optimal submission to assess if diagram type is supported
-            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+            List<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+
             if (optimalModelSubmissions.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
-            // TODO CZ: think about how to handle canceled assessments with Compass as I do not want to receive the same submission again, if I canceled the assessment
+
+            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
+            Collections.shuffle(optimalModelSubmissions);
             return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            Random r = new Random();
-            List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-                    .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
+                    .stream().map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
             if (submissionsWithoutResult.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
+
+            Random r = new Random();
             return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())).getId() });
         }
     }

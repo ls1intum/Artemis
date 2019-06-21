@@ -125,9 +125,9 @@ public class CompassService {
      * @param exerciseId the exerciseId
      * @return List of model Ids waiting for an assessment by an assessor
      */
-    public Set<Long> getModelsWaitingForAssessment(long exerciseId) {
+    public List<Long> getModelsWaitingForAssessment(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
-            return new HashSet<>();
+            return new ArrayList<>();
         }
 
         Map<Long, Grade> optimalModels = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
@@ -138,7 +138,7 @@ public class CompassService {
             }
         }
         removeManuallyAssessedModels(optimalModels, exerciseId);
-        return optimalModels.keySet();
+        return new ArrayList<>(optimalModels.keySet());
     }
 
     /**

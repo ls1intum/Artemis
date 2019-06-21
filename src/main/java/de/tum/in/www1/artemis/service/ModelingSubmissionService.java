@@ -106,7 +106,8 @@ public class ModelingSubmissionService {
     public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            List<Long> modelsWaitingForAssessment = new ArrayList<>(compassService.getModelsWaitingForAssessment(modelingExercise.getId()));
+            List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
+
             // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
             Collections.shuffle(modelsWaitingForAssessment);
 
@@ -122,14 +123,14 @@ public class ModelingSubmissionService {
         }
 
         // otherwise return a random submission that is not assessed or an empty optional
-        Random r = new Random();
-        // TODO CZ: find participations without manual result instead? as we automatically assign automatic results for every new submission
-        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(modelingExercise.getId()).stream()
-                .map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
+                .stream().map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
+
+        Random r = new Random();
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
