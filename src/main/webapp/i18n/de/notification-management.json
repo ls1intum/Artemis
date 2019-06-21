@@ -9,7 +9,7 @@
         "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
         "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
         "delete": {
-            "question": "Sind Sie sicher, dass Sie die Mitteilung {{ id }} löschen möchten?"
+            "question": "Bist du sicher, dass du die Mitteilung {{ id }} löschen möchtest?"
         },
         "detail": {
             "title": "Mitteilung"
