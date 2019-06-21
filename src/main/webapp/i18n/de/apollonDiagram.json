@@ -27,7 +27,7 @@
             "detail": {
                 "title": "Apollon-Diagramm",
                 "crop": "Bild auf Auswahl zuschneiden",
-                "help": "Laden Sie Ihre aktuelle Auswahl als PNG-Bild herunter.",
+                "help": "Lade deine aktuelle Auswahl als PNG-Bild herunter.",
                 "createLabel": "Erstelle eine Quizaufgabe",
                 "generate": "Erstellen",
                 "error": {
