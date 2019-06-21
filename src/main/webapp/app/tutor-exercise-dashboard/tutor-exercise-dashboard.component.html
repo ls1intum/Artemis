@@ -5,7 +5,7 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="exercise !== undefined">
-    <div class="row mt-3 justify-content-around">
+    <div class="row my-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph [tutorParticipation]="tutorParticipation" [numberOfParticipations]="numberOfSubmissions" [numberOfAssessments]="numberOfAssessments">
@@ -140,6 +140,9 @@
                         </li>
                     </ul>
                 </div>
+            </div>
+            <div class="alert alert-danger" *ngIf="submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS">
+                {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
             </div>
             <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
                 {{ 'artemisApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
