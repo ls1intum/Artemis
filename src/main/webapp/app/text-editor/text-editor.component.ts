@@ -99,9 +99,17 @@ export class TextEditorComponent implements OnInit {
         );
     }
 
+    /**
+     * Find "General Feedback" item for Result, if it exists.
+     * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
+     * @return General Feedback item, if it exists and if it has a Feedback Text.
+     */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            return this.result.feedbacks.find(f => f.reference == null) || null;
+            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
+            if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
+                return feedbackWithoutReference;
+            }
         }
 
         return null;
