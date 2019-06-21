@@ -20,6 +20,11 @@
         "expireDate": "Gültig bis",
         "notificationDate": "Mitteilungsdatum",
         "active": "Aktiv",
-        "notActive": "Nicht Aktiv"
+        "notActive": "Nicht Aktiv",
+        "newAnswer": "Antwort ansehen",
+        "newQuestion": "Frage ansehen",
+        "exerciseCreated": "Übung ansehen",
+        "exerciseUpdated": "Übung ansehen",
+        "attachmentUpdated": "Vorlesung ansehen"
     }
 }
