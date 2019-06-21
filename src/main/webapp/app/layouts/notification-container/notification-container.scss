@@ -4,6 +4,9 @@
     overflow: auto;
     .notification-item {
         cursor: pointer;
+        h5 {
+            white-space: initial;
+        }
         .notification-description {
             white-space: normal;
         }

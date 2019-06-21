@@ -39,6 +39,11 @@
                 "notificationPlaceholder": "Optional: Notification about changes",
                 "error": "The file {{ fileName }} is too large. The maximum filesize is 10MB"
             }
+        },
+        "attachment": {
+            "created": "A new attachment is created with identifier {{ param }}",
+            "updated": "A attachment is updated with identifier {{ param }}",
+            "deleted": "A attachment is deleted with identifier {{ param }}"
         }
     }
 }
