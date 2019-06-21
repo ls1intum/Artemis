@@ -101,21 +101,22 @@ public class ModelAssessmentConflictService {
         return existingConflicts.stream().filter(conflict -> conflict.getState().equals(state)).collect(Collectors.toList());
     }
 
-    /**
-     * Deletes all conflicts related to the given Participation. Needs to be called before a Participation gets deleted to prevent foreign key constraint violations.
-     */
-    public void deleteAllConflictsForParticipation(Participation participation) {
-        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAll();
-        existingConflicts.forEach(conflict -> {
-            if (conflict.getCausingConflictingResult().getResult().getParticipation().getId().equals(participation.getId())) {
-                modelAssessmentConflictRepository.delete(conflict);
+    // TODO MJ JavaDoc
+    public void updateConflictsOnResultRemoval(Result result) {
+        List<ModelAssessmentConflict> existingConflicts = modelAssessmentConflictRepository.findAllConflictsByCausingResult(result);
+        modelAssessmentConflictRepository.deleteAll(existingConflicts);
+        existingConflicts = modelAssessmentConflictRepository.findAllConflictsByResultInConflict(result);
+        existingConflicts.forEach(conflict -> conflict.getResultsInConflict().forEach(conflictingResult -> {
+            if (conflictingResult.getResult().getId().equals(result.getId())) {
+                conflict.getResultsInConflict().remove(conflictingResult);
+                conflictingResultRepository.delete(conflictingResult);
             }
-        });
+        }));
     }
 
     /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
-     * 
+     *
      * @param conflicts
      */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
