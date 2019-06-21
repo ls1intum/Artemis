@@ -69,6 +69,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { ArTEMiSMainModule } from 'app/layouts/main/main.module';
 
 @NgModule({
     imports: [
@@ -127,6 +128,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSConnectionNotificationModule,
         ArTEMiSListOfComplaintsModule,
+        ArTEMiSMainModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
