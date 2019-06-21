@@ -115,6 +115,10 @@
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
         </div>
+        <div class="form-group" *ngIf="textExercise.id">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">

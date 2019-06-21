@@ -31,6 +31,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
+    notificationText: string | null;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -45,6 +46,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
@@ -96,7 +98,11 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.create(this.programmingExercise));
         }

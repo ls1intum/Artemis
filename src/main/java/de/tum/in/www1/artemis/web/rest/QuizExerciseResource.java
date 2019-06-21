@@ -111,7 +111,8 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
@@ -154,7 +155,9 @@ public class QuizExerciseResource {
         quizExerciseService.sendQuizExerciseToSubscribedClients(result);
 
         // NOTE: it does not make sense to notify students here!
-        // groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(result);
     }
 
