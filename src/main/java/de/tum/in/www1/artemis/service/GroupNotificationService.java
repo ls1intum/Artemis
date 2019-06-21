@@ -174,11 +174,11 @@ public class GroupNotificationService {
         messagingTemplate.convertAndSend(groupNotification.getTopic(), groupNotification);
     }
 
-    public List<Notification> findAllNewNotificationsForCurrentUser(User currentUser) {
+    public List<Notification> findAllRecentNewNotificationsForCurrentUser(User currentUser) {
         List<String> userGroups = currentUser.getGroups();
         if (userGroups.size() == 0) {
             return new ArrayList<>();
         }
-        return this.groupNotificationRepository.findAllNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
+        return this.groupNotificationRepository.findAllRecentNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
     }
 }
