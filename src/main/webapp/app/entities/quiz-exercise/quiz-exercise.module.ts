@@ -22,7 +22,6 @@ import { ArTEMiSQuizReEvaluateModule } from 'app/quiz/re-evaluate';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
-import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
