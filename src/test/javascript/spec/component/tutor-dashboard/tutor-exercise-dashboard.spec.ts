@@ -9,7 +9,7 @@ import { ResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard';
+import { ArTEMiSTutorExerciseDashboardModule, TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { MockAlertService } from '../../helpers/mock-alert.service';
@@ -17,13 +17,14 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers';
-import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
+import { ArTEMiSTutorCourseDashboardModule, TutorCourseDashboardComponent } from 'app/tutor-course-dashboard';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
+import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,9 +42,10 @@ describe('TutorExerciseDashboardComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, ArTEMiSTutorCourseDashboardModule, RouterModule],
+            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterModule],
             declarations: [
                 TutorExerciseDashboardComponent,
+                TutorParticipationGraphComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),

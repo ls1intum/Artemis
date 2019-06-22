@@ -25,7 +25,7 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
     imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
-    entryComponents: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
+    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
     providers: [
         CourseService,
         JhiAlertService,
