@@ -7,7 +7,7 @@
     </div>
 
     <div class="container-fluid">
-        <div class="row mt-3" *ngIf="stats && stats.tutorLeaderboard && stats.tutorLeaderboard.length > 0; else loadingScreen">
+        <div class="row mt-3" *ngIf="stats && stats.tutorLeaderboardEntries && stats.tutorLeaderboardEntries.length > 0; else loadingScreen">
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -22,7 +22,7 @@
                                 <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.numberOfTutors }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
                                 <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
@@ -123,6 +123,6 @@
 
         <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
 
-        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboard" [courseId]="course.id"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [courseId]="course.id"></jhi-tutor-leaderboard>
     </div>
 </div>

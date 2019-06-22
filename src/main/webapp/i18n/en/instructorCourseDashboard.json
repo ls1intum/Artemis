@@ -21,10 +21,12 @@
             "exerciseDashboard": "Exercise dashboard",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
+                "id": "ID",
                 "name": "Name",
-                "username": "Username",
                 "numberOfAssessments": "Number of assessments",
-                "numberOfComplaints": "Number of complaints"
+                "numberOfComplaints": "Number of complaints",
+                "numberOfComplaintResponses": "Number of complaint responses",
+                "points": "Points"
             }
         }
     }

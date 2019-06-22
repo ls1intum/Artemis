@@ -8,3 +8,4 @@ export * from './course-detail.component';
 export * from './course.component';
 export * from './course.route';
 export * from './course-exercises-overview.component';
+export { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';

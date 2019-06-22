@@ -9,7 +9,7 @@ import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
-import { StatsForInstructorDashboard, StatsForTutorDashboard } from 'app/entities/course';
+import { StatsForDashboard } from 'app/entities/course';
 import { AccountService } from 'app/core';
 
 export type EntityResponseType = HttpResponse<Exercise>;
@@ -174,12 +174,12 @@ export class ExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForTutorDashboard>> {
-        return this.http.get<StatsForTutorDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
-    getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForInstructorDashboard>> {
-        return this.http.get<StatsForInstructorDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 }
 

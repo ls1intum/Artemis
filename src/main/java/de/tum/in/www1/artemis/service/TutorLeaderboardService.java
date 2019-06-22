@@ -41,7 +41,7 @@ public class TutorLeaderboardService {
 
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
 
-        List<User> tutors = userService.getTutors(course.getTeachingAssistantGroupName());
+        List<User> tutors = userService.getTutors(course);
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
@@ -52,7 +52,7 @@ public class TutorLeaderboardService {
 
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
-        List<User> tutors = userService.getTutors(exercise.getCourse().getTeachingAssistantGroupName());
+        List<User> tutors = userService.getTutors(exercise.getCourse());
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());

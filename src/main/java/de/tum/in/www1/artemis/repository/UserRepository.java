@@ -49,7 +49,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countByGroupsIsContaining(List<String> groups);
 
-    List<User> findAllByGroupsIsContaining(String group);
+    List<User> findAllByGroups(String group);
 
     @Modifying
     @Query("Update User u SET u.lastNotificationRead = utc_timestamp where u.id = :#{#userId}")

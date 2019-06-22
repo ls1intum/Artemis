@@ -20,10 +20,12 @@
             "exerciseDashboard": "Übungs-Dashboard",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Kurs Bestenliste",
+                "id": "ID",
                 "name": "Name",
-                "username": "Benutzername",
                 "numberOfAssessments": "Anzahl der Assessments",
-                "numberOfComplaints": "Anzahl der Beschwerden"
+                "numberOfComplaints": "Anzahl der Beschwerden",
+                "numberOfComplaintResponses": "Anzahl der Beschwerde Antworten",
+                "points": "Punkte"
             }
         }
     }

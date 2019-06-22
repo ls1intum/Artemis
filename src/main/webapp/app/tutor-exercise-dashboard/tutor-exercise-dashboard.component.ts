@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService, StatsForTutorDashboard } from '../entities/course';
+import { CourseService, StatsForDashboard } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -153,13 +153,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<StatsForTutorDashboard>) => {
+            (res: HttpResponse<StatsForDashboard>) => {
                 const stats = res.body!;
                 this.numberOfSubmissions = stats.numberOfSubmissions;
                 this.numberOfAssessments = stats.numberOfAssessments;
-                this.numberOfTutorAssessments = stats.numberOfTutorAssessments;
                 this.numberOfComplaints = stats.numberOfComplaints;
-                this.numberOfTutorComplaints = stats.numberOfTutorComplaints;
+                const tutorLeaderboardEntry = stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
+                if (tutorLeaderboardEntry) {
+                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfComplaints;
+                } else {
+                    this.numberOfTutorAssessments = 0;
+                    this.numberOfTutorComplaints = 0;
+                }
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);

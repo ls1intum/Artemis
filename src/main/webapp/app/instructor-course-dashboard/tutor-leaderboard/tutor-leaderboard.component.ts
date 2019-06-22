@@ -1,12 +1,5 @@
 import { Component, Input } from '@angular/core';
-
-export interface TutorLeaderboardElement {
-    name: string;
-    login: string;
-    numberOfAssessments: number;
-    numberOfComplaints: number;
-    tutorId: number;
-}
+import { TutorLeaderboardElement } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.model';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
@@ -17,7 +10,7 @@ export class TutorLeaderboardComponent {
     @Input() public courseId?: number;
     @Input() public exerciseId?: number;
 
-    sortPredicate = 'numberOfAssessments';
+    sortPredicate = 'points';
     reverseOrder = false;
 
     callback() {}
