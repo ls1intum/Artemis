@@ -510,8 +510,7 @@ Bootstrap 3.3.7 fix
 
 .editor-wrapper {
     display: grid;
-    grid-template-rows: 100px auto min-content auto;
-    grid-gap: 10px;
+    grid-template-rows: 100px auto auto;
 
     .collapsed--horizontal,
     .collapsed--vertical {
@@ -554,13 +553,10 @@ Bootstrap 3.3.7 fix
         display: flex;
         height: inherit;
 
-        > *:not(:last-child) {
-            margin-right: 10px;
-        }
-
         .editor-sidebar-left {
-            flex: 1 1 auto;
+            flex: 0 0 auto;
             display: flex;
+            width: 320px;
 
             jhi-code-editor-file-browser {
                 flex: 1 1 auto;
@@ -651,7 +647,10 @@ Bootstrap 3.3.7 fix
         }
     }
     .editor-sidebar-right {
-        flex: 1 1 auto;
+        flex: 0 0 auto;
+        display: flex;
+        flex-flow: row nowrap;
+        width: 600px;
 
         .instructions {
             display: flex;
@@ -777,24 +776,20 @@ Bootstrap 3.3.7 fix
 }
 
 .rg-main-bottom,
-.rg-sidebar-left {
+.rg-sidebar-left,
+.rg-sidebar-right {
     align-self: center;
-    span {
-        box-sizing: border-box;
-        display: block;
-        border: 1px solid #ccc;
-        border-width: 1px 0;
-    }
 }
 
 .rg-main-bottom {
     cursor: row-resize;
-    width: 20px;
-    height: 7px;
+    margin-top: 2px;
+    margin-bottom: 2px;
 }
 
-.rg-sidebar-left {
+.rg-sidebar-left,
+.rg-sidebar-right {
     cursor: col-resize;
-    height: 20px;
-    width: 7px;
+    margin-left: 2px;
+    margin-right: 2px;
 }

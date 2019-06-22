@@ -28,6 +28,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
     resizableMinWidthLeft: number;
     resizableMaxWidthLeft = 1200;
 
+    interactResizableRight: Interactable;
+    resizableMinWidthRight: number;
+    resizableMaxWidthRight = 1200;
+
     constructor(private $window: WindowRef) {}
 
     /**
@@ -65,11 +69,35 @@ export class CodeEditorGridComponent implements AfterViewInit {
         this.interactResizableLeft = interact('.editor-sidebar-left')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
-                edges: { left: false, right: 'rg-sidebar-left', bottom: false, top: false },
+                edges: { left: false, right: '.rg-sidebar-left', bottom: false, top: false },
                 // Set min and max height
                 restrictSize: {
                     min: { width: this.resizableMinWidthLeft },
                     max: { width: this.resizableMaxWidthLeft },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.width = event.rect.width + 'px';
+            });
+
+        this.resizableMinWidthRight = this.$window.nativeWindow.screen.width / 6;
+        this.interactResizableRight = interact('.editor-sidebar-right')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: '.rg-sidebar-right', right: false, bottom: false, top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { width: this.resizableMinWidthRight },
+                    max: { width: this.resizableMaxWidthRight },
                 },
                 inertia: true,
             })
