@@ -18,14 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -181,46 +181,44 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for tutor dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
 
-        ObjectNode data = populateCommonStatistics(exerciseId);
-        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutorInExercise(exerciseId, user.getId());
-        data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
 
-        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndResult_Assessor_Id(exerciseId, user.getId());
-        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
      * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
      * instructor dashboard
      *
-     * @param exerciseId - the exercise we are interested in
+     * @param exercise - the exercise we are interested in
      * @return a object node with the stats
      */
-    private ObjectNode populateCommonStatistics(@PathVariable Long exerciseId) {
-        ObjectNode data = objectMapper.createObjectNode();
+    private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
+        Long exerciseId = exercise.getId();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        stats.setNumberOfComplaints(numberOfComplaints);
 
-        return data;
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        return stats;
     }
 
     /**
@@ -231,7 +229,7 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -239,17 +237,11 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        ObjectNode data = populateCommonStatistics(exerciseId);
+        StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
         long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
-        data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+        stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
-        // TODO: use the new database views
-        tutorLeaderboardService.getExerciseLeaderboard(exerciseId);
-
-        // TODO: combine this data per tutor and attach it into the StatsForInstructorDashboardDTO
-        // data.set("tutorLeaderboard", objectMapper.valueToTree(tutorLeaderboard));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -348,7 +340,7 @@ public class ExerciseResource {
             return forbidden();
 
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        if (studentList.isEmpty() || studentList == null) {
+        if (studentList.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert(applicationName, "Given studentlist for export was empty or malformed", ""))
                     .build();
         }

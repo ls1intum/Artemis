@@ -391,4 +391,8 @@ public class UserService {
         userRepository.updateUserNotificationReadDate(loggedInUser.getId());
         return loggedInUser;
     }
+
+    public List<User> getTutors(String teachingAssistantGroupName) {
+        return userRepository.findAllByGroupsIsContaining(teachingAssistantGroupName);
+    }
 }

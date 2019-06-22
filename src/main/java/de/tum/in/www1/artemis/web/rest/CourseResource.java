@@ -22,9 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -34,6 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -351,7 +350,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            Long numberOfSubmissions = new Long(0);
+            Long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -380,34 +379,28 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForTutorDashboard(@PathVariable Long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
-
-        ObjectNode data = objectMapper.createObjectNode();
 
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) {
             return forbidden();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
-        Long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
-        data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
+        stats.setNumberOfAssessments(numberOfAssessments);
 
         Long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+        stats.setNumberOfComplaints(numberOfComplaints);
 
-        Long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
-        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
 
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -466,7 +459,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            Long numberOfParticipations = new Long(0);
+            Long numberOfParticipations = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -509,21 +502,19 @@ public class CourseResource {
         Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
         Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
 
-        stats.numberOfStudents = courseService.countNumberOfStudentsForCourse(course);
-        stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
-        stats.numberOfComplaints = numberOfComplaints;
-        stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
+        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
+        stats.setNumberOfComplaints(numberOfComplaints);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
-        stats.numberOfSubmissions = numberOfSubmissions;
-        stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         long startT = System.currentTimeMillis();
-        tutorLeaderboardService.getCourseLeaderboard(courseId);
-
-        // TODO: combine this data per tutor and attach it into the StatsForInstructorDashboardDTO
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
 
         log.info("Finished TutorLeaderboard in " + (System.currentTimeMillis() - startT) + "ms");
 
