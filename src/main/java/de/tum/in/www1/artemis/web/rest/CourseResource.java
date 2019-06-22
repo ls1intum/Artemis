@@ -28,9 +28,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -78,8 +75,6 @@ public class CourseResource {
 
     private final ObjectMapper objectMapper;
 
-    private final TextAssessmentService textAssessmentService;
-
     private final LectureService lectureService;
 
     private final ComplaintRepository complaintRepository;
@@ -96,20 +91,14 @@ public class CourseResource {
 
     private final ComplaintService complaintService;
 
-    private final TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository;
-
-    private final TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository;
-
-    private final TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository;
+    private final TutorLeaderboardService tutorLeaderboardService;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService,
-            TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository, TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
-            TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
+            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,7 +109,6 @@ public class CourseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
@@ -129,9 +117,8 @@ public class CourseResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
-        this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
-        this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
-        this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
+
     }
 
     /**
@@ -533,15 +520,12 @@ public class CourseResource {
         stats.numberOfSubmissions = numberOfSubmissions;
         stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
 
-        log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
-        // stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
-
         long startT = System.currentTimeMillis();
-        List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(courseId);
-        List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(courseId);
-        List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByCourseId(courseId);
+        tutorLeaderboardService.getCourseLeaderboard(courseId);
+
+        // TODO: combine this data per tutor and attach it into the StatsForInstructorDashboardDTO
+
         log.info("Finished TutorLeaderboard in " + (System.currentTimeMillis() - startT) + "ms");
-        log.info(tutorLeaderboardAssessments.toString());
 
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);

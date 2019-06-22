@@ -4,17 +4,13 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Immutable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Entity
 @Table(name = "view_tutor_leaderboard_assessments")
 @Immutable
 public class TutorLeaderboardAssessmentView {
 
-    @Id
-    @Column(name = "uuid")
-    @JsonIgnore
-    private String uuid;
+    @EmbeddedId
+    private LeaderboardId leaderboardId;
 
     @Column(name = "assessments")
     private Long assessments;
@@ -22,17 +18,11 @@ public class TutorLeaderboardAssessmentView {
     @Column(name = "points")
     private Long points;
 
-    @Column(name = "user_id")
-    private Long userId;
-
     @Column(name = "course_id")
     private Long courseId;
 
     @Column(name = "first_name")
     private String userFirstName;
-
-    @Column(name = "title")
-    private String courseTitle;
 
     public Long getAssessments() {
         return assessments;
@@ -43,18 +33,19 @@ public class TutorLeaderboardAssessmentView {
     }
 
     public Long getUserId() {
-        return userId;
+        return leaderboardId.getUserId();
     }
 
     public Long getCourseId() {
         return courseId;
     }
 
+    public Long getExerciseId() {
+        return leaderboardId.getExerciseId();
+    }
+
     public String getUserFirstName() {
         return userFirstName;
     }
 
-    public String getCourseTitle() {
-        return courseTitle;
-    }
 }

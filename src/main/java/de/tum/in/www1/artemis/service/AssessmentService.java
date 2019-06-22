@@ -131,43 +131,6 @@ abstract class AssessmentService {
     }
 
     /**
-     * Given a courseId, this method creates the tutor leaderboard collecting all the results of the course, checking who is the assessor and if there is any related complaint
-     *
-     * @param courseId - the course we are interested in
-     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
-     */
-    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForCourse(Long courseId) {
-
-        // TODO: this is still very slow for large courses. What we are interested in, can be calculated much faster and this is basically number of assessments and number of
-        // complaints for each tutor
-        List<Result> resultsForCourse = resultRepository.findAllByParticipation_Exercise_CourseIdWithEagerAssessor(courseId);
-
-        // TODO: stat to develop a better approach
-        List<User> tutors = new ArrayList<>();
-        // TODO add all tutors into this list
-
-        for (User tutor : tutors) {
-            // TODO count number of results for the given course in which this tutor is the assessor and which are completed
-
-            // TODO count number of complaints for the given course in which this tutor has reviewed the corresponding result
-        }
-
-        return createTutorLeaderboardFromResults(resultsForCourse);
-    }
-
-    /**
-     * Given a exerciseId, this method creates the tutor leaderboard collecting all the results of the exercise, checking who is the assessor and if there is any related complaint
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
-     */
-    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForExercise(Long exerciseId) {
-        List<Result> resultsForExercise = resultRepository.findAllByParticipation_Exercise_IdWithEagerAssessor(exerciseId);
-
-        return createTutorLeaderboardFromResults(resultsForExercise);
-    }
-
-    /**
      * Given a list of results, create a leaderboard counting how many assessments and how many complaints every tutor has
      *
      * @param results - the results to iterate over
