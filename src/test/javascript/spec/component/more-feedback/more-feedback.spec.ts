@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, async, tick, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
-import { RequestMoreFeedbackComponent } from 'app/request-more-feedback';
+import { MoreFeedbackComponent } from 'app/more-feedback';
 import { By, BrowserModule } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
@@ -13,15 +13,15 @@ import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 
 const expect = chai.expect;
-describe('RequestMoreFeedbackComponent', () => {
-    let comp: RequestMoreFeedbackComponent;
-    let fixture: ComponentFixture<RequestMoreFeedbackComponent>;
+describe('MoreFeedbackComponent', () => {
+    let comp: MoreFeedbackComponent;
+    let fixture: ComponentFixture<MoreFeedbackComponent>;
     let debugElement: DebugElement;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, HttpClientModule],
-            declarations: [RequestMoreFeedbackComponent],
+            declarations: [MoreFeedbackComponent],
             providers: [
                 {
                     provide: ComplaintService,
@@ -35,7 +35,7 @@ describe('RequestMoreFeedbackComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(RequestMoreFeedbackComponent);
+                fixture = TestBed.createComponent(MoreFeedbackComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
             });

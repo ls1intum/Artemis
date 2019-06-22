@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -90,7 +91,7 @@ public class ComplaintResponseResource {
 
         // Only tutors who are not part the original assessors can reply to a complaint
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(originalComplaint.getResult().getParticipation().getExercise())
-                || originalComplaint.getResult().getAssessor().equals(reviewer)) {
+                || (originalComplaint.getResult().getAssessor().equals(reviewer) && originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 

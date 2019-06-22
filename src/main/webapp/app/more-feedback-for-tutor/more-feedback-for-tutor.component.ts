@@ -7,16 +7,13 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 
 @Component({
-    selector: 'jhi-complaints-for-tutor-form',
-    templateUrl: './complaints-for-tutor.component.html',
+    selector: 'jhi-more-feedback-for-tutor-form',
+    templateUrl: './more-feedback-for-tutor.component.html',
     providers: [JhiAlertService],
 })
-export class ComplaintsForTutorComponent implements OnInit {
+export class MoreFeedbackForTutorComponent implements OnInit {
     @Input() complaint: Complaint;
-    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond (i.e. that he is not the assessor)
-    // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
-    // that should be sent to the server along with the assessment update.
-    @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+    @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond
     complaintText = '';
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
@@ -31,29 +28,23 @@ export class ComplaintsForTutorComponent implements OnInit {
         }
     }
 
-    respondToComplaint(acceptComplaint: boolean): void {
+    respondToComplaint(): void {
         if (this.complaintResponse.responseText.length <= 0 || !this.isAllowedToRespond) {
             return;
         }
         this.handled = true;
-        this.complaint.accepted = acceptComplaint;
+        this.complaint.accepted = true;
         this.complaintResponse.complaint = this.complaint;
-        if (acceptComplaint) {
-            // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
-            // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-            this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
-        } else {
-            // If the complaint was rejected, just the complaint response is created.
-            this.complaintResponseService.create(this.complaintResponse).subscribe(
-                response => {
-                    this.jhiAlertService.success('artemisApp.complaint.complaintResponse.created');
-                    this.complaintResponse = response.body!;
-                },
-                (err: HttpErrorResponse) => {
-                    this.onError(err.message);
-                },
-            );
-        }
+        // If the complaint was rejected, just the complaint response is created.
+        this.complaintResponseService.create(this.complaintResponse).subscribe(
+            response => {
+                this.jhiAlertService.success('artemisApp.moreFeedback.response.created');
+                this.complaintResponse = response.body!;
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
     }
 
     private onError(error: string): void {

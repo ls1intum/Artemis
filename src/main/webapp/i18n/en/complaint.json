@@ -36,14 +36,27 @@
                 "studentName": "Student's Name",
                 "actions": "Actions",
                 "title": "List of complaints"
-            }
+            },
+            "review": "Review Complaint"
         },
         "moreFeedback": {
             "title": "More feedback request",
             "description": "If something is not clear enough, or you need more explanations, request the tutor to give you more feedback",
+            "beDescriptive": "Please describe in detail what is unclear for you in the assessment. Your request will then be evaluated by the same reviewer.",
             "button": "Request more feedback",
             "info": "Submitting feedback request will not affect number of maximum complaints, but your score will remain unchanged.",
-            "response": "Response to more feedback request"
+            "review": "Review More Feedback Request",
+            "alreadyHandled": "The request has been resolved",
+            "alreadySubmitted": "You have already requested more feedback on",
+            "acceptedLong": "Request was accepted",
+            "responseExists": "Response to your request of",
+            "response": {
+                "title": "Request's response",
+                "created": "Response to more feedback request has been submitted",
+                "sendResponseTooltip": "Send response to more feedback request",
+                "provideFeedback": "Provide more feedback"
+            },
+            "hint": "Scroll down to review More Feedback Request"
         }
     }
 }

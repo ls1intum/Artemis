@@ -21,6 +21,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -42,8 +43,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     isAtLeastInstructor = false;
     busy = true;
     showResult = true;
-    hasComplaint = false;
     complaint: Complaint;
+    complaintTypes = ComplaintType;
     notFound = false;
     userId: number;
     canOverride = false;
@@ -76,6 +77,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
         private translateService: TranslateService,
+        private complaintService: ComplaintService,
     ) {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
@@ -288,7 +290,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolution);
 
         this.result = this.participation.results[0];
-        this.hasComplaint = this.result.hasComplaint;
+        if (this.result.hasComplaint) {
+            this.getComplaint();
+        }
 
         this.loadFeedbacks(this.result.feedbacks || []);
         this.busy = false;
@@ -296,6 +300,23 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkPermissions();
     }
 
+    getComplaint(): void {
+        this.complaintService.findByResultId(this.result.id).subscribe(
+            res => {
+                if (!res.body) {
+                    return;
+                }
+                this.complaint = res.body;
+                // All complaints without complaint type should be treated as complaint.
+                if (!this.complaint.complaintType) {
+                    this.complaint.complaintType = this.complaintTypes.COMPLAINT;
+                }
+            },
+            (err: HttpErrorResponse) => {
+                this.onError(err.message);
+            },
+        );
+    }
     goToExerciseDashboard() {
         if (this.exercise && this.exercise.course) {
             this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);

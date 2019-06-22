@@ -9,11 +9,11 @@ import { ComplaintResponseService } from 'app/entities/complaint-response/compla
 import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
-    selector: 'jhi-request-more-feedback-form',
-    templateUrl: './request-more-feedback.component.html',
+    selector: 'jhi-more-feedback-form',
+    templateUrl: './more-feedback.component.html',
     providers: [JhiAlertService],
 })
-export class RequestMoreFeedbackComponent implements OnInit {
+export class MoreFeedbackComponent implements OnInit {
     @Input() resultId: number;
     complaintText = '';
     alreadySubmitted: boolean;
