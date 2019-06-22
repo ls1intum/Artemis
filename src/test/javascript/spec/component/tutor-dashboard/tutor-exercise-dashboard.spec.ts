@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { stub, SinonStub } from 'sinon';
 import { ArTEMiSTestModule } from '../../test.module';
 import { MockActivatedRoute } from '../../mocks';
 import { ResultComponent } from 'app/entities/result';
@@ -31,6 +32,8 @@ describe('TutorExerciseDashboardComponent', () => {
     let comp: TutorExerciseDashboardComponent;
     let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
+
+    let modelingSubmissionStub: SinonStub;
 
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
@@ -77,23 +80,31 @@ describe('TutorExerciseDashboardComponent', () => {
                 modelingSubmissionService = TestBed.get(ModelingSubmissionService);
 
                 comp.exerciseId = exercise.id;
+
+                modelingSubmissionStub = stub(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment');
             });
     });
 
+    afterEach(() => {
+        modelingSubmissionStub.restore();
+    });
+
     it('should set unassessedSubmission if lock limit is not reached', () => {
-        spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment').and.returnValue(of(submission));
+        modelingSubmissionStub.returns(of(submission));
 
         comp.loadAll();
 
+        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmission).to.equal(submission);
         expect(comp.submissionLockLimitReached).to.be.false;
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
-        spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseWithoutAssessment').and.returnValue(throwError(lockLimitErrorResponse));
+        modelingSubmissionStub.returns(throwError(lockLimitErrorResponse));
 
         comp.loadAll();
 
+        expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(comp.unassessedSubmission).to.be.undefined;
         expect(comp.submissionLockLimitReached).to.be.true;
     });
