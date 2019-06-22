@@ -45,7 +45,6 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         QuizExerciseResetDialogComponent,
         QuizExerciseResetPopupComponent,
         QuizExerciseDetailComponent,
-        QuizExerciseExportComponent,
     ],
     entryComponents: [
         QuizExerciseComponent,

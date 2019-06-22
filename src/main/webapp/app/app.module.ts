@@ -128,7 +128,6 @@ import { ArTEMiSMainModule } from 'app/layouts/main/main.module';
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSConnectionNotificationModule,
         ArTEMiSListOfComplaintsModule,
-        ArTEMiSMainModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
