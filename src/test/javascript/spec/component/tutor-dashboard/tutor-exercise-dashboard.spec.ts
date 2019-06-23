@@ -25,6 +25,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,6 +46,7 @@ describe('TutorExerciseDashboardComponent', () => {
             imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterModule],
             declarations: [
                 TutorExerciseDashboardComponent,
+                MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(SidePanelComponent),

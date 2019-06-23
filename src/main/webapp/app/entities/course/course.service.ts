@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import { Course, StatsForInstructorDashboard, StatsForTutorDashboard } from './course.model';
+import { Course } from './course.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation/participation.model';
@@ -17,6 +17,7 @@ import { ExerciseService } from '../exercise/exercise.service';
 import { AccountService, User } from 'app/core';
 import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -90,8 +91,8 @@ export class CourseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForTutorDashboard>> {
-        return this.http.get<StatsForTutorDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+    getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
     // the body is null, because the server can identify the user anyway
@@ -118,8 +119,8 @@ export class CourseService {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }
 
-    getStatsForInstructors(id: number): Observable<HttpResponse<StatsForInstructorDashboard>> {
-        return this.http.get<StatsForInstructorDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
+    getStatsForInstructors(id: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 
     findAllCategoriesOfCourse(courseId: number): Observable<HttpResponse<string[]>> {
