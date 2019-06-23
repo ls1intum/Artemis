@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "studentDashboard": {
             "title": "Your current courses",
             "exerciseTitle": "Current exercise of \"{{ course }}\" active till {{ date }}:",
@@ -66,12 +66,18 @@
             "statistics": {
                 "totalScore": "Your total score",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
-                "exerciseCount": "Participated in {{ number }} {{type}}",
+                "exerciseCount": "{{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",
                 "relativeScore": "Relative score: {{ number }}%",
                 "presentationScore": "Presentation score: {{ number }}",
-                "noStatistics": "No statistics available for the course."
+                "noStatistics": "No statistics available for the course.",
+                "exerciseAchievedScore": "Achieved Score: {{ points }} points ({{ percentage }}%)",
+                "exerciseMissedScore": "Missed Score: {{ points }} points ({{ percentage }}%)",
+                "exerciseNotGraded": "{{ exercise }} has not yet been graded.",
+                "exerciseNotParticipated": "You have not participated in {{ exercise }}.",
+                "exerciseParticipatedAfterDueDate": "You have participated in {{ exercise }}, but after the due date.",
+                "noPointsForExercise": "You can't receive points for this exercise."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
@@ -106,7 +112,7 @@
                     "statistics": "Statistics"
                 },
                 "notParticipated": "Not participated",
-                "yourResult": "Your result:",
+                "yourGradedResult": "Your graded result:",
                 "recentResults": "Recent results:",
                 "noGradedResult": "You have no graded result.",
                 "allResults": "All results:",

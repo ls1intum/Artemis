@@ -12,7 +12,7 @@
                 </div>
                 <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
                     <button class="btn btn-outline-secondary mr-1" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                        {{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}
+                        {{ 'artemisApp.multipleChoiceQuestion.editor.style' | translate }}
                     </button>
                     <div class="dropdown-menu" ngbDropdownMenu>
                         <ng-container *ngFor="let command of headerCommands"
@@ -39,13 +39,18 @@
                             {{ command.buttonTranslationString | translate }}
                         </button>
                         <div ngbDropdownMenu>
-                            <button *ngFor="let value of command.values" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
-                            <button *ngIf="!command.values.length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                            <button *ngFor="let value of command.getValues()" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
+                            <button *ngIf="!command.getValues().length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
                         </div>
                     </div>
                 </ng-container>
             </div>
-            <div class="card border-0 markdown-editor markdown-editor__small">
+            <div
+                class="card border-0 markdown-editor "
+                [class.markdown-editor__small]="defaultHeight === MarkdownEditorHeight.SMALL"
+                [class.markdown-editor__medium]="defaultHeight === MarkdownEditorHeight.MEDIUM"
+                [class.markdown-editor__large]="defaultHeight === MarkdownEditorHeight.LARGE"
+            >
                 <ace-editor
                     #aceEditor
                     [mode]="aceEditorOptions.mode"

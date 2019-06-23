@@ -9,7 +9,7 @@
         "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
         "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
         "delete": {
-            "question": "Sind Sie sicher, dass Sie die Mitteilung {{ id }} löschen möchten?"
+            "question": "Bist du sicher, dass du die Mitteilung {{ id }} löschen möchtest?"
         },
         "detail": {
             "title": "Mitteilung"
@@ -20,6 +20,11 @@
         "expireDate": "Gültig bis",
         "notificationDate": "Mitteilungsdatum",
         "active": "Aktiv",
-        "notActive": "Nicht Aktiv"
+        "notActive": "Nicht Aktiv",
+        "newAnswer": "Antwort ansehen",
+        "newQuestion": "Frage ansehen",
+        "exerciseCreated": "Übung ansehen",
+        "exerciseUpdated": "Übung ansehen",
+        "attachmentUpdated": "Vorlesung ansehen"
     }
 }

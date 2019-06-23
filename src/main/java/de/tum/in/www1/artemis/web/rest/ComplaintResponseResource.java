@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -33,16 +34,19 @@ public class ComplaintResponseResource {
 
     private static final String ENTITY_NAME = "complaintResponse";
 
-    private ComplaintResponseRepository complaintResponseRepository;
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
-    private ComplaintResponseService complaintResponseService;
+    private final ComplaintResponseRepository complaintResponseRepository;
 
-    private AuthorizationCheckService authorizationCheckService;
+    private final ComplaintResponseService complaintResponseService;
+
+    private final AuthorizationCheckService authorizationCheckService;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
             AuthorizationCheckService authorizationCheckService) {
-        this.complaintResponseService = complaintResponseService;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintResponseService = complaintResponseService;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -59,7 +63,7 @@ public class ComplaintResponseResource {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
         return ResponseEntity.created(new URI("/api/complaint-responses/" + savedComplaintResponse.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaintResponse.getId().toString())).body(savedComplaintResponse);
     }
 
     /**

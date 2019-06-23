@@ -93,7 +93,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Language",
-            "noNotifications": "No notifications available"
+            "noNotifications": "No new notifications available",
+            "showAllNotifications": "Show all notifications"
         },
         "form": {
             "username": "Username",
@@ -164,6 +165,7 @@
             "confirm": "Confirm",
             "download": "Download",
             "edit": "Edit",
+            "editInEditor": "Edit in editor",
             "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",
             "open": "Open",

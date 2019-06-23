@@ -4,20 +4,66 @@ import java.util.List;
 
 public class StatsForInstructorDashboardDTO {
 
-    public long numberOfStudents;
+    private Long numberOfStudents;
 
-    public long numberOfTutors;
+    private Long numberOfSubmissions;
 
-    public long numberOfSubmissions;
+    private Long numberOfAssessments;
 
-    public long numberOfAssessments;
+    private Long numberOfComplaints;
 
-    public long numberOfComplaints;
+    private Long numberOfOpenComplaints;
 
-    public long numberOfOpenComplaints;
-
-    public List<StatsTutorLeaderboardDTO> tutorLeaderboard;
+    private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
     public StatsForInstructorDashboardDTO() {
+    }
+
+    public Long getNumberOfStudents() {
+        return numberOfStudents;
+    }
+
+    public void setNumberOfStudents(Long numberOfStudents) {
+        this.numberOfStudents = numberOfStudents;
+    }
+
+    public Long getNumberOfSubmissions() {
+        return numberOfSubmissions;
+    }
+
+    public void setNumberOfSubmissions(Long numberOfSubmissions) {
+        this.numberOfSubmissions = numberOfSubmissions;
+    }
+
+    public Long getNumberOfAssessments() {
+        return numberOfAssessments;
+    }
+
+    public void setNumberOfAssessments(Long numberOfAssessments) {
+        this.numberOfAssessments = numberOfAssessments;
+    }
+
+    public Long getNumberOfComplaints() {
+        return numberOfComplaints;
+    }
+
+    public void setNumberOfComplaints(Long numberOfComplaints) {
+        this.numberOfComplaints = numberOfComplaints;
+    }
+
+    public Long getNumberOfOpenComplaints() {
+        return numberOfOpenComplaints;
+    }
+
+    public void setNumberOfOpenComplaints(Long numberOfOpenComplaints) {
+        this.numberOfOpenComplaints = numberOfOpenComplaints;
+    }
+
+    public List<TutorLeaderboardDTO> getTutorLeaderboardEntries() {
+        return tutorLeaderboardEntries;
+    }
+
+    public void setTutorLeaderboardEntries(List<TutorLeaderboardDTO> tutorLeaderboardEntries) {
+        this.tutorLeaderboardEntries = tutorLeaderboardEntries;
     }
 }

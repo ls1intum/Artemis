@@ -28,7 +28,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
-    @Input() result: Result;
+    @Input() result: Result | null;
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
 
@@ -60,10 +60,10 @@ export class ResultComponent implements OnInit, OnChanges {
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
                     this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate > r2.completionDate) {
+                        if (r1.completionDate! > r2.completionDate!) {
                             return -1;
                         }
-                        if (r1.completionDate < r2.completionDate) {
+                        if (r1.completionDate! < r2.completionDate!) {
                             return 1;
                         }
                         return 0;
@@ -97,19 +97,19 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     buildResultString() {
-        if (this.result.resultString === 'No tests found') {
-            return this.translate.instant('arTeMiSApp.editor.buildFailed');
+        if (this.result!.resultString === 'No tests found') {
+            return this.translate.instant('artemisApp.editor.buildFailed');
         }
-        return this.result.resultString;
+        return this.result!.resultString;
     }
 
     getHasFeedback() {
-        if (this.result.resultString === 'No tests found') {
+        if (this.result!.resultString === 'No tests found') {
             return true;
-        } else if (this.result.hasFeedback === null) {
+        } else if (this.result!.hasFeedback === null) {
             return false;
         }
-        return this.result.hasFeedback;
+        return this.result!.hasFeedback;
     }
 
     showDetails(result: Result) {
@@ -138,16 +138,17 @@ export class ResultComponent implements OnInit, OnChanges {
      * @return {string} the css class
      */
     getTextColorClass() {
-        if (this.result.score == null) {
-            if (this.result.successful) {
+        const result = this.result!;
+        if (result.score == null) {
+            if (result.successful) {
                 return 'text-success';
             }
             return 'text-danger';
         }
-        if (this.result.score > MIN_POINTS_GREEN) {
+        if (result.score > MIN_POINTS_GREEN) {
             return 'text-success';
         }
-        if (this.result.score > MIN_POINTS_ORANGE) {
+        if (result.score > MIN_POINTS_ORANGE) {
             return 'result-orange';
         }
         return 'text-danger';
@@ -158,13 +159,14 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getResultIconClass(): string[] {
-        if (this.result.score == null) {
-            if (this.result.successful) {
+        const result = this.result!;
+        if (result.score == null) {
+            if (result.successful) {
                 return ['far', 'check-circle'];
             }
             return ['far', 'times-circle'];
         }
-        if (this.result.score > 80) {
+        if (result.score > 80) {
             return ['far', 'check-circle'];
         }
         return ['far', 'times-circle'];

@@ -14,10 +14,13 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
     providers: [ApollonDiagramService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
 
     apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
+
+    /**  */
+    autoSaveInterval: number;
 
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
@@ -47,15 +50,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
             this.apollonDiagramService.find(id).subscribe(
                 response => {
-                    const diagram = response.body;
+                    const diagram = response.body!;
 
                     this.apollonDiagram = diagram;
 
                     const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(model);
+                    this.setAutoSaveTimer();
                 },
                 () => {
-                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.detail.error.loading');
+                    this.jhiAlertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
             );
         });
@@ -68,6 +72,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        clearInterval(this.autoSaveInterval);
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -81,7 +86,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
-            type: this.apollonDiagram.diagramType,
+            type: this.apollonDiagram!.diagramType,
             locale: this.languageService.currentLang as Locale,
         });
     }
@@ -91,18 +96,24 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const umlModel = this.apollonEditor.model;
+        const umlModel = this.apollonEditor!.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram,
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram).subscribe(
-            () => {},
-            () => {
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.update.error');
-            },
-        );
+        this.apollonDiagramService.update(updatedDiagram).subscribe(() => this.setAutoSaveTimer(), () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'));
+    }
+
+    /**
+     * This function sets and starts an auto-save timer that automatically saves changes
+     * to the model after 30 seconds.
+     */
+    private setAutoSaveTimer(): void {
+        clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = window.setInterval(() => {
+            this.saveDiagram();
+        }, 30000);
     }
 
     /**
@@ -117,16 +128,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
-        modalComponentInstance.apollonEditor = this.apollonEditor;
-        modalComponentInstance.diagramTitle = this.apollonDiagram.title;
+        modalComponentInstance.apollonEditor = this.apollonEditor!;
+        modalComponentInstance.diagramTitle = this.apollonDiagram!.title;
 
         try {
             const result = await modalRef.result;
             if (result) {
-                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.create.success', { title: result.title });
+                this.jhiAlertService.success('artemisApp.apollonDiagram.create.success', { title: result.title });
             }
         } catch (error) {
-            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.create.error');
+            this.jhiAlertService.error('artemisApp.apollonDiagram.create.error');
             throw error;
         }
     }
@@ -141,8 +152,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const selection = [...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships];
-        const svg = this.apollonEditor.exportAsSVG({
+        const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
+        const svg = this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });
@@ -160,7 +171,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         document.body.appendChild(anchor);
         const url = window.URL.createObjectURL(file);
         anchor.href = url;
-        anchor.download = `${this.apollonDiagram.title}.png`;
+        anchor.download = `${this.apollonDiagram!.title}.png`;
         anchor.click();
 
         // Async revoke of ObjectURL to prevent failure on larger files.

@@ -18,7 +18,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
-    public course: Course;
+    public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
 
@@ -37,14 +37,14 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        this.paramSubscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course === undefined) {
+        if (this.course == null) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body);
+                this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
@@ -61,11 +61,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     public groupExercises(selectedOrder: number): void {
+        // set all values to 0
+        this.exerciseCountMap = new Map<string, number>();
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const courseExercises = [...this.course.exercises];
+        const courseExercises = [...this.course!.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
@@ -113,7 +115,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.weeklyExercisesGrouped = {
                 ...groupedExercises,
                 noDate: {
-                    label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
+                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
                     isCollapsed: false,
                     isCurrentWeek: false,
                     exercises: notAssociatedExercises,
@@ -139,7 +141,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         if (!this.exerciseCountMap.has(exercise.type)) {
             this.exerciseCountMap.set(exercise.type, 1);
         } else {
-            let exerciseCount = this.exerciseCountMap.get(exercise.type);
+            let exerciseCount = this.exerciseCountMap.get(exercise.type)!;
             this.exerciseCountMap.set(exercise.type, ++exerciseCount);
         }
     }
@@ -155,6 +157,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     get nextRelevantExercise(): Exercise {
-        return this.exerciseService.getNextExerciseForHours(this.course.exercises);
+        return this.exerciseService.getNextExerciseForHours(this.course!.exercises);
     }
 }

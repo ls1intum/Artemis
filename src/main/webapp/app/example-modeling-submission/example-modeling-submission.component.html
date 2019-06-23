@@ -5,10 +5,10 @@
     </div>
 
     <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
-        <h2 jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
+        <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
             Example Modeling Submission for Exercise {{ exercise?.title }}
         </h2>
-        <p *ngIf="assessmentMode" jhiTranslate="arTeMiSApp.exampleSubmission.assessmentInstruction">
+        <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">
             Double-click on a model element to view and edit the element's assessment.
         </p>
     </div>
@@ -17,30 +17,30 @@
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
-                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="arTeMiSApp.modelingExercise.usedForTutorial">Used for tutorial</label>
+                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.modelingExercise.usedForTutorial">Used for tutorial</label>
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ml-2 button-resize">
                 <fa-icon icon="save"></fa-icon>
-                <span *ngIf="isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
-                <span *ngIf="!isNewSubmission" jhiTranslate="arTeMiSApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
+                <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
+                <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
             </button>
         </div>
 
         <button *ngIf="assessmentMode" (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
             <fa-icon icon="save"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
+            <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
         <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
                 <fa-icon icon="chalkboard-teacher"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleAssessment">Show assessment</span>
+                <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment">Show assessment</span>
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
                 <fa-icon icon="code-branch"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.modelingExercise.showExampleSubmission">Show submission</span>
+                <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
     </div>
@@ -48,7 +48,7 @@
     <div class="col-12 text-right mb-2" *ngIf="readOnly">
         <button (click)="readAndUnderstood()" class="btn btn-success">
             <fa-icon icon="save"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
+            <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
         </button>
     </div>
 
@@ -57,7 +57,7 @@
             class="btn btn-primary px-5"
             (click)="checkAssessment()"
             [disabled]="!feedbacks || !assessmentsAreValid"
-            jhiTranslate="arTeMiSApp.exampleSubmission.submitAssessment"
+            jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
         >
             Submit Assessment
         </button>
@@ -86,10 +86,10 @@
                 <!--The explanation field is only visible a) in assessment mode, b) for example submissions not used for tutorial and c) when in tutor dashboard (readonly = true)
                 only if an explanation text is there-->
                 <h3 class="mt-3" *ngIf="assessmentMode && !exampleSubmission?.usedForTutorial && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))">
-                    {{ 'arTeMiSApp.exampleSubmission.assessmentExplanation' | translate }}
+                    {{ 'artemisApp.exampleSubmission.assessmentExplanation' | translate }}
                     <sup>
                         <small>
-                            <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
+                            <fa-icon icon="info-circle" title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
                         </small>
                     </sup>
                 </h3>

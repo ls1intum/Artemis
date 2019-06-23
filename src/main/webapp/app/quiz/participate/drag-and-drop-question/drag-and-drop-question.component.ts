@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, HostListener } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -20,7 +20,7 @@ polyfill({
     event.preventDefault();
 };
 
-window.addEventListener('touchmove', function() {});
+window.addEventListener('touchmove', function() {}, { passive: false });
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -29,7 +29,7 @@ window.addEventListener('touchmove', function() {});
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     /** needed to trigger a manual reload of the drag and drop background picture */
-    @ViewChild(SecuredImageComponent)
+    @ViewChild(SecuredImageComponent, { static: false })
     secureImageComponent: SecuredImageComponent;
 
     _question: DragAndDropQuestion;
@@ -79,6 +79,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         this.countCorrectMappings();
     }
@@ -111,6 +115,18 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
         this.loadingState = value;
+        if (this.loadingState === 'success') {
+            this.resizeImage();
+        }
+    }
+
+    /**
+     * Prevent scrolling when dragging elements on mobile devices
+     * @param event
+     */
+    preventDefault(event: any) {
+        event.mouseEvent.preventDefault();
+        return false;
     }
 
     /**
@@ -120,7 +136,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      *                     May be null if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
         if (dropLocation) {
@@ -181,7 +197,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation));
+            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation!, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {
@@ -204,7 +220,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     getUnassignedDragItems() {
         return this.question.dragItems.filter(dragItem => {
             return !this.mappings.some(mapping => {
-                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
+                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
         }, this);
     }
@@ -262,7 +278,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const dragAndDropQuestionUtil = this.dragAndDropQuestionUtil;
         const mapping = this.sampleSolutionMappings.find(function(solutionMapping) {
-            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation, dropLocation);
+            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation!, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
@@ -276,5 +292,14 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     countCorrectMappings(): void {
         this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
+    }
+
+    resizeImage() {
+        setTimeout(() => {
+            const image = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+            clickLayer.style.height = image.height + 'px';
+        }, 500);
     }
 }

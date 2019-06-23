@@ -7,6 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -20,6 +21,13 @@ export class ListOfComplaintsComponent implements OnInit {
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
+
+    complaintsSortingPredicate = 'id';
+    complaintsReverseOrder = false;
+    complaintsToShow: Complaint[] = [];
+    showAddressedComplaints = false;
+
+    loading = true;
 
     constructor(
         private complaintService: ComplaintService,
@@ -54,13 +62,15 @@ export class ListOfComplaintsComponent implements OnInit {
 
         complaintResponse.subscribe(
             res => {
-                this.complaints = res.body;
+                this.complaints = res.body!;
+                this.complaintsToShow = this.complaints.filter(complaint => complaint.accepted === undefined);
 
                 if (this.complaints.length > 0 && this.complaints[0].student) {
                     this.hasStudentInformation = true;
                 }
             },
             (err: HttpErrorResponse) => this.onError(err.message),
+            () => (this.loading = false),
         );
     }
 
@@ -85,15 +95,41 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
             queryParams.showBackButton = true;
         }
-        this.router.navigate([route], { queryParams });
+        this.router.navigate([route!], { queryParams });
     }
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error('error.http.400', null, null);
+        this.jhiAlertService.error('error.http.400', null, undefined);
     }
 
     back() {
         this.location.back();
+    }
+
+    callback() {}
+
+    triggerAddressedComplaints() {
+        this.showAddressedComplaints = !this.showAddressedComplaints;
+
+        if (this.showAddressedComplaints) {
+            this.complaintsToShow = this.complaints;
+        } else {
+            this.complaintsToShow = this.complaints.filter(complaint => complaint.accepted === undefined);
+        }
+    }
+
+    shouldHighlightComplaint(complaint: Complaint) {
+        // Reviewed complaints shouldn't be highlight
+        if (complaint.accepted !== undefined) {
+            return false;
+        }
+
+        const complaintSubmittedTime = complaint.submittedTime;
+        if (complaintSubmittedTime) {
+            return moment().diff(complaintSubmittedTime, 'days') > 7; // We highlight complaints older than a week
+        }
+
+        return false;
     }
 }

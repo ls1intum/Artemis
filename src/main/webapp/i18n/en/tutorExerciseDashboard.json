@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "tutorExerciseDashboard": {
             "home": {
                 "title": "Tutor Exercise Dashboard"
@@ -37,7 +37,7 @@
             "openAssessment": "Open assessment",
             "startAssessment": "Start new assessment",
             "new": "NEW",
-            "noSubmissions": "There are no submissions by students at the moment",
+            "noSubmissions": "There are currently no submissions for you to grade",
             "complaints": "Complaints",
             "noComplaints": "There are no complaints at this moment.",
             "evaluateComplaint": "Evaluate the complaint",

@@ -1,9 +1,12 @@
 import { Injectable, SecurityContext } from '@angular/core';
 import * as showdown from 'showdown';
+import * as ace from 'brace';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
+
+const Range = ace.acequire('ace/range').Range;
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdown {
@@ -25,6 +28,20 @@ export class ArtemisMarkdown {
         const offsetRange = commandIdentifier[0].length + 1;
         range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
+    }
+
+    /**
+     * Remove the text at the specified range.
+     * @param from = col & row from which to start
+     * @param to = col & row at which to end
+     * @param aceEditorContainer
+     */
+    static removeTextRange(from: { col: number; row: number }, to: { col: number; row: number }, aceEditorContainer: AceEditorComponent) {
+        aceEditorContainer.getEditor().focus();
+        aceEditorContainer
+            .getEditor()
+            .getSession()
+            .remove(new Range(from.row, from.col, to.row, to.col));
     }
 
     constructor(private sanitizer: DomSanitizer) {}
@@ -108,7 +125,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForMarkdown(markdownText: string) {
+    htmlForMarkdown(markdownText: string | null) {
         if (markdownText == null || markdownText === '') {
             return '';
         }

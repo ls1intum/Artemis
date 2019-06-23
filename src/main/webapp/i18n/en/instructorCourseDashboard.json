@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "instructorCourseDashboard": {
             "title": "Instructor Course Dashboard",
             "pageHeader": "Instructor Course Dashboard for",
@@ -11,7 +11,7 @@
             "assessments": "Assessments",
             "open": "submissions not assessed",
             "openComplaint": "complaints not reviewed",
-            "noExercise": "There isn't any exercise for this course",
+            "noExercise": "There is no exercise for this course",
             "exercise": "Exercise",
             "dueDate": "Due date",
             "assessmentDueDate": "Assessment due date",
@@ -21,10 +21,12 @@
             "exerciseDashboard": "Exercise dashboard",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
+                "id": "ID",
                 "name": "Name",
-                "username": "Username",
-                "numberOfAssessments": "Number of assessments",
-                "numberOfComplaints": "Number of complaints"
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Accepted complaints",
+                "numberOfComplaintResponses": "Complaint responses",
+                "points": "Points"
             }
         }
     }

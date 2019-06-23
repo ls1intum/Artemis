@@ -2,7 +2,7 @@ import { Command } from './command';
 
 export class ColorPickerCommand extends Command {
     buttonIcon = '';
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.color';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.color';
 
     /**
      * @function execute

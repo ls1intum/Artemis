@@ -2,7 +2,7 @@ import { Command } from './command';
 
 export class CodeCommand extends Command {
     buttonIcon = 'code';
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.code';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.code';
 
     /**
      * @function execute

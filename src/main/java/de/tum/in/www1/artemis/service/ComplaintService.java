@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -49,7 +49,7 @@ public class ComplaintService {
      */
     @Transactional
     public Complaint createComplaint(Complaint complaint, Principal principal) {
-        Result originalResult = resultRepository.findById(complaint.getResult().getId())
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         User originalSubmissor = originalResult.getParticipation().getStudent();
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
@@ -59,7 +59,7 @@ public class ComplaintService {
             throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
-        if (originalResult.getCompletionDate().isBefore(ZonedDateTime.now().minusWeeks(1))) {
+        if (!isTimeOfComplaintValid(originalResult, originalResult.getParticipation().getExercise())) {
             throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
         }
         if (!originalSubmissor.getLogin().equals(principal.getName())) {
@@ -97,6 +97,16 @@ public class ComplaintService {
     @Transactional(readOnly = true)
     public long countUnacceptedComplaintsByStudentIdAndCourseId(long studentId, long courseId) {
         return complaintRepository.countUnacceptedComplaintsByStudentIdAndCourseId(studentId, courseId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countComplaintsByCourseId(long courseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countComplaintsByExerciseId(long exerciseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
     }
 
     /**
@@ -137,35 +147,35 @@ public class ComplaintService {
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_Id(tutorId);
 
-        return filterOutStudentFromComplaints(complaints);
+        return filterOutUselessDataFromComplaints(complaints, true);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseId(Long courseId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
 
-        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
+        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
 
-        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
+        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
 
-        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
+        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId, boolean includeStudentsName) {
         List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
 
-        return includeStudentsName ? complaints : filterOutStudentFromComplaints(complaints);
+        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {
@@ -177,9 +187,48 @@ public class ComplaintService {
         }
     }
 
-    private List<Complaint> filterOutStudentFromComplaints(List<Complaint> complaints) {
-        complaints.forEach(this::filterOutStudentFromComplaint);
+    private void filterOutUselessDataFromComplaint(Complaint complaint) {
+        if (complaint.getResult() == null) {
+            return;
+        }
+
+        Participation originalParticipation = complaint.getResult().getParticipation();
+        if (originalParticipation != null && originalParticipation.getExercise() != null) {
+            Exercise exerciseWithOnlyTitle;
+            exerciseWithOnlyTitle = originalParticipation.getExercise() instanceof TextExercise ? new TextExercise() : new ModelingExercise();
+            exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
+            exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
+
+            originalParticipation.setExercise(exerciseWithOnlyTitle);
+        }
+
+        Submission originalSubmission = complaint.getResult().getSubmission();
+        if (originalSubmission != null) {
+            Submission submissionWithOnlyId = originalSubmission instanceof TextSubmission ? new TextSubmission() : new ModelingSubmission();
+            submissionWithOnlyId.setId(originalSubmission.getId());
+            complaint.getResult().setSubmission(submissionWithOnlyId);
+        }
+    }
+
+    private List<Complaint> filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
+        if (filterOutStudentFromComplaints) {
+            complaints.forEach(this::filterOutStudentFromComplaint);
+        }
+
+        complaints.forEach(this::filterOutUselessDataFromComplaint);
 
         return complaints;
+    }
+
+    /**
+     * This function checks whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the result. If
+     * the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was submitted
+     * before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    private boolean isTimeOfComplaintValid(Result result, Exercise exercise) {
+        if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
+            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(1));
+        }
+        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(1));
     }
 }

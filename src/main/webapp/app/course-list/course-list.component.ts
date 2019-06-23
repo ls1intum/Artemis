@@ -43,12 +43,12 @@ export class CourseListComponent implements OnInit {
     loadAll() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
                 for (const course of this.courses) {
                     const scores = this.courseScoreCalculationService.calculateTotalScores(course.exercises);
-                    course.absoluteScore = scores.get(ABSOLUTE_SCORE);
-                    course.relativeScore = scores.get(RELATIVE_SCORE);
-                    course.maxScore = scores.get(MAX_SCORE);
+                    course.absoluteScore = scores.get(ABSOLUTE_SCORE)!;
+                    course.relativeScore = scores.get(RELATIVE_SCORE)!;
+                    course.maxScore = scores.get(MAX_SCORE)!;
                 }
                 this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
@@ -64,13 +64,13 @@ export class CourseListComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     showWelcomeAlert() {
         // show alert after timeout to fix translation not loaded
         setTimeout(() => {
-            this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
+            this.jhiAlertService.info('artemisApp.exercise.welcome');
         }, 500);
     }
 }

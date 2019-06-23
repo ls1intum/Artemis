@@ -19,7 +19,7 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
-    notificationObserver: BehaviorSubject<Notification>;
+    notificationObserver: BehaviorSubject<Notification | null>;
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<EntityArrayResponseType>;
 
@@ -65,7 +65,7 @@ export class NotificationService {
     }
 
     getRecentSystemNotification(): Observable<SystemNotification> {
-        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterSystemNotification(res)));
+        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterSystemNotification(res)!));
     }
 
     protected convertDateFromClient(notification: Notification): Notification {
@@ -101,8 +101,8 @@ export class NotificationService {
         return notifications;
     }
 
-    protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification {
-        let systemNotification: SystemNotification;
+    protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification | null {
+        let systemNotification: SystemNotification | null = null;
         if (res.body) {
             const receivedSystemNotifications = res.body.filter(el => el.notificationType === NotificationType.SYSTEM);
             if (receivedSystemNotifications && receivedSystemNotifications.length > 0) {
@@ -119,7 +119,7 @@ export class NotificationService {
                 .then((user: User) => {
                     if (user) {
                         if (!this.notificationObserver) {
-                            this.notificationObserver = new BehaviorSubject<Notification>(null);
+                            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
                         }
                         const userTopic = `/topic/user/${user.id}/notifications`;
                         if (!this.subscribedTopics.includes(userTopic)) {
@@ -140,7 +140,7 @@ export class NotificationService {
 
     public handleCourseNotifications(course: Course): void {
         if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification>(null);
+            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
         }
         let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
         if (this.accountService.isAtLeastInstructorInCourse(course)) {
@@ -163,9 +163,9 @@ export class NotificationService {
         });
     }
 
-    subscribeToSocketMessages(): BehaviorSubject<Notification> {
+    subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
         if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification>(null);
+            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
         }
         return this.notificationObserver;
     }

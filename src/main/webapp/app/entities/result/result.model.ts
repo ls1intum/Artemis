@@ -13,7 +13,7 @@ export const enum AssessmentType {
 export class Result implements BaseEntity {
     public id: number;
     public resultString: string;
-    public completionDate: Moment;
+    public completionDate: Moment | null;
     public successful = false; // default value
     public buildArtifact = false; // default value (whether the result includes a build artifact or not, only used in programming exercises)
     public hasFeedback: boolean;
@@ -23,10 +23,13 @@ export class Result implements BaseEntity {
     public hasComplaint: boolean;
     public exampleResult: boolean;
 
-    public submission: Submission;
+    public submission: Submission | null;
     public assessor: User;
     public feedbacks: Feedback[];
-    public participation: Participation;
+    public participation: Participation | null;
+
+    // helper attributes
+    public durationInMinutes: number;
 
     constructor() {}
 }

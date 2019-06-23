@@ -41,11 +41,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
-    @Input() ratedResult: Result;
     @Input() courseId: number;
 
     @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
+    @Input() showResult: boolean;
 
     public repositoryPassword: string;
     public wasCopied = false;
@@ -61,8 +61,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            // Only load password if current user login starts with 'edx'
-            if (user && user.login && user.login.startsWith('edx')) {
+            // Only load password if current user login starts with 'edx_' or 'u4i_'
+            if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
             }
         });
@@ -71,19 +71,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     participationStatus(): ParticipationStatus {
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
+            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
             } else if (
                 !this.hasParticipations(this.exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) &&
                 quizExercise.visibleToStudents
             ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(this.exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate).isAfter(moment())) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate).isAfter(moment())) {
+            } else if (this.exercise.participations[0].initializationState === InitializationState.FINISHED && moment(this.exercise.dueDate!).isAfter(moment())) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(this.exercise.participations[0])) {
@@ -116,7 +116,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
-        return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate).isBefore(moment());
+        return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
     }
 
     isOnlineEditorAllowed(): boolean {
@@ -156,12 +156,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                        this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
                 error => {
                     console.log('Error: ' + error);
-                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                    this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
     }
@@ -184,7 +184,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 },
                 error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
-                    this.jhiAlertService.error(`arTeMiSApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                    this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             );
     }

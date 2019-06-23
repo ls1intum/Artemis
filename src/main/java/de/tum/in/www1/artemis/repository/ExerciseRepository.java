@@ -21,13 +21,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Exercise> findByCourseId(@Param("courseId") Long courseId);
 
     /**
-     * Select Exercise for Course ID WHERE there does not exist any LtiOutcomeUrl for this exercise (-> this is not an online exercise) OR there does exist an LtiOutcomeUrl for the
-     * current user (-> user has started exercise once using LTI)
+     * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
      */
-    @Query("select e from Exercise e where e.course.id =  :#{#courseId} and ((not exists(select l from LtiOutcomeUrl l where e = l.exercise)) or exists (select l2 from LtiOutcomeUrl l2 where e = l2.exercise and l2.user.login = :#{#principal.name})) ")
+    @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#principal.name})")
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal);
 
     @Query("select e from Exercise e where e.course.id =  :#{#courseId}")
+    // @QueryHints(value = {@QueryHint(name = "org.hibernate.cacheable", value = "true")})
     List<Exercise> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.participations where exercise.id = :#{#exerciseId}")

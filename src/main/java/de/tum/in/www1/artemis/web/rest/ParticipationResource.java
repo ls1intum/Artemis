@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -58,6 +59,11 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
+    private static final String ENTITY_NAME = "participation";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final ParticipationService participationService;
 
     private final QuizExerciseService quizExerciseService;
@@ -71,8 +77,6 @@ public class ParticipationResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private static final String ENTITY_NAME = "participation";
 
     private final TextSubmissionService textSubmissionService;
 
@@ -111,8 +115,8 @@ public class ParticipationResource {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Participation result = participationService.save(participation);
-        return ResponseEntity.created(new URI("/api/participations/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -134,9 +138,8 @@ public class ParticipationResource {
         }
         if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
             // participation already exists
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
-                    .body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
+                    "There is already a participation for the given exercise and user.")).body(null);
         }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
@@ -186,13 +189,14 @@ public class ParticipationResource {
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(participation);
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                        .body(participation);
             }
         }
         log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notProgrammingExercise",
+        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
                 "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
 
@@ -243,7 +247,7 @@ public class ParticipationResource {
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
     }
 
     /**
@@ -292,8 +296,11 @@ public class ParticipationResource {
         if (!(exercise instanceof TextExercise)) {
             return badRequest();
         }
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
+        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
         if (!textSubmissionWithoutAssessment.isPresent()) {
             // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
@@ -327,8 +334,50 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
+        int resultCount = 0;
+        for (Participation participation : participations) {
+            // we only need id, title, dates and max points
+            // remove unnecessary elements
+            Exercise exercise = participation.getExercise();
+            exercise.setCourse(null);
+            exercise.setParticipations(null);
+            exercise.setTutorParticipations(null);
+            exercise.setExampleSubmissions(null);
+            exercise.setAttachments(null);
+            exercise.setCategories(null);
+            exercise.setProblemStatement(null);
+            exercise.setStudentQuestions(null);
+            exercise.setGradingInstructions(null);
+            exercise.setDifficulty(null);
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                programmingExercise.setSolutionParticipation(null);
+                programmingExercise.setTemplateParticipation(null);
+                programmingExercise.setTestRepositoryUrl(null);
+                programmingExercise.setShortName(null);
+                programmingExercise.setPublishBuildPlanUrl(null);
+                programmingExercise.setProgrammingLanguage(null);
+                programmingExercise.setPackageName(null);
+                programmingExercise.setAllowOnlineEditor(null);
+            }
+            else if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                quizExercise.setQuizQuestions(null);
+                quizExercise.setQuizPointStatistic(null);
+            }
+            else if (exercise instanceof TextExercise) {
+                TextExercise textExercise = (TextExercise) exercise;
+                textExercise.setSampleSolution(null);
+            }
+            else if (exercise instanceof ModelingExercise) {
+                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+                modelingExercise.setSampleSolutionModel(null);
+                modelingExercise.setSampleSolutionExplanation(null);
+            }
+            resultCount += participation.getResults().size();
+        }
         long end = System.currentTimeMillis();
-        log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
+        log.info("Found " + participations.size() + " particpations with " + resultCount + " results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);
     }
 
@@ -344,7 +393,7 @@ public class ParticipationResource {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
         checkAccessPermissionOwner(participation);
-        Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
+        Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
             results.add(result);
@@ -530,7 +579,7 @@ public class ParticipationResource {
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
                 deleteBuildPlan, deleteRepository, principal.getName());
         participationService.delete(id, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
     }
 
     /**

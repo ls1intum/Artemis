@@ -118,13 +118,13 @@ public abstract class Exercise implements Serializable {
     // so that Jackson ignores the @Transient annotation,
     // but Hibernate still respects it
     @Transient
-    private int numberOfParticipationsTransient;
+    private Long numberOfParticipationsTransient;
 
     @Transient
-    private int numberOfAssessmentsTransient;
+    private Long numberOfAssessmentsTransient;
 
     @Transient
-    private int numberOfComplaintsTransient;
+    private Long numberOfComplaintsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -385,7 +385,7 @@ public abstract class Exercise implements Serializable {
 
     public Boolean isEnded() {
         if (getDueDate() == null) {
-            return false;
+            return Boolean.FALSE;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
     }
@@ -398,7 +398,7 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the exercise is visible to students
-            return true;
+            return Boolean.TRUE;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -463,6 +463,33 @@ public abstract class Exercise implements Serializable {
             }
         }
         return latestResult;
+    }
+
+    /**
+     * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
+     * results.
+     * 
+     * @param participation to find latest result for.
+     * @return latest result or null
+     */
+    public Result findLatestResultWithCompletionDate(Participation participation) {
+        if (participation.getResults() == null) {
+            return null;
+        }
+        Optional<Result> latestResult = participation.getResults().stream().filter(result -> result.getCompletionDate() != null).max((result1, result2) -> {
+            ZonedDateTime resultDate1 = result1.getCompletionDate();
+            ZonedDateTime resultDate2 = result2.getCompletionDate();
+            if (resultDate1.equals(resultDate2)) {
+                return 0;
+            }
+            else if (resultDate1.isAfter(resultDate2)) {
+                return 1;
+            }
+            else {
+                return -1;
+            }
+        });
+        return latestResult.orElse(null);
     }
 
     /**
@@ -557,27 +584,27 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public int getNumberOfParticipations() {
+    public Long getNumberOfParticipations() {
         return numberOfParticipationsTransient;
     }
 
-    public void setNumberOfParticipations(int numberOfParticipations) {
+    public void setNumberOfParticipations(Long numberOfParticipations) {
         this.numberOfParticipationsTransient = numberOfParticipations;
     }
 
-    public int getNumberOfAssessments() {
+    public Long getNumberOfAssessments() {
         return numberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(int numberOfAssessments) {
+    public void setNumberOfAssessments(Long numberOfAssessments) {
         this.numberOfAssessmentsTransient = numberOfAssessments;
     }
 
-    public int getNumberOfComplaints() {
+    public Long getNumberOfComplaints() {
         return numberOfComplaintsTransient;
     }
 
-    public void setNumberOfComplaints(int numberOfComplaints) {
+    public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
     }
 }

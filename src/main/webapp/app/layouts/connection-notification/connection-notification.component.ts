@@ -9,7 +9,7 @@ import { AccountService, JhiWebsocketService, User } from 'app/core';
 export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     notification = new ConnectionNotification();
     alert: { class: string; icon: string; text: string } | null = null;
-    connected: boolean;
+    connected: boolean | null;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
@@ -75,9 +75,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     updateAlert(): void {
         if (this.notification) {
             if (this.notification.type === ConnectionNotificationType.DISCONNECTED) {
-                this.alert = { class: 'alert-danger', icon: 'times-circle', text: 'arTeMiSApp.connectionAlert.disconnected' };
+                this.alert = { class: 'alert-danger', icon: 'times-circle', text: 'artemisApp.connectionAlert.disconnected' };
             } else if (this.notification.type === ConnectionNotificationType.RECONNECTED) {
-                this.alert = { class: 'alert-success', icon: 'check-circle', text: 'arTeMiSApp.connectionAlert.reconnected' };
+                this.alert = { class: 'alert-success', icon: 'check-circle', text: 'artemisApp.connectionAlert.reconnected' };
             } else if (this.notification.type === ConnectionNotificationType.CONNECTED) {
                 this.alert = null;
             }

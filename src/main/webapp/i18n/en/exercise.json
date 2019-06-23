@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "exercise": {
             "home": {
                 "title": "Exercises",
@@ -63,6 +63,7 @@
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
+            "notificationText": "Optional: Notification about changes",
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
             }

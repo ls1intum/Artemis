@@ -8,8 +8,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -327,7 +330,7 @@ public class GitService {
      * @param exercise   ProgrammingExercise associated with this repo.
      */
     public void filterLateSubmissions(Repository repository, ProgrammingExercise exercise) {
-        if (exercise.getReleaseDate() == null || exercise.getDueDate() == null) {
+        if (exercise.getDueDate() == null) {
             // No dates set on exercise
             return;
         }
@@ -336,7 +339,7 @@ public class GitService {
             Git git = new Git(repository);
 
             // Get last commit before deadline
-            Date since = Date.from(exercise.getReleaseDate().toInstant());
+            Date since = Date.from(Instant.EPOCH);
             Date until = Date.from(exercise.getDueDate().toInstant());
             RevFilter between = CommitTimeRevFilter.between(since, until);
             Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
@@ -489,6 +492,42 @@ public class GitService {
         Git git = new Git(repo);
         Status status = git.status().call();
         return status.isClean();
+    }
+
+    /**
+     * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
+     * 
+     * @param repo to squash commits for
+     * @throws IOException           on io errors or git exceptions.
+     * @throws IllegalStateException if there is no commit in the git repository.
+     */
+    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
+        Git git = new Git(repo);
+        try {
+            resetToOriginMaster(repo);
+            List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
+            RevCommit firstCommit = commits.get(commits.size() - 1);
+            // If there is a first commit, squash all other commits into it.
+            if (firstCommit != null) {
+                git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
+                git.add().addFilepattern(".").call();
+                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                git.push().setForce(true).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+                git.close();
+            }
+            else {
+                // Normally there always has to be a commit, so we throw an error in case none can be found.
+                throw new IllegalStateException();
+            }
+        }
+        // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
+        catch (JGitInternalException ex) {
+            log.debug("Did not squash the repository {} as there were no changes to commit.", repo);
+        }
+        catch (GitAPIException ex) {
+            log.error("Could not squash repository {} due to exception: {}", repo, ex);
+            throw (ex);
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "instructorCourseDashboard": {
             "title": "Instructor Kurs Dashboard",
             "pageHeader": "Instructor Kurs Dashboard für",
@@ -20,10 +20,12 @@
             "exerciseDashboard": "Übungs-Dashboard",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Kurs Bestenliste",
+                "id": "ID",
                 "name": "Name",
-                "username": "Benutzername",
-                "numberOfAssessments": "Anzahl der Assessments",
-                "numberOfComplaints": "Anzahl der Beschwerden"
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Angenommene Beschwerden",
+                "numberOfComplaintResponses": "Beschwerde Antworten",
+                "points": "Punkte"
             }
         }
     }

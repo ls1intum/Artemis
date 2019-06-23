@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, UMLModel } from '@ls1intum/apollon';
+import { DiagramType, UMLModel, UMLElement } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
@@ -10,11 +10,11 @@ import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -22,15 +22,14 @@ import * as moment from 'moment';
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
-    submission: ModelingSubmission;
-    model: UMLModel;
-    modelingExercise: ModelingExercise;
-    result: Result;
+    submission: ModelingSubmission | null;
+    model: UMLModel | null;
+    modelingExercise: ModelingExercise | null;
+    result: Result | null;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
-    conflicts: Conflict[];
+    conflicts: Conflict[] | null;
     highlightedElementIds: Set<string>;
-    ignoreConflicts = false;
 
     assessmentsAreValid = false;
     busy: boolean;
@@ -73,7 +72,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
@@ -98,8 +97,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
-            error => {
-                this.onError();
+            (error: HttpErrorResponse) => {
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
+                } else {
+                    this.onError();
+                }
             },
         );
     }
@@ -110,14 +113,16 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.goToExerciseDashboard();
-                    this.jhiAlertService.info('arTeMiSApp.tutorExerciseDashboard.noSubmissions');
+                    this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
                 } else {
                     this.onError();
                 }
@@ -173,23 +178,23 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private checkPermissions(): void {
-        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAuthorized = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAuthorized && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     onError(): void {
-        this.submission = undefined;
-        this.modelingExercise = undefined;
-        this.result = undefined;
-        this.model = undefined;
+        this.submission = null;
+        this.modelingExercise = null;
+        this.result = null;
+        this.model = null;
         this.jhiAlertService.clear();
         this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
     onSaveAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
@@ -204,31 +209,43 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSubmitAssessment() {
-        // TODO: we should warn the tutor if not all model elements have been assessed, and ask him to confirm that he really wants to submit the assessment
-        // in case he says no, we should potentially highlight the elements that are not yet assessed
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission.id, true, this.ignoreConflicts).subscribe(
+        if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
+            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+            const confirm = window.confirm(confirmationMessage);
+            if (confirm) {
+                this.submitAssessment();
+            } else {
+                this.highlightElementsWithMissingFeedback();
+            }
+        } else {
+            this.submitAssessment();
+        }
+    }
+
+    private submitAssessment() {
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
             (result: Result) => {
-                result.participation.results = [result];
+                result.participation!.results = [result];
                 this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.conflicts = undefined;
-                this.ignoreConflicts = false;
+                this.conflicts = null;
+                this.updateHighlightedConflictingElements();
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
                     this.conflicts = error.error as Conflict[];
                     this.conflicts.forEach((conflict: Conflict) => {
-                        this.modelingAssessmentService.convertResult(conflict.result);
-                        conflict.conflictingResults.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
+                        this.modelingAssessmentService.convertResult(conflict.causingConflictingResult.result);
+                        conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.modelingAssessmentService.convertResult(conflictingResult.result));
                     });
-                    this.highlightConflictingElements();
+                    this.updateHighlightedConflictingElements();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
                 } else {
                     let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
                     if (error.error && error.error.entityName && error.error.message) {
-                        errorMessage = `arTeMiSApp.${error.error.entityName}.${error.error.message}`;
+                        errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                     }
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error(errorMessage);
@@ -244,7 +261,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission.id).subscribe(
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
@@ -257,13 +274,19 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
+    onShowConflictResolution() {
+        this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
+        this.jhiAlertService.clear();
+        this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
+    }
+
     /**
      * Cancel the current assessment and navigate back to the exercise dashboard.
      */
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission.id).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission!.id).subscribe(() => {
                 this.goToExerciseDashboard();
             });
         }
@@ -276,7 +299,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     assessNextOptimal() {
         this.busy = true;
-        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+        this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
             (optimal: number[]) => {
                 this.busy = false;
                 if (optimal.length === 0) {
@@ -288,22 +311,28 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
+                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
                 }
             },
-            () => {
+            (error: HttpErrorResponse) => {
                 this.busy = false;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
+                } else {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                }
             },
         );
     }
 
-    private highlightConflictingElements() {
+    private updateHighlightedConflictingElements() {
         this.highlightedElementIds = new Set<string>();
-        this.conflicts.forEach((conflict: Conflict) => {
-            this.highlightedElementIds.add(conflict.modelElementId);
-        });
+        if (this.conflicts) {
+            this.conflicts.forEach((conflict: Conflict) => {
+                this.highlightedElementIds.add(conflict.causingConflictingResult.modelElementId);
+            });
+        }
     }
 
     /**
@@ -318,6 +347,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         ) {
             this.assessmentsAreValid = false;
             return;
+        }
+        if (this.highlightedElementIds && this.highlightedElementIds.size > 0) {
+            this.highlightedElementIds.delete(this.referencedFeedback[this.referencedFeedback.length - 1].referenceId!);
+            this.highlightedElementIds = new Set<string>(this.highlightedElementIds);
         }
         for (const feedback of this.referencedFeedback) {
             if (feedback.credits == null || isNaN(feedback.credits)) {
@@ -334,5 +367,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         } else {
             this.location.back();
         }
+    }
+
+    private highlightElementsWithMissingFeedback() {
+        this.highlightedElementIds = new Set<string>();
+        this.model!.elements.forEach((element: UMLElement) => {
+            if (this.referencedFeedback.findIndex(feedback => feedback.referenceId === element.id) < 0) {
+                this.highlightedElementIds.add(element.id);
+            }
+        });
     }
 }

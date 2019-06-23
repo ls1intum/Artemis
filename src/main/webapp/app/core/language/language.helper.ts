@@ -8,7 +8,7 @@ import { LANGUAGES } from 'app/core/language/language.constants';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
-    renderer: Renderer2 = null;
+    renderer: Renderer2;
     private _language: BehaviorSubject<string>;
 
     constructor(private translateService: TranslateService, private titleService: Title, private router: Router, rootRenderer: RendererFactory2) {
@@ -51,7 +51,7 @@ export class JhiLanguageHelper {
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
-        let title: string = routeSnapshot.data && routeSnapshot.data['pageTitle'] ? routeSnapshot.data['pageTitle'] : 'arTeMiSApp';
+        let title: string = routeSnapshot.data && routeSnapshot.data['pageTitle'] ? routeSnapshot.data['pageTitle'] : 'artemisApp';
         if (routeSnapshot.firstChild) {
             title = this.getPageTitle(routeSnapshot.firstChild) || title;
         }

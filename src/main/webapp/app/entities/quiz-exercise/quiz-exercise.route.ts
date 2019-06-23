@@ -23,7 +23,7 @@ export class QuizExerciseResolve implements Resolve<QuizExercise> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
-            return this.service.find(id).pipe(map((quizExercise: HttpResponse<QuizExercise>) => quizExercise.body));
+            return this.service.find(id).pipe(map((quizExercise: HttpResponse<QuizExercise>) => quizExercise.body!));
         }
         return of(new QuizExercise());
     }
@@ -35,7 +35,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -44,7 +44,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -54,7 +54,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -63,7 +63,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizReEvaluateComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -72,7 +72,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -82,7 +82,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -92,7 +92,7 @@ export const quizExerciseRoute: Routes = [
         component: QuizExerciseExportComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -107,7 +107,7 @@ export const quizExercisePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',
@@ -120,7 +120,7 @@ export const quizExercisePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.quizExercise.home.title',
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

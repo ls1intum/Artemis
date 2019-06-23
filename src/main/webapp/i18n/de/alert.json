@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "connectionAlert": {
             "alert": "Achtung",
             "disconnected": "Du bist nicht mehr mit dem Artemis Server verbunden. Bitte überprüfe deine Internet Verbindung.",

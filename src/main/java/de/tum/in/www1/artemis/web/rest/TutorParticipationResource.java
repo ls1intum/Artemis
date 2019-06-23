@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,11 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class TutorParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
+
+    private static final String ENTITY_NAME = "tutorParticipation";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final TutorParticipationService tutorParticipationService;
 
@@ -66,7 +72,7 @@ public class TutorParticipationResource {
         TutorParticipation existingTutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         if (existingTutorParticipation != null && existingTutorParticipation.getId() != null) {
             // tutorParticipation already exists
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationAlreadyExists",
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "tutorParticipationAlreadyExists",
                     "There is already a tutorParticipations for the given exercise and user.")).body(null);
         }
 

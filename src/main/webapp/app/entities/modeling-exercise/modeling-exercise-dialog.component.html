@@ -1,6 +1,6 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="arTeMiSApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
+        <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="artemisApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
@@ -10,11 +10,11 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
             <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="modelingExercise.title" />
         </div>
         <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
                 [exerciseCategories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -22,7 +22,7 @@
             ></jhi-category-selector>
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
                 <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
             </div>
@@ -30,7 +30,7 @@
         <div class="d-flex">
             <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker
-                    labelName="{{ 'arTeMiSApp.exercise.releaseDate' | translate }}"
+                    labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
                     (valueChange)="validateDate()"
                     [error]="false"
@@ -41,25 +41,25 @@
                 <jhi-date-time-picker
                     name="dueDate"
                     [error]="this.dueDateError"
-                    labelName="{{ 'arTeMiSApp.exercise.dueDate' | translate }}"
+                    labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
                     (valueChange)="validateDate()"
                     [(ngModel)]="modelingExercise.dueDate"
                 ></jhi-date-time-picker>
-                <div *ngIf="this.dueDateError" class="invalid-feedback">{{ 'arTeMiSApp.exercise.dueDateError' | translate }}</div>
+                <div *ngIf="this.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</div>
             </div>
         </div>
         <div class="form-group-narrow">
             <jhi-date-time-picker
                 name="assessmentDueDate"
                 [error]="this.assessmentDueDateError"
-                labelName="{{ 'arTeMiSApp.exercise.assessmentDueDate' | translate }}"
+                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
                 (valueChange)="validateDate()"
                 [(ngModel)]="modelingExercise.assessmentDueDate"
             ></jhi-date-time-picker>
-            <div *ngIf="this.assessmentDueDateError" class="invalid-feedback">{{ 'arTeMiSApp.exercise.assessmentDueDateError' | translate }}</div>
+            <div *ngIf="this.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</div>
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input
                 type="number"
                 required
@@ -73,19 +73,19 @@
             />
         </div>
         <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
             <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType">
-                <option value="ClassDiagram">{{ 'arTeMiSApp.DiagramType.ClassDiagram' | translate }}</option>
-                <option value="ActivityDiagram">{{ 'arTeMiSApp.DiagramType.ActivityDiagram' | translate }}</option>
-                <option value="ObjectDiagram">{{ 'arTeMiSApp.DiagramType.ObjectDiagram' | translate }}</option>
-                <option value="UseCaseDiagram">{{ 'arTeMiSApp.DiagramType.UseCaseDiagram' | translate }}</option>
-                <option value="CommunicationDiagram">{{ 'arTeMiSApp.DiagramType.CommunicationDiagram' | translate }}</option>
-                <option value="ComponentDiagram">{{ 'arTeMiSApp.DiagramType.ComponentDiagram' | translate }}</option>
-                <option value="DeploymentDiagram">{{ 'arTeMiSApp.DiagramType.DeploymentDiagram' | translate }}</option>
+                <option value="ClassDiagram">{{ 'artemisApp.DiagramType.ClassDiagram' | translate }}</option>
+                <option value="ActivityDiagram">{{ 'artemisApp.DiagramType.ActivityDiagram' | translate }}</option>
+                <option value="ObjectDiagram">{{ 'artemisApp.DiagramType.ObjectDiagram' | translate }}</option>
+                <option value="UseCaseDiagram">{{ 'artemisApp.DiagramType.UseCaseDiagram' | translate }}</option>
+                <option value="CommunicationDiagram">{{ 'artemisApp.DiagramType.CommunicationDiagram' | translate }}</option>
+                <option value="ComponentDiagram">{{ 'artemisApp.DiagramType.ComponentDiagram' | translate }}</option>
+                <option value="DeploymentDiagram">{{ 'artemisApp.DiagramType.DeploymentDiagram' | translate }}</option>
             </select>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="modelingExercise.course">
                 <option [ngValue]="null"></option>
                 <option [ngValue]="course.id === modelingExercise.course?.id ? modelingExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{
@@ -94,24 +94,24 @@
             </select>
         </div>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <div class="question-content background-editor-color">
                 <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
             </div>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
             <jhi-markdown-editor [(markdown)]="modelingExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <span jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution">Example Solution</span>
+            <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
             <ul>
                 <li *ngIf="modelingExercise.id && modelingExercise.sampleSolutionModel">
                     <button
                         routerLink="modeling-exercise/{{ modelingExercise.id }}/example-solution"
                         class="btn btn-link"
                         type="button"
-                        jhiTranslate="arTeMiSApp.modelingExercise.exampleSolution"
+                        jhiTranslate="artemisApp.modelingExercise.exampleSolution"
                     >
                         Example Solution
                     </button>
@@ -121,16 +121,16 @@
                 *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
                 class="btn btn-primary"
                 routerLink="modeling-exercise/{{ modelingExercise.id }}/example-solution"
-                jhiTranslate="arTeMiSApp.modelingExercise.createExampleSolution"
+                jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
             >
                 Create example solution
             </button>
-            <div class="alert alert-info" *ngIf="!modelingExercise.id" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionRequiresExercise">
+            <div class="alert alert-info" *ngIf="!modelingExercise.id" jhiTranslate="artemisApp.modelingExercise.exampleSolutionRequiresExercise">
                 To create an example solution, you first need to finish creating the modeling exercise
             </div>
         </div>
         <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
                 Example Solution Explanation
             </label>
             <div class="question-content background-editor-color">
@@ -138,7 +138,7 @@
             </div>
         </div>
         <div class="form-group">
-            <span jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissions">Example submissions</span>
+            <span jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
@@ -146,7 +146,7 @@
                         routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/{{ exampleSubmission.id }}"
                         class="btn btn-link"
                         type="button"
-                        jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmission"
+                        jhiTranslate="artemisApp.modelingExercise.exampleSubmission"
                         [translateValues]="{ number: i + 1 }"
                     >
                         Example submission {{ i + 1 }}
@@ -163,14 +163,18 @@
                 *ngIf="modelingExercise.id"
                 class="btn btn-primary"
                 routerLink="modeling-exercise/{{ modelingExercise.id }}/example-submission/new"
-                jhiTranslate="arTeMiSApp.modelingExercise.createExampleSubmission"
+                jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
                 Create example submission
             </button>
 
-            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id" jhiTranslate="arTeMiSApp.modelingExercise.exampleSubmissionsRequireExercise">
+            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the modeling exercise
             </div>
+        </div>
+        <div class="form-group" *ngIf="modelingExercise.id">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
     <div class="modal-footer">

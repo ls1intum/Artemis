@@ -25,10 +25,11 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
+import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
-    MEDIUM = 500,
+    MEDIUM = 350,
     LARGE = 1000,
 }
 
@@ -42,18 +43,19 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
-    @ViewChild('aceEditor')
+    @ViewChild('aceEditor', { static: false })
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
         autoUpdateContent: true,
         mode: 'markdown',
     };
-    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() markdown: string;
+    @Input()
+    markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
-    @Output() html = new EventEmitter<string>();
+    @Output() html = new EventEmitter<string | null>();
 
     /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
@@ -83,7 +85,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() domainCommands: Array<DomainCommand>;
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
-    @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();
+    @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -91,20 +93,23 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() showPreviewButton = true;
 
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
-    previewTextAsHtml: string;
+    previewTextAsHtml: string | null;
 
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
 
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
-    @ContentChild('preview') previewChild: ElementRef;
+    @ContentChild('preview', { static: false }) previewChild: ElementRef;
 
     /** Resizable constants **/
+    @Input()
+    defaultHeight = MarkdownEditorHeight.SMALL;
     @Input()
     enableResize = false;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input()
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
@@ -145,6 +150,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
+        // Commands may want to add custom completers - remove standard completers of the ace editor.
+        this.aceEditorContainer.getEditor().setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+        });
+        this.aceEditorContainer.getEditor().completers = [];
+
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
@@ -181,7 +193,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
@@ -234,12 +245,15 @@ export class MarkdownEditorComponent implements AfterViewInit {
             /** create empty array which
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
-            const commandTextsMappedToCommandIdentifiers = new Array<[string, DomainCommand]>();
+            const commandTextsMappedToCommandIdentifiers: [string, (DomainCommand | null)][] = [];
             /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
-            const commandIdentifiersString = domainCommandIdentifiersToParse.map(tag => tag.replace('[', '').replace(']', '')).join('|');
+            const commandIdentifiersString = domainCommandIdentifiersToParse
+                .map(tag => tag.replace('[', '').replace(']', ''))
+                .map(escapeStringForUseInRegex)
+                .join('|');
 
             /** create a new regex expression which searches for the domainCommands identifiers
              * (?=   If a command is found, add the command identifier to the result of the split
@@ -283,7 +297,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param text {string} from the parse function
      * @return array of the text with the domainCommand identifier
      */
-    private parseLineForDomainCommand = (text: string): [string, DomainCommand] => {
+    private parseLineForDomainCommand = (text: string): [string, (DomainCommand | null)] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [
                 domainCommand.getOpeningIdentifier(),

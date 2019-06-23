@@ -1,35 +1,65 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorService } from '../code-editor.service';
 import { Participation } from '../../entities/participation';
-import { RepositoryService } from '../../entities/repository/repository.service';
-import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
+import {
+    ProgrammingExercise,
+    ProgrammingExerciseEditableInstructionComponent,
+    ProgrammingExerciseInstructionComponent,
+    ProgrammingExerciseService,
+} from 'app/entities/programming-exercise';
+import { MarkdownEditorHeight } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit {
-    haveDetailsBeenLoaded = false;
+    MarkdownEditorHeight = MarkdownEditorHeight;
 
+    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+
+    @Input()
+    participation: Participation;
+    @Input()
+    get exercise() {
+        return this.exerciseValue;
+    }
+    @Input()
+    editable = false;
+    // Only relevant for editable instructions.
+    // TODO: refactor this into a container for the code-editor-instructions component.
+    @Input()
+    templateParticipation: Participation;
+    @Output()
+    onError = new EventEmitter<string>();
+    @Output()
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+
+    exerciseValue: ProgrammingExercise;
+    set exercise(exercise: ProgrammingExercise) {
+        if (this.exercise && exercise.problemStatement !== this.exercise.problemStatement) {
+            this.unsavedChanges = true;
+        }
+        this.exerciseValue = exercise;
+    }
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
     noInstructionsAvailable = false;
 
-    @Input()
-    participation: Participation;
+    // Only relevant if instructions are editable
+    savingInstructions = false;
+    unsavedChanges = false;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private programmingExerciseService: ProgrammingExerciseService) {}
 
     /**
      * @function ngAfterViewInit
@@ -65,13 +95,48 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     }
 
     /**
+     * Update the problem statement with the new string received.
+     * This does not save the new problem statement on the server.
+     * @param newProblemStatement
+     */
+    onProblemStatementEditorUpdate(newProblemStatement: string) {
+        if (newProblemStatement !== this.exercise.problemStatement) {
+            this.unsavedChanges = true;
+            this.exercise = { ...this.exercise, problemStatement: newProblemStatement };
+        }
+    }
+
+    /**
+     * Save the problem statement on the server.
+     * @param $event
+     */
+    saveInstructions($event: any) {
+        $event.stopPropagation();
+        this.savingInstructions = true;
+        return this.programmingExerciseService
+            .updateProblemStatement(this.exercise.id, this.exercise.problemStatement!)
+            .pipe(
+                tap(() => {
+                    this.unsavedChanges = false;
+                }),
+                catchError(() => {
+                    this.onError.emit('problemStatementCouldNotBeUpdated');
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.savingInstructions = false;
+            });
+    }
+
+    /**
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
+    toggleEditorCollapse($event: any) {
+        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 
     onNoInstructionsAvailable() {

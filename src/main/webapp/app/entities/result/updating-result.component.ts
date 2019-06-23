@@ -1,16 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { orderBy as _orderBy } from 'lodash';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
+import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from '.';
-import { AccountService, JhiWebsocketService } from '../../core';
-import { Subscription } from 'rxjs';
 import { RepositoryService } from 'app/entities/repository/repository.service';
-import { HttpClient } from '@angular/common/http';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import * as moment from 'moment';
-import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-updating-result',
@@ -19,105 +16,36 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 })
 
 /**
- * When using the result component make sure that the reference to the participation input is changed if the result changes
- * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
+ * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
+ * If the participation changes, the newest result from its result array will be used.
+ * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
-export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
-    // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-
+export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result: Result;
     @Input() showUngradedResults: boolean;
-    @Output() newResultReceived = new EventEmitter<boolean>();
+    @Input() showGradedBadge: boolean;
 
-    private resultUpdateListener: Subscription;
+    public resultUpdateListener: Subscription;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private resultService: ResultService,
-        private participationService: ParticipationService,
-        private repositoryService: RepositoryService,
-        private accountService: AccountService,
-        private translate: TranslateService,
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-    ) {}
-
-    ngOnInit(): void {
-        if (!this.participation || !this.participation.id) {
-            return;
-        }
-
-        if (this.result) {
-            const exercise = this.participation.exercise;
-            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.subscribeForNewResults(exercise as ProgrammingExercise);
-            }
-        } else {
-            const exercise = this.participation.exercise;
-
-            if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise && exercise.type === ExerciseType.MODELING) {
-                    // sort results by completionDate descending to ensure the newest result is shown
-                    // this is important for modeling exercises since students can have multiple tries
-                    // think about if this should be used for all types of exercises
-                    this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate > r2.completionDate) {
-                            return -1;
-                        }
-                        if (r1.completionDate < r2.completionDate) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                }
-                // Make sure result and participation are connected
-                this.result = this.participation.results[0];
-                this.result.participation = this.participation;
-            }
-
-            this.subscribeForNewResults(exercise);
-        }
-    }
-
-    subscribeForNewResults(exercise: Exercise) {
-        this.accountService.identity().then(user => {
-            // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-            const isInstructorInCourse = this.participation.student == null && exercise.course && this.accountService.isAtLeastInstructorInCourse(exercise.course);
-            const isSameUser = this.participation.student && user.id === this.participation.student.id;
-            const exerciseNotOver = exercise.dueDate == null || (moment(exercise.dueDate).isValid() && moment(exercise.dueDate).isAfter(moment()));
-
-            if ((isSameUser && exerciseNotOver) || isInstructorInCourse) {
-                this.participationWebsocketService.addParticipation(this.participation);
-                this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
-                    if (newResult) {
-                        newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                        this.handleNewResult(newResult);
-                    }
-                });
-            }
-        });
-    }
-
-    handleNewResult(newResult: Result) {
-        if (newResult.rated !== undefined && newResult.rated !== null && newResult.rated === false && !this.showUngradedResults) {
-            // do not handle unrated results
-            return;
-        }
-        this.result = newResult;
-        // Reconnect the new result with the existing participation
-        this.result.participation = this.participation;
-        this.newResultReceived.emit(true);
-    }
+    constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation) {
-            this.ngOnInit();
+        if (hasParticipationChanged(changes)) {
+            // Sort participation results by completionDate desc.
+            if (this.participation.results) {
+                this.participation.results = _orderBy(this.participation.results, 'completionDate', 'desc');
+            }
+            // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
+            const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
+            if (latestResult) {
+                // Make sure that the participation result is connected to the newest result.
+                this.result = { ...latestResult, participation: this.participation };
+            }
+
+            this.subscribeForNewResults();
         }
     }
 
@@ -125,5 +53,22 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateListener) {
             this.resultUpdateListener.unsubscribe();
         }
+    }
+
+    subscribeForNewResults() {
+        if (this.resultUpdateListener) {
+            this.resultUpdateListener.unsubscribe();
+        }
+        this.resultUpdateListener = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(
+                // Ignore initial null result of subscription
+                filter(result => !!result),
+                // Ignore ungraded results if ungraded results are supposed to be ignored.
+                filter((result: Result) => this.showUngradedResults || result.rated === true),
+                map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
+                tap(result => (this.result = result)),
+            )
+            .subscribe();
     }
 }
