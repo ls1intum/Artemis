@@ -126,7 +126,9 @@ public class ProgrammingExerciseTestCaseService {
 
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
-        if (testCases.size() > 0 && result.getFeedbacks() != null) {
+        // If the result is not successful and there are no feedbacks, the build has failed.
+        // If the build has failed, we don't alter the result string.
+        if (testCases.size() > 0 && (result.isSuccessful() || result.getFeedbacks().size() > 0)) {
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
                     .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
                     .collect(Collectors.toSet());
@@ -136,14 +138,13 @@ public class ProgrammingExerciseTestCaseService {
                     .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
             result.addFeedbacks(feedbacksForNotExecutedTestCases);
 
-            long score = 0L;
             // Recalculate the achieved score by including the test cases individual weight.
             if (successfulTestCases.size() > 0) {
                 long successfulTestScore = successfulTestCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
                 long maxTestScore = testCases.stream().map(ProgrammingExerciseTestCase::getWeight).mapToLong(w -> w).sum();
-                score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+                long score = maxTestScore > 0 ? (long) ((float) successfulTestScore / maxTestScore * 100.) : 0L;
+                result.setScore(score);
             }
-            result.setScore(score);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
             if (successfulTestCases.size() < testCases.size()) {
