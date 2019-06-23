@@ -11,6 +11,7 @@ import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
     templateUrl: './result-detail.component.html',
 })
 export class ResultDetailComponent implements OnInit {
+    @Input() resultSummary: string;
     @Input() result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];

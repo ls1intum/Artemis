@@ -12,10 +12,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: '../../entities/result/result-detail.component.html',
 })
 export class EditorInstructionsResultDetailComponent implements OnInit {
-    @Input()
-    result: Result;
-    @Input()
-    tests: string;
+    @Input() result: Result;
+    @Input() tests: string;
     isLoading: boolean;
     filterTests: string[];
     feedbackList: Feedback[];

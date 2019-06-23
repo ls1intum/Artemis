@@ -37,7 +37,7 @@ public class ProgrammingExerciseTestCaseResource {
         this.programmingExerciseService = programmingExerciseService;
     }
 
-    @GetMapping(value = "/programming-exercises-test-cases/{exerciseId}")
+    @GetMapping(value = "/programming-exercise-test-cases/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);

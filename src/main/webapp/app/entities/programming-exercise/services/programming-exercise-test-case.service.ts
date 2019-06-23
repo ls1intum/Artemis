@@ -12,7 +12,7 @@ export interface IProgrammingExerciseTestCaseService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService, OnDestroy {
-    public testCaseUrl = `${SERVER_API_URL}api/programming-exercises/test-cases`;
+    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise-test-cases`;
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
@@ -28,6 +28,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
             return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
         } else {
             return this.getTestCases(exerciseId).pipe(
+                map(testCases => (testCases.length ? testCases : null)),
                 catchError(() => of(null)),
                 switchMap((testCases: ProgrammingExerciseTestCase[] | null) => this.initTestCaseSubscription(exerciseId, testCases)),
             );

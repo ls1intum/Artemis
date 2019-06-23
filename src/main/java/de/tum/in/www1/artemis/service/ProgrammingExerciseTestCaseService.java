@@ -147,13 +147,7 @@ public class ProgrammingExerciseTestCaseService {
             }
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            if (successfulTestCases.size() < testCases.size()) {
-                result.setResultString(testCases.size() - successfulTestCases.size() - notExecutedTestCases.size() + " of " + testCases.size() + " failed, "
-                        + notExecutedTestCases.size() + " not executed");
-            }
-            else {
-                result.setResultString(testCases.size() + " passed");
-            }
+            result.setResultString(successfulTestCases.size() + " of " + testCases.size() + " passed");
         }
         return result;
     }
