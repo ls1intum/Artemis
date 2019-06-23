@@ -17,7 +17,6 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { Language } from 'app/entities/tutor-group';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
