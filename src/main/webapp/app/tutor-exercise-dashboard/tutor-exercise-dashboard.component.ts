@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService, StatsForDashboard } from '../entities/course';
+import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -19,6 +19,7 @@ import { Submission } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -34,6 +35,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+
+    statsForDashboard = new StatsForDashboard();
+
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = 0;
@@ -154,14 +158,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                const stats = res.body!;
-                this.numberOfSubmissions = stats.numberOfSubmissions;
-                this.numberOfAssessments = stats.numberOfAssessments;
-                this.numberOfComplaints = stats.numberOfComplaints;
-                const tutorLeaderboardEntry = stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
+                this.statsForDashboard = res.body!;
+                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
+                this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfComplaints;
+                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
                 } else {
                     this.numberOfTutorAssessments = 0;
                     this.numberOfTutorComplaints = 0;

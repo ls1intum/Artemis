@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
-import { StatsForDashboard } from 'app/entities/course';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -12,7 +12,7 @@ import { StatsForDashboard } from 'app/entities/course';
     providers: [JhiAlertService],
 })
 export class InstructorExerciseDashboardComponent implements OnInit {
-    exercise: Exercise | null;
+    exercise: Exercise;
     courseId: number;
 
     stats = new StatsForDashboard();
@@ -41,7 +41,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     private loadExercise(exerciseId: number) {
         this.exerciseService
             .find(exerciseId)
-            .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body), (response: HttpErrorResponse) => this.onError(response.message));
+            .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {

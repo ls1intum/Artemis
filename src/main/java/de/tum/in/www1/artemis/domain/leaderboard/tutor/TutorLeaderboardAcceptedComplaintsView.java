@@ -5,15 +5,15 @@ import javax.persistence.*;
 import org.hibernate.annotations.Immutable;
 
 @Entity
-@Table(name = "view_tutor_leaderboard_complaints")
+@Table(name = "view_tutor_leaderboard_accepted_complaints")
 @Immutable
-public class TutorLeaderboardComplaintsView {
+public class TutorLeaderboardAcceptedComplaintsView {
 
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
-    @Column(name = "complaints")
-    private Long complaints;
+    @Column(name = "accepted_complaints")
+    private Long acceptedComplaints;
 
     @Column(name = "points")
     private Long points;
@@ -24,8 +24,8 @@ public class TutorLeaderboardComplaintsView {
     @Column(name = "first_name")
     private String userFirstName;
 
-    public Long getComplaints() {
-        return complaints;
+    public Long getAcceptedComplaints() {
+        return acceptedComplaints;
     }
 
     public Long getPoints() {

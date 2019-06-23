@@ -1,10 +1,11 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseService, StatsForDashboard } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',

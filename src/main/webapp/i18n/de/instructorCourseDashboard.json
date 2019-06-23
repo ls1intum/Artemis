@@ -22,9 +22,9 @@
                 "courseTitle": "Tutor Kurs Bestenliste",
                 "id": "ID",
                 "name": "Name",
-                "numberOfAssessments": "Anzahl der Assessments",
-                "numberOfComplaints": "Anzahl der Beschwerden",
-                "numberOfComplaintResponses": "Anzahl der Beschwerde Antworten",
+                "numberOfAssessments": "Assessments",
+                "numberOfAcceptedComplaints": "Angenommene Beschwerden",
+                "numberOfComplaintResponses": "Beschwerde Antworten",
                 "points": "Punkte"
             }
         }

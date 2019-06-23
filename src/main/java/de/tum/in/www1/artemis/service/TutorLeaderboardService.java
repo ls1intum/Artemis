@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAcceptedComplaintsView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardAssessmentViewRepository;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintResponsesViewRepository;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintsViewRepository;
@@ -44,7 +44,7 @@ public class TutorLeaderboardService {
         List<User> tutors = userService.getTutors(course);
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
-        List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
+        List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByCourseId(course.getId());
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardComplaintResponses);
@@ -55,7 +55,7 @@ public class TutorLeaderboardService {
         List<User> tutors = userService.getTutors(exercise.getCourse());
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
-        List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
+        List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository
                 .findAllByLeaderboardId_ExerciseId(exercise.getId());
 
@@ -64,13 +64,13 @@ public class TutorLeaderboardService {
 
     @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
-            List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
+            List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
 
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
         for (User tutor : tutors) {
 
             Long numberOfAssessments = 0L;
-            Long numberOfComplaints = 0L;
+            Long numberOfAcceptedComplaints = 0L;
             Long numberOfComplaintResponses = 0L;
             Long points = 0L;
 
@@ -81,9 +81,9 @@ public class TutorLeaderboardService {
                 }
             }
 
-            for (TutorLeaderboardComplaintsView complaintsView : tutorLeaderboardComplaints) {
+            for (TutorLeaderboardAcceptedComplaintsView complaintsView : tutorLeaderboardComplaints) {
                 if (complaintsView.getUserId().equals(tutor.getId())) {
-                    numberOfComplaints += complaintsView.getComplaints();
+                    numberOfAcceptedComplaints += complaintsView.getAcceptedComplaints();
                     // accepted complaints count negatively
                     points -= complaintsView.getPoints();
                 }
@@ -97,7 +97,8 @@ public class TutorLeaderboardService {
                 }
             }
 
-            tutorLeaderBoardEntries.add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfComplaints, numberOfComplaintResponses, points));
+            tutorLeaderBoardEntries
+                    .add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfComplaintResponses, points));
         }
         return tutorLeaderBoardEntries;
     }
