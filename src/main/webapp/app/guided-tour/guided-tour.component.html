@@ -42,8 +42,11 @@
                 </button>
                 <div class="dotstyle dotstyle-scaleup">
                     <ul>
-                        <li *ngFor="let i of tourSteps" [ngClass]="guidedTourService.currentTourStepDisplay === tourSteps.indexOf(i) + 1 ? 'current' : ''">
-                            <span>{{ tourSteps.indexOf(i) }}</span>
+                        <li
+                            *ngFor="let i of guidedTourService.currentTourSteps"
+                            [ngClass]="guidedTourService.currentTourStepDisplay === guidedTourService.currentTourSteps.indexOf(i) + 1 ? 'current' : ''"
+                        >
+                            <span>{{ guidedTourService.currentTourSteps.indexOf(i) }}</span>
                         </li>
                     </ul>
                 </div>

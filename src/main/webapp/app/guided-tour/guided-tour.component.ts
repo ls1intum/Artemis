@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { Orientation, TourStep } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
@@ -18,7 +18,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @Input() public doneText = 'Done';
     @Input() public closeText = 'Close';
     @Input() public backText = 'Back';
-    @Input() public tourSteps: TourStep[];
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
     public highlightPadding = 4;
     public currentTourStep: TourStep = null;
@@ -30,6 +29,19 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private scrollSubscription: Subscription;
 
     constructor(public guidedTourService: GuidedTourService) {}
+
+    @HostListener('document:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.code === 'ArrowRight' && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+            this.guidedTourService.nextStep();
+        }
+        if (event.code === 'ArrowLeft' && this.guidedTourService.currentTourStepDisplay > 1) {
+            this.guidedTourService.backStep();
+        }
+        if (event.code === 'Escape') {
+            this.guidedTourService.skipTour();
+        }
+    }
 
     private get maxWidthAdjustmentForTourStep(): number {
         return this.tourStepWidth - this.minimalTourStepWidth;

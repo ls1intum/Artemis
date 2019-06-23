@@ -1,13 +1,15 @@
 import { debounceTime } from 'rxjs/internal/operators';
 import { ErrorHandler, Injectable } from '@angular/core';
-import { Observable, Subject, fromEvent } from 'rxjs';
+import { Observable, Subject, fromEvent, of } from 'rxjs';
 import { GuidedTour, TourStep, Orientation, OrientationConfiguration } from './guided-tour.constants';
 import { cloneDeep } from 'lodash';
+import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 
 @Injectable()
 export class GuidedTourService {
     public guidedTourCurrentStepStream: Observable<TourStep>;
     public guidedTourOrbShowingStream: Observable<boolean>;
+    public currentTourSteps: TourStep[];
 
     private _guidedTourCurrentStepSubject = new Subject<TourStep>();
     private _guidedTourOrbShowingSubject = new Subject<boolean>();
@@ -38,6 +40,10 @@ export class GuidedTourService {
                     }
                 }
             });
+    }
+
+    public getOverviewTour(): Observable<GuidedTour> {
+        return of(courseOverviewTour);
     }
 
     public nextStep(): void {
@@ -115,6 +121,7 @@ export class GuidedTourService {
     }
 
     public startTour(tour: GuidedTour): void {
+        this.currentTourSteps = tour.steps;
         this._currentTour = cloneDeep(tour);
         this._currentTour.steps = this._currentTour.steps.filter(step => !step.skipStep);
         this._currentTourStepIndex = 0;
