@@ -63,9 +63,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public onNoInstructionsAvailable = new EventEmitter();
     @Output()
     public resultChange = new EventEmitter<Result>();
-    @Output() public exerciseTestCasesChange = new EventEmitter();
+    @Output() public exerciseTestCasesChange = new EventEmitter<ProgrammingExerciseTestCase[] | null>();
 
-    exerciseTestCases: string[] = [];
+    exerciseTestCases: string[] | null = null;
 
     public problemStatement: string;
     public participationSubscription: Subscription;
@@ -500,7 +500,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
         const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-        const validTestCases = _intersection(tests, this.exerciseTestCases).toString();
+        const validTestCases = this.exerciseTestCases ? _intersection(tests, this.exerciseTestCases).toString() : tests;
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 

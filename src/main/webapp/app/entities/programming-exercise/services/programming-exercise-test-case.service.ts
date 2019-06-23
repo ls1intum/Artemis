@@ -7,7 +7,7 @@ import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.m
 import { JhiWebsocketService } from 'app/core';
 
 export interface IProgrammingExerciseTestCaseService {
-    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +15,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
     public testCaseUrl = `${SERVER_API_URL}api/programming-exercises/test-cases`;
 
     private connections: { [exerciseId: string]: string } = {};
-    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[]> } = {};
+    private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
@@ -23,19 +23,19 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         Object.values(this.connections).forEach(connection => this.jhiWebsocketService.unsubscribe(connection));
     }
 
-    subscribeForTestCases(exerciseId: number) {
+    subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null> {
         if (this.subjects[exerciseId]) {
-            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[]>;
+            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
         } else {
             return this.getTestCases(exerciseId).pipe(
                 catchError(() => of(null)),
-                switchMap(testCases => this.initTestCaseSubscription(exerciseId, testCases)),
+                switchMap((testCases: ProgrammingExerciseTestCase[] | null) => this.initTestCaseSubscription(exerciseId, testCases)),
             );
         }
     }
 
-    private getTestCases(exerciseId: number): Observable<string[]> {
-        return this.http.get<string[]>(`${this.testCaseUrl}/${exerciseId}`);
+    private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}`);
     }
 
     private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | null) {
