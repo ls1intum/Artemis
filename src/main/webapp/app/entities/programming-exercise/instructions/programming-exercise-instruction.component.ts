@@ -32,6 +32,7 @@ import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -398,11 +399,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (match) {
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
+                const tests = match[2].split(',');
+                const validTests = this.exerciseTestCases && !isLegacyResult(this.latestResult!) ? _intersection(tests, this.exerciseTestCases) : tests;
                 // Insert the testsStatus token to our rendered tokens
                 state.push({
                     type: 'testsStatus',
                     title: match[1],
-                    tests: match[2].split(','),
+                    tests: validTests,
                     level: state.level,
                 });
             }
@@ -500,7 +503,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
         const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-        const validTestCases = this.exerciseTestCases ? _intersection(tests, this.exerciseTestCases).toString() : tests;
+        const validTestCases = this.exerciseTestCases && !isLegacyResult(this.latestResult!) ? _intersection(tests, this.exerciseTestCases).toString() : tests;
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
@@ -567,9 +570,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 (acc, testName) => {
                     const feedback = this.latestResult!.feedbacks.find(({ text }) => text === testName);
                     // This is a legacy check, results before the 24th May are considered legacy.
-                    const isLegacyResult = this.latestResult!.completionDate!.valueOf() < 1558724787078;
+                    const resultIsLegacy = isLegacyResult(this.latestResult!);
                     // If there is no feedback item, we assume that the test was successful (legacy check).
-                    if (isLegacyResult) {
+                    if (resultIsLegacy) {
                         return {
                             failed: feedback ? [...acc.failed, testName] : acc.failed,
                             successful: feedback ? acc.successful : [...acc.successful, testName],
