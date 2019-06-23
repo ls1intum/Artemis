@@ -25,11 +25,21 @@ public class AssessmentUpdate {
         this.feedbacks = feedbacks;
     }
 
+    public AssessmentUpdate feedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+        return this;
+    }
+
     public ComplaintResponse getComplaintResponse() {
         return complaintResponse;
     }
 
     public void setComplaintResponse(ComplaintResponse complaintResponse) {
         this.complaintResponse = complaintResponse;
+    }
+
+    public AssessmentUpdate complaintResponse(ComplaintResponse complaintResponse) {
+        this.complaintResponse = complaintResponse;
+        return this;
     }
 }

@@ -49,7 +49,7 @@ public class ComplaintService {
      */
     @Transactional
     public Complaint createComplaint(Complaint complaint, Principal principal) {
-        Result originalResult = resultRepository.findById(complaint.getResult().getId())
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         User originalSubmissor = originalResult.getParticipation().getStudent();
         Long courseId = originalResult.getParticipation().getExercise().getCourse().getId();
