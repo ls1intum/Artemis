@@ -60,6 +60,12 @@ public class DatabaseUtilService {
     FeedbackRepository feedbackRepo;
 
     @Autowired
+    ComplaintRepository complaintRepo;
+
+    @Autowired
+    ComplaintResponseRepository complaintResponseRepo;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -71,6 +77,8 @@ public class DatabaseUtilService {
     public void resetDatabase() {
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
+        complaintResponseRepo.deleteAll();
+        complaintRepo.deleteAll();
         resultRepo.deleteAll();
         feedbackRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
@@ -124,6 +132,19 @@ public class DatabaseUtilService {
         return participationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
     }
 
+    public void addCourseWithOneModelingExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+    }
+
     public void addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -141,7 +162,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(useCaseExercise);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(4);
+        assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(4);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(4);
         assertThat(courseRepoContent.get(0).getExercises()).as("Contains all exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
@@ -213,6 +234,8 @@ public class DatabaseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
+        result.setParticipation(submission.getParticipation());
+        result.setAssessor(getUserByLogin(login));
         result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         return result;
     }
@@ -244,5 +267,26 @@ public class DatabaseUtilService {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID could not be found"));
         exercise.setDueDate(newDueDate);
         exerciseRepo.save(exercise);
+    }
+
+    public void updateAssessmentDueDate(long exerciseId, ZonedDateTime newDueDate) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID could not be found"));
+        exercise.setAssessmentDueDate(newDueDate);
+        exerciseRepo.save(exercise);
+    }
+
+    public void updateResultCompletionDate(long resultId, ZonedDateTime newCompletionDate) {
+        Result result = resultRepo.findById(resultId).orElseThrow(() -> new IllegalArgumentException("Result with given ID could not be found"));
+        result.setCompletionDate(newCompletionDate);
+        resultRepo.save(result);
+    }
+
+    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints) {
+        for (int i = 0; i < numberOfComplaints; i++) {
+            Result dummyResult = new Result().participation(participation);
+            dummyResult = resultRepo.save(dummyResult);
+            Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult);
+            complaintRepo.save(complaint);
+        }
     }
 }
