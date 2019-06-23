@@ -19,10 +19,22 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
+    /**
+     * On destroy unsubscribe all connections.
+     */
     ngOnDestroy(): void {
         Object.values(this.connections).forEach(connection => this.jhiWebsocketService.unsubscribe(connection));
     }
 
+    /**
+     * Subscribe to test case changes on the server.
+     * Executes a REST request initially to get the current value, so that ideally no null value is emitted to the subscriber.
+     *
+     * If the result is an empty array, this will be translated into a null value.
+     * This is done on purpose most likely this is an error as most programming exercises have at least one test case.
+     *
+     * @param exerciseId
+     */
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null> {
         if (this.subjects[exerciseId]) {
             return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
@@ -35,10 +47,19 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         }
     }
 
+    /**
+     * Executes a REST request to the test case endpoint.
+     * @param exerciseId
+     */
     private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}`);
     }
 
+    /**
+     * Set up the infrastructure for handling and reusing a new test case subscription.
+     * @param exerciseId
+     * @param initialValue
+     */
     private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | null) {
         const testCaseTopic = `/topic/programming-exercise/${exerciseId}/test-cases`;
         this.jhiWebsocketService.subscribe(testCaseTopic);
@@ -54,6 +75,11 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         return this.subjects[exerciseId];
     }
 
+    /**
+     * Notify the subscribers of the exercise specific test cases.
+     * @param exerciseId
+     * @param testCases
+     */
     private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | null) {
         this.subjects[exerciseId].next(testCases);
     }
