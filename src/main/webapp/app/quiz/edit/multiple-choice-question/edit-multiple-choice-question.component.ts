@@ -63,8 +63,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n' +
-            this.question.answerOptions
-                .map(answerOption => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
+            this.question
+                .answerOptions!.map(answerOption => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
                 .join('\n');
         return markdownText;
     }
@@ -111,7 +111,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
      *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
      *       3. resetMultipleChoicePreview() is triggered to notify the parent component
      *       about the changes within the question and to cacheValidation() since the assigned values have changed
-     * @param {domainCommands} containing tuples of [text, domainCommandIdentifiers]
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
@@ -129,7 +129,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                     currentAnswerOption.isCorrect = false;
                 }
                 currentAnswerOption.text = text;
-                this.question.answerOptions.push(currentAnswerOption);
+                this.question.answerOptions!.push(currentAnswerOption);
             } else if (command instanceof ExplanationCommand) {
                 if (currentAnswerOption) {
                     currentAnswerOption.explanation = text;

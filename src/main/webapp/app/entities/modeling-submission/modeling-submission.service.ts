@@ -1,16 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import { ModelingSubmission } from './modeling-submission.model';
-import { createRequestOption } from '../../shared';
+import { createRequestOption } from 'app/shared';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
@@ -61,12 +60,12 @@ export class ModelingSubmissionService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingSubmission = this.convertItemFromServer(res.body);
+        const body: ModelingSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
-        const jsonResponse: ModelingSubmission[] = res.body;
+        const jsonResponse: ModelingSubmission[] = res.body!;
         const body: ModelingSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

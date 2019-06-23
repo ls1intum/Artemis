@@ -146,7 +146,12 @@
             <span jhiTranslate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
         </div>
         <div class="background-area">
-            <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+            <jhi-secured-image
+                *ngIf="question.backgroundFilePath"
+                [src]="question.backgroundFilePath"
+                [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate"
+                (endLoadingProcess)="this.resizeImage()"
+            >
             </jhi-secured-image>
             <div
                 #clickLayer

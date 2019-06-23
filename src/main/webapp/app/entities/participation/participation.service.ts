@@ -43,7 +43,7 @@ export class ParticipationService {
     /*
      * Finds one participation for the currently logged in user for the given exercise in the given course
      */
-    findParticipation(courseId: number, exerciseId: number): Observable<EntityResponseType> {
+    findParticipation(courseId: number, exerciseId: number): Observable<EntityResponseType | null> {
         return this.http
             .get<Participation>(SERVER_API_URL + `api/courses/${courseId}/exercises/${exerciseId}/participation`, { observe: 'response' })
             .map((res: EntityResponseType) => {

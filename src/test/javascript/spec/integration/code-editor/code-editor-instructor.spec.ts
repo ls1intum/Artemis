@@ -192,7 +192,7 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentStub.returns(getRepositoryContentSubject);
     });
 
-    it('should load the exercise and select the template participation if no participation id is provided', (done: any) => {
+    it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
         const exercise = {
             id: 1,
@@ -251,11 +251,8 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
 
-        setTimeout(() => {
-            // Called once by each build-output, instructions, result, instructor-status
-            expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(4);
-            done();
-        }, 0);
+        // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
+        expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
     });
 
     it('should go into error state when loading the exercise failed', () => {

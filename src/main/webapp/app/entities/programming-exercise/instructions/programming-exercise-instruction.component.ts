@@ -14,6 +14,7 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { intersection as _intersection } from 'lodash';
@@ -133,7 +134,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         }
                     }),
                     filter(problemStatement => !!problemStatement),
-                    tap(problemStatement => (this.problemStatement = problemStatement)),
+                    tap(problemStatement => (this.problemStatement = problemStatement!)),
                     switchMap(() => this.loadInitialResult()),
                     map(latestResult => (this.latestResult = latestResult)),
                     tap(() => {
@@ -146,7 +147,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         } else if (this.exercise && problemStatementHasChanged(changes)) {
             // If the exercise's problemStatement is updated from the parent component, re-render the markdown.
             // This is e.g. the case if the parent component uses an editor to update the problemStatement.
-            this.problemStatement = this.exercise.problemStatement;
+            this.problemStatement = this.exercise.problemStatement!;
             this.updateMarkdown();
         }
     }
@@ -188,7 +189,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
-    loadInitialResult(): Observable<Result> {
+    loadInitialResult(): Observable<Result | null> {
         if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = this.participation.results.reduce((acc, v) => (v.id > acc.id ? v : acc));
@@ -224,9 +225,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).pipe(
+        return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
             catchError(() => Observable.of(null)),
-            map((latestResult: { body: Result[] }) => {
+            map((latestResult: HttpResponse<Result[]>) => {
                 if (latestResult && latestResult.body && latestResult.body.length) {
                     return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
                 } else {
@@ -259,7 +260,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions(): Observable<string> {
+    loadInstructions(): Observable<string | null> {
         if (this.exercise.problemStatement !== null && this.exercise.problemStatement !== undefined) {
             return Observable.of(this.exercise.problemStatement);
         } else {
@@ -319,7 +320,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 componentRef.instance.ngOnChanges({});
                 this.appRef.attachView(componentRef.hostView);
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-                const iconContainer = document.getElementById(`step-icon-${i}`);
+                const iconContainer = document.getElementById(`step-icon-${i}`)!;
                 iconContainer.innerHTML = '';
                 iconContainer.append(domElem);
             });
@@ -336,7 +337,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 plantUmlSrcAttribute => {
                     // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
                     if (document.getElementById('plantUml' + id)) {
-                        document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                        document.getElementById('plantUml' + id)!.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
                     }
                 },
                 err => {
@@ -370,7 +371,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result {Result} Result object, mostly latestResult
      * @param tests {string} Identifies the testcase
      */
-    showDetailsForTests(result: Result, tests: string) {
+    showDetailsForTests(result: Result | null, tests: string) {
         if (!result) {
             return;
         }
@@ -564,9 +565,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted } = tests.reduce(
                 (acc, testName) => {
-                    const feedback = this.latestResult.feedbacks.find(({ text }) => text === testName);
+                    const feedback = this.latestResult!.feedbacks.find(({ text }) => text === testName);
                     // This is a legacy check, results before the 24th May are considered legacy.
-                    const isLegacyResult = this.latestResult.completionDate.valueOf() < 1558724787078;
+                    const isLegacyResult = this.latestResult!.completionDate!.valueOf() < 1558724787078;
                     // If there is no feedback item, we assume that the test was successful (legacy check).
                     if (isLegacyResult) {
                         return {

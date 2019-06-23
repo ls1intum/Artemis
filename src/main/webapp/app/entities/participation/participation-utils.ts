@@ -1,8 +1,12 @@
 import { SimpleChanges } from '@angular/core';
 import { Participation } from 'app/entities/participation/participation.model';
-import { differenceBy as _differenceBy } from 'lodash';
 import { Result } from 'app/entities/result';
 
+/**
+ * Check if the participation has changed.
+ * This includes the first change (undefined -> participation)!
+ * @param changes
+ */
 export const hasParticipationChanged = (changes: SimpleChanges) => {
     return (
         changes.participation &&

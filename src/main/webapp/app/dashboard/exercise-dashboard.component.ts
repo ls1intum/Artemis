@@ -58,10 +58,10 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
-                this.course = res.body;
+                this.course = res.body!;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
+                this.exercise = res.body!;
                 this.getResults();
             });
         });
@@ -74,17 +74,21 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
 
     getResults() {
         this.resultService
-            .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
+            .getResultsForExercise(this.exercise.course!.id, this.exercise.id, {
                 showAllResults: this.showAllResults,
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
             .subscribe((res: HttpResponse<Result[]>) => {
-                const tempResults: Result[] = res.body;
+                const tempResults: Result[] = res.body!;
                 tempResults.forEach(result => {
-                    result.participation.results = [result];
-                    result.participation.exercise = this.exercise;
+                    result.participation!.results = [result];
+                    result.participation!.exercise = this.exercise;
+                    result.durationInMinutes = this.durationInMinutes(
+                        result.completionDate!,
+                        result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
+                    );
                 });
                 this.allResults = tempResults;
                 this.filterResults();
@@ -94,28 +98,24 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     filterResults() {
         this.results = [];
         if (this.showAllResults === 'successful') {
-            this.results = this.allResults.filter(result => {
-                return result.successful === true;
-            });
+            this.results = this.allResults.filter(result => result.successful);
         } else if (this.showAllResults === 'unsuccessful') {
-            this.results = this.allResults.filter(result => {
-                return result.successful === false;
-            });
+            this.results = this.allResults.filter(result => !result.successful);
         } else if (this.showAllResults === 'all') {
             this.results = this.allResults;
         }
     }
 
-    durationString(completionDate: Moment, initializationDate: Moment) {
+    durationInMinutes(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
     goToBuildPlan(result: Result) {
-        this.sourceTreeService.goToBuildPlan(result.participation);
+        this.sourceTreeService.goToBuildPlan(result.participation!);
     }
 
     goToRepository(result: Result) {
-        window.open(result.participation.repositoryUrl);
+        window.open(result.participation!.repositoryUrl);
     }
 
     showDetails(result: Result) {
@@ -132,9 +132,9 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                let studentName = result.participation.student.firstName;
-                if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
-                    studentName = studentName + ' ' + result.participation.student.lastName;
+                let studentName = result.participation!.student.firstName!;
+                if (result.participation!.student.lastName != null && result.participation!.student.lastName !== '') {
+                    studentName = studentName + ' ' + result.participation!.student.lastName;
                 }
                 rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
             });
@@ -152,11 +152,11 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                let studentName = result.participation.student.firstName;
-                if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
-                    studentName = studentName + ' ' + result.participation.student.lastName;
+                let studentName = result.participation!.student.firstName!;
+                if (result.participation!.student.lastName != null && result.participation!.student.lastName !== '') {
+                    studentName = studentName + ' ' + result.participation!.student.lastName;
                 }
-                const studentId = result.participation.student.login;
+                const studentId = result.participation!.student.login;
                 const score = result.score;
 
                 if (index === 0) {
@@ -169,7 +169,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
                 if (this.exercise.type === ExerciseType.QUIZ) {
                     rows.push(studentName + ', ' + studentId + ', ' + score);
                 } else {
-                    const repoLink = result.participation.repositoryUrl;
+                    const repoLink = result.participation!.repositoryUrl;
                     rows.push(studentName + ', ' + studentId + ', ' + score + ', ' + repoLink);
                 }
             });

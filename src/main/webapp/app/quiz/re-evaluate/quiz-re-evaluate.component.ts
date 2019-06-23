@@ -52,7 +52,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
             this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
-                this.quizExercise = response.body;
+                this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
                 this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
             });
@@ -166,10 +166,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @returns {String} the duration as String
      */
     durationString(): string {
-        if (this.duration.seconds <= 0) {
+        if (this.duration.seconds! <= 0) {
             return this.duration.minutes + ':00';
         }
-        if (this.duration.seconds < 10) {
+        if (this.duration.seconds! < 10) {
             return this.duration.minutes + ':0' + this.duration.seconds;
         }
         return this.duration.minutes + ':' + this.duration.seconds;

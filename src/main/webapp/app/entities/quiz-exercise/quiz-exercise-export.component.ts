@@ -46,16 +46,16 @@ export class QuizExerciseExportComponent implements OnInit {
      */
     private loadForCourse(courseId: number) {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
+            this.course = courseResponse.body!;
             // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
             this.quizExerciseService.findForCourse(courseId).subscribe(
                 (res: HttpResponse<QuizExercise[]>) => {
-                    const quizExercises = res.body;
+                    const quizExercises = res.body!;
                     for (const quizExercise of quizExercises) {
                         // reconnect course and exercise in case we need this information later
                         quizExercise.course = this.course;
                         this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body;
+                            const quizExerciseResponse = response.body!;
                             for (const question of quizExerciseResponse.quizQuestions) {
                                 question.exercise = quizExercise;
                                 this.questions.push(question);

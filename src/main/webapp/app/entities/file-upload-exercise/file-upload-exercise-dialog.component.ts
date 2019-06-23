@@ -36,7 +36,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -56,7 +56,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: FileUploadExercise) {

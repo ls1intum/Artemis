@@ -28,6 +28,6 @@ export class QuizExercise extends Exercise {
 
     constructor(course?: Course) {
         super(ExerciseType.QUIZ);
-        this.course = course;
+        this.course = course || null;
     }
 }

@@ -27,7 +27,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseId: number;
     public courseId: number;
     private subscription: Subscription;
-    public exercise: Exercise;
+    public exercise: Exercise | null;
     public showMoreResults = false;
     public sortedResults: Result[] = [];
     public sortedHistoryResult: Result[];
@@ -69,8 +69,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
         if (cachedParticipations && cachedParticipations.length > 0) {
             this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body;
-                this.exercise.participations = this.filterParticipations(cachedParticipations);
+                this.exercise = exerciseResponse.body!;
+                this.exercise.participations = this.filterParticipations(cachedParticipations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -78,8 +78,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         } else {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.exercise = exerciseResponse.body;
-                this.exercise.participations = this.filterParticipations(this.exercise.participations);
+                this.exercise = exerciseResponse.body!;
+                this.exercise.participations = this.filterParticipations(this.exercise.participations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
                 this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
@@ -92,7 +92,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
      * removed from the participations. We also sort the participations so that FINISHED participations come first.
      */
-    private filterParticipations(participations: Participation[]): Participation[] {
+    private filterParticipations(participations: Participation[]): Participation[] | null {
         if (!participations) {
             return null;
         }
@@ -126,8 +126,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     sortResults() {
         if (this.hasResults) {
             this.sortedResults = this.combinedParticipation.results.sort((a, b) => {
-                const aValue = moment(a.completionDate).valueOf();
-                const bValue = moment(b.completionDate).valueOf();
+                const aValue = moment(a.completionDate!).valueOf();
+                const bValue = moment(b.completionDate!).valueOf();
                 return aValue - bValue;
             });
             const sortedResultLength = this.sortedResults.length;
@@ -146,10 +146,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     subscribeForNewResults() {
         if (this.exercise && this.exercise.participations && this.exercise.participations.length > 0) {
             this.exercise.participations.forEach(participation => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise);
+                this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
         } else {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
+            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: Participation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
@@ -173,25 +173,25 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseIsOver(): boolean {
-        return moment(this.exercise.dueDate).isBefore(moment());
+        return this.exercise ? moment(this.exercise!.dueDate!).isBefore(moment()) : true;
     }
 
     get hasMoreResults(): boolean {
         return this.sortedResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
-    get exerciseRouterLink(): string {
-        if (this.exercise.type === ExerciseType.MODELING) {
-            return `/course/${this.courseId}/exercise/${this.exercise.id}/assessment`;
-        } else if (this.exercise.type === ExerciseType.TEXT) {
+    get exerciseRouterLink(): string | null {
+        if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
+            return `/course/${this.courseId}/exercise/${this.exercise!.id}/assessment`;
+        } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
         } else {
-            return;
+            return null;
         }
     }
 
     get showResults(): boolean {
-        if (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) {
+        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.hasResults && this.isAfterAssessmentDueDate;
         }
         return this.hasResults;
@@ -208,13 +208,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    get currentResult(): Result {
+    get currentResult(): Result | null {
         if (!this.hasResults) {
             return null;
         }
 
-        if (this.exercise.type === ExerciseType.MODELING || this.exercise.type === ExerciseType.TEXT) {
-            return this.sortedResults.find((result: Result) => !!result.completionDate);
+        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
+            return this.sortedResults.find((result: Result) => !!result.completionDate) || null;
         }
 
         const ratedResults = this.sortedResults.filter((result: Result) => result.rated);

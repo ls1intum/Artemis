@@ -19,7 +19,8 @@
             "submissionDate": "Submission Date",
             "type": "Type",
             "result": "Ergebnis",
-            "participation": "Participation"
+            "participation": "Participation",
+            "lockedSubmissionsLimitReached": "Du hast die maximale Anzahl von unvollständigen Bewertungen in diesem Kurs erreicht. Bitte beende deine offenen Bewertungen, bevor du eine neue beginnen kannst."
         }
     }
 }

@@ -6,7 +6,7 @@ import * as moment from 'moment';
 })
 export class DatePipe implements PipeTransform {
     transform(date: any, args?: any): any {
-        if (date == null || date === undefined) {
+        if (date == null) {
             return 'DD MMMM YYYY, hh:mm:ss PM';
         }
         const d = new Date(date);

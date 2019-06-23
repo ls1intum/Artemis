@@ -21,7 +21,7 @@ export class Participation implements BaseEntity {
     public repositoryUrl: string;
     public buildPlanId: string;
     public initializationState: InitializationState;
-    public initializationDate: Moment;
+    public initializationDate: Moment | null;
     public presentationScore: number;
     public results: Result[];
     public submissions: Submission[];

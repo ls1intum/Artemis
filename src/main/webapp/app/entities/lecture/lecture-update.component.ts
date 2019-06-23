@@ -33,7 +33,7 @@ export class LectureUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.courseService.find(Number(this.activatedRoute.snapshot.paramMap.get('courseId'))).subscribe((response: HttpResponse<Course>) => {
-                this.lecture.course = response.body;
+                this.lecture.course = response.body!;
             });
         });
     }
@@ -65,7 +65,7 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, null);
+        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 
     trackCourseById(index: number, item: Course) {

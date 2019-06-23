@@ -65,6 +65,8 @@ public final class Constants {
 
     public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
+    public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
+
     private Constants() {
     }
 }
