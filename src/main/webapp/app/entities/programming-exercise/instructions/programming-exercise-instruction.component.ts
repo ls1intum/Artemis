@@ -400,7 +400,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
                 const tests = match[2].split(',');
-                const validTests = this.exerciseTestCases && !isLegacyResult(this.latestResult!) ? _intersection(tests, this.exerciseTestCases) : tests;
+                const validTests = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases) : tests;
                 // Insert the testsStatus token to our rendered tokens
                 state.push({
                     type: 'testsStatus',
@@ -503,7 +503,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
         const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
-        const validTestCases = this.exerciseTestCases && !isLegacyResult(this.latestResult!) ? _intersection(tests, this.exerciseTestCases).toString() : tests;
+        const validTestCases = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases).toString() : tests;
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
