@@ -29,7 +29,7 @@ export abstract class Submission implements BaseEntity {
     public result: Result;
     public participation: Participation;
 
-    public language: Language;
+    public language: Language | null;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;

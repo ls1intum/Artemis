@@ -171,7 +171,7 @@
                                 <span *ngIf="submission.result !== null && submission.result.score !== null">{{ submission.result.score }} %</span>
                             </td>
                             <td *ngIf="exercise.type === ExerciseType_TEXT">
-                                {{ calculateLanguage(submission) }}
+                                {{ textSubmissionLanguageTranslationKey(submission) | translate }}
                             </td>
                             <td>
                                 <button
@@ -195,7 +195,7 @@
                             <td>{{ 'artemisApp.tutorExerciseDashboard.new' | translate }}</td>
                             <td></td>
                             <td *ngIf="exercise.type === ExerciseType_TEXT">
-                                {{ calculateLanguage(unassessedSubmission) }}
+                                {{ textSubmissionLanguageTranslationKey(unassessedSubmission) | translate }}
                             </td>
                             <td>
                                 <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">

@@ -47,7 +47,12 @@
             "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
-            "language": "Sprache"
+            "language": "Sprache",
+            "languages": {
+                "ENGLISH": "Englisch",
+                "GERMAN": "Deutsch",
+                "UNKNOWN": "Unbekannt"
+            }
         }
     }
 }

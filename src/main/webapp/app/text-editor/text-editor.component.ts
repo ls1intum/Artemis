@@ -14,7 +14,6 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
-import { Language } from 'app/entities/tutor-group';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -143,22 +142,7 @@ export class TextEditorComponent implements OnInit {
             return;
         }
         this.submission.text = this.answer;
-        const franc = require('franc-min');
-        const languageProbabilities = franc.all(this.submission.text, { only: ['eng', 'deu', 'und', 'nds'] });
-        switch (languageProbabilities[0][0]) {
-            case 'und':
-                // Language is undetermined
-                break;
-            case 'eng':
-                // Language is english
-                this.submission.language = Language.ENGLISH;
-                break;
-            case 'deu':
-            case 'nds':
-                // Language is german or lower german
-                this.submission.language = Language.GERMAN;
-                break;
-        }
+        this.textService.determineLanguage(this.submission);
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {
