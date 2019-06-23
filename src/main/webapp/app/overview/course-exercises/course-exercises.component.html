@@ -11,28 +11,28 @@
                         <button ngbDropdownItem (click)="filterUpdate([NEEDS_WORK, OVERDUE], false); filterOverdue.checked = filterGraded.checked = true">Select all</button>
                         <div class="dropdown-divider"></div>
                         <div class="px-4">
-                            <input
-                                #filterGraded
-                                type="checkbox"
-                                class="form-check-input"
-                                id="dropDownCheckGraded"
-                                checked
-                                (change)="filterUpdate([NEEDS_WORK], !filterGraded.checked)"
-                            />
                             <label class="form-check-label dropdown-item-text" for="dropDownCheckGraded">
+                                <input
+                                    #filterGraded
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    id="dropDownCheckGraded"
+                                    checked
+                                    (change)="filterUpdate([NEEDS_WORK], !filterGraded.checked)"
+                                />
                                 {{ 'artemisApp.courseOverview.exerciseList.fullScore' | translate }}
                             </label>
                         </div>
                         <div class="px-4">
-                            <input
-                                #filterOverdue
-                                type="checkbox"
-                                class="form-check-input"
-                                id="dropdownCheckOverdue"
-                                checked
-                                (change)="filterUpdate([OVERDUE], !filterOverdue.checked)"
-                            />
                             <label class="form-check-label dropdown-item-text" for="dropdownCheckOverdue">
+                                <input
+                                    #filterOverdue
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    id="dropdownCheckOverdue"
+                                    checked
+                                    (change)="filterUpdate([OVERDUE], !filterOverdue.checked)"
+                                />
                                 {{ 'artemisApp.courseOverview.exerciseList.overdue' | translate }}
                             </label>
                         </div>
