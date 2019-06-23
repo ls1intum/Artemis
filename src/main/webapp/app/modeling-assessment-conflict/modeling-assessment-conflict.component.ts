@@ -77,7 +77,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     onFeedbackChanged(feedbacks: Feedback[]) {
         const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
         const originalElementAssessment = this.rightFeedback.find(feedback => feedback.referenceId === this.rightConflictingElemenId);
-        if (elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
+        if (elementAssessmentUpdate && originalElementAssessment && elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
             this.userInteractionWithConflict = true;
             this.updateCurrentState();
         }
@@ -87,7 +87,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     setSameWidthOnModelingAssessments() {
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();
-        $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+        if (conflictEditorWidth && instructionsWidth) {
+            $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+        }
     }
 
     private updateCurrentState() {

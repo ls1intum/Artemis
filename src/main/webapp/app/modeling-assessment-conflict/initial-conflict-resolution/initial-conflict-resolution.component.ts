@@ -27,7 +27,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     currentState: ConflictResolutionState;
     conflictIndex = 0;
 
-    currentConflict: Conflict;
+    currentConflict: Conflict | undefined;
     currentModel: UMLModel;
     currentHighlightedElementIds: Set<string>;
     currentCenteredElementId: string;
@@ -38,7 +38,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     conflictingHighlightedElementIds: Set<string>;
     conflictingCenteredElementId: string;
 
-    @ViewChild('escalationModal') escalationModal: ElementRef;
+    @ViewChild('escalationModal', { static: false }) escalationModal: ElementRef;
 
     constructor(
         private route: ActivatedRoute,
@@ -53,7 +53,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.popLocalConflicts(this.submissionId);
-            if (this.conflicts && this.conflicts.length > 0) {
+            if (this.conflicts.length > 0) {
                 this.initComponent();
             } else {
                 this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(
@@ -70,20 +70,22 @@ export class InitialConflictResolutionComponent implements OnInit {
     }
 
     initComponent() {
-        this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
-        this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
-        this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation.exercise as ModelingExercise;
-        this.currentModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
-        this.jhiAlertService.clear();
-        this.jhiAlertService.addAlert(
-            {
-                type: 'info',
-                msg: 'modelingAssessmentConflict.messages.conflictResolutionInstructions',
-                timeout: undefined,
-            },
-            [],
-        );
+        if (this.currentConflict) {
+            this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
+            this.initResolutionStates(this.conflicts);
+            this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation!.exercise as ModelingExercise;
+            this.currentModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
+            this.jhiAlertService.clear();
+            this.jhiAlertService.addAlert(
+                {
+                    type: 'info',
+                    msg: 'modelingAssessmentConflict.messages.conflictResolutionInstructions',
+                    timeout: undefined,
+                },
+                [],
+            );
+        }
     }
 
     onSave() {
@@ -96,19 +98,23 @@ export class InitialConflictResolutionComponent implements OnInit {
     }
 
     onKeepYours() {
-        this.updateFeedbackInMergedFeedback(
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.currentConflict.causingConflictingResult.result.feedbacks,
-        );
+        if (this.currentConflict) {
+            this.updateFeedbackInMergedFeedback(
+                this.currentConflict.causingConflictingResult.modelElementId,
+                this.currentConflict.causingConflictingResult.modelElementId,
+                this.currentConflict.causingConflictingResult.result.feedbacks,
+            );
+        }
     }
 
     onTakeOver() {
-        this.updateFeedbackInMergedFeedback(
-            this.currentConflict.causingConflictingResult.modelElementId,
-            this.conflictingResult.modelElementId,
-            this.conflictingResult.result.feedbacks,
-        );
+        if (this.currentConflict) {
+            this.updateFeedbackInMergedFeedback(
+                this.currentConflict.causingConflictingResult.modelElementId,
+                this.conflictingResult.modelElementId,
+                this.conflictingResult.result.feedbacks,
+            );
+        }
     }
 
     onSubmit(escalatedConflicts: Conflict[]) {
@@ -143,13 +149,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
             () => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                this.router.navigate([
-                    'modeling-exercise',
-                    this.conflicts[0].causingConflictingResult.result.participation.exercise.id,
-                    'submissions',
-                    this.submissionId,
-                    'assessment',
-                ]);
+                this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
             },
             error => {
                 if (error.status === 409) {
@@ -179,22 +179,26 @@ export class InitialConflictResolutionComponent implements OnInit {
     private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
-        this.mergedFeedbacks.forEach(feedback => {
-            if (feedback.referenceId === elementIdToUpdate) {
-                feedback.credits = feedbackToUse.credits;
-            }
-            feedbacks.push(feedback);
-        });
-        this.mergedFeedbacks = feedbacks;
+        if (feedbackToUse) {
+            this.mergedFeedbacks.forEach(feedback => {
+                if (feedback.referenceId === elementIdToUpdate) {
+                    feedback.credits = feedbackToUse.credits;
+                }
+                feedbacks.push(feedback);
+            });
+            this.mergedFeedbacks = feedbacks;
+        }
     }
 
     private updateHighlightedElements() {
-        this.currentHighlightedElementIds = new Set<string>([this.currentConflict.causingConflictingResult.modelElementId]);
+        if (this.currentConflict) {
+            this.currentHighlightedElementIds = new Set<string>([this.currentConflict.causingConflictingResult.modelElementId]);
+        }
         this.conflictingHighlightedElementIds = new Set<string>([this.conflictingResult.modelElementId]);
     }
 
     private initResolutionStates(conflicts: Conflict[]) {
-        //TODO MJ move into service
+        // TODO MJ move into service
         this.conflictResolutionStates = [];
         if (conflicts && conflicts.length > 0) {
             const mergedFeedbacks = conflicts[0].causingConflictingResult.result.feedbacks;
@@ -203,7 +207,7 @@ export class InitialConflictResolutionComponent implements OnInit {
                 const conflictingResult: ConflictingResult = currentConflict.resultsInConflict[0];
                 const mergedFeedback = mergedFeedbacks.find((feedback: Feedback) => feedback.referenceId === currentConflict.causingConflictingResult.modelElementId);
                 const conflictingFeedback = conflictingResult.result.feedbacks.find((feedback: Feedback) => feedback.referenceId === conflictingResult.modelElementId);
-                if (mergedFeedback.credits !== conflictingFeedback.credits) {
+                if (mergedFeedback && conflictingFeedback && mergedFeedback.credits !== conflictingFeedback.credits) {
                     this.conflictResolutionStates.push(ConflictResolutionState.UNHANDLED);
                 } else {
                     this.conflictResolutionStates.push(ConflictResolutionState.RESOLVED);
@@ -216,7 +220,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         const distinctTutors: Map<number, User> = new Map<number, User>();
         escalatedConflicts.forEach((conflict: Conflict) => {
             conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) =>
-                distinctTutors.set(conflictingResult.result.assessor.id, conflictingResult.result.assessor),
+                distinctTutors.set(conflictingResult.result.assessor.id!, conflictingResult.result.assessor),
             );
         });
         return Array.from(distinctTutors.values());

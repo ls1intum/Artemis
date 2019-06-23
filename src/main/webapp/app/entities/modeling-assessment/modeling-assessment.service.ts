@@ -25,10 +25,14 @@ export class ModelingAssessmentService {
         return this.localSubmissionConflictMap.set(submissionID, conflicts);
     }
 
-    popLocalConflicts(submissionID: number) {
+    popLocalConflicts(submissionID: number): Conflict[] {
         const conflicts = this.localSubmissionConflictMap.get(submissionID);
         this.localSubmissionConflictMap.delete(submissionID);
-        return conflicts;
+        if (conflicts) {
+            return conflicts;
+        } else {
+            return [];
+        }
     }
 
     getConflicts(submissionID: number): Observable<Conflict[]> {

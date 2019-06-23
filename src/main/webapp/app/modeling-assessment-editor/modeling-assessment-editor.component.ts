@@ -217,7 +217,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private submitAssessment() {
-        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
+        this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, false).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
                 this.result = result;
@@ -265,9 +265,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onShowConflictResolution() {
-        this.modelingAssessmentService.addLocalConflicts(this.submission.id, this.conflicts);
-        this.jhiAlertService.clear();
-        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submission.id, 'assessment', 'conflict']);
+        if (this.conflicts) {
+            this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts);
+            this.jhiAlertService.clear();
+            this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
+        }
     }
 
     /**
