@@ -29,17 +29,21 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
+    private final ModelingSubmissionService modelingSubmissionService;
+
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     private final CompassService compassService;
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            ModelingSubmissionService modelingSubmissionService) {
         super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
@@ -72,7 +76,8 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = new Result();
+            modelingSubmissionService.setNewResult(modelingSubmission);
+            result = modelingSubmission.getResult();
         }
         // check the assessment due date if the user tries to override an existing submitted result
         if (result.getCompletionDate() != null) {

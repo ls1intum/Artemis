@@ -266,7 +266,7 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param submission
      */
-    private void setNewResult(ModelingSubmission submission) {
+    public void setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
