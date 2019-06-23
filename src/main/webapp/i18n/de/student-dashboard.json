@@ -27,7 +27,7 @@
                 "lectures": "Vorlesungen"
             },
             "exerciseList": {
-                "alreadyGraded": "Benotung abgeschlossen",
+                "fullScore": "Volle Punktzahl",
                 "overdue": "Überfällig",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",

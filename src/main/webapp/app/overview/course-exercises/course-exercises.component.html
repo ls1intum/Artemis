@@ -2,31 +2,52 @@
     <div class="col-12 col-md-8">
         <div class="mt-3 position-relative" *ngIf="course">
             <div class="exercise-controls d-none d-sm-block" *ngIf="course?.exercises.length > 0">
-                <div ngbDropdown placement="bottom-right" class="d-inline-block">
-                    <button class="btn btn-outline-primary" id="dropdownFilter" ngbDropdownToggle>
-                        <i class="fas fa-filter"></i>
-                        <div ngbDropdownMenu aria-labelledby="dropdownFilter">
-                            <button class="dropdown-item" (click)="filterByAlreadyGraded()">
-                                <fa-icon [icon]="'check-double'"></fa-icon>
-                                {{ 'artemisApp.courseOverview.exerciseList.alreadyGraded' | translate }}
-                            </button>
-                            <button class="dropdown-item">
-                                <fa-icon [icon]="'clock'"></fa-icon>
-                                {{ 'artemisApp.courseOverview.exerciseList.overdue' | translate }}
-                            </button>
-                        </div>
+                <div ngbDropdown class="d-inline-block" [autoClose]="false">
+                    <button class="btn btn-outline-primary" id="dropdownForm1" ngbDropdownToggle>
+                        <fa-icon [icon]="'filter'"></fa-icon>
                     </button>
+                    <div ngbDropdownMenu aria-labelledby="dropDownMenuFilter">
+                        <button ngbDropdownItem (click)="filterUpdate([NEEDS_WORK, OVERDUE], true); filterOverdue.checked = filterGraded.checked = false">Select none</button>
+                        <button ngbDropdownItem (click)="filterUpdate([NEEDS_WORK, OVERDUE], false); filterOverdue.checked = filterGraded.checked = true">Select all</button>
+                        <div class="dropdown-divider"></div>
+                        <div ngbDropdownItem [disabled]="false">
+                            <input
+                                #filterGraded
+                                type="checkbox"
+                                class="form-check-input"
+                                id="dropDownCheckGraded"
+                                checked
+                                (change)="filterUpdate([NEEDS_WORK], !filterGraded.checked)"
+                            />
+                            <label class="form-check-label" for="dropDownCheckGraded">
+                                {{ 'artemisApp.courseOverview.exerciseList.fullScore' | translate }}
+                            </label>
+                        </div>
+                        <div ngbDropdownItem>
+                            <input
+                                #filterOverdue
+                                type="checkbox"
+                                class="form-check-input"
+                                id="dropdownCheckOverdue"
+                                checked
+                                (change)="filterUpdate([OVERDUE], !filterOverdue.checked)"
+                            />
+                            <label class="form-check-label" for="dropdownCheckOverdue">
+                                {{ 'artemisApp.courseOverview.exerciseList.overdue' | translate }}
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div ngbDropdown placement="bottom-right" class="d-inline-block">
                     <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                         {{ 'artemisApp.courseOverview.exerciseList.sortExercises' | translate }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                        <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)">
+                        <button class="dropdown-item" (click)="orderUpdate(DUE_DATE_DESC)">
                             <fa-icon [icon]="'sort-amount-up'"></fa-icon>
                             {{ 'artemisApp.courseOverview.exerciseList.newFirst' | translate }}
                         </button>
-                        <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)">
+                        <button class="dropdown-item" (click)="orderUpdate(DUE_DATE_ASC)">
                             <fa-icon [icon]="'sort-amount-down'"></fa-icon>
                             {{ 'artemisApp.courseOverview.exerciseList.oldFirst' | translate }}
                         </button>
@@ -85,7 +106,7 @@
         <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | translate">
             <div class="row mb-1">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | translate }}</div>
-                <div class="col-4">{{ course?.exercises.length }}</div>
+                <div class="col-4">{{ getNrOfExercises() }}</div>
             </div>
             <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | translate }}</div>

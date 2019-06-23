@@ -6,6 +6,7 @@ import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { AccountService, User } from 'app/core';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -15,15 +16,18 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
+    public readonly OVERDUE = 0;
+    public readonly NEEDS_WORK = 1;
     private courseId: number;
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
+    private filters: Set<number>;
+    private user: User | null;
+    private order: number;
     public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
-
     public upcomingExercises: Exercise[];
-
     public exerciseCountMap: Map<string, number>;
 
     constructor(
@@ -32,11 +36,15 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private courseServer: CourseService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
+        private accountService: AccountService,
         private route: ActivatedRoute,
     ) {}
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
+        this.filters = new Set<number>();
+        this.accountService.identity(true).then(user => (this.user = user));
+        this.order = this.DUE_DATE_DESC;
         this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -48,10 +56,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
-        this.groupExercises(this.DUE_DATE_DESC);
+        this.applyFiltersAndOrder();
 
         this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
-            this.groupExercises(this.DUE_DATE_DESC);
+            this.applyFiltersAndOrder();
         });
     }
 
@@ -60,23 +68,52 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
-    filterByAlreadyGraded() {
-        const courseExercises = [...this.course!.exercises].filter(
-            exercise =>
-                !!exercise.numberOfParticipations && exercise.numberOfParticipations > 0 && exercise.numberOfParticipationsWithRatedResult === exercise.participations.length,
-        );
-
-        this.groupExercisesBy(this.DUE_DATE_DESC, courseExercises);
+    private getNrOfExercises(): number {
+        return [...this.exerciseCountMap.values()].reduce((a, b) => a + b, 0);
     }
 
-    private groupExercisesBy(selectedOrder: number, courseExercises: Exercise[]) {
+    private orderUpdate(selectedOrder: number) {
+        this.order = selectedOrder;
+        this.applyFiltersAndOrder();
+    }
+
+    private filterUpdate(filters: number[], active: boolean) {
+        if (active) {
+            filters.forEach(filter => this.filters.add(filter));
+        } else {
+            filters.forEach(filter => this.filters.delete(filter));
+        }
+
+        this.applyFiltersAndOrder();
+    }
+
+    private needsWork(exercise: Exercise): boolean {
+        console.log(this.user);
+        console.log(exercise);
+        return (
+            exercise.participations.some(
+                participation => participation.student.id === this.user!.id && participation.results && participation.results.some(result => result.score !== 100),
+            ) || exercise.participations.every(participation => participation.student.id !== this.user!.id || participation.results.length === 0)
+        );
+    }
+
+    private applyFiltersAndOrder() {
+        const filtered = [...this.course!.exercises].filter(
+            exercise =>
+                (!this.filters.has(this.NEEDS_WORK) || this.needsWork(exercise)) &&
+                (!exercise.dueDate || !this.filters.has(this.OVERDUE) || exercise.dueDate.isAfter(moment(new Date()))),
+        );
+        this.groupExercises(filtered);
+    }
+
+    private groupExercises(exercises: Exercise[]) {
         // set all values to 0
         this.exerciseCountMap = new Map<string, number>();
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
+        const sortedExercises = this.sortExercises(exercises, this.order);
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
@@ -136,10 +173,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
     }
 
-    public groupExercises(selectedOrder: number): void {
-        this.groupExercisesBy(selectedOrder, [...this.course!.exercises]);
-    }
-
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
         return exercises.sort((a, b) => {
             const aValue = a.dueDate ? a.dueDate.valueOf() : moment().valueOf();
@@ -160,11 +193,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
         if (upcomingExercises.length < 5) {
-            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.order);
         } else {
             const numberOfExercises = upcomingExercises.length;
             upcomingExercises = upcomingExercises.slice(numberOfExercises - 5, numberOfExercises);
-            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.order);
         }
     }
 

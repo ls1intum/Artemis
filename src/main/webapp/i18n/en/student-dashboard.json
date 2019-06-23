@@ -27,7 +27,7 @@
                 "lectures": "Lectures"
             },
             "exerciseList": {
-                "alreadyGraded": "Grading complete",
+                "fullScore": "Full score",
                 "overdue": "Overdue",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",

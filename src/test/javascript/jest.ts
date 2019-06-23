@@ -236,3 +236,4 @@ library.add(faGripLinesVertical);
 library.add(faPaperclip);
 library.add(faAngleDoubleDown);
 library.add(faAngleDoubleUp);
+library.add(faFilter);

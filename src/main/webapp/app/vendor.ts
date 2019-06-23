@@ -106,6 +106,7 @@ import {
     faImage,
     faPaperclip,
     faGripLinesVertical,
+    faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -241,4 +242,5 @@ library.add(faGripLinesVertical);
 library.add(faPaperclip);
 library.add(faAngleDoubleDown);
 library.add(faAngleDoubleUp);
+library.add(faFilter);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here
