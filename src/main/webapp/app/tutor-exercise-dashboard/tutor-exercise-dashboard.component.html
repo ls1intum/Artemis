@@ -263,4 +263,8 @@
         <jhi-assessment-instructions class="max-vh-100" style="max-height: 100vh" *ngIf="exercise.type === ExerciseType_MODELING" [exercise]="exercise" [collapsed]="true">
         </jhi-assessment-instructions>
     </div>
+
+    <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
+
+    <jhi-tutor-leaderboard [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
 </div>
