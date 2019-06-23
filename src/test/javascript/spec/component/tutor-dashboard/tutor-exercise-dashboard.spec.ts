@@ -45,7 +45,7 @@ describe('TutorExerciseDashboardComponent', () => {
             imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterModule],
             declarations: [
                 TutorExerciseDashboardComponent,
-                TutorParticipationGraphComponent,
+                MockComponent(TutorParticipationGraphComponent),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),
