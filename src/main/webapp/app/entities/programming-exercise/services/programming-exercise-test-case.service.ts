@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
@@ -46,14 +46,14 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         this.jhiWebsocketService
             .receive(testCaseTopic)
             .pipe(
-                filter(testCases => !!testCases),
+                map(testCases => (testCases.length ? testCases : null)),
                 tap(testCases => this.notifySubscribers(exerciseId, testCases)),
             )
             .subscribe();
         return this.subjects[exerciseId];
     }
 
-    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[]) {
+    private notifySubscribers(exerciseId: number, testCases: ProgrammingExerciseTestCase[] | null) {
         this.subjects[exerciseId].next(testCases);
     }
 }
