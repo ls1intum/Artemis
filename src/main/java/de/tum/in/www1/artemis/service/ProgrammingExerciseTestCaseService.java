@@ -126,9 +126,9 @@ public class ProgrammingExerciseTestCaseService {
 
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
-        // If the result is not successful and there are no feedbacks, the build has failed.
-        // If the build has failed, we don't alter the result string.
-        if (testCases.size() > 0 && (result.isSuccessful() || result.getFeedbacks().size() > 0)) {
+        // If there are no feedbacks, the build has failed.
+        // If the build has failed, we don't alter the result string, as we will show the build logs in the client.
+        if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
             Set<ProgrammingExerciseTestCase> successfulTestCases = testCases.stream()
                     .filter(testCase -> result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText().equals(testCase.getTestName()) && feedback.isPositive()))
                     .collect(Collectors.toSet());

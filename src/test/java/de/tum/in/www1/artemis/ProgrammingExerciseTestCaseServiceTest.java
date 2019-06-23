@@ -128,6 +128,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         feedbacks.add(new Feedback().text("test2").positive(true));
         feedbacks.add(new Feedback().text("test3").positive(false));
         result.feedbacks(feedbacks);
+        result.successful(false);
         Long scoreBeforeUpdate = result.getScore();
 
         testCaseService.updateResultFromTestCases(result, programmingExercise);
