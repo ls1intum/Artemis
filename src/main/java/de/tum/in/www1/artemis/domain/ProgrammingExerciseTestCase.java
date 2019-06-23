@@ -46,6 +46,11 @@ public class ProgrammingExerciseTestCase implements Serializable {
         this.id = id;
     }
 
+    public ProgrammingExerciseTestCase id(Long id) {
+        this.id = id;
+        return this;
+    }
+
     public String getTestName() {
         return testName;
     }
