@@ -27,6 +27,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal);
 
     @Query("select e from Exercise e where e.course.id =  :#{#courseId}")
+    // @QueryHints(value = {@QueryHint(name = "org.hibernate.cacheable", value = "true")})
     List<Exercise> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.participations where exercise.id = :#{#exerciseId}")

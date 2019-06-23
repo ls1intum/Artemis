@@ -200,6 +200,7 @@ dependencies {
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.ehcache:ehcache"
     implementation "org.hibernate:hibernate-jcache"
+    // implementation "org.hibernate:hibernate-ehcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate:hibernate-envers"
     implementation "org.hibernate.validator:hibernate-validator"
@@ -231,6 +232,9 @@ dependencies {
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: 'mapstruct'
     }
+
+    runtimeOnly 'org.glassfish.jaxb:jaxb-runtime'
+
     implementation "io.springfox:springfox-bean-validators"
     implementation "mysql:mysql-connector-java"
 //    liquibaseRuntime "mysql:mysql-connector-java"
