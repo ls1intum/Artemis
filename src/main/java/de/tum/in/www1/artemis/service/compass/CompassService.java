@@ -417,7 +417,7 @@ public class CompassService {
      * @return the list of modeling submissions
      */
     private Set<ModelingSubmission> getSubmissionsForExercise(long exerciseId) {
-        List<ModelingSubmission> submissions = modelingSubmissionRepository.findByExerciseIdWithEagerResultsAndFeedback(exerciseId);
+        List<ModelingSubmission> submissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
         return new HashSet<>(submissions);
     }
 
