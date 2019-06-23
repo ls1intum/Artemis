@@ -64,7 +64,7 @@ public class TutorLeaderboardService {
 
     @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
-            List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
+            List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardAcceptedComplaints, List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
 
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
         for (User tutor : tutors) {
@@ -77,15 +77,25 @@ public class TutorLeaderboardService {
             for (TutorLeaderboardAssessmentView assessmentsView : tutorLeaderboardAssessments) {
                 if (assessmentsView.getUserId().equals(tutor.getId())) {
                     numberOfAssessments += assessmentsView.getAssessments();
-                    points += assessmentsView.getPoints();
+                    if (assessmentsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the assessments
+                        points += assessmentsView.getPoints();
+                    }
+                    else if (assessmentsView.getAssessments() != null) {
+                        points += assessmentsView.getAssessments();
+                    }
                 }
             }
 
-            for (TutorLeaderboardAcceptedComplaintsView complaintsView : tutorLeaderboardComplaints) {
-                if (complaintsView.getUserId().equals(tutor.getId())) {
-                    numberOfAcceptedComplaints += complaintsView.getAcceptedComplaints();
-                    // accepted complaints count negatively
-                    points -= complaintsView.getPoints();
+            for (TutorLeaderboardAcceptedComplaintsView acceptedComplaintsView : tutorLeaderboardAcceptedComplaints) {
+                if (acceptedComplaintsView.getUserId().equals(tutor.getId())) {
+                    numberOfAcceptedComplaints += acceptedComplaintsView.getAcceptedComplaints();
+                    // accepted complaints count 2x negatively
+                    if (acceptedComplaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
+                        points -= 2 * acceptedComplaintsView.getPoints();
+                    }
+                    else if (acceptedComplaintsView.getAcceptedComplaints() != null) {
+                        points -= 2 * acceptedComplaintsView.getAcceptedComplaints();
+                    }
                 }
             }
 
@@ -93,7 +103,12 @@ public class TutorLeaderboardService {
                 if (complaintResponsesView.getUserId().equals(tutor.getId())) {
                     numberOfComplaintResponses += complaintResponsesView.getComplaintResponses();
                     // resolved complaints count 2x
-                    points += 2 * complaintResponsesView.getPoints();
+                    if (complaintResponsesView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the complaint responses
+                        points += 2 * complaintResponsesView.getPoints();
+                    }
+                    else if (complaintResponsesView.getComplaintResponses() != null) {
+                        points += 2 * complaintResponsesView.getComplaintResponses();
+                    }
                 }
             }
 
