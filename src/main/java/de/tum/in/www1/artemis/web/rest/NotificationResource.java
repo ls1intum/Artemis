@@ -9,7 +9,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 
@@ -77,6 +80,23 @@ public class NotificationResource {
     }
 
     /**
+     * GET /notifications : get all notifications by pages.
+     *
+     * @return the list notifications
+     */
+    @GetMapping("/notifications")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Notification>> getNotifications(@ApiParam Pageable pageable) {
+        log.debug("REST request to get all Courses the user has access to");
+
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+
+        final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/users");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET /notifications/for-user : get all notifications for users including the active system notification.
      *
      * @return the list notifications
@@ -93,7 +113,7 @@ public class NotificationResource {
 
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         if (currentUser != null) {
-            page.addAll(notificationService.findAllExceptSystem(currentUser));
+            page.addAll(notificationService.findAllRecentExceptSystem(currentUser));
         }
 
         return new ResponseEntity<>(page, null, HttpStatus.OK);

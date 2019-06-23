@@ -118,13 +118,13 @@ public abstract class Exercise implements Serializable {
     // so that Jackson ignores the @Transient annotation,
     // but Hibernate still respects it
     @Transient
-    private int numberOfParticipationsTransient;
+    private Long numberOfParticipationsTransient;
 
     @Transient
-    private int numberOfAssessmentsTransient;
+    private Long numberOfAssessmentsTransient;
 
     @Transient
-    private int numberOfComplaintsTransient;
+    private Long numberOfComplaintsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -385,7 +385,7 @@ public abstract class Exercise implements Serializable {
 
     public Boolean isEnded() {
         if (getDueDate() == null) {
-            return false;
+            return Boolean.FALSE;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
     }
@@ -398,7 +398,7 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the exercise is visible to students
-            return true;
+            return Boolean.TRUE;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -584,27 +584,27 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public int getNumberOfParticipations() {
+    public Long getNumberOfParticipations() {
         return numberOfParticipationsTransient;
     }
 
-    public void setNumberOfParticipations(int numberOfParticipations) {
+    public void setNumberOfParticipations(Long numberOfParticipations) {
         this.numberOfParticipationsTransient = numberOfParticipations;
     }
 
-    public int getNumberOfAssessments() {
+    public Long getNumberOfAssessments() {
         return numberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(int numberOfAssessments) {
+    public void setNumberOfAssessments(Long numberOfAssessments) {
         this.numberOfAssessmentsTransient = numberOfAssessments;
     }
 
-    public int getNumberOfComplaints() {
+    public Long getNumberOfComplaints() {
         return numberOfComplaintsTransient;
     }
 
-    public void setNumberOfComplaints(int numberOfComplaints) {
+    public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
     }
 }

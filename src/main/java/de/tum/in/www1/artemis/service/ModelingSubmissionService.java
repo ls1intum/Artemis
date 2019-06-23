@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class ModelingSubmissionService {
+public class ModelingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
@@ -38,9 +38,10 @@ public class ModelingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, ResultService resultService, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, ParticipationRepository participationRepository,
-            SimpMessageSendingOperations messagingTemplate) {
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
+            ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
+            ParticipationRepository participationRepository, SimpMessageSendingOperations messagingTemplate) {
+        super(submissionRepository, userService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
@@ -77,13 +78,30 @@ public class ModelingSubmissionService {
         return submissions;
     }
 
+    /**
+     * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
+     * submission lock limit has been reached.
+     *
+     * @param submissionId     the id of the modeling submission
+     * @param modelingExercise the corresponding exercise
+     * @return the locked modeling submission
+     */
     @Transactional
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedback(submissionId);
+        if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
+            checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+        }
         lockSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
 
+    /**
+     * Get a modeling submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param modelingExercise the exercise the submission should belong to
+     * @return a locked modeling submission that needs an assessment
+     */
     @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutResult(modelingExercise)

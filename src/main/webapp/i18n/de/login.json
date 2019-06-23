@@ -3,18 +3,18 @@
         "title": "Anmeldung",
         "form": {
             "password": "Passwort",
-            "password.placeholder": "Ihr Passwort",
+            "password.placeholder": "Passwort",
             "rememberme": "Automatische Anmeldung",
             "acceptTerms": "Bedingungen akzeptieren",
             "button": "Anmelden"
         },
         "messages": {
             "error": {
-                "authentication": "<strong>Anmeldung fehlgeschlagen!</strong> Überprüfen Sie bitte Ihre Angaben und versuchen Sie es erneut."
+                "authentication": "<strong>Anmeldung fehlgeschlagen!</strong> Überprüfe bitte deine Angaben und versuche es erneut."
             }
         },
         "password": {
-            "forgot": "Sie haben Ihr Passwort vergessen?"
+            "forgot": "Du hast dein Passwort vergessen?"
         }
     }
 }

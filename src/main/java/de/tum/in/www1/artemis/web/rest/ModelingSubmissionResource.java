@@ -190,7 +190,7 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
-        log.debug("REST request to get a text submission without assessment");
+        log.debug("REST request to get a modeling submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -203,6 +203,9 @@ public class ModelingSubmissionResource {
         if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
             return notFound();
         }
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
         ModelingSubmission modelingSubmission;
         if (lockSubmission) {
@@ -236,6 +239,8 @@ public class ModelingSubmissionResource {
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+        // Check if the limit of simultaneously locked submissions has been reached
+        modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
 
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             // ask Compass for optimal submission to assess if diagram type is supported

@@ -98,8 +98,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
-            error => {
-                this.onError();
+            (error: HttpErrorResponse) => {
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
+                } else {
+                    this.onError();
+                }
             },
         );
     }
@@ -118,6 +122,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     // there is no submission waiting for assessment at the moment
                     this.goToExerciseDashboard();
                     this.jhiAlertService.info('artemisApp.tutorExerciseDashboard.noSubmissions');
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
                 } else {
                     this.onError();
                 }
@@ -311,10 +317,14 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                         .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment?showBackButton=true`));
                 }
             },
-            () => {
+            (error: HttpErrorResponse) => {
                 this.busy = false;
-                this.jhiAlertService.clear();
-                this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.goToExerciseDashboard();
+                } else {
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                }
             },
         );
     }
