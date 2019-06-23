@@ -68,15 +68,27 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.paramSubscription.unsubscribe();
     }
 
+    /**
+     * Return the total number of exercises for the logged in user
+     */
     private getNrOfExercises(): number {
         return [...this.exerciseCountMap.values()].reduce((a, b) => a + b, 0);
     }
 
+    /**
+     * Reorders all displayed exercises
+     * @param selectedOrder The order in which the exercises should be displayed
+     */
     private orderUpdate(selectedOrder: number) {
         this.order = selectedOrder;
         this.applyFiltersAndOrder();
     }
 
+    /**
+     * Filters all displayed exercises by applying the selected filters
+     * @param filters The filters which should be applied
+     * @param active Should the filters be active or inactive
+     */
     private filterUpdate(filters: number[], active: boolean) {
         if (active) {
             filters.forEach(filter => this.filters.add(filter));
@@ -87,6 +99,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.applyFiltersAndOrder();
     }
 
+    /**
+     * Checks if the given exercise still needs work, i.e. is not graded with 100%, or wasn't even started, yet.
+     * @param exercise The exercise which should get checked
+     */
     private needsWork(exercise: Exercise): boolean {
         console.log(this.user);
         console.log(exercise);
@@ -97,6 +113,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Applies all selected filters and orders and groups the user's exercises
+     */
     private applyFiltersAndOrder() {
         const filtered = [...this.course!.exercises].filter(
             exercise =>
