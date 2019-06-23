@@ -175,6 +175,16 @@ export class TextEditorComponent implements OnInit {
         }
     }
 
+    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
+        event.preventDefault();
+        const value = editor.value;
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+
+        editor.value = value.substring(0, start) + '\t' + value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 1;
+    }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, undefined);
     }
