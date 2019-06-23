@@ -352,7 +352,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            long numberOfSubmissions = 0;
+            Long numberOfSubmissions = new Long(0);
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -360,10 +360,10 @@ public class CourseResource {
                 numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
-            exercise.setNumberOfParticipations((int) numberOfSubmissions);
-            exercise.setNumberOfAssessments((int) numberOfAssessments);
+            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
@@ -391,20 +391,20 @@ public class CourseResource {
             return forbidden();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
-        long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
 
-        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
+        Long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
         data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
 
-        long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        Long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
 
-        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
+        Long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
         data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
 
         return ResponseEntity.ok(data);
@@ -466,7 +466,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfParticipations = 0;
+            Long numberOfParticipations = new Long(0);
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -474,11 +474,11 @@ public class CourseResource {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
-            exercise.setNumberOfParticipations((int) numberOfParticipations);
-            exercise.setNumberOfAssessments((int) numberOfAssessments);
-            exercise.setNumberOfComplaints((int) numberOfComplaints);
+            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            exercise.setNumberOfParticipations(numberOfParticipations);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setNumberOfComplaints(numberOfComplaints);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
@@ -506,15 +506,15 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+        Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
 
         stats.numberOfStudents = courseService.countNumberOfStudentsForCourse(course);
         stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
         stats.numberOfComplaints = numberOfComplaints;
         stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.numberOfSubmissions = numberOfSubmissions;

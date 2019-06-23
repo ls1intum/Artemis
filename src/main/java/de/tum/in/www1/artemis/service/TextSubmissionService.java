@@ -19,12 +19,13 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class TextSubmissionService {
+public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
@@ -36,8 +37,9 @@ public class TextSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, ParticipationRepository participationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate) {
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository, ParticipationRepository participationRepository,
+            ParticipationService participationService, ResultRepository resultRepository, UserService userService, SimpMessageSendingOperations messagingTemplate) {
+        super(submissionRepository, userService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.participationRepository = participationRepository;
         this.participationService = participationService;

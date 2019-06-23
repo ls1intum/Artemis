@@ -26,6 +26,7 @@ import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise
 import { FormDateTimePickerModule } from '../../shared/date-time-picker/date-time-picker.module';
 import { ArTEMiSColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
@@ -38,6 +39,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         ArTEMiSTextExerciseModule,
         ArTEMiSModelingExerciseModule,
         RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
         ArTEMiSColorSelectorModule,
