@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title">Feedback{{ resultSummary ? ': ' + resultSummary : '' }}</h4>
+    <h4 class="modal-title">Feedback</h4>
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">&times;</button>
 </div>
 <div *ngIf="feedbackList" class="modal-body" id="result-detail-body" style="position: relative;" [ngSwitch]="isLoading">
