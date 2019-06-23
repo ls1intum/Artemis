@@ -42,6 +42,10 @@ public class AttributeTest extends StructuralTest {
     public static Collection<Object[]> findClasses() {
         List<Object[]> testData = new ArrayList<Object[]>();
 
+        if (structureOracleJSON == null) {
+            return testData;
+        }
+
         for (int i = 0; i < structureOracleJSON.length(); i++) {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
