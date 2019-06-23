@@ -115,6 +115,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
                         this.notFound = true;
+                    } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.goToExerciseDashboard();
                     } else {
                         this.onError(error.message);
                     }

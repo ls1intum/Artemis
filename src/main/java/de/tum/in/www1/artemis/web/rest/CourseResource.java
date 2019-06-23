@@ -22,20 +22,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -77,8 +74,6 @@ public class CourseResource {
 
     private final ObjectMapper objectMapper;
 
-    private final TextAssessmentService textAssessmentService;
-
     private final LectureService lectureService;
 
     private final ComplaintRepository complaintRepository;
@@ -95,12 +90,14 @@ public class CourseResource {
 
     private final ComplaintService complaintService;
 
+    private final TutorLeaderboardService tutorLeaderboardService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
-            TextAssessmentService textAssessmentService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            ModelingSubmissionService modelingSubmissionService, ResultService resultService, ComplaintService complaintService) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, LectureService lectureService,
+            NotificationService notificationService, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -111,7 +108,6 @@ public class CourseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.textAssessmentService = textAssessmentService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
@@ -120,6 +116,8 @@ public class CourseResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
+        this.tutorLeaderboardService = tutorLeaderboardService;
+
     }
 
     /**
@@ -352,7 +350,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            long numberOfSubmissions = 0;
+            Long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -360,10 +358,10 @@ public class CourseResource {
                 numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
-            exercise.setNumberOfParticipations((int) numberOfSubmissions);
-            exercise.setNumberOfAssessments((int) numberOfAssessments);
+            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
@@ -381,33 +379,28 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForTutorDashboard(@PathVariable Long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
-        ObjectNode data = objectMapper.createObjectNode();
-
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course))
+        if (!userHasPermission(course)) {
             return forbidden();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        }
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+        Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
 
-        long numberOfTutorAssessments = resultService.countNumberOfAssessmentsForTutor(courseId, user.getId());
-        data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
+        Long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        stats.setNumberOfComplaints(numberOfComplaints);
 
-        long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
 
-        long numberOfTutorComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(courseId, user.getId());
-        data.set("numberOfTutorComplaints", objectMapper.valueToTree(numberOfTutorComplaints));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -466,7 +459,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfParticipations = 0;
+            Long numberOfParticipations = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
@@ -474,11 +467,11 @@ public class CourseResource {
                 numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
-            exercise.setNumberOfParticipations((int) numberOfParticipations);
-            exercise.setNumberOfAssessments((int) numberOfAssessments);
-            exercise.setNumberOfComplaints((int) numberOfComplaints);
+            Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            exercise.setNumberOfParticipations(numberOfParticipations);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setNumberOfComplaints(numberOfComplaints);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
@@ -506,22 +499,25 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+        Long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
 
-        stats.numberOfStudents = courseService.countNumberOfStudentsForCourse(course);
-        stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
-        stats.numberOfComplaints = numberOfComplaints;
-        stats.numberOfOpenComplaints = numberOfComplaints - numberOfComplaintResponses;
+        stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
+        stats.setNumberOfComplaints(numberOfComplaints);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
-        stats.numberOfSubmissions = numberOfSubmissions;
-        stats.numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
-        log.info("Finished simple stats in " + (System.currentTimeMillis() - start) + "ms");
-        stats.tutorLeaderboard = textAssessmentService.calculateTutorLeaderboardForCourse(courseId);
+        long startT = System.currentTimeMillis();
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+
+        log.info("Finished TutorLeaderboard in " + (System.currentTimeMillis() - startT) + "ms");
+
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
     }

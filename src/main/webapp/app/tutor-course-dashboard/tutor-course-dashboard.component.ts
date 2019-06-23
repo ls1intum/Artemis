@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { Course, CourseService, StatsForTutorDashboard } from '../entities/course';
+import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -25,6 +26,8 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfTutorComplaints = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
+
+    stats = new StatsForDashboard();
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -56,7 +59,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
-                    this.unfinishedExercises = this.course.exercises.filter(exercise => (exercise.numberOfAssessments || 0) < (exercise.numberOfParticipations || 0)); // TODO: I think we should use a different criterion how to filter unfinished exercises
+                    this.unfinishedExercises = this.course.exercises.filter(exercise => (exercise.numberOfAssessments || 0) < (exercise.numberOfParticipations || 0));
+                    // TODO: I think we should use a different criterion how to filter unfinished exercises
                     this.finishedExercises = this.course.exercises.filter(exercise => exercise.numberOfAssessments === exercise.numberOfParticipations); // TODO: I think we should use a different criterion how to filter finished exercises
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
@@ -66,13 +70,19 @@ export class TutorCourseDashboardComponent implements OnInit {
         );
 
         this.courseService.getStatsForTutors(this.courseId).subscribe(
-            (res: HttpResponse<StatsForTutorDashboard>) => {
-                const status = res.body!;
-                this.numberOfSubmissions = status.numberOfSubmissions;
-                this.numberOfAssessments = status.numberOfAssessments;
-                this.numberOfTutorAssessments = status.numberOfTutorAssessments;
-                this.numberOfComplaints = status.numberOfComplaints;
-                this.numberOfTutorComplaints = status.numberOfTutorComplaints;
+            (res: HttpResponse<StatsForDashboard>) => {
+                this.stats = res.body!;
+                this.numberOfSubmissions = this.stats.numberOfSubmissions;
+                this.numberOfAssessments = this.stats.numberOfAssessments;
+                this.numberOfComplaints = this.stats.numberOfComplaints;
+                const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor.id);
+                if (tutorLeaderboardEntry) {
+                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
+                } else {
+                    this.numberOfTutorAssessments = 0;
+                    this.numberOfTutorComplaints = 0;
+                }
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);

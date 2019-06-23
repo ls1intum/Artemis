@@ -1,16 +1,23 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DragItem } from '../../../entities/drag-item';
+import { DeviceInfo, DeviceDetectorService } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-drag-item',
     templateUrl: './drag-item.component.html',
 })
-export class DragItemComponent {
+export class DragItemComponent implements OnInit {
     @Input() minWidth: string;
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
-    // Unused
     @Input() invalid: boolean;
+    deviceInfo: DeviceInfo;
+    isMobile = false;
 
-    constructor() {}
+    constructor(private deviceService: DeviceDetectorService) {}
+
+    ngOnInit(): void {
+        this.deviceInfo = this.deviceService.getDeviceInfo();
+        this.isMobile = this.deviceService.isMobile();
+    }
 }

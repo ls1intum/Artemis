@@ -51,6 +51,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
+    @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
+    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
+
     @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
     Optional<Result> findByIdWithEagerSubmissionAndFeedbacksAndAssessor(@Param("resultId") Long id);
 
@@ -74,14 +77,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Long countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long assessorId, long courseId, boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
-
-    // The query is used to build the tutor leaderboard for the instructor course dashboard, therefore we need only the rated results
-    @Query("SELECT DISTINCT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.participation.exercise.course.id = :courseId AND rated = true")
-    List<Result> findAllByParticipation_Exercise_CourseIdWithEagerAssessor(@Param("courseId") Long courseId);
-
-    // The query is used to build the tutor leaderboard for the instructor exercise dashboard, therefore we need only the rated results
-    @Query("SELECT DISTINCT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.participation.exercise.id = :exerciseId AND rated = true")
-    List<Result> findAllByParticipation_Exercise_IdWithEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     @Query("select result from Result result left join fetch result.submission where result.id = :resultId")
     Optional<Result> findByIdWithSubmission(@Param("resultId") long resultId);

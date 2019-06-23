@@ -114,12 +114,11 @@ public class GroupNotificationService {
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 
-    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise) {
+    public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        String title = "Exercise updated";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" was updated.";
+        String title = "Exercise \"" + exercise.getTitle() + "\" updated";
         notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
     }
 
@@ -174,11 +173,11 @@ public class GroupNotificationService {
         messagingTemplate.convertAndSend(groupNotification.getTopic(), groupNotification);
     }
 
-    public List<Notification> findAllNewNotificationsForCurrentUser(User currentUser) {
+    public List<Notification> findAllRecentNewNotificationsForCurrentUser(User currentUser) {
         List<String> userGroups = currentUser.getGroups();
         if (userGroups.size() == 0) {
             return new ArrayList<>();
         }
-        return this.groupNotificationRepository.findAllNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
+        return this.groupNotificationRepository.findAllRecentNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
     }
 }

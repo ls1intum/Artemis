@@ -12,6 +12,7 @@ import { ChartsModule } from 'ng2-charts';
 import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
 import { ArTEMiSHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArTEMiSSidePanelModule } from 'app/components/side-panel/side-panel.module';
+import { ArTEMiSTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 
 const ENTITY_STATES = instructorExerciseDashboardRoute;
 
@@ -26,6 +27,7 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
         ArTEMiSInstructorCourseStatsDashboardModule,
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSSidePanelModule,
+        ArTEMiSTutorLeaderboardModule,
     ],
     declarations: [InstructorExerciseDashboardComponent],
     entryComponents: [],

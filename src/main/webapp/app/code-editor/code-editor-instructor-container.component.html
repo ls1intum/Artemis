@@ -107,7 +107,9 @@
             <jhi-updating-result
                 *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
                 [participation]="selectedParticipation"
-                [result]="selectedParticipation.results && selectedParticipation.results[0]"
+                [showUngradedResults]="true"
+                [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
             <jhi-code-editor-actions
