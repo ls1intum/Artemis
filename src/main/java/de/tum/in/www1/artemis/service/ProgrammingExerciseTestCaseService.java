@@ -94,12 +94,13 @@ public class ProgrammingExerciseTestCaseService {
 
     /**
      * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
-     * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
+     * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings. Returns true if the test cases have changed, false if
+     * they haven't.
      * 
      * @param feedbacks list of build log output.
      * @param exercise  programming exercise.
      */
-    public void generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
+    public boolean generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(getAuthDummy());
 
@@ -119,9 +120,12 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> toSave = new HashSet<>();
         toSave.addAll(newTestCases);
         toSave.addAll(activationStateChanges);
+
         if (toSave.size() > 0) {
             testCaseRepository.saveAll(toSave);
+            return true;
         }
+        return false;
     }
 
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {

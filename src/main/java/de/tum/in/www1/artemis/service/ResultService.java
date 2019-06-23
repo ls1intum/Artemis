@@ -111,22 +111,24 @@ public class ResultService {
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
 
-        // When the result is from a solution participation of a programming exercise, extract the feedback items (= test cases)
-        // and store them in our database.
-        if (result != null && participation.getExercise() instanceof ProgrammingExercise
-                && ((ProgrammingExercise) participation.getExercise()).getSolutionParticipation().getId().equals(participation.getId())) {
-            testCaseService.generateFromFeedbacks(result.getFeedbacks(), (ProgrammingExercise) participation.getExercise());
-        }
-
         if (participation.getExercise() instanceof ProgrammingExercise) {
-            result = testCaseService.updateResultFromTestCases(result, (ProgrammingExercise) participation.getExercise());
-        }
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+            // When the result is from a solution participation of a programming exercise, extract the feedback items (= test cases)
+            // and store them in our database.
+            if (result != null && programmingExercise.getSolutionParticipation().getId().equals(participation.getId())) {
+                boolean haveTestCasesChanged = testCaseService.generateFromFeedbacks(result.getFeedbacks(), programmingExercise);
 
-        // Find out which test cases were executed and calculate the score according to their status and weight.
-        // This needs to be done as some test cases might not have been executed.
-        if (participation.getExercise() instanceof ProgrammingExercise && result != null && result.getFeedbacks().size() > 0) {
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
+                if (haveTestCasesChanged) {
+                    // Notify the client about the updated testCases
+                    Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
+                    messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
+                }
+            }
+
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+
         }
         notifyUser(participation, result);
     }
