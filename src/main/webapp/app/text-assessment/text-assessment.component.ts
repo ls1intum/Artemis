@@ -33,7 +33,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     text: string;
     participation: Participation;
     submission: TextSubmission;
-    unassessedSubmission: Submission;
+    unassessedSubmission: TextSubmission;
     result: Result;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
@@ -261,8 +261,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     assessNextOptimal() {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
-                (response: HttpResponse<TextSubmission>) => {
-                    this.unassessedSubmission = response.body;
+                (response: TextSubmission) => {
+                    this.unassessedSubmission = response;
                     this.router.onSameUrlNavigation = 'reload';
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
