@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.util.Dictionary;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,43 +13,53 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.config.SentryConfiguration;
-
 @Service
 @Profile("automaticText")
 public class TextSimilarityClusteringService {
 
+    private final Logger log = LoggerFactory.getLogger(TextSimilarityClusteringService.class);
+
     // region Entities
-    class Cluster {
+    static class Cluster {
 
-        double[][] distanceMatrix;
+        public double[][] distanceMatrix;
 
-        double[] probabilities;
+        public double[] probabilities;
 
-        TextBlock[] blocks;
+        public TextBlock[] blocks;
     }
 
-    class TextBlock {
+    static class TextBlock {
 
-        String id;
+        public String id;
 
-        String text;
+        public String text;
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof TextBlock) {
+                TextBlock other = (TextBlock) obj;
+                return Objects.equals(id, other.id) && Objects.equals(text, other.text);
+            }
+            return false;
+        }
     }
     // endregion
 
     // region Request/Response DTOs
-    private class ClusteringRequest {
+    private static class ClusteringRequest {
 
-        List<TextBlock> blocks;
+        public List<TextBlock> blocks;
 
         ClusteringRequest(List<TextBlock> blocks) {
             this.blocks = blocks;
         }
     }
 
-    private class ClusterResponse {
+    private static class ClusterResponse {
 
-        Dictionary<Integer, Cluster> clusters;
+        public LinkedHashMap<Integer, Cluster> clusters;
+
     }
     // endregion
 
@@ -62,17 +72,15 @@ public class TextSimilarityClusteringService {
     }
     // endregion
 
-    @Value("${automaticText.endpoint}")
+    @Value("${artemis.automatic-text.url}")
     private String API_ENDPOINT;
 
-    @Value("${automaticText.secret}")
+    @Value("${artemis.automatic-text.secret}")
     private String API_SECRET;
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
-
-    public Dictionary<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError {
+    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError, IOException {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Service to cluster student text answers.");
 
