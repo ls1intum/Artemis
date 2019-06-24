@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService, StatsForTutorDashboard } from '../entities/course';
+import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -19,6 +19,7 @@ import { Submission } from 'app/entities/submission';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -34,6 +35,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+
+    statsForDashboard = new StatsForDashboard();
+
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = 0;
@@ -153,13 +157,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
             .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<StatsForTutorDashboard>) => {
-                const stats = res.body!;
-                this.numberOfSubmissions = stats.numberOfSubmissions;
-                this.numberOfAssessments = stats.numberOfAssessments;
-                this.numberOfTutorAssessments = stats.numberOfTutorAssessments;
-                this.numberOfComplaints = stats.numberOfComplaints;
-                this.numberOfTutorComplaints = stats.numberOfTutorComplaints;
+            (res: HttpResponse<StatsForDashboard>) => {
+                this.statsForDashboard = res.body!;
+                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
+                this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
+                if (tutorLeaderboardEntry) {
+                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
+                } else {
+                    this.numberOfTutorAssessments = 0;
+                    this.numberOfTutorComplaints = 0;
+                }
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);

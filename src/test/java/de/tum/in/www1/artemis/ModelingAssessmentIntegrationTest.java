@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -41,7 +40,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
+@ActiveProfiles("artemis")
 public class ModelingAssessmentIntegrationTest {
 
     @Autowired
@@ -73,9 +72,6 @@ public class ModelingAssessmentIntegrationTest {
 
     @Autowired
     ParticipationService participationService;
-
-    @Autowired
-    ContinuousIntegrationService continuousIntegrationService;
 
     private ModelingExercise classExercise;
 
