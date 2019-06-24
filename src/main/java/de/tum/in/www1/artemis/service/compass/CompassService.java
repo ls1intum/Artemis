@@ -87,15 +87,18 @@ public class CompassService {
         this.conflictingResultService = conflictingResultService;
     }
 
+    /**
+     * Indicates if the given diagram type is supported by Compass. At the moment we only support class diagrams.
+     */
     public boolean isSupported(DiagramType diagramType) {
-        // at the moment, we only support class diagrams
         return diagramType == DiagramType.ClassDiagram;
     }
 
     /**
-     * This method will return a new Entry with a new Id for every call
+     * Get the id of the next optimal modeling submission. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which can be used for
+     * automatic assessments. This method will return a new Entry with a new Id for every call.
      *
-     * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
+     * @return new Id of the next optimal model, null if all models have been assessed
      */
     private Long getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?

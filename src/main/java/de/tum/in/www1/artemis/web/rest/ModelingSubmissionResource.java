@@ -226,12 +226,12 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Given an exerciseId, find a modeling submission for that exercise which still doesn't have any result. If the diagram type is supported by Compass we get an array of ids of
-     * the next optimal submissions from Compass, i.e. the submissions for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not
-     * supported by Compass we just get an array with the id of a random submission without assessment.
+     * Given an exerciseId, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get an array of
+     * ids of the next optimal submissions from Compass, i.e. the submissions for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's
+     * not supported by Compass we just get an array with the id of a random submission without manual assessment.
      *
-     * @param exerciseId the id of the modeling exercise for which we want to get a submission without result
-     * @return an array of modeling submission id(s) without any result
+     * @param exerciseId the id of the modeling exercise for which we want to get a submission without manual result
+     * @return an array of modeling submission id(s) without a manual result
      */
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")

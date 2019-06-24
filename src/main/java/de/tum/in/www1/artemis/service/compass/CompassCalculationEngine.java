@@ -120,6 +120,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
+    /**
+     * Adds a manual assessment to Compass so that it can be used for automatic assessments. Additionally, it marks the submission as assessed, i.e. the submission is not
+     * considered when providing a submission for manual assessment to the client.
+     *
+     * @param submission the submission for which the manual assessment is added
+     */
     private void buildAssessment(ModelingSubmission submission) {
         UMLClassDiagram model = modelIndex.getModelMap().get(submission.getId());
         if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
@@ -351,6 +357,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
+    /**
+     * Adds the given feedback elements of a manual assessment to the automatic assessment controller where it can be used for automatic assessments.
+     *
+     * @param modelingAssessment the feedback of a manual assessment
+     * @param model              the corresponding model
+     */
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLClassDiagram model) {
         Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
         try {

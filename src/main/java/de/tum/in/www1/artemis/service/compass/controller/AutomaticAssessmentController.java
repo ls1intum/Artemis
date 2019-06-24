@@ -23,11 +23,12 @@ public class AutomaticAssessmentController {
     private double totalConfidence;
 
     /**
-     * Add a score to an assessment, creates a new assessment if it does not exists
+     * For every mode element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
+     * the similarity set yet, it creates a new one.
      *
      * @param index                manages all assessments
      * @param elementIdFeedbackMap maps elementIds to feedbacks
-     * @param model                the UML model - contains all elements with its corresponding jsonIds
+     * @param model                the UML model - contains all elements with its jsonIds
      * @throws IOException if the score for the element is null
      */
     public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassDiagram model) throws IOException {

@@ -111,11 +111,11 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise, find a modeling submission for that exercise which still doesn't have any result. If the diagram type is supported by Compass we get the next optimal
+     * Given an exercise, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get the next optimal
      * submission from Compass, i.e. the submission for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not supported by Compass
-     * we just get a random submission without assessment. Note, that we cannot use a readonly transaction here as it is making problems when initially loading the calculation
-     * engine and assessing all submissions automatically: we would get an sql exception "Connection is read-only" from hibernate when saving the result in
-     * CompassService#assessAutomatically.
+     * we just get a random submission without assessment. If there is no submission without manual result we return an empty optional. Note, that we cannot use a readonly
+     * transaction here as it is making problems when initially loading the calculation engine and assessing all submissions automatically: we would get an sql exception
+     * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
      *
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @return a modeling submission without any result
@@ -140,7 +140,7 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        // otherwise return a random submission that is not assessed or an empty optional
+        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
         List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
                 .stream().map(Participation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 

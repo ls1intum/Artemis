@@ -10,7 +10,7 @@ public class ModelSelector {
 
     /**
      * Tracks which models have been selected for assessment. Typically these models are the ones where Compass learns the most, when they are assessed. All models in this set do
-     * not have a complete assessment. Models get removed from this set when it is locked by a tutor for assessment or a manual (complete) assessment exists. The key is the
+     * not have a complete assessment. Models get removed from this set when they are locked by a tutor for assessment or a manual (complete) assessment exists. The key is the
      * ModelSubmission id.
      */
     private Set<Long> modelsWaitingForAssessment = new HashSet<>();

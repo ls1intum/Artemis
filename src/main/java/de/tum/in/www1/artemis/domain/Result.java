@@ -333,6 +333,12 @@ public class Result implements Serializable {
         this.feedbacks = feedbacks;
     }
 
+    /**
+     * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
+     * assigns the new feedback afterwards.
+     *
+     * @param feedbacks the new feedback list
+     */
     public void setNewFeedback(List<Feedback> feedbacks) {
         for (Feedback feedback : feedbacks) {
             feedback.setPositive(feedback.getCredits() >= 0);
@@ -371,6 +377,9 @@ public class Result implements Serializable {
                 .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
     }
 
+    /**
+     * Compares the given feedback texts (existingText and newText) and checks if the text has changed.
+     */
     private boolean feedbackTextHasChanged(String existingText, String newText) {
         if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
             return false;
