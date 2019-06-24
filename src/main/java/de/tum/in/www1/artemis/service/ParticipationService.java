@@ -81,11 +81,14 @@ public class ParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -101,6 +104,7 @@ public class ParticipationService {
         this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
         this.authCheckService = authCheckService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -714,13 +718,7 @@ public class ParticipationService {
      */
     @Nullable
     public boolean canAccessParticipation(Participation participation) {
-        if (!userHasPermissions(participation))
-            return false;
-
-        if (!Optional.ofNullable(participation).isPresent()) {
-            return false;
-        }
-        return true;
+        return Optional.ofNullable(participation).isPresent() && userHasPermissions(participation);
     }
 
     /**
@@ -730,18 +728,23 @@ public class ParticipationService {
      * @return
      */
     private boolean userHasPermissions(Participation participation) {
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            // if the user is not the owner of the participation, the user can only see it in case he is
-            // a teaching assistant or an instructor of the course, or in case he is admin
-            User user = userService.getUserWithGroupsAndAuthorities();
-            // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
-            if (participation.getExercise() == null) {
-                // this can only happen if we have a template or solution participation. Then the call can only be invoked by an instructor / teaching assistant
-                return true;
+        if (authCheckService.isOwnerOfParticipation(participation))
+            return true;
+        // if the user is not the owner of the participation, the user can only see it in case he is
+        // a teaching assistant or an instructor of the course, or in case he is admin
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course;
+        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        if (participation.getExercise() == null) {
+            Optional<ProgrammingExercise> exercise = programmingExerciseService.getExerciseForSolutionOrTemplateParticipation(participation);
+            if (!exercise.isPresent()) {
+                return false;
             }
-            Course course = participation.getExercise().getCourse();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
+            course = exercise.get().getCourse();
         }
-        return true;
+        else {
+            course = participation.getExercise().getCourse();
+        }
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 }
