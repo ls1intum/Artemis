@@ -66,8 +66,9 @@ public class ResultResource {
     private final ProgrammingExerciseTestCaseService testCaseService;
 
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseTestCaseService testCaseService) {
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseTestCaseService testCaseService) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
