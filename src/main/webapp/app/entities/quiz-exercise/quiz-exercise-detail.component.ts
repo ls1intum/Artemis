@@ -59,6 +59,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     course: Course;
     quizExercise: QuizExercise;
     courseRepository: CourseService;
+    notificationText: string | null;
 
     entity: QuizExercise;
     savedEntity: QuizExercise;
@@ -122,6 +123,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.dndFilterEnabled = true;
         this.mcqFilterEnabled = true;
         this.shortAnswerFilterEnabled = true;
+        this.notificationText = null;
 
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         const quizId = Number(this.route.snapshot.paramMap.get('id'));
@@ -936,8 +938,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.isSaving = true;
         this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
-            this.quizExerciseService.update(this.quizExercise).subscribe(
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    this.notificationText = null;
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
                     } else {

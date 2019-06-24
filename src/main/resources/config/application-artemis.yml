@@ -5,7 +5,6 @@
 artemis:
     repo-clone-path: ./repos/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    result-retrieval-delay: 5000
     jira:
         url: https://jirabruegge.in.tum.de
         user: <username>    # e.g. ga12abc

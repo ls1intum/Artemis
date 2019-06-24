@@ -6,12 +6,12 @@
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
-                "tooLow": "Die Punktzahl Ihrer Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfen Sie die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein.",
-                "tooHigh": "Die Bewertung dieser Abgabe durch Sie ist zu hoch. Bitte überprüfen Sie die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein."
+                "tooLow": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu niedrig. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein.",
+                "tooHigh": "Die Punktzahl deiner Bewertung dieser Abgabe ist zu hoch. Bitte überprüfe die Bewertungskriterien und die Abgabe noch einmal sorgfältig und reiche deine verbesserte Bewertung ein."
             },
-            "submitSuccessful": "Ihre Beispielabgabe wurde ordnungsgemäß eingereicht.",
-            "saveSuccessful": "Deine Beispielabgabe wurde gespeichert.",
-            "readSuccessfully": "Sie haben die Bewertungsanweisungen gelesen, Sie können nun mit der Überprüfung der BeispielAbgabe beginnen.",
+            "submitSuccessful": "Deine Beispiel Abgabe wurde eingereicht.",
+            "saveSuccessful": "Deine Beispiel Abgabe wurde gespeichert.",
+            "readSuccessfully": "Du hast die Bewertungsanweisungen gelesen, du kannst nun mit der Überprüfung der Beispiel Abgabe beginnen.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
             "usedForTutorial": "Die Tutoren müssen diese Einreichung bewerten.",
@@ -22,12 +22,12 @@
             "exampleAssessment": "Beispiel Bewertung",
             "createNewAssessment": "Neue Bewertung anlegen",
             "updateAssessment": "Bewertung aktualisieren",
-            "youNeedToCreate": "Sie müssen die Beispielabgabe erstellen, bevor Sie die Beispielbewertung erstellen können.",
+            "youNeedToCreate": "Du musst die Beispiel Abgabe erstellen, bevor du die Beispiel Bewertung erstellen kannst.",
             "score": "Punktzahl",
             "submitAssessment": "Bewertung einreichen",
             "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
             "exampleSubmission": "Beispielabgabe",
-            "assessmentInstruction": "Doppelklicken Sie auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
+            "assessmentInstruction": "Doppelklicke auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung"
