@@ -25,6 +25,7 @@ export class TextExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    notificationText: string | null;
 
     courses: Course[];
 
@@ -40,6 +41,7 @@ export class TextExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
@@ -67,7 +69,11 @@ export class TextExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.textExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }

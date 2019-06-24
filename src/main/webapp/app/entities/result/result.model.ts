@@ -28,5 +28,8 @@ export class Result implements BaseEntity {
     public feedbacks: Feedback[];
     public participation: Participation | null;
 
+    // helper attributes
+    public durationInMinutes: number;
+
     constructor() {}
 }

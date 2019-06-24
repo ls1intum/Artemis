@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +37,14 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Notification> findAllExceptSystem(User currentUser) {
-        List<Notification> groupNotifications = groupNotificationService.findAllNewNotificationsForCurrentUser(currentUser);
-        List<Notification> userNotifications = singleUserNotificationService.findAllNewNotificationsForCurrentUser();
+    public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
+        return notificationRepository.findAllNotificationsForCurrentUser(currentUser.getGroups(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Notification> findAllRecentExceptSystem(User currentUser) {
+        List<Notification> groupNotifications = groupNotificationService.findAllRecentNewNotificationsForCurrentUser(currentUser);
+        List<Notification> userNotifications = singleUserNotificationService.findAllRecentNewNotificationsForCurrentUser();
         groupNotifications.addAll(userNotifications);
         return groupNotifications;
     }

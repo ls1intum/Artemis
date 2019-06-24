@@ -221,6 +221,9 @@ public class TextSubmissionResource {
             return notFound();
         }
 
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);

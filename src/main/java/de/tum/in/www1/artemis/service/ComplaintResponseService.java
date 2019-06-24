@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
@@ -49,7 +50,6 @@ public class ComplaintResponseService {
      * @return the saved complaint response
      */
     public ComplaintResponse createComplaintResponse(ComplaintResponse complaintResponse) {
-        log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
         if (complaintResponse.getId() != null) {
             throw new BadRequestAlertException("A new complaint response cannot already have an id", ENTITY_NAME, "idexists");
         }
@@ -71,9 +71,9 @@ public class ComplaintResponseService {
         if (complaintResponseRepository.findByComplaint_Id(originalComplaint.getId()).isPresent()) {
             throw new BadRequestAlertException("The complaint you are referring to does already have a response", ENTITY_NAME, "complaintresponseexists");
         }
-        // Only tutors who are not part the original assessors can reply to a complaint
+        // Only tutors who are not the original assessor of the submission can reply to a complaint
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(originalComplaint.getResult().getParticipation().getExercise())
-                || originalComplaint.getResult().getAssessor().equals(reviewer)) {
+                || (originalComplaint.getResult().getAssessor().equals(reviewer) && originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 

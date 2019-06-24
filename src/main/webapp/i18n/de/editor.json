@@ -33,8 +33,8 @@
             "fileBrowser": {
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
-                "deleteFileConfirm": "Sind Sie sicher, dass Sie die Datei <strong>{{filename}}</strong> löschen wollen?",
-                "deleteFolderConfirm": "Sind Sie sicher, dass Sie das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen wollen?",
+                "deleteFileConfirm": "Bist du sicher, dass du die Datei <strong>{{filename}}</strong> löschen willst?",
+                "deleteFolderConfirm": "Bist du sicher, dass du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
                 "unsavedChanges": "Datei enthält ungespeicherte Änderungen",
                 "createFolderRoot": "Verzeichnis auf Root Level erstellen",
                 "createFileRoot": "Datei auf Root Level erstellen",

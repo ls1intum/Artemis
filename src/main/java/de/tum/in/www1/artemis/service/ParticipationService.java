@@ -577,8 +577,6 @@ public class ParticipationService {
                         relevantResults.add(correctResult);
                     }
                     participation.setResults(new HashSet<>(relevantResults));
-                    // remove unnecessary elements
-                    participation.getExercise().setCourse(null);
                 }).collect(Collectors.toList());
     }
 

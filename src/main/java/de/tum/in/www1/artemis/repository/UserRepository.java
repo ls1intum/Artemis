@@ -49,6 +49,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countByGroupsIsContaining(List<String> groups);
 
+    List<User> findAllByGroups(String group);
+
     @Modifying
     @Query("Update User u SET u.lastNotificationRead = utc_timestamp where u.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long id);
