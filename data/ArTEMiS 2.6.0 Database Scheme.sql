@@ -75,7 +75,6 @@ CREATE TABLE `complaint` (
   `complaint_text` varchar(2000) DEFAULT NULL,
   `result_before_complaint` longtext,
   `submitted_time` datetime DEFAULT NULL,
-  `complaint_type` varchar(255) DEFAULT NULL,
   `result_id` bigint(20) DEFAULT NULL,
   `student_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),

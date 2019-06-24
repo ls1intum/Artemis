@@ -23,6 +23,7 @@ export class MoreFeedbackComponent implements OnInit {
     complaintResponse: ComplaintResponse;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
