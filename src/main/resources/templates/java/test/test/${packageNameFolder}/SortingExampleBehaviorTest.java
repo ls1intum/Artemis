@@ -34,14 +34,14 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
-        assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
+        assertArrayEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
-        assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
+        assertArrayEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
