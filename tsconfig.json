@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2015",
+        "target": "es2018",
         "module": "es2015",
         "moduleResolution": "node",
         "sourceMap": true,

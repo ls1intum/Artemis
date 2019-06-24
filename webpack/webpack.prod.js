@@ -135,7 +135,7 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
         }),
         new AngularCompilerPlugin({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),
-            tsConfigPath: utils.root('tsconfig.json'),
+            tsConfigPath: utils.root('tsconfig-aot.json'),
             sourceMap: true
         }),
         new webpack.LoaderOptionsPlugin({
