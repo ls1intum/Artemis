@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -367,8 +368,17 @@ public class Result implements Serializable {
             return false;
         }
         return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
-                .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits())
-                        || (sameFeedback.getText() != null && !sameFeedback.getText().equals(feedback.getText())));
+                .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
+    }
+
+    private boolean feedbackTextHasChanged(String existingText, String newText) {
+        if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
+            return false;
+        }
+        if (Strings.isNullOrEmpty(existingText) || Strings.isNullOrEmpty(newText)) {
+            return true;
+        }
+        return !existingText.equals(newText);
     }
 
     public Participation getParticipation() {

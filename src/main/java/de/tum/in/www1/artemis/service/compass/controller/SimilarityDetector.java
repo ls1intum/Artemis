@@ -21,19 +21,19 @@ public class SimilarityDetector {
     public static void analyzeSimilarity(UMLClassDiagram model, ModelIndex index) {
 
         for (UMLClass umlClass : model.getClassList()) {
-            umlClass.setSimilarityID(index.getElementID(umlClass));
+            umlClass.setSimilarityID(index.getSimilarityId(umlClass));
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                attribute.setSimilarityID(index.getElementID(attribute));
+                attribute.setSimilarityID(index.getSimilarityId(attribute));
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                method.setSimilarityID(index.getElementID(method));
+                method.setSimilarityID(index.getSimilarityId(method));
             }
         }
 
         for (UMLClassRelationship relation : model.getAssociationList()) {
-            relation.setSimilarityID(index.getElementID(relation));
+            relation.setSimilarityID(index.getSimilarityId(relation));
         }
 
         setContext(model);

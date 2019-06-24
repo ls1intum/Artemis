@@ -33,7 +33,7 @@ public class ModelIndex {
      * @param element an element of a model
      * @return its similarity id
      */
-    int getElementID(UMLElement element) {
+    int getSimilarityId(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }

@@ -274,7 +274,7 @@ public class CompassService {
             }
             // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable
             // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
-            Grade grade = roundGrades(engine.getGradeForModel(modelId)); // TODO: should we still round the grades?
+            Grade grade = roundGrades(engine.getGradeForModel(modelId));
 
             // Set feedback and assessment type of result
             List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
