@@ -7,6 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuizQuestionType } from '../../entities/quiz-question';
 import { Subscription } from 'rxjs/Subscription';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 
 const Sugar = require('sugar');
 Sugar.extend();
@@ -174,6 +175,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
+        private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
@@ -339,45 +341,22 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     }
 
     /**
-     * got to the Template with the next QuizStatistic -> the first QuizQuestionStatistic
+     * got to the template with the next QuizStatistic -> the first QuizQuestionStatistic
      * if there is no QuizQuestionStatistic -> go to QuizPointStatistic
      */
     nextStatistic() {
+        // go to quiz-statistic if the position = last position
         if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigate([
-                '/quiz/:quizExerciseId/quiz-point-statistic',
-                {
-                    quizExerciseId: this.quizExercise.id,
-                },
-            ]);
+            this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-point-statistic');
         } else {
+            // go to next question-statistic
             const nextQuestion = this.quizExercise.quizQuestions[0];
-            if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigate([
-                    'quiz/:quizId/multiple-choice-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigate([
-                    'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigate([
-                    'quiz/:quizId/short-answer-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else {
-                console.log('Question type not yet supported: ' + nextQuestion);
+            if (nextQuestion.type === this.MULTIPLE_CHOICE) {
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + nextQuestion.id);
+            } else if (nextQuestion.type === this.DRAG_AND_DROP) {
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + nextQuestion.id);
+            } else if (nextQuestion.type === this.SHORT_ANSWER) {
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + nextQuestion.id);
             }
         }
     }

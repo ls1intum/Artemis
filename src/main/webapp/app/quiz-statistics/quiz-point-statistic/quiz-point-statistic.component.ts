@@ -10,6 +10,7 @@ import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-
 import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';
 import * as moment from 'moment';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -60,6 +61,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
+        private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
@@ -328,13 +330,21 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
             const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
-            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
+            if (previousQuestion.type === this.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
+            } else if (previousQuestion.type === this.DRAG_AND_DROP) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
+            } else if (previousQuestion.type === this.SHORT_ANSWER) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
             }
         }
+    }
+
+    /**
+     * go to the Template with the next QuizStatistic
+     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
+     */
+    nextStatistic() {
+        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.quizExercise.quizQuestions[0]);
     }
 }
