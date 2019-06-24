@@ -9,8 +9,8 @@ import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Subscription } from 'rxjs';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { fromEvent, of, Subscription } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
@@ -165,16 +165,24 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     loadFile(fileName: string) {
         this.isLoading = true;
         /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService.getFile(fileName).subscribe(
-            fileObj => {
-                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
+        this.repositoryFileService
+            .getFile(fileName)
+            .pipe(
+                tap(fileObj => {
+                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
+                    // It is possible that the selected file has changed - in this case don't update the editor.
+                    if (this.selectedFile === fileName) {
+                        this.initEditorAfterFileChange();
+                    }
+                }),
+                catchError(err => {
+                    console.log('There was an error while getting file', this.selectedFile, err);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
                 this.isLoading = false;
-                this.initEditorAfterFileChange();
-            },
-            err => {
-                console.log('There was an error while getting file', this.selectedFile, err);
-            },
-        );
+            });
     }
 
     /**
