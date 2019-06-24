@@ -246,7 +246,7 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
-        //TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
         if (participation.getExercise() == null) {
             Exercise exercise = exerciseService.findOne(exerciseId);
             participation.setExercise(exercise);
