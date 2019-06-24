@@ -62,13 +62,13 @@ public class ResultResource {
 
     private final UserService userService;
 
-    private final ContinuousIntegrationService continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -157,7 +157,7 @@ public class ResultResource {
         }
 
         try {
-            String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
             log.info("PlanKey for received notifyResultNew is {}", planKey);
             Optional<Participation> optionalParticipation = getParticipation(planKey);
             if (optionalParticipation.isPresent()) {
