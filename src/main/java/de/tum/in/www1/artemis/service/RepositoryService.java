@@ -275,5 +275,4 @@ public class RepositoryService {
 
         return gitService.get().getOrCheckoutRepository(participation);
     }
-
 }
