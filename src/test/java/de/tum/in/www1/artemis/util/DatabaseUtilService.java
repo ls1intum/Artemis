@@ -218,7 +218,8 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
         String model = loadFileFromResources(path);
-        ModelingSubmission submission = addModelingSubmissionWithEmptyResult(exercise, model, login);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
+        submission = addModelingSubmission(exercise, submission, login);
         checkSubmissionCorrectlyStored(submission.getId(), model);
         return submission;
     }
@@ -234,7 +235,7 @@ public class DatabaseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
-        result.setParticipation(submission.getParticipation());
+        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         return result;
