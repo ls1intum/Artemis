@@ -303,6 +303,11 @@ public class RepositoryService {
             // if the user is not the owner of the participation, the user can only see it in case he is
             // a teaching assistant or an instructor of the course, or in case he is admin
             User user = userService.getUserWithGroupsAndAuthorities();
+            //TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+            if (participation.getExercise() == null) {
+                //this can only happen if we have a template or solution participation. Then the call can only be invoked by an instructor / teaching assistant
+                return true;
+            }
             Course course = participation.getExercise().getCourse();
             return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
         }

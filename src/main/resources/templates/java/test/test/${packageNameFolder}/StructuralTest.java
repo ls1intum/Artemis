@@ -149,6 +149,10 @@ public class StructuralTest {
     private static JSONArray retrieveStructureOracleJSON(String structureOracleFileName) {
         URL url = StructuralTest.class.getResource(structureOracleFileName);
 
+        if (url == null) {
+            return null;
+        }
+
         BufferedReader bufferedReader = null;
         StringBuilder result = new StringBuilder();
 
