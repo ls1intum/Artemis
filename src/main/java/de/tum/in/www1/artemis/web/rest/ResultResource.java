@@ -246,6 +246,12 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
+        //TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        if (participation.getExercise() == null) {
+            Exercise exercise = exerciseService.findOne(exerciseId);
+            participation.setExercise(exercise);
+        }
+
         if (!Hibernate.isInitialized(participation.getExercise())) {
             participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
         }
