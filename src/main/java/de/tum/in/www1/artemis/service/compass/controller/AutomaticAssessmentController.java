@@ -23,7 +23,7 @@ public class AutomaticAssessmentController {
     private double totalConfidence;
 
     /**
-     * For every mode element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
+     * For every model element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
      * the similarity set yet, it creates a new one.
      *
      * @param index                manages all assessments

@@ -57,14 +57,20 @@ public class CompassCalculationEngine implements CalculationEngine {
                 // build the model and add it to Compass
                 buildModel(modelingSubmission);
 
-                // if the submission already has a complete manual assessment also add the assessment to Compass, so that it can be considered for automatic assessments
-                if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
-                        && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
-                    buildAssessment(modelingSubmission);
+                if (hasCompleteManualAssessment(modelingSubmission)) {
+                    addManualAssessmentForSubmission(modelingSubmission);
                 }
             }
         }
         assessModelsAutomatically();
+    }
+
+    /**
+     * Checks if the given modeling submission already has a complete manual assessment. The assessment is complete if the submission has a result with a completion date.
+     */
+    private boolean hasCompleteManualAssessment(ModelingSubmission modelingSubmission) {
+        return modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
+                && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL);
     }
 
     /**
@@ -121,12 +127,12 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     * Adds a manual assessment to Compass so that it can be used for automatic assessments. Additionally, it marks the submission as assessed, i.e. the submission is not
-     * considered when providing a submission for manual assessment to the client.
+     * Adds the manual assessment of the given submission to Compass so that it can be used for automatic assessments. Additionally, it marks the submission as assessed, i.e. the
+     * submission is not considered when providing a submission for manual assessment to the client.
      *
      * @param submission the submission for which the manual assessment is added
      */
-    private void buildAssessment(ModelingSubmission submission) {
+    private void addManualAssessmentForSubmission(ModelingSubmission submission) {
         UMLClassDiagram model = modelIndex.getModelMap().get(submission.getId());
         if (model == null || submission.getResult() == null || submission.getResult().getCompletionDate() == null) {
             log.error("Could not build assessment for submission {}", submission.getId());

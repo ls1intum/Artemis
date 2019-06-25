@@ -304,7 +304,7 @@ public class CompassService {
     private void saveResult(Result result, ModelingSubmission modelingSubmission) {
         boolean isNewResult = result.getId() == null;
 
-        resultRepository.save(result);
+        result = resultRepository.save(result);
 
         if (isNewResult) {
             modelingSubmission.setResult(result);
