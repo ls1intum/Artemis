@@ -71,7 +71,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     /**
      * Return the total number of exercises for the logged in user
      */
-    private getNrOfExercises(): number {
+    getNrOfExercises(): number {
         return [...this.exerciseCountMap.values()].reduce((a, b) => a + b, 0);
     }
 
@@ -79,7 +79,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * Reorders all displayed exercises
      * @param selectedOrder The order in which the exercises should be displayed
      */
-    private orderUpdate(selectedOrder: number) {
+    orderUpdate(selectedOrder: number) {
         this.order = selectedOrder;
         this.applyFiltersAndOrder();
     }
@@ -89,7 +89,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * @param filters The filters which should be applied
      * @param active Should the filters be active or inactive
      */
-    private filterUpdate(filters: number[], active: boolean) {
+    filterUpdate(filters: number[], active: boolean) {
         if (active) {
             filters.forEach(filter => this.filters.add(filter));
         } else {
