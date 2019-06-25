@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -234,6 +235,10 @@ public class ModelingSubmissionService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
+        if (!Hibernate.isInitialized(submission.getParticipation().getResults())) {
+            Participation participationWithEagerResults = participationRepository.findByIdWithEagerResults(submission.getParticipation().getId()).get();
+            submission.setParticipation(participationWithEagerResults);
+        }
         submission.getParticipation().addResult(result);
         resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
