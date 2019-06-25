@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.domain.Course;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true") })
+    List<Course> findAll();
+
     @Query("select distinct course from Course course where (course.startDate <= current_timestamp or course.startDate is null) and (course.endDate >= current_timestamp or course.endDate is null)")
     @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true") })
     List<Course> findAllActive();
