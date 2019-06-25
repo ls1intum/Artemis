@@ -16,6 +16,8 @@
             "detail": {
                 "title": "Kurs"
             },
+            "showExpired": "Vergangene Kurse anzeigen",
+            "hideExpired": "Vergangene Kurse ausblenden",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "color": "Farbe",
