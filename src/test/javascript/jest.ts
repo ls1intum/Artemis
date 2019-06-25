@@ -102,6 +102,7 @@ import {
     faImage,
     faPaperclip,
     faGripLinesVertical,
+    faFilter,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
