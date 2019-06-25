@@ -28,7 +28,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
-    private activeFilters: Set<ExerciseFilter>;
+    activeFilters: Set<ExerciseFilter>;
     private order: ExerciseSortingOrder;
     public course: Course | null;
     public weeklyIndexKeys: string[];
