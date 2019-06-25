@@ -399,6 +399,16 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find the ProgrammingExercise where the given Participation is the solution or template Participation
+     *
+     * @param participation The solution or template participation
+     * @return The ProgrammingExercise where the given Participation is the solution or template Participation
+     */
+    public Optional<ProgrammingExercise> getExerciseForSolutionOrTemplateParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneByTemplateParticipationIdOrSolutionParticipationId(participation.getId());
+    }
+
+    /**
      * This methods sets the values (initialization date and initialization state) of the template and solution participation
      *
      * @param programmingExercise The programming exercise
