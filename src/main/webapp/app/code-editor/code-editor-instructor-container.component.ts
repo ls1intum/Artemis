@@ -108,8 +108,22 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         if (this.router.url.endsWith('/test')) {
                             this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         } else {
-                            // Template participation is default when no participationId is provided
-                            this.selectParticipationDomainById(participationId || this.exercise.templateParticipation.id);
+                            // Template participation is default when no participationId is provided.
+                            // We also have to filter out participations that don't have a repository url (faulty data).
+                            const availableParticipations = [
+                                this.exercise.templateParticipation,
+                                this.exercise.solutionParticipation,
+                                this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
+                            ].filter(Boolean);
+                            const selectedParticipation = availableParticipations.find(({ id }: Participation) => id === participationId);
+                            const nextAvailableParticipation = [selectedParticipation, ...availableParticipations]
+                                .filter(Boolean)
+                                .find(({ repositoryUrl }: Participation) => !!repositoryUrl);
+                            if (nextAvailableParticipation) {
+                                this.selectParticipationDomainById(nextAvailableParticipation.id);
+                            } else {
+                                throwError('participationNotFound');
+                            }
                         }
                     }),
                     tap(() => {
