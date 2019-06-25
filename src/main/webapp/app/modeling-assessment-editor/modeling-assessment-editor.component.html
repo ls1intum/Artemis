@@ -57,7 +57,7 @@
             [maxScore]="modelingExercise?.maxScore"
             [model]="model"
             [feedbacks]="result?.feedbacks"
-            [highlightedElementIds]="highlightedElementIds"
+            [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
