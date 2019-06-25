@@ -75,8 +75,8 @@ public class FileResource {
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")
-                && !fileExtension.equalsIgnoreCase("pdf")) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf");
+                && !fileExtension.equalsIgnoreCase("pdf") && !fileExtension.equalsIgnoreCase("zip")) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf, .zip");
         }
 
         try {
