@@ -7,7 +7,6 @@ import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/components/util/secured-image.component';
-import { DecimalPipe } from '@angular/common';
 
 // options are optional ;)
 polyfill({
@@ -78,8 +77,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     loadingState = 'loading';
 
-    decimalPipe = new DecimalPipe('en');
-
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     @HostListener('window:resize') onResize() {
@@ -144,7 +141,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
         const dragItem = dragEvent.dragData;
 
         if (dropLocation) {
-            this.resizeDropLocation();
             // check if this mapping is new
             if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings, dragItem, dropLocation)) {
                 // Do nothing
@@ -238,7 +234,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * @return {boolean} true, if the drop location is correct, otherwise false
      */
     isLocationCorrect(dropLocation: DropLocation): boolean {
-        this.resizeDropLocation();
         if (!this.question.correctMappings) {
             return false;
         }
@@ -266,7 +261,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
     showSampleSolution() {
         this.sampleSolutionMappings = this.dragAndDropQuestionUtil.solve(this.question, this.mappings);
         this.showingSampleSolution = true;
-        this.resizeDropLocation();
     }
 
     /**
@@ -308,18 +302,5 @@ export class DragAndDropQuestionComponent implements OnChanges {
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
         }, 300);
-    }
-
-    resizeDropLocation() {
-        setTimeout(() => {
-            const backgroundImage = document.querySelector('.background-area jhi-secured-image img') as HTMLImageElement;
-            Array.from(document.querySelectorAll('.click-layer .drop-location')).forEach(dropLocation => {
-                const dragItemPicture = dropLocation.querySelector('jhi-secured-image img') as HTMLImageElement;
-                if (dragItemPicture) {
-                    const adjustedWidth = this.decimalPipe.transform((dragItemPicture.width / backgroundImage.width) * 101) + '%';
-                    (<HTMLElement>dropLocation).style.width = adjustedWidth;
-                }
-            });
-        }, 200);
     }
 }
