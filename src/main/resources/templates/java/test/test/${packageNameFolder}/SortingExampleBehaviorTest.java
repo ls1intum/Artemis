@@ -34,27 +34,33 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     public void testBubbleSort() {
         BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
-        assertArrayEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
+        assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
         MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
-        assertArrayEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
+        assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testUseMergeSortForBigList() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-        Date[] bigArray = new Date[] {new Date(), new Date(), new Date(), new Date(), new Date(), new Date(), new Date(), new Date(), new Date(), new Date(), new Date()};
-        Object chosenSortStrategy = configurePolicyAndContext(Arrays.asList(bigArray));
+        List<Date> bigList = new ArrayList<Date>();
+        for (int i = 0; i < 11; i++) {
+            bigList.add(new Date());
+        }
+        Object chosenSortStrategy = configurePolicyAndContext(bigList);
         assertTrue("Problem: The sort algorithm of Context was not MergeSort for a list with more than 10 dates.", chosenSortStrategy instanceof MergeSort);
     }
 
     @Test(timeout = 1000)
     public void testUseBubbleSortForSmallList()  throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-        Date[] smallArray = new Date[] {new Date(), new Date(), new Date()};
-        Object chosenSortStrategy = configurePolicyAndContext(Arrays.asList(smallArray));
+        List<Date> smallList = new ArrayList<Date>();
+        for (int i = 0; i < 3; i++) {
+            smallList.add(new Date());
+        }
+        Object chosenSortStrategy = configurePolicyAndContext(smallList);
         assertTrue("Problem: The sort algorithm of Context was not BubbleSort for a list with less or equal than 10 dates.", chosenSortStrategy instanceof BubbleSort);
     }
 
