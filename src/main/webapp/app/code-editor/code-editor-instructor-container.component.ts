@@ -108,17 +108,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         if (this.router.url.endsWith('/test')) {
                             this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         } else {
-                            // Template participation is default when no participationId is provided.
-                            // We also have to filter out participations that don't have a repository url (faulty data).
-                            const availableParticipations = [
-                                this.exercise.templateParticipation,
-                                this.exercise.solutionParticipation,
-                                this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
-                            ].filter(Boolean);
-                            const selectedParticipation = availableParticipations.find(({ id }: Participation) => id === participationId);
-                            const nextAvailableParticipation = [selectedParticipation, ...availableParticipations]
-                                .filter(Boolean)
-                                .find(({ repositoryUrl }: Participation) => !!repositoryUrl);
+                            const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
                                 this.selectParticipationDomainById(nextAvailableParticipation.id);
                             } else {
@@ -149,6 +139,23 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+    }
+
+    /**
+     * Get the next available participation, highest priority has the participation given to the method.
+     * Removes participations without a repositoryUrl (could be invalid).
+     * Returns undefined if no valid participation can be found.
+     *
+     * @param preferredParticipationId
+     */
+    private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
+        const availableParticipations = [
+            this.exercise.templateParticipation,
+            this.exercise.solutionParticipation,
+            this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
+        ].filter(Boolean);
+        const selectedParticipation = availableParticipations.find(({ id }: Participation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: Participation) => !!repositoryUrl);
     }
 
     /**
