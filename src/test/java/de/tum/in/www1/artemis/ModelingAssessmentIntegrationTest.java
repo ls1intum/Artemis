@@ -270,6 +270,22 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
+    public void automaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1");
+        database.addParticipationForExercise(classExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        checkAutomaticAssessment(storedSubmission.getResult());
+        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedSubmission.getResult().getFeedbacks(), FeedbackType.AUTOMATIC);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
     public void noAutomaticAssessmentUponModelSave() throws Exception {
         saveModelingSubmissionAndAssessment();
         database.addParticipationForExercise(classExercise, "student2");

@@ -3,8 +3,8 @@ import { Result } from '../result';
 import { ElementType } from '@ls1intum/apollon';
 
 export const enum FeedbackHighlightColor {
-    RED = 'rgba(219, 53, 69,0.6)',
-    CYAN = 'rgba(23,162,184,0.3)',
+    RED = 'rgba(219, 53, 69, 0.6)',
+    CYAN = 'rgba(23, 162, 184, 0.3)',
     BLUE = 'rgba(0, 123, 255, 0.6)',
     YELLOW = 'rgba(255, 193, 7, 0.6)',
     GREEN = 'rgba(40, 167, 69, 0.6)',

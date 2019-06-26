@@ -25,7 +25,8 @@ public class CompassConfiguration {
 
     public final static double NO_MATCH_THRESHOLD = 0.1;
 
-    public final static double EQUALITY_THRESHOLD = 0.83;
+    // TODO CZ: decrease equality threshold again in the future
+    public final static double EQUALITY_THRESHOLD = 0.95;
 
     public final static double POORLY_ASSESSED_MODEL_THRESHOLD = 0.8;
 
