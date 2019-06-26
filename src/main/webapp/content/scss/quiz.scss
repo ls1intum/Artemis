@@ -470,8 +470,6 @@
 
             .drop-location {
                 position: absolute;
-                z-index: 1;
-
                 display: flex;
                 flex-direction: row;
                 align-items: flex-start;
@@ -1300,8 +1298,6 @@ table.answer-options-result {
 
         .drop-location {
             position: absolute;
-            z-index: 1;
-
             display: flex;
             flex-direction: row;
             align-items: flex-start;
