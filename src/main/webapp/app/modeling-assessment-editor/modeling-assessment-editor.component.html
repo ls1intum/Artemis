@@ -66,7 +66,7 @@
         <div class="col-md-6">
             <h4 jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
             <div>
-                <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
+                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
             </div>
         </div>
         <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
