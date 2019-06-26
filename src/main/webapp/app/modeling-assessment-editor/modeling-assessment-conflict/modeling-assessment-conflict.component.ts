@@ -20,13 +20,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     model: UMLModel;
     mergedFeedbacks: Feedback[];
     currentFeedbacksCopy: Feedback[];
-    modelHighlightedElements: Map<string, string>; // map elementId -> highlight color
+    modelHighlightedElements = new Map<string, string>(); // map elementId -> highlight color
     user: User | null;
 
     currentConflict: Conflict;
     conflictingResult: ConflictingResult;
     conflictingModel: UMLModel;
-    conflictingModelHighlightedElements: Map<string, string>; // map elementId -> highlight color
+    conflictingModelHighlightedElements = new Map<string, string>(); // map elementId -> highlight color
     conflicts?: Conflict[];
     conflictResolutionStates: ConflictResolutionState[];
     conflictIndex = 0;
@@ -214,21 +214,17 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     private setHighlightColorOfConflictElements(color: string) {
-        if (this.conflictingModelHighlightedElements) {
-            const conflictingModelHighlightedElements = new Map<string, string>();
-            for (const elementId of this.conflictingModelHighlightedElements.keys()) {
-                conflictingModelHighlightedElements.set(elementId, color);
-            }
-            this.conflictingModelHighlightedElements = conflictingModelHighlightedElements;
+        const conflictingModelHighlightedElements = new Map<string, string>();
+        for (const elementId of this.conflictingModelHighlightedElements.keys()) {
+            conflictingModelHighlightedElements.set(elementId, color);
         }
+        this.conflictingModelHighlightedElements = conflictingModelHighlightedElements;
 
-        if (this.modelHighlightedElements) {
-            const modelHighlightedElements = new Map<string, string>();
-            for (const elementId of this.modelHighlightedElements.keys()) {
-                modelHighlightedElements.set(elementId, color);
-            }
-            this.modelHighlightedElements = modelHighlightedElements;
+        const modelHighlightedElements = new Map<string, string>();
+        for (const elementId of this.modelHighlightedElements.keys()) {
+            modelHighlightedElements.set(elementId, color);
         }
+        this.modelHighlightedElements = modelHighlightedElements;
     }
 
     private updateOverallResolutioState() {
