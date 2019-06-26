@@ -60,11 +60,19 @@
                 ></jhi-quiz-scoring-infostudent-modal>
             </span>
         </div>
-        <div class="drag-and-drop-area">
-            <div class="instructions" *ngIf="showResult">
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution" *ngIf="showingSampleSolution"></span>
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
+        <div class="instructions" *ngIf="showResult">
+            <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution" *ngIf="showingSampleSolution"></span>
+            <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
+            <div *ngIf="showResult && !forceSampleSolution">
+                <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
+                    {{ 'artemisApp.quizQuestion.showSampleSolution' | translate }}
+                </div>
+                <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
+                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | translate }}
+                </div>
             </div>
+        </div>
+        <div class="drag-and-drop-area">
             <div class="background-area">
                 <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
                 <div class="click-layer">
@@ -206,11 +214,13 @@
                     </div>
                 </div>
             </div>
-            <div class="drag-and-drop-items" *ngIf="!showResult">
-                <div class="instructions">
+            <div class="drag-and-drop-items">
+                <div class="instructions" *ngIf="!showResult">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
+                <div *ngIf="showResult"></div>
                 <div
+                    *ngIf="!showResult"
                     class="drag-items"
                     [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                     (onDropSuccess)="onDragDrop(null, $event)"
@@ -227,14 +237,6 @@
                         [clickDisabled]="clickDisabled"
                         [minWidth]="160"
                     ></jhi-drag-item>
-                </div>
-            </div>
-            <div *ngIf="showResult && !forceSampleSolution">
-                <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.showSampleSolution' | translate }}
-                </div>
-                <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | translate }}
                 </div>
             </div>
         </div>
