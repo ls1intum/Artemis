@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { Notification } from 'app/entities/notification';
 import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
 
 @Component({
@@ -62,7 +60,7 @@ export class SystemNotificationComponent implements OnInit {
             } else {
                 if (this.notification.id === systemNotification.id) {
                     this.checkNotificationDates(systemNotification);
-                } else if (systemNotification.notificationDate.isBefore(this.notification.notificationDate) && systemNotification.expireDate.isAfter(moment())) {
+                } else if (systemNotification.notificationDate!.isBefore(this.notification.notificationDate!) && systemNotification.expireDate!.isAfter(moment())) {
                     this.checkNotificationDates(systemNotification);
                 }
             }
@@ -70,7 +68,7 @@ export class SystemNotificationComponent implements OnInit {
     }
 
     checkNotificationDates(systemNotification: SystemNotification) {
-        if (systemNotification.expireDate.isAfter(moment()) && systemNotification.notificationDate.isBefore(moment())) {
+        if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
             this.notification = systemNotification;
             this.setAlertClass();
             this.setAlertIcon();

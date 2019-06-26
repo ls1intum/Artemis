@@ -14,7 +14,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     private differ: any;
 
     constructor(differs: IterableDiffers) {
-        this.differ = differs.find([]).create(null);
+        this.differ = differs.find([]).create(undefined);
     }
 
     get submissionTextWithHtmlLinebreaks(): string {
@@ -42,10 +42,11 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
             return this.submissionTextWithHtmlLinebreaks;
         }
 
-        return this.assessments.reduce(
-            (content: string, assessment: Feedback, currentIndex: number) =>
-                content.replace(assessment.reference, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`),
-            this.submissionTextWithHtmlLinebreaks,
-        );
+        return this.assessments.reduce((content: string, assessment: Feedback, currentIndex: number) => {
+            if (assessment.reference == null) {
+                return content;
+            }
+            return content.replace(assessment.reference, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`);
+        }, this.submissionTextWithHtmlLinebreaks);
     }
 }

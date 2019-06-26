@@ -7,10 +7,10 @@ import { PasswordResetInitService } from './password-reset-init.service';
     templateUrl: './password-reset-init.component.html',
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
-    error: string;
-    errorEmailNotExists: string;
+    error: string | null;
+    errorEmailNotExists: string | null;
     resetAccount: any;
-    success: string;
+    success: string | null;
 
     constructor(private passwordResetInitService: PasswordResetInitService, private elementRef: ElementRef, private renderer: Renderer) {}
 

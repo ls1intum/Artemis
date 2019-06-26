@@ -6,6 +6,6 @@ export class FileUploadExercise extends Exercise {
 
     constructor(course?: Course) {
         super(ExerciseType.FILE_UPLOAD);
-        this.course = course;
+        this.course = course || null;
     }
 }

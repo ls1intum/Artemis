@@ -40,12 +40,12 @@ export class ApollonDiagramService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ApollonDiagram = this.convertItemFromServer(res.body);
+        const body: ApollonDiagram = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<ApollonDiagram[]>): HttpResponse<ApollonDiagram[]> {
-        const jsonResponse: ApollonDiagram[] = res.body;
+        const jsonResponse: ApollonDiagram[] = res.body!;
         const body: ApollonDiagram[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));

@@ -31,6 +31,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
+    notificationText: string | null;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -45,16 +46,17 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
+        this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -78,7 +80,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
                 .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
                 .pipe(
                     map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result])),
+                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
                     catchError(() => of(null)),
                 )
                 .subscribe(() => (this.templateParticipationResultLoaded = true));
@@ -96,14 +98,18 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.create(this.programmingExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess(result: ProgrammingExercise) {
@@ -113,12 +119,12 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.headers.get('X-artemisApp-error'));
+        this.jhiAlertService.error(error.headers.get('X-artemisApp-error')!);
         this.isSaving = false;
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.headers.get('X-artemisApp-error'));
+        this.jhiAlertService.error(error.headers.get('X-artemisApp-error')!);
     }
 
     trackCourseById(index: number, item: Course) {

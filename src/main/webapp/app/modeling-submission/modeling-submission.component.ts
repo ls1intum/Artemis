@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -33,17 +34,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     participation: Participation;
     modelingExercise: ModelingExercise;
-    result: Result;
+    result: Result | null;
 
     selectedEntities: string[];
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
-    assessmentResult: Result;
+    assessmentResult: Result | null;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
-    generalFeedbackText: String;
+    generalFeedbackText: String | null;
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
@@ -162,7 +163,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * view accordingly.
      */
     private subscribeToAutomaticSubmissionWebsocket(): void {
-        if (!this.submission && !this.submission.id) {
+        if (!this.submission || !this.submission.id) {
             return;
         }
         this.automaticSubmissionWebsocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
@@ -191,7 +192,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * and show the new assessment information to the student.
      */
     private subscribeToNewResultsWebsocket(): void {
-        if (!this.participation && !this.participation.id) {
+        if (!this.participation || !this.participation.id) {
             return;
         }
         this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id).subscribe((newResult: Result) => {
@@ -243,7 +244,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
@@ -256,7 +257,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
                 submission => {
-                    this.submission = submission.body;
+                    this.submission = submission.body!;
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
@@ -290,7 +291,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.submission.submitted = true;
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
                     // Compass has already calculated a result
@@ -418,14 +419,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(modelElementId: string, type: ElementType): boolean {
+    isSelected(feedback: Feedback): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
-        if (type in UMLRelationshipType) {
-            return this.selectedRelationships.indexOf(modelElementId) > -1;
+        if (feedback.referenceType! in UMLRelationshipType) {
+            return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
         } else {
-            return this.selectedEntities.indexOf(modelElementId) > -1;
+            return this.selectedEntities.indexOf(feedback.referenceId!) > -1;
         }
     }
 

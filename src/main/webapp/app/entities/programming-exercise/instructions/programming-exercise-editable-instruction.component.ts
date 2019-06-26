@@ -71,7 +71,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     ngOnChanges(changes: SimpleChanges): void {
         if (hasTemplateParticipationChanged(changes)) {
             if (this.templateParticipation.results) {
-                this.setTestCasesFromResult(getLatestResult(this.templateParticipation));
+                this.setTestCasesFromResult(getLatestResult(this.templateParticipation)!);
             }
             if (this.templateResultSubscription) {
                 this.templateResultSubscription.unsubscribe();
@@ -82,7 +82,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                 .pipe(
                     filter(result => !!result),
                     tap(result => {
-                        this.templateParticipation.results = [...this.templateParticipation.results, result];
+                        this.templateParticipation.results = [...this.templateParticipation.results, result!];
                     }),
                     tap(this.setTestCasesFromResult),
                 )

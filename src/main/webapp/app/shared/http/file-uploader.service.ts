@@ -15,15 +15,15 @@ export class FileUploaderService {
         const fileExtension = fileName
             ? fileName
                   .split('.')
-                  .pop()
+                  .pop()!
                   .toLocaleLowerCase()
             : file['name']
                   .split('.')
                   .pop()
                   .toLocaleLowerCase();
-        const supportedImageFormats = 'png,jpg,jpeg,svg,pdf';
+        const supportedImageFormats = 'png,jpg,jpeg,svg,pdf,zip';
         if (supportedImageFormats.indexOf(fileExtension) === -1) {
-            return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg" or ".pdf" allowed.'));
+            return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
         }
 
         /** Check file size **/
@@ -50,7 +50,7 @@ export class FileUploaderService {
             'temp' +
             filePath
                 .split('/')
-                .pop()
+                .pop()!
                 .split('#')[0]
                 .split('?')[0];
         const formData = new FormData();

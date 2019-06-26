@@ -9,8 +9,8 @@ import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
-import { StatsForInstructorDashboard, StatsForTutorDashboard } from 'app/entities/course';
 import { AccountService } from 'app/core';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -71,24 +71,26 @@ export class ExerciseService {
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInDays, 'day')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
         return exercises.find(exercise => {
+            const dueDate = exercise.dueDate!;
             return (
-                moment().isBefore(exercise.dueDate) &&
+                moment().isBefore(dueDate) &&
                 moment()
                     .add(delayInHours, 'hours')
-                    .isSameOrAfter(exercise.dueDate)
+                    .isSameOrAfter(dueDate)
             );
-        });
+        })!;
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
@@ -128,7 +130,7 @@ export class ExerciseService {
     }
 
     checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body) {
+        if (res.body && res.body.course) {
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }
@@ -158,8 +160,10 @@ export class ExerciseService {
     convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
-        delete copy.course.exercises;
-        delete copy.course.lectures;
+        if (copy.course) {
+            delete copy.course.exercises;
+            delete copy.course.lectures;
+        }
         delete copy.participations;
         return copy;
     }
@@ -170,12 +174,12 @@ export class ExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForTutorDashboard>> {
-        return this.http.get<StatsForTutorDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+    getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
-    getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForInstructorDashboard>> {
-        return this.http.get<StatsForInstructorDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    getStatsForInstructors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 }
 

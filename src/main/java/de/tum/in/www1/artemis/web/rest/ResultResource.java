@@ -62,13 +62,13 @@ public class ResultResource {
 
     private final UserService userService;
 
-    private final ContinuousIntegrationService continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -157,7 +157,7 @@ public class ResultResource {
         }
 
         try {
-            String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
             log.info("PlanKey for received notifyResultNew is {}", planKey);
             Optional<Participation> optionalParticipation = getParticipation(planKey);
             if (optionalParticipation.isPresent()) {
@@ -245,6 +245,12 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
+
+        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        if (participation.getExercise() == null) {
+            Exercise exercise = exerciseService.findOne(exerciseId);
+            participation.setExercise(exercise);
+        }
 
         if (!Hibernate.isInitialized(participation.getExercise())) {
             participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
@@ -403,10 +409,9 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        User user = userService.getUserWithGroupsAndAuthorities();
         Participation participation = participationService.findOne(participationId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user)) {
+        if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
         }
 
@@ -431,19 +436,9 @@ public class ResultResource {
             return notFound();
         }
         Participation participation = result.get().getParticipation();
-        Course course = participation.getExercise().getCourse();
 
-        if (participation.getStudent() == null) {
-            // If the student is null, then we participation is a template/solution participation -> check for instructor role
-            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
-                return forbidden();
-            }
-        }
-        else {
-            if (!authCheckService.isOwnerOfParticipation(participation)) {
-                if (!userHasPermissions(course))
-                    return forbidden();
-            }
+        if (!participationService.canAccessParticipation(participation)) {
+            return forbidden();
         }
 
         try {

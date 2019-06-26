@@ -9,8 +9,8 @@ import { ActivateService } from './activate.service';
     templateUrl: './activate.component.html',
 })
 export class ActivateComponent implements OnInit {
-    error: string;
-    success: string;
+    error: string | null;
+    success: string | null;
     modalRef: NgbModalRef;
 
     constructor(private activateService: ActivateService, private route: ActivatedRoute) {}

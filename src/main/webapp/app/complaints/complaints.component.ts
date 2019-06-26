@@ -35,12 +35,12 @@ export class ComplaintsComponent implements OnInit {
                 }
                 this.complaintText = res.body.complaintText;
                 this.alreadySubmitted = true;
-                this.submittedDate = res.body.submittedTime;
+                this.submittedDate = res.body.submittedTime!;
                 this.accepted = res.body.accepted;
                 this.handled = this.accepted !== undefined;
 
                 if (this.handled) {
-                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body));
+                    this.complaintResponseService.findByComplaintId(res.body.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
                 }
             },
             (err: HttpErrorResponse) => {
@@ -57,7 +57,7 @@ export class ComplaintsComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
-                this.submittedDate = res.body.submittedTime;
+                this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
                 this.allowedComplaints--;
             },
@@ -77,6 +77,6 @@ export class ComplaintsComponent implements OnInit {
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error('error.http.400', null, null);
+        this.jhiAlertService.error('error.http.400', null, undefined);
     }
 }

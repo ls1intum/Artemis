@@ -78,7 +78,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
-        if (complaintService.getById(complaint.getResult().getId()).isPresent()) {
+        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
         }
 

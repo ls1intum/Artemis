@@ -72,6 +72,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
             return 'orange';
         }
+
+        return '';
     }
 
     calculateProgressBarClass(): string {

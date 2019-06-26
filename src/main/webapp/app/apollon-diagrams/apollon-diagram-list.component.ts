@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DiagramType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import * as ApollonDiagramTitleFormatter from './apollon-diagram-title-formatter';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
-import { DiagramType } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -31,7 +30,7 @@ export class ApollonDiagramListComponent implements OnInit {
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
             response => {
-                this.apollonDiagrams = response.body;
+                this.apollonDiagrams = response.body!;
             },
             response => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
@@ -59,8 +58,8 @@ export class ApollonDiagramListComponent implements OnInit {
         );
     }
 
-    getTitleForApollonDiagram(diagram: ApollonDiagram) {
-        return ApollonDiagramTitleFormatter.getTitle(diagram);
+    getTitleForApollonDiagram(diagram: ApollonDiagram): string {
+        return diagram.title && diagram.title.trim().length ? diagram.title.trim() : `#${diagram.id}`;
     }
 
     openCreateDiagramDialog() {
