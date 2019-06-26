@@ -65,11 +65,7 @@
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
                 "testPassing": "Test bestanden",
-                "testFailing": "Test fehlgeschlagen",
-                "testNotExecuted": "Test nicht ausgeführt",
-                "totalTestsPassing": "{{totalTests}} Tests bestanden",
-                "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen",
-                "totalTestsNotExecuted": "{{notExecuted}} von {{totalTests}} Tests nicht ausgeführt"
+                "totalTestsPassing": "{{passedTests}} von {{totalTests}} Tests bestanden"
             },
             "repoSelect": {
                 "assignmentRepo": "Assignment Repository",

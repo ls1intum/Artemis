@@ -166,6 +166,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 tap(testCases => {
                     this.exerciseTestCases = testCases && testCases.filter(({ active }) => active).map(({ testName }) => testName);
                 }),
+                // The test cases validate the task specific tests, so we need to update the markdown here.
+                tap(() => this.updateMarkdown()),
             )
             .subscribe();
     }
@@ -560,13 +562,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const translationBasePath = 'artemisApp.editor.testStatusLabels.';
         const totalTests = tests.length;
 
-        if (this.latestResult && this.latestResult.successful) {
-            // Case 1: Submission fulfills all test cases, no further checking needed.
+        if (this.latestResult && this.latestResult.successful && (!this.latestResult.feedbacks || !this.latestResult.feedbacks.length)) {
+            // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             const label = this.translateService.instant(translationBasePath + 'testPassing');
             return [TestCaseState.SUCCESS, label];
         } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
-            const { failed, notExecuted } = tests.reduce(
+            const { failed, notExecuted, successful } = tests.reduce(
                 (acc, testName) => {
                     const feedback = this.latestResult!.feedbacks.find(({ text }) => text === testName);
                     // This is a legacy check, results before the 24th May are considered legacy.
@@ -591,26 +593,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
             // Exercise is done if none of the tests failed
             const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
-            if (totalTests === 1) {
-                const label =
-                    testCaseState === TestCaseState.SUCCESS
-                        ? this.translateService.instant(translationBasePath + 'testPassing')
-                        : testCaseState === TestCaseState.NOT_EXECUTED
-                        ? this.translateService.instant(translationBasePath + 'testNotExecuted')
-                        : this.translateService.instant(translationBasePath + 'testFailing');
-                return [testCaseState, label];
-            } else {
-                const label =
-                    testCaseState === TestCaseState.SUCCESS
-                        ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
-                        : testCaseState === TestCaseState.NOT_EXECUTED
-                        ? this.translateService.instant(translationBasePath + 'totalTestsNotExecuted', { totalTests, notExecuted: notExecuted.length })
-                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failed.length });
-                return [testCaseState, label];
-            }
+            const label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests, passedTests: successful.length });
+            return [testCaseState, label];
         } else {
             // Case 3: There are no results
-            const label = this.translateService.instant('artemisApp.editor.testStatusLabels.noResult');
+            const label = this.translateService.instant(translationBasePath + 'noResult');
             return [TestCaseState.NO_RESULT, label];
         }
     }

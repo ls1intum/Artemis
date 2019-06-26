@@ -3,7 +3,7 @@ import { IProgrammingExerciseTestCaseService } from 'app/entities/programming-ex
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 
 export class MockProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService {
-    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[]>([]);
+    private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | null>(null);
 
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.subject as Observable<ProgrammingExerciseTestCase[]>;
