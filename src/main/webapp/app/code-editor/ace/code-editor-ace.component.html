@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card code-editor-ace">
     <div class="card-header bg-primary text-white">
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
@@ -7,7 +7,7 @@
         </h3>
     </div>
 
-    <div class="card-body">
+    <div class="card-body code-editor-ace__content">
         <ace-editor
             #editor
             id="ace-code-editor"
@@ -17,8 +17,7 @@
             [autoUpdateContent]="true"
             [durationBeforeCallback]="200"
             (textChanged)="onFileTextChanged($event)"
-            class="panel panel-default"
-            style="display: block; width:100%; min-height: 100px; overflow: auto; line-height: 14px;"
+            class="code-editor-ace__content__editor"
         >
         </ace-editor>
         <p *ngIf="!selectedFile && !isLoading" id="no-file-selected" class="text-center lead text-muted pt-5" jhiTranslate="artemisApp.editor.selectFile">
