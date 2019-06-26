@@ -867,10 +867,14 @@
 
                 .drag-item {
                     div {
+                        line-height: 0;
+
                         span {
                             border: none;
                             padding: 0;
                             vertical-align: middle;
+                            display: inline-block;
+                            white-space: nowrap;
                         }
                     }
                 }
@@ -962,10 +966,7 @@
 
     img {
         max-width: 160px;
-
-        @media (orientation: landscape) and (min-width: 900px) {
-            width: 100%;
-        }
+        max-height: 160px;
     }
 
     &.no-click {
