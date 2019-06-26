@@ -550,12 +550,6 @@
                             @media (max-width: 812px) {
                                 padding: 0 !important;
                             }
-
-                            span {
-                                @media (max-width: 480px) {
-                                    font-size: 12px;
-                                }
-                            }
                         }
                     }
                 }
@@ -865,8 +859,6 @@
 
                 .drag-item {
                     div {
-                        line-height: 0;
-
                         span {
                             border: none;
                             padding: 0;
