@@ -63,9 +63,22 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
     <div class="row mt-3">
-        <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-        <div class="col-12 col-lg-6">
-            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
+        <div class="col-md-6">
+            <h4 jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
+            <div>
+                <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
+            </div>
+        </div>
+        <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
+            <h4 jhiTranslate="modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>
+            <div class="row" *ngIf="hasAutomaticFeedback">
+                <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
+                <span jhiTranslate="modelingAssessmentEditor.highlightingColors.automaticAssessment">automatic assessment</span>
+            </div>
+            <div class="row" *ngIf="highlightMissingFeedback">
+                <div class="mx-3 mb-2 highlighting-item color-red"></div>
+                <span jhiTranslate="modelingAssessmentEditor.highlightingColors.missingAssessment">missing assessment</span>
+            </div>
         </div>
     </div>
 </div>

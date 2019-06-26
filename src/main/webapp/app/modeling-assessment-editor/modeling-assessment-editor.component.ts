@@ -183,9 +183,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.referencedFeedback = feedback;
 
         this.hasAutomaticFeedback = feedback.some(feedbackItem => feedbackItem.type === FeedbackType.AUTOMATIC);
-        if (this.hasAutomaticFeedback && !this.result!.completionDate) {
-            this.highlightAutomaticFeedback();
-        }
+        this.highlightAutomaticFeedback();
 
         if (this.highlightMissingFeedback) {
             this.highlightElementsWithMissingFeedback();
@@ -408,9 +406,13 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Add all automatic feedback elements to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all elements with the corresponding
-     * "automatic feedback color" get removed first.
+     * "automatic feedback color" get removed first. The automatic feedback will not be highlighted anymore after the assessment has been completed.
      */
     private highlightAutomaticFeedback() {
+        if (this.result && this.result.completionDate) {
+            return;
+        }
+
         this.highlightedElements = this.highlightedElements
             ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.CYAN)
             : new Map<string, string>();
