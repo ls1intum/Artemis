@@ -556,6 +556,7 @@ Bootstrap 3.3.7 fix
     display: flex;
     flex-flow: column nowrap;
     height: 500px;
+    margin-bottom: 10px;
 
     &__content {
         display: flex;
@@ -598,15 +599,13 @@ Resizable drag elements
 
 .rg-main-bottom {
     cursor: row-resize;
-    margin-top: 2px;
-    margin-bottom: 2px;
 }
 
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;
-    margin-left: 2px;
-    margin-right: 2px;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 /*!* ==========================================================================
