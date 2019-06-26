@@ -1,17 +1,17 @@
 <div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="instructions card resizable-instructions border border-lightgrey">
-    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event)">
-        <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
+    <div class="card-header d-flex text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
             <span jhiTranslate="artemisApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
         </h3>
+        <fa-icon class="ml-auto" icon="chevron-right"></fa-icon>
     </div>
     <jhi-programming-exercise-instructions
         *ngIf="!editable; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
         [exercise]="exercise"
         [participation]="participation"
-        class="instructions__content"
+        class="instructions__content card-body p-0"
     >
     </jhi-programming-exercise-instructions>
     <ng-template #markdownEditorInstructions>
@@ -21,7 +21,7 @@
             [templateParticipation]="templateParticipation"
             [markdownEditorHeight]="MarkdownEditorHeight.MEDIUM"
             [enableResize]="false"
-            class="instructions__content"
+            class="instructions__content card-body p-0"
         >
         </jhi-programming-exercise-editable-instructions>
     </ng-template>

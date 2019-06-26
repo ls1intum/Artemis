@@ -520,11 +520,17 @@ Bootstrap 3.3.7 fix
         .card-header {
             height: 100%;
             width: 100%;
+            > fa-icon {
+                display: none;
+            }
         }
 
         .card-body,
-        .card-title,
         .card-second-header {
+            display: none !important;
+        }
+
+        .card-title span {
             display: none !important;
         }
 
@@ -533,10 +539,10 @@ Bootstrap 3.3.7 fix
         }
     }
     .collapsed--horizontal {
-        width: 55px !important;
+        width: 75px !important;
     }
     .collapsed--vertical {
-        height: 55px !important;
+        height: 42px !important;
     }
 }
 
@@ -585,6 +591,14 @@ Bootstrap 3.3.7 fix
 }
 
 .editor-bottom {
+    height: 200px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-flow: column nowrap;
+
+    jhi-code-editor-build-output {
+        height: inherit;
+    }
 }
 
 /*!* ==========================================================================
@@ -592,6 +606,7 @@ Resizable drag elements
 ========================================================================== *!*/
 
 .rg-main-bottom,
+.rg-bottom-bottom,
 .rg-sidebar-left,
 .rg-sidebar-right {
     align-self: center;
@@ -839,4 +854,34 @@ Instructions stepwizard
 
 .test-passing:hover {
     background-color: #f8f9fa;
+}
+
+/*!* ==========================================================================
+Build-output
+========================================================================== *!*/
+
+.build-output {
+    height: inherit;
+
+    &__content {
+        font-family: Menlo, Monaco, 'Courier New', monospace;
+        font-size: 11px;
+        overflow: hidden;
+        margin: 0;
+
+        &__entry {
+            &-date {
+                width: 130px;
+                margin-right: 10px;
+                color: #505050;
+                font-weight: normal;
+                float: left;
+                clear: left;
+            }
+            &-text {
+                margin-bottom: 0;
+                color: #003366;
+            }
+        }
+    }
 }

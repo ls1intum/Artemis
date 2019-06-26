@@ -1,12 +1,12 @@
-<div id="cardBuildOutput" class="card border resizable-buildoutput">
-    <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event)">
-        <span class="float-right "><fa-icon icon="chevron-down"></fa-icon></span>
+<div id="cardBuildOutput" class="card border build-output">
+    <div class="card-header d-flex bg-primary text-white" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <fa-icon icon="terminal"></fa-icon>
             <span jhiTranslate="artemisApp.editor.buildOutput"> &nbsp; Build Output</span>
         </h3>
+        <fa-icon class="ml-auto" icon="chevron-down"></fa-icon>
     </div>
-    <div class="card-body">
+    <div class="card-body build-output__content">
         <p class="text-center is-building" *ngIf="isBuilding">
             <fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </p>

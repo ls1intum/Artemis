@@ -1,10 +1,10 @@
 <div id="cardFiles" class="card file-browser resizable-filebrowser">
-    <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event)">
-        <span class="float-right "><fa-icon icon="chevron-left"></fa-icon></span>
+    <div class="card-header d-flex bg-primary text-white" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
-            <fa-icon icon="folder-open"></fa-icon>
-            <span *ngIf="exerciseTitle"> &nbsp;{{ exerciseTitle }}</span>
+            <fa-icon class="mr-2" icon="folder-open"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
         </h3>
+        <fa-icon class="ml-auto" icon="chevron-left"></fa-icon>
     </div>
 
     <!-- Root actions -->

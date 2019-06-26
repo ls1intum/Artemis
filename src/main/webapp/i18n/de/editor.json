@@ -31,6 +31,7 @@
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "fileBrowser": {
+                "fileBrowser": "Datei Browser",
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
                 "deleteFileConfirm": "Bist du sicher, dass du die Datei <strong>{{filename}}</strong> löschen willst?",

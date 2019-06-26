@@ -32,6 +32,10 @@ export class CodeEditorGridComponent implements AfterViewInit {
     resizableMinWidthRight: number;
     resizableMaxWidthRight = 1200;
 
+    interactResizableBottom: Interactable;
+    resizableMinHeightBottom = 300;
+    resizableMaxHeightBottom = 600;
+
     constructor(private $window: WindowRef) {}
 
     /**
@@ -113,6 +117,30 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 const target = event.target;
                 // Update element height
                 target.style.width = event.rect.width + 'px';
+            });
+
+        this.resizableMinHeightBottom = this.$window.nativeWindow.screen.height / 6;
+        this.interactResizableBottom = interact('.editor-bottom')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeightBottom },
+                    max: { height: this.resizableMaxHeightBottom },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function(event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
             });
     }
 
