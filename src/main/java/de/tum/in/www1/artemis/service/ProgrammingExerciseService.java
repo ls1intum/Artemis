@@ -436,7 +436,7 @@ public class ProgrammingExerciseService {
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new IllegalAccessException();
             }
             return programmingExercise.get();
