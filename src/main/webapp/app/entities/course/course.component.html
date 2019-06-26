@@ -51,7 +51,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let course of courses | sortBy: predicate:reverse; trackBy: trackId">
-                    <ng-container *ngIf="!showOnlyActive || course.endDate.isAfter(today)">
+                    <ng-container *ngIf="!showOnlyActive || !course.endDate || course.endDate.isAfter(today)">
                         <td>
                             <a [routerLink]="['/course', course.id, 'view']">{{ course.id }}</a>
                         </td>
