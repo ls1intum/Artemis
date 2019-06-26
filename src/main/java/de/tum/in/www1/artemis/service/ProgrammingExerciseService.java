@@ -45,6 +45,7 @@ import org.xml.sax.SAXException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -328,12 +329,10 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
 
-        Object templatePlan = continuousIntegrationService.get().createTemplateBuildPlan(programmingExercise, exerciseRepoName, testRepoName); // template build plan
-        Object solutionPlan = continuousIntegrationService.get().createSolutionBuildPlan(programmingExercise, solutionRepoName, testRepoName, templatePlan); // solution build plan
-
-        if (programmingExercise.getSequentialTestRuns()) {
-            continuousIntegrationService.get().createTestBuildPlanForExercise(programmingExercise, testRepoName, solutionPlan, templatePlan); // test build plan
-        }
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.TEMPLATE.getName(), exerciseRepoName, testRepoName); // template build
+                                                                                                                                                               // plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, RepositoryType.SOLUTION.getName(), solutionRepoName, testRepoName); // solution build
+                                                                                                                                                               // plan
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

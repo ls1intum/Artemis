@@ -12,15 +12,11 @@ import de.tum.in.www1.artemis.domain.*;
  * 
  * @param <P> generic parameter for the build plan object of a continuous integration system.
  */
-public interface ContinuousIntegrationService<P> {
+public interface ContinuousIntegrationService {
 
     public enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
     }
-
-    P createTemplateBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName);
-
-    P createSolutionBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName, P templateRepositoryPlan);
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -30,18 +26,7 @@ public interface ContinuousIntegrationService<P> {
      * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
      * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
      */
-    P createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
-
-    /**
-     * Create the test build plan and assigns the template and solution build plans as childs to it, so that they get executed on every build run of the test repository.
-     * 
-     * @param exercise               a programming exercise with the required information to create the base build plan
-     * @param testVcsRepositorySlug  the slug of the test repository, i.e. the unique identifier
-     * @param solutionRepositoryPlan the plan of the solution repository
-     * @param templateRepositoryPlan the plan of the template repository
-     * @return
-     */
-    P createTestBuildPlanForExercise(ProgrammingExercise exercise, String testVcsRepositorySlug, P solutionRepositoryPlan, P templateRepositoryPlan);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.

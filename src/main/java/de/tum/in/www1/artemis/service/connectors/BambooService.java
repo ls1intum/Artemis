@@ -49,7 +49,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
 @Service
 @Profile("bamboo")
-public class BambooService implements ContinuousIntegrationService<Plan> {
+public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
@@ -87,26 +87,10 @@ public class BambooService implements ContinuousIntegrationService<Plan> {
         this.bambooBuildPlanService = bambooBuildPlanService;
     }
 
-
     @Override
-    public Plan createTemplateBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName) {
-        return bambooBuildPlanService.createTemplateBuildPlan(programmingExercise, repositoryName, testRepositoryName);
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
     }
-    @Override
-    public Plan createSolutionBuildPlan(ProgrammingExercise programmingExercise, String repositoryName, String testRepositoryName, Plan templateRepositoryPlan){
-        return bambooBuildPlanService.createSolutionBuildPlan(programmingExercise, repositoryName, testRepositoryName, templateRepositoryPlan);
-    }
-
-    @Override
-    public Plan createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
-        return bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
-    }
-
-    @Override
-    public Plan createTestBuildPlanForExercise(ProgrammingExercise programmingExercise, String testVcsRepositorySlug, Plan solutionRepositoryPlan, Plan templateRepositoryPlan) {
-        return bambooBuildPlanService.createTestBuildPlanForExercise(programmingExercise, testVcsRepositorySlug, solutionRepositoryPlan, templateRepositoryPlan);
-    }
-
 
     private BambooClient getBambooClient() {
         final BambooClient bambooClient = new BambooClient();
