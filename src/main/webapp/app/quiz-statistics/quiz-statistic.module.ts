@@ -15,7 +15,7 @@ import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-ques
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
-import { QuizStatisticsFooterComponent } from 'app/quiz-statistics/quiz-statistics-footer.component';
+import { QuizStatisticsFooterComponent } from 'app/quiz-statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 
 const ENTITY_STATES = [...quizStatisticRoute];
 
