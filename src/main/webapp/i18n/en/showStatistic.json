@@ -28,7 +28,7 @@
             "xAxes": "Questions",
             "yAxes": "Correct Solutions"
         },
-        "multipleChoiceQuestionStatistic": {
+        "questionStatistic": {
             "titleRated": "Answer-Distribution (rated)",
             "titleUnrated": "Answer-Distribution (unrated)",
             "xAxes": "Answers",

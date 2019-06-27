@@ -28,7 +28,7 @@
             "xAxes": "Fragen",
             "yAxes": "Richtige Lösungen"
         },
-        "multipleChoiceQuestionStatistic": {
+        "questionStatistic": {
             "titleRated": "Antwortenverteilung (bewertet)",
             "titleUnrated": "Antwortenverteilung (unbewertet)",
             "xAxes": "Antworten",

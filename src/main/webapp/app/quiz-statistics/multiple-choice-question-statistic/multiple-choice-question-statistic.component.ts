@@ -89,10 +89,10 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe(xLabel => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe(yLabel => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -207,7 +207,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.correct').subscribe(correctLabel => {
+        this.translateService.get('showStatistic.questionStatistic.correct').subscribe(correctLabel => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.isCorrect) {
                     // check if the answer is valid and if true:
@@ -221,7 +221,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         });
 
         // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.incorrect').subscribe(incorrectLabel => {
+        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe(incorrectLabel => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (!answerOption.isCorrect) {
                     // check if the answer is valid and if false:
