@@ -1,10 +1,11 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseService, StatsForInstructorDashboard } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -21,16 +22,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     exercisesSortingPredicate = 'assessmentDueDate';
     exercisesReverseOrder = false;
 
-    stats: StatsForInstructorDashboard = {
-        numberOfStudents: 0,
-        numberOfSubmissions: 0,
-        numberOfTutors: 0,
-        numberOfAssessments: 0,
-        numberOfComplaints: 0,
-        numberOfOpenComplaints: 0,
-
-        tutorLeaderboard: [],
-    };
+    stats = new StatsForDashboard();
     dataForAssessmentPieChart: number[];
 
     readonly MIN_POINTS_GREEN = 100;
@@ -49,9 +41,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
             .subscribe((res: HttpResponse<Course>) => (this.course = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
-            (res: HttpResponse<StatsForInstructorDashboard>) => {
+            (res: HttpResponse<StatsForDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
-
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
             },
             (response: string) => this.onError(response),

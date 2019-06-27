@@ -139,6 +139,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
+
         if (dropLocation) {
             // check if this mapping is new
             if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings, dragItem, dropLocation)) {
@@ -300,6 +301,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
-        }, 500);
+        }, 300);
     }
 }

@@ -10,7 +10,6 @@ To start the Artemis application server from the development environment, first 
 artemis:
   repo-clone-path: ./repos/
   encryption-password: <encrypt-password>
-  result-retrieval-delay: 5000
   jira:
     url: https://jirabruegge.in.tum.de
     user: <username>
