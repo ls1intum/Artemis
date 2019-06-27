@@ -13,6 +13,7 @@
         "quizPointStatisticTitle": "Punkteverteilung",
         "quizStatisticTitle": "Quiz-Statistik",
         "recalculateStatistics": "Statistiken neu berechnen",
+        "quizQuestions": "Quizfragen",
         "quizPointStatistic": {
             "maxScore": "Maximalpunkte: ",
             "titleRated": "Punkteverteilung (bewertet)",

@@ -13,6 +13,7 @@
         "quizPointStatisticTitle": "Score-Distribution",
         "quizStatisticTitle": "Quiz-Statistic",
         "recalculateStatistics": "Recalculate Statistics",
+        "quizQuestions": "Quiz questions",
         "quizPointStatistic": {
             "maxScore": "Maximum Score: ",
             "titleRated": "Score-Distribution (rated)",
