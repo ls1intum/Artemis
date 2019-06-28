@@ -18,16 +18,26 @@
     >
         <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"> </jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
-    <div class="card-footer">
+    <div class="card-footer text-nowrap editable-instruction-container__status">
+        <span class="instructions-status">
+            <span *ngIf="!unsavedChanges">
+                <fa-icon icon="check-circle" class="text-success mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
+            </span>
+            <span *ngIf="unsavedChanges">
+                <fa-icon icon="exclamation-triangle" class="text-warning mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.unsavedTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved">Unsaved.</span>
+            </span>
+            <span *ngIf="unsavedChanges && savingInstructions">
+                <fa-icon icon="circle-notch" class="mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving">Saving...</span>
+            </span>
+        </span>
         <jhi-programming-exercise-instruction-testcase-status
             [exerciseTestCases]="exerciseTestCases"
             [problemStatement]="exercise.problemStatement"
             [taskRegex]="taskRegex"
-            class="editable-instruction-container__status"
+            class="editable-instruction-container__status__testcase"
         ></jhi-programming-exercise-instruction-testcase-status>
-        <span id="instructions-status">
-            <fa-icon *ngIf="!unsavedChanges" icon="check-circle" class="text-white"></fa-icon>
-            <fa-icon *ngIf="unsavedChanges" icon="exclamation-triangle" class="text-warning"></fa-icon>
-        </span>
     </div>
 </div>

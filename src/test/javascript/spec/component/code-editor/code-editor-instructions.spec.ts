@@ -90,7 +90,7 @@ describe('CodeEditorInstructionsComponent', () => {
 
         const saveInstructionsButton = debugElement.query(By.css('#save-instructions-button'));
         expect(saveInstructionsButton).not.to.exist;
-        const instructionsLoadingIndicator = debugElement.query(By.css('#instructions-status'));
+        const instructionsLoadingIndicator = debugElement.query(By.css('.instructions-status'));
         expect(instructionsLoadingIndicator).not.to.exist;
         const instructionCompElem = debugElement.query(By.css('jhi-programming-exercise-instructions'));
         expect(instructionCompElem).to.exist;

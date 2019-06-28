@@ -889,3 +889,18 @@ Build-output
         }
     }
 }
+
+/*!* ==========================================================================
+Code-Editor-Status
+========================================================================== *!*/
+
+.code-editor-status {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(max-content, 1fr));
+    grid-column-gap: 10px;
+
+    > :not(:first-child) {
+        border-left: 1px solid rgba(0, 0, 0, 0.125);
+        padding-left: 20px;
+    }
+}
