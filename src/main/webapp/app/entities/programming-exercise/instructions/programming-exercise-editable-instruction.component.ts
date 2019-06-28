@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { compose, map, sortBy } from 'lodash/fp';
 import { Subscription, of } from 'rxjs';
@@ -9,7 +9,7 @@ import { Result } from 'app/entities/result';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/markdown-editor';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
 
 @Component({
@@ -32,6 +32,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
 
     savingInstructions = false;
     unsavedChanges = false;
+
+    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
     @Input() enableResize = true;
     @Input() showSaveButton = false;

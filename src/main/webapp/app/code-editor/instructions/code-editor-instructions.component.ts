@@ -1,18 +1,20 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, OnDestroy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { Subscription } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Participation } from '../../entities/participation';
 import { WindowRef } from '../../core/websocket/window.service';
 import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
 import { MarkdownEditorHeight } from 'app/markdown-editor';
+import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit {
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
@@ -31,7 +33,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     interactResizable: Interactable;
     noInstructionsAvailable = false;
 
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
+    resizeSubscription: Subscription;
+
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * @function ngAfterViewInit
@@ -64,6 +68,18 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
                 // Update element width
                 target.style.width = event.rect.width + 'px';
             });
+
+        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
+            if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
+                this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.resizeSubscription) {
+            this.resizeSubscription.unsubscribe();
+        }
     }
 
     /**
