@@ -24,6 +24,15 @@
         flex: 1 1 auto;
     }
 
+    .instructions__content__markdown {
+        background-color: white;
+    }
+
+    // Fix for full screen mode, otherwise the color is black.
+    .markdown-editor {
+        background-color: white;
+    }
+
     .markdown-editor__content {
         flex: 1 1 auto;
     }

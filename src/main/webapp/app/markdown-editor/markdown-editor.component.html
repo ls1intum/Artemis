@@ -1,4 +1,4 @@
-<ngb-tabset class="markdown-editor-wrapper" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
+<ngb-tabset #wrapper class="markdown-editor-wrapper bg-white" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
     <!--Begin Editor-->
     <ngb-tab title="{{ 'entity.action.edit' | translate }}" id="editor_edit">
         <ng-template ngbTabContent>
@@ -31,6 +31,17 @@
                             Color
                         </div>
                         <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+                    </div>
+                    <div class="ml-auto">
+                        <button
+                            *ngFor="let command of metaCommands"
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            (click)="command.execute()"
+                            [ngbTooltip]="command.buttonTranslationString | translate"
+                        >
+                            <fa-icon [icon]="command.buttonIcon"></fa-icon>
+                        </button>
                     </div>
                 </div>
                 <!-- domain commands -->

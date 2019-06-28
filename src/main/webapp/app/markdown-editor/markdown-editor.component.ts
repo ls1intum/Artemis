@@ -20,6 +20,7 @@ import {
     UnorderedListCommand,
     ReferenceCommand,
     ColorPickerCommand,
+    FullscreenCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
@@ -43,6 +44,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     public MarkdownEditorHeight = MarkdownEditorHeight;
+    // This ref is used for entering the fullscreen mode.
+    @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
     @ViewChild('aceEditor', { static: false })
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
@@ -64,6 +67,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
      * because the class definitions are saved within that method*/
     colorCommands: Command[] = [new ColorPickerCommand()];
+
+    /**
+     * Use this array for commands that are not related to the markdown but to the editor (e.g. fullscreen mode).
+     * These elements will be displayed on the right side of the command bar.
+     */
+    metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
     defaultCommands: Command[] = [
@@ -158,12 +167,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().completers = [];
 
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
             });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
+                command.setMarkdownWrapper(this.wrapper);
             });
         }
         this.setupMarkdownEditor();
