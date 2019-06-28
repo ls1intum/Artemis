@@ -137,7 +137,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             .on('resizestart', function(event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.codeEditorGridService.submitResizeEvent(ResizeType.BOTTOM);
             })

@@ -321,25 +321,33 @@ jhi-code-editor-instructions {
     }
 }
 
-.editor-sidebar-right.collapsed--horizontal .editable-instruction-container__status {
+.editor-sidebar-right.collapsed--horizontal {
+    .instructions__content {
+        height: auto;
+    }
     .editable-instruction-container__status {
+        display: flex;
+        flex-flow: column;
+
         > :not(:last-child) {
             padding-bottom: 5px;
         }
 
         > :not(:first-child) {
+            padding-left: 0;
             padding-top: 5px;
             border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: none;
         }
 
         span {
             display: none !important;
         }
-    }
 
-    .editable-instruction-container__status__testcase span,
-    .instructions-status span {
-        display: none !important;
+        .editable-instruction-container__status__testcase span,
+        .instructions-status span {
+            display: none !important;
+        }
     }
 }
 
@@ -362,7 +370,7 @@ Ace Editor
 Build-output
 ========================================================================== *!*/
 
-.editor-bottom.collapsed--horizontal .build-output {
+.editor-bottom.collapsed--vertical .build-output {
     flex: none !important;
 
     .card-header {
@@ -383,10 +391,10 @@ Build-output
     }
 }
 
-.build-output {
+.build-output:not(.collapsed--vertical) {
     height: inherit;
 
-    &__content {
+    .build-output__content {
         font-family: Menlo, Monaco, 'Courier New', monospace;
         font-size: 11px;
         overflow: auto;
