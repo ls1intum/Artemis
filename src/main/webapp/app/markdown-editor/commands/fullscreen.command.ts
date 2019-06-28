@@ -46,9 +46,14 @@ export class FullscreenCommand extends Command {
 
     private isFullScreen() {
         const docElement = document as any;
-        if (docElement.fullscreenElement !== undefined) return docElement.fullscreenElement;
-        if (docElement.webkitFullscreenElement !== undefined) return docElement.webkitFullscreenElement;
-        if (docElement.mozFullScreenElement !== undefined) return docElement.mozFullScreenElement;
-        if (docElement.msFullscreenElement !== undefined) return docElement.msFullscreenElement;
+        if (docElement.fullscreenElement !== undefined) {
+            return docElement.fullscreenElement;
+        } else if (docElement.webkitFullscreenElement !== undefined) {
+            return docElement.webkitFullscreenElement;
+        } else if (docElement.mozFullScreenElement !== undefined) {
+            return docElement.mozFullScreenElement;
+        } else if (docElement.msFullscreenElement !== undefined) {
+            return docElement.msFullscreenElement;
+        }
     }
 }
