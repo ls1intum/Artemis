@@ -53,7 +53,7 @@
                     </ng-container>
                 </div>
             </div>
-            <div class="height-100 border-0 markdown-editor">
+            <div class="height-100 border-0 markdown-editor d-flex flex-column">
                 <ace-editor
                     #aceEditor
                     [mode]="aceEditorOptions.mode"
@@ -62,7 +62,8 @@
                     (textChange)="markdownChange.emit($event)"
                     class="form-control markdown-editor__content"
                 ></ace-editor>
-                <div *ngIf="enableResize" class="rg-bottom"><span></span></div>
+                <!-- Required for resizing; don't remove empty span -->
+                <fa-icon *ngIf="enableResize" icon="grip-lines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
             </div>
         </ng-template>
     </ngb-tab>

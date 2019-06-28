@@ -1,4 +1,13 @@
 <div class="editable-instruction-container">
+    <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
+    <jhi-markdown-editor
+        [defaultHeight]="markdownEditorHeight"
+        [domainCommands]="domainCommands"
+        [markdown]="exercise.problemStatement"
+        (markdownChange)="updateProblemStatement($event)"
+    >
+        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"> </jhi-programming-exercise-instructions>
+    </jhi-markdown-editor>
     <button
         *ngIf="enableSave"
         id="save-instructions-button"
@@ -10,15 +19,6 @@
         <fa-icon *ngIf="savingInstructions" icon="circle-notch" [spin]="true" class="mr-2"></fa-icon>
         <span jhiTranslate="entity.action.save"></span>
     </button>
-    <jhi-markdown-editor
-        [defaultHeight]="markdownEditorHeight"
-        [domainCommands]="domainCommands"
-        [enableResize]="enableResize"
-        [markdown]="exercise.problemStatement"
-        (markdownChange)="updateProblemStatement($event)"
-    >
-        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"> </jhi-programming-exercise-instructions>
-    </jhi-markdown-editor>
     <div *ngIf="showStatus" class="card-footer text-nowrap editable-instruction-container__status">
         <span class="instructions-status">
             <span *ngIf="!unsavedChanges">
@@ -41,4 +41,6 @@
             class="editable-instruction-container__status__testcase"
         ></jhi-programming-exercise-instruction-testcase-status>
     </div>
+    <!-- Required for resizing; don't remove empty span -->
+    <fa-icon *ngIf="enableResize" icon="grip-lines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
 </div>

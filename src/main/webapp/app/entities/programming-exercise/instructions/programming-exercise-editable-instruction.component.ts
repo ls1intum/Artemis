@@ -1,5 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, AfterViewInit, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
+import Interactable from '@interactjs/core/Interactable';
+import interact from 'interactjs';
 import { compose, map, sortBy } from 'lodash/fp';
 import { Subscription, of } from 'rxjs';
 import { filter, catchError, tap } from 'rxjs/operators';
@@ -16,7 +18,7 @@ import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
 })
-export class ProgrammingExerciseEditableInstructionComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseEditableInstructionComponent implements OnChanges, AfterViewInit, OnDestroy {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
@@ -31,6 +33,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
 
     savingInstructions = false;
     unsavedChanges = false;
+
+    interactResizable: Interactable;
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
@@ -91,6 +95,35 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
                 )
                 .subscribe();
         }
+    }
+
+    ngAfterViewInit() {
+        this.interactResizable = interact('.editable-instruction-container')
+            .resizable({
+                // Enable resize from top edge; triggered by class rg-top
+                edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: 200 },
+                    max: { height: 1200 },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.markdownEditor.aceEditorContainer.getEditor().resize();
+            })
+            .on('resizemove', function(event: any) {
+                // The first child is the markdown editor.
+                const target = event.target.children && event.target.children[0];
+                if (target) {
+                    // Update element height
+                    target.style.height = event.rect.height + 'px';
+                }
+            });
     }
 
     ngOnDestroy(): void {

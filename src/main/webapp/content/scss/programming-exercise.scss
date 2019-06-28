@@ -5,15 +5,23 @@
     flex: 1 1 auto;
     height: inherit;
 
-    jhi-markdown-editor,
-    .markdown-editor-wrapper,
-    .tab-content,
-    .tab-content > .active,
-    .markdown-editor {
+    jhi-markdown-editor {
+        height: 600px;
+    }
+
+    .markdown-editor-wrapper {
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
-        height: inherit;
+    }
+
+    jhi-markdown-editor,
+    .markdown-editor,
+    .tab-content,
+    .tab-content > .active {
+        display: flex;
+        flex-flow: column nowrap;
+        flex: 1 1 auto;
     }
 
     .markdown-editor__content {
@@ -47,5 +55,10 @@
             border-left: 1px solid rgba(0, 0, 0, 0.125);
             padding-left: 20px;
         }
+    }
+
+    .rg-bottom {
+        align-self: center;
+        cursor: row-resize;
     }
 }
