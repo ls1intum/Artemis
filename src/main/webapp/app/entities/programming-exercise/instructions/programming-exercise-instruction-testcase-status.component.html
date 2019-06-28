@@ -1,13 +1,11 @@
-<span>
-    <span *ngIf="invalidTestCases.length + missingTestCases.length > 0">
-        <fa-icon icon="exclamation-triangle" class="text-warning mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
-        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
-    </span>
-    <span *ngIf="invalidTestCases.length + missingTestCases.length <= 0">
-        <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
-        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test case issues.</span>
-    </span>
-</span>
+<div *ngIf="invalidTestCases.length + missingTestCases.length > 0">
+    <fa-icon icon="exclamation-triangle" class="text-warning mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
+</div>
+<div *ngIf="invalidTestCases.length + missingTestCases.length <= 0">
+    <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test case issues.</span>
+</div>
 
 <ng-template #tooltipContent>
     <div class="text-left w-100">
