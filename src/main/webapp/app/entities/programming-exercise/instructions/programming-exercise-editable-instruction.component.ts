@@ -35,6 +35,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
+    @Input() showStatus = true;
+    @Input() enableSave = true;
     @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input()

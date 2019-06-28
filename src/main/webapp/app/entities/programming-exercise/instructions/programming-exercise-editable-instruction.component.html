@@ -1,5 +1,6 @@
 <div class="editable-instruction-container">
     <button
+        *ngIf="enableSave"
         id="save-instructions-button"
         [disabled]="savingInstructions || !unsavedChanges"
         (click)="saveInstructions($event)"
@@ -18,7 +19,7 @@
     >
         <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"> </jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
-    <div class="card-footer text-nowrap editable-instruction-container__status">
+    <div *ngIf="showStatus" class="card-footer text-nowrap editable-instruction-container__status">
         <span class="instructions-status">
             <span *ngIf="!unsavedChanges">
                 <fa-icon icon="check-circle" class="text-success mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | translate }}"></fa-icon>

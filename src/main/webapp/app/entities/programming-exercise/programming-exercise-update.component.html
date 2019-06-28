@@ -122,10 +122,11 @@
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
                     <jhi-programming-exercise-editable-instructions
                         *ngIf="problemStatementLoaded && templateParticipationResultLoaded"
-                        #preview
                         [participation]="programmingExercise.templateParticipation"
                         [templateParticipation]="programmingExercise.templateParticipation"
                         [(exercise)]="programmingExercise"
+                        [showStatus]="programmingExercise?.id"
+                        [enableSave]="programmingExercise?.id"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>
 
