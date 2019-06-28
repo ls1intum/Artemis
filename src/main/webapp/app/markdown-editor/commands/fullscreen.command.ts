@@ -8,6 +8,7 @@ import { Command } from 'app/markdown-editor/commands/command';
  */
 export class FullscreenCommand extends Command {
     buttonIcon = 'compress';
+    buttonTranslationString = 'artemisApp.markdownEditor.commands.fullscreen';
 
     execute(input?: string): void {
         if (this.isFullScreen()) {
