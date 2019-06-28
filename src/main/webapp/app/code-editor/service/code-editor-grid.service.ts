@@ -9,8 +9,13 @@ export enum ResizeType {
     BOTTOM = 'BOTTOM',
 }
 
+export class ICodeEditorGridService {
+    subscribeForResizeEvents: (byTypes: ResizeType[]) => Observable<ResizeType>;
+    submitResizeEvent: (resizeType: ResizeType) => void;
+}
+
 @Injectable({ providedIn: 'root' })
-export class CodeEditorGridService implements OnDestroy {
+export class CodeEditorGridService implements ICodeEditorGridService, OnDestroy {
     private resizeSubject = new Subject<ResizeType>();
 
     ngOnDestroy(): void {

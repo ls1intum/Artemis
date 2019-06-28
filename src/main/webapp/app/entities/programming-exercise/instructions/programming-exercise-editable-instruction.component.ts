@@ -11,7 +11,7 @@ import { Result } from 'app/entities/result';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/markdown-editor';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
 
 @Component({
@@ -53,7 +53,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements OnChange
     @Input() templateParticipation: Participation;
     @Output() participationChange = new EventEmitter<Participation>();
 
-    @Input() markdownEditorHeight = MarkdownEditorHeight.MEDIUM;
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     set exercise(exercise: ProgrammingExercise) {

@@ -1,37 +1,29 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, ComponentFixture, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent } from 'ng-mocks';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { spy, stub, SinonStub } from 'sinon';
-import { of, Subscription, BehaviorSubject, throwError } from 'rxjs';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { SinonStub, stub } from 'sinon';
+import { BehaviorSubject, of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
-import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
 import {
     ProgrammingExercise,
     ProgrammingExerciseEditableInstructionComponent,
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
-    TestCaseState,
+    ProgrammingExerciseService,
 } from 'src/main/webapp/app/entities/programming-exercise';
-import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
-import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 chai.use(sinonChai);
@@ -43,9 +35,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
+    let programmingExerciseService: ProgrammingExerciseService;
     let subscribeForLatestResultOfParticipationStub: SinonStub;
     let getLatestResultWithFeedbacksStub: SinonStub;
     let latestResultSubject: BehaviorSubject<Result>;
+    let updateProblemStatementStub: SinonStub;
 
     const exercise = { id: 30 } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
@@ -53,7 +47,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
@@ -61,7 +55,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 SafeHtmlPipe,
             ],
-            providers: [{ provide: ResultService, useClass: MockResultService }, { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService }],
+            providers: [
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                ProgrammingExerciseService,
+            ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()
@@ -76,6 +74,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
                 getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks');
                 subscribeForLatestResultOfParticipationStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(latestResultSubject);
+
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                updateProblemStatementStub = stub(programmingExerciseService, 'updateProblemStatement');
             });
     });
 
@@ -86,6 +87,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         latestResultSubject.complete();
         latestResultSubject = new BehaviorSubject(null);
         subscribeForLatestResultOfParticipationStub.returns(latestResultSubject);
+        updateProblemStatementStub.restore();
     });
 
     it('should not have any test cases if the result feedbacks of the template participation are empty', () => {
@@ -145,4 +147,31 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(templateparticipation.id);
     });
+
+    it('should update programming exercise problem statement on button click', fakeAsync((done: any) => {
+        const newProblemStatement = 'new lorem ipsum';
+        updateProblemStatementStub.returns(of(null));
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.templateParticipation = templateparticipation;
+        fixture.detectChanges();
+
+        comp.updateProblemStatement(newProblemStatement);
+        fixture.detectChanges();
+
+        const saveInstructionsButton = debugElement.query(By.css('#save-instructions-button'));
+        expect(saveInstructionsButton).to.exist;
+        expect(saveInstructionsButton.nativeElement.disabled).to.be.false;
+
+        saveInstructionsButton.nativeElement.click();
+        tick();
+        fixture
+            .whenStable()
+            .then(() => {
+                expect(updateProblemStatementStub).to.have.been.calledOnce;
+                expect(updateProblemStatementStub).to.have.been.calledOnceWithExactly(exercise.id, newProblemStatement);
+                expect(comp.unsavedChanges).to.be.false;
+            })
+            .catch(err => done.fail(err));
+    }));
 });

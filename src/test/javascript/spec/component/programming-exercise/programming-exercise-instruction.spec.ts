@@ -270,7 +270,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementHtml);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).to.equal(problemStatementHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));

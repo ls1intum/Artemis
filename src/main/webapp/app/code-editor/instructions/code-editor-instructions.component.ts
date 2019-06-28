@@ -15,8 +15,6 @@ import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
     templateUrl: './code-editor-instructions.component.html',
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
-    MarkdownEditorHeight = MarkdownEditorHeight;
-
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
