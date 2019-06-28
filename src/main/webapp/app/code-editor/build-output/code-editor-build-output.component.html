@@ -6,13 +6,14 @@
         </h3>
         <fa-icon class="ml-auto" icon="chevron-down"></fa-icon>
     </div>
-    <div class="card-body build-output__content">
-        <p class="text-center is-building" *ngIf="isBuilding">
-            <fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span>
-        </p>
-        <p class="text-center no-buildoutput" *ngIf="!isBuilding && !rawBuildLogs.length" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
-
-        <div class="buildoutput d-flex flex-column" *ngIf="!isBuilding && rawBuildLogs.length">
+    <div class="card-body" *ngIf="!isBuilding && !rawBuildLogs.length">
+        <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
+    </div>
+    <div class="card-body" *ngIf="isBuilding">
+        <p class="text-center is-building"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
+    </div>
+    <div class="card-body build-output__content" *ngIf="!isBuilding && rawBuildLogs.length">
+        <div class="buildoutput d-flex flex-column">
             <span *ngFor="let logEntry of rawBuildLogs" class="buildoutput__entry">
                 <span class="buildoutput__entry-date">{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</span>
                 <span class="buildoutput__entry-text" [innerHtml]="logEntry.log | safeHtml"></span>
