@@ -10,10 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javassist.NotFoundException;
@@ -305,8 +302,8 @@ public class ProgrammingExerciseService {
             String testPrefix = programmingLanguage + File.separator + "test";
             String solutionPrefix = programmingLanguage + File.separator + "solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise);
-            setupTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
 
         }
         catch (Exception ex) {
@@ -338,13 +335,14 @@ public class ProgrammingExerciseService {
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+
         return programmingExercise;
     }
 
     // Copy template and push, if no file is in the directory
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
-            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
+            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
                 fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
                         programmingExercise.getPackageFolderName());
@@ -374,6 +372,78 @@ public class ProgrammingExerciseService {
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+        }
+    }
+
+    // Copy template and push, if no file is in the directory
+    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
+            throws Exception {
+        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+            if (!programmingExercise.getSequentialTestRuns()) {
+                setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+            }
+            else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
+                String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
+                String sequentialPomXmlPath = templatePath + "/stagePom.xml";
+                String testUtilsPath = templatePath + "/testutils/**/*.*";
+                Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(sequentialPomXmlPath);
+                Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
+                Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
+                // This is done to prepare for a feature where instructors/tas can add multiple build stages.
+                List<String> buildStages = new ArrayList<>();
+                buildStages.add("structural");
+                buildStages.add("behavior");
+
+                Map<String, Boolean> sectionsMap = new HashMap<>();
+                sectionsMap.put("sequential", false);
+
+                fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                fileService.removeSectionsInFile(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+
+                for (String buildStage : buildStages) {
+
+                    Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
+                    Files.createDirectory(buildStagePath);
+
+                    String buildStageResourcesPath = templatePath + "/" + buildStage + "/**/*.*";
+                    Resource[] buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
+
+                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
+                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+
+                    Files.copy(stagePomXml.getFile().toPath(), Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "pom.xml"));
+                    fileService.copyResources(testUtils, prefix, Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(),
+                            true);
+                    fileService.copyResources(buildStageResources, prefix,
+                            Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
+                }
+
+                // TODO: refactor
+                List<String> fileTargets = new ArrayList<>();
+                List<String> fileReplacements = new ArrayList<>();
+                // This is based on the correct order and assumes that boths lists have the same
+                // length, it
+                // replaces fileTargets.get(i) with fileReplacements.get(i)
+
+                if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                    fileTargets.add("${packageName}");
+                    fileReplacements.add(programmingExercise.getPackageName());
+                }
+                // there is no need in python to replace package names
+
+                fileTargets.add("${exerciseNamePomXml}");
+                fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+
+                fileTargets.add("${exerciseName}");
+                fileReplacements.add(programmingExercise.getTitle());
+
+                fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+
+                gitService.stageAllChanges(repository);
+                gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
+                repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+            }
         }
     }
 

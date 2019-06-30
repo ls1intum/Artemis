@@ -28,12 +28,14 @@
     </dependencies>
     <build>
         <sourceDirectory>${project.basedir}/assignment/src</sourceDirectory>
+        %sequential-start%
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>
                 <directory>${project.basedir}/test</directory>
             </testResource>
         </testResources>
+        %sequential-stop%
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

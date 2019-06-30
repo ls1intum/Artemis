@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,7 +11,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -242,14 +244,14 @@ public class FileService {
      * @param targetDirectoryPath the path of the folder where the copy should be located
      * @throws IOException
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
+    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
 
         for (Resource resource : resources) {
 
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
-            String targetFilePath = fileUrl.substring(index + prefix.length());
+            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
             // special case for '.git.ignore.file' file which would not be included in build otherwise
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
@@ -286,6 +288,59 @@ public class FileService {
         File targetDirectory = new File(targetDirectoryPath);
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    public void removeSectionsInFile(String filePath, Map<String, Boolean> sections) {
+        Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
+        File file = new File(filePath);
+        File tempFile = new File(filePath + "_temp");
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+            Map.Entry<Pattern, Boolean> matchingStartPattern = null;
+            String line = reader.readLine();
+            while (line != null) {
+                if (matchingStartPattern != null) {
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            matchingStartPattern = null;
+                            line = reader.readLine();
+                            break;
+                        }
+                    }
+                }
+                else if (matchingStartPattern == null) {
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            matchingStartPattern = entry;
+                            line = reader.readLine();
+                            break;
+                        }
+                    }
+                    if (matchingStartPattern != null) {
+                        continue;
+                    }
+                }
+
+                if (matchingStartPattern == null || matchingStartPattern.getValue()) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+
+                line = reader.readLine();
+            }
+            reader.close();
+            writer.close();
+            Files.delete(file.toPath());
+            FileUtils.moveFile(tempFile, new File(filePath));
+        }
+        catch (FileNotFoundException ex) {
+            throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".");
+        }
     }
 
     /**
