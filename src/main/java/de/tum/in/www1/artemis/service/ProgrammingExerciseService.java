@@ -360,7 +360,7 @@ public class ProgrammingExerciseService {
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
             throws Exception {
-        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+        if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
             String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
 
             String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
@@ -373,7 +373,7 @@ public class ProgrammingExerciseService {
 
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
-            if (!programmingExercise.getSequentialTestRuns() && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            if (!programmingExercise.getSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
 
@@ -386,7 +386,7 @@ public class ProgrammingExerciseService {
                 fileService.copyResources(testUtils, prefix, packagePath, true);
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
             }
-            else if (programmingExercise.getSequentialTestRuns()) {
+            else {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
                 Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
@@ -417,14 +417,13 @@ public class ProgrammingExerciseService {
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
                 }
             }
-            else {
-                // If there is no special test structure for a programming language, just copy all the test files.
-                setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
-                return;
-            }
 
             replacePlaceholders(programmingExercise, repository);
             pushRepository(repository, templateName);
+        }
+        else {
+            // If there is no special test structure for a programming language, just copy all the test files.
+            setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
         }
     }
 
