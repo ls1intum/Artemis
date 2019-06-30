@@ -95,8 +95,8 @@ public class BambooBuildPlanService {
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
             return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                    new MavenTask().goal("\'-Dtest=*StructuralTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                    new MavenTask().goal("\'-Dtest=*BehaviorTest\' clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                    new MavenTask().goal("clean test").workingSubdirectory("sequential").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else if (programmingLanguage == ProgrammingLanguage.PYTHON && !sequentialBuildRuns) {
             return new Stage("Default Stage")
