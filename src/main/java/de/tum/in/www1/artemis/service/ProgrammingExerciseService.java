@@ -343,11 +343,6 @@ public class ProgrammingExerciseService {
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
-                        programmingExercise.getPackageFolderName());
-            }
-
             replacePlaceholders(programmingExercise, repository);
             pushRepository(repository, templateName);
         }
@@ -386,10 +381,9 @@ public class ProgrammingExerciseService {
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                fileService.copyResources(testUtils, prefix,
-                        Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), true);
-                fileService.copyResources(testFileResources, prefix,
-                        Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
+                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                fileService.copyResources(testUtils, prefix, packagePath, true);
+                fileService.copyResources(testFileResources, prefix, packagePath, false);
             }
             else if (programmingExercise.getSequentialTestRuns()) {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
@@ -414,11 +408,10 @@ public class ProgrammingExerciseService {
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
-                    Files.copy(stagePomXml.getFile().toPath(), Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "pom.xml"));
-                    fileService.copyResources(testUtils, prefix, Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(),
-                            true);
-                    fileService.copyResources(buildStageResources, prefix,
-                            Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
+                    String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                    Files.copy(stagePomXml.getFile().toPath(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                    fileService.copyResources(testUtils, prefix, packagePath, true);
+                    fileService.copyResources(buildStageResources, prefix, packagePath, false);
                 }
             }
             else {
@@ -440,6 +433,10 @@ public class ProgrammingExerciseService {
      * @throws IOException
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+        }
+
         List<String> fileTargets = new ArrayList<>();
         List<String> fileReplacements = new ArrayList<>();
         // This is based on the correct order and assumes that boths lists have the same

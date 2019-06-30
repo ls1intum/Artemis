@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>${packageName}</groupId>
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <version>1.0</version>
     <name>${exerciseName} Tests</name>
 	<properties>

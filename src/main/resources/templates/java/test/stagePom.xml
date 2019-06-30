@@ -10,5 +10,10 @@
     <build>
         <sourceDirectory>${project.basedir}/../assignment/src</sourceDirectory>
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/test</directory>
+            </testResource>
+        </testResources>
     </build>
 </project>
