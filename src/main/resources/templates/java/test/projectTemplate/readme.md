@@ -9,8 +9,8 @@ Otherwise during the test run maven will not be able to find the imported classe
 
 #### Sequential test runs
 If you have decided to use the sequential test runs feature for this exercise, please read the following instructions:
-We use a file pattern to run structural before behavior tests.
-1. Structural test files must contain the string "Structural" in their file / class name, e.g. ClassStructuralTest.java
-2. Behavior test files must contain the string "Behavior" in their file / class name, e.g. SortingBehaviorTest.java
+We use the folder structure of the test repository to differentiate structural and behavior tests:
+1. Structural test files must be placed in the folder "structural"
+2. Behavior test files must be placed in the folder "behavior"
 
-All other files that don't follow any of the described patterns will NOT be executed!
+Files in other folders will not be executed!
