@@ -323,12 +323,17 @@ public class FileService {
                 }
                 else {
                     // If there is a starting pattern matched, check if an ending pattern is encountered.
+                    boolean endMatcherFound = false;
                     for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
                         if (entry.getKey().matcher(line).matches()) {
-                            matchingStartPattern = null;
-                            line = reader.readLine();
+                            endMatcherFound = true;
                             break;
                         }
+                    }
+                    if (endMatcherFound) {
+                        matchingStartPattern = null;
+                        line = reader.readLine();
+                        continue;
                     }
                 }
 

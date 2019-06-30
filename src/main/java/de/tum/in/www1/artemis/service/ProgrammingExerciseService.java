@@ -377,7 +377,8 @@ public class ProgrammingExerciseService {
                 String testFilePath = templatePath + "/testFiles" + "/**/*.*";
                 Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
 
-                sectionsMap.put("sequential", true);
+                sectionsMap.put("non-sequential", true);
+                sectionsMap.put("sequential", false);
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
@@ -393,7 +394,8 @@ public class ProgrammingExerciseService {
                 buildStages.add("structural");
                 buildStages.add("behavior");
 
-                sectionsMap.put("sequential", false);
+                sectionsMap.put("non-sequential", false);
+                sectionsMap.put("sequential", true);
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
