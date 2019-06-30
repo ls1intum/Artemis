@@ -347,31 +347,9 @@ public class ProgrammingExerciseService {
                 fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
                         programmingExercise.getPackageFolderName());
             }
-            // there is no need in python to replace package names
 
-            List<String> fileTargets = new ArrayList<>();
-            List<String> fileReplacements = new ArrayList<>();
-            // This is based on the correct order and assumes that boths lists have the same
-            // length, it
-            // replaces fileTargets.get(i) with fileReplacements.get(i)
-
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                fileTargets.add("${packageName}");
-                fileReplacements.add(programmingExercise.getPackageName());
-            }
-            // there is no need in python to replace package names
-
-            fileTargets.add("${exerciseNamePomXml}");
-            fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
-
-            fileTargets.add("${exerciseName}");
-            fileReplacements.add(programmingExercise.getTitle());
-
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
-
-            gitService.stageAllChanges(repository);
-            gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
-            repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+            replacePlaceholders(programmingExercise, repository);
+            pushRepository(repository, templateName);
         }
     }
 
@@ -379,26 +357,41 @@ public class ProgrammingExerciseService {
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
             throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
-            if (!programmingExercise.getSequentialTestRuns()) {
-                setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+            String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
+
+            String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
+            String testUtilsPath = templatePath + "/testutils/**/*.*";
+
+            Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
+            Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
+
+            Map<String, Boolean> sectionsMap = new HashMap<>();
+
+            fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+
+            if (!programmingExercise.getSequentialTestRuns() && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                String testFilePath = templatePath + "/testFiles" + "/**/*.*";
+                Resource[] testFileResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testFilePath);
+
+                sectionsMap.put("sequential", true);
+
+                fileService.removeSectionsInFile(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+
+                fileService.copyResources(testUtils, prefix, Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(),
+                    true);
+                fileService.copyResources(testFileResources, prefix,
+                    Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
             }
-            else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
-                String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
-                String sequentialPomXmlPath = templatePath + "/stagePom.xml";
-                String testUtilsPath = templatePath + "/testutils/**/*.*";
-                Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(sequentialPomXmlPath);
-                Resource[] testUtils = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testUtilsPath);
-                Resource[] projectTemplate = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(projectTemplatePath);
+            else if (programmingExercise.getSequentialTestRuns()) {
+                String stagePomXmlPath = templatePath + "/stagePom.xml";
+                Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> buildStages = new ArrayList<>();
                 buildStages.add("structural");
                 buildStages.add("behavior");
 
-                Map<String, Boolean> sectionsMap = new HashMap<>();
                 sectionsMap.put("sequential", false);
 
-                fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
                 fileService.removeSectionsInFile(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
                 for (String buildStage : buildStages) {
@@ -406,7 +399,7 @@ public class ProgrammingExerciseService {
                     Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
                     Files.createDirectory(buildStagePath);
 
-                    String buildStageResourcesPath = templatePath + "/" + buildStage + "/**/*.*";
+                    String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
                     Resource[] buildStageResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(buildStageResourcesPath);
 
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
@@ -418,33 +411,43 @@ public class ProgrammingExerciseService {
                     fileService.copyResources(buildStageResources, prefix,
                             Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
                 }
-
-                // TODO: refactor
-                List<String> fileTargets = new ArrayList<>();
-                List<String> fileReplacements = new ArrayList<>();
-                // This is based on the correct order and assumes that boths lists have the same
-                // length, it
-                // replaces fileTargets.get(i) with fileReplacements.get(i)
-
-                if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-                    fileTargets.add("${packageName}");
-                    fileReplacements.add(programmingExercise.getPackageName());
-                }
-                // there is no need in python to replace package names
-
-                fileTargets.add("${exerciseNamePomXml}");
-                fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
-
-                fileTargets.add("${exerciseName}");
-                fileReplacements.add(programmingExercise.getTitle());
-
-                fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
-
-                gitService.stageAllChanges(repository);
-                gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
-                repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+            } else {
+                // If there is no special test structure for a programming language, just copy all the test files.
+               setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+               return;
             }
+
+            replacePlaceholders(programmingExercise, repository);
+            pushRepository(repository, templateName);
         }
+    }
+
+    public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
+        List<String> fileTargets = new ArrayList<>();
+        List<String> fileReplacements = new ArrayList<>();
+        // This is based on the correct order and assumes that boths lists have the same
+        // length, it
+        // replaces fileTargets.get(i) with fileReplacements.get(i)
+
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            fileTargets.add("${packageName}");
+            fileReplacements.add(programmingExercise.getPackageName());
+        }
+        // there is no need in python to replace package names
+
+        fileTargets.add("${exerciseNamePomXml}");
+        fileReplacements.add(programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
+
+        fileTargets.add("${exerciseName}");
+        fileReplacements.add(programmingExercise.getTitle());
+
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
+    }
+
+    public void pushRepository(Repository repository, String templateName) throws GitAPIException {
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
+        repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
     }
 
     /**
