@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.compass;
 
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.DAYS_TO_KEEP_UNUSED_ENGINE;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.NUMBER_OF_OPTIMAL_MODELS;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -54,28 +57,6 @@ public class CompassService {
      * Map exerciseId to compass CalculationEngines
      */
     private static Map<Long, CalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
-
-    /**
-     * Remove an engine from memory after it has been unused for this number of days
-     */
-    private static final int DAYS_TO_KEEP_UNUSED_ENGINE = 1;
-
-    /**
-     * Time to check for unused engines
-     */
-    private static final int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
-
-    /**
-     * Confidence and coverage parameters to accept an automatic assessment
-     */
-    private static final double CONFIDENCE_THRESHOLD = 0.75;
-
-    private static final double COVERAGE_THRESHOLD = 0.8;
-
-    /**
-     * Number of optimal models to keep in cache
-     */
-    private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             ParticipationRepository participationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
@@ -266,6 +247,7 @@ public class CompassService {
 
         Result result = resultRepository.findDistinctWithFeedbackBySubmissionId(modelId)
                 .orElse(new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation()));
+
         // only assess automatically when there is no manual assessment yet
         if (result.getAssessmentType() != AssessmentType.MANUAL && result.getAssessor() == null) {
             ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId())
@@ -275,6 +257,7 @@ public class CompassService {
             if (!isSupported(modelingExercise.getDiagramType())) {
                 return;
             }
+
             // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable
             // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
             Grade grade = roundGrades(engine.getGradeForModel(modelId));

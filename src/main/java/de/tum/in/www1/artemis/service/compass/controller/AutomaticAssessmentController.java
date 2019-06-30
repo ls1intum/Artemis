@@ -213,5 +213,4 @@ public class AutomaticAssessmentController {
     public double getTotalConfidence() {
         return totalConfidence;
     }
-
 }

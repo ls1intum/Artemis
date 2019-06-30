@@ -27,7 +27,7 @@ public class Score {
         return comments;
     }
 
-    double getConfidence() {
+    public double getConfidence() {
         return confidence;
     }
 }

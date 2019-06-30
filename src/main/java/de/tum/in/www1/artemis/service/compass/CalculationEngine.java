@@ -90,4 +90,13 @@ public interface CalculationEngine {
      */
     JsonObject getStatistics();
 
+    /**
+     * Get the confidence for a specific model element with the given id.
+     *
+     * @param elementId    the id of the model element
+     * @param submissionId the id of the submission that contains the corresponding model
+     * @return the confidence for the model element with the given id
+     */
+    double getConfidenceForElement(String elementId, long submissionId);
+
 }

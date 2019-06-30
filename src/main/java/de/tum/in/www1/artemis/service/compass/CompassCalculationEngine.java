@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.compass;
 
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.ELEMENT_CONFIDENCE_THRESHOLD;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -267,6 +269,12 @@ public class CompassCalculationEngine implements CalculationEngine {
                 continue;
             }
 
+            double elementConfidence = getConfidenceForElement(jsonElementID, modelId);
+            if (elementConfidence < ELEMENT_CONFIDENCE_THRESHOLD) {
+                log.error("Confidence " + elementConfidence + " of element " + jsonElementID + " is smaller than configured confidence threshold " + ELEMENT_CONFIDENCE_THRESHOLD);
+                continue;
+            }
+
             feedback.setCredits(gradePointsEntry.getValue());
             feedback.setPositive(feedback.getCredits() >= 0);
             feedback.setText(grade.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
@@ -361,6 +369,18 @@ public class CompassCalculationEngine implements CalculationEngine {
         jsonObject.add("models", models);
 
         return jsonObject;
+    }
+
+    @Override
+    public double getConfidenceForElement(String elementId, long submissionId) {
+        UMLClassDiagram model = modelIndex.getModel(submissionId);
+        UMLElement element = model.getElementByJSONID(elementId);
+        if (element == null) {
+            return 0.0;
+        }
+
+        Optional<Assessment> optionalAssessment = assessmentIndex.getAssessment(element.getSimilarityID());
+        return optionalAssessment.map(assessment -> assessment.getScore(element.getContext()).getConfidence()).orElse(0.0);
     }
 
     /**
