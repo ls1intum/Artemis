@@ -23,9 +23,9 @@ import org.junit.runners.Parameterized;
  * (in case these are specified).
  */
 @RunWith(Parameterized.class)
-public class ConstructorStructuralTest extends StructuralTest {
+public class ConstructorTest extends StructuralTest {
 
-    public ConstructorStructuralTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+    public ConstructorTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 

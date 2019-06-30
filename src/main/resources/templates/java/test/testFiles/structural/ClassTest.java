@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized;
  * it implements an interface, based on its definition in the structure oracle.
  */
 @RunWith(Parameterized.class)
-public class ClassStructuralTest extends StructuralTest {
+public class ClassTest extends StructuralTest {
 
     private static final String JSON_PROPERTY_SUPERCLASS = "superclass";
 	private static final String JSON_PROPERTY_INTERFACES = "interfaces";
@@ -32,7 +32,7 @@ public class ClassStructuralTest extends StructuralTest {
 	private static final String JSON_PROPERTY_PACKAGE = "package";
 	private static final String JSON_PROPERTY_NAME = "name";
 
-	public ClassStructuralTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+	public ClassTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
         super(expectedClassName, expectedPackageName, expectedClassJSON);
     }
 
