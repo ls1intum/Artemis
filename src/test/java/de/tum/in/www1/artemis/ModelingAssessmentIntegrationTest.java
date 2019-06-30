@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -88,7 +89,7 @@ public class ModelingAssessmentIntegrationTest {
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(2, 1);
+        database.addUsers(6, 1);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
@@ -299,6 +300,56 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testConfidenceThreshold() throws Exception {
+        Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
+        Feedback feedbackTwentyPoints = new Feedback().credits(20.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
+        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
+        ModelingSubmission submission4 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
+        ModelingSubmission submission5 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student5");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student6");
+
+        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
+                Collections.singletonList(feedbackOnePoint.text("long feedback text")), HttpStatus.OK);
+
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
+
+        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
+                Collections.singletonList(feedbackTwentyPoints.text("wrong text")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
+
+        request.put("/api/modeling-submissions/" + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
+                Collections.singletonList(feedbackOnePoint.text("short text")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
+
+        request.put("/api/modeling-submissions/" + submission4.getId() + "/feedback?submit=true&ignoreConflicts=true",
+                Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
+
+        request.put("/api/modeling-submissions/" + submission5.getId() + "/feedback?submit=true&ignoreConflicts=true",
+                Collections.singletonList(feedbackOnePoint.text("medium text")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
+        // TODO CZ: adapt expected points when feedback points are not merged anymore + check for longes "correct" feedback text
+        assertThat(automaticResult.get().getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessmentUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
@@ -418,7 +469,7 @@ public class ModelingAssessmentIntegrationTest {
 
     private void checkAssessmentNotFinished(Result storedResult, User assessor) {
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
-        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
+        assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
