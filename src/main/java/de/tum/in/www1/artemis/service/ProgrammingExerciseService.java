@@ -353,7 +353,16 @@ public class ProgrammingExerciseService {
         }
     }
 
-    // Copy template and push, if no file is in the directory
+    /**
+     * Set up the test repository. This method differentiates non sequential and sequential test repositories (more than 1 test job).
+     *
+     * @param repository
+     * @param resources
+     * @param prefix
+     * @param templateName
+     * @param programmingExercise
+     * @throws Exception
+     */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
             throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
@@ -375,12 +384,12 @@ public class ProgrammingExerciseService {
 
                 sectionsMap.put("sequential", true);
 
-                fileService.removeSectionsInFile(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                fileService.copyResources(testUtils, prefix, Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(),
-                    true);
+                fileService.copyResources(testUtils, prefix,
+                        Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), true);
                 fileService.copyResources(testFileResources, prefix,
-                    Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
+                        Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
             }
             else if (programmingExercise.getSequentialTestRuns()) {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
@@ -392,7 +401,7 @@ public class ProgrammingExerciseService {
 
                 sectionsMap.put("sequential", false);
 
-                fileService.removeSectionsInFile(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
                 for (String buildStage : buildStages) {
 
@@ -411,10 +420,11 @@ public class ProgrammingExerciseService {
                     fileService.copyResources(buildStageResources, prefix,
                             Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString(), false);
                 }
-            } else {
+            }
+            else {
                 // If there is no special test structure for a programming language, just copy all the test files.
-               setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
-               return;
+                setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+                return;
             }
 
             replacePlaceholders(programmingExercise, repository);
@@ -422,6 +432,13 @@ public class ProgrammingExerciseService {
         }
     }
 
+    /**
+     * Replace placeholders in repository files (e.g. ${placeholder}).
+     * 
+     * @param programmingExercise
+     * @param repository
+     * @throws IOException
+     */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         List<String> fileTargets = new ArrayList<>();
         List<String> fileReplacements = new ArrayList<>();
@@ -444,6 +461,13 @@ public class ProgrammingExerciseService {
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
     }
 
+    /**
+     * Stage, commit and push.
+     * 
+     * @param repository
+     * @param templateName
+     * @throws GitAPIException
+     */
     public void pushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");

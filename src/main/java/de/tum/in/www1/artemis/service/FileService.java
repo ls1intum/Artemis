@@ -290,7 +290,13 @@ public class FileService {
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
     }
 
-    public void removeSectionsInFile(String filePath, Map<String, Boolean> sections) {
+    /**
+     * Look for sections that start and end with a section marker (e.g. %section-start% and %section-end%). Overrides the given file in filePath with a new file!
+     *
+     * @param filePath of file to look for replacable sections in.
+     * @param sections of structure String (section name) / Boolean (keep content in section or remove it).
+     */
+    public void replacePlaceholderSections(String filePath, Map<String, Boolean> sections) {
         Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
         File file = new File(filePath);
         File tempFile = new File(filePath + "_temp");
@@ -301,25 +307,28 @@ public class FileService {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
-                if (matchingStartPattern != null) {
+                // If there is no starting pattern matched atm, check if the current line is a start pattern.
+                if (matchingStartPattern == null) {
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            matchingStartPattern = entry;
+                            break;
+                        }
+                    }
+                    // If a pattern is matched, don't write anything so that the section qualifier is removed.
+                    if (matchingStartPattern != null) {
+                        line = reader.readLine();
+                        continue;
+                    }
+                }
+                else {
+                    // If there is a starting pattern matched, check if an ending pattern is encountered.
                     for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
                         if (entry.getKey().matcher(line).matches()) {
                             matchingStartPattern = null;
                             line = reader.readLine();
                             break;
                         }
-                    }
-                }
-                else if (matchingStartPattern == null) {
-                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
-                        if (entry.getKey().matcher(line).matches()) {
-                            matchingStartPattern = entry;
-                            line = reader.readLine();
-                            break;
-                        }
-                    }
-                    if (matchingStartPattern != null) {
-                        continue;
                     }
                 }
 
@@ -330,6 +339,7 @@ public class FileService {
 
                 line = reader.readLine();
             }
+
             reader.close();
             writer.close();
             Files.delete(file.toPath());
