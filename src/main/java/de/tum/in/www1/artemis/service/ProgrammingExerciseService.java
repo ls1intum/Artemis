@@ -411,7 +411,8 @@ public class ProgrammingExerciseService {
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
                     String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
-                    Files.copy(stagePomXml.getFile().toPath(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+
+                    Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
                     fileService.copyResources(testUtils, prefix, packagePath, true);
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
                 }
