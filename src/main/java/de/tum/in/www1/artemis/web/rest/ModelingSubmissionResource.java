@@ -166,7 +166,7 @@ public class ModelingSubmissionResource {
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
@@ -341,8 +341,9 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Removes sensitive information (e.g. example solution) from the exercise. This should be called before sending an exercise to the client for a student. IMPORTANT: Do not call
-     * this method from a transactional context as this would remove the sensitive information also from the entity in the database without explicitly saving it.
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
      */
     private void hideDetails(ModelingSubmission modelingSubmission) {
         // do not send old submissions or old results to the client
@@ -351,13 +352,16 @@ public class ModelingSubmissionResource {
             modelingSubmission.getParticipation().setResults(null);
 
             Exercise exercise = modelingSubmission.getParticipation().getExercise();
-            if (exercise != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
-                exercise.filterSensitiveInformation();
-            }
-            // remove information about the student from the submission for tutors to ensure a double-blind assessment
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                modelingSubmission.getParticipation().setStudent(null);
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    exercise.filterSensitiveInformation();
+                    modelingSubmission.setResult(null);
+                }
+                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                    modelingSubmission.getParticipation().setStudent(null);
+                }
             }
         }
     }
