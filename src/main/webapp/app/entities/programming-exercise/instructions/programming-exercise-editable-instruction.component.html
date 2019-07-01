@@ -1,6 +1,11 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    <jhi-markdown-editor [domainCommands]="domainCommands" [markdown]="exercise.problemStatement" (markdownChange)="updateProblemStatement($event)">
+    <jhi-markdown-editor
+        class="editable-instruction-container__editor"
+        [domainCommands]="domainCommands"
+        [markdown]="exercise.problemStatement"
+        (markdownChange)="updateProblemStatement($event)"
+    >
         <jhi-programming-exercise-instructions class="editable-instruction-container__instructions" #preview [participation]="participation" [exercise]="exercise">
         </jhi-programming-exercise-instructions>
     </jhi-markdown-editor>

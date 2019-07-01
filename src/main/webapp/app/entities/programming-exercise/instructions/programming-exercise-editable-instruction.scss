@@ -9,11 +9,11 @@
         height: 100%;
     }
 
-    jhi-markdown-editor {
-        height: 600px;
+    &__editor {
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
+        height: 100%;
     }
 
     .instructions__content__markdown {
