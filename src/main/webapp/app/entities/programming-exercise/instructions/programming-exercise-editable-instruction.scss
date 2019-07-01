@@ -1,4 +1,4 @@
-/*.editable-instruction-container {
+.editable-instruction-container {
     position: relative;
     display: flex;
     flex-flow: column nowrap;
@@ -7,35 +7,38 @@
 
     jhi-markdown-editor {
         height: 600px;
-    }
-
-    .markdown-editor-wrapper {
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
     }
 
-    jhi-markdown-editor,
+    /*    .markdown-editor-wrapper {
+        display: flex;
+        flex-flow: column nowrap;
+        flex: 1 1 auto;
+    }*/
+
+    /*    jhi-markdown-editor,
     .markdown-editor,
     .tab-content,
     .tab-content > .active {
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
-    }
+    }*/
 
     .instructions__content__markdown {
         background-color: white;
     }
 
     // Fix for full screen mode, otherwise the color is black.
-    .markdown-editor {
+    /*    .markdown-editor {
         background-color: white;
-    }
+    }*/
 
-    .markdown-editor__content {
+    /*    .markdown-editor__content {
         flex: 1 1 auto;
-    }
+    }*/
 
     .card-second-header {
         padding: 10px 15px;
@@ -43,11 +46,11 @@
         border-bottom: 1px solid #ddd;
     }
 
-    &__markdown {
+    /*    &__markdown {
         height: inherit;
         overflow: auto;
         padding: 1.25rem;
-    }
+    }*/
 
     &__save {
         position: absolute;
@@ -70,4 +73,4 @@
         align-self: center;
         cursor: row-resize;
     }
-}*/
+}

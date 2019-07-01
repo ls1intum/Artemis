@@ -17,6 +17,7 @@ import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
+    styleUrls: ['./programming-exercise-editable-instruction.scss'],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements OnChanges, AfterViewInit, OnDestroy {
     participationValue: Participation;
