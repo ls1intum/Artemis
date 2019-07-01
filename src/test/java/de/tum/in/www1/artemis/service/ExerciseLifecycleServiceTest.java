@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.ScheduledFuture;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.Test;
@@ -33,31 +34,77 @@ public class ExerciseLifecycleServiceTest {
     public void testScheduleExerciseOnReleaseTask() throws InterruptedException {
         final ZonedDateTime now = ZonedDateTime.now();
 
-        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest").releaseDate(now.plusSeconds(2)).dueDate(now.plusSeconds(5))
-                .assessmentDueDate(now.plusSeconds(8));
+        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask").releaseDate(now.plusSeconds(1)).dueDate(now.plusSeconds(2))
+                .assessmentDueDate(now.plusSeconds(3));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
         MutableBoolean assessmentDueTrigger = new MutableBoolean(false);
 
-        exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, releaseTrigger::setTrue);
-        exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, dueTrigger::setTrue);
-        exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, assessmentDueTrigger::setTrue);
+        final ScheduledFuture<?> releaseFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, releaseTrigger::setTrue);
+        final ScheduledFuture<?> dueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, dueTrigger::setTrue);
+        final ScheduledFuture<?> assessmentDueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, assessmentDueTrigger::setTrue);
 
-        Thread.sleep(2500);
+        assertFalse(releaseFuture.isDone());
+        assertFalse(dueFuture.isDone());
+        assertFalse(assessmentDueFuture.isDone());
+
+        Thread.sleep(1500);
         assertEqual(releaseTrigger, true);
         assertEqual(dueTrigger, false);
         assertEqual(assessmentDueTrigger, false);
 
-        Thread.sleep(3500);
+        assertTrue(releaseFuture.isDone());
+        assertFalse(dueFuture.isDone());
+        assertFalse(assessmentDueFuture.isDone());
+
+        Thread.sleep(1000);
         assertEqual(releaseTrigger, true);
         assertEqual(dueTrigger, true);
         assertEqual(assessmentDueTrigger, false);
 
-        Thread.sleep(2500);
+        assertTrue(releaseFuture.isDone());
+        assertTrue(dueFuture.isDone());
+        assertFalse(assessmentDueFuture.isDone());
+
+        Thread.sleep(1000);
         assertEqual(releaseTrigger, true);
         assertEqual(dueTrigger, true);
         assertEqual(assessmentDueTrigger, true);
+
+        assertTrue(releaseFuture.isDone());
+        assertTrue(dueFuture.isDone());
+        assertTrue(assessmentDueFuture.isDone());
+
+        assertFalse(releaseFuture.isCancelled());
+        assertFalse(dueFuture.isCancelled());
+        assertFalse(assessmentDueFuture.isCancelled());
+    }
+
+    @Test
+    public void testCancellationOfScheduledTask() throws InterruptedException {
+        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask").dueDate(ZonedDateTime.now().plusSeconds(1));
+        MutableBoolean trigger = new MutableBoolean(false);
+
+        final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, trigger::setTrue);
+
+        assertFalse(future.isDone());
+        assertFalse(future.isCancelled());
+        assertEqual(trigger, false);
+
+        Thread.sleep(500);
+
+        future.cancel(false);
+
+        assertTrue(future.isDone());
+        assertTrue(future.isCancelled());
+        assertEqual(trigger, false);
+
+        Thread.sleep(750);
+
+        assertTrue(future.isDone());
+        assertTrue(future.isCancelled());
+        assertEqual(trigger, false);
     }
 
     private void assertEqual(MutableBoolean testBoolean, boolean expected) {

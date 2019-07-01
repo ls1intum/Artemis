@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class ExerciseLifecycleService {
         this.scheduler = scheduler;
     }
 
-    public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
+    public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         final ZonedDateTime lifecycleDate;
 
         switch (lifecycle) {
@@ -39,11 +40,12 @@ public class ExerciseLifecycleService {
             break;
 
         default:
-            return;
+            throw new IllegalStateException("Unexpected Exercise Lifecycle State: " + lifecycle);
         }
 
-        scheduler.schedule(task, lifecycleDate.toInstant());
+        final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
         log.debug("Scheduled Task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
+        return future;
     }
 
 }
