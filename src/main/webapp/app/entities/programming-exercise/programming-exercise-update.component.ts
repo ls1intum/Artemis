@@ -16,6 +16,7 @@ import { ResultService } from 'app/entities/result';
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
+    styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly JAVA = ProgrammingLanguage.JAVA;
