@@ -43,7 +43,6 @@ export enum MarkdownEditorHeight {
 export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
-    public MarkdownEditorHeight = MarkdownEditorHeight;
     // This ref is used for entering the fullscreen mode.
     @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
     @ViewChild('aceEditor', { static: false })
@@ -112,8 +111,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ContentChild('preview', { static: false }) previewChild: ElementRef;
 
     /** Resizable constants **/
-    @Input()
-    defaultHeight = MarkdownEditorHeight.SMALL;
     @Input()
     enableResize = false;
     @Input()

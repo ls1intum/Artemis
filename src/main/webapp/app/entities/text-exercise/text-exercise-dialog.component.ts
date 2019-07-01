@@ -18,6 +18,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 @Component({
     selector: 'jhi-text-exercise-dialog',
     templateUrl: './text-exercise-dialog.component.html',
+    styleUrls: ['./text-exercise-dialog.scss'],
 })
 export class TextExerciseDialogComponent implements OnInit {
     textExercise: TextExercise;
