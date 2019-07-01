@@ -233,57 +233,18 @@ jhi-code-editor-instructions {
     flex: 1 1 auto;
     height: inherit;
 
-    .instructions {
+    .instructions-wrapper {
         display: flex;
         flex-flow: column nowrap;
         flex: 1 1 auto;
         height: 100%;
-
-        .editable-instruction-container,
-        jhi-markdown-editor,
-        .markdown-editor-wrapper,
-        .tab-content,
-        .tab-content > .active,
-        jhi-programming-exercise-instructions {
-            display: flex;
-            flex-flow: column nowrap;
-            flex: 1 1 auto;
-            height: inherit;
-        }
-
-        .markdown-editor {
-            display: flex;
-            flex-flow: column nowrap;
-            flex: 1 1 auto;
-            height: auto;
-        }
-
-        .markdown-editor__content {
-            flex: 1 1 auto;
-        }
 
         &__content {
             display: flex;
             flex-flow: column nowrap;
             flex: 1 1 auto;
             height: inherit;
-
-            .card-second-header {
-                padding: 10px 15px;
-                background-color: #f5f5f5;
-                border-bottom: 1px solid #ddd;
-            }
-
-            &__markdown {
-                height: inherit;
-                overflow: auto;
-                padding: 1.25rem;
-            }
         }
-    }
-
-    .nav.nav-tabs {
-        background-color: #f5f5f5;
     }
 }
 

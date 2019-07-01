@@ -5,6 +5,10 @@
     flex: 1 1 auto;
     height: inherit;
 
+    &__instructions {
+        height: 100%;
+    }
+
     jhi-markdown-editor {
         height: 600px;
         display: flex;
@@ -12,45 +16,15 @@
         flex: 1 1 auto;
     }
 
-    /*    .markdown-editor-wrapper {
-        display: flex;
-        flex-flow: column nowrap;
-        flex: 1 1 auto;
-    }*/
-
-    /*    jhi-markdown-editor,
-    .markdown-editor,
-    .tab-content,
-    .tab-content > .active {
-        display: flex;
-        flex-flow: column nowrap;
-        flex: 1 1 auto;
-    }*/
-
     .instructions__content__markdown {
         background-color: white;
     }
-
-    // Fix for full screen mode, otherwise the color is black.
-    /*    .markdown-editor {
-        background-color: white;
-    }*/
-
-    /*    .markdown-editor__content {
-        flex: 1 1 auto;
-    }*/
 
     .card-second-header {
         padding: 10px 15px;
         background-color: #f5f5f5;
         border-bottom: 1px solid #ddd;
     }
-
-    /*    &__markdown {
-        height: inherit;
-        overflow: auto;
-        padding: 1.25rem;
-    }*/
 
     &__save {
         position: absolute;
