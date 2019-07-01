@@ -13,7 +13,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @Input() public topOfPageAdjustment = 0;
     @Input() public tourStepWidth = 300;
     @Input() public minimalTourStepWidth = 200;
-    @Input() public skipText = 'Skip';
     @Input() public nextText = 'Next';
     @Input() public doneText = 'Done';
     @Input() public closeText = 'Close';
@@ -24,7 +23,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public selectedElementRect: DOMRect = null;
     public isOrbShowing = false;
 
-    private _announcementsCount = 0;
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
