@@ -72,7 +72,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             });
 
         this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMaxWidthLeft = this.$window.nativeWindow.screen.width / 4;
+        this.resizableMaxWidthLeft = this.$window.nativeWindow.screen.width / 2;
         this.interactResizableLeft = interact('.editor-sidebar-left')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom
@@ -98,7 +98,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
             });
 
         this.resizableMinWidthRight = this.$window.nativeWindow.screen.width / 6;
-        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 3;
+        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 2;
         this.interactResizableRight = interact('.editor-sidebar-right')
             .resizable({
                 // Enable resize from bottom edge; triggered by class rg-bottom

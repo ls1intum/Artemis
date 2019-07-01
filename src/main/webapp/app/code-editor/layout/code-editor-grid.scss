@@ -43,6 +43,7 @@ Code-Editor Layout Styles
 
                 ::ng-deep > *:first-child {
                     flex: 1 1 auto;
+                    width: 90%;
                 }
             }
         }
@@ -62,6 +63,7 @@ Code-Editor Layout Styles
 
             ::ng-deep > *:last-child {
                 flex: 1 1 auto;
+                width: 90%;
             }
         }
     }
@@ -153,7 +155,7 @@ Collapsable styling
             display: none;
         }
         .instructions__content {
-            height: auto;
+            display: none;
         }
     }
 
