@@ -19,6 +19,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
+    styleUrls: ['./code-editor-build-output.scss'],
     providers: [JhiAlertService, WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {

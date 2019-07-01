@@ -25,6 +25,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
+    styleUrls: ['./code-editor-ace.scss'],
     providers: [JhiAlertService, WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {

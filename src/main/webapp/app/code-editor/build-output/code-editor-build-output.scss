@@ -1,0 +1,29 @@
+/*!* ==========================================================================
+Build-output
+========================================================================== *!*/
+
+.build-output {
+    height: inherit;
+
+    .build-output__content {
+        font-family: Menlo, Monaco, 'Courier New', monospace;
+        font-size: 11px;
+        overflow: auto;
+        margin: 0;
+
+        .build-output__entry {
+            &-date {
+                width: 130px;
+                margin-right: 10px;
+                color: #505050;
+                font-weight: normal;
+                float: left;
+                clear: left;
+            }
+            &-text {
+                margin-bottom: 0;
+                color: #003366;
+            }
+        }
+    }
+}

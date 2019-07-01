@@ -1,0 +1,239 @@
+/*!* ==========================================================================
+Code-Editor Layout Styles
+========================================================================== *!*/
+
+.editor-wrapper {
+    display: grid;
+    grid-template-rows: min-content auto auto;
+    grid-row-gap: 10px;
+
+    .collapsed--horizontal {
+        width: 75px !important;
+    }
+    .collapsed--vertical {
+        height: 42px !important;
+    }
+
+    .editor-statusbar {
+        display: flex;
+        align-items: center;
+        border: 1px solid #e7e7e7;
+        padding: 10px;
+
+        &__title {
+            color: #5e5e5e;
+            font-size: 18px;
+        }
+    }
+
+    .editor-main {
+        display: flex;
+        flex-flow: column nowrap;
+        height: 500px;
+        margin-bottom: 10px;
+
+        &__content {
+            display: flex;
+            height: inherit;
+
+            .editor-sidebar-left {
+                flex: 0 1 auto;
+                display: flex;
+                width: 310px;
+
+                ::ng-deep > *:first-child {
+                    flex: 1 1 auto;
+                }
+            }
+        }
+
+        .editor-center {
+            flex: 1 1 auto;
+
+            .card {
+                height: 100%;
+            }
+        }
+        .editor-sidebar-right {
+            flex: 0 1 auto;
+            display: flex;
+            flex-flow: row nowrap;
+            width: 500px;
+
+            ::ng-deep > *:last-child {
+                flex: 1 1 auto;
+            }
+        }
+    }
+
+    .editor-bottom {
+        height: 200px;
+        flex: 1 1 auto;
+        display: flex;
+        flex-flow: column nowrap;
+
+        ::ng-deep > * {
+            height: 100%;
+        }
+    }
+}
+
+/*!* ==========================================================================
+Collapsable styling
+========================================================================== *!*/
+
+// File browser
+.editor-sidebar-left.collapsed--horizontal {
+    ::ng-deep > * {
+        flex: none !important;
+
+        .card-header {
+            height: 100%;
+            width: 100%;
+            > fa-icon {
+                display: none;
+            }
+        }
+
+        .card-body,
+        .card-second-header {
+            display: none !important;
+        }
+
+        .card-title span {
+            display: none !important;
+        }
+    }
+}
+
+.editor-sidebar-left:not(.collapsed--horizontal) {
+    ::ng-deep .code-editor-status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(max-content, 1fr));
+        grid-column-gap: 10px;
+
+        > :not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+    }
+}
+
+.editor-sidebar-left.collapsed--horizontal {
+    ::ng-deep .code-editor-status {
+        > :not(:last-child) {
+            padding-bottom: 5px;
+        }
+        > :not(:first-child) {
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        span {
+            display: none !important;
+        }
+    }
+}
+
+// Instructions
+.editor-sidebar-right.collapsed--horizontal ::ng-deep {
+    flex: none !important;
+
+    .card-header {
+        height: 100%;
+        width: 100%;
+        > fa-icon {
+            display: none;
+        }
+    }
+    .instructions-wrapper__content {
+        height: auto !important;
+
+        .editable-instruction-container__save,
+        .editable-instruction-container__editor {
+            display: none;
+        }
+        .instructions__content {
+            height: auto;
+        }
+    }
+
+    .card-second-header {
+        display: none !important;
+    }
+
+    .card-title span {
+        display: none !important;
+    }
+}
+
+.editor-sidebar-right:not(.collapsed--horizontal) {
+    ::ng-deep .editable-instruction-container__status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(max-content, 1fr));
+        grid-column-gap: 10px;
+
+        > :not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+    }
+}
+
+.editor-sidebar-right.collapsed--horizontal {
+    ::ng-deep .instructions__content {
+        height: auto;
+    }
+    ::ng-deep .editable-instruction-container__status {
+        display: flex;
+        flex-flow: column;
+
+        > :not(:last-child) {
+            padding-bottom: 5px;
+        }
+
+        > :not(:first-child) {
+            padding-left: 0 !important;
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: none !important;
+        }
+
+        span {
+            display: none !important;
+        }
+
+        .editable-instruction-container__status__testcase span,
+        .instructions-status span {
+            display: none !important;
+        }
+    }
+}
+
+// build-output
+.editor-bottom.collapsed--vertical {
+    ::ng-deep .card-body {
+        display: none;
+    }
+}
+
+/*!* ==========================================================================
+Resizable drag elements
+========================================================================== *!*/
+
+.rg-main-bottom,
+.rg-bottom-bottom,
+.rg-sidebar-left,
+.rg-sidebar-right {
+    align-self: center;
+}
+
+.rg-main-bottom {
+    cursor: row-resize;
+}
+
+.rg-sidebar-left,
+.rg-sidebar-right {
+    cursor: col-resize;
+    margin-left: 4px;
+    margin-right: 4px;
+}

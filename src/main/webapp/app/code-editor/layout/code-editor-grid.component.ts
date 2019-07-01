@@ -10,6 +10,7 @@ import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
+    styleUrls: ['./code-editor-grid.scss'],
     providers: [JhiAlertService, WindowRef, CodeEditorGridService],
 })
 export class CodeEditorGridComponent implements AfterViewInit {

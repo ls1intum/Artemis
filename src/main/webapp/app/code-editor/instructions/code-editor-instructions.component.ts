@@ -1,4 +1,4 @@
-import { AfterViewInit, OnDestroy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Subscription } from 'rxjs';
@@ -7,11 +7,11 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Participation } from '../../entities/participation';
 import { WindowRef } from '../../core/websocket/window.service';
 import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
-import { MarkdownEditorHeight } from 'app/markdown-editor';
 import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
+    styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
