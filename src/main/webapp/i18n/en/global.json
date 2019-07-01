@@ -93,6 +93,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Language",
+            "guidedtour": "Guided tour",
+            "starttour": "Start tour",
             "noNotifications": "No notifications available"
         },
         "form": {

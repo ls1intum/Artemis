@@ -28,14 +28,6 @@
                     </span>
                 </a>
             </li>
-            <!--            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">-->
-            <!--                <a class="nav-link" routerLink="courses" (click)="collapseNavbar()" id="courses-menu">-->
-            <!--                    <span>-->
-            <!--                        <fa-icon [icon]="'home'"></fa-icon>-->
-            <!--                        <span jhiTranslate="global.menu.courses">Courses</span>-->
-            <!--                    </span>-->
-            <!--                </a>-->
-            <!--            </li>-->
             <li
                 *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"
                 ngbDropdown
@@ -158,7 +150,14 @@
                     </li>
                     <div class="dropdown-divider"></div>
                     <li>
-                        <a class="dropdown-item" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                        <h6 class="dropdown-header" jhiTranslate="global.menu.guidedtour">Guided Tour</h6>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" jhiTranslate="global.menu.starttour" (click)="startOverviewTour()">Start tour</a>
+                    </li>
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <a class="dropdown-item guided-tour" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
                             <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>

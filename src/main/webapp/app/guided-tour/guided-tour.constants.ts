@@ -19,6 +19,10 @@ export interface TourStep {
     useHighlightPadding?: boolean;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;
+    /** translation key for the title **/
+    titleTranslateKey: string;
+    /** translation key for the content **/
+    contentTranslateKey: string;
 }
 
 export interface GuidedTour {

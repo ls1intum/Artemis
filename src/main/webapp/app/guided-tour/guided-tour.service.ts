@@ -31,8 +31,10 @@ export class GuidedTourService {
                         this._onResizeMessage = true;
                         this._guidedTourCurrentStepSubject.next({
                             title: 'Please resize',
+                            titleTranslateKey: '',
                             content:
                                 'You have resized the tour to a size that is too small to continue. Please resize the browser to a larger size to continue the tour or close the tour.',
+                            contentTranslateKey: '',
                         });
                     } else {
                         this._onResizeMessage = false;
