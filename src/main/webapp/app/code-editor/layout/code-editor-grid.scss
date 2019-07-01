@@ -69,10 +69,18 @@ Code-Editor Layout Styles
     }
 
     .editor-bottom {
-        height: 200px;
         flex: 1 1 auto;
         display: flex;
         flex-flow: column nowrap;
+        height: 200px;
+
+        // Hide the grip lines if the editor-bottom content template is empty.
+        .rg-bottom-bottom {
+            display: none;
+        }
+        ::ng-deep > * + .rg-bottom-bottom {
+            display: inherit !important;
+        }
 
         ::ng-deep > * {
             height: 100%;
