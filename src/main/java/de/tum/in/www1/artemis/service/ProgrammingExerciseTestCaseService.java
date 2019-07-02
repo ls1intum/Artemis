@@ -74,6 +74,15 @@ public class ProgrammingExerciseTestCaseService {
         return false;
     }
 
+    /**
+     * Updates an incoming result with the information of the exercises test cases. This update includes: - Checking which test cases were not executed as this is not part of the
+     * bamboo build (not all test cases are executed in an exercise with sequential test runs) - Recalculating the score based based on the successful test cases weight vs the
+     * total weight of all test cases.
+     *
+     * @param result   to modify with new score, result string & added feedbacks (not executed tests)
+     * @param exercise the result belongs to.
+     * @return
+     */
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> testCases = findActiveByExerciseId(exercise.getId());
         // If there are no feedbacks, the build has failed.
