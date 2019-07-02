@@ -1210,7 +1210,7 @@ table.answer-options-result {
     width: 50%;
 }
 
-.drag-and-drop-statistic-picture {
+.drag-and-drop-quizStatistic-picture {
     .click-layer {
         .drop-location {
             background: white;
@@ -1226,11 +1226,14 @@ table.answer-options-result {
 
             .drag-item {
                 div {
-                    padding: 6px;
+                    line-height: 1;
 
                     span {
                         border: none;
                         padding: 0;
+                        white-space: nowrap;
+                        vertical-align: middle;
+                        display: inline-block;
                     }
                 }
             }
@@ -1320,6 +1323,7 @@ table.answer-options-result {
         div {
             span {
                 border: 1px solid transparent;
+                padding: 0;
             }
         }
         div.invalid {
