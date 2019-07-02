@@ -341,7 +341,7 @@ public class ResultResource {
 
             Result relevantResult;
             if (ratedOnly) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, null);
             }
             else {
                 relevantResult = participation.findLatestResult();

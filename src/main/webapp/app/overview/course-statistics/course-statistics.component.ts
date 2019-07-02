@@ -236,11 +236,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     groupExercisesByType() {
-        const exercises = this.course!.exercises;
+        let exercises = this.course!.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
+        exercises = exercises.sort((a: Exercise, b: Exercise) => (a.dueDate || moment().add(5, 'year')).valueOf() - (b.dueDate || moment().add(5, 'year')).valueOf());
         exercises.forEach(exercise => {
-            if (!exercise.dueDate || exercise.dueDate.isBefore(moment())) {
+            if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type);
                 if (index === -1) {
                     index = exerciseTypes.length;

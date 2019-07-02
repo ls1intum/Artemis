@@ -449,7 +449,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation, ZonedDateTime assessmentDueDate) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;
@@ -458,7 +458,9 @@ public class QuizExercise extends Exercise implements Serializable {
             // only rated results are considered relevant
             Result latestRatedResult = null;
             for (Result result : participation.getResults()) {
-                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                Boolean isAssessmentOver = assessmentDueDate == null || assessmentDueDate.isBefore(ZonedDateTime.now());
+                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))
+                        || isAssessmentOver) {
                     latestRatedResult = result;
                 }
             }
