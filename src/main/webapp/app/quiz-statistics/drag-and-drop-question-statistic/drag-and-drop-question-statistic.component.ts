@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService, JhiWebsocketService } from '../../core';
@@ -108,6 +108,10 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+    }
+
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
     }
 
     getDataSets() {
@@ -361,6 +365,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         } else {
             return null;
         }
+    }
+
+    resizeImage() {
+        setTimeout(() => {
+            const image = document.querySelector('.drag-and-drop-quizStatistic-picture jhi-secured-image img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+            clickLayer.style.height = image.height + 'px';
+        }, 500);
     }
 
     /**

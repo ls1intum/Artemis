@@ -1218,8 +1218,16 @@ table.answer-options-result {
     }
     .click-layer {
         .solution {
-            img {
-                width: 100%;
+            .drag-item-picture {
+                img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    position: absolute;
+                    -webkit-transform: translate(-50%, -50%);
+                    transform: translate(-50%, -50%);
+                    top: 50%;
+                    left: 50%;
+                }
             }
         }
         .drop-location {
@@ -1312,10 +1320,6 @@ table.answer-options-result {
         }
     }
 
-    img {
-        //width: 100%;
-    }
-
     .drag-items {
         margin: 6px 0;
         width: 100%;
@@ -1329,6 +1333,15 @@ table.answer-options-result {
     .drag-item {
         border: 1px solid dimgrey;
         background: #fafafa;
+        max-width: 100%;
+
+        .drag-item-picture {
+            img {
+                width: auto;
+                max-width: unset;
+                max-height: unset;
+            }
+        }
 
         div {
             span {
