@@ -29,8 +29,6 @@ export class FullscreenCommand extends Command {
         } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
         }
-        // For some browsers the resize doesn't seem to work automatically.
-        this.aceEditorContainer.getEditor().resize();
     }
 
     private exitFullscreen() {
@@ -44,8 +42,6 @@ export class FullscreenCommand extends Command {
         } else if (docElement.webkitExitFullscreen) {
             docElement.webkitExitFullscreen();
         }
-        // For some browsers the resize doesn't seem to work automatically.
-        this.aceEditorContainer.getEditor().resize();
     }
 
     private isFullScreen() {
