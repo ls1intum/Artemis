@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -63,12 +66,10 @@ public class ResultResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ProgrammingExerciseTestCaseService testCaseService;
-
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseTestCaseService testCaseService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
+
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -78,7 +79,6 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.testCaseService = testCaseService;
     }
 
     /**
@@ -168,7 +168,6 @@ public class ResultResource {
                 else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
                     participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
                 }
-
                 resultService.onResultNotifiedNew(participation, requestBody);
                 log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
                 return ResponseEntity.ok().build();
@@ -443,16 +442,9 @@ public class ResultResource {
         }
 
         try {
-            // There is a difference between an empty list of feedback items & no feedback items at all.
-            // E.g. for a programming exercise no feedback items means the build has failed by a compilation error.
-            // This is why we raise a not found error that the client can handle.
-            List<Feedback> feedbackItems = result.get().getFeedbacks();
-            if (feedbackItems != null) {
-                return new ResponseEntity<>(feedbackItems, HttpStatus.OK);
-            }
-            else {
-                return notFound();
-            }
+            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
+            // TODO: send an empty list to the client and do not send a 404
+            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(notFound());
         }
         catch (Exception e) {
             log.error("REST request to get Result failed : {}", resultId, e);
