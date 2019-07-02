@@ -343,7 +343,7 @@ public class ProgrammingExerciseService {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             replacePlaceholders(programmingExercise, repository);
-            pushRepository(repository, templateName);
+            commitAndPushRepository(repository, templateName);
         }
     }
 
@@ -418,7 +418,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            pushRepository(repository, templateName);
+            commitAndPushRepository(repository, templateName);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -466,7 +466,7 @@ public class ProgrammingExerciseService {
      * @param templateName
      * @throws GitAPIException
      */
-    public void pushRepository(Repository repository, String templateName) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
         repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
