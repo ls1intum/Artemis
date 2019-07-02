@@ -300,9 +300,23 @@ public class FileService {
         Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
         File file = new File(filePath);
         File tempFile = new File(filePath + "_temp");
+        FileReader fr;
+        FileWriter fw;
+        BufferedReader reader;
+        BufferedWriter writer;
+
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+            fr = new FileReader(file);
+            fw = new FileWriter(tempFile);
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("File " + filePath + " should be updated but does not exist.");
+        }
+
+        reader = new BufferedReader(fr);
+        writer = new BufferedWriter(fw);
+
+        try {
 
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
@@ -345,16 +359,20 @@ public class FileService {
                 line = reader.readLine();
             }
 
-            reader.close();
-            writer.close();
             Files.delete(file.toPath());
             FileUtils.moveFile(tempFile, new File(filePath));
         }
-        catch (FileNotFoundException ex) {
-            throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
-        }
         catch (IOException ex) {
             throw new RuntimeException("Error encountered when reading File " + filePath + ".");
+        }
+        finally {
+            try {
+                reader.close();
+                writer.close();
+            }
+            catch (IOException ex) {
+                log.info("Error encountered when closing file readers / writers for {}", file);
+            }
         }
     }
 
