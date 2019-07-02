@@ -66,7 +66,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
     @Test
     public void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
         List<Feedback> feedbacks = new ArrayList<>();
-        testCaseService.generateFromFeedbacks(feedbacks, programmingExercise);
+        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3);
@@ -81,7 +81,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         feedbacks.add(new Feedback().text("test2"));
         feedbacks.add(new Feedback().text("test4"));
         feedbacks.add(new Feedback().text("test5"));
-        testCaseService.generateFromFeedbacks(feedbacks, programmingExercise);
+        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5);
@@ -103,7 +103,7 @@ public class ProgrammingExerciseTestCaseServiceTest {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1"));
         feedbacks.add(new Feedback().text("test2"));
-        testCaseService.generateFromFeedbacks(feedbacks, programmingExercise);
+        testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);

@@ -116,7 +116,7 @@ public class ResultService {
             // When the result is from a solution participation of a programming exercise, extract the feedback items (= test cases)
             // and store them in our database.
             if (result != null && programmingExercise.getSolutionParticipation() != null && programmingExercise.getSolutionParticipation().getId().equals(participation.getId())) {
-                boolean haveTestCasesChanged = testCaseService.generateFromFeedbacks(result.getFeedbacks(), programmingExercise);
+                boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
 
                 if (haveTestCasesChanged) {
                     // Notify the client about the updated testCases
