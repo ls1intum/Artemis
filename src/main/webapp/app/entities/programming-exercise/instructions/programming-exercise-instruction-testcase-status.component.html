@@ -4,7 +4,7 @@
 </div>
 <div *ngIf="invalidTestCases.length + missingTestCases.length <= 0">
     <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
-    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test case issues.</span>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
 </div>
 
 <ng-template #tooltipContent>
