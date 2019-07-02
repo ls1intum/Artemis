@@ -56,23 +56,28 @@ public class Assessment {
         return this.contextFeedbackList;
     }
 
+    /**
+     * Calculates a score for a given list of feedback elements. The score contains points, a collection of feedback comments and the confidence. Points: the credits that the
+     * maximum amount of feedback elements share. Feedback comments: the collected feedback texts of all the given feedback elements. Confidence: the maximum percentage of feedback
+     * elements that share the same credits.
+     *
+     * @param feedbacks the list of feedback elements
+     * @return the score containing points, a collection of feedback comments and the confidence
+     */
     private Score calculateTotalScore(List<Feedback> feedbacks) {
         Set<String> comments = new HashSet<>();
-        // sum points and save number of assessments for each unique credit number
-        double credits = 0;
-        Map<Double, Integer> counting = new HashMap<>();
+        // counts the amount of feedback elements that have the same credits assigned, i.e. maps "credits -> amount" for every unique credit number
+        Map<Double, Integer> creditCount = new HashMap<>();
 
         for (Feedback existingFeedback : feedbacks) {
-            double points = existingFeedback.getCredits();
-
-            credits += points;
-            counting.put(points, counting.getOrDefault(points, 0) + 1);
+            double credits = existingFeedback.getCredits();
+            creditCount.put(credits, creditCount.getOrDefault(credits, 0) + 1);
             comments.add(existingFeedback.getText());
         }
 
-        double maxCount = counting.entrySet().stream().mapToInt(Map.Entry::getValue).max().orElse(0);
-        double mean = credits / feedbacks.size();
+        double maxCount = creditCount.values().stream().mapToInt(i -> i).max().orElse(0);
+        double maxCountCredits = creditCount.entrySet().stream().filter(entry -> entry.getValue() == maxCount).map(Map.Entry::getKey).findFirst().orElse(0.0);
         double confidence = maxCount / feedbacks.size();
-        return new Score(mean, new ArrayList<>(comments), confidence);
+        return new Score(maxCountCredits, new ArrayList<>(comments), confidence);
     }
 }
