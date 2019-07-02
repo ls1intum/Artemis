@@ -251,8 +251,8 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
 
-        // Called once by each build-output, instructions, result, the editable instructions wrapper (= templateParticipation) and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
-        expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(6);
+        // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
+        expect(subscribeForLatestResultOfParticipationStub.callCount).to.equal(5);
     });
 
     it('should go into error state when loading the exercise failed', () => {
