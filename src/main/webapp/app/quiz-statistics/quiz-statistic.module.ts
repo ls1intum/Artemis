@@ -37,7 +37,6 @@ const ENTITY_STATES = [...quizStatisticRoute];
         MultipleChoiceQuestionStatisticComponent,
         DragAndDropQuestionStatisticComponent,
         ShortAnswerQuestionStatisticComponent,
-        QuizStatisticsFooterComponent,
     ],
     providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

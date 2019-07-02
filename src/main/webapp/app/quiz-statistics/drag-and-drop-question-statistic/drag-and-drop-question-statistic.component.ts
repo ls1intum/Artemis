@@ -27,11 +27,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
@@ -369,7 +364,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     resizeImage() {
         setTimeout(() => {
-            const image = document.querySelector('.drag-and-drop-quizStatistic-picture jhi-secured-image img') as HTMLImageElement;
+            const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';

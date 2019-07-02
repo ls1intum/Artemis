@@ -17,11 +17,6 @@ import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.servi
     templateUrl: './quiz-point-statistic.component.html',
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: Subscription;
@@ -327,15 +322,15 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      */
     previousStatistic() {
         if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
+            this.router.navigateByUrl('/quiz/${this.quizExercise.id}/quiz-statistic');
         } else {
             const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
-            if (previousQuestion.type === this.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === this.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === this.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
+            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
+                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/${previousQuestion.id}');
+            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
+                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/${previousQuestion.id}');
+            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
+                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/short-answer-question-statistic/${previousQuestion.id}');
             }
         }
     }

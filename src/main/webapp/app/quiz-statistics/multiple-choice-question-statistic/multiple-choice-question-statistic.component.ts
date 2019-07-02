@@ -18,11 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     providers: [QuizStatisticUtil, ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
