@@ -58,26 +58,34 @@ public class Assessment {
 
     /**
      * Calculates a score for a given list of feedback elements. The score contains points, a collection of feedback comments and the confidence. Points: the credits that the
-     * maximum amount of feedback elements share. Feedback comments: the collected feedback texts of all the given feedback elements. Confidence: the maximum percentage of feedback
-     * elements that share the same credits.
+     * maximum amount of feedback elements share. Feedback comments: the collected feedback texts of all feedback elements that share the credits from above. Confidence: the
+     * maximum percentage of feedback elements that share the same credits.
      *
      * @param feedbacks the list of feedback elements
-     * @return the score containing points, a collection of feedback comments and the confidence
+     * @return the score containing points, a collection of feedback text and the confidence
      */
     private Score calculateTotalScore(List<Feedback> feedbacks) {
-        Set<String> comments = new HashSet<>();
         // counts the amount of feedback elements that have the same credits assigned, i.e. maps "credits -> amount" for every unique credit number
         Map<Double, Integer> creditCount = new HashMap<>();
+        // collects the feedback texts of the feedback elements that have the same credits assigned, i.e. maps "credits -> set of feedback text" for every unique credit number
+        Map<Double, Set<String>> creditFeedbackText = new HashMap<>();
 
         for (Feedback existingFeedback : feedbacks) {
             double credits = existingFeedback.getCredits();
             creditCount.put(credits, creditCount.getOrDefault(credits, 0) + 1);
-            comments.add(existingFeedback.getText());
+
+            if (existingFeedback.getText() != null) {
+                Set<String> feedbackTextForCredits = creditFeedbackText.getOrDefault(credits, new HashSet<>());
+                feedbackTextForCredits.add(existingFeedback.getText());
+                creditFeedbackText.put(credits, feedbackTextForCredits);
+            }
         }
 
         double maxCount = creditCount.values().stream().mapToInt(i -> i).max().orElse(0);
-        double maxCountCredits = creditCount.entrySet().stream().filter(entry -> entry.getValue() == maxCount).map(Map.Entry::getKey).findFirst().orElse(0.0);
         double confidence = maxCount / feedbacks.size();
-        return new Score(maxCountCredits, new ArrayList<>(comments), confidence);
+        double maxCountCredits = creditCount.entrySet().stream().filter(entry -> entry.getValue() == maxCount).map(Map.Entry::getKey).findFirst().orElse(0.0);
+        Set<String> feedbackTextForMaxCountCredits = creditFeedbackText.getOrDefault(maxCountCredits, new HashSet<>());
+
+        return new Score(maxCountCredits, new ArrayList<>(feedbackTextForMaxCountCredits), confidence);
     }
 }

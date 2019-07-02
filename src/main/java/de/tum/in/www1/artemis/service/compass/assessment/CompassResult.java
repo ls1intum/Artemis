@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -60,17 +59,10 @@ public class CompassResult implements Grade {
                 continue;
             }
 
-            StringBuilder elementComments = new StringBuilder();
-            Iterator<String> iterator = entry.getValue().getComments().iterator();
+            // get the longest of the given comments as feedback text - we assume that a longer text means more information/feedback for the student
+            String elementFeedbackText = entry.getValue().getComments().stream().max((text1, text2) -> Math.max(text1.length(), text2.length())).orElse("");
 
-            while (iterator.hasNext()) {
-                elementComments.append(iterator.next());
-
-                if (iterator.hasNext()) {
-                    elementComments.append("\n\n");
-                }
-            }
-            jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementComments.toString());
+            jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementFeedbackText);
             jsonIdPointsMapping.put(entry.getKey().getJSONElementID(), entry.getValue().getPoints());
         }
     }

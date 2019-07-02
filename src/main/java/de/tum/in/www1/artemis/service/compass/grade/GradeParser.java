@@ -9,6 +9,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
+// TODO CZ: remove?
 public class GradeParser {
 
     /**

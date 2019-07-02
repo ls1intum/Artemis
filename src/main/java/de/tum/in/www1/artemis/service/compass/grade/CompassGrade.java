@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.grade;
 import java.util.HashMap;
 import java.util.Map;
 
+// TODO CZ: remove? if parser is removed, CompassResult has to be adjusted and can be used instead of CompassGrade in the CompassService
 public class CompassGrade implements Grade {
 
     private Map<String, String> jsonIdCommentsMapping;

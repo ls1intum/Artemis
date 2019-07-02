@@ -311,15 +311,16 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student6");
 
         request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
-                Collections.singletonList(feedbackTwentyPoints.text("long feedback text")), HttpStatus.OK);
+                Collections.singletonList(feedbackTwentyPoints.text("wrong text")), HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isPresent();
         assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.get().getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(20);
+        assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("wrong text");
 
         request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
-                Collections.singletonList(feedbackOnePoint.text("wrong text")), HttpStatus.OK);
+                Collections.singletonList(feedbackOnePoint.text("long feedback text")), HttpStatus.OK);
 
         automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isPresent();
@@ -346,7 +347,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(automaticResult).as("automatic result was created").isPresent();
         assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.get().getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(1);
-        // TODO CZ: check for longes "correct" feedback text
+        assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
     }
 
     @Test
