@@ -63,12 +63,12 @@ public class ProgrammingExerciseTestCaseService {
             return !matchingText.isPresent() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
 
-        Set<ProgrammingExerciseTestCase> toSave = new HashSet<>();
-        toSave.addAll(newTestCases);
-        toSave.addAll(activationStateChanges);
+        Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
+        testCasesToSave.addAll(newTestCases);
+        testCasesToSave.addAll(activationStateChanges);
 
-        if (toSave.size() > 0) {
-            testCaseRepository.saveAll(toSave);
+        if (testCasesToSave.size() > 0) {
+            testCaseRepository.saveAll(testCasesToSave);
             return true;
         }
         return false;
