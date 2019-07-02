@@ -444,11 +444,9 @@ Stepwizard styles (editor instructions)
     text-align: center;
     position: relative;
 
-    &--no-result.btn {
-        cursor: default;
-    }
-
-    &--failed.btn {
+    &--failed,
+    &--not-executed,
+    &--no-result {
         cursor: pointer;
     }
 }

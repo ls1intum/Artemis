@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,7 +11,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -242,14 +244,14 @@ public class FileService {
      * @param targetDirectoryPath the path of the folder where the copy should be located
      * @throws IOException
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
+    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
 
         for (Resource resource : resources) {
 
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
-            String targetFilePath = fileUrl.substring(index + prefix.length());
+            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
             // special case for '.git.ignore.file' file which would not be included in build otherwise
             if (targetFilePath.endsWith("git.ignore.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
@@ -286,6 +288,92 @@ public class FileService {
         File targetDirectory = new File(targetDirectoryPath);
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * Look for sections that start and end with a section marker (e.g. %section-start% and %section-end%). Overrides the given file in filePath with a new file!
+     *
+     * @param filePath of file to look for replacable sections in.
+     * @param sections of structure String (section name) / Boolean (keep content in section or remove it).
+     */
+    public void replacePlaceholderSections(String filePath, Map<String, Boolean> sections) {
+        Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
+        File file = new File(filePath);
+        File tempFile = new File(filePath + "_temp");
+        FileReader fr;
+        FileWriter fw;
+        BufferedReader reader;
+        BufferedWriter writer;
+
+        try {
+            fr = new FileReader(file);
+            fw = new FileWriter(tempFile);
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("File " + filePath + " should be updated but does not exist.");
+        }
+
+        reader = new BufferedReader(fr);
+        writer = new BufferedWriter(fw);
+
+        try {
+
+            Map.Entry<Pattern, Boolean> matchingStartPattern = null;
+            String line = reader.readLine();
+            while (line != null) {
+                // If there is no starting pattern matched atm, check if the current line is a start pattern.
+                if (matchingStartPattern == null) {
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            matchingStartPattern = entry;
+                            break;
+                        }
+                    }
+                    // If a pattern is matched, don't write anything so that the section qualifier is removed.
+                    if (matchingStartPattern != null) {
+                        line = reader.readLine();
+                        continue;
+                    }
+                }
+                else {
+                    // If there is a starting pattern matched, check if an ending pattern is encountered.
+                    boolean endMatcherFound = false;
+                    for (Map.Entry<Pattern, Boolean> entry : patternBooleanMap.entrySet()) {
+                        if (entry.getKey().matcher(line).matches()) {
+                            endMatcherFound = true;
+                            break;
+                        }
+                    }
+                    if (endMatcherFound) {
+                        matchingStartPattern = null;
+                        line = reader.readLine();
+                        continue;
+                    }
+                }
+
+                if (matchingStartPattern == null || matchingStartPattern.getValue()) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+
+                line = reader.readLine();
+            }
+
+            Files.delete(file.toPath());
+            FileUtils.moveFile(tempFile, new File(filePath));
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".");
+        }
+        finally {
+            try {
+                reader.close();
+                writer.close();
+            }
+            catch (IOException ex) {
+                log.info("Error encountered when closing file readers / writers for {}", file);
+            }
+        }
     }
 
     /**
