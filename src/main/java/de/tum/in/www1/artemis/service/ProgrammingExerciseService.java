@@ -389,16 +389,16 @@ public class ProgrammingExerciseService {
                 String stagePomXmlPath = templatePath + "/stagePom.xml";
                 Resource stagePomXml = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(stagePomXmlPath);
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
-                List<String> buildStages = new ArrayList<>();
-                buildStages.add("structural");
-                buildStages.add("behavior");
+                List<String> sequentialTestTasks = new ArrayList<>();
+                sequentialTestTasks.add("structural");
+                sequentialTestTasks.add("behavior");
 
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 
                 fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
-                for (String buildStage : buildStages) {
+                for (String buildStage : sequentialTestTasks) {
 
                     Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
                     Files.createDirectory(buildStagePath);
