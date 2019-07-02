@@ -1211,7 +1211,17 @@ table.answer-options-result {
 }
 
 .drag-and-drop-quizStatistic-picture {
+    > jhi-secured-image {
+        img {
+            width: 100%;
+        }
+    }
     .click-layer {
+        .solution {
+            img {
+                width: 100%;
+            }
+        }
         .drop-location {
             background: white;
             border: 1px dashed black;
@@ -1303,7 +1313,7 @@ table.answer-options-result {
     }
 
     img {
-        width: 100%;
+        //width: 100%;
     }
 
     .drag-items {
