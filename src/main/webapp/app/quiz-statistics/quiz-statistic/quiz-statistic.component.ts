@@ -334,25 +334,4 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             },
         ];
     }
-
-    /**
-     * got to the template with the next QuizStatistic -> the first QuizQuestionStatistic
-     * if there is no QuizQuestionStatistic -> go to QuizPointStatistic
-     */
-    nextStatistic() {
-        // go to quiz-statistic if the position = last position
-        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigateByUrl('/quiz/${this.quizExercise.id}/quiz-point-statistic');
-        } else {
-            // go to next question-statistic
-            const nextQuestion = this.quizExercise.quizQuestions[0];
-            if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/${nextQuestion.id}');
-            } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/${nextQuestion.id}');
-            } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/short-answer-question-statistic/${nextQuestion.id}');
-            }
-        }
-    }
 }

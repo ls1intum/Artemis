@@ -315,31 +315,4 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             return 0;
         });
     }
-
-    /**
-     * got to the Template with the previous QuizStatistic -> the last QuizQuestionStatistic
-     * if there is no QuizQuestionStatistic -> go to QuizStatistic
-     */
-    previousStatistic() {
-        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigateByUrl('/quiz/${this.quizExercise.id}/quiz-statistic');
-        } else {
-            const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
-            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/${previousQuestion.id}');
-            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/${previousQuestion.id}');
-            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/${this.quizExercise.id}/short-answer-question-statistic/${previousQuestion.id}');
-            }
-        }
-    }
-
-    /**
-     * go to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.quizExercise.quizQuestions[0]);
-    }
 }

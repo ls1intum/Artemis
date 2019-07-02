@@ -363,27 +363,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     resizeImage() {
+        /* set timeout as workaround to render all necessary elements */
         setTimeout(() => {
             const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
             const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
             clickLayer.style.width = image.width + 'px';
             clickLayer.style.height = image.height + 'px';
-        }, 500);
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
+        }, 100);
     }
 }

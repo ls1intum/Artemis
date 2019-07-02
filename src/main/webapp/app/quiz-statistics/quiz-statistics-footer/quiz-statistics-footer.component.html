@@ -47,11 +47,10 @@
                     <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                     <span
                         id="remaining-time-value"
-                        [class.time-critical]="remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4"
-                        [class.time-warning]="
-                            (remainingTimeSeconds >= 60 && remainingTimeSeconds < 120) ||
-                            (remainingTimeSeconds >= quizExercise.duration / 4 && remainingTimeSeconds < quizExercise.duration / 2)
-                        "
+                        [ngClass]="{
+                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4,
+                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2
+                        }"
                     >
                         {{ remainingTimeText }}
                     </span>
