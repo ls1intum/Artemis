@@ -1029,6 +1029,7 @@
 
     #remaining-time-value {
         font-weight: bold;
+        white-space: nowrap;
     }
 
     #quiz-score {
@@ -1050,7 +1051,6 @@
     }
 
     .connection-status {
-        margin-top: 4px;
         font-size: 14px;
         color: green;
 
