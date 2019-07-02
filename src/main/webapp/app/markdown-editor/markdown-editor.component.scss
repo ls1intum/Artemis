@@ -4,6 +4,12 @@
     flex: 1 1 auto;
     height: inherit;
 
+    // This is a fix for using the fullscreen mode on Safari.
+    &:-webkit-full-screen {
+        width: 100%;
+        height: 100%;
+    }
+
     // We need to adjust the styles of the bootstrap tab-content panel which is not part of this component's html.
     ::ng-deep {
         .tab-list {
