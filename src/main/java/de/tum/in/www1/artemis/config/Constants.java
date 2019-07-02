@@ -38,8 +38,6 @@ public final class Constants {
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
-    public static final String NEW_TEST_REPO_RESULT_RESOURCE_PATH = "/programming-exercises/new-test-repo-result";
-
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api" + NEW_RESULT_RESOURCE_PATH;
 
     public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
