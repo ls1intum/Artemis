@@ -42,8 +42,8 @@ public class RepositoryParticipationResource extends RepositoryResource {
 
     @Override
     Repository getRepository(Long participationId) throws IOException, IllegalAccessException, InterruptedException {
-        Participation participation = participationService.findOne(participationId);
-        return repositoryService.checkoutRepositoryByParticipation(participation);
+        StudentParticipation participation = participationService.findOne(participationId);
+        return repositoryService.checkoutRepositoryByParticipation((ProgrammingExerciseStudentParticipation) participation);
     }
 
     /**
@@ -176,11 +176,11 @@ public class RepositoryParticipationResource extends RepositoryResource {
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Participation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOne(participationId);
         if (!participationService.canAccessParticipation(participation))
             return forbidden();
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs((ProgrammingExerciseParticipation) participation);
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

@@ -65,13 +65,13 @@ public class RepositoryWebsocketResource {
     }
 
     @Nullable
-    private boolean checkParticipation(Participation participation, Principal principal) {
+    private boolean checkParticipation(StudentParticipation participation, Principal principal) {
         if (!userHasPermissions(participation, principal))
             return false;
         return Optional.ofNullable(participation).isPresent();
     }
 
-    private boolean userHasPermissions(Participation participation, Principal principal) {
+    private boolean userHasPermissions(StudentParticipation participation, Principal principal) {
         if (!authCheckService.isOwnerOfParticipation(participation, principal)) {
             // if the user is not the owner of the participation, the user can only see it in case he is
             // a teaching assistant or an instructor of the course, or in case he is admin
@@ -112,7 +112,7 @@ public class RepositoryWebsocketResource {
      */
     @MessageMapping("/topic/repository/{participationId}/files")
     public void updateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
-        Participation participation = participationService.findOne(participationId);
+        ProgrammingExerciseStudentParticipation participation = participationService.findProgrammingExerciseParticipation(participationId);
         // User must have the necessary permissions to update a file
         if (!checkParticipation(participation, principal)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");

@@ -199,8 +199,8 @@ public class ExerciseService {
         else if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((Participation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((Participation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+            programmingExercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
         }
     }
 
@@ -292,14 +292,18 @@ public class ExerciseService {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
-        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
-            exercise.getParticipations().forEach(participationService::cleanupBuildPlan);
+        if (exercise instanceof ProgrammingExercise) {
+            for (StudentParticipation participation : exercise.getParticipations()) {
+                participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
+            }
 
             if (!deleteRepositories) {
                 return;    // in this case, we are done
             }
 
-            exercise.getParticipations().forEach(participationService::cleanupRepository);
+            for (StudentParticipation participation : exercise.getParticipations()) {
+                participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
+            }
 
         }
         else {
@@ -323,16 +327,18 @@ public class ExerciseService {
             log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return null;
         }
-        for (Participation participation : exercise.getParticipations()) {
+        for (StudentParticipation participation : exercise.getParticipations()) {
+            ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             try {
-                if (participation.getRepositoryUrl() == null || participation.getStudent() == null || !studentIds.contains(participation.getStudent().getLogin())) {
+                if (studentParticipation.getRepositoryUrl() == null || studentParticipation.getStudent() == null
+                        || !studentIds.contains(studentParticipation.getStudent().getLogin())) {
                     // participation is not relevant for zip archive.
                     continue;
                 }
 
-                boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
+                boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(studentParticipation.getRepositoryUrlAsUrl());
 
-                Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
                 gitService.get().resetToOriginMaster(repo); // start with clean state
                 gitService.get().filterLateSubmissions(repo, (ProgrammingExercise) exercise);
                 programmingExerciseService.get().addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
@@ -345,7 +351,7 @@ public class ExerciseService {
                     // if onlineeditor is *not* allowed OR onlineEditor *is* allowed and repo didn't exist beforehand
                     // --> we are free to delete
                     log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                    gitService.get().deleteLocalRepository(participation);
+                    gitService.get().deleteLocalRepository(studentParticipation);
                 }
                 else {
                     // finish with clean state
@@ -355,7 +361,7 @@ public class ExerciseService {
                 }
             }
             catch (IOException | GitException | InterruptedException ex) {
-                log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
+                log.error("export repository Participation for " + studentParticipation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
             }
         }
         if (exercise.getParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
@@ -390,20 +396,21 @@ public class ExerciseService {
         Path finalZipFilePath = null;
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
+                ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
                 try {
-                    if (participation.getRepositoryUrl() != null) {     // ignore participations without repository URL
+                    if (studentParticipation.getRepositoryUrl() != null) {     // ignore participations without repository URL
                         // 1. clone the repository
-                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
                         // 2. zip repository and collect the zip file
                         log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         // 3. delete the locally cloned repo again
-                        gitService.get().deleteLocalRepository(participation);
+                        gitService.get().deleteLocalRepository(studentParticipation);
                     }
                 }
                 catch (IOException | GitException | InterruptedException ex) {
-                    log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
+                    log.error("Archiving and deleting the repository " + studentParticipation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
 

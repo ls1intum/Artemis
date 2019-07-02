@@ -14,6 +14,7 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -21,7 +22,7 @@ import { Feedback } from 'app/entities/feedback';
 })
 export class TextEditorComponent implements OnInit {
     textExercise: TextExercise;
-    participation: Participation;
+    participation: StudentParticipation;
     result: Result;
     submission: TextSubmission;
     isActive: boolean;
@@ -65,7 +66,7 @@ export class TextEditorComponent implements OnInit {
         }
 
         this.textService.get(participationId).subscribe(
-            (data: Participation) => {
+            (data: StudentParticipation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);

@@ -267,7 +267,7 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByParticipation(ProgrammingExerciseStudentParticipation participation) throws IOException, IllegalAccessException, InterruptedException {
         boolean hasAccess = participationService.canAccessParticipation(participation);
         if (!hasAccess) {
             throw new IllegalAccessException();

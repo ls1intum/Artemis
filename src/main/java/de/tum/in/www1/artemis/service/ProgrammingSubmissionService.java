@@ -9,11 +9,11 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -28,7 +28,7 @@ public class ProgrammingSubmissionService {
 
     private final ParticipationService participationService;
 
-    private final ParticipationRepository participationRepository;
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -36,11 +36,11 @@ public class ProgrammingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.participationRepository = participationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
@@ -48,12 +48,12 @@ public class ProgrammingSubmissionService {
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
-        Optional<Participation> optionalParticipation = participationRepository.findById(participationId);
+        Optional<ProgrammingExerciseStudentParticipation> optionalParticipation = programmingExerciseStudentParticipationRepository.findById(participationId);
         if (!optionalParticipation.isPresent()) {
             log.warn("Invalid participation received while notifying about push: " + participationId);
             return;
         }
-        Participation participation = optionalParticipation.get();
+        ProgrammingExerciseStudentParticipation participation = optionalParticipation.get();
         if (participation.getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to
             // reactivate the

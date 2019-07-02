@@ -131,7 +131,7 @@ public class AuthorizationCheckService {
      * @param participation participation to check the rights for
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(Participation participation) {
+    public boolean isOwnerOfParticipation(StudentParticipation participation) {
         // A template/solution participation doesn't have a student, this is done to avoid null pointer exceptions
         if (participation.getStudent() == null) {
             return false;
@@ -148,7 +148,7 @@ public class AuthorizationCheckService {
      * @param principal     websocket user
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(Participation participation, Principal principal) {
+    public boolean isOwnerOfParticipation(StudentParticipation participation, Principal principal) {
         return participation.getStudent() != null && participation.getStudent().getLogin().equals(principal.getName());
     }
 

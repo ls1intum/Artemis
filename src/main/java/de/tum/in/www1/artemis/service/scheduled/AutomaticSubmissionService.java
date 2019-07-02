@@ -80,7 +80,8 @@ public class AutomaticSubmissionService {
 
                 submissionRepository.save(unsubmittedSubmission);
 
-                String username = unsubmittedSubmission.getParticipation().getStudent().getLogin();
+                StudentParticipation studentParticipation = (StudentParticipation) unsubmittedSubmission.getParticipation();
+                String username = studentParticipation.getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
                     messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + unsubmittedSubmission.getId(), unsubmittedSubmission);
                 }
@@ -110,12 +111,12 @@ public class AutomaticSubmissionService {
      */
     private Submission updateParticipation(Submission submission) {
         if (submission != null) {
-            Participation participation = submission.getParticipation();
-            if (participation == null) {
+            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            if (studentParticipation == null) {
                 log.error("The submission {} has no participation.", submission);
                 return null;
             }
-            Exercise exercise = participation.getExercise();
+            Exercise exercise = studentParticipation.getExercise();
             if (submission instanceof ModelingSubmission) {
                 ModelingExercise modelingExercise = (ModelingExercise) exercise;
                 ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
@@ -125,8 +126,8 @@ public class AutomaticSubmissionService {
                 modelingSubmissionService.checkAutomaticResult(modelingSubmission, modelingExercise);
             }
             // set participation state to finished and persist it
-            participation.setInitializationState(InitializationState.FINISHED);
-            participationService.save(participation);
+            studentParticipation.setInitializationState(InitializationState.FINISHED);
+            participationService.save(studentParticipation);
             // return modeling submission with model and optional result
             return submission;
         }

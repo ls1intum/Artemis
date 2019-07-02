@@ -297,10 +297,10 @@ public class CourseResource {
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
-        List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        List<StudentParticipation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
-
         long exerciseCount = 0;
+
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             Set<Lecture> lecturesWithReleasedAttachments = lectureService.filterActiveAttachments(course.getLectures());
@@ -579,7 +579,7 @@ public class CourseResource {
         List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
 
         for (Exercise exercise : exercises) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
             exercise.setParticipations(new HashSet<>());
 
@@ -589,7 +589,7 @@ public class CourseResource {
                 exercise.filterSensitiveInformation();
             }
 
-            for (Participation participation : participations) {
+            for (StudentParticipation participation : participations) {
                 // Removing not needed properties
                 participation.setStudent(null);
 

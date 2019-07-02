@@ -93,7 +93,7 @@ public class ResultService {
      */
     @Async
     @Deprecated
-    public void onResultNotifiedOld(Participation participation) {
+    public void onResultNotifiedOld(ProgrammingExerciseParticipation participation) {
         log.debug("Received new build result for participation " + participation.getId());
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompletedOld(participation);
@@ -107,21 +107,19 @@ public class ResultService {
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
-    public void onResultNotifiedNew(Participation participation, Object requestBody) throws Exception {
+    public void onResultNotifiedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
         log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
 
-        if (participation.getExercise() instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
-                extractTestCasesFromResult(participation, result);
-            }
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            result = testCaseService.updateResultFromTestCases(result, programmingExercise);
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+        if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
+            extractTestCasesFromResult(participation, result);
         }
+        // Find out which test cases were executed and calculate the score according to their status and weight.
+        // This needs to be done as some test cases might not have been executed.
+        result = testCaseService.updateResultFromTestCases(result, programmingExercise);
 
         notifyUser(participation, result);
     }
@@ -133,17 +131,17 @@ public class ResultService {
      * @param participation of the given result.
      * @param result        from which to extract the test cases.
      */
-    private void extractTestCasesFromResult(Participation participation, Result result) {
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+    private void extractTestCasesFromResult(ProgrammingExerciseParticipation participation, Result result) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getProgrammingExercise().getId());
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getProgrammingExercise().getId() + "/test-cases", testCases);
         }
     }
 
-    private void notifyUser(Participation participation, Result result) {
+    private void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
@@ -193,7 +191,7 @@ public class ResultService {
             }
 
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
-            ltiService.onNewBuildResult(savedResult.getParticipation());
+            ltiService.onNewBuildResult((ProgrammingExerciseParticipation) savedResult.getParticipation());
         }
     }
 

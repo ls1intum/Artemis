@@ -90,7 +90,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     // submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
@@ -114,7 +114,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Participation participation = submission.getParticipation();
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
         if (!courseService.userHasAtLeastStudentPermissions(exercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return forbidden();
@@ -169,7 +169,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
@@ -198,10 +199,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            result.getParticipation().setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
-        if (submit && (result.getParticipation().getExercise().getAssessmentDueDate() == null
-                || result.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && (((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate() == null
+                || ((StudentParticipation) result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         }
         return ResponseEntity.ok(result);
@@ -231,7 +232,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         Result result = modelingAssessmentService.updateAssessmentAfterComplaint(modelingSubmission.getResult(), modelingExercise, assessmentUpdate);

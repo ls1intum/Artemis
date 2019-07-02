@@ -45,7 +45,7 @@ public class DatabaseUtilService {
     ResultRepository resultRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    StudentParticipationRepository participationRepo;
 
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
@@ -117,13 +117,13 @@ public class DatabaseUtilService {
      * @param login    login of the user
      * @return eagerly loaded representation of the participation object stored in the database
      */
-    public Participation addParticipationForExercise(Exercise exercise, String login) {
-        Optional<Participation> storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+    public StudentParticipation addParticipationForExercise(Exercise exercise, String login) {
+        Optional<StudentParticipation> storedParticipation = participationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isPresent()) {
             return storedParticipation.get();
         }
         User user = getUserByLogin(login);
-        Participation participation = new Participation();
+        StudentParticipation participation = new StudentParticipation();
         participation.setStudent(user);
         participation.setExercise(exercise);
         participationRepo.save(participation);
@@ -177,7 +177,7 @@ public class DatabaseUtilService {
      * @return submission stored in the modelingSubmissionRepository
      */
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, login);
         Result result = new Result();
@@ -192,7 +192,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
@@ -202,7 +202,7 @@ public class DatabaseUtilService {
 
     @Transactional
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
-        Participation participation = addParticipationForExercise(exercise, login);
+        StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);

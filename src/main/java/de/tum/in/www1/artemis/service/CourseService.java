@@ -242,10 +242,10 @@ public class CourseService {
         Map<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
 
         for (Exercise exercise : exercisesOfCourse) {
-            Set<Participation> participations = exercise.getParticipations();
+            Set<StudentParticipation> participations = exercise.getParticipations();
             boolean exerciseHasDueDate = exercise.getDueDate() != null;
 
-            for (Participation participation : participations) {
+            for (StudentParticipation participation : participations) {
 
                 // id of user in the database to reference to the user
                 long userID = participation.getStudent().getId();

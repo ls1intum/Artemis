@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -24,8 +25,8 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ConflictingResultService;
 import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
@@ -42,7 +43,7 @@ public class CompassService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ModelAssessmentConflictService conflictService;
 
@@ -76,11 +77,11 @@ public class CompassService {
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ParticipationRepository participationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
+            StudentParticipationRepository studentParticipationRepository, ModelAssessmentConflictService conflictService, ConflictingResultService conflictingResultService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.conflictService = conflictService;
         this.conflictingResultService = conflictingResultService;
     }
@@ -241,7 +242,8 @@ public class CompassService {
             Grade grade = engine.getGradeForModel(modelId);
             // automatic assessment holds confidence and coverage threshold
             if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+                StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
+                ModelingExercise modelingExercise = modelingExerciseRepository.findById(studentParticipation.getExercise().getId()).get();
                 /*
                  * Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
                  */
@@ -360,7 +362,7 @@ public class CompassService {
         if (compassCalculationEngines.containsKey(exerciseId)) {
             return true;
         }
-        if (participationRepository.existsByExerciseId(exerciseId)) {
+        if (studentParticipationRepository.existsByExerciseId(exerciseId)) {
             this.loadCalculationEngineForExercise(exerciseId);
             return true;
         }

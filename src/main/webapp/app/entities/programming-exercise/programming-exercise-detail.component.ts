@@ -29,8 +29,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
 
-            this.programmingExercise.solutionParticipation.exercise = this.programmingExercise;
-            this.programmingExercise.templateParticipation.exercise = this.programmingExercise;
+            this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
+            this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
             const course = this.programmingExercise.course!;
             this.resultService.findResultsForParticipation(course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id).subscribe(results => {

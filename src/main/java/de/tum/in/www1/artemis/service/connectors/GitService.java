@@ -79,7 +79,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws IOException, InterruptedException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
@@ -551,7 +551,7 @@ public class GitService {
      * @param participation Participation Object.
      * @throws IOException
      */
-    public void deleteLocalRepository(Participation participation) throws IOException {
+    public void deleteLocalRepository(ProgrammingExerciseParticipation participation) throws IOException {
         Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
@@ -575,8 +575,18 @@ public class GitService {
     }
 
     public Path zipRepository(Repository repo) throws IOException {
-        String zipRepoName = repo.getParticipation().getExercise().getCourse().getTitle() + "-" + repo.getParticipation().getExercise().getTitle() + "-"
-                + repo.getParticipation().getStudent().getLogin() + ".zip";
+        ProgrammingExerciseParticipation participation = repo.getParticipation();
+        String zipRepoName = participation.getProgrammingExercise().getCourse().getTitle() + "-" + participation.getProgrammingExercise().getTitle();
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            zipRepoName += "-" + ((ProgrammingExerciseStudentParticipation) participation).getStudent().getLogin() + ".zip";
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+            zipRepoName += "-" + "template.zip";
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            zipRepoName += "-" + "solution.zip";
+        }
+
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(REPO_CLONE_PATH, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(REPO_CLONE_PATH, "zippedRepos"));

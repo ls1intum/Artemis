@@ -17,7 +17,6 @@ import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
-import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -31,12 +30,9 @@ public class ArTEMiSApp implements InitializingBean {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final AutomaticSubmissionService automaticSubmissionService;
-
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
+    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
-        this.automaticSubmissionService = automaticSubmissionService;
     }
 
     /**

@@ -429,7 +429,8 @@ public class Result implements Serializable {
         if (submission instanceof QuizSubmission) {
             QuizSubmission quizSubmission = (QuizSubmission) submission;
             // get the exercise this result belongs to
-            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
+            QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string

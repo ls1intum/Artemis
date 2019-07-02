@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { Participation, ParticipationService, StudentParticipation } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -30,7 +30,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
     paramSub: Subscription;
-    participation: Participation;
+    participation: StudentParticipation;
     exercise: ProgrammingExercise;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
@@ -89,10 +89,10 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<Participation | null> {
+    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
         return this.participationService.findWithLatestResult(participationId).pipe(
             map(res => res && res.body),
-            flatMap((participation: Participation) =>
+            flatMap((participation: StudentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
                           map(feedback => {

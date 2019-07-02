@@ -51,7 +51,7 @@
                             !exercise ||
                             !exercise.participations ||
                             !exercise.participations.length ||
-                            (exercise.participations.length && !exercise.participations[0].repositoryUrl)
+                            (exercise.participations.length && !repositoryUrl(exercise.participations[0]))
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem

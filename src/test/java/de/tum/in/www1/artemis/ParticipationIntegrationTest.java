@@ -18,7 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -60,7 +60,7 @@ public class ParticipationIntegrationTest {
         Course course = courseRepo.findAll().get(0);
         Exercise exercise = exerciseRepo.findAll().get(0);
         URI location = request.post("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/participations", null, HttpStatus.CREATED);
-        Participation participation = request.get(location.getPath(), HttpStatus.OK, Participation.class);
+        StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(exercise);
         assertThat(participation.getSubmissions()).as("no submissions on initialization").isEmpty();
         assertThat(participation.getStudent()).as("Student got set").isNotNull();

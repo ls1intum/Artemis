@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -137,7 +138,7 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        Optional<Participation> participation = getParticipation(planKey);
+        Optional<ProgrammingExerciseParticipation> participation = getParticipation(planKey);
         if (participation.isPresent()) {
             resultService.onResultNotifiedOld(participation.get());
             return ResponseEntity.ok().build();
@@ -159,14 +160,14 @@ public class ResultResource {
         try {
             String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
             log.info("PlanKey for received notifyResultNew is {}", planKey);
-            Optional<Participation> optionalParticipation = getParticipation(planKey);
+            Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipation(planKey);
             if (optionalParticipation.isPresent()) {
-                Participation participation = optionalParticipation.get();
+                ProgrammingExerciseParticipation participation = optionalParticipation.get();
                 if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
-                    participation.setExercise(programmingExerciseService.getExerciseForTemplateParticipation(participation));
+                    participation.setProgrammingExercise(programmingExerciseService.getExercise((TemplateProgrammingExerciseParticipation) participation));
                 }
                 else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
-                    participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
+                    participation.setProgrammingExercise(programmingExerciseService.getExercise((SolutionProgrammingExerciseParticipation) participation));
                 }
                 resultService.onResultNotifiedNew(participation, requestBody);
                 log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
@@ -183,17 +184,37 @@ public class ResultResource {
             log.error("An exception occurred during handling of notifyResultNew", e);
             return badRequest();
         }
-
     }
 
-    private Optional<Participation> getParticipation(String planKey) {
-        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
-        Optional<Participation> participation = Optional.empty();
+    private Optional<ProgrammingExerciseParticipation> getParticipation(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey.contains(RepositoryType.TEMPLATE.getName())) {
+            Optional<TemplateProgrammingExerciseParticipation> templateParticipation = participationService.findTemplateParticipationByBuildPlanId(planKey);
+            // we have to convert the optional type here to make Java happy
+            if (templateParticipation.isPresent()) {
+                return Optional.of(templateParticipation.get());
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        else if (planKey.contains(RepositoryType.SOLUTION.getName())) {
+            Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = participationService.findSolutionParticipationByBuildPlanId(planKey);
+            // we have to convert the optional type here to make Java happy
+            if (solutionParticipation.isPresent()) {
+                return Optional.of(solutionParticipation.get());
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
+        Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
-                for (Participation otherParticipation : participations) {
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
                     if (otherParticipation.getInitializationDate().isAfter(participation.get().getInitializationDate())) {
                         participation = Optional.of(otherParticipation);
                     }
@@ -201,7 +222,13 @@ public class ResultResource {
             }
         }
 
-        return participation;
+        // we have to convert the optional type here to make Java happy
+        if (participation.isPresent()) {
+            return Optional.of(participation.get());
+        }
+        else {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -244,7 +271,7 @@ public class ResultResource {
         log.debug("REST request to get Results for Participation : {}", participationId);
 
         List<Result> results = new ArrayList<>();
-        Participation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOne(participationId);
 
         // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
         if (participation.getExercise() == null) {
@@ -330,9 +357,9 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
 
-        for (Participation participation : participations) {
+        for (StudentParticipation participation : participations) {
             // Filter out participations without Students
             // These participations are used e.g. to store template and solution build plans in programming exercises
             if (participation.getStudent() == null) {
@@ -409,7 +436,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOne(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
@@ -435,7 +462,7 @@ public class ResultResource {
         if (!result.isPresent()) {
             return notFound();
         }
-        Participation participation = result.get().getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.get().getParticipation();
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();

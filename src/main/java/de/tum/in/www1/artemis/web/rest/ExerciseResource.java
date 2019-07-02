@@ -375,11 +375,11 @@ public class ExerciseResource {
         }
 
         if (exercise != null) {
-            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
             exercise.setParticipations(new HashSet<>());
 
-            for (Participation participation : participations) {
+            for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);

@@ -7,6 +7,7 @@ import { Participation } from '../entities/participation';
 
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
@@ -85,7 +86,7 @@ export class CourseScoreCalculationService {
 
     getParticipationForExercise(exercise: Exercise): Participation | null {
         if (exercise.participations != null && exercise.participations.length > 0) {
-            const exerciseParticipation: Participation = exercise.participations[0];
+            const exerciseParticipation: StudentParticipation = exercise.participations[0];
             return this.convertDateForParticipationFromServer(exerciseParticipation);
         } else {
             return null;

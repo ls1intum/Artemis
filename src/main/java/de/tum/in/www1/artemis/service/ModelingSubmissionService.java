@@ -34,20 +34,20 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ParticipationService participationService;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
-            ParticipationRepository participationRepository, SimpMessageSendingOperations messagingTemplate) {
+            StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate) {
         super(submissionRepository, userService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -61,7 +61,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (Participation participation : participations) {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
@@ -179,11 +179,12 @@ public class ModelingSubmissionService extends SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
 
-        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(), username);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
+                username);
         if (!optionalParticipation.isPresent()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
-        Participation participation = optionalParticipation.get();
+        StudentParticipation participation = optionalParticipation.get();
 
         // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
         // get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have
@@ -211,7 +212,7 @@ public class ModelingSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-        Participation savedParticipation = participationRepository.save(participation);
+        Participation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
             Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
             if (optionalModelingSubmission.isPresent()) {

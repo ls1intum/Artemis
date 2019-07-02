@@ -9,8 +9,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -22,18 +22,18 @@ abstract class AssessmentService {
 
     protected final ResultRepository resultRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final ResultService resultService;
 
     private final AuthorizationCheckService authCheckService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
     }
@@ -92,11 +92,11 @@ abstract class AssessmentService {
      */
     @Transactional
     public void cancelAssessmentOfSubmission(Submission submission) {
-        Participation participation = participationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
         participation.removeResult(result);
-        participationRepository.save(participation);
+        studentParticipationRepository.save(participation);
         resultRepository.deleteById(result.getId());
     }
 
