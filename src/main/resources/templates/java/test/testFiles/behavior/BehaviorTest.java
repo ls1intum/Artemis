@@ -53,29 +53,29 @@ public abstract class BehaviorTest {
         String className = qualifiedClassName.split("\\.")[qualifiedClassName.split("\\.").length - 1];
 
         String failMessage = "Problem: could not instantiate the class '" + className + "' because";
+        
         try {
-            Constructor<?> constructor = clazz.getConstructor(constructorArgTypes);
-            return constructor.newInstance(constructorArgs);
-
-        } catch (IllegalAccessException iae) {
+            Constructor<?> constructor = clazz.getDeclaredConstructor(constructorArgTypes);
+            return constructor.newInstance(constructorArgs);            	
+        } catch (IllegalAccessException iae) {		
             fail(failMessage += " access to its constructor with the parameters: " + getParameterTypesAsString(constructorArgTypes) + " was denied."
-                + " Please check the modifiers of the constructor.");
-        } catch (IllegalArgumentException iae) {
+                    + " Please check the modifiers of the constructor.");
+        } catch (IllegalArgumentException iae) {	
             fail(failMessage += " the actual constructor or none of the actual constructors of this class match the expected one."
-                + " We expect, amongst others, one with " + constructorArgs.length + " arguments."
-                + " Please implement this constructor correctly.");
-        } catch (InstantiationException ie) {
+                    + " We expect, amongst others, one with " + getParameterTypesAsString(constructorArgTypes) + " parameters, which is not exist."
+                    + " Please implement this constructor correctly.");
+        } catch (InstantiationException ie) {		
             fail(failMessage += " the class is abstract and should not have a constructor."
-                + " Please remove the constructor of the class.");
-        } catch (InvocationTargetException ite) {
+                    + " Please remove the constructor of the class.");
+        } catch (InvocationTargetException ite) {	
             fail(failMessage += " the constructor with " + constructorArgs.length + " parameters threw an exception and could not be initialized."
-                + " Please check the constructor implementation.");
+                    + " Please check the constructor implementation.");
         } catch (ExceptionInInitializerError eiie) {
             fail(failMessage += " the constructor with " + constructorArgs.length + " parameters could not be initialized.");
-        } catch (NoSuchMethodException nsme) {
+        } catch (NoSuchMethodException nsme) { 		
             fail(failMessage += " the class does not have a constructor with the arguments: "
-                + getParameterTypesAsString(constructorArgTypes) + ". Please implement this constructor properly.");
-        } catch (SecurityException se) {
+                    + getParameterTypesAsString(constructorArgTypes) + ". Please implement this constructor properly.");
+        } catch (SecurityException se) {			
             fail(failMessage += " access to the package of the class was denied.");
         }
 
@@ -93,12 +93,12 @@ public abstract class BehaviorTest {
             + object.getClass().getSimpleName() + "' because";
 
         try {
-            return object.getClass().getField(attributeName).get(object);
-        } catch (NoSuchFieldException nsfe) {
+            return object.getClass().getDeclaredField(attributeName).get(object);
+        } catch (NoSuchFieldException nsfe) {	
             fail(failMessage += " the attribute does not exist. Please implement the attribute correctly.");
-        } catch (SecurityException se) {
+        } catch (SecurityException se) {		
             fail(failMessage += " access to the package of the class was denied.");
-        } catch (IllegalAccessException iae) {
+        } catch (IllegalAccessException iae) {	
             fail(failMessage += " access to the attribute was denied. Please check the modifiers of the attribute.");
         }
 

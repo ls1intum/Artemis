@@ -104,6 +104,7 @@ import {
     faGripLinesVertical,
     faGripLines,
     faCompress,
+    faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -240,3 +241,4 @@ library.add(faAngleDoubleDown);
 library.add(faAngleDoubleUp);
 library.add(faCompress);
 library.add(faGripLines);
+library.add(faQuestion);

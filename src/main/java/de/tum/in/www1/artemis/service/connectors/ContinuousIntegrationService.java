@@ -7,6 +7,11 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 
+/**
+ * Abstract service for managing entities related to continuous integration.
+ * 
+ * @param <P> generic parameter for the build plan object of a continuous integration system.
+ */
 public interface ContinuousIntegrationService {
 
     public enum BuildStatus {
@@ -16,12 +21,12 @@ public interface ContinuousIntegrationService {
     /**
      * Creates the base build plan for the given programming exercise
      * 
-     * @param exercise                    a programming exercise with the required information to create the base build plan
-     * @param planKey                     the key of the plan
-     * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testVcsRepositorySlug       the slug of the test repository, i.e. the unique identifier
+     * @param exercise           a programming exercise with the required information to create the base build plan
+     * @param planKey            the key of the plan
+     * @param repositoryName     the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
 
     /**
      * Copy the base build plan for the given user on the CI system.

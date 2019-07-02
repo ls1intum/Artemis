@@ -76,9 +76,7 @@
             "testStatusLabels": {
                 "noResult": "No results",
                 "testPassing": "Test passing",
-                "testFailing": "Test failing",
-                "totalTestsPassing": "{{totalTests}} tests passing",
-                "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing"
+                "totalTestsPassing": "{{passedTests}} of {{totalTests}} tests passing"
             },
             "repoSelect": {
                 "assignmentRepo": "Assignment Repository",

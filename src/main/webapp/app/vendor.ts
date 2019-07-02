@@ -68,6 +68,7 @@ import {
     faPlayCircle,
     faPlus,
     faQuestionCircle,
+    faQuestion,
     faRedo,
     faRoad,
     faSave,
@@ -206,6 +207,7 @@ library.add(faExclamationCircle);
 library.add(faTerminal);
 library.add(faSpinner);
 library.add(faQuestionCircle);
+library.add(faQuestion);
 library.add(faTimesCircle);
 library.add(faAngleRight);
 library.add(faCheck);
