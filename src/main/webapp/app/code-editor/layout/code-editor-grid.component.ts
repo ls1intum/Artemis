@@ -71,7 +71,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 target.style.height = event.rect.height + 'px';
             });
 
-        this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 7;
         this.resizableMaxWidthLeft = this.$window.nativeWindow.screen.width / 2;
         this.interactResizableLeft = interact('.editor-sidebar-left')
             .resizable({
