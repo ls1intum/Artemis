@@ -1,17 +1,26 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
 import { BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
-import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
+import { DomainChange, DomainDependent, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
+}
+
+export enum GitConflictState {
+    IN_CONFLICT = 'IN_CONFLICT',
+    OK = 'RESOLVED',
+}
+
+export interface IConflictStateService {
+    subscribeConflictState: () => Observable<GitConflictState>;
 }
 
 export interface ICodeEditorRepositoryFileService {
@@ -33,6 +42,39 @@ export interface ICodeEditorRepositoryService {
 
 export interface IBuildLogService {
     getBuildLogs: () => Observable<BuildLogEntry[]>;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ConflictStateService extends DomainDependent implements IConflictStateService, OnDestroy {
+    private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>>;
+    private websocketConnections: Map<string, string>;
+
+    constructor(domainService: DomainService, private jhiWebsocketService: JhiWebsocketService) {
+        super(domainService);
+    }
+
+    subscribeConflictState = () => {
+        const [, domainValue] = this.domain;
+        const domainKey = `participation-${domainValue.id.toString()}`;
+
+        const repoSubject = new BehaviorSubject(GitConflictState.OK);
+
+        const repoStateUpdateChannel = `/topic/repository-state/${domainKey}/stateUpdate`;
+        this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
+        this.jhiWebsocketService
+            .receive(repoStateUpdateChannel)
+            .pipe(tap(update => repoSubject.next(update)))
+            .subscribe();
+
+        this.websocketConnections.set(domainKey, repoStateUpdateChannel);
+        this.conflictSubjects.set(domainKey, repoSubject);
+
+        return repoSubject as Observable<GitConflictState>;
+    };
+
+    ngOnDestroy(): void {
+        Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
+    }
 }
 
 @Injectable({ providedIn: 'root' })
