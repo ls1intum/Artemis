@@ -24,7 +24,7 @@ public class ProgrammingExerciseTestCase implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "testName")
+    @Column(name = "test_name")
     private String testName;
 
     @Column(name = "weight")
