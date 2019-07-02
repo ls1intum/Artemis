@@ -9,7 +9,7 @@ import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/entities/result';
 

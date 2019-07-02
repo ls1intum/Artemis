@@ -12,6 +12,11 @@
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"
     >
-        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"></jhi-programming-exercise-instructions>
+        <jhi-programming-exercise-instructions
+            #preview
+            [participation]="participation"
+            [exercise]="exercise"
+            (exerciseTestCasesChange)="updateTestCases($event)"
+        ></jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
 </div>
