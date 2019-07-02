@@ -3,10 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -25,49 +21,6 @@ public class ProgrammingExerciseTestCaseService {
         this.testCaseRepository = testCaseRepository;
     }
 
-    // TODO: Workaround for known bug, should be removed once fixed: https://jira.spring.io/browse/DATAJPA-1357
-    // The issue is that these methods are called from the build result notification of bamboo, so there is no authentication object available.
-    // This doesn't cause problems for out-of-the-box repository methods, but does for custom ones.
-    private Authentication getAuthDummy() {
-        return new Authentication() {
-
-            @Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return null;
-            }
-
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
-
-            @Override
-            public Object getDetails() {
-                return null;
-            }
-
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
-
-            @Override
-            public boolean isAuthenticated() {
-                return false;
-            }
-
-            @Override
-            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-
-            }
-
-            @Override
-            public String getName() {
-                return null;
-            }
-        };
-    }
-
     /**
      * Returns all test cases for a programming exercise.
      * 
@@ -75,8 +28,6 @@ public class ProgrammingExerciseTestCaseService {
      * @return test cases of a programming exercise.
      */
     public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
-        SecurityContext context = SecurityContextHolder.getContext();
-        context.setAuthentication(getAuthDummy());
         return this.testCaseRepository.findByExerciseId(id);
     }
 
@@ -87,9 +38,7 @@ public class ProgrammingExerciseTestCaseService {
      * @return active test cases of a programming exercise.
      */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
-        SecurityContext context = SecurityContextHolder.getContext();
-        context.setAuthentication(getAuthDummy());
-        return this.testCaseRepository.findActiveByExerciseId(id);
+        return this.testCaseRepository.findByExerciseIdAndActive(id, true);
     }
 
     /**
@@ -101,9 +50,6 @@ public class ProgrammingExerciseTestCaseService {
      * @param exercise  programming exercise.
      */
     public boolean generateFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
-        SecurityContext context = SecurityContextHolder.getContext();
-        context.setAuthentication(getAuthDummy());
-
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1).exercise(exercise).active(true)).collect(Collectors.toSet());

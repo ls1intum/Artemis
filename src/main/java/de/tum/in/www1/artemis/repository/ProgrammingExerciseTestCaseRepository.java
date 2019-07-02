@@ -15,9 +15,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 @Repository
 public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<ProgrammingExerciseTestCase, Long> {
 
-    @Query("select programmingExerciseTestCase from ProgrammingExerciseTestCase programmingExerciseTestCase where programmingExerciseTestCase.exercise.id = :#{#exerciseId}")
     Set<ProgrammingExerciseTestCase> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select tc from ProgrammingExerciseTestCase tc where tc.exercise.id = :#{#exerciseId} and tc.active = true")
-    Set<ProgrammingExerciseTestCase> findActiveByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(Long exerciseId, Boolean active);
 }
