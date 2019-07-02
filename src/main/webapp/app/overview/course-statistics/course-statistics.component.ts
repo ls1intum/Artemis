@@ -9,6 +9,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
+import { InitializationState } from 'app/entities/participation';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -299,7 +300,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                             }
                         }
                     } else {
-                        if (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!)) {
+                        if (
+                            participation.initializationState === InitializationState.FINISHED &&
+                            (!exercise.dueDate || participation.initializationDate!.isBefore(exercise.dueDate!))
+                        ) {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotGraded', true);
                         } else {
                             groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseParticipatedAfterDueDate', false);
