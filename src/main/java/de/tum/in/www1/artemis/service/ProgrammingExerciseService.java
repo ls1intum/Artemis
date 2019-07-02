@@ -13,7 +13,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javassist.NotFoundException;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -524,10 +523,10 @@ public class ProgrammingExerciseService {
      * 
      * @param id of the programming exercise.
      * @return
-     * @throws NotFoundException      the programming exercise could not be found.
+     * @throws NoSuchElementException the programming exercise could not be found.
      * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    public ProgrammingExercise findById(Long id) throws NotFoundException, IllegalAccessException {
+    public ProgrammingExercise findById(Long id) throws NoSuchElementException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
@@ -538,7 +537,7 @@ public class ProgrammingExerciseService {
             return programmingExercise.get();
         }
         else {
-            throw new NotFoundException("programming exercise not found");
+            throw new NoSuchElementException("programming exercise not found");
         }
     }
 

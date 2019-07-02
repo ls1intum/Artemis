@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
+import java.util.NoSuchElementException;
 import java.util.Set;
-import javassist.NotFoundException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,7 @@ public class ProgrammingExerciseTestCaseResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
-        catch (NotFoundException ex) {
+        catch (NoSuchElementException ex) {
             return notFound();
         }
     }
