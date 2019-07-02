@@ -20,6 +20,8 @@
             display: flex;
             flex-flow: column nowrap;
             flex: 1 1 auto;
+            // This is needed so the preview doesn't overflow the container.
+            height: 100%;
         }
     }
 
