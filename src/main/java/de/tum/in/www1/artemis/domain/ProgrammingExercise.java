@@ -244,6 +244,11 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     }
 
     @JsonIgnore
+    public boolean isParticipationSolutionParticipationOfThisExercise(Participation participation) {
+        return this.getSolutionParticipation() != null && this.getSolutionParticipation().getId().equals(participation.getId());
+    }
+
+    @JsonIgnore
     public String getProjectKey() {
         // this is the key used for Bitbucket and Bamboo
         // remove all whitespace and make sure it is upper case

@@ -101,8 +101,9 @@ public class ResultService {
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it.
-     * 
+     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
+     * extracted from the feedbacks & the result is updated with the information from the test cases.
+     *
      * @param participation Participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
      */
@@ -113,24 +114,33 @@ public class ResultService {
 
         if (participation.getExercise() instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-            // When the result is from a solution participation of a programming exercise, extract the feedback items (= test cases)
-            // and store them in our database.
-            if (result != null && programmingExercise.getSolutionParticipation() != null && programmingExercise.getSolutionParticipation().getId().equals(participation.getId())) {
-                boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
-
-                if (haveTestCasesChanged) {
-                    // Notify the client about the updated testCases
-                    Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
-                    messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
-                }
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (result != null && programmingExercise.isParticipationSolutionParticipationOfThisExercise(participation)) {
+                extractTestCasesFromResult(participation, result);
             }
-
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise);
-
         }
+
         notifyUser(participation, result);
+    }
+
+    /**
+     * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
+     * through the websocket!
+     *
+     * @param participation of the given result.
+     * @param result        from which to extract the test cases.
+     */
+    private void extractTestCasesFromResult(Participation participation, Result result) {
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
+        boolean haveTestCasesChanged = testCaseService.generateTestCasesFromFeedbacks(result.getFeedbacks(), programmingExercise);
+        if (haveTestCasesChanged) {
+            // Notify the client about the updated testCases
+            Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(participation.getExercise().getId());
+            messagingTemplate.convertAndSend("/topic/programming-exercise/" + participation.getExercise().getId() + "/test-cases", testCases);
+        }
     }
 
     private void notifyUser(Participation participation, Result result) {
