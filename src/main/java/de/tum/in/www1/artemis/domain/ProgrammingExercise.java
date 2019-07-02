@@ -269,7 +269,7 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         this.testCases = testCases;
     }
 
-    public Boolean getSequentialTestRuns() {
+    public Boolean hasSequentialTestRuns() {
         if (sequentialTestRuns == null) {
             return false;
         }

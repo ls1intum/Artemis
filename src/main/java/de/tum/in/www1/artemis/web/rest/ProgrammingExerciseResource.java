@@ -546,7 +546,7 @@ public class ProgrammingExerciseResource {
         try {
             String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.getSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
+            testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             if (didGenerateOracle) {
