@@ -197,9 +197,9 @@ describe('CodeEditorInstructorIntegration', () => {
         const exercise = {
             id: 1,
             problemStatement,
-            participations: [{ id: 2 }],
-            templateParticipation: { id: 3 },
-            solutionParticipation: { id: 4 },
+            participations: [{ id: 2, repositoryUrl: 'test' }],
+            templateParticipation: { id: 3, repositoryUrl: 'test2' },
+            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
         exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
         exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
@@ -317,9 +317,9 @@ describe('CodeEditorInstructorIntegration', () => {
         const exercise = {
             id: 1,
             problemStatement,
-            participations: [{ id: 2 }],
-            templateParticipation: { id: 3 },
-            solutionParticipation: { id: 4 },
+            participations: [{ id: 2, repositoryUrl: 'test' }],
+            templateParticipation: { id: 3, repositoryUrl: 'test2' },
+            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
 
         const setDomainSpy = spy(domainService, 'setDomain');
@@ -366,5 +366,39 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).to.have.been.calledTwice;
         expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.participations[0]]);
         expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
+    });
+
+    it('should not be able to select a repository without repositoryUrl', () => {
+        const exercise = {
+            id: 1,
+            problemStatement,
+            participations: [{ id: 2, repositoryUrl: 'test' }],
+            templateParticipation: { id: 3 },
+            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+        } as ProgrammingExercise;
+
+        const setDomainSpy = spy(domainService, 'setDomain');
+
+        // Start with assignment repository
+        // @ts-ignore
+        (container.router as MockRouter).setUrl('code-editor-instructor/1/3');
+        container.ngOnInit();
+        routeSubject.next({ exerciseId: 1, participationId: 3 });
+        findWithParticipationsSubject.next({ body: exercise });
+
+        containerFixture.detectChanges();
+
+        expect(setDomainSpy).to.have.been.calledOnce;
+        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.solutionParticipation]);
+        expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
+        expect(container.selectedParticipation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.grid).to.exist;
+        expect(container.fileBrowser).to.exist;
+        expect(container.actions).to.exist;
+        expect(container.instructions).to.exist;
+        expect(container.resultComp).to.exist;
+        expect(container.buildOutput).to.exist;
+        expect(container.buildOutput.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.instructions.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
     });
 });

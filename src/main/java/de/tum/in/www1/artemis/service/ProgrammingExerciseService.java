@@ -307,19 +307,15 @@ public class ProgrammingExerciseService {
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
-            // repositories can
-            // be used by the build plans
+            // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
             gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis");
             gitService.commitAndPush(testRepo, "Empty Setup by Artemis");
             gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis");
         }
 
-        // The creation of the webhooks must occur after the initial push, because the
-        // participation is
-        // not yet saved in the database, so we cannot save the submission accordingly
-        // (see
-        // ProgrammingSubmissionService.notifyPush)
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
