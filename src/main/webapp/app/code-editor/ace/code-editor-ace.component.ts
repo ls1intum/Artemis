@@ -18,13 +18,14 @@ import * as ace from 'brace';
 
 import { AnnotationArray, TextChange } from 'app/entities/ace-editor';
 import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
+import { CodeEditorGridService, CodeEditorRepositoryFileService, ResizeType } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor/model';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
+    styleUrls: ['./code-editor-ace.scss'],
     providers: [JhiAlertService, WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -54,6 +55,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     editorMode: string; // String or mode object
     isLoading = false;
     annotationChange: Subscription;
+    resizeSubscription: Subscription;
     buildLogErrorsValue: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
     // We store changes in the editor since the last content emit to update annotation positions.
@@ -64,7 +66,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.buildLogErrorsChange.emit(this.buildLogErrors);
     }
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * @function ngAfterViewInit
@@ -76,6 +78,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             animatedScroll: true,
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
+        });
+        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_LEFT, ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
+            this.editor.getEditor().resize();
         });
     }
 
@@ -213,6 +218,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
+        }
+        if (this.resizeSubscription) {
+            this.resizeSubscription.unsubscribe();
         }
     }
 }

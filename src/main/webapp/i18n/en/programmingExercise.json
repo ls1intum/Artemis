@@ -41,6 +41,14 @@
             "squashTemplateCommitsWarning": "This action squashes all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
             "squashTemplateCommitsError": "Template repository commits could not be squashed.",
             "squashTemplateCommitsSuccess": "Template repository commits have been successfully squashed.",
+            "editable": {
+                "unsaved": "Unsaved.",
+                "unsavedTooltip": "There are unsaved changes in the problem statement.",
+                "saving": "Saving...",
+                "savingTooltip": "Saving your unsaved changes in the problem statement.",
+                "saved": "Saved.",
+                "savedTooltip": "The problem statement is saved."
+            },
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "[task] Task",
@@ -52,7 +60,9 @@
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that are part of the problem statement but can't be found in your test repository:",
-                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:"
+                "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
+                "issues": "Test case issues.",
+                "ok": "Test cases ok."
             }
         }
     }

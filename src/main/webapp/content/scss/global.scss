@@ -1,6 +1,5 @@
 @import 'bootstrap-variables';
 @import 'artemis-variables';
-@import 'editor';
 @import 'quiz';
 @import 'text';
 @import '~ng-pick-datetime/assets/style/picker.min.css';
@@ -79,6 +78,14 @@ a:not(.btn):hover {
 
 .popover {
     max-width: 100%;
+}
+
+.border-lightgrey {
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
+.text-lightgrey {
+    color: rgba(0, 0, 0, 0.125);
 }
 
 /* ==========================================================================
