@@ -1,22 +1,36 @@
 version: '3'
 
 services:
-  artemis-app:
-    build:
-      context: .
-      dockerfile: ./docker/app/Dockerfile
-    command: ./gradlew bootRun
+  artemis-server:
+    command: ./gradlew bootRun -Pdocker=yes
     depends_on:
       - artemis-mysql
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false
       - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis
+    image: openjdk:8-jdk-alpine
     networks:
       - artemis
     ports:
       - 8080:8080
     volumes:
-      - ./:/app/ 
+      - ./:/server/
+    working_dir: /server
+  
+  artemis-client:
+    command: sh -c "yarn install && yarn start"
+    depends_on:
+      - artemis-server
+    image: node:12.3.1-alpine
+    networks:
+      - artemis
+    ports:
+      - 9000:9000
+      - 9001:9001 # TODO: maybe remove this
+      - 9006:9006 # TODO: maybe remove this
+    volumes:
+      - ./:/client/
+    working_dir: /client
 
   artemis-mysql:
     command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp

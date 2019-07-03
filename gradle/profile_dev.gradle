@@ -29,16 +29,19 @@ bootRun {
     args = []
 }
 
-task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
-    inputs.dir("src/main/webapp/")
+// As client and server are separated in the docker setup webpackBuildDev task should not be executed
+if(!project.hasProperty('docker') || project.property('docker') == 'no') {
+    task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
+        inputs.dir("src/main/webapp/")
 
-    def webpackDevFiles = fileTree("webpack//")
-    webpackDevFiles.exclude("webpack.prod.js")
-    inputs.files(webpackDevFiles)
+        def webpackDevFiles = fileTree("webpack//")
+        webpackDevFiles.exclude("webpack.prod.js")
+        inputs.files(webpackDevFiles)
 
-    outputs.dir("build/resources/main/static/")
+        outputs.dir("build/resources/main/static/")
 
-    args = ["run", "webpack:build"]
+        args = ["run", "webpack:build"]
+    }
 }
 
 processResources {
@@ -52,5 +55,7 @@ processResources {
     }
 }
 
-processResources.dependsOn webpackBuildDev
+if(!project.hasProperty('docker') || project.property('docker') == 'no') {
+    processResources.dependsOn webpackBuildDev
+}
 bootJar.dependsOn processResources
