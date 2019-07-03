@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,8 +35,8 @@ public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
-            Optional<VersionControlService> versionControlService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
+            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate) {
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, messagingTemplate);
         this.exerciseService = exerciseService;
         this.versionControlService = versionControlService;
     }

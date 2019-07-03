@@ -15,8 +15,8 @@ export enum DomainType {
 }
 
 export enum GitConflictState {
-    IN_CONFLICT = 'IN_CONFLICT',
-    OK = 'RESOLVED',
+    CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',
+    OK = 'OK',
 }
 
 export interface IConflictStateService {
@@ -59,7 +59,7 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
 
         const repoSubject = new BehaviorSubject(GitConflictState.OK);
 
-        const repoStateUpdateChannel = `/topic/repository-state/${domainKey}/stateUpdate`;
+        const repoStateUpdateChannel = `/topic/repository-state/${domainKey}/conflict`;
         this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
         this.jhiWebsocketService
             .receive(repoStateUpdateChannel)

@@ -8,9 +8,11 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,15 +37,22 @@ public class RepositoryParticipationResource extends RepositoryResource {
     private final ParticipationService participationService;
 
     public RepositoryParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ParticipationService participationService) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ParticipationService participationService,
+            SimpMessageSendingOperations messagingTemplate) {
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, messagingTemplate);
         this.participationService = participationService;
     }
 
     @Override
     Repository getRepository(Long participationId) throws IOException, IllegalAccessException, InterruptedException {
         Participation participation = participationService.findOne(participationId);
-        return repositoryService.checkoutRepositoryByParticipation(participation);
+        try {
+            return repositoryService.checkoutRepositoryByParticipation(participation);
+        }
+        catch (CheckoutConflictException ex) {
+            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/" + participationId + "update", "CHECKOUT_CONFLICT");
+            throw new IOException();
+        }
     }
 
     /**
