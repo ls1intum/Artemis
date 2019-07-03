@@ -41,6 +41,14 @@
             "squashTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "squashTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
             "squashTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
+            "editable": {
+                "unsaved": "Ungespeichert.",
+                "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
+                "saving": "Speichert...",
+                "savingTooltip": "Speichert die ungespeicherten Änderungen in der Aufgabenstellung.",
+                "saved": "Gespeichert.",
+                "savedTooltip": "Die Aufgabenstellung ist gespeichert."
+            },
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
@@ -52,7 +60,9 @@
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
-                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:"
+                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
+                "issues": "Testfall Probleme.",
+                "ok": "Testfälle ok."
             }
         }
     }
