@@ -192,7 +192,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingSubmission.getSubmissionDate());
                 if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                    compassService.addAssessment(exerciseId, submissionId, feedbacks);
+                    compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
                 }
             }
         }

@@ -38,13 +38,15 @@ public class Assessment {
     }
 
     /**
-     * Add feedback for a specific context to the contextFeedbackList, recalculate metrics for the contextScoreMapping
+     * Add feedback for a specific context to the contextFeedbackList, recalculate metrics for the contextScoreMapping. If feedback with the same ID already exists, it will be
+     * replaced by the new feedback item.
      *
      * @param feedback The feedback to add
      * @param context  The context connected to the score
      */
     public void addFeedback(Feedback feedback, Context context) {
         List<Feedback> feedbacks = getFeedbacks(context);
+        feedbacks.removeIf(existingFeedback -> existingFeedback.getId().equals(feedback.getId()));
         feedbacks.add(feedback);
         contextScoreMapping.put(context, calculateTotalScore(feedbacks));
     }
