@@ -20,6 +20,7 @@ import { ResultService } from 'app/entities/result';
 @Component({
     selector: 'jhi-programming-exercise-dialog',
     templateUrl: './programming-exercise-dialog.component.html',
+    styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;

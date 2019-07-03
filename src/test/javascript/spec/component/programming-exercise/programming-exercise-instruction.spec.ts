@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
@@ -45,7 +46,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
             declarations: [ProgrammingExerciseInstructionComponent, SafeHtmlPipe],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
@@ -280,7 +281,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortNotExecutedHtml);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortNotExecutedHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
@@ -318,7 +319,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.stepwizard-circle'))).to.have.lengthOf(2);
         tick();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('.instructions')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortFailsHtml);
+        expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).to.equal(problemStatementBubbleSortFailsHtml);
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
