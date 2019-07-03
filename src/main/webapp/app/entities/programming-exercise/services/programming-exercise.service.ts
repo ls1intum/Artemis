@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ProgrammingExercise } from './programming-exercise.model';
+import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
 import { Participation } from 'app/entities/participation';

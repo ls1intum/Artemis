@@ -14,8 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.stereotype.Service;
@@ -37,10 +35,13 @@ public class RepositoryService {
 
     private UserService userService;
 
-    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService) {
+    private ParticipationService participationService;
+
+    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
         this.userService = userService;
+        this.participationService = participationService;
     }
 
     /**
@@ -267,50 +268,11 @@ public class RepositoryService {
      * @throws InterruptedException
      */
     public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {
-        boolean hasAccess = canAccessParticipation(participation);
+        boolean hasAccess = participationService.canAccessParticipation(participation);
         if (!hasAccess) {
             throw new IllegalAccessException();
         }
 
         return gitService.get().getOrCheckoutRepository(participation);
-    }
-
-    /**
-     * Check if a repository can be accessed given a participation.
-     * 
-     * @param participation
-     * @return
-     */
-    @Nullable
-    public boolean canAccessParticipation(Participation participation) {
-        if (!userHasPermissions(participation))
-            return false;
-
-        if (!Optional.ofNullable(participation).isPresent()) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Check if a user has permissions to to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
-     * 
-     * @param participation
-     * @return
-     */
-    private boolean userHasPermissions(Participation participation) {
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            // if the user is not the owner of the participation, the user can only see it in case he is
-            // a teaching assistant or an instructor of the course, or in case he is admin
-            User user = userService.getUserWithGroupsAndAuthorities();
-            //TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
-            if (participation.getExercise() == null) {
-                //this can only happen if we have a template or solution participation. Then the call can only be invoked by an instructor / teaching assistant
-                return true;
-            }
-            Course course = participation.getExercise().getCourse();
-            return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
-        }
-        return true;
     }
 }
