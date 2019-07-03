@@ -112,6 +112,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSave() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
             result => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
@@ -121,6 +126,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onSubmit() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         const escalatedConflicts: Conflict[] = [];
         for (let i = 0; i < this.conflictResolutionStates.length; i++) {
             if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {

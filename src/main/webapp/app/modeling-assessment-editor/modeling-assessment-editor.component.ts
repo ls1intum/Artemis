@@ -207,6 +207,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onSaveAssessment() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
@@ -237,6 +242,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private submitAssessment() {
+        if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
+            this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return;
+        }
+
         this.modelingAssessmentService.saveAssessment(this.feedback, this.submission!.id, true, true).subscribe(
             (result: Result) => {
                 result.participation!.results = [result];
