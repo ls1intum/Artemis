@@ -10,9 +10,6 @@ public class Score {
 
     private List<String> comments;
 
-    public Score() {
-    }
-
     public Score(double points, List<String> comments, double confidence) {
         this.points = points;
         this.comments = comments;

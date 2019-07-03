@@ -218,8 +218,10 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
-        checkAutomaticAssessment(storedSubmission.getResult());
-        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedSubmission.getResult().getFeedbacks(), FeedbackType.AUTOMATIC);
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
+        assertThat(automaticResult).as("automatic assessment is created").isPresent();
+        checkAutomaticAssessment(automaticResult.get());
+        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.get().getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -232,11 +234,13 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
-        checkAutomaticAssessment(storedSubmission.getResult());
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
+        assertThat(automaticResult).as("automatic assessment is created").isPresent();
+        checkAutomaticAssessment(automaticResult.get());
         List<Feedback> feedbackUsedForAutomaticAssessment = modelingAssessment.getFeedbacks().stream()
-                .filter(feedback -> storedSubmission.getResult().getFeedbacks().stream().anyMatch(storedFeedback -> storedFeedback.getReference().equals(feedback.getReference())))
+                .filter(feedback -> automaticResult.get().getFeedbacks().stream().anyMatch(storedFeedback -> storedFeedback.getReference().equals(feedback.getReference())))
                 .collect(Collectors.toList());
-        checkFeedbackCorrectlyStored(feedbackUsedForAutomaticAssessment, storedSubmission.getResult().getFeedbacks(), FeedbackType.AUTOMATIC);
+        checkFeedbackCorrectlyStored(feedbackUsedForAutomaticAssessment, automaticResult.get().getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -250,8 +254,10 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
-        checkAutomaticAssessment(storedSubmission.getResult());
-        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedSubmission.getResult().getFeedbacks(), FeedbackType.AUTOMATIC);
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
+        assertThat(automaticResult).as("automatic assessment is created").isPresent();
+        checkAutomaticAssessment(automaticResult.get());
+        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.get().getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -265,8 +271,10 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
-        checkAutomaticAssessment(storedSubmission.getResult());
-        assertThat(storedSubmission.getResult().getFeedbacks()).as("no feedback has been assigned").isEmpty();
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
+        assertThat(automaticResult).as("automatic assessment is created").isPresent();
+        checkAutomaticAssessment(automaticResult.get());
+        assertThat(automaticResult.get().getFeedbacks()).as("no feedback has been assigned").isEmpty();
     }
 
     @Test
@@ -281,8 +289,10 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
-        checkAutomaticAssessment(storedSubmission.getResult());
-        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedSubmission.getResult().getFeedbacks(), FeedbackType.AUTOMATIC);
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
+        assertThat(automaticResult).as("automatic assessment is created").isPresent();
+        checkAutomaticAssessment(automaticResult.get());
+        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.get().getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test

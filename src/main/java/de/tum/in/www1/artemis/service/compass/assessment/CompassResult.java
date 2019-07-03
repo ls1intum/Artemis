@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.assessment;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +60,12 @@ public class CompassResult implements Grade {
                 continue;
             }
 
-            // get the longest of the given comments as feedback text - we assume that a longer text means more information/feedback for the student
-            String elementFeedbackText = entry.getValue().getComments().stream().max((text1, text2) -> Math.max(text1.length(), text2.length())).orElse("");
+            String elementFeedbackText = "";
+            List<String> comments = entry.getValue().getComments();
+            if (comments != null) {
+                // get the longest of the given comments as feedback text - we assume that a longer text means more information/feedback for the student
+                elementFeedbackText = comments.stream().filter(Objects::nonNull).max((text1, text2) -> Math.max(text1.length(), text2.length())).orElse("");
+            }
 
             jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementFeedbackText);
             jsonIdPointsMapping.put(entry.getKey().getJSONElementID(), entry.getValue().getPoints());

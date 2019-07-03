@@ -95,12 +95,12 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
 
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
@@ -111,13 +111,13 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
 
         String validActivityModel = database.loadFileFromResources("test-data/model-submission/activity-model.json");
         submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
         returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
@@ -128,13 +128,13 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
 
         String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
         submission = ModelFactory.generateModelingSubmission(validObjectModel, true);
         returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
@@ -145,13 +145,13 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
 
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
         submission = ModelFactory.generateModelingSubmission(validUseCaseModel, true);
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
-        checkDetailsHidden(returnedSubmission);
+        checkDetailsHidden(returnedSubmission, true);
     }
 
     // TODO: Fix defective test
@@ -167,7 +167,7 @@ public class ModelingSubmissionIntegrationTest {
         try {
             returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
             database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
-            checkDetailsHidden(returnedSubmission);
+            checkDetailsHidden(returnedSubmission, true);
             Fail.fail("update on submitted ModelingSubmission worked");
         }
         catch (Exception e) {
@@ -237,7 +237,7 @@ public class ModelingSubmissionIntegrationTest {
 
         assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        checkDetailsHidden(storedSubmission);
+        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -261,7 +261,7 @@ public class ModelingSubmissionIntegrationTest {
 
         assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        checkDetailsHidden(storedSubmission);
+        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -291,7 +291,7 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(storedSubmission.getResult().getAssessmentType()).as("type of result is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
         assertThat(storedSubmission.getResult().getCompletionDate()).as("completion date is not set").isNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is not set").isNull();
-        checkDetailsHidden(storedSubmission);
+        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -310,7 +310,7 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        checkDetailsHidden(storedSubmission);
+        checkDetailsHidden(storedSubmission, false);
     }
 
     @Test
@@ -387,11 +387,14 @@ public class ModelingSubmissionIntegrationTest {
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
     }
 
-    private void checkDetailsHidden(ModelingSubmission submission) {
+    private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getSampleSolutionModel()).isNullOrEmpty();
         assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getSampleSolutionExplanation()).isNullOrEmpty();
+        if (isStudent) {
+            assertThat(submission.getResult()).isNull();
+        }
     }
 
     private ModelingSubmission performInitialModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
