@@ -438,10 +438,10 @@ public class ModelingAssessmentIntegrationTest {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
-            HttpStatus.OK);
+                HttpStatus.OK);
 
         request.put("/api/modeling-submissions/" + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
-            HttpStatus.OK);
+                HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("assessment is correctly stored").isEqualTo(1);
@@ -457,19 +457,21 @@ public class ModelingAssessmentIntegrationTest {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
+        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+                HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
-            HttpStatus.OK);
+                HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("overridden assessment has correct amount of feedback").isEqualTo(1);
         assertThat(modelingAssessment.getFeedbacks().get(0)).as("feedback is properly overridden").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("automatic assessment still exists").isEqualTo(1);
-        assertThat(modelingAssessment.getFeedbacks().get(0)).as("automatic assessment is overridden properly").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
+        assertThat(modelingAssessment.getFeedbacks().get(0)).as("automatic assessment is overridden properly").isEqualToComparingOnlyGivenFields(changedFeedback, "credits",
+                "text");
     }
 
     @Test
@@ -479,13 +481,15 @@ public class ModelingAssessmentIntegrationTest {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
-        request.put("/api/modeling-submissions/" + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback), HttpStatus.OK);
+        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+                HttpStatus.OK);
+        request.put("/api/modeling-submissions/" + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+                HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
-            HttpStatus.OK);
+                HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("overridden assessment has correct amount of feedback").isEqualTo(1);
