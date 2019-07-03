@@ -22,7 +22,7 @@ import { Complaint } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise';
-import { Submission } from 'app/entities/submission';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -50,6 +50,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     notFound = false;
     userId: number;
     canOverride = false;
+
+    paramSub: Subscription;
 
     formattedProblemStatement: string | null;
     formattedSampleSolution: string | null;
@@ -100,35 +102,40 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const submissionValue = this.route.snapshot.paramMap.get('submissionId');
-
-        if (submissionValue === 'new') {
-            this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
-                participation => {
-                    this.receiveParticipation(participation);
-
-                    // Update the url with the new id, without reloading the page, to make the history consistent
-                    const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
-                    this.location.go(newUrl);
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        this.notFound = true;
-                    } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.goToExerciseDashboard();
-                    } else {
-                        this.onError(error.message);
-                    }
-                    this.busy = false;
-                },
-            );
-        } else {
-            const submissionId = Number(submissionValue);
-            this.assessmentsService
-                .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
-                .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
         }
+        this.paramSub = this.route.params.subscribe(params => {
+            const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+            const submissionValue = this.route.snapshot.paramMap.get('submissionId');
+
+            if (submissionValue === 'new') {
+                this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
+                    participation => {
+                        this.receiveParticipation(participation);
+
+                        // Update the url with the new id, without reloading the page, to make the history consistent
+                        const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                        this.location.go(newUrl);
+                    },
+                    (error: HttpErrorResponse) => {
+                        if (error.status === 404) {
+                            this.notFound = true;
+                        } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                            this.goToExerciseDashboard();
+                        } else {
+                            this.onError(error.message);
+                        }
+                        this.busy = false;
+                    },
+                );
+            } else {
+                const submissionId = Number(submissionValue);
+                this.assessmentsService
+                    .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
+                    .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+            }
+        });
     }
 
     /**
@@ -191,6 +198,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
+        this.paramSub.unsubscribe();
     }
 
     public addAssessment(assessmentText: string): void {
@@ -257,6 +265,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
     /**
      * Load next assessment in the same page.
+     * It calls the api to load the new unassessed submission in the same page.
+     * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNextOptimal() {
         if (this.exercise.type === ExerciseType.TEXT) {
@@ -264,10 +274,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 (response: TextSubmission) => {
                     this.unassessedSubmission = response;
                     this.router.onSameUrlNavigation = 'reload';
-                    // navigate to root and then to new assessment page to trigger re-initialization of the components
-                    this.router
-                        .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`, {}));
+                    // navigate to the new assessment page to trigger re-initialization of the components
+                    this.router.navigateByUrl(`/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`, {});
                 },
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
