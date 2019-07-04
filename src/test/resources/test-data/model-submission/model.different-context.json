@@ -1,0 +1,72 @@
+{
+    "version": "2.0.0",
+    "size": {
+        "width": 480,
+        "height": 290
+    },
+    "type": "ClassDiagram",
+    "interactive": {
+        "elements": [],
+        "relationships": []
+    },
+    "elements": [
+        {
+            "id": "840bbac6-c42f-4a15-81df-bd7631fc1a95",
+            "name": "Abstract",
+            "owner": null,
+            "type": "AbstractClass",
+            "bounds": {
+                "x": 280,
+                "y": 0,
+                "width": 200,
+                "height": 100
+            },
+            "attributes": [
+                "5101c7d4-a233-4561-b1b0-1e3258d38ef0"
+            ],
+            "methods": []
+        },
+        {
+            "id": "5101c7d4-a233-4561-b1b0-1e3258d38ef0",
+            "name": "+ attribute: Type",
+            "owner": "840bbac6-c42f-4a15-81df-bd7631fc1a95",
+            "type": "ClassAttribute",
+            "bounds": {
+                "x": 280,
+                "y": 40,
+                "width": 200,
+                "height": 30
+            }
+        },
+        {
+            "id": "8f59210a-ea9e-4bae-9225-94ae961577ba",
+            "name": "Class",
+            "owner": null,
+            "type": "Class",
+            "bounds": {
+                "x": 0,
+                "y": 190,
+                "width": 200,
+                "height": 100
+            },
+            "attributes": [
+                "44f51e4f-5e3f-4fbd-b4b5-83b53e263ef9"
+            ],
+            "methods": []
+        },
+        {
+            "id": "44f51e4f-5e3f-4fbd-b4b5-83b53e263ef9",
+            "name": "+ attribute: Type",
+            "owner": "8f59210a-ea9e-4bae-9225-94ae961577ba",
+            "type": "ClassAttribute",
+            "bounds": {
+                "x": 0,
+                "y": 230,
+                "width": 200,
+                "height": 30
+            }
+        }
+    ],
+    "relationships": [],
+    "assessments": []
+}

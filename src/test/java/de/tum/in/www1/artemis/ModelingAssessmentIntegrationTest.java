@@ -367,7 +367,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student11");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
 
         request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
             Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
@@ -420,6 +420,28 @@ public class ModelingAssessmentIntegrationTest {
 
         Optional<Result> storedResultOfSubmission2 = resultRepo.findDistinctWithFeedbackBySubmissionId(submission2.getId());
         assertThat(storedResultOfSubmission2).as("result is not present").isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testAutomaticAssessment_elementsWithDifferentContextInSameSimilaritySet() throws Exception {
+        List<Feedback> assessment1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.json");
+        List<Feedback> assessment2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.automatic.json");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student2");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student3");
+
+        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment1, HttpStatus.OK);
+
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(4);
+
+        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment2, HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(2);
     }
 
     @Test
