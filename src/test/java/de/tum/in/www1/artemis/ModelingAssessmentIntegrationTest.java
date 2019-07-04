@@ -362,6 +362,40 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testLongestFeedbackTextSelection() throws Exception {
+        Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
+        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student11");
+
+        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
+            Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
+
+        Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
+        assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
+
+        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
+            Collections.singletonList(feedbackOnePoint.text("short")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
+        assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
+
+        request.put("/api/modeling-submissions/" + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
+            Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
+
+        automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
+        assertThat(automaticResult).as("automatic result was created").isPresent();
+        assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
+        assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessmentUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
