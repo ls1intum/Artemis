@@ -370,15 +370,15 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
 
         request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
-            Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
+                Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isPresent();
         assertThat(automaticResult.get().getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
-        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
-            Collections.singletonList(feedbackOnePoint.text("short")), HttpStatus.OK);
+        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(feedbackOnePoint.text("short")),
+                HttpStatus.OK);
 
         automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isPresent();
@@ -386,7 +386,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(automaticResult.get().getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
         request.put("/api/modeling-submissions/" + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
-            Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
+                Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
 
         automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isPresent();
