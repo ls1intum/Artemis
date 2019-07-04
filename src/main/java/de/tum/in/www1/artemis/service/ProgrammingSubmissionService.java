@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.BambooScheduleService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 
@@ -34,17 +35,20 @@ public class ProgrammingSubmissionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final BambooScheduleService bambooScheduleService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, BambooScheduleService bambooScheduleService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.bambooScheduleService = bambooScheduleService;
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
@@ -82,6 +86,8 @@ public class ProgrammingSubmissionService {
         participation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
+
+        bambooScheduleService.startResultScheduler(participation);
 
         // notify user via websocket
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);

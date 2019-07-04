@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.connectors.BambooScheduleService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -39,6 +40,8 @@ public class ResultService {
 
     private final LtiService ltiService;
 
+    private final BambooScheduleService bambooScheduleService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final ObjectMapper objectMapper;
@@ -47,7 +50,7 @@ public class ResultService {
 
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService) {
+            ProgrammingExerciseTestCaseService testCaseService, BambooScheduleService bambooScheduleService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -56,6 +59,7 @@ public class ResultService {
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
+        this.bambooScheduleService = bambooScheduleService;
     }
 
     public Result findOne(long id) {
@@ -122,6 +126,8 @@ public class ResultService {
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise);
         }
+
+        bambooScheduleService.cancelResultScheduler(participation);
 
         notifyUser(participation, result);
     }

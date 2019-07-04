@@ -46,10 +46,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
 
 @Service
@@ -80,13 +77,15 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final BambooScheduleService bambooScheduleService;
+
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository,
-            ParticipationRepository participationRepository, UserService userService, AuthorizationCheckService authCheckService) {
+            ParticipationRepository participationRepository, UserService userService, AuthorizationCheckService authCheckService, BambooScheduleService bambooScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -98,6 +97,7 @@ public class ProgrammingExerciseService {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.bambooScheduleService = bambooScheduleService;
     }
 
     /**
@@ -126,6 +126,8 @@ public class ProgrammingExerciseService {
             participationRepository.save(participation);
 
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
+
+            bambooScheduleService.startResultScheduler(participation);
         }
     }
 
