@@ -388,14 +388,14 @@ public class ExerciseService {
         log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path finalZipFilePath = null;
-        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 try {
-                    if (participation.getRepositoryUrl() != null) {     // ignore participations without repository URL
+                    if (participation.getRepositoryUrl() != null) {     // ignore participations without repository URL and without student
                         // 1. clone the repository
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
                         // 2. zip repository and collect the zip file
-                        log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         // 3. delete the locally cloned repo again
@@ -411,8 +411,8 @@ public class ExerciseService {
                 try {
                     // create a large zip file with all zipped repos and provide it for download
                     log.info("Create zip file for all repositories");
-                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                            exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
+                    String exerciseName = exercise.getShortName() != null ? exercise.getShortName() : exercise.getTitle().replaceAll("\\s", "");
+                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getShortName() + "-" + exerciseName + ".zip");
                     createZipFile(finalZipFilePath, zippedRepoFiles);
                     scheduleForDeletion(finalZipFilePath, 300);
 
