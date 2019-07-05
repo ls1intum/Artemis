@@ -581,7 +581,7 @@ public class GitService {
 
     public Path zipRepository(Repository repo) throws IOException {
         String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
-        Exercise exercise = repo.getParticipation().getExercise();
+        ProgrammingExercise exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
         // take the last component
         String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
