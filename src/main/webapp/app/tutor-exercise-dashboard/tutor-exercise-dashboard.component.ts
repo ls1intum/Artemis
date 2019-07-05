@@ -271,15 +271,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
         return 'DRAFT';
     }
 
-    textSubmissionLanguageTranslationKey(submission: Submission): string {
-        if (submission.submissionExerciseType !== SubmissionExerciseType.TEXT) {
-            throw new Error('Cannot determine text submission language for non-text-exercise.');
-        }
-        const textSubmission: TextSubmission = submission as TextSubmission;
-
-        return 'artemisApp.tutorExerciseDashboard.languages.' + (textSubmission.language || 'UNKNOWN').toString();
-    }
-
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;

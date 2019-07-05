@@ -150,7 +150,7 @@ export class TextEditorComponent implements OnInit {
             return;
         }
         this.submission.text = this.answer;
-        this.textService.determineLanguage(this.submission);
+        this.submission.language = this.textService.predictLanguage(this.submission.text);
         const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {

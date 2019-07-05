@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { TextSubmission } from 'app/entities/text-submission';
 import { Language } from 'app/entities/tutor-group';
 import { Franc, FrancLanguage, SUPPORTED_TEXT_LANGUAGES } from './franc';
 
@@ -15,11 +14,7 @@ export class TextEditorService {
         return this.http.get(`api/text-editor/${id}`, { responseType: 'json' });
     }
 
-    determineLanguage(submission: TextSubmission): void {
-        submission.language = this.predictLanguage(submission.text);
-    }
-
-    private predictLanguage(text: string): Language | null {
+    predictLanguage(text: string): Language | null {
         const languageProbabilities = this.franc.all(text, { only: SUPPORTED_TEXT_LANGUAGES });
 
         switch (languageProbabilities[0][0]) {
