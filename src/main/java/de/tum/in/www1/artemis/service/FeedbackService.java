@@ -37,6 +37,8 @@ public class FeedbackService {
      * Checking if the result already has feedbacks if not try retrieving them from bamboo and create them. Having feedbacks create a JSONObject which will be converted into the
      * bamboo format to fit the already used frontend system
      *
+     * @deprecated This method is deprecated and is planned to be removed September 2019. The reason is that we store the build results in our database now and don't have to query
+     *             the integration service for them.
      * @param result for which the feedback is supposed to be retrieved
      * @return a set of feedback objects including test case names and error messages
      */

@@ -1,3 +1,4 @@
+import { ElementRef } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 
 /**
@@ -9,9 +10,14 @@ export abstract class Command {
     buttonIcon: string;
     buttonTranslationString: string;
     protected aceEditorContainer: AceEditorComponent;
+    protected markdownWrapper: ElementRef;
 
     public setEditor(aceEditorContainer: AceEditorComponent): void {
         this.aceEditorContainer = aceEditorContainer;
+    }
+
+    public setMarkdownWrapper(ref: ElementRef) {
+        this.markdownWrapper = ref;
     }
 
     protected getSelectedText(): string {

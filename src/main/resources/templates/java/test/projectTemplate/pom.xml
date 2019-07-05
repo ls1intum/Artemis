@@ -3,7 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>${packageName}</groupId>
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
+    %non-sequential-start%
     <packaging>jar</packaging>
+    %non-sequential-stop%
+    %sequential-start%
+    <packaging>pom</packaging>
+    %sequential-stop%
     <version>1.0</version>
     <name>${exerciseName} Tests</name>
 	<properties>
@@ -28,12 +33,14 @@
     </dependencies>
     <build>
         <sourceDirectory>${project.basedir}/assignment/src</sourceDirectory>
+        %non-sequential-start%
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>
                 <directory>${project.basedir}/test</directory>
             </testResource>
         </testResources>
+        %non-sequential-stop%
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
