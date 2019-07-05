@@ -31,7 +31,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.templateParticipationSubscription.unsubscribe();
             }
             // TODO: thilo: does this really make sense?
-            // this.participationWebsocketService.addParticipation(this.templateParticipation, this.exercise);
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
@@ -47,7 +46,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 this.solutionParticipationSubscription.unsubscribe();
             }
             // TODO: thilo: does this really make sense?
-            // this.participationWebsocketService.addParticipation(this.solutionParticipation, this.exercise);
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(

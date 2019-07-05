@@ -287,6 +287,7 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
                         }
+                        removeUnnecessaryObjectsBeforeSendingToClient(participation);
                         messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + quizId + "/participation", participation);
                         counter++;
                     }
@@ -319,6 +320,25 @@ public class QuizScheduleService {
         }
         catch (Exception e) {
             log.error("Exception in Quiz Schedule:\n{}", e.getMessage());
+        }
+    }
+
+    private void removeUnnecessaryObjectsBeforeSendingToClient(Participation participation) {
+        if (participation.getExercise() != null) {
+            // we do not need the course and lectures
+            participation.getExercise().setCourse(null);
+        }
+        // submissions are part of results, so we do not need them twice
+        participation.setSubmissions(null);
+        if (participation.getResults() != null && participation.getResults().size() > 0) {
+            QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
+            if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
+                for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                    if (submittedAnswer.getQuizQuestion() != null) {
+                        submittedAnswer.getQuizQuestion().setQuizQuestionStatistic(null);
+                    }
+                }
+            }
         }
     }
 

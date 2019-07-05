@@ -1,22 +1,17 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import { By } from '@angular/platform-browser';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { spy, stub, SinonStub, SinonSpy } from 'sinon';
-import { of, Subscription, BehaviorSubject, throwError } from 'rxjs';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { SinonSpy, spy } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
-import { Feedback } from 'src/main/webapp/app/entities/feedback';
+import { ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks/mock-result.service';
 import {
     ProgrammingExercise,
@@ -24,15 +19,8 @@ import {
     ProgrammingExerciseInstructionComponent,
     ProgrammingExerciseInstructionTestcaseStatusComponent,
     ProgrammingExerciseTestCaseService,
-    TestCaseState,
 } from 'src/main/webapp/app/entities/programming-exercise';
-import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
-import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { problemStatement, problemStatementNoneExecutedHtml } from '../../sample/problemStatement.json';
 import { MockParticipationWebsocketService } from '../../mocks';
-import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
-import { EditorInstructionsResultDetailComponent } from 'app/code-editor';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 
@@ -53,7 +41,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgbModule],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionTestcaseStatusComponent),
