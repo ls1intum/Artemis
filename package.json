@@ -33,7 +33,7 @@
         "bootstrap": "4.3.1",
         "chart.js": "2.8.0",
         "core-js": "3.1.4",
-        "franc-min": "^4.1.0",
+        "franc-min": "4.1.0",
         "interactjs": "1.4.11",
         "jest": "24.8.0",
         "jest-preset-angular": "7.1.1",
