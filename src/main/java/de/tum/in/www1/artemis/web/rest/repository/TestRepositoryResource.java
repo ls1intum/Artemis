@@ -52,13 +52,20 @@ public class TestRepositoryResource extends RepositoryResource {
             return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/test-" + exerciseId + "/update", "CHECKOUT_CONFLICT");
+            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/test-" + exerciseId + "/conflict", "CHECKOUT_CONFLICT");
             throw new IOException();
         }
         catch (GitAPIException ex) {
             log.error("Exception encountered when trying to get the test repository for exercise id {}: {}", exerciseId, ex);
             throw new IOException();
         }
+    }
+
+    @Override
+    URL getRepositoryUrl(Long exerciseId) {
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
+        return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
     }
 
     /**

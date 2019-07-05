@@ -35,7 +35,7 @@ export interface ICodeEditorRepositoryFileService {
 }
 
 export interface ICodeEditorRepositoryService {
-    isClean: () => Observable<{ isClean: boolean }>;
+    getStatus: () => Observable<{ repositoryStatus: string }>;
     commit: () => Observable<void>;
     pull: () => Observable<void>;
     resetRepository: () => Observable<void>;
@@ -64,7 +64,7 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
 
         const repoSubject = new BehaviorSubject(GitConflictState.OK);
 
-        const repoStateUpdateChannel = `/topic/repository-state/${domainKey}/conflict`;
+        const repoStateUpdateChannel = `/topic/user/repository-state/${domainKey}/conflict`;
         this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
         this.jhiWebsocketService
             .receive(repoStateUpdateChannel)
@@ -97,8 +97,8 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
         super(http, jhiWebsocketService, domainService);
     }
 
-    isClean = () => {
-        return this.http.get<any>(this.restResourceUrl!).map(data => ({ isClean: data.isClean }));
+    getStatus = () => {
+        return this.http.get<any>(this.restResourceUrl!);
     };
 
     commit = () => {

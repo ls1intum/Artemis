@@ -1,7 +1,8 @@
-import { HostListener, ViewChild } from '@angular/core';
+import { HostListener, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import Interactable from '@interactjs/core/Interactable';
 
@@ -10,7 +11,7 @@ import { ParticipationService } from 'app/entities/participation';
 import { FileChange, RenameFileChange, CreateFileChange, DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { AnnotationArray } from 'app/entities/ace-editor';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorSessionService } from 'app/code-editor/service';
+import { CodeEditorSessionService, ConflictStateService, GitConflictState } from 'app/code-editor/service';
 import { EditorState, CommitState } from 'app/code-editor/model';
 import { CodeEditorGridComponent } from 'app/code-editor/layout';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
@@ -28,6 +29,9 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     editorState: EditorState;
     commitState: CommitState;
     isBuilding: boolean;
+    gitConflictState: GitConflictState;
+
+    gitConflictStateSubscription: Subscription;
 
     constructor(
         protected participationService: ParticipationService,

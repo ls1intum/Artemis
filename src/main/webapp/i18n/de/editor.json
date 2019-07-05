@@ -39,6 +39,9 @@
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
+            "conflict": {
+                "resolveConflict": "Konflikt bereinigen"
+            },
             "fileBrowser": {
                 "fileBrowser": "Datei Browser",
                 "deleteFileTitle": "Datei löschen",

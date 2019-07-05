@@ -6,12 +6,15 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
@@ -70,6 +74,10 @@ public abstract class RepositoryResource {
      * @throws InterruptedException
      */
     abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
+
+    abstract URL getRepositoryUrl(Long domainId);
+
+    abstract boolean canAccessRepository(Long domainId);
 
     public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) throws IOException, InterruptedException {
         log.debug("REST request to files for domainId : {}", domainId);
@@ -316,15 +324,23 @@ public abstract class RepositoryResource {
     public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws IOException, GitAPIException, InterruptedException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
-        Repository repository;
-        try {
-            repository = getRepository(domainId);
-        }
-        catch (IllegalAccessException ex) {
+        boolean hasPermissions = canAccessRepository(domainId);
+
+        if (!hasPermissions) {
             return forbidden();
         }
-        RepositoryStatusDTO status = repositoryService.getStatus(repository);
 
-        return new ResponseEntity<>(status, HttpStatus.OK);
+        RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
+        URL repositoryUrl = getRepositoryUrl(domainId);
+
+        try {
+            boolean isClean = repositoryService.isClean(repositoryUrl);
+            repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            repositoryStatus.setRepositoryStatus(RepositoryStatusDTOType.CONFLICT);
+        }
+
+        return new ResponseEntity<>(repositoryStatus, HttpStatus.OK);
     }
 }

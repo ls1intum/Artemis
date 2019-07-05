@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 /**
  * Service that provides utilites for managing files in a git repository.
@@ -208,14 +207,14 @@ public class RepositoryService {
      * @return
      * @throws GitAPIException
      */
-    public RepositoryStatusDTO getStatus(Repository repository) throws GitAPIException {
-        RepositoryStatusDTO status = new RepositoryStatusDTO();
-        status.isClean = gitService.get().isClean(repository);
+    public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
+        Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl);
+        boolean isClean = gitService.get().isClean(repository);
 
-        if (status.isClean) {
-            gitService.get().pullIgnoreConflicts(repository);
+        if (isClean) {
+            gitService.get().pull(repository);
         }
-        return status;
+        return isClean;
     }
 
     /**
@@ -257,23 +256,5 @@ public class RepositoryService {
             throw new IllegalAccessException();
         }
         return gitService.get().getOrCheckoutRepository(repoUrl);
-    }
-
-    /**
-     * Retrieve a repository by a participation connected to it.
-     * 
-     * @param participation
-     * @return
-     * @throws IOException
-     * @throws IllegalAccessException
-     * @throws InterruptedException
-     */
-    public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
-        boolean hasAccess = participationService.canAccessParticipation(participation);
-        if (!hasAccess) {
-            throw new IllegalAccessException();
-        }
-
-        return gitService.get().getOrCheckoutRepository(participation);
     }
 }

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, O
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
+import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
 import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
@@ -160,6 +160,8 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
                         return throwError('couldNotBeRetrieved');
+                    } else if (this.commitState === CommitState.CONFLICT) {
+                        return throwError('repositoryInConflict');
                     }
                     return this.loadFiles();
                 }),
@@ -183,9 +185,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
      * @desc Calls the repository service to see if the repository has uncommitted changes
      */
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
-        return this.repositoryService.isClean().pipe(
-            catchError(() => Observable.of(null)),
-            rxMap(res => (res ? (res.isClean ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES) : CommitState.COULD_NOT_BE_RETRIEVED)),
+        return this.repositoryService.getStatus().pipe(
+            rxMap(res =>
+                res.repositoryStatus === 'CLEAN'
+                    ? CommitState.CLEAN
+                    : res.repositoryStatus === 'UNCOMMITTED_CHANGES'
+                    ? CommitState.UNCOMMITTED_CHANGES
+                    : res.repositoryStatus === 'CONFLICT'
+                    ? CommitState.CONFLICT
+                    : CommitState.COULD_NOT_BE_RETRIEVED,
+            ),
+            catchError(() => Observable.of(CommitState.COULD_NOT_BE_RETRIEVED)),
         );
     };
 
