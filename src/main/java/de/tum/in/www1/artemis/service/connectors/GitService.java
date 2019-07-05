@@ -104,6 +104,8 @@ public class GitService {
         if (cachedRepositories.containsKey(localPath)) {
             // in this case we pull for changes to make sure the Git repo is up to date
             Repository repository = cachedRepositories.get(localPath);
+            // disable auto garbage collection because it can lead to problems
+            repository.getConfig().setString("gc", null, "auto", "0");
             pullIgnoreConflicts(repository);
             return repository;
         }
@@ -127,7 +129,7 @@ public class GitService {
             // Repository is not yet available on the server
             // We need to check it out from the remote repository
             try {
-                log.info("Cloning from " + repoUrl + " to " + localPath);
+                log.debug("Cloning from " + repoUrl + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
                 Git result = Git.cloneRepository().setURI(repoUrl.toString()).setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                         .setDirectory(localPath.toFile()).call();
@@ -158,6 +160,8 @@ public class GitService {
         // Create the JGit repository object
         Repository repository = new Repository(builder);
         repository.setLocalPath(localPath);
+        // disable auto garbage collection because it can lead to problems
+        repository.getConfig().setString("gc", null, "auto", "0");
 
         if (shouldPullChanges) {
             pull(repository);
@@ -577,7 +581,7 @@ public class GitService {
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
-            log.info("Deleted Repository at " + repoPath);
+            log.debug("Deleted Repository at " + repoPath);
         }
     }
 
@@ -596,8 +600,12 @@ public class GitService {
     }
 
     public Path zipRepository(Repository repo) throws IOException {
-        String zipRepoName = repo.getParticipation().getExercise().getCourse().getTitle() + "-" + repo.getParticipation().getExercise().getTitle() + "-"
-                + repo.getParticipation().getStudent().getLogin() + ".zip";
+        String[] repositoryUrlComponents = repo.getParticipation().getRepositoryUrl().split(File.separator);
+        Exercise exercise = repo.getParticipation().getExercise();
+        String courseShortName = exercise.getCourse().getShortName().replaceAll("\\s", "");
+        // take the last component
+        String zipRepoName = courseShortName + "-" + repositoryUrlComponents[repositoryUrlComponents.length - 1] + ".zip";
+
         Path repoPath = repo.getLocalPath();
         Path zipFilePath = Paths.get(REPO_CLONE_PATH, "zippedRepos", zipRepoName);
         Files.createDirectories(Paths.get(REPO_CLONE_PATH, "zippedRepos"));

@@ -102,6 +102,9 @@ import {
     faImage,
     faPaperclip,
     faGripLinesVertical,
+    faGripLines,
+    faCompress,
+    faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -236,3 +239,6 @@ library.add(faGripLinesVertical);
 library.add(faPaperclip);
 library.add(faAngleDoubleDown);
 library.add(faAngleDoubleUp);
+library.add(faCompress);
+library.add(faGripLines);
+library.add(faQuestion);

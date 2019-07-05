@@ -316,8 +316,10 @@
     }
 
     .question-content {
-        > div {
-            height: 12em;
+        display: flex;
+        flex-flow: column;
+        > * {
+            height: 350px;
         }
     }
 }

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -39,7 +40,7 @@ import { Participation, ParticipationService, ParticipationWebsocketService } fr
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
-import { problemStatement, problemStatementRendered } from '../../sample/problemStatement.json';
+import { problemStatement, problemStatementNoneExecutedRendered } from '../../sample/problemStatement.json';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
@@ -217,7 +218,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
-        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementRendered);
+        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementNoneExecutedRendered);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;
@@ -294,7 +295,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.instructions.participation).to.deep.equal(participation);
         expect(container.instructions.readOnlyInstructions).to.exist;
         expect(container.instructions.editableInstructions).not.to.exist;
-        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementRendered);
+        expect(container.instructions.readOnlyInstructions.renderedMarkdown).to.equal(problemStatementNoneExecutedRendered);
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).to.have.been.calledTwice;

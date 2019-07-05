@@ -19,6 +19,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
+    styleUrls: ['./code-editor-build-output.scss'],
     providers: [JhiAlertService, WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -80,8 +81,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput')
             .resizable({
-                // Enable resize from top edge; triggered by class rg-top
-                edges: { left: false, right: false, bottom: false, top: '.rg-top' },
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
                 // Set min and max height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },

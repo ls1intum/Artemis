@@ -1,24 +1,153 @@
 import * as $ from 'jquery';
-import { Component, ContentChild, ElementRef, Input } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { CourseService } from 'app/entities/course';
 import { WindowRef } from 'app/core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import interact from 'interactjs';
+import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
-    providers: [JhiAlertService, WindowRef, CourseService],
+    styleUrls: ['./code-editor-grid.scss'],
+    providers: [JhiAlertService, WindowRef, CodeEditorGridService],
 })
-export class CodeEditorGridComponent {
+export class CodeEditorGridComponent implements AfterViewInit {
     @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
     @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
     @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
 
     @Input()
     exerciseTitle: string;
+
+    interactResizableMain: Interactable;
+    resizableMinHeightMain = 480;
+    resizableMaxHeightMain = 1200;
+
+    interactResizableLeft: Interactable;
+    resizableMinWidthLeft: number;
+    resizableMaxWidthLeft = 1200;
+
+    interactResizableRight: Interactable;
+    resizableMinWidthRight: number;
+    resizableMaxWidthRight = 1200;
+
+    interactResizableBottom: Interactable;
+    resizableMinHeightBottom = 300;
+    resizableMaxHeightBottom = 600;
+
+    constructor(private $window: WindowRef, private codeEditorGridService: CodeEditorGridService) {}
+
+    /**
+     * @function ngAfterViewInit
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     */
+    ngAfterViewInit(): void {
+        this.resizableMinHeightMain = this.$window.nativeWindow.screen.height / 3;
+        this.interactResizableMain = interact('.editor-main')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: '.rg-main-bottom', top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeightMain },
+                    max: { height: this.resizableMaxHeightMain },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.codeEditorGridService.submitResizeEvent(ResizeType.MAIN_BOTTOM);
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+            });
+
+        this.resizableMinWidthLeft = this.$window.nativeWindow.screen.width / 7;
+        this.resizableMaxWidthLeft = this.$window.nativeWindow.screen.width / 2;
+        this.interactResizableLeft = interact('.editor-sidebar-left')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: '.rg-sidebar-left', bottom: false, top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { width: this.resizableMinWidthLeft },
+                    max: { width: this.resizableMaxWidthLeft },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_LEFT);
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.width = event.rect.width + 'px';
+            });
+
+        this.resizableMinWidthRight = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMaxWidthRight = this.$window.nativeWindow.screen.width / 2;
+        this.interactResizableRight = interact('.editor-sidebar-right')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: '.rg-sidebar-right', right: false, bottom: false, top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { width: this.resizableMinWidthRight },
+                    max: { width: this.resizableMaxWidthRight },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_RIGHT);
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.width = event.rect.width + 'px';
+            });
+
+        this.resizableMinHeightBottom = this.$window.nativeWindow.screen.height / 6;
+        this.interactResizableBottom = interact('.editor-bottom')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: '.rg-bottom-bottom', top: false },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeightBottom },
+                    max: { height: this.resizableMaxHeightBottom },
+                },
+                inertia: true,
+            })
+            .on('resizestart', function(event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', (event: any) => {
+                event.target.classList.remove('card-resizable');
+                this.codeEditorGridService.submitResizeEvent(ResizeType.BOTTOM);
+            })
+            .on('resizemove', function(event: any) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+            });
+    }
 
     /**
      * @function toggleCollapse
@@ -32,23 +161,14 @@ export class CodeEditorGridComponent {
     toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
-        const $card = $(target).closest('.card');
+        const $card = $(target).closest('.collapsable');
+        const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
 
-        if ($card.hasClass('collapsed')) {
-            $card.removeClass('collapsed');
+        if ($card.hasClass(collapsed)) {
+            $card.removeClass(collapsed);
             interactResizable.resizable({ enabled: true });
-
-            // Reset min width if argument was provided
-            if (minWidth) {
-                $card.width(minWidth + 'px');
-            }
-            // Reset min height if argument was provided
-            if (minHeight) {
-                $card.height(minHeight + 'px');
-            }
         } else {
-            $card.addClass('collapsed');
-            horizontal ? $card.width('55px') : $card.height('35px');
+            $card.addClass(collapsed);
             interactResizable.resizable({ enabled: false });
         }
     }
