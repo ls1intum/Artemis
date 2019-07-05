@@ -1,5 +1,6 @@
 import { Injectable, SecurityContext } from '@angular/core';
 import * as showdown from 'showdown';
+import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from 'app/entities/quiz-question';
