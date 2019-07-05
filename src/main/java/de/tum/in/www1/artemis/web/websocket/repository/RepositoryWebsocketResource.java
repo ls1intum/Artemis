@@ -15,6 +15,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.naming.NoPermissionException;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -124,7 +125,7 @@ public class RepositoryWebsocketResource {
         try {
             repository = gitService.get().getOrCheckoutRepository(participation);
         }
-        catch (IOException | InterruptedException ex) {
+        catch (IOException | GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/files", error);
             return;
@@ -165,7 +166,7 @@ public class RepositoryWebsocketResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", error);
             return;
         }
-        catch (IOException | InterruptedException ex) {
+        catch (IOException | GitAPIException | InterruptedException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/test-repository/" + exerciseId + "/files", error);
             return;

@@ -19,8 +19,10 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
@@ -79,7 +81,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
@@ -94,7 +96,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException {
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException, GitAPIException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -102,7 +104,7 @@ public class GitService {
         if (cachedRepositories.containsKey(localPath)) {
             // in this case we pull for changes to make sure the Git repo is up to date
             Repository repository = cachedRepositories.get(localPath);
-            pull(repository);
+            pullIgnoreConflicts(repository);
             return repository;
         }
 
@@ -240,9 +242,8 @@ public class GitService {
      *
      * @param repo Local Repository Object.
      * @return The PullResult which contains FetchResult and MergeResult.
-     * @throws GitAPIException
      */
-    public PullResult pull(Repository repo) {
+    public PullResult pullIgnoreConflicts(Repository repo) {
         try {
             Git git = new Git(repo);
             // flush cache of files
@@ -254,6 +255,26 @@ public class GitService {
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
         return null;
+    }
+
+    /**
+     * Pulls from remote repository.
+     *
+     * @param repo Local Repository Object.
+     * @return The PullResult which contains FetchResult and MergeResult.
+     * @throws GitAPIException
+     */
+    public PullResult pull(Repository repo) throws GitAPIException {
+        try {
+            Git git = new Git(repo);
+            // flush cache of files
+            repo.setContent(null);
+            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+            throw ex;
+        }
     }
 
     /**

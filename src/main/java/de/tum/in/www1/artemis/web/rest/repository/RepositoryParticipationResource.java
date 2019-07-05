@@ -8,6 +8,7 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -49,8 +50,12 @@ public class RepositoryParticipationResource extends RepositoryResource {
         try {
             return repositoryService.checkoutRepositoryByParticipation(participation);
         }
-        catch (CheckoutConflictException ex) {
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/participation-" + participationId + "/update", "CHECKOUT_CONFLICT");
+            throw new IOException();
+        }
+        catch (GitAPIException ex) {
+            log.error("Exception encountered when trying to get the repository for participationId {}: {}", participationId, ex);
             throw new IOException();
         }
     }

@@ -187,7 +187,7 @@ public class RepositoryService {
      * @param repository
      */
     public void pullChanges(Repository repository) {
-        gitService.get().pull(repository);
+        gitService.get().pullIgnoreConflicts(repository);
     }
 
     /**
@@ -213,7 +213,7 @@ public class RepositoryService {
         status.isClean = gitService.get().isClean(repository);
 
         if (status.isClean) {
-            gitService.get().pull(repository);
+            gitService.get().pullIgnoreConflicts(repository);
         }
         return status;
     }
@@ -228,7 +228,7 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -248,7 +248,8 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl)
+            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities(principal);
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -267,7 +268,7 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException {
+    public Repository checkoutRepositoryByParticipation(Participation participation) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         boolean hasAccess = participationService.canAccessParticipation(participation);
         if (!hasAccess) {
             throw new IllegalAccessException();

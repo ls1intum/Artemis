@@ -7,6 +7,7 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,8 +51,12 @@ public class TestRepositoryResource extends RepositoryResource {
         try {
             return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
         }
-        catch (CheckoutConflictException ex) {
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/test-" + exerciseId + "/update", "CHECKOUT_CONFLICT");
+            throw new IOException();
+        }
+        catch (GitAPIException ex) {
+            log.error("Exception encountered when trying to get the test repository for exercise id {}: {}", exerciseId, ex);
             throw new IOException();
         }
     }

@@ -455,17 +455,18 @@ public class ProgrammingExerciseService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
+            throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
 
         gitService.resetToOriginMaster(solutionRepository);
-        gitService.pull(solutionRepository);
+        gitService.pullIgnoreConflicts(solutionRepository);
         gitService.resetToOriginMaster(exerciseRepository);
-        gitService.pull(exerciseRepository);
+        gitService.pullIgnoreConflicts(exerciseRepository);
         gitService.resetToOriginMaster(testRepository);
-        gitService.pull(testRepository);
+        gitService.pullIgnoreConflicts(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
