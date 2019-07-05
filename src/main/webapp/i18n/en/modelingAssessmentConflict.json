@@ -1,5 +1,6 @@
 {
     "modelingAssessmentConflict": {
+        "conflictResolution": "Conflict Resolution",
         "conflicts": "Conflict",
         "ownAssessmentTitle": "Your current assessment",
         "button": {

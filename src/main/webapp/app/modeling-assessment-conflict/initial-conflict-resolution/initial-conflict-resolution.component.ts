@@ -11,6 +11,7 @@ import { User } from 'app/core';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { ModelingAssessmentConflictService } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.service';
 
 @Component({
     selector: 'jhi-initial-conflict-resolution',
@@ -42,8 +43,8 @@ export class InitialConflictResolutionComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
+        private conflictService: ModelingAssessmentConflictService,
         private jhiAlertService: JhiAlertService,
         private router: Router,
         private modalService: NgbModal,
@@ -52,11 +53,11 @@ export class InitialConflictResolutionComponent implements OnInit {
     ngOnInit() {
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
-            this.conflicts = this.modelingAssessmentService.popLocalConflicts(this.submissionId);
+            this.conflicts = this.conflictService.popLocalConflicts(this.submissionId);
             if (this.conflicts.length > 0) {
                 this.initComponent();
             } else {
-                this.modelingAssessmentService.getConflicts(this.submissionId).subscribe(
+                this.conflictService.getConflictsForSubmission(this.submissionId).subscribe(
                     conflicts => {
                         this.conflicts = conflicts;
                         this.initComponent();
@@ -70,10 +71,10 @@ export class InitialConflictResolutionComponent implements OnInit {
     }
 
     initComponent() {
+        this.initResolutionStates(this.conflicts);
         this.onCurrentConflictChanged(0);
         if (this.currentConflict) {
             this.mergedFeedbacks = JSON.parse(JSON.stringify(this.conflicts[this.conflictIndex].causingConflictingResult.result.feedbacks));
-            this.initResolutionStates(this.conflicts);
             this.modelingExercise = this.currentConflict.causingConflictingResult.result.participation!.exercise as ModelingExercise;
             this.currentModel = JSON.parse((this.currentConflict.causingConflictingResult.result.submission as ModelingSubmission).model);
             this.jhiAlertService.clear();
@@ -117,6 +118,16 @@ export class InitialConflictResolutionComponent implements OnInit {
         }
     }
 
+    onFeedbackChanged(feedbacks: Feedback[]) {
+        this.mergedFeedbacks = feedbacks;
+    }
+
+    onConflictStateChanged(newState: ConflictResolutionState) {
+        this.conflictResolutionStates[this.conflictIndex] = newState;
+        this.currentState = newState;
+        // this.conflictResolutionStates = [...this.conflictResolutionStates];
+    }
+
     onSubmit(escalatedConflicts: Conflict[]) {
         if (escalatedConflicts && escalatedConflicts.length > 0) {
             this.escalateAndSubmit(escalatedConflicts);
@@ -128,7 +139,7 @@ export class InitialConflictResolutionComponent implements OnInit {
     onCurrentConflictChanged(conflictIndex: number) {
         this.conflictIndex = conflictIndex;
         this.currentConflict = this.conflicts[conflictIndex];
-        this.currentState = this.conflictResolutionStates[conflictIndex];
+        this.onConflictStateChanged(this.conflictResolutionStates[conflictIndex]);
         this.conflictingResult = this.currentConflict.resultsInConflict[0];
         this.conflictingModel = JSON.parse((this.conflictingResult.result.submission as ModelingSubmission).model);
         this.updateHighlightedElements();
@@ -141,7 +152,7 @@ export class InitialConflictResolutionComponent implements OnInit {
         modalRef.componentInstance.tutorsEscalatingTo = this.getDistinctTutorsEscalatingTo(escalatedConflicts);
         modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
         modalRef.result.then(() => {
-            this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
+            this.conflictService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
         });
     }
 
@@ -154,7 +165,7 @@ export class InitialConflictResolutionComponent implements OnInit {
             error => {
                 if (error.status === 409) {
                     const conflicts = error.error as Conflict[];
-                    this.modelingAssessmentService.convertConflicts(conflicts);
+                    this.conflictService.convertConflicts(conflicts);
                     this.conflicts = conflicts;
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
@@ -164,16 +175,6 @@ export class InitialConflictResolutionComponent implements OnInit {
                 }
             },
         );
-    }
-
-    onFeedbackChanged(feedbacks: Feedback[]) {
-        this.mergedFeedbacks = feedbacks;
-    }
-
-    onConflictStateChanged(newState: ConflictResolutionState) {
-        this.conflictResolutionStates[this.conflictIndex] = newState;
-        this.currentState = newState;
-        this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
     }
 
     private updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {

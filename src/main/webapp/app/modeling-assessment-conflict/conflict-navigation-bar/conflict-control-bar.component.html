@@ -12,7 +12,7 @@
         </div>
         <jhi-alert></jhi-alert>
         <div class="control-button-container">
-            <button class="btn btn-primary" (click)="onSave()">
+            <button *ngIf="showSave" class="btn btn-primary" (click)="onSave()">
                 <fa-icon icon="save"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>

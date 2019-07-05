@@ -1,8 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { ModelingSubmission } from 'app/entities/modeling-submission';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from 'app/entities/feedback';
@@ -10,7 +9,7 @@ import { AccountService } from 'app/core';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { UMLModel } from '@ls1intum/apollon';
-import { ConflictEscalationModalComponent } from 'app/modeling-assessment-conflict/conflict-escalation-modal/conflict-escalation-modal.component';
+import { ModelingAssessmentConflictService } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.service';
 
 @Component({
     selector: 'jhi-escalated-conflict-resolution',
@@ -44,8 +43,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
+        private conflictService: ModelingAssessmentConflictService,
         private jhiAlertService: JhiAlertService,
         private router: Router,
         private modalService: NgbModal,
@@ -55,7 +53,7 @@ export class EscalatedConflictResolutionComponent implements OnInit {
     ngOnInit() {
         this.route.params.subscribe(params => {
             this.resultId = Number(params['resultId']);
-            this.modelingAssessmentService.getConflictsForResultInConflict(this.resultId).subscribe(
+            this.conflictService.getConflictsForResultInConflict(this.resultId).subscribe(
                 conflicts => {
                     this.conflicts = conflicts;
                     this.accountService.identity().then(user => {
@@ -97,12 +95,8 @@ export class EscalatedConflictResolutionComponent implements OnInit {
 
     onSave() {}
 
-    onSubmit(escalatedConflicts: Conflict[]) {
-        if (escalatedConflicts && escalatedConflicts.length > 0) {
-            this.escalateAndSubmit(escalatedConflicts);
-        } else {
-            this.submit();
-        }
+    onSubmit() {
+        this.conflictService.updateConflicts(this.conflicts);
     }
 
     onKeepYours() {
@@ -121,14 +115,6 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         }
     }
 
-    escalateAndSubmit(escalatedConflicts: Conflict[]) {
-        const modalRef = this.modalService.open(ConflictEscalationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.escalatedConflictsCount = escalatedConflicts.length;
-        modalRef.result.then(() => {
-            this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => this.submit());
-        });
-    }
-
     onFeedbackChanged(feedbacks: Feedback[]) {
         // this.mergedFeedbacks = feedbacks;
     }
@@ -137,10 +123,6 @@ export class EscalatedConflictResolutionComponent implements OnInit {
         this.conflictResolutionStates[this.conflictIndex] = newState;
         this.currentState = newState;
         this.conflictResolutionStates = JSON.parse(JSON.stringify(this.conflictResolutionStates));
-    }
-
-    private submit() {
-        // this.modelingAssessmentService.updateConflicts();
     }
 
     private initResolutionStates(conflicts: Conflict[]) {

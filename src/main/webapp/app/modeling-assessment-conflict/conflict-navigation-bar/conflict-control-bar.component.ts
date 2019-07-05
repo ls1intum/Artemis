@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { JhiAlertService } from 'ng-jhipster';
-import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-conflict-control-bar',
@@ -13,11 +12,13 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
     private conflictIndex = 0;
     conflictsAllHandled = false;
 
-    @Input() conflicts: Conflict[];
+    @Input() showSave: boolean = false;
+    @Input() conflicts: Conflict[] | null;
     @Input() conflictResolutionStates: ConflictResolutionState[] = [];
     @Output() selectedConflictChanged = new EventEmitter<number>();
     @Output() save = new EventEmitter();
     @Output() submit = new EventEmitter<Conflict[]>();
+
     constructor(private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {}
@@ -33,8 +34,11 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
             }
         }
     }
+
     onNextConflict() {
-        this.conflictIndex = this.conflictIndex < this.conflicts.length - 1 ? ++this.conflictIndex : this.conflictIndex;
+        if (this.conflicts) {
+            this.conflictIndex = this.conflictIndex < this.conflicts.length - 1 ? ++this.conflictIndex : this.conflictIndex;
+        }
         this.updateSelectedConflict();
     }
 
@@ -57,25 +61,23 @@ export class ConflictControlBarComponent implements OnInit, OnChanges {
 
     private getEscalatedConflicts() {
         const escalatedConflicts = new Array<Conflict>();
-        for (let i = 0; i < this.conflictResolutionStates.length; i++) {
-            if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
-                escalatedConflicts.push(this.conflicts[i]);
+        if (this.conflicts) {
+            for (let i = 0; i < this.conflictResolutionStates.length; i++) {
+                if (this.conflictResolutionStates[i] === ConflictResolutionState.ESCALATED) {
+                    escalatedConflicts.push(this.conflicts[i]);
+                }
             }
         }
+
         return escalatedConflicts;
     }
 
     private updateOverallResolutionState() {
-        for (const state of this.conflictResolutionStates) {
-            if (state === ConflictResolutionState.UNHANDLED) {
-                this.conflictsAllHandled = false;
-                return;
-            }
-        }
-        if (!this.conflictsAllHandled) {
+        const newConflictsAllHandled = this.conflictResolutionStates.every(state => state !== ConflictResolutionState.UNHANDLED);
+        if (newConflictsAllHandled && !this.conflictsAllHandled) {
             this.jhiAlertService.clear();
             this.jhiAlertService.success('modelingAssessmentConflict.messages.conflictsResolved');
         }
-        this.conflictsAllHandled = true;
+        this.conflictsAllHandled = newConflictsAllHandled;
     }
 }

@@ -14,42 +14,9 @@ export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
-    private localSubmissionConflictMap: Map<number, Conflict[]>;
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {
-        this.localSubmissionConflictMap = new Map<number, Conflict[]>();
-    }
-
-    addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
-        return this.localSubmissionConflictMap.set(submissionID, conflicts);
-    }
-
-    popLocalConflicts(submissionID: number): Conflict[] {
-        const conflicts = this.localSubmissionConflictMap.get(submissionID);
-        this.localSubmissionConflictMap.delete(submissionID);
-        if (conflicts) {
-            return conflicts;
-        } else {
-            return [];
-        }
-    }
-
-    getConflicts(submissionID: number): Observable<Conflict[]> {
-        return this.http.get<Conflict[]>(`${this.resourceUrl}/modeling-submissions/${submissionID}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
-    }
-
-    getConflictsForResultInConflict(resultId: number): Observable<Conflict[]> {
-        return this.http.get<Conflict[]>(`${this.resourceUrl}/results/${resultId}/model-assessment-conflicts`).map(conflicts => this.convertConflicts(conflicts));
-    }
-
-    escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
-        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
-    }
-
-    updateConflicts(conflicts: Conflict[]): Observable<Conflict> {
-        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts`, conflicts);
-    }
+    constructor(private http: HttpClient) {}
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
@@ -99,14 +66,6 @@ export class ModelingAssessmentService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
-    }
-
-    convertConflicts(conflicts: Conflict[]) {
-        conflicts.forEach((conflict: Conflict) => {
-            this.convertResult(conflict.causingConflictingResult.result);
-            conflict.resultsInConflict.forEach((conflictingResult: ConflictingResult) => this.convertResult(conflictingResult.result));
-        });
-        return conflicts;
     }
 
     /**

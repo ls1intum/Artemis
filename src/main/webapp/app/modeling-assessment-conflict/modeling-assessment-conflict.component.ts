@@ -1,8 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
-import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
+import { ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Feedback } from 'app/entities/feedback';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
@@ -33,7 +32,6 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     @Input() rightAssessmentReadOnly = false;
     @Input() conflictState: ConflictResolutionState = ConflictResolutionState.UNHANDLED;
     @Input() resultsInConflict: ConflictingResult[];
-    // @Output() escalate = new EventEmitter<{ escalatedConflicts: Conflict[]; newFeedbacks: Feedback[] }>();
     @Output() conflictResolutionStateChanged = new EventEmitter<ConflictResolutionState>();
     @Output() leftButtonPressed = new EventEmitter();
     @Output() rightButtonPressed = new EventEmitter();

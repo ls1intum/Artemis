@@ -1,5 +1,6 @@
 {
     "modelingAssessmentConflict": {
+        "conflictResolution": "Konflikt Behandlung",
         "conflicts": "Konflikt",
         "ownAssessmentTitle": "Deine aktuelle Bewertung",
         "button": {

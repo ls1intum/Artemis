@@ -1,7 +1,7 @@
 {
     "modelingAssessment": {
         "points": "Punkte",
-        "assessmentOf": "Bewertung von {{firstName}} {{lastName}}",
+        "assessmentOf": "Bewertung von",
         "noModel": "Kein Modell zum Darstellen gefunden.",
         "countOfConflictingAssessments": "{{count}} tutors assessed different then you."
     }

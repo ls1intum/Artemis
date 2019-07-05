@@ -15,6 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { ModelingAssessmentConflictService } from 'app/modeling-assessment-conflict/modeling-assessment-conflict.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -52,6 +53,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
+        private conflictService: ModelingAssessmentConflictService,
         private accountService: AccountService,
         private location: Location,
         private translateService: TranslateService,
@@ -228,7 +230,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
-                    this.conflicts = this.modelingAssessmentService.convertConflicts(error.error as Conflict[]);
+                    this.conflicts = this.conflictService.convertConflicts(error.error as Conflict[]);
                     this.updateHighlightedConflictingElements();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('modelingAssessmentEditor.messages.submitFailedWithConflict');
@@ -266,7 +268,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onShowConflictResolution() {
         if (this.conflicts) {
-            this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts);
+            this.conflictService.addLocalConflicts(this.submission!.id, this.conflicts);
             this.jhiAlertService.clear();
             this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
         }

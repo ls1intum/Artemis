@@ -172,6 +172,12 @@ public class ModelAssessmentConflictService {
         return storedConflict;
     }
 
+    /**
+     * Used to update the list of conflicts according to the decisions of the currentUser to whom the list of conflicts got escalated to.
+     * 
+     * @param conflicts
+     * @param currentUser
+     */
     public void updateEscalatedConflicts(List<ModelAssessmentConflict> conflicts, User currentUser) {
         conflicts.forEach(conflict -> {
             ModelAssessmentConflict storedConflict = findOne(conflict.getId());
@@ -278,6 +284,13 @@ public class ModelAssessmentConflictService {
         }
     }
 
+    /**
+     * Updates the given storedConflict with the decision of a tutor to whom the storedConflict got escalated to. When all tutors posted their decision the conflict is either
+     * escalated to an instructor or resolved in case all tutors decided the same way
+     * 
+     * @param storedConflict
+     * @param updatedConflictingResult
+     */
     private void updateEscalatedConflict(ModelAssessmentConflict storedConflict, ConflictingResult updatedConflictingResult) {
         ConflictingResult storedConflictingResult = storedConflict.getResultsInConflict().stream()
                 .filter(conflictingResult -> conflictingResult.getId().equals(updatedConflictingResult.getId())).findFirst().get();

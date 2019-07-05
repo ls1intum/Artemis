@@ -3,7 +3,6 @@ import { ApollonEditor, ApollonMode, Assessment, DiagramType, Selection, UMLMode
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
-import { User } from 'app/core';
 import * as $ from 'jquery';
 import { ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 
@@ -17,8 +16,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
-    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
-    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef | undefined;
+    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef | undefined;
     @Input() model: UMLModel;
     @Input() highlightedElementIds: Set<string>;
     @Input() highlightColor = 'rgba(219, 53, 69,0.6)';
@@ -44,7 +43,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
-            if (this.resizeOptions.initialWidth) {
+            if (this.resizeContainer && this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
             }
             interact('.resizable')
@@ -111,25 +110,26 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
 
         this.handleFeedback();
-
-        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: ApollonMode.Assessment,
-            readonly: this.readOnly,
-            model: this.model,
-            type: this.diagramType,
-            enablePopups: this.enablePopups,
-        });
-        this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
-            if (this.readOnly) {
-                this.selectionChanged.emit(selection);
-            }
-        });
-        if (!this.readOnly) {
-            this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
-                this.feedbacks = this.generateFeedbackFromAssessment(assessments);
-                this.calculateTotalScore();
-                this.feedbackChanged.emit(this.feedbacks);
+        if (this.editorContainer) {
+            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+                mode: ApollonMode.Assessment,
+                readonly: this.readOnly,
+                model: this.model,
+                type: this.diagramType,
+                enablePopups: this.enablePopups,
             });
+            this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
+                if (this.readOnly) {
+                    this.selectionChanged.emit(selection);
+                }
+            });
+            if (!this.readOnly) {
+                this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
+                    this.feedbacks = this.generateFeedbackFromAssessment(assessments);
+                    this.calculateTotalScore();
+                    this.feedbackChanged.emit(this.feedbacks);
+                });
+            }
         }
     }
 
@@ -235,12 +235,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private scrollIntoView(elementId: string) {
-        const element = this.editorContainer.nativeElement as HTMLElement;
-        const matchingElement = $(element)
-            .find(`#${elementId}`)
-            .get(0);
-        if (matchingElement) {
-            matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
+        if (this.editorContainer) {
+            const element = this.editorContainer.nativeElement as HTMLElement;
+            const matchingElement = $(element)
+                .find(`#${elementId}`)
+                .get(0);
+            if (matchingElement) {
+                matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
+            }
         }
     }
 

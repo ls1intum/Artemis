@@ -1,3 +1,22 @@
-<p>
-    instructor-conflict-resolution works!
-</p>
+<jhi-conflict-control-bar [conflicts]="conflicts" (save)="onSave()" (submit)="onSubmit($event)"></jhi-conflict-control-bar>
+<jhi-modeling-assessment-conflict
+    *ngIf="currentConflict"
+    [modelingExercise]="modelingExercise"
+    [conflictState]="currentState"
+    leftTitle="{{ 'modelingAssessment.assessmentOf' | translate }} {{ leftConflictingResult.result.assessor.firstName }} {{ leftConflictingResult.result.assessor.lastName }}"
+    [leftModel]="leftModel"
+    [leftFeedbacks]="leftConflictingResult.result.feedbacks"
+    [leftHighlightedElementIds]="conflictingHighlightedElementIds"
+    [leftCenteredElementId]="conflictingCenteredElementId"
+    [leftConflictingElemenId]="conflictingCenteredElementId"
+    rightTitle="{{ 'modelingAssessmentConflict.ownAssessmentTitle' | translate }}"
+    [rightModel]="rightModel"
+    [rightFeedback]="currentFeedbacksCopy"
+    [rightHighlightedElementIds]="currentHighlightedElementIds"
+    [rightCenteredElementId]="currentCenteredElementId"
+    [rightConflictingElemenId]="currentCenteredElementId"
+    (conflictResolutionStateChanged)="onConflictStateChanged($event)"
+    (leftButtonPressed)="onTakeOver()"
+    (rightButtonPressed)="onKeepYours()"
+    (rightFeedbacksChanged)="onFeedbackChanged($event)"
+></jhi-modeling-assessment-conflict>
