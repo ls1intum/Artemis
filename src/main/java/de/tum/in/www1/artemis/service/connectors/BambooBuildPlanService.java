@@ -63,66 +63,66 @@ public class BambooBuildPlanService {
     @Value("${artemis.bamboo.bitbucket-application-link-id}")
     private String BITBUCKET_APPLICATION_LINK_ID;
 
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
-        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
-        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
-
-        // Bamboo build plan
-        final String planName = planKey; // Must be unique within the project
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
-
-        // Bamboo build project
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        // Permissions
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
+
+        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
+        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+
+        bambooServer.publish(plan);
+
         Course course = programmingExercise.getCourse();
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
-
-        Plan plan = null;
-        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            plan = createJavaBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
-        }
-        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.PYTHON) {
-            plan = createPythonBuildPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
-        }
-        bambooServer.publish(plan);
-
-        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
+        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), plan.getKey().toString(), teachingAssistantGroupName,
+                instructorGroupName, ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
     }
 
-    Project createBuildProject(String name, String key) {
+    private Project createBuildProject(String name, String key) {
         return new Project().key(key).name(name);
     }
 
-    private Plan createJavaBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
+        if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                    new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
+                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 1.8").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 1.8").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON && !sequentialBuildRuns) {
+            return new Stage("Default Stage")
+                    .jobs(new Job("Default Job", new BambooKey("JOB1"))
+                            .tasks(createCheckoutTask("", "tests"),
+                                    new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
+                            .requirements(new Requirement("Python3")));
+        }
+        else if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            return new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask("", "tests"),
+                    new ScriptTask().description("Builds and tests the structural tests")
+                            .inlineBody("pytest tests/structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
+                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest tests/behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
+                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
+        }
 
-        return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1")).tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
-                        new MavenTask().goal("clean test").jdk("JDK 1.8").executableLabel("Maven 3").hasTests(true))))
-                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        return null;
     }
 
-    private Plan createPythonBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        return createDefaultBuildPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
-                .stages(new Stage("Default Stage").jobs(new Job("Default Job", new BambooKey("JOB1"))
-                        .tasks(createCheckoutTask("", "tests"),
-                                new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                        .requirements(new Requirement("Python3"))))
-                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
-    }
-
-    private Plan createDefaultBuildPlan(String planKey, String planName, String planDescription, String projectKey, String projectName, String vcsProjectKey,
-            String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        return new Plan(createBuildProject(projectName, projectKey), planName, planKey).description(planDescription)
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
+        return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-                .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
-                        createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug));
+                .planRepositories(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName),
+                        createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug))
+                .triggers(new BitbucketServerTrigger()).planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
@@ -148,13 +148,13 @@ public class BambooBuildPlanService {
                 .shallowClonesEnabled(true).remoteAgentCacheEnabled(false).changeDetection(new VcsChangeDetection());
     }
 
-    private PlanPermissions setPlanPermission(String bambooProjectKey, String bambooPlanKey, String teachingAssistantGroupName, String instructorGroupName, String adminGroupName) {
-        final PlanPermissions planPermission = new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(
+    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, String teachingAssistantGroupName, String instructorGroupName,
+            String adminGroupName) {
+        return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(
                 new Permissions().userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                         .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                         .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                         .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
-        return planPermission;
     }
 
 }

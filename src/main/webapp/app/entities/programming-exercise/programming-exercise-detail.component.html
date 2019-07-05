@@ -46,6 +46,10 @@
                 <dd>
                     <span>{{ programmingExercise.solutionParticipation.buildPlanId }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.sequentialTestRuns }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
@@ -114,8 +118,8 @@
                 </button>
                 <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
             </span>
-            <span class="mr-1">
-                <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA" (click)="generateStructureOracle()" class="btn btn-secondary">
+            <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
+                <button type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                 </button>
                 <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>

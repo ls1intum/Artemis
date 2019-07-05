@@ -3,9 +3,9 @@
 ![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/ArTEMiS/develop.svg?style=flat-square)
 ![Dependencies status](https://img.shields.io/david/dev/ls1intum/ArTEMiS.svg?style=flat-square)
 
-This application was generated using JHipster 6.1.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.1.1](http://www.jhipster.tech/documentation-archive/v6.1.1).
+This application was generated using JHipster 6.1.2, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.1.2](http://www.jhipster.tech/documentation-archive/v6.1.2).
 
-**Current version:** 3.2.0
+**Current version:** 3.3.0
 
 ## Main features
 Artemis supports the following exercises:

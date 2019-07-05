@@ -26,8 +26,11 @@
             "repositories": "Repositories",
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
-            "problemStatement": "Problemstellung",
             "allowOnlineEditor": "Online Editor erlauben",
+            "sequentialTestRuns": {
+                "title": "Sequentielle Testläufe",
+                "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+            },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
@@ -38,6 +41,14 @@
             "squashTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "squashTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
             "squashTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
+            "editable": {
+                "unsaved": "Ungespeichert.",
+                "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
+                "saving": "Speichert...",
+                "savingTooltip": "Speichert die ungespeicherten Änderungen in der Aufgabenstellung.",
+                "saved": "Gespeichert.",
+                "savedTooltip": "Die Aufgabenstellung ist gespeichert."
+            },
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "[task] Aufgabe",
@@ -49,7 +60,9 @@
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
-                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:"
+                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
+                "issues": "Testfall Probleme.",
+                "ok": "Testfälle ok."
             }
         }
     }
