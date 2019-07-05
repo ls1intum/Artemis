@@ -139,9 +139,11 @@ export class ArtemisMarkdown {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
+            extensions: [showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        return this.sanitizer.sanitize(SecurityContext.HTML, html);
+        const sanitized = this.sanitizer.sanitize(SecurityContext.SCRIPT, html);
+        return sanitized;
     }
 
     markdownForHtml(htmlText: string) {
