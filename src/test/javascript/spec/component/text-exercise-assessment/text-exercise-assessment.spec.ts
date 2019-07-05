@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -40,7 +41,7 @@ describe('TextAssessmentComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterModule],
+            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterTestingModule],
             declarations: [
                 TextAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
@@ -54,7 +55,6 @@ describe('TextAssessmentComponent', () => {
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
-                { provide: Location },
                 {
                     provide: ExerciseService,
                     useValue: {
