@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -58,9 +59,12 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository) {
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            Optional<TextClusteringScheduleService> textClusteringScheduleService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -71,6 +75,7 @@ public class TextExerciseResource {
         this.resultRepository = resultRepository;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.textClusteringScheduleService = textClusteringScheduleService;
     }
 
     /**
@@ -117,6 +122,7 @@ public class TextExerciseResource {
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClustering(result));
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -150,6 +156,7 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClustering(result));
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
@@ -224,6 +231,7 @@ public class TextExerciseResource {
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return forbidden();
             }
+            textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
             textExerciseService.delete(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }

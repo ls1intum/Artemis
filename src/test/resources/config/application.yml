@@ -27,7 +27,9 @@ artemis:
     git:
         name: ArTEMiS
         email: artemis@in.tum.de
-
+    automatic-text:
+        url: http://localhost:8000/cluster
+        secret: foo
 logging:
     level:
         ROOT: INFO

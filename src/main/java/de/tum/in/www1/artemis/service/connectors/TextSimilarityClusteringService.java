@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ public class TextSimilarityClusteringService {
     private final Logger log = LoggerFactory.getLogger(TextSimilarityClusteringService.class);
 
     // region Entities
-    static class Cluster {
+    public static class Cluster {
 
         public double[][] distanceMatrix;
 
@@ -29,7 +28,7 @@ public class TextSimilarityClusteringService {
         public TextBlock[] blocks;
     }
 
-    static class TextBlock {
+    public static class TextBlock {
 
         public String id;
 
@@ -64,7 +63,7 @@ public class TextSimilarityClusteringService {
     // endregion
 
     // region Exceptions
-    class NetworkingError extends Exception {
+    public class NetworkingError extends Exception {
 
         NetworkingError(String message) {
             super(message);
@@ -80,7 +79,7 @@ public class TextSimilarityClusteringService {
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError, IOException {
+    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Service to cluster student text answers.");
 
@@ -98,6 +97,19 @@ public class TextSimilarityClusteringService {
         log.info("Finished clustering remote call in " + (System.currentTimeMillis() - start) + "ms");
 
         return clusterResponse.clusters;
+    }
+
+    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
+        for (int retries = 0;; retries++) {
+            try {
+                return clusterTextBlocks(blocks);
+            }
+            catch (NetworkingError error) {
+                if (retries >= maxRetries) {
+                    throw error;
+                }
+            }
+        }
     }
 
     private HttpHeaders authenticationHeader() {
