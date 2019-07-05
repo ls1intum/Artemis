@@ -62,26 +62,22 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
     subscribeConflictState = () => {
         const domainKey = this.getDomainKey();
 
-        const repoSubject = new BehaviorSubject(GitConflictState.OK);
+        if (!this.conflictSubjects[domainKey]) {
+            const repoSubject = new BehaviorSubject(GitConflictState.OK);
 
-        const repoStateUpdateChannel = `/topic/user/repository-state/${domainKey}/conflict`;
-        this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
-        this.jhiWebsocketService
-            .receive(repoStateUpdateChannel)
-            .pipe(tap(update => repoSubject.next(update)))
-            .subscribe();
+            const repoStateUpdateChannel = `/topic/user/repository-state/${domainKey}/conflict`;
+            this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
+            this.jhiWebsocketService
+                .receive(repoStateUpdateChannel)
+                .pipe(tap(update => repoSubject.next(update)))
+                .subscribe();
 
-        this.websocketConnections.set(domainKey, repoStateUpdateChannel);
-        this.conflictSubjects.set(domainKey, repoSubject);
+            this.websocketConnections.set(domainKey, repoStateUpdateChannel);
+            this.conflictSubjects.set(domainKey, repoSubject);
 
-        return repoSubject as Observable<GitConflictState>;
-    };
-
-    notifyConflictState = (conflictState: GitConflictState) => {
-        const domainKey = this.getDomainKey();
-        const subject = this.conflictSubjects.get(domainKey);
-        if (subject) {
-            subject.next(conflictState);
+            return repoSubject as Observable<GitConflictState>;
+        } else {
+            return this.conflictSubjects[domainKey];
         }
     };
 

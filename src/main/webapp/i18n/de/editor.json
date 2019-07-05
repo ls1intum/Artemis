@@ -22,6 +22,8 @@
             "changesSubmittedTooltip": "Alle Änderungen abgesendet.",
             "unsubmittedChanges": "Nicht abgesendet.",
             "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.",
+            "changesConflict": "Konflikt",
+            "changesConflictTooltip": "Dein Repository befindet sich ein einem Konfliktzustand. Bereinige den Konflikt um weiterzuarbeiten.",
             "submittingChanges": "Sendet...",
             "submittingChangesTooltip": "Änderungen werden abgesendet.",
             "preparingForSubmit": "Vorbereitet...",
