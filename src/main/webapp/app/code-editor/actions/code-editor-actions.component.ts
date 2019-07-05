@@ -1,20 +1,20 @@
-import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
 import { CommitState, EditorState } from 'app/code-editor';
+import { ConflictStateService, GitConflictState } from 'app/code-editor/service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
 
 @Component({
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
-    providers: [],
 })
-export class CodeEditorActionsComponent {
+export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     CommitState = CommitState;
     EditorState = EditorState;
+    GitConflictState = GitConflictState;
 
     @Input()
     buildable = true;
@@ -47,6 +47,10 @@ export class CodeEditorActionsComponent {
     editorStateValue: EditorState;
     commitStateValue: CommitState;
     isBuildingValue: boolean;
+    gitConflictState: GitConflictState;
+    isResolvingConflict = false;
+
+    gitConflictStateSubscription: Subscription;
 
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
@@ -63,7 +67,19 @@ export class CodeEditorActionsComponent {
         this.isBuildingChange.emit(isBuilding);
     }
 
-    constructor(private repositoryService: CodeEditorRepositoryService, private repositoryFileService: CodeEditorRepositoryFileService) {}
+    constructor(
+        private repositoryService: CodeEditorRepositoryService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private conflictService: ConflictStateService,
+    ) {}
+
+    ngOnInit(): void {
+        this.gitConflictStateSubscription = this.conflictService.subscribeConflictState().subscribe(gitConflictState => (this.gitConflictState = gitConflictState));
+    }
+
+    ngOnDestroy(): void {
+        this.gitConflictStateSubscription.unsubscribe();
+    }
 
     /**
      * @function saveFiles
@@ -90,7 +106,6 @@ export class CodeEditorActionsComponent {
      * @function commit
      * @desc Commits the current repository files.
      * If there are unsaved changes, save them first before trying to commit again.
-     * @param $event
      */
     commit() {
         // Avoid multiple commits at the same time.
@@ -117,5 +132,9 @@ export class CodeEditorActionsComponent {
                     this.onError.emit('commitFailed');
                 },
             );
+    }
+
+    resetRepository() {
+        this.repositoryService.resetRepository().subscribe(() => this.conflictService.notifyConflictState(GitConflictState.OK));
     }
 }

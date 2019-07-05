@@ -7,6 +7,7 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -46,7 +47,13 @@ public class TestRepositoryResource extends RepositoryResource {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
-        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
+        try {
+            return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
+        }
+        catch (CheckoutConflictException ex) {
+            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/test-" + exerciseId + "/update", "CHECKOUT_CONFLICT");
+            throw new IOException();
+        }
     }
 
     /**

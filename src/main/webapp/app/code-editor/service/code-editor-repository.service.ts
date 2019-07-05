@@ -38,6 +38,7 @@ export interface ICodeEditorRepositoryService {
     isClean: () => Observable<{ isClean: boolean }>;
     commit: () => Observable<void>;
     pull: () => Observable<void>;
+    resetRepository: () => Observable<void>;
 }
 
 export interface IBuildLogService {
@@ -46,16 +47,20 @@ export interface IBuildLogService {
 
 @Injectable({ providedIn: 'root' })
 export class ConflictStateService extends DomainDependent implements IConflictStateService, OnDestroy {
-    private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>>;
-    private websocketConnections: Map<string, string>;
+    private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
+    private websocketConnections: Map<string, string> = new Map();
 
     constructor(domainService: DomainService, private jhiWebsocketService: JhiWebsocketService) {
         super(domainService);
+        this.initDomainSubscription();
+    }
+
+    ngOnDestroy(): void {
+        Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
     }
 
     subscribeConflictState = () => {
-        const [, domainValue] = this.domain;
-        const domainKey = `participation-${domainValue.id.toString()}`;
+        const domainKey = this.getDomainKey();
 
         const repoSubject = new BehaviorSubject(GitConflictState.OK);
 
@@ -72,9 +77,18 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
         return repoSubject as Observable<GitConflictState>;
     };
 
-    ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
-    }
+    notifyConflictState = (conflictState: GitConflictState) => {
+        const domainKey = this.getDomainKey();
+        const subject = this.conflictSubjects.get(domainKey);
+        if (subject) {
+            subject.next(conflictState);
+        }
+    };
+
+    private getDomainKey = () => {
+        const [domainType, domainValue] = this.domain;
+        return `${domainType === DomainType.PARTICIPATION ? 'participation' : 'test'}-${domainValue.id.toString()}`;
+    };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,6 +107,10 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
 
     pull = () => {
         return this.http.get<void>(`${this.restResourceUrl}/pull`, {});
+    };
+
+    resetRepository = () => {
+        return this.http.post<void>(`${this.restResourceUrl}/reset-repository`, {});
     };
 }
 

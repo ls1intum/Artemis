@@ -1,28 +1,46 @@
-<div>
-    <button
-        id="save_button"
-        type="button"
-        class="btn btn-primary navbar-btn mr-3"
-        [disabled]="editorState !== EditorState.UNSAVED_CHANGES || commitState === CommitState.COMMITTING"
-        (click)="saveChangedFiles().toPromise()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="Save all unsaved changes in your files."
-    >
-        <span *ngIf="editorState === EditorState.SAVING"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span>
-        <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
-    </button>
-    <button
-        id="submit_button"
-        type="button"
-        class="btn btn-success navbar-btn"
-        [disabled]="editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)"
-        (click)="commit()"
-        data-toggle="tooltip"
-        data-placement="left"
-        title="Stage, commit, push, build and test your changes."
-    >
-        <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building</span></span>
-        <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="artemisApp.editor.submit">Submit</span></span>
-    </button>
-</div>
+<ng-container [ngSwitch]="gitConflictState">
+    <div *ngSwitchCase="GitConflictState.OK">
+        <button
+            id="save_button"
+            type="button"
+            class="btn btn-primary navbar-btn mr-3"
+            [disabled]="editorState !== EditorState.UNSAVED_CHANGES || commitState === CommitState.COMMITTING"
+            (click)="saveChangedFiles().toPromise()"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="Save all unsaved changes in your files."
+        >
+            <span *ngIf="editorState === EditorState.SAVING"
+                ><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span
+            >
+            <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
+        </button>
+        <button
+            id="submit_button"
+            type="button"
+            class="btn btn-success navbar-btn"
+            [disabled]="editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)"
+            (click)="commit()"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="Stage, commit, push, build and test your changes."
+        >
+            <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building</span></span>
+            <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="artemisApp.editor.submit">Submit</span></span>
+        </button>
+    </div>
+    <div *ngSwitchCase="GitConflictState.CHECKOUT_CONFLICT">
+        <button
+            id="resolve_conflict_button"
+            type="button"
+            class="btn btn-danger navbar-btn mr-3"
+            (click)="resetRepository()"
+            data-toggle="tooltip"
+            data-placement="left"
+            title="Reset your repository to continue with your participation"
+        >
+            <span *ngIf="isResolvingConflict"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.resolvingConflict">Saving</span></span>
+            <span *ngIf="!isResolvingConflict"><fa-icon [icon]="['far', 'times']"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict">Resolve conflict</span></span>
+        </button>
+    </div>
+</ng-container>

@@ -50,7 +50,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
             return repositoryService.checkoutRepositoryByParticipation(participation);
         }
         catch (CheckoutConflictException ex) {
-            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/" + participationId + "update", "CHECKOUT_CONFLICT");
+            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/participation-" + participationId + "/update", "CHECKOUT_CONFLICT");
             throw new IOException();
         }
     }
