@@ -1336,11 +1336,12 @@ table.answer-options-result {
     .drag-item {
         border: 1px solid dimgrey;
         background: #fafafa;
-        max-width: 100%;
 
         .drag-item-picture {
             img {
                 width: auto;
+                max-width: 160px;
+                max-height: 160px;
             }
         }
 
@@ -1400,6 +1401,12 @@ table.answer-options-result {
     color: #333;
     background-color: #fff;
     border-color: #ccc;
+}
+
+@include media-breakpoint-down(xs) {
+    .btn + .btn {
+        margin-top: 15px;
+    }
 }
 
 /* CSS tooltip to overcome hybrid setup problems */
