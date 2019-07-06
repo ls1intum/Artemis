@@ -5,3 +5,4 @@ export * from './code-editor.service';
 export * from './code-editor-file.service';
 export * from './code-editor-grid.service';
 export { ICodeEditorSessionService } from 'app/code-editor/service/icode-editor-session.service';
+export { IConflictStateService, ConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';

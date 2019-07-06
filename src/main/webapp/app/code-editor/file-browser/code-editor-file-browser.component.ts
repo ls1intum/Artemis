@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, throwError } from 'rxjs';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
@@ -9,7 +9,7 @@ import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState, ConflictStateService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
@@ -19,7 +19,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
@@ -28,7 +28,7 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Input()
     exerciseTitle: string;
     @Input()
-    get selectedFile() {
+    get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
     @Input()
@@ -46,14 +46,14 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
-    selectedFileChange = new EventEmitter<string>();
+    selectedFileChange = new EventEmitter<string | undefined>();
     @Output()
     commitStateChange = new EventEmitter<CommitState>();
     @Output()
     onError = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
-    selectedFileValue: string;
+    selectedFileValue: string | undefined;
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     filesTreeViewItem: TreeviewItem[];
@@ -83,7 +83,10 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    set selectedFile(file: string) {
+    conflictState: GitConflictState;
+    conflictSubscription: Subscription;
+
+    set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
     }
@@ -99,7 +102,17 @@ export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit 
         private repositoryFileService: CodeEditorRepositoryFileService,
         private repositoryService: CodeEditorRepositoryService,
         private fileService: CodeEditorFileService,
+        private conflictService: ConflictStateService,
     ) {}
+
+    ngOnInit(): void {
+        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((conflictState: GitConflictState) => {
+            this.conflictState = conflictState;
+            if (this.conflictState === GitConflictState.CHECKOUT_CONFLICT) {
+                this.selectedFile = undefined;
+            }
+        });
+    }
 
     /**
      * @function ngAfterViewInit

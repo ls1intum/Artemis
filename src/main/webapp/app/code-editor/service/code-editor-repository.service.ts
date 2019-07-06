@@ -1,27 +1,19 @@
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Subject, of, pipe, throwError, UnaryFunction } from 'rxjs';
-import { catchError, map, distinctUntilChanged, tap } from 'rxjs/operators';
+import { pipe, Subject, throwError, UnaryFunction } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
 import { BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
-import { DomainChange, DomainDependent, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
+import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor';
+import { ConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
-}
-
-export enum GitConflictState {
-    CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',
-    OK = 'OK',
-}
-
-export interface IConflictStateService {
-    subscribeConflictState: () => Observable<GitConflictState>;
 }
 
 export interface ICodeEditorRepositoryFileService {
@@ -44,50 +36,6 @@ export interface ICodeEditorRepositoryService {
 
 export interface IBuildLogService {
     getBuildLogs: () => Observable<BuildLogEntry[]>;
-}
-
-@Injectable({ providedIn: 'root' })
-export class ConflictStateService extends DomainDependent implements IConflictStateService, OnDestroy {
-    private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
-    private websocketConnections: Map<string, string> = new Map();
-
-    constructor(domainService: DomainService, private jhiWebsocketService: JhiWebsocketService) {
-        super(domainService);
-        this.initDomainSubscription();
-    }
-
-    ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
-    }
-
-    subscribeConflictState = () => {
-        const domainKey = this.getDomainKey();
-        const subject = this.conflictSubjects.get(domainKey);
-        if (!subject) {
-            const repoSubject = new BehaviorSubject(GitConflictState.OK);
-            this.conflictSubjects.set(domainKey, repoSubject);
-            return repoSubject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
-        } else {
-            return subject.pipe(
-                tap(console.log),
-                distinctUntilChanged(),
-            ) as Observable<GitConflictState>;
-        }
-    };
-
-    notifyConflictState = (gitConflictState: GitConflictState) => {
-        console.log('notify conflict', gitConflictState);
-        const domainKey = this.getDomainKey();
-        const subject = this.conflictSubjects.get(domainKey);
-        if (subject) {
-            subject.next(gitConflictState);
-        }
-    };
-
-    private getDomainKey = () => {
-        const [domainType, domainValue] = this.domain;
-        return `${domainType === DomainType.PARTICIPATION ? 'participation' : 'test'}-${domainValue.id.toString()}`;
-    };
 }
 
 @Injectable({ providedIn: 'root' })
