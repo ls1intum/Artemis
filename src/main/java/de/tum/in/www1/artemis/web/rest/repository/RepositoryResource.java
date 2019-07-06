@@ -358,6 +358,9 @@ public abstract class RepositoryResource {
         try {
             repositoryService.commitChanges(repository);
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
         catch (GitAPIException ex) {
             // TODO: Properly catch specific git errors
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,6 +1,6 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConflictStateService } from 'app/code-editor/service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConflictStateService, GitConflictState } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-resolve-conflict-modal',
@@ -17,6 +17,7 @@ export class CodeEditorResolveConflictModalComponent {
      */
     deleteFile() {
         this.repositoryService.resetRepository().subscribe(() => {
+            this.conflictService.notifyConflictState(GitConflictState.OK);
             this.closeModal();
         });
     }

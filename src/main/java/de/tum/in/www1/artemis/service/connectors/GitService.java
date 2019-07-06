@@ -104,7 +104,9 @@ public class GitService {
             Repository repository = cachedRepositories.get(localPath);
             // disable auto garbage collection because it can lead to problems
             repository.getConfig().setString("gc", null, "auto", "0");
-            pullIgnoreConflicts(repository);
+            if (pullOnCheckout) {
+                pull(repository);
+            }
             return repository;
         }
 

@@ -8,6 +8,7 @@ import { BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependent, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
+import { CommitState } from 'app/code-editor';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
@@ -61,18 +62,23 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
 
     subscribeConflictState = () => {
         const domainKey = this.getDomainKey();
-        if (!this.conflictSubjects[domainKey]) {
+        const subject = this.conflictSubjects.get(domainKey);
+        if (!subject) {
             const repoSubject = new BehaviorSubject(GitConflictState.OK);
             this.conflictSubjects.set(domainKey, repoSubject);
             return repoSubject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
         } else {
-            return this.conflictSubjects[domainKey].pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+            return subject.pipe(
+                tap(console.log),
+                distinctUntilChanged(),
+            ) as Observable<GitConflictState>;
         }
     };
 
     notifyConflictState = (gitConflictState: GitConflictState) => {
+        console.log('notify conflict', gitConflictState);
         const domainKey = this.getDomainKey();
-        const subject = this.conflictSubjects[domainKey];
+        const subject = this.conflictSubjects.get(domainKey);
         if (subject) {
             subject.next(gitConflictState);
         }
@@ -91,7 +97,14 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
     }
 
     getStatus = () => {
-        return this.http.get<any>(this.restResourceUrl!).pipe(this.handleErrorResponse<{ repositoryStatus: string }>());
+        return this.http.get<any>(this.restResourceUrl!).pipe(
+            this.handleErrorResponse<{ repositoryStatus: string }>(),
+            tap(({ repositoryStatus }) => {
+                if (repositoryStatus !== CommitState.CONFLICT) {
+                    this.conflictService.notifyConflictState(GitConflictState.OK);
+                }
+            }),
+        );
     };
 
     commit = () => {

@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, throwError, Subscription } from 'rxjs';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
-import { CommitState, EditorState } from 'app/code-editor';
+import { CommitState, EditorState, GitConflictState } from 'app/code-editor';
 import { ConflictStateService } from 'app/code-editor/service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
@@ -75,10 +75,16 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe(() => {
+        this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
             // This is why a timeout of 0 is set to make sure the template is rendered before setting the commitState.
-            setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
+            if (this.commitState === CommitState.CONFLICT && gitConflictState === GitConflictState.OK) {
+                // Case a: Conflict was resolved.
+                setTimeout(() => (this.commitState = CommitState.UNDEFINED), 0);
+            } else if (this.commitState !== CommitState.CONFLICT && gitConflictState === GitConflictState.CHECKOUT_CONFLICT) {
+                // Case b: Conflict has occurred.
+                setTimeout(() => (this.commitState = CommitState.CONFLICT), 0);
+            }
         });
     }
 
@@ -142,6 +148,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        const modalRef = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
+        this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
     }
 }
