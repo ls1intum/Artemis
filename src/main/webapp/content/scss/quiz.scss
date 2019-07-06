@@ -1214,11 +1214,6 @@ table.answer-options-result {
 }
 
 .drag-and-drop-quizStatistic-picture {
-    > jhi-secured-image {
-        img {
-            width: 100%;
-        }
-    }
     .click-layer {
         .solution {
             .drag-item-picture {
@@ -1312,6 +1307,8 @@ table.answer-options-result {
         left: 0;
         bottom: 0;
         right: 0;
+        margin-left: auto;
+        margin-right: auto;
         z-index: 1;
 
         .drop-location {
