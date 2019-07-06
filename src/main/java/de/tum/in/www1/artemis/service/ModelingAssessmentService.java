@@ -90,7 +90,7 @@ public class ModelingAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-        result.setNewFeedback(modelingAssessment);
+        result.updateAllFeedbackItems(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 

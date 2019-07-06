@@ -24,6 +24,11 @@ public class Score {
         return comments;
     }
 
+    /**
+     * Returns the confidence of the score. The confidence is the percentage indicating how certain Compass is about the points and comments of the Score.
+     *
+     * @return the confidence of the score
+     */
     public double getConfidence() {
         return confidence;
     }

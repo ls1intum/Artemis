@@ -340,11 +340,11 @@ public class Result implements Serializable {
 
     /**
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
-     * assigns the new feedback afterwards.
+     * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
      * @param feedbacks the new feedback list
      */
-    public void setNewFeedback(List<Feedback> feedbacks) {
+    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
         for (Feedback feedback : feedbacks) {
             feedback.setPositive(feedback.getCredits() >= 0);
             setFeedbackType(feedback);
@@ -389,10 +389,7 @@ public class Result implements Serializable {
         if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
             return false;
         }
-        if (Strings.isNullOrEmpty(existingText) || Strings.isNullOrEmpty(newText)) {
-            return true;
-        }
-        return !existingText.equals(newText);
+        return !Objects.equals(existingText, newText);
     }
 
     public Participation getParticipation() {

@@ -406,10 +406,10 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all submissions.
+     * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
      * @param id the id of the entity
-     * @return the participation with all its submissions
+     * @return the participation with all its submissions and results
      */
     @Transactional(readOnly = true)
     public Participation findOneWithEagerSubmissionsAndResults(Long id) {
@@ -526,6 +526,13 @@ public class ParticipationService {
         return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
     }
 
+    /**
+     * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
+     * corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);

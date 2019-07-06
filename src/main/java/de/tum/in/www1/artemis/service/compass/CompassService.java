@@ -258,8 +258,7 @@ public class CompassService {
                 return;
             }
 
-            // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable
-            // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
+            // Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage.
             Grade grade = roundGrades(engine.getGradeForModel(modelId));
 
             // Set feedback and assessment type of result
@@ -297,8 +296,7 @@ public class CompassService {
     }
 
     /**
-     * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable. Also see
-     * https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information.
+     * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable.
      * <p>
      * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded to x.5 > [x.65, x + 1[ gets rounded to x + 1
      * <p>

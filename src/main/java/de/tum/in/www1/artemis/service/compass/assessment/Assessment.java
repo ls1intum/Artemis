@@ -64,7 +64,7 @@ public class Assessment {
      * maximum amount of feedback elements share. Feedback comments: the collected feedback texts of all feedback elements that share the credits from above. Confidence: the
      * maximum percentage of feedback elements that share the same credits.
      *
-     * @param feedbacks the list of feedback elements
+     * @param feedbacks the list of feedback elements for which the new score should be calculated
      * @return the score containing points, a collection of feedback text and the confidence
      */
     private Score calculateTotalScore(List<Feedback> feedbacks) {

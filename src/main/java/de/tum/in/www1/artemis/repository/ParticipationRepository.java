@@ -53,12 +53,26 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results par where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
     Optional<Participation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
+    /**
+     * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
+     * corresponding submission yet.
+     *
+     * @param exerciseId the exercise id the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
     @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null or result.assessmentType = 'AUTOMATIC')")
     List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.id = :#{#participationId}")
     Optional<Participation> findByIdWithEagerResults(@Param("participationId") Long participationId);
 
+    /**
+     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database. Returns an empty Optional if the
+     * participation could not be found.
+     *
+     * @param participationId the id of the participation
+     * @return the participation with eager submissions and results or an empty Optional
+     */
     @Query("select distinct participation from Participation participation left join fetch participation.submissions s left join fetch s.result left join fetch participation.results where participation.id = :#{#participationId}")
     Optional<Participation> findByIdWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
 

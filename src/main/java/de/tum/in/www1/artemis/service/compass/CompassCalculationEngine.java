@@ -56,7 +56,6 @@ public class CompassCalculationEngine implements CalculationEngine {
 
             String model = modelingSubmission.getModel();
             if (model != null) {
-                // build the model and add it to Compass
                 buildModel(modelingSubmission);
 
                 if (hasCompleteManualAssessment(modelingSubmission)) {
@@ -111,12 +110,26 @@ public class CompassCalculationEngine implements CalculationEngine {
         return model;
     }
 
+    /**
+     * Creates a JSONObject from the model contained in the given modeling submission. Afterwards, it builds an UMLClassDiagramm from the JSONObject, analyzes the similarity and
+     * sets the similarity ID of each model element and adds the model to the model index of the calculation engine. The model index contains all models of the corresponding
+     * exercise.
+     *
+     * @param modelingSubmission the modeling submission containing the model as JSON string
+     */
     private void buildModel(ModelingSubmission modelingSubmission) {
         if (modelingSubmission.getModel() != null) {
             buildModel(modelingSubmission.getId(), new JsonParser().parse(modelingSubmission.getModel()).getAsJsonObject());
         }
     }
 
+    /**
+     * Build an UMLClassDiagramm from a JSON representation of the model, analyzes the similarity and sets the similarity ID of each model element. Afterwards, the model is added
+     * to the model index of the calculation engine which contains all models of the corresponding exercise.
+     *
+     * @param modelSubmissionId the id of the modeling submission the model belongs to
+     * @param jsonModel         JSON representation of the UML model
+     */
     private void buildModel(long modelSubmissionId, JsonObject jsonModel) {
         try {
             UMLClassDiagram model = JSONParser.buildModelFromJSON(jsonModel, modelSubmissionId);
