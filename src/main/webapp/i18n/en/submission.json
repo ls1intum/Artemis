@@ -19,7 +19,8 @@
             "submissionDate": "Submission Date",
             "type": "Type",
             "result": "Result",
-            "participation": "Participation"
+            "participation": "Participation",
+            "lockedSubmissionsLimitReached": "You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one."
         }
     }
 }

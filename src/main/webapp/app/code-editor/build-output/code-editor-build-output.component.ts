@@ -19,6 +19,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
+    styleUrls: ['./code-editor-build-output.scss'],
     providers: [JhiAlertService, WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges, OnDestroy {
@@ -33,7 +34,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         return this.buildLogErrorsValue;
     }
     @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth: number; resizableMinHeight: number }>();
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
     @Output()
     buildLogErrorsChange = new EventEmitter<BuildLogErrors>();
     @Output()
@@ -80,8 +81,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
         this.interactResizable = interact('.resizable-buildoutput')
             .resizable({
-                // Enable resize from top edge; triggered by class rg-top
-                edges: { left: false, right: false, bottom: false, top: '.rg-top' },
+                // Enable resize from bottom edge; triggered by class rg-bottom
+                edges: { left: false, right: false, bottom: false, top: '.rg-bottom' },
                 // Set min and max height
                 restrictSize: {
                     min: { height: this.resizableMinHeight },
@@ -121,7 +122,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
                 .pipe(
                     switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
-                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer)),
+                    map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
                         const buildLogErrors = this.rawBuildLogs.extractErrors();
@@ -207,7 +208,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
      * Else -> show build logs.
      * @param result
      */
-    fetchBuildResults(result: Result): Observable<BuildLogEntry[] | null> {
+    fetchBuildResults(result: Result | null): Observable<BuildLogEntry[] | null> {
         if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
             return of([]);
         } else {

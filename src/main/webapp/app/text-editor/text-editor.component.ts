@@ -61,7 +61,7 @@ export class TextEditorComponent implements OnInit {
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
-            return this.jhiAlertService.error('artemisApp.textExercise.error', null, null);
+            return this.jhiAlertService.error('artemisApp.textExercise.error', null, undefined);
         }
 
         this.textService.get(participationId).subscribe(
@@ -79,7 +79,7 @@ export class TextEditorComponent implements OnInit {
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results && this.isAfterAssessmentDueDate) {
-                        this.result = data.results.find(r => r.submission.id === this.submission.id);
+                        this.result = data.results.find(r => r.submission!.id === this.submission.id)!;
                     }
 
                     if (this.submission && this.submission.text) {
@@ -99,9 +99,17 @@ export class TextEditorComponent implements OnInit {
         );
     }
 
+    /**
+     * Find "General Feedback" item for Result, if it exists.
+     * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
+     * @return General Feedback item, if it exists and if it has a Feedback Text.
+     */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            return this.result.feedbacks.find(f => f.reference == null) || null;
+            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
+            if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
+                return feedbackWithoutReference;
+            }
         }
 
         return null;
@@ -123,7 +131,7 @@ export class TextEditorComponent implements OnInit {
         this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
             response => {
                 if (response) {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.textExercise.saveSuccessful');
 
@@ -150,7 +158,7 @@ export class TextEditorComponent implements OnInit {
             this.submission.submitted = true;
             this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
                 response => {
-                    this.submission = response.body;
+                    this.submission = response.body!;
                     this.result = this.submission.result;
 
                     if (this.isActive) {
@@ -167,8 +175,18 @@ export class TextEditorComponent implements OnInit {
         }
     }
 
+    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
+        event.preventDefault();
+        const value = editor.value;
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+
+        editor.value = value.substring(0, start) + '\t' + value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 1;
+    }
+
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message, null, undefined);
     }
 
     previous() {

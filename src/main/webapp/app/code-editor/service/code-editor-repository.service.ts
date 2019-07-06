@@ -7,7 +7,7 @@ import { Observable } from 'rxjs/Observable';
 import { BuildLogEntry } from 'app/entities/build-log';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
-import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
+import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
@@ -42,7 +42,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
     }
 
     isClean = () => {
-        return this.http.get<any>(this.restResourceUrl).map(data => ({ isClean: data.isClean }));
+        return this.http.get<any>(this.restResourceUrl!).map(data => ({ isClean: data.isClean }));
     };
 
     commit = () => {

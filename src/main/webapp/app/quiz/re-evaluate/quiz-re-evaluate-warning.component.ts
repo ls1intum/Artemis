@@ -40,7 +40,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     ngOnInit(): void {
         this.isSaving = false;
         this.quizExerciseService.find(this.quizExercise.id).subscribe(res => {
-            this.backUpQuiz = res.body;
+            this.backUpQuiz = res.body!;
             this.loadQuizSuccess(this.quizExercise);
         });
     }
@@ -74,9 +74,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         // check each question
         this.quizExercise.quizQuestions.forEach(question => {
             // find same question in backUp (necessary if the order has been changed)
-            const backUpQuestion = this.backUpQuiz.quizQuestions.find(questionBackUp => {
-                return question.id === questionBackUp.id;
-            });
+            const backUpQuestion = this.backUpQuiz.quizQuestions.find(questionBackUp => question.id === questionBackUp.id)!;
 
             this.checkQuestion(question, backUpQuestion);
         });
@@ -127,17 +125,15 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkMultipleChoiceQuestion(question: MultipleChoiceQuestion, backUpQuestion: MultipleChoiceQuestion): void {
         // question-Element deleted?
-        if (question.answerOptions.length !== backUpQuestion.answerOptions.length) {
+        if (question.answerOptions!.length !== backUpQuestion.answerOptions!.length) {
             this.questionElementDeleted = true;
         }
         // check each answer
-        question.answerOptions.forEach(answer => {
+        question.answerOptions!.forEach(answer => {
             // only check if there are no changes on the question-elements yet
             if (!this.questionCorrectness || !this.questionElementInvalid) {
-                const backUpAnswer = backUpQuestion.answerOptions.find(answerBackUp => {
-                    return answerBackUp.id === answer.id;
-                });
-                if (backUpAnswer !== null) {
+                const backUpAnswer = backUpQuestion.answerOptions!.find(answerBackUp => answerBackUp.id === answer.id);
+                if (backUpAnswer != null) {
                     // answer set invalid?
                     if (answer.invalid !== backUpAnswer.invalid) {
                         this.questionElementInvalid = true;
@@ -173,21 +169,17 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         if (!this.questionElementInvalid) {
             // check each dragItem
             question.dragItems.forEach(dragItem => {
-                const backUpDragItem = backUpQuestion.dragItems.find(dragItemBackUp => {
-                    return dragItemBackUp.id === dragItem.id;
-                });
+                const backUpDragItem = backUpQuestion.dragItems.find(dragItemBackUp => dragItemBackUp.id === dragItem.id);
                 // dragItem set invalid?
-                if (backUpDragItem !== null && dragItem.invalid !== backUpDragItem.invalid) {
+                if (backUpDragItem != null && dragItem.invalid !== backUpDragItem.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
             // check each dropLocation
             question.dropLocations.forEach(dropLocation => {
-                const backUpDropLocation = backUpQuestion.dropLocations.find(dropLocationBackUp => {
-                    return dropLocationBackUp.id === dropLocation.id;
-                });
+                const backUpDropLocation = backUpQuestion.dropLocations.find(dropLocationBackUp => dropLocationBackUp.id === dropLocation.id);
                 // dropLocation set invalid?
-                if (backUpDropLocation !== null && dropLocation.invalid !== backUpDropLocation.invalid) {
+                if (backUpDropLocation != null && dropLocation.invalid !== backUpDropLocation.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
@@ -229,7 +221,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                     return;
                 }
                 // solution set invalid?
-                if (backUpSolution !== null && solution.invalid !== backUpSolution.invalid) {
+                if (backUpSolution != null && solution.invalid !== backUpSolution.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
@@ -239,7 +231,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                     return spotBackUp.id === spot.id;
                 });
                 // spot set invalid?
-                if (backUpSpot !== null && spot.invalid !== backUpSpot.invalid) {
+                if (backUpSpot != null && spot.invalid !== backUpSpot.invalid) {
                     this.questionElementInvalid = true;
                 }
             });

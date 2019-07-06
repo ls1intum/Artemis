@@ -71,15 +71,15 @@
         </div>
         <div class="form-group" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <jhi-markdown-editor [(markdown)]="textExercise.problemStatement"></jhi-markdown-editor>
+            <jhi-markdown-editor class="markdown-editor" [(markdown)]="textExercise.problemStatement"></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_sampleSolution">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
-            <jhi-markdown-editor [(markdown)]="textExercise.sampleSolution"></jhi-markdown-editor>
+            <jhi-markdown-editor class="markdown-editor" [(markdown)]="textExercise.sampleSolution"></jhi-markdown-editor>
         </div>
         <div class="form-group" id="field_gradingInstructions">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
-            <jhi-markdown-editor [(markdown)]="textExercise.gradingInstructions"></jhi-markdown-editor>
+            <jhi-markdown-editor class="markdown-editor" [(markdown)]="textExercise.gradingInstructions"></jhi-markdown-editor>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
@@ -114,6 +114,10 @@
             <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the text exercise.
             </div>
+        </div>
+        <div class="form-group" *ngIf="textExercise.id">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+            <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
     <div class="modal-footer">

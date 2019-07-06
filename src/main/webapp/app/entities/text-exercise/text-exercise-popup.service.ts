@@ -9,7 +9,7 @@ import { CourseService } from '../course';
 
 @Injectable({ providedIn: 'root' })
 export class TextExercisePopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
     constructor(
         private datePipe: DatePipe,
@@ -23,14 +23,13 @@ export class TextExercisePopupService {
 
     open(component: Component, id?: number | any, courseId?: number): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 
             if (id) {
                 this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-                    const textExercise: TextExercise = textExerciseResponse.body;
+                    const textExercise: TextExercise = textExerciseResponse.body!;
                     this.ngbModalRef = this.textExerciseModalRef(component, textExercise);
                     resolve(this.ngbModalRef);
                 });
@@ -39,7 +38,7 @@ export class TextExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            const course = res.body;
+                            const course = res.body!;
                             this.ngbModalRef = this.textExerciseModalRef(component, new TextExercise(course));
                             resolve(this.ngbModalRef);
                         });

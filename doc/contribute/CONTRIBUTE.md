@@ -24,6 +24,38 @@ Once the changes in your pull request are approved by one of our reviewers, they
 
 Find here [a guide](../setup/SETUP.md) on how to setup your local development environment.
 
+## CSS Guidelines
+
+We are using [Scss](https://sass-lang.com) to write modular, reusable css.
+
+We have a couple of global scss files in `webapp/content` but encourage [component dependent css with angular's styleUrls](https://angular.io/guide/component-styles).
+
+The [bootstrap css](https://getbootstrap.com/) is imported into Artemis, however we discourage using it in html.
+We encourage using the Scss [extend](https://sass-lang.com/documentation/at-rules/extend) mechanism if bootstrap styles are used.
+
+Discouraged html styling:
+`<div class="d-flex">some content</div>`
+
+Encouraged scss extend styling:
+```
+.my-container {
+    @extend .d-flex;
+}
+```
+
+From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/).
+```
+.my-container {
+    // container styles
+    &__content {
+        // content styles
+        &--modifier {
+            // modifier styles
+        }
+    }
+}
+```
+
 ## Testing
 
 We create unit & integration tests for the Artemis server and client.

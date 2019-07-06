@@ -66,6 +66,7 @@
                 "shortAnswerSubmittedAnswer": "Short Answer Submitted Answer",
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
+                "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -95,7 +96,8 @@
             "language": "Language",
             "guidedtour": "Guided tour",
             "starttour": "Start tour",
-            "noNotifications": "No notifications available"
+            "noNotifications": "No notifications available",
+            "showAllNotifications": "Show all notifications"
         },
         "form": {
             "username": "Username",

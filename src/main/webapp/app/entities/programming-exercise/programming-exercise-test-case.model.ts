@@ -1,0 +1,15 @@
+import { ProgrammingExercise } from '.';
+
+export interface IProgrammingExerciseTestCase {
+    id: number;
+    testName: string;
+    weight: number;
+    active: boolean;
+    exercise: ProgrammingExercise;
+}
+
+export class ProgrammingExerciseTestCase implements IProgrammingExerciseTestCase {
+    constructor(public id: number, public testName: string, public weight: number, public active: boolean, public exercise: ProgrammingExercise) {
+        this.active = this.active || false;
+    }
+}

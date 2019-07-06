@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
@@ -21,7 +21,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
 
     templateParticipationSubscription: Subscription;
     solutionParticipationSubscription: Subscription;
-    issues: ProgrammingExerciseIssues[] = [];
+    issues: (ProgrammingExerciseIssues | null)[] = [];
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -30,12 +30,11 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.templateParticipationSubscription) {
                 this.templateParticipationSubscription.unsubscribe();
             }
-            this.participationWebsocketService.addParticipation(this.templateParticipation, this.exercise);
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
                     filter(result => !!result),
-                    tap(result => (this.templateParticipation.results = [result])),
+                    tap(result => (this.templateParticipation.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();
@@ -45,12 +44,11 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.solutionParticipationSubscription) {
                 this.solutionParticipationSubscription.unsubscribe();
             }
-            this.participationWebsocketService.addParticipation(this.solutionParticipation, this.exercise);
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(
                     filter(result => !!result),
-                    tap(result => (this.solutionParticipation.results = [result])),
+                    tap(result => (this.solutionParticipation.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();

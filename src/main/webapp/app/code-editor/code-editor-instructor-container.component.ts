@@ -8,7 +8,7 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { CodeEditorFileService, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
 import {
     CodeEditorAceComponent,
@@ -108,8 +108,12 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                         if (this.router.url.endsWith('/test')) {
                             this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         } else {
-                            // Template participation is default when no participationId is provided
-                            this.selectParticipationDomainById(participationId || this.exercise.templateParticipation.id);
+                            const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
+                            if (nextAvailableParticipation) {
+                                this.selectParticipationDomainById(nextAvailableParticipation.id);
+                            } else {
+                                throwError('participationNotFound');
+                            }
                         }
                     }),
                     tap(() => {
@@ -138,6 +142,23 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     }
 
     /**
+     * Get the next available participation, highest priority has the participation given to the method.
+     * Removes participations without a repositoryUrl (could be invalid).
+     * Returns undefined if no valid participation can be found.
+     *
+     * @param preferredParticipationId
+     */
+    private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
+        const availableParticipations = [
+            this.exercise.templateParticipation,
+            this.exercise.solutionParticipation,
+            this.exercise.participations && this.exercise.participations.length ? this.exercise.participations[0] : undefined,
+        ].filter(Boolean);
+        const selectedParticipation = availableParticipations.find(({ id }: Participation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: Participation) => !!repositoryUrl);
+    }
+
+    /**
      * Subscribe for domain changes caused by url route changes.
      * Distinguishes between participation based domains (template, solution, assignment) and the test repository.
      */
@@ -146,6 +167,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
             .subscribeDomainChange()
             .pipe(
                 filter(domain => !!domain),
+                map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
                     this.initializeProperties();
                     if (domainType === DomainType.PARTICIPATION) {
@@ -190,11 +212,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
             : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(
-                  map(({ body }) => body),
+                  map(({ body }) => body!),
                   // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
                   switchMap(exercise =>
                       this.resultService.getLatestResultWithFeedbacks(exercise.templateParticipation.id).pipe(
-                          map(({ body }) => body),
+                          map(({ body }) => body!),
                           map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
                           catchError(() => of(exercise)),
                       ),
@@ -240,7 +262,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     createAssignmentParticipation() {
         this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
         return this.courseExerciseService
-            .startExercise(this.exercise.course.id, this.exercise.id)
+            .startExercise(this.exercise.course!.id, this.exercise.id)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {

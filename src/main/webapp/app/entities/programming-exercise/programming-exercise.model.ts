@@ -16,10 +16,11 @@ export class ProgrammingExercise extends Exercise {
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;
     public problemStatement: string;
+    public sequentialTestRuns: boolean | null;
 
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
-        this.course = course;
+        this.course = course || null;
         this.templateParticipation = new Participation();
         this.solutionParticipation = new Participation();
     }

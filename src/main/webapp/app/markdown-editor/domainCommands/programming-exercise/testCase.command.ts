@@ -37,7 +37,7 @@ export class TestCaseCommand extends DomainMultiOptionCommand {
      */
     execute(value: string): void {
         const { row, column } = this.getCursorPosition();
-        const matchInTag = this.isCursorWithinTag();
+        const matchInTag = this.isCursorWithinTag()!;
 
         const generateTestCases = (match: { matchStart: number; matchEnd: number; innerTagContent: string }): string[] => {
             // Check if the cursor is within the tag - if so, add the test to the list.

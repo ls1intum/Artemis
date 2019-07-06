@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTEMiSTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Component Tests', () => {

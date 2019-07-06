@@ -89,7 +89,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * of the model outside of Apollon.
      */
     getCurrentModel(): UMLModel {
-        const currentModel: UMLModel = this.apollonEditor.model;
+        const currentModel: UMLModel = this.apollonEditor!.model;
         this.removeAssessments(currentModel);
         return currentModel;
     }

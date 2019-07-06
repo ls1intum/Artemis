@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 
 import { ArTEMiSTestModule } from '../../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Component Tests', () => {

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -282,7 +284,8 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
             return createProgrammingExercise(programmingExercise);
@@ -317,7 +320,9 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
     }
 
@@ -331,7 +336,8 @@ public class ProgrammingExerciseResource {
      */
     @PatchMapping("/programming-exercises-problem")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate) throws URISyntaxException {
+    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
         // fetch course from database to make sure client didn't change groups
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(problemStatementUpdate.getExerciseId());
@@ -353,7 +359,9 @@ public class ProgrammingExerciseResource {
         programmingExercise.setProblemStatement(problemStatementUpdate.getProblemStatement());
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(result);
     }
 
@@ -463,6 +471,39 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * Squash all commits into one in the template repository of a given exercise.
+     * 
+     * @param id of the exercise
+     * @return
+     */
+    @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        if (!programmingExerciseOptional.isPresent()) {
+            return notFound();
+        }
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        try {
+            URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
+            programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+        catch (IOException | IllegalStateException | InterruptedException | GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * PUT /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
      *
      * @param id The ID of the programming exercise for which the structure oracle should get generated
@@ -504,6 +545,8 @@ public class ProgrammingExerciseResource {
 
         try {
             String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
+            // Atm we only have one folder that can have structural tests, but this could change.
+            testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             if (didGenerateOracle) {

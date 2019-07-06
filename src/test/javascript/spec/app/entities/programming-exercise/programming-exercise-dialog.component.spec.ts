@@ -7,7 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTEMiSTestModule } from '../../../test.module';
 import { ProgrammingExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise-dialog.component';
-import { ProgrammingExerciseService } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise.service';
+import { ProgrammingExerciseService } from '../../../../../../main/webapp/app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise.model';
 
 describe('Component Tests', () => {

@@ -146,6 +146,15 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.lastName = lastName;
     }
 
+    public String getName() {
+        if (lastName != null && !lastName.equals("")) {
+            return firstName + " " + lastName;
+        }
+        else {
+            return firstName;
+        }
+    }
+
     public String getEmail() {
         return email;
     }

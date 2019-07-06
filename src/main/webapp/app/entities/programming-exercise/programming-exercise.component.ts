@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
@@ -34,7 +34,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     protected loadExercises(): void {
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
+                this.programmingExercises = res.body!;
                 // reconnect exercise with course
                 this.programmingExercises.forEach(exercise => {
                     exercise.course = this.course;

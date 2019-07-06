@@ -18,6 +18,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 @Component({
     selector: 'jhi-text-exercise-dialog',
     templateUrl: './text-exercise-dialog.component.html',
+    styleUrls: ['./text-exercise-dialog.scss'],
 })
 export class TextExerciseDialogComponent implements OnInit {
     textExercise: TextExercise;
@@ -25,6 +26,7 @@ export class TextExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    notificationText: string | null;
 
     courses: Course[];
 
@@ -40,17 +42,18 @@ export class TextExerciseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
 
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
-        this.courseService.findAllCategoriesOfCourse(this.textExercise.course.id).subscribe(
+        this.courseService.findAllCategoriesOfCourse(this.textExercise.course!.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -67,7 +70,11 @@ export class TextExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.textExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }
@@ -85,7 +92,7 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess(result: TextExercise) {
@@ -95,7 +102,7 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message, null, undefined);
         this.isSaving = false;
     }
 

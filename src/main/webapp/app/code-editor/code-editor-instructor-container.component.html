@@ -28,7 +28,7 @@
                 <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <button
-                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id"
+                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUrl"
                         (click)="selectTemplateParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
@@ -36,7 +36,7 @@
                         <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
                     </button>
                     <button
-                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id"
+                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUrl"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
                         [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
@@ -50,7 +50,8 @@
                             loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                             !exercise ||
                             !exercise.participations ||
-                            !exercise.participations.length
+                            !exercise.participations.length ||
+                            (exercise.participations.length && !exercise.participations[0].repositoryUrl)
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
@@ -107,7 +108,9 @@
             <jhi-updating-result
                 *ngIf="selectedParticipation && !isBuilding && selectedRepository !== REPOSITORY.TEST"
                 [participation]="selectedParticipation"
-                [result]="selectedParticipation.results && selectedParticipation.results[0]"
+                [showUngradedResults]="true"
+                [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                [short]="true"
                 class="mr-2"
             ></jhi-updating-result>
             <jhi-code-editor-actions

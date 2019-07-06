@@ -68,6 +68,7 @@ import { ArTEMiSComplaintsForTutorModule } from 'app/complaints-for-tutor';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
+import { DeviceDetectorModule } from 'ngx-device-detector';
 
 @NgModule({
     imports: [
@@ -75,6 +76,7 @@ import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
         BrowserAnimationsModule,
         ArTEMiSAppRoutingModule,
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
+        DeviceDetectorModule,
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */

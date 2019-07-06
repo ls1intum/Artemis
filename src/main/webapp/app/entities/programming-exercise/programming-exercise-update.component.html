@@ -118,17 +118,40 @@
                     </select>
                 </div>
 
-                <div class="form-group-narrow" id="field_problemStatement" name="problemStatement">
+                <div class="form-group" id="field_problemStatement" name="problemStatement">
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
                     <jhi-programming-exercise-editable-instructions
                         *ngIf="problemStatementLoaded && templateParticipationResultLoaded"
-                        #preview
                         [participation]="programmingExercise.templateParticipation"
-                        [templateParticipation]="programmingExercise.templateParticipation"
                         [(exercise)]="programmingExercise"
+                        [showStatus]="programmingExercise?.id"
+                        [enableSave]="programmingExercise?.id"
+                        class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>
-
+                <!--        It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
+                <div class="form-group-narrow">
+                    <div class="form-check">
+                        <label class="form-check-label" for="field_sequentialTestRuns">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="sequentialTestRuns"
+                                id="field_sequentialTestRuns"
+                                [disabled]="!!programmingExercise.id"
+                                [(ngModel)]="programmingExercise.sequentialTestRuns"
+                                checked
+                            />
+                            <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
+                            <fa-icon
+                                icon="question-circle"
+                                class="text-secondary"
+                                placement="top"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
+                            ></fa-icon>
+                        </label>
+                    </div>
+                </div>
                 <div class="form-group-narrow">
                     <div class="form-check">
                         <label class="form-check-label" for="field_allowOnlineEditor">
@@ -159,6 +182,10 @@
                             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
                         </label>
                     </div>
+                </div>
+                <div class="form-group-narrow" *ngIf="programmingExercise.id">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+                    <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
                 </div>
             </div>
             <div>

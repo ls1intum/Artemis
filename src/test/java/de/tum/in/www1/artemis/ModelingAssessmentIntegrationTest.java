@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -41,7 +40,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
+@ActiveProfiles("artemis")
 public class ModelingAssessmentIntegrationTest {
 
     @Autowired
@@ -73,9 +72,6 @@ public class ModelingAssessmentIntegrationTest {
 
     @Autowired
     ParticipationService participationService;
-
-    @Autowired
-    ContinuousIntegrationService continuousIntegrationService;
 
     private ModelingExercise classExercise;
 
@@ -114,7 +110,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSave() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
@@ -127,7 +123,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_classDiagram() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
@@ -140,7 +136,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_activityDiagram() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/activity-model.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/activity-assessment.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
@@ -153,7 +149,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_objectDiagram() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
@@ -166,7 +162,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit_useCaseDiagram() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
@@ -179,7 +175,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSaveAndSubmit() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
+        User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put("/api/modeling-submissions/" + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
@@ -271,7 +267,7 @@ public class ModelingAssessmentIntegrationTest {
     }
 
     private List<ModelAssessmentConflict> causeConflict(String assessorName, ModelingSubmission submission1, ModelingSubmission submission2) throws Exception {
-        User assessor = userRepo.findOneByLogin(assessorName).get();
+        User assessor = database.getUserByLogin(assessorName);
         List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
         List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
         request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true", feedbacks1, HttpStatus.OK);

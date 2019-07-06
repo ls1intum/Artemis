@@ -35,7 +35,7 @@ export class OverviewComponent {
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
             },
             (response: string) => this.onError(response),
@@ -43,11 +43,11 @@ export class OverviewComponent {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
-    get nextRelevantExercise(): Exercise {
-        let relevantExercise: Exercise = null;
+    get nextRelevantExercise(): Exercise | null {
+        let relevantExercise: Exercise | null = null;
         if (this.courses) {
             this.courses.forEach(course => {
                 const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
@@ -55,7 +55,7 @@ export class OverviewComponent {
                     if (!relevantExercise) {
                         relevantExercise = relevantExerciseForCourse;
                         this.nextRelevantCourse = course;
-                    } else if (relevantExerciseForCourse.dueDate.isBefore(relevantExercise.dueDate)) {
+                    } else if (relevantExerciseForCourse.dueDate!.isBefore(relevantExercise.dueDate!)) {
                         relevantExercise = relevantExerciseForCourse;
                         this.nextRelevantCourse = course;
                     }

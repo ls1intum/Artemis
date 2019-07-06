@@ -101,8 +101,8 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         for (const question of this.submittedQuizExercise.quizQuestions) {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
             if (mcQuizQuestion.id === this.question.id) {
-                answerOptionsOfQuestion = mcQuizQuestion.answerOptions;
-                this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions.filter(option => option.isCorrect).length;
+                answerOptionsOfQuestion = mcQuizQuestion.answerOptions!;
+                this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions!.filter(option => option.isCorrect).length;
             }
         }
 
@@ -136,7 +136,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.submittedAnswerCorrectValues();
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
-        this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
+        this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions!.length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.checkForCorrectAnswers.length;
         this.multipleChoiceWrongAnswerChosen = this.checkForWrongAnswers.length;
         this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;

@@ -44,7 +44,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     private loadCourse(): void {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
+            this.course = courseResponse.body!;
             this.loadExercises();
         });
     }

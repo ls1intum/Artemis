@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
-import { of } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
@@ -20,9 +20,9 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
-            return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body));
+            return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return of(new ProgrammingExercise());
+        return Observable.of(new ProgrammingExercise());
     }
 }
 

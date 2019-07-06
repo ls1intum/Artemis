@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 import { TextSubmission } from './text-submission.model';
-import { TextExercise } from 'app/entities/text-exercise';
 import { createRequestOption } from 'app/shared';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
@@ -48,21 +47,17 @@ export class TextSubmissionService {
             .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
 
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<HttpResponse<TextSubmission>> {
-        return this.http
-            .get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`, {
-                observe: 'response',
-            })
-            .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<TextSubmission> {
+        return this.http.get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = this.convertItemFromServer(res.body);
+        const body: TextSubmission = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
-        const jsonResponse: TextSubmission[] = res.body;
+        const jsonResponse: TextSubmission[] = res.body!;
         const body: TextSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));
