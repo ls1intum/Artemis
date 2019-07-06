@@ -20,6 +20,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
+    GitConflictState = GitConflictState;
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;

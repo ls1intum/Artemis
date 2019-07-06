@@ -10,7 +10,7 @@
     <!-- Root actions -->
     <div class="card-second-header">
         <button
-            [disabled]="isLoadingFiles"
+            [disabled]="isLoadingFiles || conflictState === GitConflictState.CHECKOUT_CONFLICT"
             class="btn btn-light"
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
@@ -19,7 +19,7 @@
             <fa-icon icon="file" class="ml-1"></fa-icon>
         </button>
         <button
-            [disabled]="isLoadingFiles"
+            [disabled]="isLoadingFiles || conflictState === GitConflictState.CHECKOUT_CONFLICT"
             class="btn btn-light ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
@@ -28,7 +28,7 @@
             <fa-icon icon="folder" class="ml-1"></fa-icon>
         </button>
         <button
-            [disabled]="isLoadingFiles"
+            [disabled]="isLoadingFiles || conflictState === GitConflictState.CHECKOUT_CONFLICT"
             class="btn btn-light ml-auto"
             (click)="toggleTreeCompress($event)"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
@@ -69,6 +69,7 @@
         [hasError]="errorFiles && errorFiles.includes(item.value)"
         [onCollapseExpand]="onCollapseExpand"
         [isCompressed]="compressFolders"
+        [disableActions]="conflictState === GitConflictState.CHECKOUT_CONFLICT"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"
@@ -83,6 +84,7 @@
         [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
+        [disableActions]="conflictState === GitConflictState.CHECKOUT_CONFLICT"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"
