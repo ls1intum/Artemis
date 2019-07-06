@@ -1,5 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent } from 'ng-mocks';
+import { CookieService } from 'ngx-cookie';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { WindowRef } from 'app/core';
@@ -11,6 +13,7 @@ import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import {
+    CodeEditorConflictStateService,
     CodeEditorFileBrowserComponent,
     CodeEditorFileBrowserCreateNodeComponent,
     CodeEditorFileBrowserFileComponent,
@@ -22,8 +25,15 @@ import {
     CommitState,
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
-import { MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService } from '../../mocks';
+import {
+    MockCodeEditorConflictStateService,
+    MockCodeEditorRepositoryFileService,
+    MockCodeEditorRepositoryService,
+    MockCookieService,
+    MockSyncStorage
+} from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
+
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,6 +65,10 @@ describe('CodeEditorFileBrowserComponent', () => {
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: CookieService, useClass: MockCookieService },
             ],
         })
             .compileComponents()
@@ -83,7 +97,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         const expectedFileTreeItems: TreeviewItem[] = [];
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ isClean: true }));
+        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         const changes: SimpleChanges = {
             commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
@@ -103,7 +117,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ isClean: true }));
+        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         const changes: SimpleChanges = {
             commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
@@ -228,7 +242,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             } as any),
         ].map(x => x.toString());
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ isClean: true }));
+        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         const changes: SimpleChanges = {
             commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),

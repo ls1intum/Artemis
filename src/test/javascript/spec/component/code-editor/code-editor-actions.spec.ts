@@ -1,22 +1,33 @@
 /* tslint:disable:no-unused-expression */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {LocalStorageService, SessionStorageService} from 'ngx-webstorage';
+import {CookieService} from 'ngx-cookie';
+import {TranslateModule} from '@ngx-translate/core';
+import {By} from '@angular/platform-browser';
+import {DebugElement} from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { spy, stub, SinonStub } from 'sinon';
-import { Subject } from 'rxjs';
-import { isEqual as _isEqual } from 'lodash';
+import {SinonStub, spy, stub} from 'sinon';
+import {Subject} from 'rxjs';
+import {isEqual as _isEqual} from 'lodash';
 
-import { AceEditorModule } from 'ng2-ace-editor';
-import { CodeEditorActionsComponent } from 'app/code-editor';
-import { CommitState, EditorState } from 'app/code-editor/model';
-import { CodeEditorRepositoryService, CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
-import { ArTEMiSTestModule } from '../../test.module';
+import {AceEditorModule} from 'ng2-ace-editor';
+import {CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState, EditorState} from 'app/code-editor';
+import {CommitState, EditorState} from 'app/code-editor/model';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService
+} from 'app/code-editor/service/code-editor-repository.service';
+import {ArTEMiSTestModule} from '../../test.module';
 
-import { cartesianProduct } from 'app/shared/util/utils';
-import { MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService } from '../../mocks';
+import {cartesianProduct} from 'app/shared/util/utils';
+import {
+    MockCodeEditorConflictStateService,
+    MockCodeEditorRepositoryFileService,
+    MockCodeEditorRepositoryService,
+    MockCookieService,
+    MockSyncStorage
+} from '../../mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,6 +48,10 @@ describe('CodeEditorActionsComponent', () => {
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: CookieService, useClass: MockCookieService },
             ],
         })
             .compileComponents()
@@ -57,20 +72,21 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     it('should show save and submit button without any inputs', () => {
+        fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save_button'));
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         expect(saveButton).to.exist;
         expect(submitButton).to.exist;
     });
 
-    const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], Object.keys(CommitState).filter(k => k !== CommitState.COMMITTING), [true, false]);
+    const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
     const enableCommitButtonCombinations = cartesianProduct(
-        Object.keys(EditorState).filter(k => k !== EditorState.SAVING),
+        [EditorState.UNSAVED_CHANGES, EditorState.CLEAN],
         [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN],
         [false],
     );
 
-    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState), [true, false]).map((combination: [EditorState, CommitState, boolean]) => {
+    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT), [true, false]).map((combination: [EditorState, CommitState, boolean]) => {
         const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
@@ -90,9 +106,10 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     it('should update ui when saving', () => {
-        const saveButton = fixture.debugElement.query(By.css('#save_button'));
+        comp.commitState = CommitState.CLEAN;
         comp.editorState = EditorState.UNSAVED_CHANGES;
         fixture.detectChanges();
+        const saveButton = fixture.debugElement.query(By.css('#save_button'));
         const saveButtonFeedbackBeforeSave = saveButton.nativeElement.innerHTML;
         comp.editorState = EditorState.SAVING;
         fixture.detectChanges();
@@ -101,9 +118,10 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     it('should update ui when building', () => {
-        const commitButton = fixture.debugElement.query(By.css('#submit_button'));
+        comp.editorState = EditorState.UNSAVED_CHANGES;
         comp.commitState = CommitState.COMMITTING;
         fixture.detectChanges();
+        const commitButton = fixture.debugElement.query(By.css('#submit_button'));
         const commitButtonFeedbackBeforeStartBuild = commitButton.nativeElement.innerHTML;
         comp.isBuilding = true;
         fixture.detectChanges();

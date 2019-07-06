@@ -13,7 +13,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
     ArTEMiSCodeEditorModule,
-    CodeEditorBuildLogService,
+    CodeEditorBuildLogService, CodeEditorConflictStateService,
     CodeEditorFileService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
@@ -24,7 +24,7 @@ import {
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import {
-    MockCodeEditorBuildLogService,
+    MockCodeEditorBuildLogService, MockCodeEditorConflictStateService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
@@ -104,6 +104,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService }
             ],
         })
             .compileComponents()
@@ -176,7 +177,7 @@ describe('CodeEditorStudentIntegration', () => {
         container.commitState = commitState;
         containerFixture.detectChanges();
 
-        isCleanSubject.next({ isClean: true });
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
 
