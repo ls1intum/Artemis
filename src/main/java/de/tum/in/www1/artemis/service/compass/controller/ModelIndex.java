@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -19,12 +19,12 @@ public class ModelIndex {
      */
     private Map<Long, UMLClassDiagram> modelMap;
 
-    private HashMap<UMLElement, Integer> modelElementMapping;
+    private Map<UMLElement, Integer> modelElementMapping;
 
     public ModelIndex() {
-        modelElementMapping = new HashMap<>();
+        modelElementMapping = new ConcurrentHashMap<>();
         uniqueModelElementList = new ConcurrentLinkedQueue<>();
-        modelMap = new HashMap<>();
+        modelMap = new ConcurrentHashMap<>();
     }
 
     /**

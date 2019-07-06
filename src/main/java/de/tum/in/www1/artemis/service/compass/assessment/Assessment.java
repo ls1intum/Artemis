@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 
@@ -11,8 +12,8 @@ public class Assessment {
     private Map<Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Feedback feedback) {
-        contextFeedbackList = new HashMap<>();
-        contextScoreMapping = new HashMap<>();
+        contextFeedbackList = new ConcurrentHashMap<>();
+        contextScoreMapping = new ConcurrentHashMap<>();
         List<Feedback> contextAssessments = new ArrayList<>();
         contextAssessments.add(feedback);
         List<String> comments = Collections.singletonList(feedback.getText());

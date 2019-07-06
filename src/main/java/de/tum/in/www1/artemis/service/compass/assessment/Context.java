@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Context {
 
@@ -17,7 +16,8 @@ public class Context {
     }
 
     public Context(int contextElementID) {
-        this.contextElementIDs = new HashSet<>(Collections.singletonList(contextElementID));
+        this.contextElementIDs = ConcurrentHashMap.newKeySet();
+        contextElementIDs.add(contextElementID);
     }
 
     public Context(Set<Integer> contextElementIDs) {

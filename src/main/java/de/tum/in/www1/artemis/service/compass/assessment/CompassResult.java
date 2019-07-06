@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +29,8 @@ public class CompassResult implements Grade {
     private double coverage;
 
     public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
-        jsonIdCommentsMapping = new HashMap<>();
-        jsonIdPointsMapping = new HashMap<>();
+        jsonIdCommentsMapping = new ConcurrentHashMap<>();
+        jsonIdPointsMapping = new ConcurrentHashMap<>();
 
         this.elementScoreMapping = elementScoreMapping;
         this.coverage = coverage;
@@ -81,7 +81,7 @@ public class CompassResult implements Grade {
      * @return the calculated result
      */
     public static CompassResult buildResultFromResultList(List<CompassResult> compassResultList, double coverage) {
-        Map<UMLElement, Score> newScoreMapping = new HashMap<>();
+        Map<UMLElement, Score> newScoreMapping = new ConcurrentHashMap<>();
 
         for (CompassResult compassResult : compassResultList) {
             newScoreMapping.putAll(compassResult.elementScoreMapping);

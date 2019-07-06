@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,7 @@ public class AutomaticAssessmentController {
             missingCount += classCount - compassResult.entitiesCovered();
         }
 
-        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         for (UMLClassRelationship relation : model.getAssociationList()) {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getSimilarityID());
@@ -137,7 +138,7 @@ public class AutomaticAssessmentController {
     }
 
     private CompassResult assessConnectable(UMLClass umlClass, AssessmentIndex index) {
-        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         int missing = 0;
 
