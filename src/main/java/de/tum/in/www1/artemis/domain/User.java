@@ -86,6 +86,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Column(name = "last_notification_read")
     private ZonedDateTime lastNotificationRead = null;
 
+    @Column(name = "guided_tour_settings")
+    private String guidedTourSettings = new String();
+
     @ElementCollection
     private List<String> groups = new ArrayList<>();
 
@@ -197,6 +200,14 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
         this.lastNotificationRead = lastNotificationRead;
+    }
+
+    public GuidedTourSettings getGuidedTourSettings() {
+        return GuidedTourSettings.createFromJson(this.guidedTourSettings);
+    }
+
+    public void setGuidedTourSettings(String guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     public String getLangKey() {
