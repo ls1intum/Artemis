@@ -104,7 +104,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
 
     // TODO: Maybe we don't have to check for the error here?
     resetRepository = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/reset-repository`, {}).pipe(this.handleErrorResponse());
+        return this.http.post<void>(`${this.restResourceUrl}/reset`, {});
     };
 
     private handleErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>

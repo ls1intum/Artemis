@@ -73,7 +73,7 @@ public abstract class RepositoryResource {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException, GitAPIException;
+    abstract Repository getRepository(Long domainId, boolean pullOnCheckout) throws IOException, IllegalAccessException, InterruptedException, GitAPIException;
 
     abstract URL getRepositoryUrl(Long domainId);
 
@@ -83,7 +83,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to files for domainId : {}", domainId);
 
         try {
-            Repository repository = getRepository(domainId);
+            Repository repository = getRepository(domainId, true);
             HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         }
@@ -111,7 +111,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -148,7 +148,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -191,7 +191,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -234,7 +234,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -277,7 +277,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -313,7 +313,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -343,7 +343,7 @@ public abstract class RepositoryResource {
 
         Repository repository;
         try {
-            repository = getRepository(domainId);
+            repository = getRepository(domainId, true);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -363,6 +363,23 @@ public abstract class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public ResponseEntity<Void> resetToLastCommit(Long domainId) throws IOException, InterruptedException {
+        Repository repository;
+        try {
+            repository = getRepository(domainId, false);
+            gitService.get().resetToOriginMaster(repository);
+        }
+        catch (IllegalAccessException ex) {
+            return forbidden();
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
+
     }
 
     /**

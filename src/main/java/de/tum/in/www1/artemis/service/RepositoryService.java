@@ -208,7 +208,7 @@ public class RepositoryService {
      * @throws GitAPIException
      */
     public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
-        Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl);
+        Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl, true);
         boolean isClean = gitService.get().isClean(repository);
 
         if (isClean) {
@@ -227,14 +227,15 @@ public class RepositoryService {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Exercise exercise, URL repoUrl, boolean pullOnCheckout)
+            throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl);
+        return gitService.get().getOrCheckoutRepository(repoUrl, pullOnCheckout);
     }
 
     /**
@@ -255,6 +256,6 @@ public class RepositoryService {
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl);
+        return gitService.get().getOrCheckoutRepository(repoUrl, true);
     }
 }

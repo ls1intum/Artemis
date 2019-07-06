@@ -292,9 +292,9 @@ public class ProgrammingExerciseService {
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
         Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
-        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
-        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl);
+        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
+        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
         try {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
@@ -559,7 +559,7 @@ public class ProgrammingExerciseService {
      * @throws IllegalStateException
      */
     public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws IOException, InterruptedException, IllegalStateException, GitAPIException {
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
@@ -577,9 +577,9 @@ public class ProgrammingExerciseService {
      */
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
             throws IOException, GitAPIException, InterruptedException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
 
         gitService.resetToOriginMaster(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);

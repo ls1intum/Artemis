@@ -44,14 +44,14 @@ public class RepositoryParticipationResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long participationId) throws IOException, InterruptedException, GitAPIException {
+    Repository getRepository(Long participationId, boolean pullOnCheckout) throws IOException, InterruptedException, GitAPIException {
         Participation participation = participationService.findOne(participationId);
         boolean hasPermissions = participationService.canAccessParticipation(participation);
         if (!hasPermissions) {
             throw new IllegalAccessError();
         }
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl);
+        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnCheckout);
     }
 
     @Override
@@ -171,6 +171,11 @@ public class RepositoryParticipationResource extends RepositoryResource {
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.commitChanges(participationId);
+    }
+
+    @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) throws IOException, InterruptedException {
+        return super.resetToLastCommit(participationId);
     }
 
     /**

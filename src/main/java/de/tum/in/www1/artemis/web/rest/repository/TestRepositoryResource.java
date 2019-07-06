@@ -42,11 +42,11 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    Repository getRepository(Long exerciseId, boolean pullOnCheckout) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
-        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
+        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnCheckout);
     }
 
     @Override

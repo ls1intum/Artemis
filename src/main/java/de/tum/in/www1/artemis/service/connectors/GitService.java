@@ -81,7 +81,7 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
-        Repository repository = getOrCheckoutRepository(repoUrl);
+        Repository repository = getOrCheckoutRepository(repoUrl, true);
         repository.setParticipation(participation);
         return repository;
     }
@@ -94,7 +94,7 @@ public class GitService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnCheckout) throws IOException, InterruptedException, GitAPIException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -161,7 +161,7 @@ public class GitService {
         // disable auto garbage collection because it can lead to problems
         repository.getConfig().setString("gc", null, "auto", "0");
 
-        if (shouldPullChanges) {
+        if (shouldPullChanges && pullOnCheckout) {
             pull(repository);
         }
 
