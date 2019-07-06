@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService.Cluster;
-import static de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService.TextBlock;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
@@ -17,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
@@ -69,10 +69,10 @@ public class TextClusteringScheduleService {
             log.debug("Start Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
 
             // Find all submissions for Exercise and Split them into Blocks
-            final List<TextBlock> blocks = getTextBlocks(exercise.getId());
+            final Set<TextBlock> blocks = getTextBlocks(exercise.getId());
 
             // Invoke clustering for Text Blocks
-            final Map<Integer, Cluster> clusters;
+            final Map<Integer, TextCluster> clusters;
             try {
                 clusters = textSimilarityClusteringService.clusterTextBlocks(blocks, 3);
             }
@@ -81,8 +81,13 @@ public class TextClusteringScheduleService {
                 return;
             }
 
+            // TODO: Soll der -1 Cluster gespeichert werden?
+
             // TODO: Persist Blocks
             clusters.size();
+
+            // TODO (Gregor): Sort Manual Assessment Queue
+            // Pass clusters.values() ?
 
             log.info("Found " + clusters.size() + " clusters for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") in "
                     + (System.currentTimeMillis() - start) + "ms");
@@ -101,13 +106,9 @@ public class TextClusteringScheduleService {
     }
 
     @NotNull
-    private List<TextBlock> getTextBlocks(Long exerciseId) {
+    private Set<TextBlock> getTextBlocks(Long exerciseId) {
         return textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true).stream().map(TextSubmission::getText).map(textBlockService::splitSubmissionIntoBlocks)
-                .flatMap(List::stream).map(clause -> {
-                    final TextBlock block = new TextBlock();
-                    block.text = clause;
-                    return block;
-                }).collect(Collectors.toList());
+                .flatMap(List::stream).map(clause -> new TextBlock().text(clause)).collect(Collectors.toSet());
     }
 
 }

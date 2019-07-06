@@ -277,6 +277,16 @@ entity TextSubmission {             //extends Submission
     text String                     //LONGTEXT --> lob
 }
 
+entity TextBlock {
+    id String
+    text String
+}
+
+entity TextCluster {
+    probabilities Blob
+    distanceMatrix Blob
+}
+
 entity FileUploadSubmission {       //extends Submission
     filePath String
 }
@@ -475,6 +485,8 @@ relationship OneToMany {
     Exercise{studentQuestions} to StudentQuestion{exercise},
     Lecture{studentQuestions} to StudentQuestion{lecture},
     ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
+    TextSubmission{blocks} to TextBlock{submission},
+    TextCluster{blocks} to TextBlock{cluster},
 }
 
 relationship OneToOne {

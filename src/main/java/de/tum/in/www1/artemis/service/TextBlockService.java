@@ -7,12 +7,17 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
 public class TextBlockService {
+
+    private final TextBlockRepository textBlockRepository;
+
+    TextBlockService(TextBlockRepository textBlockRepository) {
+        this.textBlockRepository = textBlockRepository;
+    }
 
     public void prepopulateFeedbackBlocks(Result result) throws ClassCastException {
         if (result.getFeedbacks().size() != 0 || !(result.getSubmission() instanceof TextSubmission)) {

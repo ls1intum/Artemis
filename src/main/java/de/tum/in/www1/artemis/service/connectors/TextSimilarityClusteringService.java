@@ -12,52 +12,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+
 @Service
 @Profile("automaticText")
 public class TextSimilarityClusteringService {
 
     private final Logger log = LoggerFactory.getLogger(TextSimilarityClusteringService.class);
 
-    // region Entities
-    public static class Cluster {
-
-        public double[][] distanceMatrix;
-
-        public double[] probabilities;
-
-        public TextBlock[] blocks;
-    }
-
-    public static class TextBlock {
-
-        public String id;
-
-        public String text;
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof TextBlock) {
-                TextBlock other = (TextBlock) obj;
-                return Objects.equals(id, other.id) && Objects.equals(text, other.text);
-            }
-            return false;
-        }
-    }
-    // endregion
-
     // region Request/Response DTOs
     private static class ClusteringRequest {
 
-        public List<TextBlock> blocks;
+        public Set<TextBlock> blocks;
 
-        ClusteringRequest(List<TextBlock> blocks) {
+        ClusteringRequest(Set<TextBlock> blocks) {
             this.blocks = blocks;
         }
     }
 
     private static class ClusterResponse {
 
-        public LinkedHashMap<Integer, Cluster> clusters;
+        public LinkedHashMap<Integer, TextCluster> clusters;
 
     }
     // endregion
@@ -79,7 +55,7 @@ public class TextSimilarityClusteringService {
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError {
+    public Map<Integer, TextCluster> clusterTextBlocks(Set<TextBlock> blocks) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Service to cluster student text answers.");
 
@@ -99,7 +75,7 @@ public class TextSimilarityClusteringService {
         return clusterResponse.clusters;
     }
 
-    public Map<Integer, Cluster> clusterTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
+    public Map<Integer, TextCluster> clusterTextBlocks(Set<TextBlock> blocks, int maxRetries) throws NetworkingError {
         for (int retries = 0;; retries++) {
             try {
                 return clusterTextBlocks(blocks);
