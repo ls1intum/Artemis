@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConflictStateService, GitConflictState } from 'app/code-editor/service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-resolve-conflict-modal',
@@ -9,7 +9,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConflictS
     providers: [CodeEditorRepositoryFileService],
 })
 export class CodeEditorResolveConflictModalComponent {
-    constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: ConflictStateService) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: CodeEditorConflictStateService) {}
 
     /**
      * @function deleteFile

@@ -9,7 +9,7 @@ import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor';
-import { ConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
@@ -40,7 +40,7 @@ export interface IBuildLogService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryService extends DomainDependentEndpoint implements ICodeEditorRepositoryService {
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: ConflictStateService) {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 
@@ -95,7 +95,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     private fileUpdateSubject = new Subject<{ [fileName: string]: string | null }>();
     private fileUpdateUrl: string;
 
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: ConflictStateService) {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 

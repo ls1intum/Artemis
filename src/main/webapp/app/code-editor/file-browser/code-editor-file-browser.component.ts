@@ -9,7 +9,7 @@ import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState, ConflictStateService } from 'app/code-editor/service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState, CodeEditorConflictStateService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
@@ -102,7 +102,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         private repositoryFileService: CodeEditorRepositoryFileService,
         private repositoryService: CodeEditorRepositoryService,
         private fileService: CodeEditorFileService,
-        private conflictService: ConflictStateService,
+        private conflictService: CodeEditorConflictStateService,
     ) {}
 
     ngOnInit(): void {

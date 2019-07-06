@@ -4,8 +4,8 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 
-import { CommitState, EditorState, GitConflictState } from 'app/code-editor';
-import { ConflictStateService } from 'app/code-editor/service';
+import { CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
 
@@ -70,7 +70,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     constructor(
         private repositoryService: CodeEditorRepositoryService,
         private repositoryFileService: CodeEditorRepositoryFileService,
-        private conflictService: ConflictStateService,
+        private conflictService: CodeEditorConflictStateService,
         private modalService: NgbModal,
     ) {}
 

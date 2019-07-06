@@ -10,7 +10,7 @@ import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorFileService, CodeEditorSessionService, ConflictStateService, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, CodeEditorSessionService, CodeEditorConflictStateService, DomainService, DomainType } from 'app/code-editor/service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
@@ -42,7 +42,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     constructor(
         private resultService: ResultService,
         private domainService: DomainService,
-        private conflictService: ConflictStateService,
+        private conflictService: CodeEditorConflictStateService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
