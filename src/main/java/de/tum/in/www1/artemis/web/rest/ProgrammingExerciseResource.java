@@ -378,10 +378,16 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
-        for (Exercise exercise : exercises) {
+        for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
+
+            // Avoid circular serialization issues with jackson.
+            if (exercise.getTemplateParticipation() != null) {
+                exercise.getTemplateParticipation().setExercise(null);
+                exercise.getSolutionParticipation().setExercise(null);
+            }
         }
         return ResponseEntity.ok().body(exercises);
     }
@@ -432,6 +438,12 @@ public class ProgrammingExerciseResource {
 
             if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
                 return forbidden();
+            }
+
+            // Avoid circular serialization issues with jackson.
+            if (programmingExercise.getTemplateParticipation() != null) {
+                programmingExercise.getTemplateParticipation().setExercise(null);
+                programmingExercise.getSolutionParticipation().setExercise(null);
             }
 
             return ResponseEntity.ok(programmingExercise);
