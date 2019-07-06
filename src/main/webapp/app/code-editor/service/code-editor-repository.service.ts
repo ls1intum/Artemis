@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Subject, of, pipe, throwError, UnaryFunction } from 'rxjs';
+import { catchError, map, distinctUntilChanged, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 
 import { BuildLogEntry } from 'app/entities/build-log';
@@ -61,23 +61,20 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
 
     subscribeConflictState = () => {
         const domainKey = this.getDomainKey();
-
         if (!this.conflictSubjects[domainKey]) {
             const repoSubject = new BehaviorSubject(GitConflictState.OK);
-
-            const repoStateUpdateChannel = `/topic/user/repository-state/${domainKey}/conflict`;
-            this.jhiWebsocketService.subscribe(repoStateUpdateChannel);
-            this.jhiWebsocketService
-                .receive(repoStateUpdateChannel)
-                .pipe(tap(update => repoSubject.next(update)))
-                .subscribe();
-
-            this.websocketConnections.set(domainKey, repoStateUpdateChannel);
             this.conflictSubjects.set(domainKey, repoSubject);
-
-            return repoSubject as Observable<GitConflictState>;
+            return repoSubject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
         } else {
-            return this.conflictSubjects[domainKey];
+            return this.conflictSubjects[domainKey].pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+        }
+    };
+
+    notifyConflictState = (gitConflictState: GitConflictState) => {
+        const domainKey = this.getDomainKey();
+        const subject = this.conflictSubjects[domainKey];
+        if (subject) {
+            subject.next(gitConflictState);
         }
     };
 
@@ -89,25 +86,36 @@ export class ConflictStateService extends DomainDependent implements IConflictSt
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryService extends DomainDependentEndpoint implements ICodeEditorRepositoryService {
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: ConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 
     getStatus = () => {
-        return this.http.get<any>(this.restResourceUrl!);
+        return this.http.get<any>(this.restResourceUrl!).pipe(this.handleErrorResponse<{ repositoryStatus: string }>());
     };
 
     commit = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/commit`, {});
+        return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(this.handleErrorResponse());
     };
 
     pull = () => {
-        return this.http.get<void>(`${this.restResourceUrl}/pull`, {});
+        return this.http.get<void>(`${this.restResourceUrl}/pull`, {}).pipe(this.handleErrorResponse());
     };
 
+    // TODO: Maybe we don't have to check for the error here?
     resetRepository = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/reset-repository`, {});
+        return this.http.post<void>(`${this.restResourceUrl}/reset-repository`, {}).pipe(this.handleErrorResponse());
     };
+
+    private handleErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
+        pipe(
+            catchError((err: HttpErrorResponse) => {
+                if (err.status === 409) {
+                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                }
+                return throwError(err);
+            }),
+        );
 }
 
 @Injectable({ providedIn: 'root' })
@@ -126,7 +134,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     private fileUpdateSubject = new Subject<{ [fileName: string]: string | null }>();
     private fileUpdateUrl: string;
 
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: ConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
 
@@ -147,27 +155,33 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     }
 
     getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`);
+        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(this.handleErrorResponse<{ [fileName: string]: FileType }>());
     };
 
     getFile = (fileName: string) => {
-        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).map(data => ({ fileContent: data }));
+        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+            map(data => ({ fileContent: data })),
+            this.handleErrorResponse<{ fileContent: string }>(),
+        );
     };
 
     createFile = (fileName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) });
+        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(this.handleErrorResponse());
     };
 
     createFolder = (folderName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) });
+        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(this.handleErrorResponse());
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
-        return this.http.put(`${this.restResourceUrl}/file`, fileContent, {
-            params: new HttpParams().set('file', fileName),
-        });
+        return this.http
+            .put(`${this.restResourceUrl}/file`, fileContent, {
+                params: new HttpParams().set('file', fileName),
+            })
+            .pipe(this.handleErrorResponse());
     };
 
+    // TODO: We also have to handle receiving the conflict from the websocket
     updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
@@ -178,16 +192,39 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
         this.fileUpdateSubject = new Subject<{ [p: string]: string | null }>();
 
         this.jhiWebsocketService.subscribe(this.fileUpdateUrl);
-        this.jhiWebsocketService.receive(this.fileUpdateUrl).subscribe(res => this.fileUpdateSubject.next(res), err => this.fileUpdateSubject.error(err));
+        this.jhiWebsocketService
+            .receive(this.fileUpdateUrl)
+            .pipe(this.handleWebsocketErrorResponse())
+            .subscribe(res => this.fileUpdateSubject.next(res), err => this.fileUpdateSubject.error(err));
         this.jhiWebsocketService.send(`${this.websocketResourceUrlSend}/files`, fileUpdates);
         return this.fileUpdateSubject as Observable<{ [fileName: string]: string | null }>;
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename });
+        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(this.handleErrorResponse());
     };
 
     deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) });
+        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(this.handleErrorResponse());
     };
+
+    private handleErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
+        pipe(
+            catchError((err: HttpErrorResponse) => {
+                if (err.status === 409) {
+                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                }
+                return throwError(err);
+            }),
+        );
+
+    private handleWebsocketErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
+        pipe(
+            catchError((err: { error: string }) => {
+                if (err.error === 'checkoutConflict') {
+                    this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+                }
+                return throwError(err);
+            }),
+        );
 }

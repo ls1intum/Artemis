@@ -73,7 +73,7 @@ public abstract class RepositoryResource {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
+    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException, GitAPIException;
 
     abstract URL getRepositoryUrl(Long domainId);
 
@@ -89,6 +89,12 @@ public abstract class RepositoryResource {
         }
         catch (IllegalAccessException ex) {
             return forbidden();
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -110,6 +116,13 @@ public abstract class RepositoryResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         try {
             byte[] out = repositoryService.getFile(repository, filename);
             HttpHeaders responseHeaders = new HttpHeaders();
@@ -139,6 +152,12 @@ public abstract class RepositoryResource {
         }
         catch (IllegalAccessException ex) {
             return forbidden();
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         InputStream inputStream = request.getInputStream();
@@ -177,6 +196,12 @@ public abstract class RepositoryResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         InputStream inputStream = request.getInputStream();
 
@@ -213,6 +238,12 @@ public abstract class RepositoryResource {
         }
         catch (IllegalAccessException ex) {
             return forbidden();
+        }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         try {
@@ -251,6 +282,13 @@ public abstract class RepositoryResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         try {
             repositoryService.deleteFile(repository, filename);
         }
@@ -280,6 +318,13 @@ public abstract class RepositoryResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         repositoryService.pullChanges(repository);
 
         return new ResponseEntity<>(HttpStatus.OK);
@@ -303,6 +348,13 @@ public abstract class RepositoryResource {
         catch (IllegalAccessException ex) {
             return forbidden();
         }
+        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        catch (GitAPIException ex) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         try {
             repositoryService.commitChanges(repository);
         }

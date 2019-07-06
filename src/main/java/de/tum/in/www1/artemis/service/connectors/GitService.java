@@ -19,10 +19,8 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RebaseTodoLine;
@@ -269,16 +267,10 @@ public class GitService {
      * @throws GitAPIException
      */
     public PullResult pull(Repository repo) throws GitAPIException {
-        try {
-            Git git = new Git(repo);
-            // flush cache of files
-            repo.setContent(null);
-            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
-            throw ex;
-        }
+        Git git = new Git(repo);
+        // flush cache of files
+        repo.setContent(null);
+        return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
 
     /**

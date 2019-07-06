@@ -9,8 +9,6 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,24 +44,14 @@ public class RepositoryParticipationResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long participationId) throws IOException, InterruptedException {
+    Repository getRepository(Long participationId) throws IOException, InterruptedException, GitAPIException {
         Participation participation = participationService.findOne(participationId);
         boolean hasPermissions = participationService.canAccessParticipation(participation);
         if (!hasPermissions) {
             throw new IllegalAccessError();
         }
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        try {
-            return gitService.get().getOrCheckoutRepository(repositoryUrl);
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/participation-" + participationId + "/conflict", "CHECKOUT_CONFLICT");
-            throw new IOException();
-        }
-        catch (GitAPIException ex) {
-            log.error("Exception encountered when trying to get the repository for participationId {}: {}", participationId, ex);
-            throw new IOException();
-        }
+        return gitService.get().getOrCheckoutRepository(repositoryUrl);
     }
 
     @Override

@@ -7,8 +7,6 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.eclipse.jgit.errors.CheckoutConflictException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -44,21 +42,11 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId) throws IOException, IllegalAccessException, InterruptedException {
+    Repository getRepository(Long exerciseId) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
-        try {
-            return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
-        }
-        catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            messagingTemplate.convertAndSendToUser(userService.getUser().getLogin(), "/topic/repository-state/test-" + exerciseId + "/conflict", "CHECKOUT_CONFLICT");
-            throw new IOException();
-        }
-        catch (GitAPIException ex) {
-            log.error("Exception encountered when trying to get the test repository for exercise id {}: {}", exerciseId, ex);
-            throw new IOException();
-        }
+        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl);
     }
 
     @Override
@@ -66,6 +54,12 @@ public class TestRepositoryResource extends RepositoryResource {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
+    }
+
+    @Override
+    boolean canAccessRepository(Long exerciseId) {
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        return authCheckService.isAtLeastInstructorForCourse(exercise.getCourse(), userService.getUser());
     }
 
     /**

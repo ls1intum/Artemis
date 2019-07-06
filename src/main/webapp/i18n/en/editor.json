@@ -79,7 +79,8 @@
                 "participationCouldNotBeCreated": "Participation could not be created.",
                 "couldNotBeRetrieved": "The repository status could not be retrieved.",
                 "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
-                "failedToLoadBuildLogs": "The build logs could not be retrieved."
+                "failedToLoadBuildLogs": "The build logs could not be retrieved.",
+                "repositoryInConflict": "Your repository has entered a conflict state."
             },
             "testStatusLabels": {
                 "noResult": "No results",

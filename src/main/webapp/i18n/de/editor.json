@@ -75,7 +75,8 @@
                 "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
                 "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
                 "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
-                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
+                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden.",
+                "repositoryInConflict": "Dein Repository befindet sich in einem Konfliktzustand."
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
