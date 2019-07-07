@@ -45,4 +45,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
+
+    @EntityGraph(attributePaths = "course")
+    @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
+    Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
 }

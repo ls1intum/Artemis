@@ -14,9 +14,11 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { intersection as _intersection } from 'lodash';
+import { faCheckCircle, faTimesCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
@@ -28,12 +30,15 @@ import { Participation, hasParticipationChanged, ParticipationWebsocketService }
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
-import { HttpResponse } from '@angular/common/http';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
-    UNDEFINED = 'UNDEFINED',
+    NOT_EXECUTED = 'NOT_EXECUTED',
     SUCCESS = 'SUCCESS',
     FAIL = 'FAIL',
+    NO_RESULT = 'NO_RESULT',
 }
 
 type Step = {
@@ -44,6 +49,7 @@ type Step = {
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
+    styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     TestCaseState = TestCaseState;
@@ -58,19 +64,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
     @Output()
-    public resultChange = new EventEmitter<Result | null>();
+    public resultChange = new EventEmitter<Result>();
+    @Output() public exerciseTestCasesChange = new EventEmitter<ProgrammingExerciseTestCase[] | null>();
+
+    exerciseTestCases: string[] | null = null;
 
     public problemStatement: string;
     public participationSubscription: Subscription;
 
     public isInitial = true;
     public isLoading: boolean;
-    public latestResultValue: Result | null;
+    public latestResult: Result | null;
     public steps: Array<Step> = [];
     public plantUMLs: { [id: string]: string } = {};
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
+
+    testCaseSubscription: Subscription;
 
     constructor(
         private editorService: CodeEditorService,
@@ -78,6 +89,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private testCaseService: ProgrammingExerciseTestCaseService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -93,15 +105,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
-    get latestResult(): Result | null {
-        return this.latestResultValue;
-    }
-
-    set latestResult(result: Result | null) {
-        this.latestResultValue = result;
-        this.resultChange.emit(result);
-    }
-
     /**
      * If the participation changes, the participation's instructions need to be loaded and the
      * subscription for the participation's result needs to be set up.
@@ -109,6 +112,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     public ngOnChanges(changes: SimpleChanges) {
         const participationHasChanged = hasParticipationChanged(changes);
+        const exerciseHasChanged = hasExerciseChanged(changes);
+        // It is possible that the exercise does not have an id in case it is being created now.
+        if (exerciseHasChanged && this.exercise.id) {
+            this.setupTestCaseSubscription();
+        }
         if (participationHasChanged) {
             this.isInitial = true;
             this.setupResultWebsocket();
@@ -144,6 +152,25 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.problemStatement = this.exercise.problemStatement!;
             this.updateMarkdown();
         }
+    }
+
+    private setupTestCaseSubscription() {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+
+        this.testCaseSubscription = this.testCaseService
+            .subscribeForTestCases(this.exercise.id)
+            .pipe(
+                filter(testCases => !!testCases),
+                tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
+                tap(testCases => {
+                    this.exerciseTestCases = testCases && testCases.filter(({ active }) => active).map(({ testName }) => testName);
+                }),
+                // The test cases validate the task specific tests, so we need to update the markdown here.
+                tap(() => this.updateMarkdown()),
+            )
+            .subscribe();
     }
 
     /**
@@ -274,7 +301,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 } else {
                     tests = event.target.parentElement.getAttribute('data-tests');
                 }
-                this.showDetailsForTests(this.latestResult, tests);
+                if (tests.length) {
+                    this.showDetailsForTests(this.latestResult, tests);
+                }
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
@@ -290,8 +319,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.steps.forEach(({ done }, i) => {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(FaIconComponent).create(this.injector);
                 componentRef.instance.size = 'lg';
-                componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : faTimesCircle;
-                componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : 'text-danger'];
+                componentRef.instance.iconProp = done === TestCaseState.SUCCESS ? faCheckCircle : done === TestCaseState.FAIL ? faTimesCircle : faQuestionCircle;
+                componentRef.instance.classes = [done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary'];
                 componentRef.instance.ngOnChanges({});
                 this.appRef.attachView(componentRef.hostView);
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
@@ -332,9 +361,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
         const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
-        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.children[0].classList.contains('text-success')).length;
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.classList.contains('stepwizard-step--success')).length;
         /** The click should only be executed if the clicked element is not a positive test **/
-        if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
+        if (testStatusDOMElements.length && !testStatusCircleElements[index].classList.contains('stepwizard-step--success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
             testStatusDOMElements[index - positiveTestsUntilIndex].click();
         }
@@ -373,11 +402,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         if (match) {
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
+                const tests = match[2].split(',');
+                const validTests = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases) : tests;
                 // Insert the testsStatus token to our rendered tokens
                 state.push({
                     type: 'testsStatus',
                     title: match[1],
-                    tests: match[2].split(','),
+                    tests: validTests,
                     level: state.level,
                 });
             }
@@ -474,18 +505,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
         const tests = tokens[0].tests || [];
         const [done, label] = this.statusForTests(tests);
+        const textColor = done === TestCaseState.SUCCESS ? 'text-success' : done === TestCaseState.FAIL ? 'text-danger' : 'text-secondary';
+        const validTestCases = this.exerciseTestCases && this.latestResult && !isLegacyResult(this.latestResult) ? _intersection(tests, this.exerciseTestCases).toString() : tests;
 
         let text = `<span class="bold"><span id=step-icon-${this.steps.length}></span>`;
 
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        if (done === TestCaseState.SUCCESS) {
-            text += '<span class="text-success bold">' + label + '</span>';
-        } else if (done === TestCaseState.FAIL) {
-            text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
-        } else {
-            text += '<span class="text-danger bold">' + label + '</span>';
+        if (done === TestCaseState.SUCCESS || done === TestCaseState.NO_RESULT || !validTestCases.length) {
+            text += `<span class="${textColor} bold">` + label + '</span>';
+        } else if (done === TestCaseState.FAIL || done === TestCaseState.NOT_EXECUTED) {
+            text += '<a data-tests="' + validTestCases + `" class="test-status"><span class="${textColor} result">` + label + '</span></a>';
         }
         text += '<br>';
 
@@ -515,7 +546,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
             const [done] = this.statusForTests(tests);
-            return done === TestCaseState.SUCCESS ? 'green' : 'red';
+            return done === TestCaseState.SUCCESS ? 'green' : done === TestCaseState.FAIL ? 'red' : 'grey';
         });
 
         this.plantUMLs[id] = plantUml;
@@ -532,37 +563,43 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         const translationBasePath = 'artemisApp.editor.testStatusLabels.';
         const totalTests = tests.length;
 
-        if (this.latestResult && this.latestResult.successful) {
-            // Case 1: Submission fulfills all test cases, no further checking needed.
+        if (this.latestResult && this.latestResult.successful && (!this.latestResult.feedbacks || !this.latestResult.feedbacks.length)) {
+            // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             const label = this.translateService.instant(translationBasePath + 'testPassing');
             return [TestCaseState.SUCCESS, label];
         } else if (this.latestResult && this.latestResult.feedbacks && this.latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
-            const failedTests = tests.filter(testName => {
-                const feedback = this.latestResult!.feedbacks.find(({ text }) => text === testName);
-                // If there is no feedback item, we assume that the test was successful (legacy check)
-                return feedback ? !feedback.positive : false;
-            });
+            const { failed, notExecuted, successful } = tests.reduce(
+                (acc, testName) => {
+                    const feedback = this.latestResult!.feedbacks.find(({ text }) => text === testName);
+                    // This is a legacy check, results before the 24th May are considered legacy.
+                    const resultIsLegacy = isLegacyResult(this.latestResult!);
+                    // If there is no feedback item, we assume that the test was successful (legacy check).
+                    if (resultIsLegacy) {
+                        return {
+                            failed: feedback ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback ? acc.successful : [...acc.successful, testName],
+                            notExecuted: acc.notExecuted,
+                        };
+                    } else {
+                        return {
+                            failed: feedback && feedback.positive === false ? [...acc.failed, testName] : acc.failed,
+                            successful: feedback && feedback.positive === true ? [...acc.successful, testName] : acc.successful,
+                            notExecuted: !feedback || feedback.positive === undefined ? [...acc.notExecuted, testName] : acc.notExecuted,
+                        };
+                    }
+                },
+                { failed: [], successful: [], notExecuted: [] },
+            );
 
             // Exercise is done if none of the tests failed
-            const testCaseState = failedTests.length === 0 ? TestCaseState.SUCCESS : TestCaseState.FAIL;
-            if (totalTests === 1) {
-                const label =
-                    testCaseState === TestCaseState.SUCCESS
-                        ? this.translateService.instant(translationBasePath + 'testPassing')
-                        : this.translateService.instant(translationBasePath + 'testFailing');
-                return [testCaseState, label];
-            } else {
-                const label =
-                    testCaseState === TestCaseState.SUCCESS
-                        ? this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests })
-                        : this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests: failedTests.length });
-                return [testCaseState, label];
-            }
+            const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
+            const label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests, passedTests: successful.length });
+            return [testCaseState, label];
         } else {
             // Case 3: There are no results
-            const label = this.translateService.instant('artemisApp.editor.testStatusLabels.noResult');
-            return [TestCaseState.UNDEFINED, label];
+            const label = this.translateService.instant(translationBasePath + 'noResult');
+            return [TestCaseState.NO_RESULT, label];
         }
     }
 
@@ -572,6 +609,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.steps = [];
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();
+        }
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
         }
     }
 }

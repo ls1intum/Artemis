@@ -75,8 +75,8 @@ public class FileResource {
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         if (!fileExtension.equalsIgnoreCase("png") && !fileExtension.equalsIgnoreCase("jpg") && !fileExtension.equalsIgnoreCase("jpeg") && !fileExtension.equalsIgnoreCase("svg")
-                && !fileExtension.equalsIgnoreCase("pdf")) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf");
+                && !fileExtension.equalsIgnoreCase("pdf") && !fileExtension.equalsIgnoreCase("zip")) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf, .zip");
         }
 
         try {
@@ -238,8 +238,15 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDisposition(contentDisposition);
+            String mediaType = "application/pdf";
+            if (filename.endsWith(".pdf")) {
+                mediaType = "application/pdf";
+            }
+            else if (filename.endsWith(".zip")) {
+                mediaType = "application/zip";
+            }
 
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType("application/pdf")).header("filename", filename).body(resource);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mediaType)).header("filename", filename).body(resource);
         }
         catch (IOException ex) {
             log.error("Lecture attachement download lef to the following exception", ex);
