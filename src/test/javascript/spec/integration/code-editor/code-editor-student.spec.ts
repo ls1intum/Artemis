@@ -13,7 +13,8 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import {
     ArTEMiSCodeEditorModule,
-    CodeEditorBuildLogService, CodeEditorConflictStateService,
+    CodeEditorBuildLogService,
+    CodeEditorConflictStateService,
     CodeEditorFileService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
@@ -24,7 +25,8 @@ import {
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import {
-    MockCodeEditorBuildLogService, MockCodeEditorConflictStateService,
+    MockCodeEditorBuildLogService,
+    MockCodeEditorConflictStateService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
@@ -104,7 +106,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService }
+                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
             ],
         })
             .compileComponents()

@@ -25,15 +25,8 @@ import {
     CommitState,
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
-import {
-    MockCodeEditorConflictStateService,
-    MockCodeEditorRepositoryFileService,
-    MockCodeEditorRepositoryService,
-    MockCookieService,
-    MockSyncStorage
-} from '../../mocks';
+import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-
 
 chai.use(sinonChai);
 const expect = chai.expect;

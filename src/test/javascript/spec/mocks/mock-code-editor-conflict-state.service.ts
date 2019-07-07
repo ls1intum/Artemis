@@ -1,4 +1,4 @@
-import {GitConflictState, IConflictStateService} from "app/code-editor";
+import { GitConflictState, IConflictStateService } from 'app/code-editor';
 import { of } from 'rxjs';
 
 export class MockCodeEditorConflictStateService implements IConflictStateService {
