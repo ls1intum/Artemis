@@ -17,9 +17,9 @@ public class ExerciseLifecycleService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseLifecycleService.class);
 
-    private TaskScheduler scheduler;
+    private final TaskScheduler scheduler;
 
-    ExerciseLifecycleService(@Qualifier("taskScheduler") TaskScheduler scheduler) {
+    public ExerciseLifecycleService(@Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduler = scheduler;
     }
 
