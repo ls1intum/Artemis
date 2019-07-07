@@ -18,11 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     providers: [QuizStatisticUtil, ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
@@ -89,10 +84,10 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe(xLabel => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe(yLabel => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -207,7 +202,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.correct').subscribe(correctLabel => {
+        this.translateService.get('showStatistic.questionStatistic.correct').subscribe(correctLabel => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.isCorrect) {
                     // check if the answer is valid and if true:
@@ -221,7 +216,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         });
 
         // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.incorrect').subscribe(incorrectLabel => {
+        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe(incorrectLabel => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (!answerOption.isCorrect) {
                     // check if the answer is valid and if false:
@@ -332,21 +327,5 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     switchSolution() {
         this.showSolution = !this.showSolution;
         this.loadDataInDiagram();
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
     }
 }
