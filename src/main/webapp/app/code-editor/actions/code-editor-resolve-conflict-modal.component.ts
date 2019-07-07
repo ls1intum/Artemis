@@ -12,10 +12,11 @@ export class CodeEditorResolveConflictModalComponent {
     constructor(public activeModal: NgbActiveModal, private repositoryService: CodeEditorRepositoryService, private conflictService: CodeEditorConflictStateService) {}
 
     /**
-     * @function deleteFile
-     * @desc Reads the provided fileName and deletes the matching file in the repository
+     * Reset the git repository to its last commit.
+     *
+     * @function resetRepository
      */
-    deleteFile() {
+    resetRepository() {
         this.repositoryService.resetRepository().subscribe(() => {
             this.conflictService.notifyConflictState(GitConflictState.OK);
             this.closeModal();

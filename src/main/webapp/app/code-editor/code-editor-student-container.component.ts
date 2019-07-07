@@ -10,7 +10,7 @@ import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorFileService, CodeEditorSessionService, CodeEditorConflictStateService, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
@@ -30,8 +30,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
 
     paramSub: Subscription;
-    gitConflictStateSubscription: Subscription;
-
     participation: Participation;
     exercise: ProgrammingExercise;
 
@@ -42,7 +40,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     constructor(
         private resultService: ResultService,
         private domainService: DomainService,
-        private conflictService: CodeEditorConflictStateService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -85,9 +82,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
-        }
-        if (this.gitConflictStateSubscription) {
-            this.gitConflictStateSubscription.unsubscribe();
         }
     }
 

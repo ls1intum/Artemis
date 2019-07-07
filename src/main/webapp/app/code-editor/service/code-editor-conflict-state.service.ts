@@ -14,6 +14,10 @@ export interface IConflictStateService {
     notifyConflictState: (gitConflictState: GitConflictState) => void;
 }
 
+/**
+ * This service manages the information about git conflicts of repositories.
+ * It offers methods to both subscribe and notify on conflicts.
+ */
 @Injectable({ providedIn: 'root' })
 export class CodeEditorConflictStateService extends DomainDependent implements IConflictStateService, OnDestroy {
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
@@ -28,6 +32,10 @@ export class CodeEditorConflictStateService extends DomainDependent implements I
         Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
     }
 
+    /**
+     * Subscribe to git conflict notifications. Does not emit the same value twice in a row (distinctUntilChanged).
+     * Emits an OK as a first value.
+     */
     subscribeConflictState = () => {
         const domainKey = this.getDomainKey();
         const subject = this.conflictSubjects.get(domainKey);
@@ -40,6 +48,11 @@ export class CodeEditorConflictStateService extends DomainDependent implements I
         }
     };
 
+    /**
+     * Notify all subscribers about a given conflictState.
+     *
+     * @param gitConflictState
+     */
     notifyConflictState = (gitConflictState: GitConflictState) => {
         const domainKey = this.getDomainKey();
         const subject = this.conflictSubjects.get(domainKey);

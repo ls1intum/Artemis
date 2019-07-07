@@ -21,7 +21,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -52,16 +51,13 @@ public abstract class RepositoryResource {
 
     protected final RepositoryService repositoryService;
 
-    protected final SimpMessageSendingOperations messagingTemplate;
-
     public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -368,6 +364,14 @@ public abstract class RepositoryResource {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    /**
+     * Reset a repository to the last commit. This will remove all staged / unstaged changes. Use with care as lost data can't be retrieved!
+     *
+     * @param domainId
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) throws IOException, InterruptedException {
         Repository repository;
         try {

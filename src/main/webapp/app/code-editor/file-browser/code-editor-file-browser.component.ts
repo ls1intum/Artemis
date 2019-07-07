@@ -110,6 +110,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             .subscribeConflictState()
             .pipe(rxFilter(conflictState => conflictState === GitConflictState.OK))
             .subscribe(() => {
+                // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
                 this.selectedFile = undefined;
             });
     }

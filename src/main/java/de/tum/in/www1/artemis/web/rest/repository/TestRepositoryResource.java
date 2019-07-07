@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,20 +34,36 @@ public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
-            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, messagingTemplate);
+            Optional<VersionControlService> versionControlService) {
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.exerciseService = exerciseService;
         this.versionControlService = versionControlService;
     }
 
+    /**
+     * Retrieve a test repository by providing its exerciseId. Will check if the user has permissions to access data related to the given test repository.
+     *
+     * @param exerciseId of the given test repository's exercise.
+     * @param pullOnGet  perform a pull on retrieval of a git repository (in some cases it might make sense not to pull!)
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws GitAPIException
+     */
     @Override
-    Repository getRepository(Long exerciseId, boolean pullOnCheckout) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
+    Repository getRepository(Long exerciseId, boolean pullOnGet) throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-tests";
         URL testsRepoUrl = versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
-        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnCheckout);
+        return repositoryService.checkoutRepositoryByName(exercise, testsRepoUrl, pullOnGet);
     }
 
+    /**
+     * Get the test repository url by providing a exercise id. Will not check any permissions!
+     *
+     * @param exerciseId
+     * @return
+     */
     @Override
     URL getRepositoryUrl(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
@@ -56,6 +71,12 @@ public class TestRepositoryResource extends RepositoryResource {
         return versionControlService.get().getCloneURL(exercise.getProjectKey(), testRepoName);
     }
 
+    /**
+     * Check if a user can access the test repository of the exercise.
+     *
+     * @param exerciseId
+     * @return
+     */
     @Override
     boolean canAccessRepository(Long exerciseId) {
         ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);

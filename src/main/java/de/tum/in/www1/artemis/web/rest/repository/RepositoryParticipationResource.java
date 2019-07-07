@@ -12,7 +12,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,12 +36,21 @@ public class RepositoryParticipationResource extends RepositoryResource {
     private final ParticipationService participationService;
 
     public RepositoryParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
-        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService, messagingTemplate);
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ParticipationService participationService) {
+        super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
     }
 
+    /**
+     * Retrieve a repository by providing a participation id. Will check if the user has permissions to access data related to the given participation.
+     *
+     * @param participationId of the given participation.
+     * @param pullOnGet       perform a pull on retrieval of a git repository (in some cases it might make sense not to pull!)
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws GitAPIException
+     */
     @Override
     Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
         Participation participation = participationService.findOne(participationId);
@@ -54,12 +62,24 @@ public class RepositoryParticipationResource extends RepositoryResource {
         return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
+    /**
+     * Get the repository url by providing a participation id. Will not check any permissions!
+     *
+     * @param participationId
+     * @return
+     */
     @Override
     URL getRepositoryUrl(Long participationId) {
         Participation participation = participationService.findOne(participationId);
         return participation.getRepositoryUrlAsUrl();
     }
 
+    /**
+     * Check if a user can access the participation's repository.
+     *
+     * @param participationId
+     * @return
+     */
     @Override
     boolean canAccessRepository(Long participationId) {
         Participation participation = participationService.findOne(participationId);

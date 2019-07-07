@@ -8,7 +8,7 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { CodeEditorContainer } from './code-editor-mode-container.component';
 import { TranslateService } from '@ngx-translate/core';
-import { CodeEditorFileService, CodeEditorConflictStateService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
+import { CodeEditorFileService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
 import {
     CodeEditorAceComponent,
