@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
@@ -15,6 +15,7 @@ import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-ques
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
+import { QuizStatisticsFooterComponent } from 'app/quiz-statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 
 const ENTITY_STATES = [...quizStatisticRoute];
 
@@ -26,6 +27,7 @@ const ENTITY_STATES = [...quizStatisticRoute];
         MultipleChoiceQuestionStatisticComponent,
         DragAndDropQuestionStatisticComponent,
         ShortAnswerQuestionStatisticComponent,
+        QuizStatisticsFooterComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -37,6 +39,7 @@ const ENTITY_STATES = [...quizStatisticRoute];
         ShortAnswerQuestionStatisticComponent,
     ],
     providers: [QuizStatisticUtil, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSStatisticModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

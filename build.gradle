@@ -112,6 +112,8 @@ springBoot {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
 }
 
+// Execute the test cases: ./gradlew executeTests
+
 test {
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
 
