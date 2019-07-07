@@ -1,17 +1,17 @@
-import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
-import {LocalStorageService, SessionStorageService} from 'ngx-webstorage';
-import {MockComponent} from 'ng-mocks';
-import {CookieService} from 'ngx-cookie';
-import {By} from '@angular/platform-browser';
-import {TranslateModule} from '@ngx-translate/core';
-import {WindowRef} from 'app/core';
-import {DebugElement, SimpleChange, SimpleChanges} from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockComponent } from 'ng-mocks';
+import { CookieService } from 'ngx-cookie';
+import { By } from '@angular/platform-browser';
+import { TranslateModule } from '@ngx-translate/core';
+import { WindowRef } from 'app/core';
+import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import {AceEditorModule} from 'ng2-ace-editor';
-import {TreeviewItem, TreeviewModule} from 'ngx-treeview';
-import {SinonStub, spy, stub} from 'sinon';
-import {Observable, Subject} from 'rxjs';
+import { AceEditorModule } from 'ng2-ace-editor';
+import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
+import { SinonStub, spy, stub } from 'sinon';
+import { Observable, Subject } from 'rxjs';
 import {
     CodeEditorConflictStateService,
     CodeEditorFileBrowserComponent,
@@ -25,15 +25,9 @@ import {
     CommitState,
     GitConflictState,
 } from 'app/code-editor';
-import {ArTEMiSTestModule} from '../../test.module';
-import {
-    MockCodeEditorConflictStateService,
-    MockCodeEditorRepositoryFileService,
-    MockCodeEditorRepositoryService,
-    MockCookieService,
-    MockSyncStorage
-} from '../../mocks';
-import {FileType} from 'app/entities/ace-editor/file-change.model';
+import { ArTEMiSTestModule } from '../../test.module';
+import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
+import { FileType } from 'app/entities/ace-editor/file-change.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -753,5 +747,5 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         expect(getRepositoryContentStub).to.have.been.calledOnce;
         expect(comp.selectedFile).to.be.undefined;
-    })
+    });
 });
