@@ -4,12 +4,12 @@ import { Observable, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
-import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState } from 'app/code-editor';
+import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState, GitConflictState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState, CodeEditorConflictStateService } from 'app/code-editor/service';
+import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
@@ -175,6 +175,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
                         return throwError('couldNotBeRetrieved');
                     } else if (this.commitState === CommitState.CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
                         return throwError('repositoryInConflict');
                     }
                     return this.loadFiles();
@@ -200,15 +201,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
         return this.repositoryService.getStatus().pipe(
-            rxMap(res =>
-                res.repositoryStatus === 'CLEAN'
+            rxMap(res => {
+                return res.repositoryStatus === 'CLEAN'
                     ? CommitState.CLEAN
                     : res.repositoryStatus === 'UNCOMMITTED_CHANGES'
                     ? CommitState.UNCOMMITTED_CHANGES
                     : res.repositoryStatus === 'CONFLICT'
                     ? CommitState.CONFLICT
-                    : CommitState.COULD_NOT_BE_RETRIEVED,
-            ),
+                    : CommitState.COULD_NOT_BE_RETRIEVED;
+            }),
             catchError(() => Observable.of(CommitState.COULD_NOT_BE_RETRIEVED)),
         );
     };

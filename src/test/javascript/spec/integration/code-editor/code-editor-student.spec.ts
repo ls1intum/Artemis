@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, tick, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, tick, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
@@ -522,36 +522,45 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [{ id: 3, successful: false }] } as Participation;
-        const commitState = CommitState.UNDEFINED;
+        container.ngOnInit();
+        const result = { id: 3, successful: false };
+        const participation = { id: 1, results: [result] } as Participation;
+        const feedbacks = [{ id: 2 }] as Feedback[];
+        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
+        findWithLatestResultStub.returns(findWithLatestResultSubject);
+        getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
         getRepositoryContentStub.returns(of([]));
-        getFeedbackDetailsForResultStub.returns(of([]));
-        getBuildLogsStub.returns(of([]));
 
-        container.participation = participation;
-        container.exercise = exercise as ProgrammingExercise;
-        container.commitState = commitState;
-        domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        routeSubject.next({ participationId: 1 });
+
+        containerFixture.detectChanges();
+
+        findWithLatestResultSubject.next({ body: participation });
+        getFeedbackDetailsForResultSubject.next({ body: feedbacks });
+
         containerFixture.detectChanges();
 
         // Create conflict.
         isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
-        conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
         containerFixture.detectChanges();
 
         expect(container.commitState).to.equal(CommitState.CONFLICT);
         expect(getRepositoryContentStub).to.not.have.been.called;
 
         // Resolve conflict.
-        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         conflictService.notifyConflictState(GitConflictState.OK);
         tick();
+        containerFixture.detectChanges();
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         containerFixture.detectChanges();
 
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(getRepositoryContentStub).to.calledOnce;
+
+        containerFixture.destroy();
+        flush();
     }));
 });
