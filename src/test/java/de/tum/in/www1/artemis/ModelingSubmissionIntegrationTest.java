@@ -6,7 +6,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.assertj.core.api.Fail;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,24 +153,18 @@ public class ModelingSubmissionIntegrationTest {
         checkDetailsHidden(returnedSubmission, true);
     }
 
-    // TODO: Fix defective test
-    @Ignore
     @Test
     @WithMockUser(value = "student2")
     public void updateModelSubmissionAfterSubmit() throws Exception {
         database.addParticipationForExercise(classExercise, "student2");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+
         submission = ModelFactory.generateModelingSubmission(validModel, false);
-        try {
-            returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
-            database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
-            checkDetailsHidden(returnedSubmission, true);
-            Fail.fail("update on submitted ModelingSubmission worked");
-        }
-        catch (Exception e) {
-        }
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
+
+        database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
     }
 
     @Test
