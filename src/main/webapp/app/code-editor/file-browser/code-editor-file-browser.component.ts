@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, filter as rxFilter, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
 import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState, GitConflictState } from 'app/code-editor';
@@ -9,7 +9,7 @@ import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService, GitConflictState } from 'app/code-editor/service';
+import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
@@ -20,7 +20,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
-    GitConflictState = GitConflictState;
+    CommitState = CommitState;
     FileType = FileType;
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
@@ -84,7 +84,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
-    conflictState: GitConflictState;
     conflictSubscription: Subscription;
 
     set selectedFile(file: string | undefined) {
@@ -107,12 +106,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     ) {}
 
     ngOnInit(): void {
-        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((conflictState: GitConflictState) => {
-            this.conflictState = conflictState;
-            if (this.conflictState === GitConflictState.CHECKOUT_CONFLICT) {
+        this.conflictSubscription = this.conflictService
+            .subscribeConflictState()
+            .pipe(rxFilter(conflictState => conflictState === GitConflictState.OK))
+            .subscribe(() => {
                 this.selectedFile = undefined;
-            }
-        });
+            });
     }
 
     /**

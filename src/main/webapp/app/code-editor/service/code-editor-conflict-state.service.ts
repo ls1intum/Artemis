@@ -11,6 +11,7 @@ export enum GitConflictState {
 
 export interface IConflictStateService {
     subscribeConflictState: () => Observable<GitConflictState>;
+    notifyConflictState: (gitConflictState: GitConflictState) => void;
 }
 
 @Injectable({ providedIn: 'root' })

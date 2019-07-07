@@ -1,17 +1,17 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
-import { CookieService } from 'ngx-cookie';
-import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
-import { WindowRef } from 'app/core';
-import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
+import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
+import {LocalStorageService, SessionStorageService} from 'ngx-webstorage';
+import {MockComponent} from 'ng-mocks';
+import {CookieService} from 'ngx-cookie';
+import {By} from '@angular/platform-browser';
+import {TranslateModule} from '@ngx-translate/core';
+import {WindowRef} from 'app/core';
+import {DebugElement, SimpleChange, SimpleChanges} from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
-import { SinonStub, spy, stub } from 'sinon';
-import { Observable, Subject } from 'rxjs';
+import {AceEditorModule} from 'ng2-ace-editor';
+import {TreeviewItem, TreeviewModule} from 'ngx-treeview';
+import {SinonStub, spy, stub} from 'sinon';
+import {Observable, Subject} from 'rxjs';
 import {
     CodeEditorConflictStateService,
     CodeEditorFileBrowserComponent,
@@ -23,10 +23,17 @@ import {
     CodeEditorRepositoryService,
     CodeEditorStatusComponent,
     CommitState,
+    GitConflictState,
 } from 'app/code-editor';
-import { ArTEMiSTestModule } from '../../test.module';
-import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import {ArTEMiSTestModule} from '../../test.module';
+import {
+    MockCodeEditorConflictStateService,
+    MockCodeEditorRepositoryFileService,
+    MockCodeEditorRepositoryService,
+    MockCookieService,
+    MockSyncStorage
+} from '../../mocks';
+import {FileType} from 'app/entities/ace-editor/file-change.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,11 +44,16 @@ describe('CodeEditorFileBrowserComponent', () => {
     let debugElement: DebugElement;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
+    let conflictService: CodeEditorConflictStateService;
     let getRepositoryContentStub: SinonStub;
     let isCleanStub: SinonStub;
     let createFileStub: SinonStub;
     let createFolderStub: SinonStub;
     let renameFileStub: SinonStub;
+
+    const createFileRoot = '#create_file_root';
+    const createFolderRoot = '#create_folder_root';
+    const compressTree = '#compress_tree';
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -71,6 +83,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 debugElement = fixture.debugElement;
                 codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
                 codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
+                conflictService = debugElement.injector.get(CodeEditorConflictStateService);
                 isCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
                 createFileStub = stub(codeEditorRepositoryFileService, 'createFile');
@@ -701,4 +714,44 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
         expect(renamingInput).not.to.exist;
     }));
+
+    it('should disable action buttons if there is a git conflict', () => {
+        const repositoryContent: { [fileName: string]: string } = {};
+        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CONFLICT }));
+        getRepositoryContentStub.returns(Observable.of(repositoryContent));
+        comp.commitState = CommitState.UNDEFINED;
+
+        let changes: SimpleChanges = {
+            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
+        };
+        comp.ngOnChanges(changes);
+        fixture.detectChanges();
+
+        expect(comp.commitState).to.equal(CommitState.CONFLICT);
+
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).to.be.true;
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).to.be.true;
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).to.be.false;
+
+        // Resolve conflict.
+        conflictService.notifyConflictState(GitConflictState.OK);
+        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
+
+        comp.commitState = CommitState.UNDEFINED;
+
+        changes = {
+            commitState: new SimpleChange(undefined, CommitState.UNDEFINED, true),
+        };
+        comp.ngOnChanges(changes);
+        fixture.detectChanges();
+
+        expect(comp.commitState).to.equal(CommitState.CLEAN);
+
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).to.be.false;
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).to.be.false;
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).to.be.false;
+
+        expect(getRepositoryContentStub).to.have.been.calledOnce;
+        expect(comp.selectedFile).to.be.undefined;
+    })
 });
