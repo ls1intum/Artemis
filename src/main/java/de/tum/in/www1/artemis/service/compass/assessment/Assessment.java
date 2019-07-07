@@ -35,6 +35,10 @@ public class Assessment {
      * @return List of Scores added for the given context. Returns empty List when no scores are available for context
      */
     public List<Feedback> getFeedbacks(Context context) {
+        if (context == null) {
+            return new ArrayList<>();
+        }
+
         return contextFeedbackList.getOrDefault(context, new ArrayList<>());
     }
 
