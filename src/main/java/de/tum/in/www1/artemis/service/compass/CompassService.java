@@ -118,12 +118,15 @@ public class CompassService {
         }
 
         List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
-        if (optimalModelIds.size() < NUMBER_OF_OPTIMAL_MODELS) {
+        while (optimalModelIds.size() < NUMBER_OF_OPTIMAL_MODELS) {
             Long nextOptimalModelId = getNextOptimalModel(exerciseId);
-            if (nextOptimalModelId != null) {
-                optimalModelIds.add(nextOptimalModelId);
+            if (nextOptimalModelId == null) {
+                break;
             }
+
+            optimalModelIds.add(nextOptimalModelId);
         }
+
         removeManuallyAssessedModels(optimalModelIds, exerciseId);
         return new ArrayList<>(optimalModelIds);
     }
