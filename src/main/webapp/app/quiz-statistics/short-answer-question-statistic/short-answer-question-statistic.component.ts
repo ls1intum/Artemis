@@ -28,11 +28,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: ShortAnswerQuestion;
     questionStatistic: ShortAnswerQuestionStatistic;
@@ -379,21 +374,5 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         } else {
             return null;
         }
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
     }
 }
