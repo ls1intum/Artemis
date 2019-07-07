@@ -70,16 +70,20 @@ public class CompassService {
 
     /**
      * Indicates if the given diagram type is supported by Compass. At the moment we only support class diagrams.
+     *
+     * @param diagramType the diagram that should be checked
+     * @return true if the given diagram type is supported by Compass, false otherwise
      */
     public boolean isSupported(DiagramType diagramType) {
         return diagramType == DiagramType.ClassDiagram;
     }
 
     /**
-     * Get the id of the next optimal modeling submission. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which can be used for
-     * automatic assessments. This method will return a new Entry with a new Id for every call.
+     * Get the id of the next optimal modeling submission for the given exercise. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass
+     * which can be used for automatic assessments. This method will return a new Entry with a new Id for every call.
      *
-     * @return new Id of the next optimal model, null if all models have been assessed
+     * @param exerciseId the id of the exercise the modeling submission should belong to
+     * @return new Id of the next optimal model, null if all models have been assessed for the given exercise
      */
     private Long getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
@@ -129,6 +133,9 @@ public class CompassService {
      * corresponding modeling submission. If there is, the model gets removed from the list of optimal models. This check should not be necessary as there should only be models in
      * the list that have no or only an automatic assessment. We better double check here as we want to make sure that no models with finished or manual assessments get sent to
      * other users than the assessor.
+     *
+     * @param optimalModelIds the list of ids of optimal models
+     * @param exerciseId      the id of the exercise the optimal models belong to
      */
     private void removeManuallyAssessedModels(List<Long> optimalModelIds, long exerciseId) {
         Iterator<Long> iterator = optimalModelIds.iterator();

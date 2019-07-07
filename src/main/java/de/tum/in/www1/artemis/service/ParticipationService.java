@@ -414,7 +414,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerSubmissionsAndResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndResults(id);
+        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }

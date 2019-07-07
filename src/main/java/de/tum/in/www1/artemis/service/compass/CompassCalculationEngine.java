@@ -58,7 +58,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             if (model != null) {
                 buildModel(modelingSubmission);
 
-                if (hasCompleteManualAssessment(modelingSubmission)) {
+                if (hasCompletedManualAssessment(modelingSubmission)) {
                     addManualAssessmentForSubmission(modelingSubmission);
                 }
             }
@@ -67,9 +67,12 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     * Checks if the given modeling submission already has a complete manual assessment. The assessment is complete if the submission has a result with a completion date.
+     * Checks if the given modeling submission already has a completed manual assessment. The assessment is completed if the submission has a result with a completion date.
+     *
+     * @param modelingSubmission the modeling submission to check
+     * @return true if the submission already has a completed manual assessment, false otherwise
      */
-    private boolean hasCompleteManualAssessment(ModelingSubmission modelingSubmission) {
+    private boolean hasCompletedManualAssessment(ModelingSubmission modelingSubmission) {
         return modelingSubmission.getResult() != null && modelingSubmission.getResult().getCompletionDate() != null
                 && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL);
     }
@@ -282,12 +285,15 @@ public class CompassCalculationEngine implements CalculationEngine {
                 continue;
             }
 
+            // Get the confidence for this element of the model. If the confidence is less than the configured threshold, no automatic feedback will be created for this element
+            // and the loop will continue with the next model element.
             double elementConfidence = getConfidenceForElement(jsonElementID, modelId);
             if (elementConfidence < ELEMENT_CONFIDENCE_THRESHOLD) {
-                log.error("Confidence " + elementConfidence + " of element " + jsonElementID + " is smaller than configured confidence threshold " + ELEMENT_CONFIDENCE_THRESHOLD);
+                log.debug("Confidence " + elementConfidence + " of element " + jsonElementID + " is smaller than configured confidence threshold " + ELEMENT_CONFIDENCE_THRESHOLD);
                 continue;
             }
 
+            // Set the values of the automatic feedback using the values of the Grade that Compass calculated earlier in the automatic assessment process.
             feedback.setCredits(gradePointsEntry.getValue());
             feedback.setPositive(feedback.getCredits() >= 0);
             feedback.setText(grade.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
@@ -333,31 +339,31 @@ public class CompassCalculationEngine implements CalculationEngine {
         JsonObject jsonObject = new JsonObject();
 
         JsonObject uniqueElements = new JsonObject();
-        int conflicts = 0;
-        for (UMLElement umlElement : this.modelIndex.getUniqueElements()) {
+        int numberOfConflicts = 0;
+        for (UMLElement umlElement : modelIndex.getUniqueElements()) {
             JsonObject uniqueElement = new JsonObject();
             uniqueElement.addProperty("name", umlElement.getName());
             uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
-            boolean conflict = this.hasConflict(umlElement.getSimilarityID());
-            if (conflict) {
-                conflicts++;
+            boolean hasConflict = hasConflict(umlElement.getSimilarityID());
+            if (hasConflict) {
+                numberOfConflicts++;
             }
-            uniqueElement.addProperty("conflicts", conflict);
+            uniqueElement.addProperty("conflicts", hasConflict);
             uniqueElements.add(umlElement.getSimilarityID() + "", uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
 
-        jsonObject.addProperty("numberModels", this.modelIndex.getModelCollection().size());
-        jsonObject.addProperty("numberConflicts", conflicts);
-        jsonObject.addProperty("totalConfidence", this.getTotalConfidence());
-        jsonObject.addProperty("totalCoverage", this.getTotalCoverage());
+        jsonObject.addProperty("numberModels", modelIndex.getModelCollection().size());
+        jsonObject.addProperty("numberConflicts", numberOfConflicts);
+        jsonObject.addProperty("totalConfidence", getTotalConfidence());
+        jsonObject.addProperty("totalCoverage", getTotalCoverage());
 
         JsonObject models = new JsonObject();
-        for (Map.Entry<Long, UMLClassDiagram> modelEntry : this.getModelMap().entrySet()) {
+        for (Map.Entry<Long, UMLClassDiagram> modelEntry : getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
             model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
             model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
-            int modelConflicts = 0;
+            int numberOfModelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>();
             elements.addAll(modelEntry.getValue().getClassList());
             elements.addAll(modelEntry.getValue().getAssociationList());
@@ -366,12 +372,12 @@ public class CompassCalculationEngine implements CalculationEngine {
                 elements.addAll(umlClass.getMethods());
             }
             for (UMLElement element : elements) {
-                boolean modelConflict = this.hasConflict(element.getSimilarityID());
-                if (modelConflict) {
-                    modelConflicts++;
+                boolean modelHasConflict = hasConflict(element.getSimilarityID());
+                if (modelHasConflict) {
+                    numberOfModelConflicts++;
                 }
             }
-            model.addProperty("conflicts", modelConflicts);
+            model.addProperty("conflicts", numberOfModelConflicts);
             model.addProperty("elements", elements.size());
             model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof UMLClass).count());
             model.addProperty("attributes", elements.stream().filter(umlElement -> umlElement instanceof UMLAttribute).count());

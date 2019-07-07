@@ -291,8 +291,8 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+            return ResponseEntity.notFound()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
         }
         ModelingExercise modelingExercise;
         if (participation.getExercise() instanceof ModelingExercise) {
@@ -313,7 +313,7 @@ public class ModelingSubmissionResource {
         }
 
         // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse()))) {
+        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
             return forbidden();
         }
 

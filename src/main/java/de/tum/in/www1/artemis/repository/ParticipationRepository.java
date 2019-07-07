@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,8 +74,8 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
      * @param participationId the id of the participation
      * @return the participation with eager submissions and results or an empty Optional
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions s left join fetch s.result left join fetch participation.results where participation.id = :#{#participationId}")
-    Optional<Participation> findByIdWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
+    @EntityGraph(attributePaths = { "submissions", "submissions.result", "results" })
+    Optional<Participation> findWithEagerSubmissionsAndResultsById(Long participationId);
 
     @Query("select distinct participation from Participation participation left join fetch participation.submissions left join fetch participation.results r left join fetch r.assessor where participation.id = :#{#participationId}")
     Optional<Participation> findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(@Param("participationId") Long participationId);

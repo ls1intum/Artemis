@@ -202,7 +202,8 @@ export class ModelingAssessmentService {
     }
 
     /**
-     * Checks if the feedback text of every feedback item is smaller than the configured maximum length.
+     * Checks if the feedback text and detail text of every feedback item is smaller than the configured maximum length. Returns true if the length of the texts is valid or if
+     * there is no feedback, false otherwise.
      */
     isFeedbackTextValid(feedback: Feedback[]): boolean {
         if (!feedback) {
