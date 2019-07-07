@@ -445,13 +445,14 @@ public abstract class Exercise implements Serializable {
      * @param participation the participation whose results we are considering
      * @return the latest relevant result in the given participation, or null, if none exist
      */
-    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
             // NOTE: for the dashboard we only use rated results with completion date
+            Boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             // TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
-            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE)) {
+            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE) && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestResult == null) {
                     latestResult = result;
@@ -468,7 +469,7 @@ public abstract class Exercise implements Serializable {
     /**
      * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
      * results.
-     * 
+     *
      * @param participation to find latest result for.
      * @return latest result or null
      */
@@ -532,7 +533,7 @@ public abstract class Exercise implements Serializable {
         if (participation != null) {
 
             // only transmit the relevant result
-            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
+            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
             Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
 
             // add results to json

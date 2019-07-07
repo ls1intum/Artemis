@@ -32,7 +32,7 @@ export class CourseScoreCalculationService {
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation !== null) {
                     const result = this.getResultForParticipation(participation, exercise.dueDate!);
-                    if (result !== null) {
+                    if (result !== null && result.rated) {
                         let score = result.score;
                         if (score === null) {
                             score = 0;
