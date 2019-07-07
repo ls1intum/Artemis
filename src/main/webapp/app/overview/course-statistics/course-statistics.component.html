@@ -5,7 +5,7 @@
             <div class="chart-container" style="margin-bottom: 20px">
                 <div class="chart-text">
                     <h2 class="text-center">{{ totalRelativeScore }} %</h2>
-                    <h4 class="text-center">{{ totalScore }} Pts</h4>
+                    <h4 class="text-center">{{ totalScore }} / {{ totalMaxScore }} Pts</h4>
                 </div>
                 <canvas
                     baseChart
@@ -25,6 +25,11 @@
             </div>
         </div>
         <div class="col-12 col-md-8">
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h4>{{ 'artemisApp.courseOverview.statistics.description' | translate }}</h4>
+                </div>
+            </div>
             <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises" id="{{ exerciseGroup.type }}-wrapper">
                 <div class="col-12 mb-1 d-flex align-items-center">
                     <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
