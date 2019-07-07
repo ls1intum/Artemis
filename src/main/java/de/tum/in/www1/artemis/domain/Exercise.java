@@ -78,7 +78,7 @@ public abstract class Exercise implements Serializable {
     private String gradingInstructions;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    // @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private List<String> categories = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
