@@ -18,6 +18,7 @@ public class NameSimilarity {
         return string1.equals(string2) ? 1 : 0;
     }
 
+    // TODO CZ: this is not a good similarity calculation
     public static double namePartiallyEqualsSimilarity(String string1, String string2) {
         if (string1.equals(string2)) {
             return 1;
