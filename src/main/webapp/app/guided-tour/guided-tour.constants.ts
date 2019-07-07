@@ -1,12 +1,12 @@
 export interface TourStep {
     /** Selector for element that will be highlighted */
-    selector?: string;
+    selector?: string | undefined;
     /** Tour title text */
-    title?: string;
+    title: string;
     /** Tour step text */
     content: string;
     /** Where the tour step will appear next to the selected element */
-    orientation?: Orientation | OrientationConfiguration[];
+    orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */
     action?: () => void;
     /** Action that happens when the step is closed */

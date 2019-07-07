@@ -14,7 +14,7 @@ export class GuidedTourService {
     private _guidedTourCurrentStepSubject = new Subject<TourStep>();
     private _guidedTourOrbShowingSubject = new Subject<boolean>();
     private _currentTourStepIndex = 0;
-    private _currentTour: GuidedTour = null;
+    private _currentTour: GuidedTour;
     private _onFirstStep = true;
     private _onLastStep = true;
     private _onResizeMessage = false;
@@ -49,14 +49,16 @@ export class GuidedTourService {
     }
 
     public nextStep(): void {
-        if (this._currentTour.steps[this._currentTourStepIndex].closeAction) {
-            this._currentTour.steps[this._currentTourStepIndex].closeAction();
+        const currentStep = this._currentTour.steps[this._currentTourStepIndex];
+        if (currentStep.closeAction) {
+            currentStep.closeAction();
         }
         if (this._currentTour.steps[this._currentTourStepIndex + 1]) {
             this._currentTourStepIndex++;
             this._setFirstAndLast();
-            if (this._currentTour.steps[this._currentTourStepIndex].action) {
-                this._currentTour.steps[this._currentTourStepIndex].action();
+            if (currentStep.action) {
+                currentStep.action();
+
                 // Usually an action is opening something so we need to give it time to render.
                 setTimeout(() => {
                     if (this._checkSelectorValidity()) {
@@ -81,14 +83,15 @@ export class GuidedTourService {
     }
 
     public backStep(): void {
-        if (this._currentTour.steps[this._currentTourStepIndex].closeAction) {
-            this._currentTour.steps[this._currentTourStepIndex].closeAction();
+        const currentStep = this._currentTour.steps[this._currentTourStepIndex];
+        if (currentStep.closeAction) {
+            currentStep.closeAction();
         }
         if (this._currentTour.steps[this._currentTourStepIndex - 1]) {
             this._currentTourStepIndex--;
             this._setFirstAndLast();
-            if (this._currentTour.steps[this._currentTourStepIndex].action) {
-                this._currentTour.steps[this._currentTourStepIndex].action();
+            if (currentStep.action) {
+                currentStep.action();
                 setTimeout(() => {
                     if (this._checkSelectorValidity()) {
                         this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
@@ -117,9 +120,9 @@ export class GuidedTourService {
 
     public resetTour(): void {
         document.body.classList.remove('tour-open');
-        this._currentTour = null;
+        // this._currentTour = undefined;
         this._currentTourStepIndex = 0;
-        this._guidedTourCurrentStepSubject.next(null);
+        this._guidedTourCurrentStepSubject.next(undefined);
     }
 
     public startTour(tour: GuidedTour): void {
@@ -133,9 +136,11 @@ export class GuidedTourService {
             if (!this._currentTour.useOrb) {
                 document.body.classList.add('tour-open');
             }
-            if (this._currentTour.steps[this._currentTourStepIndex].action) {
-                this._currentTour.steps[this._currentTourStepIndex].action();
+            const currentStep = this._currentTour.steps[this._currentTourStepIndex];
+            if (currentStep.action) {
+                currentStep.action();
             }
+
             if (this._checkSelectorValidity()) {
                 this._guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this._currentTourStepIndex));
             } else {
@@ -156,7 +161,7 @@ export class GuidedTourService {
 
     private _checkSelectorValidity(): boolean {
         if (this._currentTour.steps[this._currentTourStepIndex].selector) {
-            const selectedElement = document.querySelector(this._currentTour.steps[this._currentTourStepIndex].selector);
+            const selectedElement = document.querySelector(this._currentTour.steps[this._currentTourStepIndex].selector!);
             if (!selectedElement) {
                 this.errorHandler.handleError(
                     // If error handler is configured this should not block the browser.
@@ -193,7 +198,10 @@ export class GuidedTourService {
     }
 
     public get preventBackdropFromAdvancing(): boolean {
-        return this._currentTour && this._currentTour.preventBackdropFromAdvancing;
+        if (this._currentTour) {
+            return this._currentTour && (this._currentTour.preventBackdropFromAdvancing ? this._currentTour.preventBackdropFromAdvancing : false);
+        }
+        return false;
     }
 
     private getPreparedTourStep(index: number): TourStep {
