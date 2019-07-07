@@ -249,6 +249,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
         }
 
+        // remove circular dependencies
+        if (result.getParticipation() != null && result.getParticipation().getResults() != null) {
+            result.getParticipation().getResults().stream().forEach(participationResult -> participationResult.setParticipation(null));
+        }
+
         return ResponseEntity.ok(result);
     }
 
