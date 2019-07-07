@@ -44,14 +44,14 @@ public class RepositoryParticipationResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long participationId, boolean pullOnCheckout) throws IOException, InterruptedException, GitAPIException {
+    Repository getRepository(Long participationId, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
         Participation participation = participationService.findOne(participationId);
         boolean hasPermissions = participationService.canAccessParticipation(participation);
         if (!hasPermissions) {
             throw new IllegalAccessError();
         }
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnCheckout);
+        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override

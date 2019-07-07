@@ -89,45 +89,39 @@ public class GitService {
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUrl The remote repository.
+     * @param repoUrl   The remote repository.
+     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnCheckout) throws IOException, InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(URL repoUrl, boolean pullOnGet) throws IOException, InterruptedException, GitAPIException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
-        // check if Repository object already created and available in cachedRepositories
-        if (cachedRepositories.containsKey(localPath)) {
-            // in this case we pull for changes to make sure the Git repo is up to date
-            Repository repository = cachedRepositories.get(localPath);
-            // disable auto garbage collection because it can lead to problems
-            repository.getConfig().setString("gc", null, "auto", "0");
-            if (pullOnCheckout) {
+        // First try to just retrieve the git repository from our server, as it might already be checked out.
+        try {
+            Repository repository = getRepositoryByLocalPath(localPath);
+            if (pullOnGet) {
                 pull(repository);
             }
             return repository;
         }
-
-        // make sure that multiple clone operations for the same repository cannot happen at the same time
-        int numberOfAttempts = 5;
-        while (cloneInProgressOperations.containsKey(localPath)) {
-            log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
-            Thread.sleep(1000);
-            if (numberOfAttempts == 0) {
-                throw new GitException("Cannot clone the same repository multiple times");
+        // If the git repository can't be found on our server, clone it from the remote.
+        catch (IOException ex) {
+            int numberOfAttempts = 5;
+            // Make sure that multiple clone operations for the same repository cannot happen at the same time.
+            while (cloneInProgressOperations.containsKey(localPath)) {
+                log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
+                Thread.sleep(1000);
+                if (numberOfAttempts == 0) {
+                    throw new GitException("Cannot clone the same repository multiple times");
+                }
+                else {
+                    numberOfAttempts--;
+                }
             }
-            else {
-                numberOfAttempts--;
-            }
-        }
-        boolean shouldPullChanges = false;
-
-        // Check if the repository is already checked out on the server
-        if (!Files.exists(localPath)) {
-            // Repository is not yet available on the server
-            // We need to check it out from the remote repository
+            // Clone repository.
             try {
                 log.debug("Cloning from " + repoUrl + " to " + localPath);
                 cloneInProgressOperations.put(localPath, localPath);
@@ -145,32 +139,41 @@ public class GitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
+            return getRepositoryByLocalPath(localPath);
         }
-        else {
-            log.debug("Repository at " + localPath + " already exists");
-            // in this case we pull for changes to make sure the Git repo is up to date
-            shouldPullChanges = true;
+    }
+
+    /**
+     * Get a git repository that is checked out on the server. Throws immediately an exception if the localPath does not exist. Will first try to retrieve a cached repository from
+     * cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     *
+     * @param localPath to git repo on server.
+     * @return the git repository in the localPath (if exists!)
+     * @throws IOException if the the filepath can't be found or does not contain a git repository.
+     */
+    private Repository getRepositoryByLocalPath(Path localPath) throws IOException {
+        if (!Files.exists(localPath)) {
+            // In this case we should remove the repository if cached, because it can't exist anymore.
+            cachedRepositories.remove(localPath);
+            throw new IOException();
         }
 
+        Repository cachedRepository = cachedRepositories.get(localPath);
+        if (cachedRepository != null) {
+            return cachedRepository;
+        }
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         builder.setGitDir(new java.io.File(localPath + "/.git")).readEnvironment() // scan environment GIT_* variables
                 .findGitDir().setup();
-
         // Create the JGit repository object
         Repository repository = new Repository(builder);
         repository.setLocalPath(localPath);
         // disable auto garbage collection because it can lead to problems
         repository.getConfig().setString("gc", null, "auto", "0");
-
-        if (shouldPullChanges && pullOnCheckout) {
-            pull(repository);
-        }
-
         // Cache the JGit repository object for later use
         // Avoids the expensive re-opening of local repositories
         cachedRepositories.put(localPath, repository);
-
         return repository;
     }
 
