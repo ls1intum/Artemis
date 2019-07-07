@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, tick, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -21,12 +20,14 @@ import {
     CodeEditorSessionService,
     CodeEditorStudentContainerComponent,
     CommitState,
+    DomainService,
+    DomainType,
     EditorState,
+    GitConflictState,
 } from 'app/code-editor';
 import { ArTEMiSTestModule } from '../../test.module';
 import {
     MockCodeEditorBuildLogService,
-    MockCodeEditorConflictStateService,
     MockCodeEditorRepositoryFileService,
     MockCodeEditorRepositoryService,
     MockCodeEditorSessionService,
@@ -61,6 +62,8 @@ describe('CodeEditorStudentIntegration', () => {
     let resultService: ResultService;
     let buildLogService: CodeEditorBuildLogService;
     let participationService: ParticipationService;
+    let conflictService: CodeEditorConflictStateService;
+    let domainService: DomainService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -106,7 +109,6 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
             ],
         })
             .compileComponents()
@@ -122,6 +124,8 @@ describe('CodeEditorStudentIntegration', () => {
                 buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
                 participationService = containerDebugElement.injector.get(ParticipationService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
+                conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
+                domainService = containerDebugElement.injector.get(DomainService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
 
@@ -516,4 +520,38 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(container.participation).to.be.undefined;
     });
+
+    it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        const exercise = { id: 1, problemStatement };
+        const participation = { id: 2, exercise, student: { id: 99 }, results: [{ id: 3, successful: false }] } as Participation;
+        const commitState = CommitState.UNDEFINED;
+        const isCleanSubject = new Subject();
+        checkIfRepositoryIsCleanStub.returns(isCleanSubject);
+        getRepositoryContentStub.returns(of([]));
+        getFeedbackDetailsForResultStub.returns(of([]));
+        getBuildLogsStub.returns(of([]));
+
+        container.participation = participation;
+        container.exercise = exercise as ProgrammingExercise;
+        container.commitState = commitState;
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        containerFixture.detectChanges();
+
+        // Create conflict.
+        isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
+        conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
+        containerFixture.detectChanges();
+
+        expect(container.commitState).to.equal(CommitState.CONFLICT);
+        expect(getRepositoryContentStub).to.not.have.been.called;
+
+        // Resolve conflict.
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
+        conflictService.notifyConflictState(GitConflictState.OK);
+        tick();
+        containerFixture.detectChanges();
+
+        expect(container.commitState).to.equal(CommitState.CLEAN);
+        expect(getRepositoryContentStub).to.calledOnce;
+    }));
 });
