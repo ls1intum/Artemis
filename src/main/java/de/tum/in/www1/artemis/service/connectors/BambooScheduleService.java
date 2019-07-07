@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
@@ -20,7 +21,7 @@ public class BambooScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(BambooScheduleService.class);
 
-    private final ContinuousIntegrationService continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ResultService resultService;
 
@@ -33,7 +34,7 @@ public class BambooScheduleService {
         threadPoolTaskScheduler.initialize();
     }
 
-    public BambooScheduleService(ContinuousIntegrationService continuousIntegrationService, @Lazy ResultService resultService) { // TODO: check if @Lazy is fine
+    public BambooScheduleService(Optional<ContinuousIntegrationService> continuousIntegrationService, @Lazy ResultService resultService) { // TODO: check if @Lazy is fine
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultService = resultService;
     }
@@ -55,7 +56,7 @@ public class BambooScheduleService {
     private void checkResult(ProgrammingSubmission submission) {
         Participation participation = submission.getParticipation();
         log.info("Checking result for participation " + participation.getId());
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
         if (buildStatus.equals(ContinuousIntegrationService.BuildStatus.INACTIVE)) {
             log.info("Inactive build state with missing result");
 
