@@ -7,9 +7,13 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 public class NameSimilarity {
 
     /**
-     * @return 1 if both strings have any word in common (splitting on uppercase), 0 otherwise
+     * Analyzes the similarity between two given strings by calculating a Levenshtein simple ratio.
+     *
+     * @param string1 the first of the two strings that should be compared
+     * @param string2 the second of the two strings that should be compared
+     * @return the Levenshtein simple ratio between the two input strings
      */
-    public static double nameContainsSimilarity(String string1, String string2) {
+    public static double levenshteinSimilarity(String string1, String string2) {
         // TODO longterm: think about an even more sophisticated approach that takes e.g. thesaurus and specific uml conventions into account
         return FuzzySearch.ratio(string1, string2) / 100.0;
     }

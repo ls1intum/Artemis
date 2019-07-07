@@ -57,7 +57,7 @@ public class UMLClass extends UMLElement {
         }
         UMLClass otherClass = (UMLClass) other;
 
-        similarity += NameSimilarity.nameContainsSimilarity(name, otherClass.name) * CompassConfiguration.CLASS_NAME_WEIGHT;
+        similarity += NameSimilarity.levenshteinSimilarity(name, otherClass.name) * CompassConfiguration.CLASS_NAME_WEIGHT;
         // TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
         if (this.type == otherClass.type) {
             similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
