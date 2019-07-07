@@ -20,7 +20,7 @@ public class BambooScheduleService {
 
     private final Logger log = LoggerFactory.getLogger(BambooScheduleService.class);
 
-    private final BambooService bambooService;
+    private final ContinuousIntegrationService continuousIntegrationService;
 
     private final ResultService resultService;
 
@@ -33,8 +33,8 @@ public class BambooScheduleService {
         threadPoolTaskScheduler.initialize();
     }
 
-    public BambooScheduleService(BambooService bambooService, @Lazy ResultService resultService) { // TODO: check if @Lazy is fine
-        this.bambooService = bambooService;
+    public BambooScheduleService(ContinuousIntegrationService continuousIntegrationService, @Lazy ResultService resultService) { // TODO: check if @Lazy is fine
+        this.continuousIntegrationService = continuousIntegrationService;
         this.resultService = resultService;
     }
 
@@ -55,7 +55,7 @@ public class BambooScheduleService {
     private void checkResult(ProgrammingSubmission submission) {
         Participation participation = submission.getParticipation();
         log.info("Checking result for participation " + participation.getId());
-        ContinuousIntegrationService.BuildStatus buildStatus = bambooService.getBuildStatus(participation);
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
         if (buildStatus.equals(ContinuousIntegrationService.BuildStatus.INACTIVE)) {
             log.info("Inactive build state with missing result");
 
