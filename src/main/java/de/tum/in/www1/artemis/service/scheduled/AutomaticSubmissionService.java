@@ -80,6 +80,10 @@ public class AutomaticSubmissionService {
 
                 submissionRepository.save(unsubmittedSubmission);
 
+                if (unsubmittedSubmission instanceof ModelingSubmission) {
+                    notifyCompassAboutNewModelingSubmission((ModelingSubmission) unsubmittedSubmission, (ModelingExercise) exercise);
+                }
+
                 StudentParticipation studentParticipation = (StudentParticipation) unsubmittedSubmission.getParticipation();
                 String username = studentParticipation.getStudent().getLogin();
                 if (unsubmittedSubmission instanceof ModelingSubmission) {
@@ -103,8 +107,7 @@ public class AutomaticSubmissionService {
     }
 
     /**
-     * Updates the participation for a given submission. The participation is set to FINISHED. In the case of a modeling exercise Compass is additionally notified about the new
-     * submission.
+     * Updates the participation for a given submission. The participation is set to FINISHED.
      *
      * @param submission the submission for which the participation should be updated for
      * @return submission if updating participation successful, otherwise null
@@ -116,21 +119,28 @@ public class AutomaticSubmissionService {
                 log.error("The submission {} has no participation.", submission);
                 return null;
             }
-            Exercise exercise = studentParticipation.getExercise();
-            if (submission instanceof ModelingSubmission) {
-                ModelingExercise modelingExercise = (ModelingExercise) exercise;
-                ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                // notify compass about new submission
-                modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
-                // check if compass could assess automatically
-                modelingSubmissionService.checkAutomaticResult(modelingSubmission, modelingExercise);
-            }
-            // set participation state to finished and persist it
+
             studentParticipation.setInitializationState(InitializationState.FINISHED);
+
             participationService.save(studentParticipation);
-            // return modeling submission with model and optional result
+
             return submission;
         }
         return null;
+    }
+
+    /**
+     * Notify Compass about the new modeling submission. Compass will then try to automatically assess the submission.
+     *
+     * @param modelingSubmission the new modeling submission Compass should be notified about
+     * @param modelingExercise   the modeling exercise to which the submission belongs to
+     */
+    private void notifyCompassAboutNewModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        try {
+            modelingSubmissionService.notifyCompass(modelingSubmission, modelingExercise);
+        }
+        catch (Exception ex) {
+            log.error("Exception while notifying Compass about a new (automatic) submission:\n{}", ex.getMessage(), ex);
+        }
     }
 }

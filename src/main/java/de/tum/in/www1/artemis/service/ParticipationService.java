@@ -436,15 +436,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all submissions.
+     * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
      * @param id the id of the entity
-     * @return the participation with all its submissions
+     * @return the participation with all its submissions and results
      */
     @Transactional(readOnly = true)
-    public StudentParticipation findOneWithEagerSubmissions(Long id) {
+    public StudentParticipation findOneWithEagerSubmissionsAndResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerSubmissions(id);
+        Optional<StudentParticipation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
@@ -538,7 +538,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return studentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
     @Transactional(readOnly = true)
@@ -556,9 +556,16 @@ public class ParticipationService {
         return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
     }
 
+    /**
+     * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
+     * corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
     @Transactional(readOnly = true)
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
     }
 
     @Transactional(readOnly = true)

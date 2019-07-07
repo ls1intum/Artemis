@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -337,15 +338,58 @@ public class Result implements Serializable {
         this.feedbacks = feedbacks;
     }
 
-    public void setNewFeedback(List<Feedback> feedbacks) {
-        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it
-        // will also be deleted in the database because of the 'orphanRemoval = true' flag.
-        getFeedbacks().clear();
+    /**
+     * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
+     * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
+     *
+     * @param feedbacks the new feedback list
+     */
+    public void updateAllFeedbackItems(List<Feedback> feedbacks) {
         for (Feedback feedback : feedbacks) {
             feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setType(FeedbackType.MANUAL);
-            addFeedback(feedback);
+            setFeedbackType(feedback);
         }
+        // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it
+        // will also be deleted in the database because of the 'orphanRemoval = true' flag.
+        getFeedbacks().clear();
+        feedbacks.forEach(this::addFeedback);
+    }
+
+    /**
+     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if Compass created the feedback
+     * automatically and the tutor has overridden the feedback in the manual assessment. This is done to differentiate between automatic feedback that was overridden manually and
+     * pure manual feedback to analyze the quality of automatic assessments. In all other cases the type stays the same.
+     *
+     * @param feedback the new feedback for which to set the type
+     */
+    private void setFeedbackType(Feedback feedback) {
+        if (feedback.getType() == null) {
+            feedback.setType(FeedbackType.MANUAL);
+        }
+        else if ((feedback.getType().equals(FeedbackType.AUTOMATIC) && feedbackHasChanged(feedback))) {
+            feedback.setType(FeedbackType.AUTOMATIC_ADAPTED);
+        }
+    }
+
+    /**
+     * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
+     */
+    private boolean feedbackHasChanged(Feedback feedback) {
+        if (this.feedbacks == null || this.feedbacks.size() == 0) {
+            return false;
+        }
+        return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
+                .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
+    }
+
+    /**
+     * Compares the given feedback texts (existingText and newText) and checks if the text has changed.
+     */
+    private boolean feedbackTextHasChanged(String existingText, String newText) {
+        if (Strings.isNullOrEmpty(existingText) && Strings.isNullOrEmpty(newText)) {
+            return false;
+        }
+        return !Objects.equals(existingText, newText);
     }
 
     public Participation getParticipation() {

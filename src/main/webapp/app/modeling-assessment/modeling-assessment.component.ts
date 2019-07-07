@@ -19,8 +19,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
     @Input() model: UMLModel;
-    @Input() highlightedElementIds: Set<string>;
-    @Input() highlightColor = 'rgba(219, 53, 69,0.6)';
+    @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
@@ -37,8 +36,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        if (this.highlightedElementIds) {
-            this.updateHighlightedElements(this.highlightedElementIds);
+        if (this.highlightedElements) {
+            this.updateHighlightedElements(this.highlightedElements);
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
@@ -83,13 +82,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.handleFeedback();
             this.applyStateConfiguration();
         }
-        if (changes.highlightedElementIds || changes.highlightColor) {
-            if (changes.highlightColor) {
-                this.highlightColor = changes.highlightColor.currentValue;
-            }
-            if (changes.highlightedElementIds) {
-                this.highlightedElementIds = changes.highlightedElementIds.currentValue;
-            }
+        if (changes.highlightedElements) {
+            this.highlightedElements = changes.highlightedElements.currentValue;
+
             if (this.apollonEditor !== null) {
                 this.applyStateConfiguration();
             }
@@ -134,8 +129,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private applyStateConfiguration() {
-        if (this.highlightedElementIds) {
-            this.updateHighlightedElements(this.highlightedElementIds);
+        if (this.highlightedElements) {
+            this.updateHighlightedElements(this.highlightedElements);
         }
         if (this.centeredElementId) {
             setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
@@ -210,25 +205,23 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private updateHighlightedElements(newElementIDs: Set<string>) {
-        if (!newElementIDs) {
-            newElementIDs = new Set<string>();
+    /**
+     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     *
+     * @param newElements a map of elementIds -> highlight color
+     */
+    private updateHighlightedElements(newElements: Map<string, string>) {
+        if (!newElements) {
+            newElements = new Map<string, string>();
         }
+
         if (this.apollonEditor !== null) {
             const model: UMLModel = this.apollonEditor!.model;
             for (const element of model.elements) {
-                if (newElementIDs.has(element.id)) {
-                    element.highlight = this.highlightColor;
-                } else {
-                    element.highlight = undefined;
-                }
+                element.highlight = newElements.get(element.id);
             }
             for (const relationship of model.relationships) {
-                if (newElementIDs.has(relationship.id)) {
-                    relationship.highlight = this.highlightColor;
-                } else {
-                    relationship.highlight = undefined;
-                }
+                relationship.highlight = newElements.get(relationship.id);
             }
             this.apollonEditor!.model = model;
         }

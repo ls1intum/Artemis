@@ -7,6 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuizQuestionType } from '../../entities/quiz-question';
 import { Subscription } from 'rxjs/Subscription';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 
 const Sugar = require('sugar');
 Sugar.extend();
@@ -139,11 +140,6 @@ export interface DataSetProvider {
     templateUrl: './quiz-statistic.component.html',
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     private sub: Subscription;
 
@@ -174,6 +170,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
+        private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
@@ -336,49 +333,5 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 backgroundColor: this.colors,
             },
         ];
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic -> the first QuizQuestionStatistic
-     * if there is no QuizQuestionStatistic -> go to QuizPointStatistic
-     */
-    nextStatistic() {
-        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigate([
-                '/quiz/:quizExerciseId/quiz-point-statistic',
-                {
-                    quizExerciseId: this.quizExercise.id,
-                },
-            ]);
-        } else {
-            const nextQuestion = this.quizExercise.quizQuestions[0];
-            if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigate([
-                    'quiz/:quizId/multiple-choice-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigate([
-                    'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigate([
-                    'quiz/:quizId/short-answer-question-statistic/:questionId',
-                    {
-                        quizId: this.quizExercise.id,
-                        questionId: nextQuestion.id,
-                    },
-                ]);
-            } else {
-                console.log('Question type not yet supported: ' + nextQuestion);
-            }
-        }
     }
 }

@@ -294,24 +294,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body!;
                     this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
-                    // Compass has already calculated a result
-                    if (this.result && this.result.assessmentType && this.isAfterAssessmentDueDate) {
-                        const participation = this.participation;
-                        participation.results = [this.result];
-                        this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                            this.assessmentResult = assessmentResult;
-                            this.prepareAssessmentData();
-                        });
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessfulWithAssessment');
-                    } else {
-                        if (this.isActive) {
-                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                        } else {
-                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
-                        }
-                    }
                     this.retryStarted = false;
+
+                    if (this.isActive) {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                    } else {
+                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    }
+
                     this.subscribeToWebsockets();
                     if (this.automaticSubmissionWebsocketChannel) {
                         this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);

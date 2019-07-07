@@ -137,15 +137,16 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random text submission for that exercise which still doesn't have any result.
+     * Given an exercise id, find a random text submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
      *
-     * @param textExercise the exercise for which we want to retrieve a submission without result
-     * @return a textSubmission without any result, if any
+     * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> getTextSubmissionWithoutResult(TextExercise textExercise) {
+    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
         Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(textExercise.getId()).stream()
+        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
                 .map(Participation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {

@@ -77,7 +77,7 @@ abstract class AssessmentService {
         }
 
         // Update the result that was complained about with the new feedback
-        originalResult.setNewFeedback(assessmentUpdate.getFeedbacks());
+        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         originalResult.evaluateFeedback(exercise.getMaxScore());
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
