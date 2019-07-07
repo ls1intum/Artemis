@@ -172,6 +172,10 @@
             "prettier --write",
             "git add"
         ],
+        "src/main/test/javascript/spec/**/*.{json,ts}": [
+            "prettier --write",
+            "git add"
+        ],
         "src/{main,test}/java/**/*.java": [
             "bash ./linting.sh",
             "git add"
