@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, throwError } from 'rxjs';
-import { catchError, map as rxMap, filter as rxFilter, switchMap, tap } from 'rxjs/operators';
+import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { WindowRef } from 'app/core';
 import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState, GitConflictState } from 'app/code-editor';
@@ -84,6 +84,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     resizableMaxWidth = 800;
     interactResizable: Interactable;
 
+    gitConflictState: GitConflictState;
     conflictSubscription: Subscription;
 
     set selectedFile(file: string | undefined) {
@@ -106,13 +107,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     ) {}
 
     ngOnInit(): void {
-        this.conflictSubscription = this.conflictService
-            .subscribeConflictState()
-            .pipe(rxFilter(conflictState => conflictState === GitConflictState.OK))
-            .subscribe(() => {
-                // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
+        this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
+            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
+            if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
-            });
+            }
+            this.gitConflictState = gitConflictState;
+        });
     }
 
     /**

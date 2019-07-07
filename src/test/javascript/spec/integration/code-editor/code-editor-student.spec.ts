@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, tick, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
@@ -181,6 +181,8 @@ describe('CodeEditorStudentIntegration', () => {
         container.participation = participation;
         container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
+        // TODO: This should be replaced by testing with route params.
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
@@ -259,6 +261,8 @@ describe('CodeEditorStudentIntegration', () => {
         container.participation = participation;
         container.exercise = exercise as ProgrammingExercise;
         container.commitState = commitState;
+        // TODO: This should be replaced by testing with route params.
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
         containerFixture.detectChanges();
 
         isCleanSubject.error('fatal error');
