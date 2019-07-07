@@ -105,6 +105,46 @@ public class ResultService {
     }
 
     /**
+     * Check async for new result, this could happen if the Bamboo->Artemis notification failed
+     *
+     * @param expectedSubmission ProgrammingSubmission for which a result might be available
+     * @return true if a
+     */
+    @Async
+    public boolean checkForResult(ProgrammingSubmission expectedSubmission) {
+        Participation participation = expectedSubmission.getParticipation();
+        log.debug("Checking new build result for participation " + participation.getId());
+
+        Result result;
+        try {
+            result = continuousIntegrationService.get().onBuildCompletedOld(participation);
+        }
+        catch (NullPointerException ex) {
+            // No build found
+            // TODO: handle this
+            return false;
+        }
+
+        if (result == null) {
+            log.debug("No result found for Participation " + participation.getId());
+            return false;
+        }
+
+        ProgrammingSubmission receivedSubmission = (ProgrammingSubmission) result.getSubmission();
+        if (receivedSubmission.getCommitHash().equals(expectedSubmission.getCommitHash())) {
+            log.debug("Found matching submission for participation " + participation.getId());
+            // Found matching submission, inform user
+            notifyUser(participation, result);
+            return true;
+        }
+
+        // Mismatching commit hash
+        log.debug("Mismatching commit hash for participation " + participation.getId());
+        return false;
+
+    }
+
+    /**
      * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *

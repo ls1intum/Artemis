@@ -12,6 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.service.ResultService;
 
 @Service
@@ -37,28 +38,34 @@ public class BambooScheduleService {
         this.resultService = resultService;
     }
 
-    public void startResultScheduler(Participation participation) {
+    public void startResultScheduler(ProgrammingSubmission submission) {
+        Participation participation = submission.getParticipation();
         log.debug("Scheduling checkResult() for Participation " + participation.getId());
 
-        cancelResultScheduler(participation); // Cancel running schedulers
+        cancelResultScheduler(submission.getParticipation()); // Cancel running schedulers
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, 30);
 
-        ScheduledFuture scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(() -> checkResult(participation), calendar.getTime(), 30000);
+        ScheduledFuture scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(() -> checkResult(submission), calendar.getTime(), 30000);
 
         scheduledFutures.put(participation.getId(), scheduledFuture);
     }
 
-    private void checkResult(Participation participation) {
+    private void checkResult(ProgrammingSubmission submission) {
+        Participation participation = submission.getParticipation();
         log.info("Checking result for participation " + participation.getId());
         ContinuousIntegrationService.BuildStatus buildStatus = bambooService.getBuildStatus(participation);
         if (buildStatus.equals(ContinuousIntegrationService.BuildStatus.INACTIVE)) {
             log.info("Inactive build state with missing result");
 
             // We did not get notified by Bamboo -> We fetch the result manually
-            resultService.onResultNotifiedOld(participation);
-            cancelResultScheduler(participation);
+            if (resultService.checkForResult(submission)) { // Result fetched successfully with matching commit hash
+                cancelResultScheduler(submission.getParticipation());
+            }
+            else { // Received result has wrong commit hash
+                   // TODO: handle this
+            }
             return;
         }
 

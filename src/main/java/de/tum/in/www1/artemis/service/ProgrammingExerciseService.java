@@ -127,7 +127,7 @@ public class ProgrammingExerciseService {
 
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
 
-            bambooScheduleService.startResultScheduler(participation);
+            bambooScheduleService.startResultScheduler(submission);
         }
     }
 

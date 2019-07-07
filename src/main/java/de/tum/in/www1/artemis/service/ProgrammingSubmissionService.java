@@ -87,7 +87,7 @@ public class ProgrammingSubmissionService {
 
         programmingSubmissionRepository.save(programmingSubmission);
 
-        bambooScheduleService.startResultScheduler(participation);
+        bambooScheduleService.startResultScheduler(programmingSubmission);
 
         // notify user via websocket
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
