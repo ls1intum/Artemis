@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "markdownEditor": {
+            "commands": {
+                "fullscreen": "Fullscreen"
+            }
+        }
+    }
+}

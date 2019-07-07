@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
 import { CodeEditorStatusComponent } from 'app/code-editor';
 import { CommitState, EditorState } from 'app/code-editor';
@@ -15,7 +16,7 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, AceEditorModule, NgbModule],
             declarations: [CodeEditorStatusComponent],
         })
             .compileComponents()

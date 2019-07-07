@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.grade;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class CompassGrade implements Grade {
@@ -14,12 +13,6 @@ public class CompassGrade implements Grade {
     private double confidence;
 
     private double coverage;
-
-    /** Default Constructor for empty grade */
-    public CompassGrade() {
-        jsonIdCommentsMapping = new HashMap<>();
-        jsonIdPointsMapping = new HashMap<>();
-    }
 
     public CompassGrade(double coverage, double confidence, double points, Map<String, String> jsonIdCommentsMapping, Map<String, Double> jsonIdPointsMapping) {
         this.coverage = coverage;

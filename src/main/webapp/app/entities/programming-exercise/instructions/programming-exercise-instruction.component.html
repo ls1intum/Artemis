@@ -1,4 +1,4 @@
-<div id="programming-exercise-instructions-content" class="card" *ngIf="!isLoading; else loadingInstructions">
+<div class="instructions__content border-0" *ngIf="!isLoading; else loadingInstructions">
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">
@@ -30,7 +30,12 @@
     </div>
 
     <!-- Rendered markdown will be inserted in this div -->
-    <div class="card-body instructions markdown-preview" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown | safeHtml"></div>
+    <div
+        id="programming-exercise-instructions-content"
+        class="instructions__content__markdown markdown-preview"
+        [hidden]="!renderedMarkdown"
+        [innerHtml]="renderedMarkdown | safeHtml"
+    ></div>
 </div>
 <ng-template #loadingInstructions>
     <span id="programming-exercise-instructions-loading" class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>

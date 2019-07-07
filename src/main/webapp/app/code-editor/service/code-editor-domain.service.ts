@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { JhiWebsocketService } from 'app/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DomainParticipationChange, DomainType } from 'app/code-editor';
+import { DomainParticipationChange, DomainType } from 'app/code-editor/service';
 import { Participation } from 'app/entities/participation';
 
 export type DomainParticipationChange = [DomainType.PARTICIPATION, Participation];
