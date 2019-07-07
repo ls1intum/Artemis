@@ -444,7 +444,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public StudentParticipation findOneWithEagerSubmissionsAndResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<StudentParticipation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(id);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
@@ -538,7 +538,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return studentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
     @Transactional(readOnly = true)
