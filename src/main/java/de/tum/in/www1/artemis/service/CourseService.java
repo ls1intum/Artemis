@@ -32,13 +32,16 @@ public class CourseService {
 
     private final UserRepository userRepository;
 
+    private final SessionFactoryService sessionFactoryService;
+
     public CourseService(CourseRepository courseRepository, UserService userService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            UserRepository userRepository) {
+            UserRepository userRepository, SessionFactoryService sessionFactoryService) {
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.sessionFactoryService = sessionFactoryService;
     }
 
     /**
@@ -49,6 +52,8 @@ public class CourseService {
      */
     public Course save(Course course) {
         log.debug("Request to save Course : {}", course);
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Course.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictQueryRegion("query_" + Course.class.getName());
         return courseRepository.save(course);
     }
 
@@ -216,6 +221,8 @@ public class CourseService {
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
         courseRepository.deleteById(id);
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Course.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictQueryRegion("query_" + Course.class.getName());
     }
 
     public List<String> getAllTeachingAssistantGroupNames() {

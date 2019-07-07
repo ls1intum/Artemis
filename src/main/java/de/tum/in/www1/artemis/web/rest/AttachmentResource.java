@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -53,8 +54,10 @@ public class AttachmentResource {
 
     private final CacheManager cacheManager;
 
+    private final SessionFactoryService sessionFactoryService;
+
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            CourseService courseService, UserService userService, FileService fileService, CacheManager cacheManager) {
+            CourseService courseService, UserService userService, FileService fileService, CacheManager cacheManager, SessionFactoryService sessionFactoryService) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
@@ -62,6 +65,7 @@ public class AttachmentResource {
         this.userService = userService;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
+        this.sessionFactoryService = sessionFactoryService;
     }
 
     /**
@@ -80,6 +84,9 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Attachment.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Attachment.class.getName());
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -102,6 +109,9 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Attachment.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Attachment.class.getName());
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -174,6 +184,9 @@ public class AttachmentResource {
         if (hasCourseInstructorAccess) {
             log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
+            sessionFactoryService.getSessionFactory().getCache().evictRegion(Attachment.class.getName());
+            sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+            sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Attachment.class.getName());
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         else {

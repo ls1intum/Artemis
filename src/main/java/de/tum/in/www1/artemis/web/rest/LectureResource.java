@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.LectureService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -51,13 +48,16 @@ public class LectureResource {
 
     private final UserService userService;
 
+    private final SessionFactoryService sessionFactoryService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseService courseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, SessionFactoryService sessionFactoryService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseService = courseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.sessionFactoryService = sessionFactoryService;
     }
 
     /**
@@ -79,6 +79,10 @@ public class LectureResource {
             return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Course.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Lecture.class.getName());
+
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -103,6 +107,9 @@ public class LectureResource {
             return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Course.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Lecture.class.getName());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
     }
 
@@ -176,6 +183,9 @@ public class LectureResource {
         }
         log.debug("REST request to delete Lecture : {}", id);
         lectureService.delete(lecture);
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Lecture.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion(Course.class.getName());
+        sessionFactoryService.getSessionFactory().getCache().evictRegion("query_" + Lecture.class.getName());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

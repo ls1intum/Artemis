@@ -21,10 +21,12 @@ import de.tum.in.www1.artemis.domain.Lecture;
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
 
     @Query("select l FROM Lecture l WHERE l.course.id =  :#{#courseId}")
-    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true") })
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+            @QueryHint(name = "org.hibernate.cacheRegion", value = "query_de.tum.in.www1.artemis.domain.Lecture") })
     List<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
-    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true") })
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+            @QueryHint(name = "org.hibernate.cacheRegion", value = "query_de.tum.in.www1.artemis.domain.Lecture") })
     Optional<Lecture> findById(@Param("id") Long id);
 
 }

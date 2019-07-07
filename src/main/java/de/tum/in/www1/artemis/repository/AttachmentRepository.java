@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.domain.Attachment;
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
     @Query("select a FROM Attachment a WHERE a.lecture.id =  :#{#lectureId}")
-    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true") })
+    @QueryHints(value = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+            @QueryHint(name = "org.hibernate.cacheRegion", value = "query_de.tum.in.www1.artemis.domain.Attachment") })
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
 
 }
