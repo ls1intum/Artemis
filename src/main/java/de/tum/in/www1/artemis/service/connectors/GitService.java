@@ -245,7 +245,7 @@ public class GitService {
     }
 
     /**
-     * Pulls from remote repository.
+     * Pulls from remote repository. Does not throw any exceptions when pulling, e.g. CheckoutConflictException or WrongRepositoryStateException.
      *
      * @param repo Local Repository Object.
      * @return The PullResult which contains FetchResult and MergeResult.

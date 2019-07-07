@@ -203,7 +203,7 @@ public class RepositoryService {
     /**
      * Retrieve the status of the repository. Also pulls the repository.
      * 
-     * @param repository
+     * @param repositoryUrl
      * @return
      * @throws GitAPIException
      */
