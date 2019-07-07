@@ -31,3 +31,16 @@ $titlebar-height: 65px;
         width: 100%;
     }
 }
+
+.highlighting-item {
+    width: 100px;
+    height: 25px;
+}
+
+.color-red {
+    background-color: rgba(219, 53, 69, 0.8);
+}
+
+.color-cyan {
+    background-color: rgba(23, 162, 184, 0.5);
+}
