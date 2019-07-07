@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { sortBy } from 'lodash';
 
 import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, PRESENTATION_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
@@ -240,7 +241,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         let exercises = this.course!.exercises;
         const groupedExercises: any[] = [];
         const exerciseTypes: string[] = [];
-        exercises = exercises.sort((a: Exercise, b: Exercise) => (a.dueDate || moment().add(5, 'year')).valueOf() - (b.dueDate || moment().add(5, 'year')).valueOf());
+        // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
+        exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
         exercises.forEach(exercise => {
             if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type);

@@ -457,8 +457,8 @@ public class QuizExercise extends Exercise implements Serializable {
         else {
             // only rated results are considered relevant
             Result latestRatedResult = null;
+            Boolean isAssessmentOver = assessmentDueDate == null || assessmentDueDate.isBefore(ZonedDateTime.now());
             for (Result result : participation.getResults()) {
-                Boolean isAssessmentOver = assessmentDueDate == null || assessmentDueDate.isBefore(ZonedDateTime.now());
                 if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))
                         || isAssessmentOver) {
                     latestRatedResult = result;
