@@ -633,7 +633,7 @@ public class GitService {
         path = path.replaceAll(".git$", "");
         path = path.replaceAll("/$", "");
         path = path.replaceAll("^/", "");
-        path = path.replaceAll("^scm/", "");
+        path = path.replaceAll(".*scm/", "");
         return path;
     }
 
