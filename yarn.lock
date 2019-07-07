@@ -898,6 +898,11 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
+"@swimlane/ngx-datatable@^15.0.2":
+  version "15.0.2"
+  resolved "https://registry.yarnpkg.com/@swimlane/ngx-datatable/-/ngx-datatable-15.0.2.tgz#3ab0a25668ebc20fe192a3014d41875e0f307181"
+  integrity sha512-IlUyCs/hLv12hzz2pGugbrdRpBbwE6JUM4Bm4CCqLptmZj+t8pw8Ywthde8yUDdpgGgTJeJ9G5o92QadyGbP3g==
+
 "@types/ace@0.0.42":
   version "0.0.42"
   resolved "https://registry.yarnpkg.com/@types/ace/-/ace-0.0.42.tgz#941973bc5c1d5c9213f0561b8b2d82a18e1400ea"

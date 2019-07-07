@@ -12,6 +12,7 @@ import { ProgrammingExerciseDetailComponent } from './programming-exercise-detai
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
+import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -66,6 +67,15 @@ export const programmingExerciseRoute: Routes = [
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
+        component: ProgrammingExerciseManageTestCasesComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.programmingExercise.home.title',
