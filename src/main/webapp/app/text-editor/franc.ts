@@ -4,8 +4,6 @@ export enum FrancLanguage {
     UNDEFINED = 'und',
 }
 
-export const SUPPORTED_TEXT_LANGUAGES = Object.keys(FrancLanguage).map(key => FrancLanguage[key]);
-
 export interface Franc {
     all(text: string, options?: { only: FrancLanguage[] }): [FrancLanguage, number];
 }
