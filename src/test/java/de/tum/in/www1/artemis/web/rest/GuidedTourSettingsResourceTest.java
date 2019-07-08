@@ -50,11 +50,6 @@ public class GuidedTourSettingsResourceTest {
     }
 
     @Test
-    public void getGuidedTourSettings() throws Exception {
-
-    }
-
-    @Test
     @WithMockUser(value = "student1")
     public void updateGuidedTourSettings() throws Exception {
         GuidedTourSettings guidedTourSettings = new GuidedTourSettings(true, false, true, false, true, true);
