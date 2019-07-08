@@ -78,6 +78,14 @@ public class ModelFactory {
         return submission;
     }
 
+    public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setSubmission(submission);
+        exampleSubmission.setExercise(exercise);
+        exampleSubmission.setUsedForTutorial(usedForTutorial);
+        return exampleSubmission;
+    }
+
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
         Course course = new Course();
