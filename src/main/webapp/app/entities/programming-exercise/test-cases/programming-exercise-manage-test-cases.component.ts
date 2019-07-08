@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy {
     exerciseId: number;
-    editing = null;
+    editing: ProgrammingExerciseTestCase | null = null;
     testCases: ProgrammingExerciseTestCase[];
     testCaseSubscription: Subscription;
     paramSub: Subscription;
@@ -41,17 +41,28 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
-    updateValue(event: any, cell: string, rowIndex: number) {
-        const testCaseId = this.testCases[rowIndex].id;
+    enterEditing(rowIndex: number) {
+        this.editing = this.testCases[rowIndex];
+    }
+
+    leaveEditingWithoutSaving() {
+        this.editing = null;
+    }
+
+    updateWeight(event: any) {
+        if (!this.editing) {
+            return;
+        }
+        const editedTestCase = this.editing;
         const weight = event.target.value;
-        this.testCaseService.updateWeight(this.exerciseId, testCaseId, weight).subscribe(() => {
+        this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe(() => {
             this.editing = null;
-            const updatedTestCases = this.testCases.map(testCase => (testCase.id === testCaseId ? { ...testCase, weight } : testCase));
+            const updatedTestCases = this.testCases.map(testCase => (testCase.id === editedTestCase.id ? { ...testCase, weight } : testCase));
             this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
         });
     }
 
-    leaveEditing(event: any, cell: string, rowIndex: number) {
-        this.editing[rowIndex + '-' + cell] = false;
+    getRowClass(row: ProgrammingExerciseTestCase) {
+        return !row.active ? 'test-case--inactive' : '';
     }
 }

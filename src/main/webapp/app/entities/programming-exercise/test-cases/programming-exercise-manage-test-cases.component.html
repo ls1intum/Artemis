@@ -12,6 +12,7 @@
         [rowHeight]="'auto'"
         [rows]="testCases"
         [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+        [rowClass]="getRowClass"
     >
         <ngx-datatable-column name="Id" prop="id">
             <ng-template ngx-datatable-cell-template let-value="value">
@@ -25,17 +26,17 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Weight" prop="weight">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <span title="Double click to edit" (dblclick)="editing = testCases.indexOf(row)" *ngIf="editing !== testCases.indexOf(row)">
+                <span title="Double click to edit" *ngIf="editing !== testCases[testCases.indexOf(row)]" (dblclick)="enterEditing(testCases.indexOf(row))">
                     {{ value }}
                 </span>
                 <input
+                    *ngIf="editing === testCases[testCases.indexOf(row)]"
                     autofocus
-                    (blur)="updateValue($event, 'weight', testCases.indexOf(row))"
-                    (keyup.enter)="updateValue($event, 'weight', testCases.indexOf(row))"
-                    (keyup.escape)="leaveEditing($event, 'weight', testCases.indexOf(row))"
-                    *ngIf="editing === testCases.indexOf(row)"
-                    type="text"
+                    (blur)="updateWeight($event)"
+                    (keyup.enter)="updateWeight($event)"
+                    (keyup.escape)="leaveEditingWithoutSaving()"
                     [value]="value"
+                    type="text"
                 />
                 <!--                <fa-icon icon="pencil-alt" (click)="editing[rowIndex + '-weight'] = true"></fa-icon>-->
             </ng-template>
