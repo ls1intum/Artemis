@@ -162,8 +162,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.testCaseSubscription = this.testCaseService
             .subscribeForTestCases(this.exercise.id)
             .pipe(
-                filter(testCases => !!testCases),
                 tap(testCases => this.exerciseTestCasesChange.emit(testCases)),
+                filter(testCases => !!testCases),
                 tap(testCases => {
                     this.exerciseTestCases = testCases && testCases.filter(({ active }) => active).map(({ testName }) => testName);
                 }),
