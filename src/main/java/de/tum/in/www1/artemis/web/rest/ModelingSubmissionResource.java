@@ -280,8 +280,7 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted). If
-     * there is no submission yet (initial call), a new one will be created and saved to the database before sending it to the client.
+     * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
      *
      * @param participationId the participationId for which to find the submission and data for the modeling editor
      * @return the ResponseEntity with the submission as body

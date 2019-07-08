@@ -38,8 +38,6 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final TextSubmissionService textSubmissionService;
-
     private final TextAssessmentService textAssessmentService;
 
     private final TextExerciseService textExerciseService;
@@ -60,11 +58,9 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    public TextExerciseResource(TextSubmissionService textSubmissionService, TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService,
-            TextAssessmentService textAssessmentService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
-            ParticipationService participationService, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
-        this.textSubmissionService = textSubmissionService;
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
+            UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -236,7 +232,7 @@ public class TextExerciseResource {
 
     /**
      * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing and the assessments if the submission was already
-     * submitted. If there is no submission yet (initial call), a new one will be created and saved to the database before sending it to the client along with the participation.
+     * submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
      * @return the ResponseEntity with the participation as body
