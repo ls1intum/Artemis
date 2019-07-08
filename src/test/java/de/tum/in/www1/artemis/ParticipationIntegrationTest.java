@@ -50,7 +50,7 @@ public class ParticipationIntegrationTest {
     @Before
     public void initTestCase() {
         database.resetDatabase();
-        database.addUsers(2, 0);
+        database.addUsers(2, 0, 0);
         database.addCourseWithDifferentModelingExercises();
     }
 
