@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/p
     styleUrls: ['./programming-exercise-manage-test-cases.scss'],
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy {
+    @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
     exerciseId: number;
     editing: ProgrammingExerciseTestCase | null = null;
     testCaseSubscription: Subscription;
@@ -58,6 +59,11 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
     enterEditing(rowIndex: number) {
         this.editing = this.filteredTestCases[rowIndex];
+        setTimeout(() => {
+            if (this.editingInput) {
+                this.editingInput.nativeElement.focus();
+            }
+        });
     }
 
     leaveEditingWithoutSaving() {

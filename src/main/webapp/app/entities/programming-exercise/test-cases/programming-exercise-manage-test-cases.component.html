@@ -39,11 +39,18 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Weight" prop="weight">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <span title="Double click to edit" *ngIf="editing !== filteredTestCases[filteredTestCases.indexOf(row)]" (dblclick)="enterEditing(filteredTestCases.indexOf(row))">
+                <span
+                    title="Double click to edit"
+                    class="edit-weight__value"
+                    *ngIf="editing !== filteredTestCases[filteredTestCases.indexOf(row)]"
+                    (dblclick)="enterEditing(filteredTestCases.indexOf(row))"
+                >
                     {{ value }}
                 </span>
                 <input
+                    #editingInput
                     *ngIf="editing === filteredTestCases[filteredTestCases.indexOf(row)]"
+                    class="edit-weight__input"
                     autofocus
                     (blur)="updateWeight($event)"
                     (keyup.enter)="updateWeight($event)"
@@ -51,7 +58,7 @@
                     [value]="value"
                     type="text"
                 />
-                <fa-icon icon="pencil-alt" (click)="enterEditing(filteredTestCases.indexOf(row))"></fa-icon>
+                <fa-icon icon="pencil-alt" class="edit-weight__edit-icon" (click)="enterEditing(filteredTestCases.indexOf(row))"></fa-icon>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">
