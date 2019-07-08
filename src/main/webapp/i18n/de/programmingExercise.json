@@ -63,6 +63,12 @@
                 "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfall Probleme.",
                 "ok": "Testfälle ok."
+            },
+            "manageTestCases": {
+                "title": "Verwalte die Testfälle.",
+                "hideInactive": "Inaktive Testfälle verbergen",
+                "showInactive": "Inaktive Testfälle anzeigen",
+                "resetWeights": "Gewichtung zurücksetzen"
             }
         }
     }

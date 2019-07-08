@@ -63,6 +63,12 @@
                 "missingTestCases": "There are {{number}} test cases that were found in your test repository but are not part of the the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok."
+            },
+            "manageTestCases": {
+                "title": "Test Case Management.",
+                "hideInactive": "Hide inactive test cases",
+                "showInactive": "Show inactivate test cases",
+                "resetWeights": "Reset weights"
             }
         }
     }
