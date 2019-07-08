@@ -12,7 +12,7 @@ export interface IProgrammingExerciseTestCaseService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService, OnDestroy {
-    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise-test-cases`;
+    public testCaseUrl = `${SERVER_API_URL}api/programming-exercise`;
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | null> } = {};
@@ -47,12 +47,22 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         }
     }
 
+    public notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void {
+        if (this.subjects[exerciseId]) {
+            this.subjects[exerciseId].next(testCases);
+        }
+    }
+
     /**
      * Executes a REST request to the test case endpoint.
      * @param exerciseId
      */
     private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases`);
+    }
+
+    public updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<void> {
+        return this.http.post<void>(`${this.testCaseUrl}/${exerciseId}/test-cases/${testCaseId}/update-weight`, { weight });
     }
 
     /**

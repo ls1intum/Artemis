@@ -2,7 +2,17 @@
     <h3>
         Inline Editing
     </h3>
-    <ngx-datatable #mydatatable class="bootstrap" [headerHeight]="50" [limit]="10" [columnMode]="'force'" [footerHeight]="50" [rowHeight]="'auto'" [rows]="testCases">
+    <ngx-datatable
+        #mydatatable
+        class="bootstrap"
+        [headerHeight]="50"
+        [limit]="10"
+        [columnMode]="'force'"
+        [footerHeight]="50"
+        [rowHeight]="'auto'"
+        [rows]="testCases"
+        [sorts]="[{ prop: 'testName', dir: 'asc' }]"
+    >
         <ngx-datatable-column name="Id" prop="id">
             <ng-template ngx-datatable-cell-template let-value="value">
                 {{ value }}
@@ -15,10 +25,19 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Weight" prop="weight">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <span title="Double click to edit" (dblclick)="editing[rowIndex + '-weight'] = true" *ngIf="!editing[rowIndex + '-weight']">
+                <span title="Double click to edit" (dblclick)="editing = testCases.indexOf(row)" *ngIf="editing !== testCases.indexOf(row)">
                     {{ value }}
                 </span>
-                <input autofocus (blur)="updateValue($event, 'weight', rowIndex)" *ngIf="editing[rowIndex + '-weight']" type="text" [value]="value" />
+                <input
+                    autofocus
+                    (blur)="updateValue($event, 'weight', testCases.indexOf(row))"
+                    (keyup.enter)="updateValue($event, 'weight', testCases.indexOf(row))"
+                    (keyup.escape)="leaveEditing($event, 'weight', testCases.indexOf(row))"
+                    *ngIf="editing === testCases.indexOf(row)"
+                    type="text"
+                    [value]="value"
+                />
+                <!--                <fa-icon icon="pencil-alt" (click)="editing[rowIndex + '-weight'] = true"></fa-icon>-->
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">

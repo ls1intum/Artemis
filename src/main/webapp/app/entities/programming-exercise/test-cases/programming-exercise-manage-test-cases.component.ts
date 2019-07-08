@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 })
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy {
     exerciseId: number;
-    editing = {};
+    editing = null;
     testCases: ProgrammingExerciseTestCase[];
     testCaseSubscription: Subscription;
     paramSub: Subscription;
@@ -26,9 +26,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
-            this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exerciseId)
-                .subscribe((testCases: ProgrammingExerciseTestCase[]) => (this.testCases = testCases));
+            this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
+                this.testCases = testCases;
+            });
         });
     }
 
@@ -41,11 +41,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
-    updateValue(event: any, cell: string, rowIndex: string) {
-        console.log('inline editing rowIndex', rowIndex);
+    updateValue(event: any, cell: string, rowIndex: number) {
+        const testCaseId = this.testCases[rowIndex].id;
+        const weight = event.target.value;
+        this.testCaseService.updateWeight(this.exerciseId, testCaseId, weight).subscribe(() => {
+            this.editing = null;
+            const updatedTestCases = this.testCases.map(testCase => (testCase.id === testCaseId ? { ...testCase, weight } : testCase));
+            this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
+        });
+    }
+
+    leaveEditing(event: any, cell: string, rowIndex: number) {
         this.editing[rowIndex + '-' + cell] = false;
-        this.testCases[rowIndex][cell] = event.target.value;
-        this.testCases = [...this.testCases];
-        console.log('UPDATED!', this.testCases[rowIndex][cell]);
     }
 }

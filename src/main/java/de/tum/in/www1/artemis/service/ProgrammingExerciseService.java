@@ -538,6 +538,29 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Find a programming exercise by its id.
+     *
+     * @param id of the programming exercise.
+     * @return
+     * @throws NoSuchElementException the programming exercise could not be found.
+     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     */
+    public ProgrammingExercise findByIdWithTestCases(Long id) throws NoSuchElementException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new IllegalAccessException();
+            }
+            return programmingExercise.get();
+        }
+        else {
+            throw new NoSuchElementException("programming exercise not found");
+        }
+    }
+
+    /**
      * This method saves the participations of the programming xercise
      *
      * @param programmingExercise The programming exercise

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -39,6 +41,12 @@ public class ProgrammingExerciseTestCaseService {
      */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
         return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+    }
+
+    @Transactional
+    public void updateWeight(Long testCaseId, Integer weight) {
+        this.testCaseRepository.findById(testCaseId).map(testCase -> testCase.weight(weight)).orElseThrow(NoSuchElementException::new);
+
     }
 
     /**
