@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 
 public class SimilarityDetector {
 
@@ -21,19 +22,23 @@ public class SimilarityDetector {
     public static void analyzeSimilarity(UMLClassDiagram model, ModelIndex index) {
 
         for (UMLClass umlClass : model.getClassList()) {
-            umlClass.setElementID(index.getElementID(umlClass));
+            umlClass.setSimilarityID(index.getSimilarityId(umlClass));
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                attribute.setElementID(index.getElementID(attribute));
+                attribute.setSimilarityID(index.getSimilarityId(attribute));
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                method.setElementID(index.getElementID(method));
+                method.setSimilarityID(index.getSimilarityId(method));
             }
         }
 
         for (UMLClassRelationship relation : model.getAssociationList()) {
-            relation.setElementID(index.getElementID(relation));
+            relation.setSimilarityID(index.getSimilarityId(relation));
+        }
+
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            umlPackage.setSimilarityID(index.getSimilarityId(umlPackage));
         }
 
         setContext(model);
@@ -49,8 +54,13 @@ public class SimilarityDetector {
                 method.setContext(generateContextForElement(model, method));
             }
         }
+
         for (UMLClassRelationship relation : model.getAssociationList()) {
             relation.setContext(generateContextForElement(model, relation));
+        }
+
+        for (UMLPackage umlPackage : model.getPackageList()) {
+            umlPackage.setContext(generateContextForElement(model, umlPackage));
         }
     }
 
@@ -60,14 +70,14 @@ public class SimilarityDetector {
         if (element.getClass() == UMLAttribute.class) {
             for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getAttributes().contains(element)) {
-                    return new Context(umlClass.getElementID());
+                    return new Context(umlClass.getSimilarityID());
                 }
             }
         }
         else if (element.getClass() == UMLMethod.class) {
             for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getMethods().contains(element)) {
-                    return new Context(umlClass.getElementID());
+                    return new Context(umlClass.getSimilarityID());
                 }
             }
         }
@@ -79,7 +89,7 @@ public class SimilarityDetector {
         /*
          * else if (element.getClass() == UMLClass.class) { return ClassContext.getWeakContext((UMLClass) element, model); } else if (element.getClass() == UMLAssociation.class) {
          * UMLAssociation relation = (UMLAssociation) element; Set<Integer> edges = new HashSet<>(); for (UMLClass connectableElement : model.getClassList()) { if
-         * (relation.getSource().equals(connectableElement) || relation.getTarget().equals(connectableElement)) { edges.add(connectableElement.getElementID()); } } if
+         * (relation.getSource().equals(connectableElement) || relation.getTarget().equals(connectableElement)) { edges.add(connectableElement.getSimilarityID()); } } if
          * (!edges.isEmpty()) { return new Context(edges); } }
          */
 

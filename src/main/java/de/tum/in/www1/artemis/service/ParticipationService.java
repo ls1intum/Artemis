@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,11 +79,16 @@ public class ParticipationService {
 
     private final ModelAssessmentConflictService conflictService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ParticipationService(ParticipationRepository participationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
+            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -96,6 +103,8 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
         this.conflictService = conflictService;
+        this.authCheckService = authCheckService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -397,15 +406,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all submissions.
+     * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
      * @param id the id of the entity
-     * @return the participation with all its submissions
+     * @return the participation with all its submissions and results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerSubmissions(Long id) {
+    public Participation findOneWithEagerSubmissionsAndResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissions(id);
+        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
@@ -517,9 +526,16 @@ public class ParticipationService {
         return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
     }
 
+    /**
+     * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
+     * corresponding submission yet.
+     *
+     * @param exerciseId the id of the exercise the participations should belong to
+     * @return a list of participations including their submitted submissions that do not have a manual result
+     */
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(Long exerciseId) {
-        return participationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutResults(exerciseId);
+    public List<Participation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
+        return participationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
     }
 
     @Transactional(readOnly = true)
@@ -699,5 +715,43 @@ public class ParticipationService {
 
     public Participation findOneWithEagerCourse(Long participationId) {
         return participationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Check if a participation can be accessed with the current user.
+     *
+     * @param participation
+     * @return
+     */
+    @Nullable
+    public boolean canAccessParticipation(Participation participation) {
+        return Optional.ofNullable(participation).isPresent() && userHasPermissions(participation);
+    }
+
+    /**
+     * Check if a user has permissions to to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
+     *
+     * @param participation
+     * @return
+     */
+    private boolean userHasPermissions(Participation participation) {
+        if (authCheckService.isOwnerOfParticipation(participation))
+            return true;
+        // if the user is not the owner of the participation, the user can only see it in case he is
+        // a teaching assistant or an instructor of the course, or in case he is admin
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course;
+        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        if (participation.getExercise() == null) {
+            Optional<ProgrammingExercise> exercise = programmingExerciseService.getExerciseForSolutionOrTemplateParticipation(participation);
+            if (!exercise.isPresent()) {
+                return false;
+            }
+            course = exercise.get().getCourse();
+        }
+        else {
+            course = participation.getExercise().getCourse();
+        }
+        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 }

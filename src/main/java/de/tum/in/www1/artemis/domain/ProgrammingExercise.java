@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -42,6 +42,9 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
+    @Column(name = "sequential_test_runs")
+    private Boolean sequentialTestRuns;
+
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
@@ -51,6 +54,10 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
     private Participation solutionParticipation;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
@@ -237,6 +244,11 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     }
 
     @JsonIgnore
+    public boolean isParticipationSolutionParticipationOfThisExercise(Participation participation) {
+        return this.getSolutionParticipation() != null && this.getSolutionParticipation().getId().equals(participation.getId());
+    }
+
+    @JsonIgnore
     public String getProjectKey() {
         // this is the key used for Bitbucket and Bamboo
         // remove all whitespace and make sure it is upper case
@@ -252,6 +264,25 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JsonIgnore
     public String getPackageFolderName() {
         return getPackageName().replace(".", "/");
+    }
+
+    public Set<ProgrammingExerciseTestCase> getTestCases() {
+        return testCases;
+    }
+
+    public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
+        this.testCases = testCases;
+    }
+
+    public Boolean hasSequentialTestRuns() {
+        if (sequentialTestRuns == null) {
+            return false;
+        }
+        return sequentialTestRuns;
+    }
+
+    public void setSequentialTestRuns(Boolean sequentialTestRuns) {
+        this.sequentialTestRuns = sequentialTestRuns;
     }
 
     /**

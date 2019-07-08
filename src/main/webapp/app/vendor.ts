@@ -68,6 +68,7 @@ import {
     faPlayCircle,
     faPlus,
     faQuestionCircle,
+    faQuestion,
     faRedo,
     faRoad,
     faSave,
@@ -106,6 +107,8 @@ import {
     faImage,
     faPaperclip,
     faGripLinesVertical,
+    faGripLines,
+    faCompress,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -204,6 +207,7 @@ library.add(faExclamationCircle);
 library.add(faTerminal);
 library.add(faSpinner);
 library.add(faQuestionCircle);
+library.add(faQuestion);
 library.add(faTimesCircle);
 library.add(faAngleRight);
 library.add(faCheck);
@@ -238,7 +242,9 @@ library.add(farFileCode);
 library.add(farCircle);
 library.add(farSave);
 library.add(faGripLinesVertical);
+library.add(faGripLines);
 library.add(faPaperclip);
 library.add(faAngleDoubleDown);
 library.add(faAngleDoubleUp);
+library.add(faCompress);
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

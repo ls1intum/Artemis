@@ -126,7 +126,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogIsBuildingHtml).not.to.exist;
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
         expect(buildLogNoResultHtml).not.to.exist;
-        const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
+        const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
     });
 
@@ -237,7 +237,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(buildLogIsBuildingHtml).not.to.exist;
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
         expect(buildLogNoResultHtml).not.to.exist;
-        const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
+        const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).to.have.lengthOf(buildLogs.length);
     });
 });

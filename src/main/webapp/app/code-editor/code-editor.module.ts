@@ -20,6 +20,7 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorBuildLogService,
     CodeEditorSessionService,
+    CodeEditorGridService,
     // layout
     CodeEditorGridComponent,
     // components
@@ -85,6 +86,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorBuildLogService,
         CodeEditorSessionService,
         CodeEditorFileService,
+        CodeEditorGridService,
         { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],

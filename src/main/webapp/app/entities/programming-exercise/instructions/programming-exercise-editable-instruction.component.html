@@ -1,17 +1,51 @@
 <div class="editable-instruction-container">
-    <jhi-programming-exercise-instruction-testcase-status
-        [exerciseTestCases]="exerciseTestCases"
-        [problemStatement]="exercise.problemStatement"
-        [taskRegex]="taskRegex"
-        class="editable-instruction-container__status"
-    ></jhi-programming-exercise-instruction-testcase-status>
+    <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     <jhi-markdown-editor
-        [defaultHeight]="markdownEditorHeight"
+        class="editable-instruction-container__editor"
         [domainCommands]="domainCommands"
-        [enableResize]="true"
         [markdown]="exercise.problemStatement"
         (markdownChange)="updateProblemStatement($event)"
     >
-        <jhi-programming-exercise-instructions #preview [participation]="participation" [exercise]="exercise"></jhi-programming-exercise-instructions>
+        <jhi-programming-exercise-instructions
+            class="editable-instruction-container__instructions"
+            [participation]="participation"
+            [exercise]="exercise"
+            (exerciseTestCasesChange)="updateTestCases($event)"
+        ></jhi-programming-exercise-instructions>
     </jhi-markdown-editor>
+    <button
+        *ngIf="enableSave"
+        id="save-instructions-button"
+        [disabled]="savingInstructions || !unsavedChanges"
+        (click)="saveInstructions($event)"
+        class="btn btn-light editable-instruction-container__save"
+    >
+        <fa-icon *ngIf="!savingInstructions" icon="save" class="mr-2"></fa-icon>
+        <fa-icon *ngIf="savingInstructions" icon="circle-notch" [spin]="true" class="mr-2"></fa-icon>
+        <span jhiTranslate="entity.action.save"></span>
+    </button>
+    <div *ngIf="showStatus" class="card-footer text-nowrap editable-instruction-container__status">
+        <div class="instructions-status">
+            <div *ngIf="!unsavedChanges && !savingInstructions">
+                <fa-icon icon="check-circle" class="text-success mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
+            </div>
+            <div *ngIf="unsavedChanges && !savingInstructions">
+                <fa-icon icon="exclamation-triangle" class="text-warning mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.unsavedTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved">Unsaved.</span>
+            </div>
+            <div *ngIf="savingInstructions">
+                <fa-icon icon="circle-notch" class="mr-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | translate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving">Saving...</span>
+            </div>
+        </div>
+        <jhi-programming-exercise-instruction-testcase-status
+            [exerciseTestCases]="exerciseTestCases"
+            [problemStatement]="exercise.problemStatement"
+            [taskRegex]="taskRegex"
+            class="editable-instruction-container__status__testcase"
+        ></jhi-programming-exercise-instruction-testcase-status>
+    </div>
+    <!-- Required for resizing; don't remove empty span -->
+    <fa-icon *ngIf="enableResize" icon="grip-lines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
 </div>

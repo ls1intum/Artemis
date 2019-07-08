@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';

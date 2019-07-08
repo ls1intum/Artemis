@@ -29,17 +29,21 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
+    private final ModelingSubmissionService modelingSubmissionService;
+
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     private final CompassService compassService;
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ParticipationRepository participationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            ModelingSubmissionService modelingSubmissionService) {
         super(complaintResponseService, complaintRepository, resultRepository, participationRepository, resultService, authCheckService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
@@ -72,7 +76,8 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = new Result();
+            modelingSubmissionService.setNewResult(modelingSubmission);
+            result = modelingSubmission.getResult();
         }
         // check the assessment due date if the user tries to override an existing submitted result
         if (result.getCompletionDate() != null) {
@@ -85,7 +90,7 @@ public class ModelingAssessmentService extends AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-        result.setNewFeedback(modelingAssessment);
+        result.updateAllFeedbackItems(modelingAssessment);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
 
@@ -108,7 +113,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
         super.cancelAssessmentOfSubmission(modelingSubmission);
         ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
-        compassService.markModelAsUnassessed(modelingExercise, modelingSubmission.getId());
+        compassService.cancelAssessmentForSubmission(modelingExercise, modelingSubmission.getId());
     }
 
     /**

@@ -1,30 +1,39 @@
 <div class="editor-wrapper">
     <!-- Top bar -->
-    <nav class="navbar navbar-light navbar-expand-sm jh-navbar d-flex">
+    <nav class="editor-statusbar">
         <!-- Exercise title -->
-        <div class="jh-logo-container float-left editor-top-left">
-            <span>{{ exerciseTitle }}</span>
-        </div>
+        <span class="editor-statusbar__title">{{ exerciseTitle }}</span>
         <ng-content select="[editorNavbar]"> </ng-content>
     </nav>
 
     <div class="editor-main">
-        <!-- File browser -->
-        <div class="editor-sidebar-left">
-            <ng-content select="[editorSidebarLeft]"></ng-content>
+        <div class="editor-main__content">
+            <!-- File browser -->
+            <div class="editor-sidebar-left collapsable">
+                <ng-content select="[editorSidebarLeft]"></ng-content>
+                <!-- Required for resizing; don't remove empty span -->
+                <fa-icon icon="grip-lines-vertical" class="rg-sidebar-left text-lightgrey"><span></span></fa-icon>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-center">
+                <ng-content select="[editorCenter]"></ng-content>
+            </div>
+
+            <!-- Instructions -->
+            <div class="editor-sidebar-right collapsable">
+                <fa-icon icon="grip-lines-vertical" class="rg-sidebar-right text-lightgrey"><span></span></fa-icon>
+                <ng-content select="[editorSidebarRight]"></ng-content>
+            </div>
         </div>
 
-        <!-- Editor -->
-        <div class="editor-center">
-            <ng-content select="[editorCenter]"></ng-content>
-        </div>
-
-        <!-- Instructions -->
-        <div class="editor-sidebar-right">
-            <ng-content select="[editorSidebarRight]"></ng-content>
-        </div>
+        <!-- Required for resizing; don't remove empty span -->
+        <fa-icon icon="grip-lines" class="rg-main-bottom text-lightgrey"><span></span></fa-icon>
     </div>
-    <div class="editor-bottom">
-        <ng-content select="[editorBottomArea]"></ng-content>
+
+    <div class="editor-bottom collapsable">
+        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
+        <!-- Required for resizing; don't remove empty span -->
+        <fa-icon icon="grip-lines" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
     </div>
 </div>
