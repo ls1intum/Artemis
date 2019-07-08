@@ -1,8 +1,10 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, ViewChild } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { of } from 'rxjs';
+import { map as rxMap, filter as rxFilter } from 'rxjs/operators';
 import { catchError, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation';
 import { compose, filter, map, sortBy } from 'lodash/fp';
@@ -13,6 +15,7 @@ import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { Result, ResultService } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -66,7 +69,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.exerciseChange.emit(this.exerciseValue);
     }
 
-    constructor(private programmingExerciseService: ProgrammingExerciseService, private jhiAlertService: JhiAlertService) {}
+    constructor(private programmingExerciseService: ProgrammingExerciseService, private jhiAlertService: JhiAlertService, private resultService: ResultService) {}
 
     ngAfterViewInit() {
         this.interactResizable = interact('.editable-instruction-container')
@@ -128,13 +131,33 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateTestCases = (testCases: ProgrammingExerciseTestCase[]) => {
-        setTimeout(() => {
-            this.exerciseTestCases = compose(
-                map(({ testName }) => testName),
-                filter(({ active }) => active),
-                sortBy('testName'),
-            )(testCases);
-            this.testCaseCommand.setValues(this.exerciseTestCases);
-        }, 0);
+        if (testCases) {
+            setTimeout(() => {
+                this.exerciseTestCases = compose(
+                    map(({ testName }) => testName),
+                    filter(({ active }) => active),
+                    sortBy('testName'),
+                )(testCases);
+                this.testCaseCommand.setValues(this.exerciseTestCases);
+            }, 0);
+        } else if (this.exercise.solutionParticipation) {
+            // Fallback for exercises that don't have test cases yet.
+            this.resultService
+                .getLatestResultWithFeedbacks(this.exercise.solutionParticipation.id)
+                .pipe(
+                    rxMap((res: HttpResponse<Result>) => res.body),
+                    rxFilter((result: Result) => !!result.feedbacks),
+                    rxMap(({ feedbacks }: Result) =>
+                        compose(
+                            map(({ text }) => text),
+                            sortBy('text'),
+                        )(feedbacks),
+                    ),
+                )
+                .subscribe((testCases: string[]) => {
+                    this.exerciseTestCases = testCases;
+                    this.testCaseCommand.setValues(this.exerciseTestCases);
+                });
+        }
     };
 }
