@@ -63,6 +63,14 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
+    /**
+     * Update the weight of the specified test case.
+     *
+     * @param exerciseId
+     * @param testCaseId
+     * @param testCaseWeightUpdate
+     * @return
+     */
     @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
@@ -83,6 +91,12 @@ public class ProgrammingExerciseTestCaseResource {
         }
     }
 
+    /**
+     * Use with care: Set the weight of all test cases of an exercise to 1.
+     *
+     * @param exerciseId
+     * @return
+     */
     @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeight(@PathVariable Long exerciseId) {

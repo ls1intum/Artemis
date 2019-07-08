@@ -47,6 +47,11 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         }
     }
 
+    /**
+     * Send new values for the test cases of an exercise to all subscribers.
+     * @param exerciseId
+     * @param testCases
+     */
     public notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void {
         if (this.subjects[exerciseId]) {
             this.subjects[exerciseId].next(testCases);
@@ -61,10 +66,23 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases`);
     }
 
+    /**
+     * Update the weight with the provided value of the provieded test case.
+     * Needs the exercise to verify permissions on the server.
+     *
+     * @param exerciseId
+     * @param testCaseId
+     * @param weight
+     */
     public updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase> {
         return this.http.post<ProgrammingExerciseTestCase>(`${this.testCaseUrl}/${exerciseId}/test-cases/${testCaseId}/update-weight`, { weight });
     }
 
+    /**
+     * Use with care: Set all test case weights to 1.
+     *
+     * @param exerciseId
+     */
     public resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.post<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset-weights`, {});
     }

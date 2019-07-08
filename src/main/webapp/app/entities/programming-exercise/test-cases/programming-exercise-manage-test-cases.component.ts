@@ -34,6 +34,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
     constructor(private testCaseService: ProgrammingExerciseTestCaseService, private route: ActivatedRoute) {}
 
+    /**
+     * Subscribes to the route params to get the current exerciseId.
+     * Uses the exerciseId to subscribe to the newest value of the exercise's test cases.
+     */
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.exerciseId = Number(params['exerciseId']);
@@ -57,6 +61,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
+    /**
+     * Show an input to edit the test cases weight.
+     * @param rowIndex
+     */
     enterEditing(rowIndex: number) {
         this.editing = this.filteredTestCases[rowIndex];
         setTimeout(() => {
@@ -66,10 +74,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         });
     }
 
+    /**
+     * Hide input.
+     */
     leaveEditingWithoutSaving() {
         this.editing = null;
     }
 
+    /**
+     * Update the weight of the edited test case.
+     * @param event
+     */
     updateWeight(event: any) {
         if (!this.editing) {
             return;
@@ -83,6 +98,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         });
     }
 
+    /**
+     * Sets the weights of all test cases to 1.
+     */
     resetWeights() {
         this.editing = null;
         this.testCaseService.resetWeights(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
@@ -90,10 +108,18 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         });
     }
 
+    /**
+     * Executes filtering on all availabile test cases with the specified params.
+     */
     updateTestCaseFilter = () => {
         this.filteredTestCases = this.showInactiveValue ? this.testCases : this.testCases.filter(({ active }) => active);
     };
 
+    /**
+     * Makes inactive test cases grey.
+     *
+     * @param row
+     */
     getRowClass(row: ProgrammingExerciseTestCase) {
         return !row.active ? 'test-case--inactive' : '';
     }

@@ -43,6 +43,13 @@ public class ProgrammingExerciseTestCaseService {
         return this.testCaseRepository.findByExerciseIdAndActive(id, true);
     }
 
+    /**
+     * Update the weight of the provided test case.
+     *
+     * @param testCaseId
+     * @param weight
+     * @return
+     */
     @Transactional
     public ProgrammingExerciseTestCase updateWeight(Long testCaseId, Integer weight) {
         Optional<ProgrammingExerciseTestCase> testCaseOpt = this.testCaseRepository.findById(testCaseId);
@@ -54,6 +61,12 @@ public class ProgrammingExerciseTestCaseService {
         }
     }
 
+    /**
+     * Reset the weights of all test cases to 1.
+     *
+     * @param exerciseId
+     * @return
+     */
     @Transactional
     public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
         Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
