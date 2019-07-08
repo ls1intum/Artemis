@@ -282,9 +282,8 @@ public class TextExerciseResource {
 
         participation.getExercise().filterSensitiveInformation();
 
-        TextSubmission textSubmission;
         if (optionalTextSubmission.isPresent()) {
-            textSubmission = optionalTextSubmission.get();
+            TextSubmission textSubmission = optionalTextSubmission.get();
 
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
@@ -296,10 +295,6 @@ public class TextExerciseResource {
             }
 
             participation.addSubmissions(textSubmission);
-        }
-        else {
-            textSubmission = new TextSubmission();
-            textSubmissionService.save(textSubmission, participation);
         }
 
         return ResponseEntity.ok(participation);

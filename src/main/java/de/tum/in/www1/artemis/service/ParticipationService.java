@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -121,11 +122,11 @@ public class ParticipationService {
 
     /**
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
-     * repository / build plan related stuff for programming exercises.
+     * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
-     * @param exercise
-     * @param username
-     * @return
+     * @param exercise the exercise which is started
+     * @param username the name of the user who starts the exercise
+     * @return the participation connecting the given exercise and user
      */
     @Transactional
     public Participation startExercise(Exercise exercise, String username) {
@@ -171,9 +172,13 @@ public class ParticipationService {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
             }
+
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
+
+            // initialize a modeling or text submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+            initializeSubmission(participation, exercise);
         }
 
         participation = save(participation);
@@ -183,6 +188,30 @@ public class ParticipationService {
         }
 
         return participation;
+    }
+
+    /**
+     * Initializes a new text or modeling submission (depending on the type of the given exercise), connects it with the given participation and stores it in the database.
+     *
+     * @param participation the participation for which the submission should be initialized
+     * @param exercise      the corresponding exercise, should be either a text or modeling exercise, otherwise it will instantly return and not do anything
+     */
+    private void initializeSubmission(Participation participation, Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
+            return;
+        }
+
+        Submission submission;
+        if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else {
+            submission = new TextSubmission();
+        }
+
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        participation.addSubmissions(submission);
     }
 
     /**

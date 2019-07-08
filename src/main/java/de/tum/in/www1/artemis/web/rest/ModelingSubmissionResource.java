@@ -320,8 +320,9 @@ public class ModelingSubmissionResource {
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
         if (!optionalModelingSubmission.isPresent()) {
+            // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
-            modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.getStudent().getLogin());
+            modelingSubmission.setParticipation(participation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
