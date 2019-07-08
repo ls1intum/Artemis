@@ -209,12 +209,7 @@ public class RepositoryService {
      */
     public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
         Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl, true);
-        boolean isClean = gitService.get().isClean(repository);
-
-        if (isClean) {
-            gitService.get().pull(repository);
-        }
-        return isClean;
+        return gitService.get().isClean(repository);
     }
 
     /**
