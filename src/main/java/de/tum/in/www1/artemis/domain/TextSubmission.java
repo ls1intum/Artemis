@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.persistence.*;
 
@@ -21,7 +21,7 @@ public class TextSubmission extends Submission implements Serializable {
     private String text;
 
     @OneToMany(mappedBy = "submission")
-    private Set<TextBlock> blocks = new HashSet<>();
+    private List<TextBlock> blocks = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -38,11 +38,11 @@ public class TextSubmission extends Submission implements Serializable {
         this.text = text;
     }
 
-    public Set<TextBlock> getBlocks() {
+    public List<TextBlock> getBlocks() {
         return blocks;
     }
 
-    public TextSubmission blocks(Set<TextBlock> textBlocks) {
+    public TextSubmission blocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
         return this;
     }
@@ -59,7 +59,7 @@ public class TextSubmission extends Submission implements Serializable {
         return this;
     }
 
-    public void setBlocks(Set<TextBlock> textBlocks) {
+    public void setBlocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

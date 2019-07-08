@@ -26,24 +26,26 @@ public class TextBlockService {
 
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final String submissionText = textSubmission.getText();
-        final List<String> blocks = splitSubmissionIntoBlocks(submissionText);
-        final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block).credits(0d)).collect(Collectors.toList());
+        final List<TextBlock> blocks = splitSubmissionIntoBlocks(submissionText);
+        final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block.getText()).credits(0d)).collect(Collectors.toList());
 
         result.getFeedbacks().addAll(feedbacks);
     }
 
-    public List<String> splitSubmissionIntoBlocks(String submission) {
+    public List<TextBlock> splitSubmissionIntoBlocks(String submission) {
         BreakIterator breakIterator = BreakIterator.getSentenceInstance();
         breakIterator.setText(submission);
-        List<String> sentences = new ArrayList<>();
+        List<TextBlock> blocks = new ArrayList<>();
 
         int start = breakIterator.first();
         for (int end = breakIterator.next(); end != BreakIterator.DONE; start = end, end = breakIterator.next()) {
             String sentence = submission.substring(start, end).trim();
-            sentences.add(sentence);
+            final TextBlock textBlock = new TextBlock().text(sentence).startIndex(start).endIndex(end);
+            textBlock.computeId();
+            blocks.add(textBlock);
         }
 
-        return sentences;
+        return blocks;
     }
 
 }

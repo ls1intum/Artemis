@@ -58,10 +58,12 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
             TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextExerciseService textExerciseService,
             TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
         this.participationService = participationService;
@@ -73,6 +75,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingTemplate = messagingTemplate;
+        this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
@@ -145,7 +148,18 @@ public class TextAssessmentResource extends AssessmentResource {
         final Exercise exercise = result.getParticipation().getExercise();
         checkAuthorization(exercise);
 
-        textBlockService.prepopulateFeedbackBlocks(result);
+        if (!(exercise instanceof TextExercise)) {
+            throw new BadRequestAlertException("No text exercise found for the given ID.", "textExercise", "exerciseNotFound");
+        }
+
+        final TextExercise textExercise = (TextExercise) exercise;
+
+        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
+            automaticTextFeedbackService.get().suggestFeedback(result);
+        }
+        else {
+            textBlockService.prepopulateFeedbackBlocks(result);
+        }
         return ResponseEntity.ok(result);
     }
 
