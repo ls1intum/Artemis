@@ -1,0 +1,244 @@
+{
+    "version": "2.0.0",
+    "size": {
+        "width": 830,
+        "height": 280
+    },
+    "type": "ClassDiagram",
+    "interactive": {
+        "elements": [],
+        "relationships": []
+    },
+    "elements": [
+        {
+            "id": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+            "name": "Car",
+            "owner": null,
+            "type": "AbstractClass",
+            "bounds": {
+                "x": 320,
+                "y": 0,
+                "width": 200,
+                "height": 100
+            },
+            "attributes": [
+                "b6a57e2c-dd95-4aae-b061-ff1dff9234cd"
+            ],
+            "methods": [
+                "1b93b52a-d31a-4218-900c-0a306f498452"
+            ]
+        },
+        {
+            "id": "b6a57e2c-dd95-4aae-b061-ff1dff9234cd",
+            "name": "+ speed: int",
+            "owner": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+            "type": "ClassAttribute",
+            "bounds": {
+                "x": 320,
+                "y": 40,
+                "width": 200,
+                "height": 30
+            }
+        },
+        {
+            "id": "1b93b52a-d31a-4218-900c-0a306f498452",
+            "name": "+ drive()",
+            "owner": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+            "type": "ClassMethod",
+            "bounds": {
+                "x": 320,
+                "y": 70,
+                "width": 200,
+                "height": 30
+            }
+        },
+        {
+            "id": "56ba66ca-6004-4f3a-bb33-ce74e3192c4c",
+            "name": "SlowCar",
+            "owner": null,
+            "type": "Class",
+            "bounds": {
+                "x": 0,
+                "y": 210,
+                "width": 200,
+                "height": 40
+            },
+            "attributes": [],
+            "methods": []
+        },
+        {
+            "id": "7552e321-071b-42dc-a1dc-45c90f91dda2",
+            "name": "FastCar",
+            "owner": null,
+            "type": "Class",
+            "bounds": {
+                "x": 320,
+                "y": 210,
+                "width": 200,
+                "height": 70
+            },
+            "attributes": [],
+            "methods": [
+                "4e668fe4-41ec-48db-97ed-b6a6aab5b58a"
+            ]
+        },
+        {
+            "id": "4e668fe4-41ec-48db-97ed-b6a6aab5b58a",
+            "name": "+ accelerate()",
+            "owner": "7552e321-071b-42dc-a1dc-45c90f91dda2",
+            "type": "ClassMethod",
+            "bounds": {
+                "x": 320,
+                "y": 250,
+                "width": 200,
+                "height": 30
+            }
+        },
+        {
+            "id": "2b5c2671-a261-47ab-95ba-eeee2c01fc65",
+            "name": "AutonomousCar",
+            "owner": null,
+            "type": "Class",
+            "bounds": {
+                "x": 630,
+                "y": 210,
+                "width": 200,
+                "height": 70
+            },
+            "attributes": [
+                "329d802f-4227-4743-b8cc-10914399bc32"
+            ],
+            "methods": []
+        },
+        {
+            "id": "329d802f-4227-4743-b8cc-10914399bc32",
+            "name": "- shield: Rectangle",
+            "owner": "2b5c2671-a261-47ab-95ba-eeee2c01fc65",
+            "type": "ClassAttribute",
+            "bounds": {
+                "x": 630,
+                "y": 250,
+                "width": 200,
+                "height": 30
+            }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "d74ef9be-e35b-4dc0-a560-79a2b812aeb4",
+            "name": "",
+            "type": "ClassInheritance",
+            "source": {
+                "element": "7552e321-071b-42dc-a1dc-45c90f91dda2",
+                "direction": "Up",
+                "multiplicity": "",
+                "role": ""
+            },
+            "target": {
+                "element": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+                "direction": "Down",
+                "multiplicity": "",
+                "role": ""
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 110
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "bounds": {
+                "x": 420,
+                "y": 100,
+                "width": 1,
+                "height": 110
+            }
+        },
+        {
+            "id": "1db861e9-c4eb-46a2-9558-bccb4ccad503",
+            "name": "",
+            "type": "ClassInheritance",
+            "source": {
+                "element": "2b5c2671-a261-47ab-95ba-eeee2c01fc65",
+                "direction": "Up",
+                "multiplicity": "",
+                "role": ""
+            },
+            "target": {
+                "element": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+                "direction": "Down",
+                "multiplicity": "",
+                "role": ""
+            },
+            "path": [
+                {
+                    "x": 310,
+                    "y": 110
+                },
+                {
+                    "x": 310,
+                    "y": 55
+                },
+                {
+                    "x": 0,
+                    "y": 55
+                },
+                {
+                    "x": 0,
+                    "y": 0
+                }
+            ],
+            "bounds": {
+                "x": 420,
+                "y": 100,
+                "width": 310,
+                "height": 110
+            }
+        },
+        {
+            "id": "3bcd82e3-98c0-4c6f-8b70-ad06f15d87f6",
+            "name": "",
+            "type": "ClassInheritance",
+            "source": {
+                "element": "56ba66ca-6004-4f3a-bb33-ce74e3192c4c",
+                "direction": "Up",
+                "multiplicity": "",
+                "role": ""
+            },
+            "target": {
+                "element": "8bf82205-e4c2-46ce-8f0d-c41c35cf326a",
+                "direction": "Down",
+                "multiplicity": "",
+                "role": ""
+            },
+            "path": [
+                {
+                    "x": 0,
+                    "y": 110
+                },
+                {
+                    "x": 0,
+                    "y": 55
+                },
+                {
+                    "x": 320,
+                    "y": 55
+                },
+                {
+                    "x": 320,
+                    "y": 0
+                }
+            ],
+            "bounds": {
+                "x": 100,
+                "y": 100,
+                "width": 320,
+                "height": 110
+            }
+        }
+    ],
+    "assessments": []
+}

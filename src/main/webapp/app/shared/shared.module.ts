@@ -11,6 +11,7 @@ import {
     KeysPipe,
     TypeCheckPipe,
     HtmlForMarkdownPipe,
+    TruncatePipe,
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
@@ -32,6 +33,7 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
+        TruncatePipe,
     ],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [],
@@ -48,6 +50,7 @@ import { RemovePositiveAutomaticFeedbackPipe } from 'app/shared/pipes/remove-pos
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
+        TruncatePipe,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })

@@ -50,6 +50,14 @@
             >
                 Override Assessment
             </button>
+            <!--Right now, this button is displayed when an assessment is graded and submitted, just like of the "override button".-->
+            <button
+                class="btn btn-success ml-3"
+                (click)="assessNextOptimal()"
+                [disabled]="!assessmentsAreValid"
+                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.nextAssessment"
+            ></button>
         </div>
     </div>
 </div>
@@ -130,7 +138,7 @@
     <div class="row mt-2">
         <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
         <div class="col-12 col-lg-8 col-xl-6">
-            <textarea class="form-control" rows="2" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
+            <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
         </div>
     </div>
 </ng-container>

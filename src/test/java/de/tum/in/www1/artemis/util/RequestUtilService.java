@@ -63,6 +63,10 @@ public class RequestUtilService {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
 
+        if (res.getResponse().getStatus() >= 299) {
+            return null;
+        }
+
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
