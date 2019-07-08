@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.TextCluster;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface TextBlockRepository extends JpaRepository<TextBlock, Long> {
+public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
 
     Optional<Set<TextBlock>> findAllByCluster(TextCluster textCluster);
 }

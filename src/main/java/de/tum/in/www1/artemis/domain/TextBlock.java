@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.apache.commons.codec.digest.DigestUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -15,33 +16,70 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @Entity
 @Table(name = "text_block")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class TextBlock implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Size(min = 40, max = 40)
+    @Column(name = "id", unique = true, columnDefinition = "CHAR(40)")
+    private String id;
 
-    @Column(name = "text")
+    @Column(name = "text", nullable = false)
     private String text;
+
+    @Column(name = "startIndex", nullable = false)
+    private int startIndex;
+
+    @Column(name = "endIndex", nullable = false)
+    private int endIndex;
 
     @ManyToOne
     @JsonIgnoreProperties("blocks")
     private TextSubmission submission;
 
     @ManyToOne
-    @JsonIgnoreProperties("blocks")
+    @JsonIgnore
     private TextCluster cluster;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
+    }
+
+    public void computeId() {
+        final String idString = submission.getId() + ";" + startIndex + "-" + endIndex + ";" + text;
+        id = DigestUtils.sha1Hex(idString);
+    }
+
+    public int getStartIndex() {
+        return startIndex;
+    }
+
+    public TextBlock startIndex(int startIndex) {
+        this.startIndex = startIndex;
+        return this;
+    }
+
+    public void setStartIndex(int startIndex) {
+        this.startIndex = startIndex;
+    }
+
+    public int getEndIndex() {
+        return endIndex;
+    }
+
+    public TextBlock endIndex(int endIndex) {
+        this.endIndex = endIndex;
+        return this;
+    }
+
+    public void setEndIndex(int endIndex) {
+        this.endIndex = endIndex;
     }
 
     public String getText() {

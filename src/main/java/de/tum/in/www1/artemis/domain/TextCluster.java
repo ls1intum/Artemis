@@ -1,20 +1,21 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A TextCluster.
  */
 @Entity
 @Table(name = "text_cluster")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class TextCluster implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -31,9 +32,16 @@ public class TextCluster implements Serializable {
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 
+    @Lob
+    @Column(name = "block_order")
+    private byte[] blockOrder;
+
     @OneToMany(mappedBy = "cluster")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<TextBlock> blocks = new HashSet<>();
+    private List<TextBlock> blocks = new ArrayList<>();
+
+    @ManyToOne
+    @JsonIgnore
+    private TextExercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -45,14 +53,7 @@ public class TextCluster implements Serializable {
     }
 
     public double[] getProbabilities() {
-        final ByteArrayInputStream bais = new ByteArrayInputStream(probabilities);
-        try (final ObjectInputStream ois = new ObjectInputStream(bais)) {
-            return (double[]) ois.readObject();
-        }
-        catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return castFromBinary(probabilities);
     }
 
     public TextCluster probabilities(double[] probabilities) {
@@ -61,25 +62,11 @@ public class TextCluster implements Serializable {
     }
 
     public void setProbabilities(double[] probabilities) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(probabilities);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        this.probabilities = baos.toByteArray();
+        this.probabilities = castToBinary(probabilities);
     }
 
     public double[][] getDistanceMatrix() {
-        final ByteArrayInputStream bais = new ByteArrayInputStream(distanceMatrix);
-        try (final ObjectInputStream ois = new ObjectInputStream(bais)) {
-            return (double[][]) ois.readObject();
-        }
-        catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return castFromBinary(distanceMatrix);
     }
 
     public TextCluster distanceMatrix(double[][] distanceMatrix) {
@@ -88,21 +75,28 @@ public class TextCluster implements Serializable {
     }
 
     public void setDistanceMatrix(double[][] distanceMatrix) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(distanceMatrix);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        this.distanceMatrix = baos.toByteArray();
+        this.distanceMatrix = castToBinary(distanceMatrix);
     }
 
-    public Set<TextBlock> getBlocks() {
+    private String[] getBlockOrder() {
+        return castFromBinary(blockOrder);
+    }
+
+    public void storeBlockOrder() {
+        final String[] blockOrder = (String[]) blocks.stream().map(TextBlock::getId).toArray();
+        this.blockOrder = castToBinary(blockOrder);
+    }
+
+    public int getBlockIndex(TextBlock textBlock) {
+        final String[] order = getBlockOrder();
+        return IntStream.range(0, order.length).filter(i -> textBlock.getId().equals(order[i])).findFirst().orElse(-1);
+    }
+
+    public List<TextBlock> getBlocks() {
         return blocks;
     }
 
-    public TextCluster blocks(Set<TextBlock> textBlocks) {
+    public TextCluster blocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
         return this;
     }
@@ -119,13 +113,37 @@ public class TextCluster implements Serializable {
         return this;
     }
 
-    public void setBlocks(Set<TextBlock> textBlocks) {
+    public void setBlocks(List<TextBlock> textBlocks) {
         this.blocks = textBlocks;
+    }
+
+    public TextExercise getExercise() {
+        return exercise;
+    }
+
+    public TextCluster exercise(TextExercise exercise) {
+        setExercise(exercise);
+        return this;
+    }
+
+    public void setExercise(TextExercise exercise) {
+        this.exercise = exercise;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public int size() {
         return blocks.size();
+    }
+
+    public double distanceBetweenBlocks(TextBlock first, TextBlock second) {
+        int firstIndex = getBlockIndex(first);
+        int secondIndex = getBlockIndex(second);
+
+        if (firstIndex == -1 || secondIndex == -1) {
+            throw new IllegalArgumentException("Cannot compute distance to Text Block outside cluster.");
+        }
+
+        return getDistanceMatrix()[firstIndex][secondIndex];
     }
 
     @Override
@@ -141,11 +159,36 @@ public class TextCluster implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        return Objects.hashCode(getId());
     }
 
     @Override
     public String toString() {
-        return "TextCluster{" + "id=" + getId() + ", probabilities='" + getProbabilities() + "'" + ", distanceMatrix='" + getDistanceMatrix() + "'" + "}";
+        return "TextCluster{" + "id=" + getId() + ", probabilities='" + Arrays.toString(getProbabilities()) + "'" + ", distanceMatrix='" + Arrays.deepToString(getDistanceMatrix())
+                + "'" + "}";
     }
+
+    // region Binary Cast
+    private <T> T castFromBinary(byte[] data) {
+        final ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        try (final ObjectInputStream ois = new ObjectInputStream(bais)) {
+            return (T) ois.readObject();
+        }
+        catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private <T> byte[] castToBinary(T data) {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(data);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return baos.toByteArray();
+    }
+    // endregion
 }

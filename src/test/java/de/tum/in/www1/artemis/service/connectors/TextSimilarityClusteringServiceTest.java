@@ -36,7 +36,7 @@ public class TextSimilarityClusteringServiceTest {
         ReflectionTestUtils.setField(service, "API_ENDPOINT", "https://tac.ase.in.tum.de/cluster");
         ReflectionTestUtils.setField(service, "restTemplate", restTemplate());
 
-        final Set<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text)).peek(block -> block.setId((long) (Math.random() * 1000)))
+        final Set<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text).startIndex(0).endIndex(3)).peek(TextBlock::computeId)
                 .collect(Collectors.toSet());
 
         final Map<Integer, TextCluster> clusterDictionary = service.clusterTextBlocks(blocks);
@@ -44,7 +44,7 @@ public class TextSimilarityClusteringServiceTest {
         assertThat(clusterDictionary.keySet(), hasSize(1));
         assertThat(clusterDictionary.keySet(), hasItem(-1));
         final TextCluster cluster = clusterDictionary.get(-1);
-        final Set<TextBlock> blocks1 = cluster.getBlocks();
+        final List<TextBlock> blocks1 = cluster.getBlocks();
 
         assertThat(blocks1.toArray(), is(equalTo(blocks.toArray())));
 
