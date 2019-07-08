@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -47,14 +46,12 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * Count the number of unaccepted complaints of a student in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
      * of complaints for a student in a course. Requests for more feedback are not counted here.
      *
-     * @param studentId     the id of the student
-     * @param courseId      the id of the course
-     * @param complaintType type of a complaint
+     * @param studentId the id of the student
+     * @param courseId  the id of the course
      * @return the number of unaccepted
      */
-    @Query("SELECT count(c) FROM Complaint c  WHERE c.complaintType <> :#{#complaintType} AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
-    long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId,
-            @Param("complaintType") ComplaintType complaintType);
+    @Query("SELECT count(c) FROM Complaint c  WHERE (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL)  AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
      * This magic method counts the number of complaints associated to an exercise id

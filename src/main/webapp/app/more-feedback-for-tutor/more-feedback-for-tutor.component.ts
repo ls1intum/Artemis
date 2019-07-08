@@ -35,7 +35,6 @@ export class MoreFeedbackForTutorComponent implements OnInit {
         this.handled = true;
         this.complaint.accepted = true;
         this.complaintResponse.complaint = this.complaint;
-        // If the complaint was rejected, just the complaint response is created.
         this.complaintResponseService.create(this.complaintResponse).subscribe(
             response => {
                 this.jhiAlertService.success('artemisApp.moreFeedback.response.created');

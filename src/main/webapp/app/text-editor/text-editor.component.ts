@@ -93,7 +93,7 @@ export class TextEditorComponent implements OnInit {
                         this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
                         this.complaintService.findByResultId(this.result.id).subscribe(res => {
                             if (res.body) {
-                                if (res.body.complaintType === ComplaintType.COMPLAINT) {
+                                if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
                                     this.hasComplaint = true;
                                 } else {
                                     this.hasRequestMoreFeedback = true;

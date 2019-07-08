@@ -81,8 +81,7 @@
             {{ 'artemisApp.complaint.moreInfo' | translate }}
         </button>
         <button
-            class="btn btn-primary"
-            style="margin-left: 5px;"
+            class="btn btn-primary ml"
             [class.not-allowed]="!isTimeOfComplaintValid"
             (click)="toggleRequestMoreFeedbackForm()"
             [disabled]="!isTimeOfComplaintValid"

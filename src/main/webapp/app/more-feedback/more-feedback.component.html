@@ -21,7 +21,15 @@
                 <span *ngIf="handled && accepted" class="text-light bg-success"> &nbsp;{{ 'artemisApp.moreFeedback.acceptedLong' | translate }}&nbsp; </span>
             </p>
 
-            <textarea id="complainTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
+            <textarea
+                id="complainTextArea"
+                class="col-12 px-1"
+                rows="4"
+                maxlength="2000"
+                [(ngModel)]="complaintText"
+                [readOnly]="alreadySubmitted"
+                [disabled]="alreadySubmitted"
+            ></textarea>
 
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">

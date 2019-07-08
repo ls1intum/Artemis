@@ -73,7 +73,14 @@ public class ComplaintResponseService {
         }
         // Only tutors who are not the original assessor of the submission can reply to a complaint
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(originalComplaint.getResult().getParticipation().getExercise())
-                || (originalComplaint.getResult().getAssessor().equals(reviewer) && originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT))) {
+                || (originalComplaint.getResult().getAssessor().equals(reviewer)
+                        && (originalComplaint.getComplaintType() == null || originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT)))) {
+            throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
+        }
+
+        // Only tutors who are the original assessor of the submission can reply to more feedback request
+        else if (!originalComplaint.getResult().getAssessor().equals(reviewer)
+                && (originalComplaint.getComplaintType() != null && originalComplaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 

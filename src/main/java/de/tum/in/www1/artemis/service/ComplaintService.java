@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -97,7 +96,7 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countUnacceptedComplaintsByStudentIdAndCourseId(long studentId, long courseId) {
-        return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(studentId, courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(studentId, courseId);
     }
 
     @Transactional(readOnly = true)
