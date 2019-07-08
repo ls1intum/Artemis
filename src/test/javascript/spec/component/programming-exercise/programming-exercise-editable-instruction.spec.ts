@@ -39,7 +39,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let subscribeForTestCaseSpy: SinonSpy;
     let getLatestResultWithFeedbacksStub: SinonStub;
 
-    const exercise = { id: 30, solutionParticipation: { id: 99 } } as ProgrammingExercise;
+    const exercise = { id: 30, templateParticipation: { id: 99 } } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
 
@@ -138,7 +138,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(comp.exerciseTestCases).to.have.lengthOf(0);
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(99);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
 
         subject.next({ body: { feedbacks: [{ text: 'testY' }, { text: 'testX' }] } } as HttpResponse<Result>);
         tick();

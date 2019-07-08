@@ -140,10 +140,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 )(testCases);
                 this.testCaseCommand.setValues(this.exerciseTestCases);
             }, 0);
-        } else if (this.exercise.solutionParticipation) {
+        } else if (this.exercise.templateParticipation) {
             // Fallback for exercises that don't have test cases yet.
             this.resultService
-                .getLatestResultWithFeedbacks(this.exercise.solutionParticipation.id)
+                .getLatestResultWithFeedbacks(this.exercise.templateParticipation.id)
                 .pipe(
                     rxMap((res: HttpResponse<Result>) => res.body),
                     rxFilter((result: Result) => !!result.feedbacks),
