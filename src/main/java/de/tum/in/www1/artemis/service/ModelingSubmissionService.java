@@ -270,7 +270,10 @@ public class ModelingSubmissionService extends SubmissionService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        submission.getParticipation().addResult(result);
+        if (submission.getParticipation() != null) {
+            // TODO: this is a workaround for ExampleSubmissions and their assessments. In this case there is no participation. We should handle this case properly
+            submission.getParticipation().addResult(result);
+        }
         resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
     }
