@@ -1,7 +1,20 @@
 <div>
-    <h3>
-        Inline Editing
+    <h3 jhiTranslate="artemisApp.programmingExercise.manageTestCases.title">
+        Manage Test Cases.
     </h3>
+    <div>
+        <div class="btn-group btn-group-toggle" ngbRadioGroup name="radioBasic" [(ngModel)]="showInactive">
+            <label ngbButtonLabel class="btn-secondary">
+                <input ngbButton type="radio" [value]="false" />
+                <span jhiTranslate="artemisApp.programmingExercise.manageTestCases.hideInactive"></span>
+            </label>
+            <label ngbButtonLabel class="btn-secondary">
+                <input ngbButton type="radio" value="true" />
+                <span jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive"></span>
+            </label>
+        </div>
+        <!--        <button class="btn btn-primary" (click)=""></button>-->
+    </div>
     <ngx-datatable
         #mydatatable
         class="bootstrap"
@@ -10,7 +23,7 @@
         [columnMode]="'force'"
         [footerHeight]="50"
         [rowHeight]="'auto'"
-        [rows]="testCases"
+        [rows]="filteredTestCases"
         [sorts]="[{ prop: 'testName', dir: 'asc' }]"
         [rowClass]="getRowClass"
     >
@@ -38,7 +51,7 @@
                     [value]="value"
                     type="text"
                 />
-                <!--                <fa-icon icon="pencil-alt" (click)="editing[rowIndex + '-weight'] = true"></fa-icon>-->
+                <fa-icon icon="pencil-alt" (click)="enterEditing(testCases.indexOf(row))"></fa-icon>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">

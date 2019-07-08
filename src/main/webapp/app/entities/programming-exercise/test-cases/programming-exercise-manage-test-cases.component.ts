@@ -14,9 +14,22 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy {
     exerciseId: number;
     editing: ProgrammingExerciseTestCase | null = null;
-    testCases: ProgrammingExerciseTestCase[];
     testCaseSubscription: Subscription;
     paramSub: Subscription;
+
+    testCases: ProgrammingExerciseTestCase[];
+    filteredTestCases: ProgrammingExerciseTestCase[];
+
+    showInactiveValue = false;
+
+    get showInactive() {
+        return this.showInactiveValue;
+    }
+
+    set showInactive(showInactive: boolean) {
+        this.showInactiveValue = showInactive;
+        this.updateTestCaseFilter();
+    }
 
     constructor(private testCaseService: ProgrammingExerciseTestCaseService, private route: ActivatedRoute) {}
 
@@ -28,6 +41,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             }
             this.testCaseSubscription = this.testCaseService.subscribeForTestCases(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
                 this.testCases = testCases;
+                this.updateTestCaseFilter();
             });
         });
     }
@@ -61,6 +75,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
         });
     }
+
+    updateTestCaseFilter = () => {
+        this.filteredTestCases = this.showInactiveValue ? this.testCases : this.testCases.filter(({ active }) => active);
+    };
 
     getRowClass(row: ProgrammingExerciseTestCase) {
         return !row.active ? 'test-case--inactive' : '';
