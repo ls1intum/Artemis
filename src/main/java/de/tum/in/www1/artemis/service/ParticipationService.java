@@ -520,7 +520,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Optional<Participation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return participationRepository.findByExerciseIdAndStudentLoginWithEagerSubmissions(exerciseId, username);
+        return participationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**
