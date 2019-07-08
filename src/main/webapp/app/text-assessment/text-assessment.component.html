@@ -124,7 +124,13 @@
         <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
             <div class="alert alert-secondary text-center" role="alert">
                 <p jhiTranslate="artemisApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
-                <a class="alert-link" jhiTranslate="artemisApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()" *ngIf="result">Add Text Blocks automatically.</a>
+                <a
+                    class="alert-link"
+                    jhiTranslate="artemisApp.textAssessment.predefineTextBlocks"
+                    (click)="predefineTextBlocks()"
+                    *ngIf="result && !exercise.automaticAssessmentEnabled"
+                    >Add Text Blocks automatically.</a
+                >
             </div>
         </div>
         <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
