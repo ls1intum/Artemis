@@ -65,15 +65,15 @@ public class ProgrammingExerciseTestCaseResource {
 
     @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
+    public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
             @RequestBody ProgrammingExerciseTestCaseWeightUpdate testCaseWeightUpdate) {
         log.debug("REST request to update the weight of test case {} to {}", testCaseId, testCaseWeightUpdate.getWeight());
         try {
             // Retrieve programming exercise to check availability & permissions.
             ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
             programmingExercise.getTestCases().stream().filter(testCase -> testCase.getId().equals(testCaseId)).findFirst().orElseThrow(NoSuchElementException::new);
-            programmingExerciseTestCaseService.updateWeight(testCaseId, testCaseWeightUpdate.getWeight());
-            return new ResponseEntity<>(HttpStatus.OK);
+            ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseService.updateWeight(testCaseId, testCaseWeightUpdate.getWeight());
+            return ResponseEntity.ok(testCase);
         }
         catch (IllegalAccessException ex) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -82,4 +82,23 @@ public class ProgrammingExerciseTestCaseResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeight(@PathVariable Long exerciseId) {
+        log.debug("REST request to reset the weights of exercise {}", exerciseId);
+        try {
+            // Retrieve programming exercise to check availability & permissions.
+            programmingExerciseService.findById(exerciseId);
+            Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.resetWeights(exerciseId);
+            return ResponseEntity.ok(testCases);
+        }
+        catch (IllegalAccessException ex) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        catch (NoSuchElementException ex) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 }

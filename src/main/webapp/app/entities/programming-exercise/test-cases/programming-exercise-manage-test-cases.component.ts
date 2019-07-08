@@ -1,10 +1,9 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
-import { IProgrammingExerciseTestCase, ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 
 @Component({
     selector: 'jhi-programming-exercise-manage-test-cases',
@@ -17,8 +16,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     testCaseSubscription: Subscription;
     paramSub: Subscription;
 
-    testCases: ProgrammingExerciseTestCase[];
-    filteredTestCases: ProgrammingExerciseTestCase[];
+    testCases: ProgrammingExerciseTestCase[] = [];
+    filteredTestCases: ProgrammingExerciseTestCase[] = [];
 
     showInactiveValue = false;
 
@@ -27,6 +26,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     set showInactive(showInactive: boolean) {
+        this.editing = null;
         this.showInactiveValue = showInactive;
         this.updateTestCaseFilter();
     }
@@ -36,6 +36,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.exerciseId = Number(params['exerciseId']);
+            this.editing = null;
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
             }
@@ -56,7 +57,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     }
 
     enterEditing(rowIndex: number) {
-        this.editing = this.testCases[rowIndex];
+        this.editing = this.filteredTestCases[rowIndex];
     }
 
     leaveEditingWithoutSaving() {
@@ -69,10 +70,17 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
         const editedTestCase = this.editing;
         const weight = event.target.value;
-        this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe(() => {
+        this.testCaseService.updateWeight(this.exerciseId, editedTestCase.id, weight).subscribe((updatedTestCase: ProgrammingExerciseTestCase) => {
             this.editing = null;
-            const updatedTestCases = this.testCases.map(testCase => (testCase.id === editedTestCase.id ? { ...testCase, weight } : testCase));
+            const updatedTestCases = this.testCases.map(testCase => (testCase.id === updatedTestCase.id ? updatedTestCase : testCase));
             this.testCaseService.notifyTestCases(this.exerciseId, updatedTestCases);
+        });
+    }
+
+    resetWeights() {
+        this.editing = null;
+        this.testCaseService.resetWeights(this.exerciseId).subscribe((testCases: ProgrammingExerciseTestCase[]) => {
+            this.testCaseService.notifyTestCases(this.exerciseId, testCases);
         });
     }
 

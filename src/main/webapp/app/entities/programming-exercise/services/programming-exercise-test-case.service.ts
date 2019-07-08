@@ -61,8 +61,12 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         return this.http.get<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases`);
     }
 
-    public updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<void> {
-        return this.http.post<void>(`${this.testCaseUrl}/${exerciseId}/test-cases/${testCaseId}/update-weight`, { weight });
+    public updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase> {
+        return this.http.post<ProgrammingExerciseTestCase>(`${this.testCaseUrl}/${exerciseId}/test-cases/${testCaseId}/update-weight`, { weight });
+    }
+
+    public resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.post<ProgrammingExerciseTestCase[]>(`${this.testCaseUrl}/${exerciseId}/test-cases/reset-weights`, {});
     }
 
     /**

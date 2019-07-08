@@ -13,13 +13,13 @@
                 <span jhiTranslate="artemisApp.programmingExercise.manageTestCases.showInactive"></span>
             </label>
         </div>
-        <!--        <button class="btn btn-primary" (click)=""></button>-->
+        <button class="btn btn-primary" (click)="resetWeights()" jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"></button>
     </div>
     <ngx-datatable
         #mydatatable
         class="bootstrap"
         [headerHeight]="50"
-        [limit]="10"
+        [limit]="20"
         [columnMode]="'force'"
         [footerHeight]="50"
         [rowHeight]="'auto'"
@@ -39,11 +39,11 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="Weight" prop="weight">
             <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                <span title="Double click to edit" *ngIf="editing !== testCases[testCases.indexOf(row)]" (dblclick)="enterEditing(testCases.indexOf(row))">
+                <span title="Double click to edit" *ngIf="editing !== filteredTestCases[filteredTestCases.indexOf(row)]" (dblclick)="enterEditing(filteredTestCases.indexOf(row))">
                     {{ value }}
                 </span>
                 <input
-                    *ngIf="editing === testCases[testCases.indexOf(row)]"
+                    *ngIf="editing === filteredTestCases[filteredTestCases.indexOf(row)]"
                     autofocus
                     (blur)="updateWeight($event)"
                     (keyup.enter)="updateWeight($event)"
@@ -51,7 +51,7 @@
                     [value]="value"
                     type="text"
                 />
-                <fa-icon icon="pencil-alt" (click)="enterEditing(testCases.indexOf(row))"></fa-icon>
+                <fa-icon icon="pencil-alt" (click)="enterEditing(filteredTestCases.indexOf(row))"></fa-icon>
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Is Active" prop="active">

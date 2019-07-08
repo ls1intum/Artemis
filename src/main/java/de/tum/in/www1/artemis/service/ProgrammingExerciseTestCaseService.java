@@ -44,9 +44,23 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     @Transactional
-    public void updateWeight(Long testCaseId, Integer weight) {
-        this.testCaseRepository.findById(testCaseId).map(testCase -> testCase.weight(weight)).orElseThrow(NoSuchElementException::new);
+    public ProgrammingExerciseTestCase updateWeight(Long testCaseId, Integer weight) {
+        Optional<ProgrammingExerciseTestCase> testCaseOpt = this.testCaseRepository.findById(testCaseId);
+        if (testCaseOpt.isPresent()) {
+            return testCaseOpt.get().weight(weight);
+        }
+        else {
+            throw new NoSuchElementException();
+        }
+    }
 
+    @Transactional
+    public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            testCase.setWeight(1);
+        }
+        return testCases;
     }
 
     /**
