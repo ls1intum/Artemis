@@ -8,6 +8,9 @@ import { JhiWebsocketService } from 'app/core';
 
 export interface IProgrammingExerciseTestCaseService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
+    notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
+    updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase>;
+    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 
 @Injectable({ providedIn: 'root' })

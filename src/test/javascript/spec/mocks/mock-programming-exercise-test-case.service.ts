@@ -19,4 +19,16 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
     next(value: ProgrammingExerciseTestCase[]) {
         this.subject.next(value);
     }
+
+    notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void {
+        this.subject.next(testCases);
+    }
+
+    resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return of();
+    }
+
+    updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase> {
+        return of();
+    }
 }
