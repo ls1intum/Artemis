@@ -112,7 +112,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Executes filtering on all availabile test cases with the specified params.
      */
     updateTestCaseFilter = () => {
-        this.filteredTestCases = this.showInactiveValue ? this.testCases : this.testCases.filter(({ active }) => active);
+        this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
     };
 
     /**
