@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -39,6 +38,8 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final TextSubmissionService textSubmissionService;
+
     private final TextAssessmentService textAssessmentService;
 
     private final TextExerciseService textExerciseService;
@@ -59,9 +60,11 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
-            UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository) {
+    public TextExerciseResource(TextSubmissionService textSubmissionService, TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService,
+            TextAssessmentService textAssessmentService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService,
+            ParticipationService participationService, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
+            ExampleSubmissionRepository exampleSubmissionRepository) {
+        this.textSubmissionService = textSubmissionService;
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -233,16 +236,15 @@ public class TextExerciseResource {
 
     /**
      * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing and the assessments if the submission was already
-     * submitted.
+     * submitted. If there is no submission yet (initial call), a new one will be created and saved to the database before sending it to the client along with the participation.
      *
      * @param participationId the participationId for which to find the data for the text editor
-     * @return the ResponseEntity with json as body
+     * @return the ResponseEntity with the participation as body
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -275,22 +277,29 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> textSubmission = participation.findLatestTextSubmission();
+        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (textSubmission.isPresent()) {
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.get().setParticipation(null);
+        TextSubmission textSubmission;
+        if (optionalTextSubmission.isPresent()) {
+            textSubmission = optionalTextSubmission.get();
 
-            Result result = textSubmission.get().getResult();
-            if (textSubmission.get().isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
                 List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission.get());
+            participation.addSubmissions(textSubmission);
+        }
+        else {
+            textSubmission = new TextSubmission();
+            textSubmissionService.save(textSubmission, participation);
         }
 
         return ResponseEntity.ok(participation);

@@ -428,7 +428,7 @@ public class ParticipationService {
      * @return the participation with all its results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerResultsAndSubmissions(Long id) {
+    public Participation findOneWithEagerResultsAndSubmissionsAndAssessor(Long id) {
         log.debug("Request to get Participation : {}", id);
         Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
         if (!participation.isPresent()) {

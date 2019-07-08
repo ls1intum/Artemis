@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -19,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -244,7 +246,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getModelSubmission_lockLimitNotReached_success() throws Exception {
+    public void getModelSubmission_lockLimitReached_success() throws Exception {
         User user = database.getUserByLogin("tutor1");
         createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -378,6 +380,21 @@ public class ModelingSubmissionIntegrationTest {
         database.addModelingSubmission(useCaseExercise, submission, "student2");
 
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_submissionCreated() throws Exception {
+        Participation partcipation = database.addParticipationForExercise(classExercise, "student1");
+
+        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + partcipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+
+        assertThat(returnedSubmission.getId()).as("created submission has an id").isNotNull();
+        Optional<ModelingSubmission> storedSubmission = modelingSubmissionRepo.findById(returnedSubmission.getId());
+        assertThat(storedSubmission).as("submission got saved to the database").isPresent();
+        assertThat(storedSubmission.get().getParticipation()).as("participation is correctly set").isEqualToIgnoringGivenFields(partcipation, "results", "submissions");
+        assertThat(storedSubmission.get().getType()).as("submission type is manual").isEqualTo(SubmissionType.MANUAL);
+        assertThat(storedSubmission.get().getSubmissionDate()).as("submission date is set").isNotNull();
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

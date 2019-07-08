@@ -280,14 +280,14 @@ public class ModelingSubmissionResource {
     }
 
     /**
-     * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
+     * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted). If
+     * there is no submission yet (initial call), a new one will be created and saved to the database before sending it to the client.
      *
-     * @param participationId the participationId for which to find the data for the modeling editor
-     * @return the ResponseEntity with json as body
+     * @param participationId the participationId for which to find the submission and data for the modeling editor
+     * @return the ResponseEntity with the submission as body
      */
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
@@ -320,8 +320,8 @@ public class ModelingSubmissionResource {
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
         if (!optionalModelingSubmission.isPresent()) {
-            modelingSubmission = new ModelingSubmission(); // NOTE: this object is not yet persisted
-            modelingSubmission.setParticipation(participation);
+            modelingSubmission = new ModelingSubmission();
+            modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.getStudent().getLogin());
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
