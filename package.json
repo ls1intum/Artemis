@@ -168,7 +168,7 @@
         "yarn": ">=1.3.2"
     },
     "lint-staged": {
-        "src/main/webapp/**/*.{json,ts,css,scss,html}": [
+        "src/{main/webapp,test}/**/*.{json,ts,css,scss,html}": [
             "prettier --write",
             "git add"
         ],
