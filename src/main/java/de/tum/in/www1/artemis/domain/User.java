@@ -244,11 +244,14 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public GuidedTourSettings getGuidedTourSettings() {
+        if (this.guidedTourSettings.isEmpty()) {
+            return GuidedTourSettings.defaultSettings();
+        }
         return GuidedTourSettings.createFromJson(this.guidedTourSettings);
     }
 
-    public void setGuidedTourSettings(String guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
+    public void setGuidedTourSettings(GuidedTourSettings guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings.toJson();
     }
 
     @Override

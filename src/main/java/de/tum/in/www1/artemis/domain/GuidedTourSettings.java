@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serializable;
+
 import com.google.gson.Gson;
 
-public class GuidedTourSettings {
+public class GuidedTourSettings implements Serializable {
 
     private boolean showCourseOverviewTour = false;
 
@@ -15,6 +17,19 @@ public class GuidedTourSettings {
     private boolean showModelingExerciseTour = false;
 
     private boolean showTextExerciseTour = false;
+
+    public GuidedTourSettings() {
+    }
+
+    public GuidedTourSettings(boolean showCourseOverviewTour, boolean showNavigationTour, boolean showProgrammingExerciseTour, boolean showQuizExerciseTour,
+            boolean showModelingExerciseTour, boolean showTextExerciseTour) {
+        this.showCourseOverviewTour = showCourseOverviewTour;
+        this.showNavigationTour = showNavigationTour;
+        this.showProgrammingExerciseTour = showProgrammingExerciseTour;
+        this.showQuizExerciseTour = showQuizExerciseTour;
+        this.showModelingExerciseTour = showModelingExerciseTour;
+        this.showTextExerciseTour = showTextExerciseTour;
+    }
 
     public boolean isShowCourseOverviewTour() {
         return showCourseOverviewTour;
@@ -69,10 +84,17 @@ public class GuidedTourSettings {
         return gson.fromJson(guidedTourSettingsJson, GuidedTourSettings.class);
     }
 
+    public static GuidedTourSettings defaultSettings() {
+        return new GuidedTourSettings();
+    }
+
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
+    }
+
     @Override
     public String toString() {
-        return "GuidedTourSettings[" + "showCourseOverviewTour=" + showCourseOverviewTour + ", showNavigationTour=" + showNavigationTour + ", showProgrammingExerciseTour="
-                + showProgrammingExerciseTour + ", showQuizExerciseTour=" + showQuizExerciseTour + ", showModelingExerciseTour=" + showModelingExerciseTour
-                + ", showTextExerciseTour=" + showTextExerciseTour + "]";
+        return this.toJson();
     }
 }
