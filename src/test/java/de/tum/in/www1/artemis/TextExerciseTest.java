@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -34,12 +33,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @ActiveProfiles("artemis")
 public class TextExerciseTest {
 
-    private static ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
-
-    private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
-
-    private static ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
-
     @Autowired
     DatabaseUtilService database;
 
@@ -56,7 +49,7 @@ public class TextExerciseTest {
     TextSubmissionRepository textSubmissionRepository;
 
     @Before
-    public void initTestCase() throws Exception {
+    public void initTestCase() {
         database.resetDatabase();
         database.addUsers(1, 2);
     }
@@ -65,11 +58,10 @@ public class TextExerciseTest {
     @WithMockUser(roles = "TA")
     public void submitEnglishTextExercise() throws Exception {
         database.addCourseWithOneTextExercise();
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is an english Text", Language.ENGLISH, true);
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
         long courseID = courseRepo.findAllActive().get(0).getId();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(Long.valueOf(courseID)).get(0);
-
-        request.post("/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.CREATED);
+        TextExercise textExercise = textExerciseRepository.findByCourseId(courseID).get(0);
+        request.post("api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
 
         Optional<TextSubmission> result = textSubmissionRepository.findById((long) 0);
         assertThat(result.isPresent()).isEqualTo(true);

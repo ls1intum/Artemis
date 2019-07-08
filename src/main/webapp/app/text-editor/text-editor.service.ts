@@ -14,6 +14,12 @@ export class TextEditorService {
         return this.http.get(`api/text-editor/${id}`, { responseType: 'json' });
     }
 
+    /**
+     * Takes a text and returns it's language
+     * @param   {String} text
+     *
+     * @returns {Language} language of the text
+     */
     predictLanguage(text: string): Language | null {
         const languageProbabilities = this.franc.all(text);
 
