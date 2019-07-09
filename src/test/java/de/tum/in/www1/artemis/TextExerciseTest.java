@@ -11,11 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -51,21 +51,22 @@ public class TextExerciseTest {
     @Before
     public void initTestCase() {
         database.resetDatabase();
-        database.addUsers(1, 2);
+        database.addUsers(1, 1);
     }
 
     @Test
-    @WithMockUser(roles = "TA")
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void submitEnglishTextExercise() throws Exception {
         database.addCourseWithOneTextExercise();
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
         long courseID = courseRepo.findAllActive().get(0).getId();
         TextExercise textExercise = textExerciseRepository.findByCourseId(courseID).get(0);
-        request.post("api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        request.postWithResponseBody("/api/courses/" + courseID + "/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
-        Optional<TextSubmission> result = textSubmissionRepository.findById((long) 0);
+        Optional<TextSubmission> result = textSubmissionRepository.findById(textSubmission.getId());
         assertThat(result.isPresent()).isEqualTo(true);
-        assertThat(result.get().getLanguage()).isEqualTo(Language.ENGLISH);
+        result.ifPresent(submission -> assertThat(submission.getLanguage()).isEqualTo(Language.ENGLISH));
 
     }
 }
