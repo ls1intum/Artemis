@@ -53,6 +53,7 @@
             <!--Right now, this button is displayed when an assessment is graded and submitted, just like of the "override button".-->
             <button
                 class="btn btn-success ml-3"
+                id="assessNextButton"
                 (click)="assessNextOptimal()"
                 [disabled]="!assessmentsAreValid"
                 *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
