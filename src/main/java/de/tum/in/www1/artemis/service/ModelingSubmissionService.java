@@ -262,16 +262,16 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Creates and sets new Result object in given submission and stores changes to the database.
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
+     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
-     * @param submission
+     * @param submission the submission for which a new result should be created
      */
     public void setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
-            // TODO: this is a workaround for ExampleSubmissions and their assessments. In this case there is no participation. We should handle this case properly
             submission.getParticipation().addResult(result);
         }
         resultRepository.save(result);

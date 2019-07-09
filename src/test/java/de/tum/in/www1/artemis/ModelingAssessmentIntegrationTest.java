@@ -89,7 +89,7 @@ public class ModelingAssessmentIntegrationTest {
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(6, 1);
+        database.addUsers(6, 1, 0);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
