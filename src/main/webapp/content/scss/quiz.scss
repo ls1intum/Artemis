@@ -396,6 +396,10 @@
         margin: 2px 0;
     }
 
+    .label + ngb-popover-window {
+        max-width: 500px;
+    }
+
     .answer-options {
         margin-top: 20px;
     }
@@ -429,6 +433,10 @@
                 flex-direction: column;
                 align-items: flex-end;
                 font-size: 18px;
+
+                ngb-popover-window {
+                    max-width: 500px;
+                }
             }
         }
 
@@ -1403,12 +1411,6 @@ table.answer-options-result {
     border-color: #ccc;
 }
 
-@include media-breakpoint-down(xs) {
-    .btn + .btn {
-        margin-top: 15px;
-    }
-}
-
 /* CSS tooltip to overcome hybrid setup problems */
 
 /* Tooltip container */
@@ -1573,5 +1575,19 @@ ngb-tooltip-window > div {
     }
     .orange {
         color: #d86b1f;
+    }
+}
+
+@include media-breakpoint-down(xs) {
+    .btn + .btn {
+        margin-top: 15px;
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .hint {
+        ngb-popover-window {
+            max-width: 300px !important;
+        }
     }
 }
