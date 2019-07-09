@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A TextCluster.
@@ -37,6 +38,7 @@ public class TextCluster implements Serializable {
     private byte[] blockOrder;
 
     @OneToMany(mappedBy = "cluster")
+    @JsonIgnoreProperties("cluster")
     private List<TextBlock> blocks = new ArrayList<>();
 
     @ManyToOne

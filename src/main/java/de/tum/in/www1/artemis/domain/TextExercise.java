@@ -22,7 +22,7 @@ public class TextExercise extends Exercise implements Serializable {
     @Column(name = "automatic_text_assessment")
     private boolean automaticAssessmentEnabled = false;
 
-    @OneToMany
+    @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     private List<TextCluster> clusters;
 

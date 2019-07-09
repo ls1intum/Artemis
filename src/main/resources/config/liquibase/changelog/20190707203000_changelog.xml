@@ -19,10 +19,10 @@
             <column name="text" type="varchar(255)">
                 <constraints nullable="false" />
             </column>
-            <column name="startIndex" type="int">
+            <column name="start_index" type="int">
                 <constraints nullable="false" />
             </column>
-            <column name="endIndex" type="int">
+            <column name="end_index" type="int">
                 <constraints nullable="false" />
             </column>
 

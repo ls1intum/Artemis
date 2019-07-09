@@ -59,6 +59,6 @@ public class TextExerciseService {
      */
     @Transactional(readOnly = true)
     public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
-        return textExerciseRepository.findByAutomaticAssessmentEnabledAndDueDateIsAfter(ZonedDateTime.now());
+        return textExerciseRepository.findByAutomaticAssessmentEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
     }
 }

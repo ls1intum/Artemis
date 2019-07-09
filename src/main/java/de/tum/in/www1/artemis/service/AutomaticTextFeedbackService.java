@@ -39,10 +39,12 @@ public class AutomaticTextFeedbackService {
             if (cluster != null) {
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks();
                 final List<Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(exercise, cluster);
+                // TODO: Use HashMap
 
                 final List<String> feedbackReferences = feedbackForTextExerciseInCluster.parallelStream().map(Feedback::getReference).collect(Collectors.toList());
                 final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
                         .filter(element -> feedbackReferences.contains(element.getId())).min(Comparator.comparing(element -> cluster.distanceBetweenBlocks(block, element)));
+                // TODO: Refactor Comparator to TextBlock Class
 
                 if (mostSimilarBlockInClusterWithFeedback.isPresent()) {
                     final Feedback similarFeedback = feedbackForTextExerciseInCluster.parallelStream()

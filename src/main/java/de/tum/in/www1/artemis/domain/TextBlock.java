@@ -9,7 +9,6 @@ import javax.validation.constraints.Size;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A TextBlock.
@@ -28,14 +27,14 @@ public class TextBlock implements Serializable {
     @Column(name = "text", nullable = false)
     private String text;
 
-    @Column(name = "startIndex", nullable = false)
+    @Column(name = "start_index", nullable = false)
     private int startIndex;
 
-    @Column(name = "endIndex", nullable = false)
+    @Column(name = "end_index", nullable = false)
     private int endIndex;
 
     @ManyToOne
-    @JsonIgnoreProperties("blocks")
+    @JsonIgnore
     private TextSubmission submission;
 
     @ManyToOne
@@ -52,7 +51,8 @@ public class TextBlock implements Serializable {
     }
 
     public void computeId() {
-        final String idString = submission.getId() + ";" + startIndex + "-" + endIndex + ";" + text;
+        final long submissionId = submission != null ? submission.getId() : 0;
+        final String idString = submissionId + ";" + startIndex + "-" + endIndex + ";" + text;
         id = DigestUtils.sha1Hex(idString);
     }
 

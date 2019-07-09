@@ -20,5 +20,5 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("SELECT e FROM TextExercise e WHERE e.course.id = :#{#courseId}")
     List<TextExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    List<TextExercise> findByAutomaticAssessmentEnabledAndDueDateIsAfter(ZonedDateTime dueDate);
+    List<TextExercise> findByAutomaticAssessmentEnabledAndDueDateIsAfter(boolean automaticAssessmentEnabled, ZonedDateTime dueDate);
 }

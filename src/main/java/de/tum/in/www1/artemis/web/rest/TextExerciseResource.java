@@ -122,9 +122,7 @@ public class TextExerciseResource {
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);
-        if (textExercise.isAutomaticAssessmentEnabled()) {
-            textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClustering(result));
-        }
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -158,10 +156,7 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
-        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(result));
-        if (textExercise.isAutomaticAssessmentEnabled()) {
-            textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClustering(result));
-        }
+        textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {

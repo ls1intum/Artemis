@@ -24,9 +24,9 @@ public class TextSimilarityClusteringService {
     // region Request/Response DTOs
     private static class ClusteringRequest {
 
-        public Set<TextBlock> blocks;
+        public List<TextBlock> blocks;
 
-        ClusteringRequest(Set<TextBlock> blocks) {
+        ClusteringRequest(List<TextBlock> blocks) {
             this.blocks = blocks;
         }
     }
@@ -55,7 +55,7 @@ public class TextSimilarityClusteringService {
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    public Map<Integer, TextCluster> clusterTextBlocks(Set<TextBlock> blocks) throws NetworkingError {
+    public Map<Integer, TextCluster> clusterTextBlocks(List<TextBlock> blocks) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Service to cluster student text answers.");
 
@@ -75,7 +75,7 @@ public class TextSimilarityClusteringService {
         return clusterResponse.clusters;
     }
 
-    public Map<Integer, TextCluster> clusterTextBlocks(Set<TextBlock> blocks, int maxRetries) throws NetworkingError {
+    public Map<Integer, TextCluster> clusterTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
         for (int retries = 0;; retries++) {
             try {
                 return clusterTextBlocks(blocks);
