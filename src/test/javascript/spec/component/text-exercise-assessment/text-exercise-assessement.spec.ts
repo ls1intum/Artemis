@@ -28,6 +28,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Subject } from 'rxjs';
+import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,17 +38,16 @@ describe('TextAssessmentComponent', () => {
     let fixture: ComponentFixture<TextAssessmentComponent>;
     let textSubmissionService: TextSubmissionService;
     let route: ActivatedRoute;
+    let textAssessmentsService: TextAssessmentsService;
 
-    let textSubmissionStub: SinonStub;
+    let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+
+    let getFeedbackDataForExerciseSubmissionStub: SinonStub;
 
     let debugElement: DebugElement;
 
-    let routeSubject: Subject<Params>;
-
     const exercise = { id: 20, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
     const submission = { id: 30 } as TextSubmission;
-
-    // const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -72,29 +72,19 @@ describe('TextAssessmentComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TextAssessmentComponent);
                 comp = fixture.componentInstance;
+                comp.exercise = exercise;
 
                 debugElement = fixture.debugElement;
-
                 textSubmissionService = TestBed.get(TextSubmissionService);
-                route = debugElement.injector.get(ActivatedRoute);
-
-                comp.exercise.id = 20;
-
-                textSubmissionStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
-
-                routeSubject = new Subject();
-
-                (route as MockActivatedRoute).setSubject(routeSubject);
+                textAssessmentsService = TestBed.get(TextAssessmentsService);
+                getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
+                getFeedbackDataForExerciseSubmissionStub = stub(textAssessmentsService, 'getFeedbackDataForExerciseSubmission');
             });
     });
 
     afterEach(() => {
-        textSubmissionStub.restore();
-
-        routeSubject.complete();
-        routeSubject = new Subject();
-
-        (route as MockActivatedRoute).setSubject(routeSubject);
+        getTextSubmissionForExerciseWithoutAssessmentStub.restore();
+        getFeedbackDataForExerciseSubmissionStub.restore();
     });
 
     it('AssessNextButton should be visible and the method assessNextOptimal should be invoked', () => {
@@ -183,6 +173,7 @@ describe('TextAssessmentComponent', () => {
         };
         comp.isAuthorized = true;
         comp.isAtLeastInstructor = true;
+        comp.assessmentsAreValid = true;
         const unassessedSubmission = {
             submissionExerciseType: 'text',
             id: 2279,
@@ -255,20 +246,13 @@ describe('TextAssessmentComponent', () => {
         const assessNextButton = debugElement.query(By.css('#assessNextButton'));
         expect(assessNextButton).to.exist;
 
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(of(unassessedSubmission));
         assessNextButton.nativeElement.click();
-
-        textSubmissionStub.returns(of(unassessedSubmission));
+        expect(getTextSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
         expect(comp.unassessedSubmission).to.be.deep.equal(unassessedSubmission);
+
+        //next test:
+        //getFeedbackDataForExerciseSubmissionStub.returns(of());
+        //expect(getFeedbackDataForExerciseSubmissionStub).to.have.been.called;
     });
-
-    it('should load unassessedSubmission if there is an unassessed submission and lock limit is not reached', fakeAsync(() => {
-        comp.ngOnInit();
-        tick();
-        expect(comp.userId).to.equal(99);
-
-        routeSubject.next({ exerciseId: exercise.id, submissionId: submission.id });
-
-        fixture.destroy();
-        flush();
-    }));
 });
