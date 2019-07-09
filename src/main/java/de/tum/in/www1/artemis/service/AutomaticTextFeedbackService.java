@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.Comparator;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toList;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Profile;
@@ -26,7 +28,7 @@ public class AutomaticTextFeedbackService {
     /**
      * @param result
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final TextExercise exercise = (TextExercise) textSubmission.getParticipation().getExercise();
@@ -38,26 +40,21 @@ public class AutomaticTextFeedbackService {
 
             if (cluster != null) {
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks();
-                final List<Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(exercise, cluster);
-                // TODO: Use HashMap
+                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(exercise, cluster);
 
-                final List<String> feedbackReferences = feedbackForTextExerciseInCluster.parallelStream().map(Feedback::getReference).collect(Collectors.toList());
                 final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
-                        .filter(element -> feedbackReferences.contains(element.getId())).min(Comparator.comparing(element -> cluster.distanceBetweenBlocks(block, element)));
-                // TODO: Refactor Comparator to TextBlock Class
+                        .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
+                        .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
                 if (mostSimilarBlockInClusterWithFeedback.isPresent()) {
-                    final Feedback similarFeedback = feedbackForTextExerciseInCluster.parallelStream()
-                            .filter(element -> element.getReference().equals(mostSimilarBlockInClusterWithFeedback.get().getId())).findFirst()
-                            .orElseThrow(() -> new IllegalStateException("Feedback Element must exist. Existence checked before!"));
-
+                    final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
                     return newFeedback.reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
 
                 }
             }
 
             return newFeedback.credits(0d).type(FeedbackType.MANUAL);
-        }).collect(Collectors.toList());
+        }).collect(toList());
 
         result.getFeedbacks().addAll(suggestedFeedback);
     }

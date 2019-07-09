@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -69,10 +70,9 @@ public class TextClusteringService {
 
         for (TextCluster cluster : savedClusters) {
             cluster.setExercise(exercise);
-            final List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream()
-                    .map(block -> savedBlocks.stream().filter(element -> element.getId().equals(block.getId())).findFirst()
-                            .orElseThrow(() -> new IllegalStateException("Cannot handle unknown Text Block.")))
-                    .peek(block -> block.setCluster(cluster)).collect(Collectors.toList());
+            final List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> savedBlocks.stream()
+                    .filter(element -> element.getId().equals(block.getId())).findFirst().orElseThrow(() -> new IllegalStateException("Cannot handle unknown Text Block.")))
+                    .peek(block -> block.setCluster(cluster)).collect(toList());
             cluster.setBlocks(updatedBlockReferences);
             // cluster.storeBlockOrder();
             textBlockRepository.saveAll(updatedBlockReferences);
@@ -93,9 +93,7 @@ public class TextClusteringService {
     List<TextBlock> getTextBlocks(Long exerciseId) {
         List<TextBlock> set = new ArrayList<>();
         for (TextSubmission textSubmission : textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true)) {
-            String text = textSubmission.getText();
-            final List<TextBlock> blocks = textBlockService.splitSubmissionIntoBlocks(text);
-            blocks.forEach(block -> block.setSubmission(textSubmission));
+            final List<TextBlock> blocks = textBlockService.splitSubmissionIntoBlocks(textSubmission);
             textSubmission.setBlocks(blocks);
             set.addAll(blocks);
         }

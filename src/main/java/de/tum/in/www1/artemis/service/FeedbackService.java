@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +73,9 @@ public class FeedbackService {
     }
 
     @Transactional
-    public List<Feedback> getFeedbackForTextExerciseInCluster(TextExercise exercise, TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().parallelStream().map(TextBlock::getId).collect(Collectors.toList());
-        return feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise);
+    public Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextExercise exercise, TextCluster cluster) {
+        final List<String> references = cluster.getBlocks().parallelStream().map(TextBlock::getId).collect(toList());
+        return feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
+                .collect(toMap(Feedback::getReference, f -> f));
     }
 }
