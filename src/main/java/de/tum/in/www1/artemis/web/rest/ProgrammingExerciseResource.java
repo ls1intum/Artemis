@@ -410,6 +410,11 @@ public class ProgrammingExerciseResource {
                 return forbidden();
             }
         }
+        // Avoid circular serialization issues with jackson.
+        if (programmingExercise.get().getTemplateParticipation() != null) {
+            programmingExercise.get().getTemplateParticipation().setExercise(null);
+            programmingExercise.get().getSolutionParticipation().setExercise(null);
+        }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
     }
 
