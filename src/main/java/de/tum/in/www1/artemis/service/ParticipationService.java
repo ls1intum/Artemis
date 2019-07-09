@@ -177,8 +177,10 @@ public class ParticipationService {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
 
-            // initialize a modeling or text submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-            initializeSubmission(participation, exercise);
+            if (participation.getId() == null || !submissionRepository.existsByParticipationId(participation.getId())) {
+                // initialize a modeling or text submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+                initializeSubmission(participation, exercise);
+            }
         }
 
         participation = save(participation);

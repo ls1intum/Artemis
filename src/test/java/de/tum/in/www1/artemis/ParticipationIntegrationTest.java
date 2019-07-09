@@ -97,4 +97,18 @@ public class ParticipationIntegrationTest {
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateTwiceInModelingExercise_badRequest() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateTwiceInTextExercise_badRequest() throws Exception {
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
 }
