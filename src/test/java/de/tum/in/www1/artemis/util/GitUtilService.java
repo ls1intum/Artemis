@@ -47,6 +47,8 @@ public class GitUtilService {
 
     private Repository localRepo;
 
+    private Git localGit;
+
     public Repository initRepo() {
         try {
             deleteRepos();
@@ -57,8 +59,8 @@ public class GitUtilService {
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
-            Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRoot + "/" + remoteName + "/.git").setDirectory(new File(repoRoot + "/" + repositoryName))
-                    .call();
+            localGit = Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRoot + "/" + remoteName + "/.git")
+                    .setDirectory(new File(repoRoot + "/" + repositoryName)).call();
 
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             builder.setGitDir(new java.io.File(repoRoot + "/" + repositoryName + "/.git")).readEnvironment() // scan environment GIT_* variables
@@ -92,6 +94,15 @@ public class GitUtilService {
 
     public void deleteRepos() {
         try {
+            if (remoteRepo != null) {
+                remoteRepo.close();
+            }
+            if (localRepo != null) {
+                localRepo.close();
+            }
+            if (localGit != null) {
+                localGit.close();
+            }
             FileUtils.deleteDirectory(new File(repoRoot + "/" + repositoryName));
             FileUtils.deleteDirectory(new File(remoteRoot + "/" + remoteName));
             localRepo = null;
