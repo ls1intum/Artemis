@@ -39,7 +39,7 @@ import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
-import { isLegacyResult, isSolutionParticipation, isTemplateParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { isLegacyResult, isSolutionParticipation, isStudentParticipation, isTemplateParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -237,43 +237,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        if (this.participation instanceof StudentParticipation) {
-            return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
-                catchError(() => Observable.of(null)),
-                map((latestResult: HttpResponse<Result[]>) => {
-                    if (latestResult && latestResult.body && latestResult.body.length) {
-                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                    } else {
-                        return null;
-                    }
-                }),
-                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
-            );
-        } else if (isTemplateParticipation(this.participation)) {
-            return this.programmingExerciseParticipationService.getLatestResultWithFeedbackForTemplateParticipation(this.participation.id).pipe(
-                catchError(() => Observable.of(null)),
-                map((latestResult: HttpResponse<Result[]>) => {
-                    if (latestResult && latestResult.body && latestResult.body.length) {
-                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                    } else {
-                        return null;
-                    }
-                }),
-                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
-            );
-        } else if (isSolutionParticipation(this.participation)) {
-            return this.programmingExerciseParticipationService.getLatestResultWithFeedbackForSolutionParticipation(this.participation.id).pipe(
-                catchError(() => Observable.of(null)),
-                map((latestResult: HttpResponse<Result[]>) => {
-                    if (latestResult && latestResult.body && latestResult.body.length) {
-                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                    } else {
-                        return null;
-                    }
-                }),
-                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
-            );
-        }
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation).pipe(catchError(() => Observable.of(null)));
     }
 
     /**

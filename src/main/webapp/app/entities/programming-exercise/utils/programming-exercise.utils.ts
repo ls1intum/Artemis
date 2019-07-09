@@ -11,6 +11,10 @@ export const isLegacyResult = (result: Result) => {
     return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
 };
 
+export const isStudentParticipation = (participation: Participation) => {
+    return participation.type === 'student';
+};
+
 export const isTemplateParticipation = (participation: Participation) => {
     return participation.type === 'template';
 };
