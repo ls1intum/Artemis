@@ -71,7 +71,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param testCaseWeightUpdate
      * @return
      */
-    @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
+    @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
             @RequestBody ProgrammingExerciseTestCaseWeightUpdate testCaseWeightUpdate) {
@@ -97,7 +97,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId
      * @return
      */
-    @PostMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
+    @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateWeight(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
