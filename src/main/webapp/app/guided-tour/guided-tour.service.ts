@@ -1,15 +1,23 @@
-import { debounceTime } from 'rxjs/internal/operators';
 import { ErrorHandler, Injectable } from '@angular/core';
-import { Observable, Subject, fromEvent, of } from 'rxjs';
-import { GuidedTour, TourStep, Orientation, OrientationConfiguration } from './guided-tour.constants';
+import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { cloneDeep } from 'lodash';
+import { JhiAlertService } from 'ng-jhipster';
+import { Observable, Subject, fromEvent, of } from 'rxjs';
+import { debounceTime } from 'rxjs/internal/operators';
+
+import { SERVER_API_URL } from 'app/app.constants';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
+import { GuidedTourSettings } from 'app/guided-tour/guided-tour-settings.model';
+import { GuidedTour, TourStep, Orientation, OrientationConfiguration } from './guided-tour.constants';
 
 @Injectable()
 export class GuidedTourService {
+    public resourceUrl = SERVER_API_URL + 'guided-tour-settings';
+
     public guidedTourCurrentStepStream: Observable<TourStep>;
     public guidedTourOrbShowingStream: Observable<boolean>;
     public currentTourSteps: TourStep[];
+    public guidedTourSettings: GuidedTourSettings;
 
     private _guidedTourCurrentStepSubject = new Subject<TourStep>();
     private _guidedTourOrbShowingSubject = new Subject<boolean>();
@@ -19,10 +27,17 @@ export class GuidedTourService {
     private _onLastStep = true;
     private _onResizeMessage = false;
 
-    constructor(public errorHandler: ErrorHandler) {
+    constructor(public errorHandler: ErrorHandler, private http: HttpClient, private jhiAlertService: JhiAlertService) {
         console.log('Guided Tour Service INIT');
         this.guidedTourCurrentStepStream = this._guidedTourCurrentStepSubject.asObservable();
         this.guidedTourOrbShowingStream = this._guidedTourOrbShowingSubject.asObservable();
+
+        this.getGuidedTourSettings().subscribe(
+            (res: HttpResponse<GuidedTourSettings>) => {
+                this.guidedTourSettings = res.body!;
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
 
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
@@ -45,7 +60,11 @@ export class GuidedTourService {
             });
     }
 
-    public getOverviewTour(): Observable<GuidedTour> {
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
+    }
+
+    public getOverviewTour(): Observable<GuidedTour> | null {
         return of(courseOverviewTour);
     }
 
@@ -232,5 +251,14 @@ export class GuidedTourService {
             convertedStep.orientation = currentOrientation;
         }
         return convertedStep;
+    }
+
+    public getGuidedTourSettings(): Observable<HttpResponse<GuidedTourSettings>> {
+        return this.http.get<GuidedTourSettings>(this.resourceUrl, { observe: 'response' });
+    }
+
+    public updateGuidedTourSettings(showCourseOverviewTour: boolean) {
+        const updatedGuidedTourSettings = new GuidedTourSettings(showCourseOverviewTour, true, true, true, true, true);
+        return this.http.put<GuidedTourSettings>(this.resourceUrl, updatedGuidedTourSettings, { observe: 'response' });
     }
 }

@@ -28,7 +28,9 @@ export class OverviewComponent {
     ) {
         this.loadAndFilterCourses();
         setTimeout(() => {
-            this.startTour();
+            if (guidedTourService.guidedTourSettings.showCourseOverviewTour) {
+                this.startTour();
+            }
         }, 500);
     }
 
@@ -66,7 +68,7 @@ export class OverviewComponent {
     }
 
     public startTour(): void {
-        this.guidedTourService.getOverviewTour().subscribe(tour => {
+        this.guidedTourService.getOverviewTour()!.subscribe(tour => {
             this.overviewTour = tour;
             this.guidedTourService.startTour(this.overviewTour);
         });

@@ -6,17 +6,17 @@ import com.google.gson.Gson;
 
 public class GuidedTourSettings implements Serializable {
 
-    private boolean showCourseOverviewTour = false;
+    private boolean showCourseOverviewTour = true;
 
-    private boolean showNavigationTour = false;
+    private boolean showNavigationTour = true;
 
-    private boolean showProgrammingExerciseTour = false;
+    private boolean showProgrammingExerciseTour = true;
 
-    private boolean showQuizExerciseTour = false;
+    private boolean showQuizExerciseTour = true;
 
-    private boolean showModelingExerciseTour = false;
+    private boolean showModelingExerciseTour = true;
 
-    private boolean showTextExerciseTour = false;
+    private boolean showTextExerciseTour = true;
 
     public GuidedTourSettings() {
     }

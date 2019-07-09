@@ -13,7 +13,6 @@ import javax.validation.constraints.Size;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.GuidedTourSettings;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -60,8 +59,6 @@ public class UserDTO {
 
     private List<String> groups;
 
-    private GuidedTourSettings guidedTourSettings;
-
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -69,12 +66,11 @@ public class UserDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
                 user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getLastNotificationRead(),
-                user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
+                user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups());
     }
 
     public UserDTO(Long id, String login, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
-            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, List<String> groups,
-            GuidedTourSettings guidedTourSettings) {
+            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, List<String> groups) {
 
         this.id = id;
         this.login = login;
@@ -91,7 +87,6 @@ public class UserDTO {
         this.lastNotificationRead = lastNotificationRead;
         this.authorities = authorities;
         this.groups = groups;
-        this.guidedTourSettings = guidedTourSettings;
     }
 
     public Long getId() {
@@ -214,19 +209,10 @@ public class UserDTO {
         this.groups = groups;
     }
 
-    public GuidedTourSettings getGuidedTourSettings() {
-        return guidedTourSettings;
-    }
-
-    public void setGuidedTourSettings(GuidedTourSettings guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
-    }
-
     @Override
     public String toString() {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + createdBy + ", createdDate=" + createdDate + ", lastModifiedBy='"
-                + lastModifiedBy + '\'' + ", lastModifiedDate=" + lastModifiedDate + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities
-                + "guidedTourSettings=" + guidedTourSettings + "}";
+                + lastModifiedBy + '\'' + ", lastModifiedDate=" + lastModifiedDate + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities + "}";
     }
 }

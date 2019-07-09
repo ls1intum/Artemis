@@ -89,6 +89,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @ElementCollection
     private List<String> groups = new ArrayList<>();
 
+    @JsonIgnore
     @Column(name = "guided_tour_settings")
     private String guidedTourSettings = new String();
 
@@ -244,7 +245,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     }
 
     public GuidedTourSettings getGuidedTourSettings() {
-        if (this.guidedTourSettings.isEmpty()) {
+        if (this.guidedTourSettings == null || this.guidedTourSettings.isEmpty()) {
             return GuidedTourSettings.defaultSettings();
         }
         return GuidedTourSettings.createFromJson(this.guidedTourSettings);

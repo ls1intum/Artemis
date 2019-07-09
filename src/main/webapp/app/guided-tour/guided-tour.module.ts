@@ -1,10 +1,11 @@
-import { GuidedTourService } from './guided-tour.service';
-import { GuidedTourComponent } from './guided-tour.component';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule, ErrorHandler } from '@angular/core';
 import { ModuleWithProviders } from '@angular/compiler/src/core';
-import { ArTEMiSSharedModule } from 'app/shared';
 import { JhiLanguageService } from 'ng-jhipster';
+
 import { JhiLanguageHelper } from 'app/core';
+import { ArTEMiSSharedModule } from 'app/shared';
+import { GuidedTourService } from './guided-tour.service';
+import { GuidedTourComponent } from './guided-tour.component';
 
 @NgModule({
     declarations: [GuidedTourComponent],
