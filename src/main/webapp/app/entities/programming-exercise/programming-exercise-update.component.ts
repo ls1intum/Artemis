@@ -41,7 +41,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
-        private resultService: ResultService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
@@ -88,15 +87,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             );
         } else {
             this.problemStatementLoaded = true;
-            this.templateParticipationResultLoaded = false;
-            this.resultService
-                .getLatestResultWithFeedbacks(this.programmingExercise.templateParticipation.id)
-                .pipe(
-                    map(({ body }) => body),
-                    tap(result => (this.programmingExercise.templateParticipation.results = [result!])),
-                    catchError(() => of(null)),
-                )
-                .subscribe(() => (this.templateParticipationResultLoaded = true));
         }
     }
 
