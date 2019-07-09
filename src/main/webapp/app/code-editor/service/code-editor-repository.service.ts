@@ -10,7 +10,9 @@ import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 
 export enum DomainType {
-    PARTICIPATION = 'PARTICIPATION',
+    TEMPLATE_PARTICIPATION = 'TEMPLATE_PARTICIPATION',
+    SOLUTION_PARTICIPATION = 'SOLUTION_PARTICIPATION',
+    STUDENT_PARTICIPATION = 'STUDENT_PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
 }
 

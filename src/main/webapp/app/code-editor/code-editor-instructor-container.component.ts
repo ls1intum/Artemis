@@ -3,7 +3,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProgrammingExercise, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { CourseExerciseService } from 'app/entities/course';
 import {
     Participation,
@@ -81,9 +81,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     constructor(
         private router: Router,
         private exerciseService: ProgrammingExerciseService,
-        private resultService: ResultService,
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -177,7 +177,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
                     this.initializeProperties();
-                    if (domainType === DomainType.PARTICIPATION) {
+                    if (domainType !== DomainType.TEST_REPOSITORY) {
                         this.setSelectedParticipation(domainValue.id);
                     } else {
                         this.selectedParticipation = null;
@@ -226,9 +226,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                   map(({ body }) => body!),
                   // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
                   switchMap(exercise =>
-                      this.resultService.getLatestResultWithFeedbacks(exercise.templateParticipation.id).pipe(
-                          map(({ body }) => body!),
-                          map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
+                      this.programmingExerciseParticipationService.getLatestResultWithFeedbackForTemplateParticipation(exercise.templateParticipation.id).pipe(
+                          map(result => (result ? { ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } } : exercise)),
                           catchError(() => of(exercise)),
                       ),
                   ),
@@ -241,11 +240,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      **/
     selectParticipationDomainById(participationId: number) {
         if (participationId === this.exercise.templateParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
+            this.domainService.setDomain([DomainType.TEMPLATE_PARTICIPATION, this.exercise.templateParticipation]);
         } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
+            this.domainService.setDomain([DomainType.SOLUTION_PARTICIPATION, this.exercise.solutionParticipation]);
         } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.participations[0]]);
+            this.domainService.setDomain([DomainType.STUDENT_PARTICIPATION, this.exercise.participations[0]]);
         } else {
             this.onError('participationNotFound');
         }

@@ -120,7 +120,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges,
             const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
             of(latestResult)
                 .pipe(
-                    switchMap(result => (result ? this.loadAndAttachResultDetails(result) : of(result))),
                     switchMap(result => this.fetchBuildResults(result)),
                     map(buildLogsFromServer => new BuildLogEntryArray(...buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {

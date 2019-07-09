@@ -8,7 +8,10 @@ import { filter, tap } from 'rxjs/operators';
 import { DomainParticipationChange, DomainType } from 'app/code-editor/service';
 import { Participation } from 'app/entities/participation';
 
-export type DomainParticipationChange = [DomainType.PARTICIPATION, Participation];
+export type DomainParticipationChange =
+    | [DomainType.SOLUTION_PARTICIPATION, Participation]
+    | [DomainType.TEMPLATE_PARTICIPATION, Participation]
+    | [DomainType.STUDENT_PARTICIPATION, Participation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
 export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
 
@@ -82,9 +85,19 @@ export abstract class DomainDependentEndpoint extends DomainDependent {
         super.setDomain(domain);
         const [domainType, domainValue] = this.domain;
         switch (domainType) {
-            case DomainType.PARTICIPATION:
-                this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
-                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/repository/${domainValue.id}`;
+            case DomainType.SOLUTION_PARTICIPATION:
+                this.restResourceUrl = `${this.restResourceUrlBase}/solution-repository/${domainValue.id}`;
+                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/solution-repository/${domainValue.id}`;
+                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
+                break;
+            case DomainType.TEMPLATE_PARTICIPATION:
+                this.restResourceUrl = `${this.restResourceUrlBase}/template-repository/${domainValue.id}`;
+                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/template-repository/${domainValue.id}`;
+                this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
+                break;
+            case DomainType.STUDENT_PARTICIPATION:
+                this.restResourceUrl = `${this.restResourceUrlBase}/student-repository/${domainValue.id}`;
+                this.websocketResourceUrlSend = `${this.websocketResourceUrlBase}/student-repository/${domainValue.id}`;
                 this.websocketResourceUrlReceive = `/user${this.websocketResourceUrlSend}`;
                 break;
             case DomainType.TEST_REPOSITORY:
