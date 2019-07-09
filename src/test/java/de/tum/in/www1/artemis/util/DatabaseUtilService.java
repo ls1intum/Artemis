@@ -51,6 +51,9 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
     ModelAssessmentConflictRepository conflictRepo;
 
     @Autowired
@@ -86,6 +89,7 @@ public class DatabaseUtilService {
         feedbackRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
+        textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
