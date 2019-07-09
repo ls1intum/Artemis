@@ -26,13 +26,20 @@ import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
-import { Participation, hasParticipationChanged, ParticipationWebsocketService } from 'app/entities/participation';
+import {
+    Participation,
+    hasParticipationChanged,
+    ParticipationWebsocketService,
+    StudentParticipation,
+    TemplateProgrammingExerciseParticipation,
+    SolutionProgrammingExerciseParticipation,
+} from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
-import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { isLegacyResult, isSolutionParticipation, isTemplateParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -90,6 +97,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private testCaseService: ProgrammingExerciseTestCaseService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -229,17 +237,43 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
-            catchError(() => Observable.of(null)),
-            map((latestResult: HttpResponse<Result[]>) => {
-                if (latestResult && latestResult.body && latestResult.body.length) {
-                    return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
-                } else {
-                    return null;
-                }
-            }),
-            flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
-        );
+        if (this.participation instanceof StudentParticipation) {
+            return this.resultService.findResultsForParticipation(this.exercise.course!.id, this.exercise.id, this.participation.id).pipe(
+                catchError(() => Observable.of(null)),
+                map((latestResult: HttpResponse<Result[]>) => {
+                    if (latestResult && latestResult.body && latestResult.body.length) {
+                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                    } else {
+                        return null;
+                    }
+                }),
+                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+            );
+        } else if (isTemplateParticipation(this.participation)) {
+            return this.programmingExerciseParticipationService.getLatestResultWithFeedbackForTemplateParticipation(this.participation.id).pipe(
+                catchError(() => Observable.of(null)),
+                map((latestResult: HttpResponse<Result[]>) => {
+                    if (latestResult && latestResult.body && latestResult.body.length) {
+                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                    } else {
+                        return null;
+                    }
+                }),
+                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+            );
+        } else if (isSolutionParticipation(this.participation)) {
+            return this.programmingExerciseParticipationService.getLatestResultWithFeedbackForSolutionParticipation(this.participation.id).pipe(
+                catchError(() => Observable.of(null)),
+                map((latestResult: HttpResponse<Result[]>) => {
+                    if (latestResult && latestResult.body && latestResult.body.length) {
+                        return latestResult.body.reduce((acc: Result, v: Result) => (v.id > acc.id ? v : acc));
+                    } else {
+                        return null;
+                    }
+                }),
+                flatMap((latestResult: Result) => (latestResult ? this.loadAndAttachResultDetails(latestResult) : Observable.of(null))),
+            );
+        }
     }
 
     /**
