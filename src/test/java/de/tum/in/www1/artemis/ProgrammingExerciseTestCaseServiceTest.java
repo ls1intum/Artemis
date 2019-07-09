@@ -112,6 +112,23 @@ public class ProgrammingExerciseTestCaseServiceTest {
     }
 
     @Test
+    public void shouldResetTestWeights() {
+        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+        testCaseService.resetWeights(programmingExercise.getId());
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+    }
+
+    @Test
+    public void shouldUpdateTestWeight() {
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
+        testCaseService.updateWeight(testCase.getId(), 400);
+
+        assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
+    }
+
+    @Test
     public void shouldNotUpdateResultIfNoTestCasesExist() {
         testCaseRepository.deleteAll();
 
