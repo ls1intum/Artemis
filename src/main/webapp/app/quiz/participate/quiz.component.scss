@@ -1,0 +1,31 @@
+.quiz-header {
+    font-size: 16px;
+    margin-top: 25px;
+}
+
+.quiz-content {
+    margin-top: 6px;
+    margin-bottom: 110px;
+    min-height: calc(100vh - 400px);
+
+    .question-index {
+        padding: 2px 6px;
+    }
+}
+
+.quiz-footer {
+    height: 100px;
+}
+
+.quiz-content,
+.quiz-footer-content {
+    font-size: 16px;
+}
+
+.in-parentheses:before {
+    content: '(';
+}
+
+.in-parentheses:after {
+    content: ')';
+}

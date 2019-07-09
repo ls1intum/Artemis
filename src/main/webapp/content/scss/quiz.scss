@@ -6,82 +6,6 @@
     margin-bottom: 100px;
 }
 
-#quiz-title {
-    margin-bottom: 8px;
-}
-
-.short-answer-question-div-as-input {
-    background-color: white;
-    border: 1px solid #ced4da;
-    padding: 2px 3px;
-    width: 170px;
-    height: 40px;
-}
-
-.short-answer-question-display {
-    display: flex;
-    max-width: 100%;
-    flex-wrap: wrap;
-
-    .short-answer-question-display-element {
-        display: inline-flex;
-    }
-
-    .short-answer-question-display-statistic-element {
-        display: inline-flex;
-        line-height: 35px;
-    }
-}
-
-.short-answer-question-display-statistic {
-    display: inline-block;
-}
-
-.short-answer-question-input-container {
-    position: relative;
-    display: inline-block;
-}
-
-.short-answer-question-input {
-    margin-bottom: 10px;
-    line-height: 35px;
-    border-width: 1px;
-    border-style: solid;
-    border-color: #ced4da;
-}
-
-.saQuestion-quizStatistic-letter {
-    position: absolute;
-    right: 0px;
-    top: 10px;
-    z-index: 1;
-    opacity: 1;
-
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    background-color: #428bca;
-    color: white;
-    border-radius: 50%;
-    text-align: center;
-}
-
-.saQuestion-quizStatistic-letter-solution {
-    position: absolute;
-    right: 0px;
-    top: 10px;
-    z-index: 1;
-    opacity: 1;
-
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    background-color: #5cb85c;
-    color: white;
-    border-radius: 50%;
-    text-align: center;
-}
-
 .edit-quiz .quiz-options,
 .question-options {
     display: flex;
@@ -129,61 +53,6 @@
     }
 }
 
-.quizStatistic-footer {
-    position: fixed;
-    height: 60px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-    background: white;
-
-    .container {
-        height: 100%;
-
-        .quiz-footer-content,
-        .edit-quiz-footer-content {
-            @media (min-width: 320px) and (max-width: 480px) {
-                .form-group {
-                    padding-top: 10px;
-                }
-            }
-
-            .form-group {
-                justify-content: center;
-
-                .dropup {
-                    text-align: center;
-                    width: 100%;
-                }
-            }
-        }
-    }
-}
-
-.quizStatistic-footer-content {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .form-control,
-    .input-group-btn {
-        display: inline-block;
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-}
-
 .edit-quiz-footer,
 .quiz-footer {
     position: fixed;
@@ -203,10 +72,6 @@
 
 .edit-quiz-footer {
     height: 80px;
-}
-
-.quiz-footer {
-    height: 100px;
 }
 
 .edit-quiz-footer-content,
@@ -326,10 +191,6 @@
 
 .background-editor-color {
     background: #f8f9fa;
-}
-
-.background-editor-high {
-    min-height: 150px;
 }
 
 .mc-question,
@@ -996,27 +857,6 @@
     }
 }
 
-.quiz-header {
-    font-size: 16px;
-    margin-top: 25px;
-}
-
-.quiz-content,
-.quiz-footer-content {
-    font-size: 16px;
-}
-
-.quiz-content {
-    margin-top: 6px;
-    margin-bottom: 110px;
-
-    min-height: calc(100vh - 400px);
-
-    .question-index {
-        padding: 2px 6px;
-    }
-}
-
 .quiz-footer-content,
 .edit-quiz-footer-content {
     #remaining-time {
@@ -1169,14 +1009,6 @@ table.answer-options-result {
     white-space: nowrap;
 }
 
-.in-parentheses:before {
-    content: '(';
-}
-
-.in-parentheses:after {
-    content: ')';
-}
-
 .no-flex-shrink {
     flex-shrink: 0;
 }
@@ -1200,201 +1032,8 @@ table.answer-options-result {
     color: blue;
 }
 
-.answer-border {
-    padding: 10px;
-    border-radius: 0.1em;
-    border-width: 1px;
-    border-style: solid;
-    border-color: lightgrey;
-    height: auto;
-}
-
 .warning-modal-window .modal-dialog {
     width: 50%;
-}
-
-.drag-and-drop-quizStatistic-picture {
-    jhi-secured-image img {
-        max-width: 100%;
-    }
-    .click-layer {
-        .solution {
-            .drag-item-picture {
-                img {
-                    max-width: 100%;
-                    max-height: 100%;
-                    position: absolute;
-                    -webkit-transform: translate(-50%, -50%);
-                    transform: translate(-50%, -50%);
-                    top: 50%;
-                    left: 50%;
-                }
-            }
-        }
-        .drop-location {
-            background: white;
-            border: 1px dashed black;
-
-            .drag-item,
-            jhi-drag-item {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                background: white;
-            }
-
-            .drag-item {
-                div {
-                    line-height: 1;
-
-                    span {
-                        border: none;
-                        padding: 0;
-                        white-space: nowrap;
-                        vertical-align: middle;
-                        display: inline-block;
-                    }
-                }
-            }
-
-            .letter {
-                color: white;
-                position: absolute;
-                top: 3%;
-                left: 3%;
-                z-index: 1;
-                opacity: 1;
-                -webkit-transform: translate3d(-63%, -63%, 0);
-                -moz-transform: translate3d(-63%, -63%, 0);
-                -ms-transform: translate3d(-63%, -63%, 0);
-                -o-transform: translate3d(-63%, -63%, 0);
-                transform: translate3d(-63%, -63%, 0);
-            }
-            .letter-solution {
-                color: white;
-                position: absolute;
-                top: 3%;
-                left: 3%;
-                z-index: 1;
-                opacity: 1;
-                -webkit-transform: translate3d(-63%, -63%, 0);
-                -moz-transform: translate3d(-63%, -63%, 0);
-                -ms-transform: translate3d(-63%, -63%, 0);
-                -o-transform: translate3d(-63%, -63%, 0);
-                transform: translate3d(-63%, -63%, 0);
-            }
-            .invalid {
-                color: red;
-                position: absolute;
-                bottom: 0;
-                left: 2px;
-                z-index: 1;
-                opacity: 1;
-            }
-        }
-    }
-    position: relative;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 18px;
-    background: #fefefe;
-
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-
-    .click-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        margin-left: auto;
-        margin-right: auto;
-        z-index: 1;
-
-        .drop-location {
-            position: absolute;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            justify-content: flex-end;
-        }
-    }
-
-    .drag-items {
-        margin: 6px 0;
-        width: 100%;
-        min-height: 180px;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-    }
-
-    .drag-item {
-        border: 1px solid dimgrey;
-        background: #fafafa;
-
-        .drag-item-picture {
-            img {
-                width: auto;
-                max-width: 160px;
-                max-height: 160px;
-            }
-        }
-
-        div {
-            span {
-                border: 1px solid transparent;
-                padding: 0;
-            }
-        }
-        div.invalid {
-            span {
-                color: red;
-                padding: 0;
-            }
-            width: auto;
-            height: auto;
-
-            position: absolute;
-            bottom: 0;
-            left: 2px;
-            z-index: 1;
-            opacity: 1;
-        }
-    }
-
-    .letter {
-        position: absolute;
-        z-index: 10;
-        left: 50%;
-        top: 50%;
-
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        background-color: #428bca;
-        color: white;
-        border-radius: 50%;
-        text-align: center;
-    }
-    .letter-solution {
-        position: absolute;
-        z-index: 10;
-        left: 50%;
-        top: 50%;
-
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        background-color: #5cb85c;
-        color: white;
-        border-radius: 50%;
-        text-align: center;
-    }
 }
 
 .btn-default {
@@ -1575,3 +1214,66 @@ ngb-tooltip-window > div {
         color: #d86b1f;
     }
 }
+
+/** SHORT ANSWER QUESTIONS **/
+
+@mixin sa-quiz-statistic-letter($color) {
+    position: absolute;
+    top: 10px;
+    right: 0;
+    z-index: 1;
+    opacity: 1;
+
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: $color;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.short-answer-question-display {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+
+    &__element {
+        display: inline-flex;
+    }
+
+    &__statistic-element {
+        display: inline-flex;
+        line-height: 35px;
+    }
+
+    .short-answer-question-container {
+        display: inline-block;
+        position: relative;
+
+        &__input {
+            border-width: 1px;
+            border-style: solid;
+            border-color: #ced4da;
+            line-height: 35px;
+            margin-bottom: 10px;
+        }
+
+        &__div-input {
+            background-color: white;
+            border: 1px solid #ced4da;
+            padding: 2px 3px;
+            width: 170px;
+            height: 40px;
+        }
+
+        &__statistic-letter {
+            @include sa-quiz-statistic-letter(#428bca); // TODO add color to variables
+        }
+
+        &__statistic-letter-solution {
+            @include sa-quiz-statistic-letter(#5cb85c); // TODO add color to variables
+        }
+    }
+}
+/** END SHORT ANSWER QUESTIONS **/

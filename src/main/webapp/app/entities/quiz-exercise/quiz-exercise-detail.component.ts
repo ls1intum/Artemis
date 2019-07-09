@@ -40,6 +40,7 @@ interface Warning {
     templateUrl: './quiz-exercise-detail.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
+    styleUrls: ['./quiz-exercise-detail.component.scss'],
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, ComponentCanDeactivate {
     // Make constants available to html for comparison
