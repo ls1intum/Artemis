@@ -3,9 +3,10 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService, JhiLanguageHelper } from 'app/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import * as moment from 'moment';
 import { stub, SinonStub } from 'sinon';
 import { ArTEMiSTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../mocks';
+import { MockActivatedRoute, MockSyncStorage } from '../../mocks';
 import { UpdatingResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArTEMiSSharedModule } from 'app/shared';
@@ -29,6 +30,10 @@ import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Subject } from 'rxjs';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
+import { Location } from '@angular/common';
+import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
+import { TextAssessmentDashboardComponent } from 'app/text-assessment/text-assessment-dashboard/text-assessment-dashboard.component';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,12 +51,15 @@ describe('TextAssessmentComponent', () => {
 
     let debugElement: DebugElement;
 
+    let router: Router;
+    let location: Location;
+
     const exercise = { id: 20, type: ExerciseType.TEXT, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as TextExercise;
     const submission = { id: 30 } as TextSubmission;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterTestingModule],
+            imports: [ArTEMiSTestModule, ArTEMiSSharedModule, RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
             declarations: [
                 TextAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
@@ -59,13 +67,16 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(TextAssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                //TextAssessmentDashboardComponent,
             ],
             providers: [
                 JhiLanguageHelper,
                 { provide: JhiAlertService, useClass: MockAlertService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                //{ provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: Router, useClass: MockRouter },
+                //{ provide: Router, useClass: MockRouter },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
@@ -75,10 +86,16 @@ describe('TextAssessmentComponent', () => {
                 comp.exercise = exercise;
 
                 debugElement = fixture.debugElement;
+
+                router = debugElement.injector.get(Router);
+                location = debugElement.injector.get(Location);
+
                 textSubmissionService = TestBed.get(TextSubmissionService);
                 textAssessmentsService = TestBed.get(TextAssessmentsService);
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 getFeedbackDataForExerciseSubmissionStub = stub(textAssessmentsService, 'getFeedbackDataForExerciseSubmission');
+
+                router.initialNavigation();
             });
     });
 
@@ -87,14 +104,17 @@ describe('TextAssessmentComponent', () => {
         getFeedbackDataForExerciseSubmissionStub.restore();
     });
 
-    it('AssessNextButton should be visible and the method assessNextOptimal should be invoked', () => {
+    it('AssessNextButton should be visible and the method assessNextOptimal should be invoked', fakeAsync(() => {
         // set all attributes for comp
+        comp.ngOnInit();
+        tick();
+
         comp.userId = 99;
         comp.submission = { submissionExerciseType: 'text', id: 2278, submitted: true, type: 'MANUAL', submissionDate: '2019-07-09T12:47:33.244+02:00', text: 'asdfasdfasdfasdf' };
         comp.result = {
             id: 2374,
             resultString: '1 of 12 points',
-            completionDate: '2019-07-09T11:51:23.251Z',
+            completionDate: moment('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
             rated: true,
@@ -252,7 +272,14 @@ describe('TextAssessmentComponent', () => {
         expect(comp.unassessedSubmission).to.be.deep.equal(unassessedSubmission);
 
         //next test:
+        //router.navigate(['text/:exerciseId/assessment/:submissionId']);
+        tick();
+        expect(location.path()).to.be.equal('/text/' + comp.exercise.id + '/assessment/' + comp.unassessedSubmission.id);
+
         //getFeedbackDataForExerciseSubmissionStub.returns(of());
         //expect(getFeedbackDataForExerciseSubmissionStub).to.have.been.called;
-    });
+
+        fixture.destroy();
+        flush();
+    }));
 });
