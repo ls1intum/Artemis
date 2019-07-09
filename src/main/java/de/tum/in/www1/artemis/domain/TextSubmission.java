@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * A TextSubmission.
  */
@@ -21,9 +23,17 @@ public class TextSubmission extends Submission implements Serializable {
     private String text;
 
     @OneToMany(mappedBy = "submission")
+    @JsonIgnoreProperties("submission")
     private List<TextBlock> blocks = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
+    public TextSubmission() {
+    }
+
+    public TextSubmission(Long id) {
+        setId(id);
+    }
 
     public String getText() {
         return text;
