@@ -1578,16 +1578,21 @@ ngb-tooltip-window > div {
     }
 }
 
-@include media-breakpoint-down(xs) {
-    .btn + .btn {
-        margin-top: 15px;
-    }
-}
-
 @include media-breakpoint-down(sm) {
     .hint {
         ngb-popover-window {
             max-width: 300px !important;
+        }
+    }
+}
+
+@include media-breakpoint-down(xs) {
+    .btn + .btn {
+        margin-top: 15px;
+    }
+    .hint {
+        ngb-popover-window {
+            max-width: 200px !important;
         }
     }
 }
