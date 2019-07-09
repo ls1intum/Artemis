@@ -128,7 +128,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build logs
      * @return list of build log entries
      */
-    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingExerciseParticipation participation);
+    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
 
     /**
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.

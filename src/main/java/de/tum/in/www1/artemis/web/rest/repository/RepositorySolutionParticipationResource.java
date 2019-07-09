@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,7 +18,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.RepositoryService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
@@ -28,20 +33,20 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 @RestController
 @RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-public class RepositoryParticipationResource extends RepositoryResource {
+public class RepositorySolutionParticipationResource extends RepositoryResource {
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    public RepositoryParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositorySolutionParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
-        this.participationService = participationService;
+        this.participationService = programmingExerciseParticipationService;
     }
 
     @Override
     Repository getRepository(Long participationId) throws IOException, IllegalAccessException, InterruptedException {
-        Optional<ProgrammingExerciseStudentParticipation> participation = participationService.findStudentParticipation(participationId);
+        Optional<SolutionProgrammingExerciseParticipation> participation = participationService.findSolutionParticipation(participationId);
         return repositoryService.checkoutRepositoryByParticipation(participation.get());
     }
 
@@ -52,7 +57,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/student-repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/solution-repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.getFiles(participationId);
     }
@@ -65,7 +70,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/student-repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/solution-repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.getFile(participationId, filename);
     }
@@ -79,7 +84,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/student-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/solution-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
             throws IOException, InterruptedException {
         return super.createFile(participationId, filename, request);
@@ -94,7 +99,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/student-repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/solution-repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
             throws IOException, InterruptedException {
         return super.createFolder(participationId, folderName, request);
@@ -109,7 +114,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping(value = "/student-repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/solution-repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
         return super.renameFile(participationId, fileMove);
     }
@@ -122,7 +127,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @DeleteMapping(value = "/student-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/solution-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.deleteFile(participationId, filename);
     }
@@ -134,7 +139,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/student-repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/solution-repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.pullChanges(participationId);
     }
@@ -147,7 +152,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/student-repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/solution-repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.commitChanges(participationId);
     }
@@ -160,7 +165,7 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/student-repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/solution-repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
         return super.getStatus(participationId);
     }
@@ -171,11 +176,11 @@ public class RepositoryParticipationResource extends RepositoryResource {
      * @param participationId the participationId of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/student-repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/solution-repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Optional<ProgrammingExerciseStudentParticipation> participation = participationService.findStudentParticipation(participationId);
+        Optional<SolutionProgrammingExerciseParticipation> participation = participationService.findSolutionParticipation(participationId);
         if (!participation.isPresent())
             return notFound();
         if (!participationService.canAccessParticipation(participation.get()))

@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 
 @Service
 public class ProgrammingExerciseParticipationService {
+
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     private SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
@@ -21,21 +23,43 @@ public class ProgrammingExerciseParticipationService {
     private UserService userService;
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, UserService userService, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            UserService userService, AuthorizationCheckService authCheckService) {
+        this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.authCheckService = authCheckService;
         this.userService = userService;
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
+        return studentParticipationRepository.findById(participationId);
+    }
+
+    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipation(Long participationId) {
+        return templateParticipationRepository.findById(participationId);
+    }
+
+    public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipation(Long participationId) {
+        return solutionParticipationRepository.findById(participationId);
+    }
+
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
-        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
             return canAccessParticipation((SolutionProgrammingExerciseParticipation) participation);
         }
         else if (participation instanceof TemplateProgrammingExerciseParticipation) {
             return canAccessParticipation((TemplateProgrammingExerciseParticipation) participation);
         }
         return false;
+    }
+
+    public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation) {
+        User user = userService.getUser();
+        return participation.getStudent().getLogin().equals(user.getLogin());
     }
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation) {

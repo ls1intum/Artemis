@@ -234,8 +234,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(ProgrammingExerciseParticipation participation) {
-        return retrieveLatestBuildLogs(participation.getBuildPlanId());
+    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
+        return retrieveLatestBuildLogs(buildPlanId);
     }
 
     @Override
