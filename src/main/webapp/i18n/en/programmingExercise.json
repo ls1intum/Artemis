@@ -65,7 +65,7 @@
                 "ok": "Test cases ok."
             },
             "manageTestCases": {
-                "title": "Test Case Management.",
+                "title": "Manage Test Cases",
                 "hideInactive": "Hide inactive test cases",
                 "showInactive": "Show inactivate test cases",
                 "resetWeights": "Reset weights"

@@ -65,7 +65,7 @@
                 "ok": "Testfälle ok."
             },
             "manageTestCases": {
-                "title": "Verwalte die Testfälle.",
+                "title": "Verwalte Testfälle",
                 "hideInactive": "Inaktive Testfälle verbergen",
                 "showInactive": "Inaktive Testfälle anzeigen",
                 "resetWeights": "Gewichtung zurücksetzen"
