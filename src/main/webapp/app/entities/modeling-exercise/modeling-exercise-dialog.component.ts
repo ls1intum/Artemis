@@ -33,7 +33,9 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     courses: Course[];
 
-    domainCommands = [new KatexCommand()];
+    domainCommandsProblemStatement = [new KatexCommand()];
+    domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,

@@ -97,7 +97,7 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommands"
+                [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="modelingExercise.problemStatement"
             ></jhi-markdown-editor>
         </div>
@@ -105,7 +105,7 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommands"
+                [domainCommands]="domainCommandsGradingInstructions"
                 [(markdown)]="modelingExercise.gradingInstructions"
             ></jhi-markdown-editor>
         </div>
@@ -141,7 +141,7 @@
             </label>
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommands"
+                [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="modelingExercise.sampleSolutionExplanation"
             ></jhi-markdown-editor>
         </div>
