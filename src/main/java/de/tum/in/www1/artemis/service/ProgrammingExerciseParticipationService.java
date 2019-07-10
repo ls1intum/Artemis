@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.Principal;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -69,6 +70,33 @@ public class ProgrammingExerciseParticipationService {
 
     public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+    }
+
+    public boolean canAccessParticipation(ProgrammingExerciseParticipation participation, Principal principal) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation, principal);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            return canAccessParticipation((SolutionProgrammingExerciseParticipation) participation, principal);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+            return canAccessParticipation((TemplateProgrammingExerciseParticipation) participation, principal);
+        }
+        return false;
+    }
+
+    public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
+        return participation.getStudent().getLogin().equals(principal.getName());
+    }
+
+    public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
+        User user = userService.getUserWithGroupsAndAuthorities(principal);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+    }
+
+    public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
+        User user = userService.getUserWithGroupsAndAuthorities(principal);
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 }
