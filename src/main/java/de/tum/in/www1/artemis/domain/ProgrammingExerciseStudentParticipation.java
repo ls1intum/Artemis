@@ -67,6 +67,8 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     }
 
     @Override
+    @JsonIgnore
+    // TODO: this is a helper method to avoid casts in other classes that want to access the underlying exercise
     public ProgrammingExercise getProgrammingExercise() {
         Exercise exercise = getExercise();
         if (exercise instanceof ProgrammingExercise) { // this should always be the case except exercise is null

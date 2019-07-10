@@ -68,6 +68,7 @@ public class SolutionProgrammingExerciseParticipation extends Participation impl
     }
 
     @Override
+    @JsonIgnore
     public Exercise getExercise() {
         return getProgrammingExercise();
     }
