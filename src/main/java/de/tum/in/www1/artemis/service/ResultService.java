@@ -141,8 +141,11 @@ public class ResultService {
         }
     }
 
+    @Transactional(readOnly = true)
     private void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
+            // Avoid circular serialization issues.
+            result.getParticipation().setExercise(null);
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
 

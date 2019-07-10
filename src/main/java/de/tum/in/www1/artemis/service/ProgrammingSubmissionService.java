@@ -6,9 +6,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -28,6 +30,8 @@ public class ProgrammingSubmissionService {
 
     private final ParticipationService participationService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final Optional<VersionControlService> versionControlService;
@@ -38,27 +42,37 @@ public class ProgrammingSubmissionService {
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
-        Optional<ProgrammingExerciseStudentParticipation> optionalParticipation = programmingExerciseStudentParticipationRepository.findById(participationId);
-        if (!optionalParticipation.isPresent()) {
-            log.warn("Invalid participation received while notifying about push: " + participationId);
-            return;
+        ProgrammingExerciseParticipation participation;
+        // We don't know here what kind of participation to expect, so the only way is to try each one.
+        try {
+            participation = programmingExerciseParticipationService.findStudentParticipation(participationId).get();
         }
-        ProgrammingExerciseStudentParticipation participation = optionalParticipation.get();
-        if (participation.getInitializationState() == InitializationState.INACTIVE) {
+        catch (ObjectRetrievalFailureException ex) {
+            try {
+                participation = programmingExerciseParticipationService.findTemplateParticipation(participationId).get();
+            }
+            catch (ObjectRetrievalFailureException ex2) {
+                participation = programmingExerciseParticipationService.findSolutionParticipation(participationId).get();
+            }
+        }
+        if (participation instanceof ProgrammingExerciseStudentParticipation
+                && ((ProgrammingExerciseStudentParticipation) participation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to
             // reactivate the
             // build plan by resuming the participation
-            participationService.resumeExercise(participation.getExercise(), participation);
+            participationService.resumeExercise(participation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) participation);
             // in addition we need to trigger a build so that we receive a result in a few
             // seconds
             continuousIntegrationService.get().triggerBuild(participation);
