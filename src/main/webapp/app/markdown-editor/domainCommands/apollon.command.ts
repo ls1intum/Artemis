@@ -17,29 +17,21 @@ export class ApollonCommand extends DomainTagCommand {
      * @desc Open a dialog where the user can create a new diagram or edit an existing one.
      */
     execute(): void {
-        const existingDiagram = this.isCursorWithinTag();
+        const existingDiagramId = this.isCursorWithinTag();
         // @ts-ignore
         // xl is an allowed option for the modal size, but missing in the type definitions
         const ref = this.modalService.open(ModelingEditorDialogComponent, { keyboard: true, size: 'xl' });
-        if (existingDiagram) {
-            const { matchStart, matchEnd, innerTagContent: diagram } = existingDiagram;
+        if (existingDiagramId) {
             // If there is an existing diagram, load it.
-            ref.componentInstance.umlModel = JSON.parse(diagram);
-            ref.componentInstance.onModelSave.subscribe((umlModel: UMLModel) => {
+            ref.componentInstance.diagramId = Number(existingDiagramId);
+            ref.componentInstance.onModelSave.subscribe(() => {
                 ref.close();
-                ArtemisMarkdown.removeTextRange(
-                    { col: matchStart, row: this.aceEditorContainer.getEditor().getCursorPosition().row },
-                    { col: matchEnd, row: this.aceEditorContainer.getEditor().getCursorPosition().row },
-                    this.aceEditorContainer,
-                );
-                const text = this.getOpeningIdentifier() + JSON.stringify(umlModel) + this.getClosingIdentifier();
-                ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
             });
         } else {
             // Otherwise let the modal create a new diagram on save and insert its value into the markdown.
-            ref.componentInstance.onModelSave.subscribe((umlModel: UMLModel) => {
+            ref.componentInstance.onModelSave.subscribe((diagram: ApollonDiagram) => {
                 ref.close();
-                const text = '\n' + this.getOpeningIdentifier() + JSON.stringify(umlModel) + this.getClosingIdentifier();
+                const text = '\n' + this.getOpeningIdentifier() + diagram.id + this.getClosingIdentifier();
                 ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
             });
         }
