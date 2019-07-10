@@ -11,9 +11,9 @@ import { isSolutionParticipation, isStudentParticipation, isTemplateParticipatio
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService {
-    public resourceUrlStudent = SERVER_API_URL + 'api/programming-exercises-student-participation/';
-    public resourceUrlSolution = SERVER_API_URL + 'api/programming-exercises-solution-participation/';
-    public resourceUrlTemplate = SERVER_API_URL + 'api/programming-exercises-template-participation/';
+    public resourceUrlStudent = SERVER_API_URL + 'api/programming-exercises-participation/';
+    public resourceUrlSolution = SERVER_API_URL + 'api/programming-exercises-participation/';
+    public resourceUrlTemplate = SERVER_API_URL + 'api/programming-exercises-participation/';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService, private resultService: ResultService) {}
 

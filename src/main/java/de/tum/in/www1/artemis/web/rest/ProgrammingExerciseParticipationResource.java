@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
 
 @RestController
@@ -35,16 +32,20 @@ public class ProgrammingExerciseParticipationResource {
 
     private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
+    private ParticipationRepository participationRepository;
+
     private ResultRepository resultRepository;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ParticipationRepository participationRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.studentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -70,14 +71,23 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
-    @GetMapping(value = "/programming-exercises-solution-participation/{participationId}/latest-result-with-feedbacks")
+    @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForSolutionParticipation(@PathVariable Long participationId) {
-        Optional<SolutionProgrammingExerciseParticipation> participation = solutionParticipationRepository.findById(participationId);
-        if (!participation.isPresent()) {
+        Optional<Participation> participationOpt = participationRepository.findById(participationId);
+        if (!participationOpt.isPresent()) {
             return notFound();
         }
-        return getLatestResultWithFeedbacks(participation.get());
+        Participation participation = participationOpt.get();
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            return getLatestResultWithFeedbacks((SolutionProgrammingExerciseParticipation) participation);
+        }
+        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+            return getLatestResultWithFeedbacks((TemplateProgrammingExerciseParticipation) participation);
+        }
+        else {
+            return getLatestResultWithFeedbacks((ProgrammingExerciseStudentParticipation) participation);
+        }
     }
 
     /**
