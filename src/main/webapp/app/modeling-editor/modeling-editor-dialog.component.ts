@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { of } from 'rxjs';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
+import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 
 @Component({
     selector: 'jhi-modeling-editor-dialog',
@@ -11,22 +14,61 @@ export class ModelingEditorDialogComponent {
     DiagramType = DiagramType;
     @ViewChild(ModelingEditorComponent, { static: false }) editor: ModelingEditorComponent;
     @Input()
-    umlModel: UMLModel;
+    get diagramId() {
+        return this.diagramIdValue;
+    }
     @Input()
     diagramType = DiagramType.ClassDiagram;
     @Input()
     readOnly = false;
     @Output()
-    onModelSave = new EventEmitter<UMLModel>();
+    onModelSave = new EventEmitter<ApollonDiagram>();
 
-    constructor(private activeModal: NgbActiveModal) {}
+    diagramIdValue: number;
+    diagram: ApollonDiagram;
+    umlModel: UMLModel;
+    isLoading = false;
+    isSaving = false;
+
+    set diagramId(diagramId: number) {
+        this.diagramIdValue = diagramId;
+        this.isLoading = true;
+        this.apollonDiagramService
+            .find(this.diagramId)
+            .pipe(
+                tap(console.log),
+                map(res => res && res.body),
+            )
+            .subscribe((diagram: ApollonDiagram) => {
+                this.diagram = diagram;
+                this.diagramType = diagram.diagramType;
+                this.umlModel = JSON.parse(diagram.jsonRepresentation);
+                this.isLoading = false;
+            });
+    }
+
+    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService) {}
 
     selectDiagramType(diagramType: DiagramType) {
         this.diagramType = diagramType;
     }
 
     onSave() {
-        this.onModelSave.emit(this.editor.getCurrentModel());
+        const currentModel = JSON.stringify(this.editor.getCurrentModel());
+        const apollonDiagram = new ApollonDiagram(this.diagramType);
+        apollonDiagram.jsonRepresentation = currentModel;
+        of(null)
+            .pipe(
+                tap(() => (this.isSaving = true)),
+                switchMap(() =>
+                    this.diagramId ? this.apollonDiagramService.update({ ...apollonDiagram, id: this.diagramId }) : this.apollonDiagramService.create(apollonDiagram),
+                ),
+                map(res => res.body),
+                filter(diagram => !!diagram),
+            )
+            .subscribe((diagram: ApollonDiagram) => {
+                this.onModelSave.emit(diagram);
+            });
     }
 
     onCancel() {

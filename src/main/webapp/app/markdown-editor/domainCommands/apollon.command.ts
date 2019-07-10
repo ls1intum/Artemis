@@ -2,7 +2,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingEditorDialogComponent } from 'app/modeling-editor';
-import { UMLModel } from '@ls1intum/apollon';
 import { ApollonDiagram } from 'app/entities/apollon-diagram';
 
 export class ApollonCommand extends DomainTagCommand {
@@ -23,7 +22,7 @@ export class ApollonCommand extends DomainTagCommand {
         const ref = this.modalService.open(ModelingEditorDialogComponent, { keyboard: true, size: 'xl' });
         if (existingDiagramId) {
             // If there is an existing diagram, load it.
-            ref.componentInstance.diagramId = Number(existingDiagramId);
+            ref.componentInstance.diagramId = Number(existingDiagramId.innerTagContent);
             ref.componentInstance.onModelSave.subscribe(() => {
                 ref.close();
             });
