@@ -252,7 +252,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().getResults().forEach(participationResult -> participationResult.setParticipation(null));
+            result.getParticipation().setResults(null);
         }
 
         return ResponseEntity.ok(result);
