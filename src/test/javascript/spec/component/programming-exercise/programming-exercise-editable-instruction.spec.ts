@@ -1,17 +1,19 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
 import { MockComponent } from 'ng-mocks';
+import { of, Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { SinonSpy, spy } from 'sinon';
+import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
 import { SafeHtmlPipe } from 'src/main/webapp/app/shared';
-import { ResultService } from 'src/main/webapp/app/entities/result';
+import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks/mock-result.service';
 import {
     ProgrammingExercise,
@@ -32,10 +34,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
     let testCaseService: ProgrammingExerciseTestCaseService;
+    let resultService: ResultService;
 
     let subscribeForTestCaseSpy: SinonSpy;
+    let getLatestResultWithFeedbacksStub: SinonStub;
 
-    const exercise = { id: 30 } as ProgrammingExercise;
+    const exercise = { id: 30, templateParticipation: { id: 99 } } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
 
@@ -53,6 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: ResultService, useClass: MockResultService },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
@@ -63,13 +68,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 debugElement = fixture.debugElement;
                 testCaseService = debugElement.injector.get(ProgrammingExerciseTestCaseService);
                 (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
+                resultService = debugElement.injector.get(ResultService);
                 subscribeForTestCaseSpy = spy(testCaseService, 'subscribeForTestCases');
+                getLatestResultWithFeedbacksStub = stub(resultService, 'getLatestResultWithFeedbacks');
             });
     });
 
     afterEach(() => {
         (testCaseService as MockProgrammingExerciseTestCaseService).initSubject([]);
         subscribeForTestCaseSpy.restore();
+        getLatestResultWithFeedbacksStub.restore();
     });
 
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
@@ -116,5 +124,26 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).to.be.empty;
 
         expect(subscribeForTestCaseSpy).to.have.been.calledOnceWithExactly(exercise.id);
+    }));
+
+    it('should try to retreive the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+        const subject = new Subject<HttpResponse<Result>>();
+        getLatestResultWithFeedbacksStub.returns(subject);
+
+        // No test cases available, might be that the solution build never ran to create tests...
+        (testCaseService as MockProgrammingExerciseTestCaseService).next(null);
+
+        fixture.detectChanges();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(0);
+        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+
+        subject.next({ body: { feedbacks: [{ text: 'testY' }, { text: 'testX' }] } } as HttpResponse<Result>);
+        tick();
+
+        expect(comp.exerciseTestCases).to.have.lengthOf(2);
+        expect(comp.exerciseTestCases).to.deep.equal(['testX', 'testY']);
     }));
 });
