@@ -167,7 +167,7 @@ public class ParticipationService {
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise || exercise instanceof TextExercise) {
+        else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise) {
             if (participation.getInitializationState() == null || participation.getInitializationState() == FINISHED) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
@@ -178,7 +178,7 @@ public class ParticipationService {
             }
 
             if (participation.getId() == null || !submissionRepository.existsByParticipationId(participation.getId())) {
-                // initialize a modeling or text submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+                // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
                 initializeSubmission(participation, exercise);
             }
         }
@@ -193,10 +193,11 @@ public class ParticipationService {
     }
 
     /**
-     * Initializes a new text or modeling submission (depending on the type of the given exercise), connects it with the given participation and stores it in the database.
+     * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
+     * database.
      *
      * @param participation the participation for which the submission should be initialized
-     * @param exercise      the corresponding exercise, should be either a text or modeling exercise, otherwise it will instantly return and not do anything
+     * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
      */
     private void initializeSubmission(Participation participation, Exercise exercise) {
         if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
@@ -207,8 +208,11 @@ public class ParticipationService {
         if (exercise instanceof ModelingExercise) {
             submission = new ModelingSubmission();
         }
-        else {
+        else if (exercise instanceof TextExercise) {
             submission = new TextSubmission();
+        }
+        else {
+            submission = new FileUploadSubmission();
         }
 
         submission.setParticipation(participation);
@@ -384,7 +388,7 @@ public class ParticipationService {
     /**
      * Get all the participations.
      *
-     * @return the list of entities
+     * @return the list of participations
      */
     @Transactional(readOnly = true)
     public List<Participation> findAll() {
@@ -396,7 +400,7 @@ public class ParticipationService {
      * Get all the participations.
      *
      * @param pageable the pagination information
-     * @return the list of entities
+     * @return the list of participations
      */
     @Transactional(readOnly = true)
     public Page<Participation> findAll(Pageable pageable) {
@@ -407,15 +411,15 @@ public class ParticipationService {
     /**
      * Get one participation by id.
      *
-     * @param id the id of the entity
-     * @return the entity
+     * @param participationId the id of the participation
+     * @return the participation
      */
     @Transactional(readOnly = true)
-    public Participation findOne(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findById(id);
+    public Participation findOne(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findById(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -423,15 +427,15 @@ public class ParticipationService {
     /**
      * Get one participation by id including all results.
      *
-     * @param id the id of the participation
+     * @param participationId the id of the participation
      * @return the participation with all its results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerResults(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerResults(id);
+    public Participation findOneWithEagerResults(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findByIdWithEagerResults(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -439,15 +443,15 @@ public class ParticipationService {
     /**
      * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
-     * @param id the id of the entity
+     * @param participationId the id of the entity
      * @return the participation with all its submissions and results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerSubmissionsAndResults(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(id);
+    public Participation findOneWithEagerSubmissionsAndResults(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsAndResultsById(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -455,15 +459,15 @@ public class ParticipationService {
     /**
      * Get one participation by id including all results and submissions.
      *
-     * @param id the id of the participation
+     * @param participationId the id of the participation
      * @return the participation with all its results
      */
     @Transactional(readOnly = true)
-    public Participation findOneWithEagerResultsAndSubmissionsAndAssessor(Long id) {
-        log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
+    public Participation findOneWithEagerResultsAndSubmissionsAndAssessor(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participationId);
         if (!participation.isPresent()) {
-            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
     }
@@ -473,7 +477,7 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise in state initialized or inactive
      */
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
@@ -491,7 +495,7 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise in any state
      */
     @Transactional(readOnly = true)
     public Optional<Participation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
@@ -504,7 +508,7 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise in state finished
      */
     @Transactional(readOnly = true)
     public Optional<Participation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
@@ -517,7 +521,7 @@ public class ParticipationService {
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the entity
+     * @return the participation of the given student and exercise with eager submissions in any state
      */
     @Transactional(readOnly = true)
     public Optional<Participation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
@@ -529,7 +533,7 @@ public class ParticipationService {
      * Get all participations for the given student including all results
      *
      * @param username the username of the student
-     * @return the list of entities
+     * @return the list of participations of the given student including all results
      */
     @Transactional(readOnly = true)
     public List<Participation> findWithResultsByStudentUsername(String username) {
