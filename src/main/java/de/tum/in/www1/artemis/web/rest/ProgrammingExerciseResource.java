@@ -382,12 +382,6 @@ public class ProgrammingExerciseResource {
             // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
-
-            // Avoid circular serialization issues with jackson.
-            if (exercise.getTemplateParticipation() != null) {
-                exercise.getTemplateParticipation().setExercise(null);
-                exercise.getSolutionParticipation().setExercise(null);
-            }
         }
         return ResponseEntity.ok().body(exercises);
     }
