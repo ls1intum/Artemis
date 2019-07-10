@@ -2,6 +2,7 @@ import { Injectable, SecurityContext } from '@angular/core';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
+import * as DOMPurify from 'dompurify';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
@@ -44,8 +45,6 @@ export class ArtemisMarkdown {
             .getSession()
             .remove(new Range(from.row, from.col, to.row, to.col));
     }
-
-    constructor(private sanitizer: DomSanitizer) {}
 
     /**
      * Parse the markdown text and apply the result to the target object's data
@@ -142,8 +141,7 @@ export class ArtemisMarkdown {
             extensions: [showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        const sanitized = this.sanitizer.sanitize(SecurityContext.SCRIPT, html);
-        return sanitized;
+        return DOMPurify.sanitize(html);
     }
 
     markdownForHtml(htmlText: string) {
