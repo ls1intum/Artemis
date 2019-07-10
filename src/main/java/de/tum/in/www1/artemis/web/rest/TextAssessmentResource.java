@@ -173,7 +173,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         Participation participation = textSubmission.get().getParticipation();
-        participation = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+        participation = participationService.findOneWithEagerResultsAndSubmissionsAndAssessor(participation.getId());
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
