@@ -51,7 +51,7 @@ public class TextExerciseTest {
     @Before
     public void initTestCase() {
         database.resetDatabase();
-        database.addUsers(1, 1);
+        database.addUsers(1, 1, 1);
     }
 
     @Test
