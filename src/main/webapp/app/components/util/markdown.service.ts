@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as showdown from 'showdown';
-import showdownKatex from 'showdown-katex';
+import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import * as DOMPurify from 'dompurify';
 import { MarkDownElement } from 'app/entities/quiz-question';
