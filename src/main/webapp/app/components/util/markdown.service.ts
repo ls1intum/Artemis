@@ -1,9 +1,8 @@
-import { Injectable, SecurityContext } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as showdown from 'showdown';
-import * as showdownKatex from 'showdown-katex';
+import showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import * as DOMPurify from 'dompurify';
-import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
