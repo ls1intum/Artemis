@@ -11,10 +11,15 @@ import { isSolutionParticipation, isStudentParticipation, isTemplateParticipatio
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService {
+    public resourceUrlStudent = SERVER_API_URL + 'api/programming-exercises-student-participation/';
     public resourceUrlSolution = SERVER_API_URL + 'api/programming-exercises-solution-participation/';
     public resourceUrlTemplate = SERVER_API_URL + 'api/programming-exercises-template-participation/';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService, private resultService: ResultService) {}
+
+    getStudentParticipationWithLatestResult(participationId: number) {
+        return this.http.get<Participation>(this.resourceUrlStudent + participationId + '/participation-with-latest-result-and-feedbacks');
+    }
 
     getLatestResultWithFeedback(participation: Participation): Observable<Result | null> {
         if (isStudentParticipation(participation)) {

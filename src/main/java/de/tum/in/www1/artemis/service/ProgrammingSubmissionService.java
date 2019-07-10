@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.hibernate.WrongClassException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -56,14 +57,15 @@ public class ProgrammingSubmissionService {
     public void notifyPush(Long participationId, Object requestBody) {
         ProgrammingExerciseParticipation participation;
         // We don't know here what kind of participation to expect, so the only way is to try each one.
+        // TODO: This seems like a very bad way to handle this, but is there another way without changing the bitbucket / bamboo configuration?
         try {
             participation = programmingExerciseParticipationService.findStudentParticipation(participationId).get();
         }
-        catch (ObjectRetrievalFailureException ex) {
+        catch (WrongClassException | ObjectRetrievalFailureException ex) {
             try {
                 participation = programmingExerciseParticipationService.findTemplateParticipation(participationId).get();
             }
-            catch (ObjectRetrievalFailureException ex2) {
+            catch (WrongClassException | ObjectRetrievalFailureException ex2) {
                 participation = programmingExerciseParticipationService.findSolutionParticipation(participationId).get();
             }
         }

@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
@@ -15,6 +18,10 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 @SuppressWarnings("unused")
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+
+    @EntityGraph(attributePaths = "results.feedbacks")
+    @Query("select p from ProgrammingExerciseStudentParticipation p where p.id = :participationId")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
 
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
 

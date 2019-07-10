@@ -11,7 +11,7 @@ import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
 import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
@@ -40,6 +40,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     constructor(
         private resultService: ResultService,
         private domainService: DomainService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
@@ -90,8 +91,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * @param participationId
      */
     loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
-        return this.participationService.findWithLatestResult(participationId).pipe(
-            map(res => res && res.body),
+        return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             flatMap((participation: StudentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(

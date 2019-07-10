@@ -142,10 +142,11 @@ public class ResultService {
     }
 
     @Transactional(readOnly = true)
-    private void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
+    public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
             // Avoid circular serialization issues.
-            result.getParticipation().setExercise(null);
+            // TODO: This results in removing the reference from the participation to the exercise.
+            // result.getParticipation().setExercise(null);
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
 

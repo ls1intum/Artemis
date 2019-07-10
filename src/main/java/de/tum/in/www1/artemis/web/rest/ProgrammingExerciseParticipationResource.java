@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -32,15 +33,36 @@ public class ProgrammingExerciseParticipationResource {
 
     private TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
 
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+
     private ResultRepository resultRepository;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
+        this.studentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
+    }
+
+    /**
+     * GET /courses/:courseId/exercises : get all the exercises.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     */
+    @GetMapping(value = "/programming-exercises-student-participation/{participationId}/participation-with-latest-result-and-feedbacks")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
+        Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+        if (!participation.isPresent()) {
+            return notFound();
+        }
+        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(participation.get());
     }
 
     /**
