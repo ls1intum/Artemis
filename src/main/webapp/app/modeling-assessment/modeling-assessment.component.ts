@@ -16,14 +16,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     totalScore = 0;
 
-    @ViewChild('editorContainer') editorContainer: ElementRef;
-    @ViewChild('resizeContainer') resizeContainer: ElementRef;
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
     @Input() model: UMLModel;
-    @Input() highlightedElementIds: Set<string>;
+    @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
+    @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
-    @Input() assessor: User;
+    @Input() title: string;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Input() enablePopups = true;
@@ -35,10 +36,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        if (this.highlightedElementIds) {
-            this.updateHighlightedElements(this.highlightedElementIds);
-            // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);
+        if (this.highlightedElements) {
+            this.updateHighlightedElements(this.highlightedElements);
         }
+        this.applyStateConfiguration();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -73,18 +74,25 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
-            this.apollonEditor.model = changes.model.currentValue;
+            this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
+            this.applyStateConfiguration();
         }
-        if (changes.highlightedElementIds) {
+        if (changes.highlightedElements) {
+            this.highlightedElements = changes.highlightedElements.currentValue;
+
             if (this.apollonEditor !== null) {
-                this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+                this.applyStateConfiguration();
             }
-            // this.scrollIntoView(changes.highlightedElementId.currentValue);
+        }
+        if (changes.centeredElementId) {
+            if (this.centeredElementId) {
+                this.scrollIntoView(this.centeredElementId);
+            }
         }
     }
 
@@ -120,6 +128,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    private applyStateConfiguration() {
+        if (this.highlightedElements) {
+            this.updateHighlightedElements(this.highlightedElements);
+        }
+        if (this.centeredElementId) {
+            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
+        }
+    }
+
     /**
      * Gets the assessments from Apollon and creates/updates the corresponding Feedback entries in the
      * element feedback mapping.
@@ -130,7 +147,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
                 existingFeedback.credits = assessment.score;
-                existingFeedback.text = assessment.feedback;
+                existingFeedback.text = assessment.feedback || null;
             } else {
                 this.elementFeedback.set(assessment.modelElementId, new Feedback(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
             }
@@ -167,7 +184,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.model.relationships) {
             availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
         }
-        return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId));
+        return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId!));
     }
 
     /**
@@ -184,30 +201,30 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return;
         }
         for (const feedback of feedbacks) {
-            this.elementFeedback.set(feedback.referenceId, feedback);
+            this.elementFeedback.set(feedback.referenceId!, feedback);
         }
     }
 
-    private updateHighlightedElements(newElementIDs: Set<string>) {
-        if (!newElementIDs) {
-            newElementIDs = new Set<string>();
+    /**
+     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     *
+     * @param newElements a map of elementIds -> highlight color
+     */
+    private updateHighlightedElements(newElements: Map<string, string>) {
+        if (!newElements) {
+            newElements = new Map<string, string>();
         }
-        const model: UMLModel = this.apollonEditor.model;
-        for (const element of model.elements) {
-            if (newElementIDs.has(element.id)) {
-                element.highlight = 'red';
-            } else {
-                element.highlight = undefined;
+
+        if (this.apollonEditor !== null) {
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                element.highlight = newElements.get(element.id);
             }
-        }
-        for (const relationship of model.relationships) {
-            if (newElementIDs.has(relationship.id)) {
-                relationship.highlight = 'red';
-            } else {
-                relationship.highlight = undefined;
+            for (const relationship of model.relationships) {
+                relationship.highlight = newElements.get(relationship.id);
             }
+            this.apollonEditor!.model = model;
         }
-        this.apollonEditor.model = model;
     }
 
     private scrollIntoView(elementId: string) {
@@ -230,14 +247,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         this.model.assessments = feedbacks.map(feedback => {
             return {
-                modelElementId: feedback.referenceId,
-                elementType: feedback.referenceType,
-                score: feedback.credits,
-                feedback: feedback.text,
+                modelElementId: feedback.referenceId!,
+                elementType: feedback.referenceType!,
+                score: feedback.credits!,
+                feedback: feedback.text || undefined,
             };
         });
         if (this.apollonEditor) {
-            this.apollonEditor.model = this.model;
+            this.apollonEditor!.model = this.model;
         }
     }
 
@@ -254,7 +271,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         let totalScore = 0;
         for (const feedback of this.feedbacks) {
-            totalScore += feedback.credits;
+            totalScore += feedback.credits!;
         }
         this.totalScore = totalScore;
     }

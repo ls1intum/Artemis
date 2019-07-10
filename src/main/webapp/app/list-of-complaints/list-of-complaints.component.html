@@ -3,7 +3,7 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
-                {{ 'arTeMiSApp.complaint.listOfComplaints.title' | translate }}
+                {{ 'artemisApp.complaint.listOfComplaints.title' | translate }}
             </h2>
         </div>
     </div>
@@ -13,22 +13,64 @@
     <jhi-alert></jhi-alert>
 
     <div class="row table-responsive">
-        <table class="table" [hidden]="complaints.length === 0">
+        <div class="form-check col-6 align-baseline" *ngIf="!loading">
+            <input
+                type="checkbox"
+                name="showAddressedComplaint"
+                id="field_showAddressedComplaint"
+                [ngModel]="showAddressedComplaints"
+                (ngModelChange)="triggerAddressedComplaints()"
+            />
+            <label class="form-check-label" for="field_showAddressedComplaint">
+                {{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | translate }}
+            </label>
+        </div>
+
+        <div [hidden]="complaintsToShow.length !== 0">
+            {{ 'artemisApp.complaint.listOfComplaints.noComplaintsToShow' | translate }}
+        </div>
+
+        <table class="table" [hidden]="complaintsToShow.length === 0">
             <thead>
-                <tr>
-                    <th>#</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.exercise' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.submissionId' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerLogin' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.reviewerName' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentLogin' | translate }}</th>
-                    <th *ngIf="hasStudentInformation">{{ 'arTeMiSApp.complaint.listOfComplaints.studentName' | translate }}</th>
-                    <th>{{ 'arTeMiSApp.complaint.listOfComplaints.actions' | translate }}</th>
+                <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" [callback]="callback">
+                    <th jhiSortBy="id"><a class="th-link">#</a><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="result.participation.exercise.title">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.submission.id">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.login">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.assessor.firstName">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="student.firstName" *ngIf="hasStudentInformation">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="accepted">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | translate }}</a
+                        ><fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | translate }}</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let complaint of complaints">
+                <tr
+                    *ngFor="let complaint of complaintsToShow | sortBy: complaintsSortingPredicate:complaintsReverseOrder"
+                    [ngClass]="{ 'table-warning': shouldHighlightComplaint(complaint) }"
+                >
                     <td>
                         {{ complaint.id }}
                     </td>
@@ -49,18 +91,24 @@
                         <span>{{ complaint.result?.assessor?.firstName }} {{ complaint.result?.assessor?.lastName }}</span>
                     </td>
 
-                    <td>
+                    <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.login }}</span>
                     </td>
 
-                    <td>
+                    <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
+                    </td>
+
+                    <td>
+                        <span class="text-warning" *ngIf="complaint.accepted == undefined">{{ 'artemisApp.complaint.listOfComplaints.noReply' | translate }}</span>
+                        <span class="text-success" *ngIf="complaint.accepted == true">{{ 'artemisApp.complaint.listOfComplaints.accepted' | translate }}</span>
+                        <span class="text-danger" *ngIf="complaint.accepted == false">{{ 'artemisApp.complaint.listOfComplaints.rejected' | translate }}</span>
                     </td>
 
                     <td class="text-center">
                         <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)">
                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
-                            {{ 'arTeMiSApp.tutorExerciseDashboard.showComplaint' | translate }}
+                            {{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}
                         </button>
                     </td>
                 </tr>
@@ -69,6 +117,6 @@
     </div>
 
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
-        {{ 'arTeMiSApp.tutorExerciseDashboard.noComplaints' | translate }}
+        {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
     </div>
 </div>

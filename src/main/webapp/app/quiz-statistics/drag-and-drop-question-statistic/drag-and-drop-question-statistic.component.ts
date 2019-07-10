@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService, JhiWebsocketService } from '../../core';
@@ -27,11 +27,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
@@ -58,7 +53,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string;
+    questionTextRendered: string | null;
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -83,7 +78,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
+                    this.loadQuiz(res.body!, false);
                 });
             }
 
@@ -98,16 +93,20 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
             // add Axes-labels based on selected language
             this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
             this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
     }
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
+    }
+
+    @HostListener('window:resize') onResize() {
+        this.resizeImage();
     }
 
     getDataSets() {
@@ -244,9 +243,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => {
-                return dropLocation.id === dlCounter.dropLocation.id;
-            });
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => dropLocation.id === dlCounter.dropLocation.id)!;
             this.ratedData.push(dropLocationCounter.ratedCounter);
             this.unratedData.push(dropLocationCounter.unRatedCounter);
         });
@@ -357,7 +354,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
+        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter(mapping => mapping.dropLocation!.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
         } else {
@@ -365,19 +362,13 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         }
     }
 
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
+    resizeImage() {
+        /* set timeout as workaround to render all necessary elements */
+        setTimeout(() => {
+            const image = document.querySelector('.drag-and-drop-quizStatistic-picture img') as HTMLImageElement;
+            const clickLayer = document.getElementsByClassName('click-layer').item(0) as HTMLElement;
+            clickLayer.style.width = image.width + 'px';
+            clickLayer.style.height = image.height + 'px';
+        }, 100);
     }
 }

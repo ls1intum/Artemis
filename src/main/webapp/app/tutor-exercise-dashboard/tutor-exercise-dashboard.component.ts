@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService, StatsForTutorDashboard } from '../entities/course';
+import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -16,7 +16,10 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Submission } from 'app/entities/submission';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -32,6 +35,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
+
+    statsForDashboard = new StatsForDashboard();
+
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = 0;
@@ -50,10 +56,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[];
+    submissionLockLimitReached = false;
 
-    formattedGradingInstructions: string;
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
+    formattedGradingInstructions: string | null;
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
 
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
@@ -74,7 +81,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor: User;
+    tutor: User | null;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -101,12 +108,13 @@ export class TutorExerciseDashboardComponent implements OnInit {
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
+                this.exercise = res.body!;
                 this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
 
                 if (this.exercise.type === this.ExerciseType_TEXT) {
-                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown((<TextExercise>this.exercise).sampleSolution);
+                    const textExercise = this.exercise as TextExercise;
+                    this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
                 } else if (this.exercise.type === this.ExerciseType_MODELING) {
                     this.modelingExercise = this.exercise as ModelingExercise;
                     if (this.modelingExercise.sampleSolutionModel) {
@@ -146,15 +154,22 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.complaintService
             .getForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body), (error: HttpErrorResponse) => this.onError(error.message));
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
-            (res: HttpResponse<StatsForTutorDashboard>) => {
-                this.numberOfSubmissions = res.body.numberOfSubmissions;
-                this.numberOfAssessments = res.body.numberOfAssessments;
-                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
-                this.numberOfComplaints = res.body.numberOfComplaints;
-                this.numberOfTutorComplaints = res.body.numberOfTutorComplaints;
+            (res: HttpResponse<StatsForDashboard>) => {
+                this.statsForDashboard = res.body!;
+                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
+                this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
+                if (tutorLeaderboardEntry) {
+                    this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                    this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
+                } else {
+                    this.numberOfTutorAssessments = 0;
+                    this.numberOfTutorComplaints = 0;
+                }
 
                 if (this.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
@@ -165,84 +180,78 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
-    // TODO CZ: too much duplicated code
+    /**
+     * Get all the submissions from the server for which the current user is the assessor, which is the case for started or completed assessments. All these submissions get listed
+     * in the exercise dashboard.
+     */
     private getSubmissions(): void {
+        let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textSubmissionService
-                .getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-                .map((response: HttpResponse<TextSubmission[]>) =>
-                    response.body.map((submission: TextSubmission) => {
-                        if (submission.result) {
-                            // reconnect some associations
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
-                        }
-
-                        return submission;
-                    }),
-                )
-                .subscribe((submissions: TextSubmission[]) => {
-                    this.submissions = submissions;
-                });
+            submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.modelingSubmissionService
-                .getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true })
-                .map((response: HttpResponse<ModelingSubmission[]>) =>
-                    response.body.map((submission: ModelingSubmission) => {
-                        if (submission.result) {
-                            // reconnect some associations
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
-                        }
-
-                        return submission;
-                    }),
-                )
-                .subscribe((submissions: ModelingSubmission[]) => {
-                    this.submissions = submissions;
-                    this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
-                });
+            submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
         }
+
+        submissionsObservable
+            .pipe(
+                map(res => res.body),
+                map(this.reconnectEntities),
+            )
+            .subscribe((submissions: Submission[]) => {
+                this.submissions = submissions;
+            });
     }
 
-    // TODO CZ: too much duplicated code
+    /**
+     * Reconnect submission, result and participation for all submissions in the given array.
+     */
+    private reconnectEntities = (submissions: Submission[]) => {
+        return submissions.map((submission: Submission) => {
+            if (submission.result) {
+                // reconnect some associations
+                submission.result.submission = submission;
+                submission.result.participation = submission.participation;
+                submission.participation.results = [submission.result];
+            }
+            return submission;
+        });
+    };
+
+    /**
+     * Get a submission from the server that does not have an assessment yet (if there is one). The submission gets added to the end of the list of submissions in the exercise
+     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course. If the user reached this limit,
+     * the server will respond with a BAD REQUEST response here.
+     */
     private getSubmissionWithoutAssessment(): void {
+        let submissionObservable: Observable<Submission> = of();
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-                (response: HttpResponse<TextSubmission>) => {
-                    this.unassessedSubmission = response.body;
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                    } else {
-                        this.onError(error.message);
-                    }
-                },
-            );
+            submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
         } else if (this.exercise.type === ExerciseType.MODELING) {
-            this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId).subscribe(
-                (response: ModelingSubmission) => {
-                    this.unassessedSubmission = response;
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                    } else {
-                        this.onError(error.message);
-                    }
-                },
-            );
+            submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
         }
+
+        submissionObservable.subscribe(
+            (submission: Submission) => {
+                this.unassessedSubmission = submission;
+                this.submissionLockLimitReached = false;
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.submissionLockLimitReached = true;
+                } else {
+                    this.onError(error.message);
+                }
+            },
+        );
     }
 
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
-            this.tutorParticipation = res.body;
+            this.tutorParticipation = res.body!;
             this.tutorParticipationStatus = this.tutorParticipation.status;
-            this.jhiAlertService.success('arTeMiSApp.tutorExerciseDashboard.participation.instructionsReviewed');
+            this.jhiAlertService.success('artemisApp.tutorExerciseDashboard.participation.instructionsReviewed');
         }, this.onError);
     }
 
@@ -251,7 +260,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 
     calculateStatus(submission: Submission) {
@@ -285,7 +294,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         }
 
         const queryParams: any = {};
-        let route: string;
+        let route = '';
         let submission = submissionId.toString();
         if (isNewAssessment) {
             submission = 'new';

@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "tutorExerciseDashboard": {
             "home": {
                 "title": "Dashboard für Lehrerübungen"
@@ -37,7 +37,7 @@
             "openAssessment": "Bewertung öffnen",
             "startAssessment": "Neue Bewertung starten",
             "new": "NEU",
-            "noSubmissions": "Zur Zeit gibt es keine Abgaben von Studenten.",
+            "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerde.",
             "evaluateComplaint": "Auswertung der Beschwerde.",
@@ -46,7 +46,8 @@
             "exerciseInformation": "Übungsinformationen",
             "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
-            "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben"
+            "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
+            "nextAssessment": "Nächste Abgabe bewerten"
         }
     }
 }

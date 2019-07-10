@@ -3,9 +3,16 @@
         "assessment": "Assessment",
         "assessmentLocked": "Assessment locked by: {{otherUser}}",
         "assessmentLockedCurrentUser": "You have the lock for this assessment",
+        "conflicts": "Conflict",
+        "ownAssessmentTitle": "Your current assessment",
+        "conflictingAssessmentTitle": "1. out of {{count}} conflicting assessments. Assessed by",
         "button": {
             "overrideAssessment": "Override Assessment",
-            "nextSubmission": "Assess Next Submission"
+            "nextSubmission": "Assess Next Submission",
+            "resolveConflict": "Resolve Conflicts",
+            "applyChanges": "Apply Changes",
+            "keepYours": "Keep Yours",
+            "acceptTheirs": "Take Over"
         },
         "messages": {
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
@@ -19,8 +26,18 @@
             "resultDismissed": "Your assessment was dismissed because another tutor already rated this model.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
             "updateAfterComplaintFailed": "Updating the Assessment failed.",
-            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again."
+            "confirmSubmission": "You have not assessed all model elements. Are you sure you want to submit this assessment? You will not be able to change it afterwards.",
+            "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
+            "noConflicts": "Conflicts could not be loaded",
+            "conflictsResolved": "All conflicts have been processed.",
+            "feedbackTextTooLong": "Failed to save Assessment. Feedback text must not be longer than 500 characters."
         },
-        "reviewComplaint": "Review Complaint"
+        "reviewComplaint": "Review Complaint",
+        "automaticAssessmentAvailable": "Congratulations! To save you some time, parts of this model were already assessed automatically. Please review the automatic assessment and assess the rest of the model afterwards. By submitting the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.",
+        "highlightingColors": {
+            "title": "Highlighting Color(s)",
+            "automaticAssessment": "automatic assessment",
+            "missingAssessment": "missing assessment"
+        }
     }
 }

@@ -10,17 +10,13 @@ import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-
 import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';
 import * as moment from 'moment';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: Subscription;
@@ -60,6 +56,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
+        private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
@@ -70,7 +67,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuizSuccess(res.body);
+                    this.loadQuizSuccess(res.body!);
                 });
             }
 
@@ -114,10 +111,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
 
             // add Axes-labels based on selected language
             this.translateService.get('showStatistic.quizPointStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
             this.translateService.get('showStatistic.quizPointStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
 
@@ -289,7 +286,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      */
     recalculate() {
         this.quizExerciseService.recalculate(this.quizExercise.id).subscribe(res => {
-            this.loadQuizSuccess(res.body);
+            this.loadQuizSuccess(res.body!);
         });
     }
 
@@ -317,24 +314,5 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             // a must be equal to b
             return 0;
         });
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic -> the last QuizQuestionStatistic
-     * if there is no QuizQuestionStatistic -> go to QuizStatistic
-     */
-    previousStatistic() {
-        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-            this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
-        } else {
-            const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
-            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
-            }
-        }
     }
 }

@@ -20,7 +20,7 @@ export class LectureResolve implements Resolve<Lecture> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Lecture>) => response.ok),
-                map((lecture: HttpResponse<Lecture>) => lecture.body),
+                map((lecture: HttpResponse<Lecture>) => lecture.body!),
             );
         }
         return of(new Lecture());
@@ -33,7 +33,7 @@ export const lectureRoute: Routes = [
         component: LectureComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.home.title',
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -45,7 +45,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.home.title',
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -57,7 +57,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.attachments.title',
+            pageTitle: 'artemisApp.lecture.attachments.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -69,7 +69,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.home.title',
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -81,7 +81,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.home.title',
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -96,7 +96,7 @@ export const lecturePopupRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.lecture.home.title',
+            pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup',

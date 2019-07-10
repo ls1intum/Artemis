@@ -44,14 +44,14 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     private loadCourse(): void {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
+            this.course = courseResponse.body!;
             this.loadExercises();
         });
     }
 
     public getAmountOfExercisesString<T>(exercises: Array<T>): string {
         if (exercises.length === 0) {
-            return this.translateService.instant('arTeMiSApp.createExercise.noExercises');
+            return this.translateService.instant('artemisApp.createExercise.noExercises');
         } else {
             return exercises.length.toString();
         }

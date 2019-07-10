@@ -1,30 +1,43 @@
 <div class="row table-responsive mt-3">
     <table class="table">
         <thead>
-            <tr>
+            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder" [callback]="callback">
                 <th>#</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.username' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</th>
-                <th>{{ 'arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaints' | translate }}</th>
+                <th jhiSortBy="name">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.name' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="points">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.points' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfAssessments">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAssessments' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfAcceptedComplaints">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfComplaintResponses">
+                    <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaintResponses' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                </th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutor of tutorsData | keyvalue: orderByNumberOfAssessments; let i = index">
+            <tr *ngFor="let tutor of tutorsData | sortBy: sortPredicate:reverseOrder; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ tutor.value.name }}</td>
-                <td>{{ tutor.value.login }}</td>
-                <td>{{ tutor.value.numberOfAssessments }}</td>
-                <td *ngIf="courseId">
-                    <a routerLink="/complaints" [queryParams]="{ courseId: courseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
+                <td>{{ tutor.name }}</td>
+                <td>{{ tutor.points }}</td>
+                <td>{{ tutor.numberOfAssessments }}</td>
+                <td *ngIf="course && isAtLeastInstructor">
+                    <a routerLink="/complaints" [queryParams]="{ courseId: course.id, tutorId: tutor.userId }">
+                        {{ tutor.numberOfAcceptedComplaints }}
                     </a>
                 </td>
-                <td *ngIf="exerciseId">
-                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor.value.tutorId }">
-                        {{ tutor.value.numberOfComplaints }}
+                <td *ngIf="exercise && isAtLeastInstructor">
+                    <a routerLink="/complaints" [queryParams]="{ exerciseId: exercise.id, tutorId: tutor.userId }">
+                        {{ tutor.numberOfAcceptedComplaints }}
                     </a>
                 </td>
+                <td *ngIf="!isAtLeastInstructor">{{ tutor.numberOfAcceptedComplaints }}</td>
+                <td>{{ tutor.numberOfComplaintResponses }}</td>
             </tr>
         </tbody>
     </table>

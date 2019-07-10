@@ -42,6 +42,9 @@ public class ResultResource {
 
     private static final String ENTITY_NAME = "result";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     @Value("${artemis.bamboo.authentication-token}")
     private String CI_AUTHENTICATION_TOKEN = "";
 
@@ -59,13 +62,13 @@ public class ResultResource {
 
     private final UserService userService;
 
-    private final ContinuousIntegrationService continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ResultResource(UserService userService, ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService, ContinuousIntegrationService continuousIntegrationService,
-            ProgrammingExerciseService programmingExerciseService) {
+            AuthorizationCheckService authCheckService, FeedbackService feedbackService, ExerciseService exerciseService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseService programmingExerciseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -114,7 +117,8 @@ public class ResultResource {
 
         resultService.createNewResult(result, true);
 
-        return ResponseEntity.created(new URI("/api/results/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -146,12 +150,15 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     @Transactional
     public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+        log.info("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+            log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
 
         try {
-            String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            String planKey = continuousIntegrationService.get().getPlanKey(requestBody);
+            log.info("PlanKey for received notifyResultNew is {}", planKey);
             Optional<Participation> optionalParticipation = getParticipation(planKey);
             if (optionalParticipation.isPresent()) {
                 Participation participation = optionalParticipation.get();
@@ -162,15 +169,18 @@ public class ResultResource {
                     participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
                 }
                 resultService.onResultNotifiedNew(participation, requestBody);
+                log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
                 return ResponseEntity.ok().build();
             }
             else {
+                log.info("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
                 // return ok so that Bamboo does not think it was an error
                 return ResponseEntity.ok().build();
             }
 
         }
         catch (Exception e) {
+            log.error("An exception occurred during handling of notifyResultNew", e);
             return badRequest();
         }
 
@@ -215,7 +225,7 @@ public class ResultResource {
         }
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -235,6 +245,12 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
+
+        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
+        if (participation.getExercise() == null) {
+            Exercise exercise = exerciseService.findOne(exerciseId);
+            participation.setExercise(exercise);
+        }
 
         if (!Hibernate.isInitialized(participation.getExercise())) {
             participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
@@ -325,7 +341,7 @@ public class ResultResource {
 
             Result relevantResult;
             if (ratedOnly) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
             }
             else {
                 relevantResult = participation.findLatestResult();
@@ -384,6 +400,26 @@ public class ResultResource {
     }
 
     /**
+     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation. The order of results is determined by completionDate desc.
+     *
+     * @param participationId the id of the participation for which to retrieve the latest result.
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
+    @GetMapping("results/{participationId}/latest-result")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
+        log.debug("REST request to get latest result for participation : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
+
+        if (!participationService.canAccessParticipation(participation)) {
+            return forbidden();
+        }
+
+        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        return result.map(ResponseEntity::ok).orElse(notFound());
+    }
+
+    /**
      * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
      * or build errors)
      *
@@ -400,19 +436,9 @@ public class ResultResource {
             return notFound();
         }
         Participation participation = result.get().getParticipation();
-        Course course = participation.getExercise().getCourse();
 
-        if (participation.getStudent() == null) {
-            // If the student is null, then we participation is a template/solution participation -> check for instructor role
-            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
-                return forbidden();
-            }
-        }
-        else {
-            if (!authCheckService.isOwnerOfParticipation(participation)) {
-                if (!userHasPermissions(course))
-                    return forbidden();
-            }
+        if (!participationService.canAccessParticipation(participation)) {
+            return forbidden();
         }
 
         try {
@@ -443,7 +469,7 @@ public class ResultResource {
             if (!userHasPermissions(course))
                 return forbidden();
             resultRepository.deleteById(resultId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, resultId.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
         }
         return ResponseEntity.notFound().build();
     }

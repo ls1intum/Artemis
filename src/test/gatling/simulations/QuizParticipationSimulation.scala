@@ -22,23 +22,22 @@ class QuizParticipationSimulation extends Simulation {
     val numUsersNoSubmit = 200
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
-        "username" -> ("<USERNAME>"),   // NOTE: generate real username for each value of i (removed for security)
-        "password" -> ("<PASSWORD>")    // NOTE: generate real password for each value of i (removed for security)
+        "username" -> ("<USERNAME>"), // NOTE: generate real username for each value of i (removed for security)
+        "password" -> ("<PASSWORD>") // NOTE: generate real password for each value of i (removed for security)
     ))
 
     val baseURL = "http://localhost:8080"
     val wsBaseURL = "ws://localhost:8080"
 
     val httpConf: HttpProtocolBuilder = http
-        .baseURL(baseURL)
-        .wsBaseURL(wsBaseURL)
+        .baseUrl(baseURL)
+        .wsBaseUrl(wsBaseURL)
         .inferHtmlResources()
         .acceptHeader("*/*")
         .acceptEncodingHeader("gzip, deflate")
         .acceptLanguageHeader("fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3")
         .connectionHeader("keep-alive")
         .userAgentHeader("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:33.0) Gecko/20100101 Firefox/33.0")
-        .disableClientSharing
 
     val headers_http = Map(
         "Accept" -> """application/json"""
@@ -64,64 +63,64 @@ class QuizParticipationSimulation extends Simulation {
 
         // iterate through all questions to select answers
         questions.foreach((questionP) => {
-            val question = questionP.get.asInstanceOf[Map[String, Any]]
-            val questionType = question("type").get.asInstanceOf[String]
+//            val question = questionP.get.asInstanceOf[Map[String, Any]]
+//            val questionType = question("type").get.asInstanceOf[String]
 
             // create a submitted answer for this question
-            var submittedAnswer = Map(
-                "question" -> question,
-                "type" -> questionType
-            )
-
-            if (questionType.equals("multiple-choice")) {
-                // save selected options in a List
-                var selectedOptions = List[Map[String, Any]]()
-
-                // iterate through all answer options of this question
-                val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
-                answerOptions.foreach((answerOptionP) => {
-                    val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
-
-                    // select each answer option with a 50/50 chance
-                    if (math.random < 0.5) {
-                        selectedOptions = answerOption +: selectedOptions
-                    }
-                })
-
-                // add selected options to submitted answer
-                submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
-            } else if (questionType.equals("drag-and-drop")) {
-                // save mappings in a List
-                var mappings = List[Map[String, Any]]()
-
-                // extract drag items and drop locations
-                var dragItems = question("dragItems").get.asInstanceOf[List[Any]]
-                var dropLocations = question("dropLocations").get.asInstanceOf[List[Any]]
-
-                while (dragItems.nonEmpty && dropLocations.nonEmpty) {
-                    // create a random mapping
-                    val dragItemIndex = (math.random * dragItems.size).floor.toInt
-                    val dropLocationIndex = (math.random * dropLocations.size).floor.toInt
-
-                    val mapping = Map(
-                        "dragItem" -> dragItems.get(dragItemIndex).get.asInstanceOf[Map[String, Any]],
-                        "dropLocation" -> dropLocations.get(dropLocationIndex).get.asInstanceOf[Map[String, Any]]
-                    )
-
-                    // remove selected elements from lists
-                    dragItems = dragItems.take(dragItemIndex) ++ dragItems.drop(dragItemIndex + 1)
-                    dropLocations = dropLocations.take(dropLocationIndex) ++ dropLocations.drop(dropLocationIndex + 1)
-
-                    // add mapping to mappings
-                    mappings = mapping +: mappings
-                }
-
-                // add mappings to submitted answer
-                submittedAnswer = submittedAnswer + ("mappings" -> mappings)
-            }
-
-            // add submitted answer to the List
-            submittedAnswers = submittedAnswer +: submittedAnswers
+//            var submittedAnswer = Map(
+//                "question" -> question,
+//                "type" -> questionType
+//            )
+//
+//            if (questionType.equals("multiple-choice")) {
+//                // save selected options in a List
+//                var selectedOptions = List[Map[String, Any]]()
+//
+//                // iterate through all answer options of this question
+//                val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
+//                answerOptions.foreach((answerOptionP) => {
+//                    val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
+//
+//                    // select each answer option with a 50/50 chance
+//                    if (math.random < 0.5) {
+//                        selectedOptions = answerOption +: selectedOptions
+//                    }
+//                })
+//
+//                // add selected options to submitted answer
+//                submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+//            } else if (questionType.equals("drag-and-drop")) {
+//                // save mappings in a List
+//                var mappings = List[Map[String, Any]]()
+//
+//                // extract drag items and drop locations
+//                var dragItems = question("dragItems").get.asInstanceOf[List[Any]]
+//                var dropLocations = question("dropLocations").get.asInstanceOf[List[Any]]
+//
+//                while (dragItems.nonEmpty && dropLocations.nonEmpty) {
+//                    // create a random mapping
+//                    val dragItemIndex = (math.random * dragItems.size).floor.toInt
+//                    val dropLocationIndex = (math.random * dropLocations.size).floor.toInt
+//
+//                    val mapping = Map(
+//                        "dragItem" -> dragItems.get(dragItemIndex).get.asInstanceOf[Map[String, Any]],
+//                        "dropLocation" -> dropLocations.get(dropLocationIndex).get.asInstanceOf[Map[String, Any]]
+//                    )
+//
+//                    // remove selected elements from lists
+//                    dragItems = dragItems.take(dragItemIndex) ++ dragItems.drop(dragItemIndex + 1)
+//                    dropLocations = dropLocations.take(dropLocationIndex) ++ dropLocations.drop(dropLocationIndex + 1)
+//
+//                    // add mapping to mappings
+//                    mappings = mapping +: mappings
+//                }
+//
+//                // add mappings to submitted answer
+//                submittedAnswer = submittedAnswer + ("mappings" -> mappings)
+//            }
+//
+//            // add submitted answer to the List
+//            submittedAnswers = submittedAnswer +: submittedAnswers
         })
 
         // add submitted answers to submission
@@ -175,38 +174,39 @@ class QuizParticipationSimulation extends Simulation {
 
     val workOnQuiz: ChainBuilder = exec(
         ws("Connect WebSocket")
-            .open("/websocket/tracker/websocket")).exitHereIfFailed
+            .connect("/websocket/tracker/websocket")).exitHereIfFailed
         .pause(5 seconds)
         .exec(ws("Connect STOMP")
             .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
-            .check(wsAwait.within(10 seconds).until(1)))
+            .await(10 seconds)())
         .exec(ws("Subscribe Submission")
             .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/submission\n\n\u0000"))
         .pause(5 seconds)
         .repeat(20) {
             exec(ws("Send Answers")
                 .sendText(session => "SEND\ndestination:/topic/quizExercise/" + exerciseId + "/submission\n\n" + selectRandomAnswers(session("questions").as[String], false) + "\u0000")
-                .check(wsListen.within(10 seconds).until(1)))
+                .await(10 seconds)())
                 .pause(5 seconds)
         }
 
     val submitQuiz: ChainBuilder = rendezVous(numUsersSubmit)
         .exec(ws("Submit Answers")
             .sendText(session => "SEND\ndestination:/topic/quizExercise/" + exerciseId + "/submission\n\n" + selectRandomAnswers(session("questions").as[String], true) + "\u0000")
-            .check(wsListen.within(10 seconds).until(1)))
+            .await(10 seconds)())
         .pause(5 seconds)
 
     val waitForResult: ChainBuilder = pause(10 seconds)
         .exec(ws("Subscribe Participation")
-            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/exercise/" + exerciseId + "/participation\n\n\u0000")
-            .check(wsAwait.within(600 seconds).until(1)))
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/participation\n\n\u0000")
+            .await(600 seconds)())
+
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(numUsersNoSubmit) over (20 seconds)),
-        usersSubmit.inject(rampUsers(numUsersSubmit) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(numUsersNoSubmit) during (20 seconds)),
+        usersSubmit.inject(rampUsers(numUsersSubmit) during (20 seconds))
     ).protocols(httpConf)
 
 }

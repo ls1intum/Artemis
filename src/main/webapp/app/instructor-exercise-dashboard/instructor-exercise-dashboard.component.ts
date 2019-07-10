@@ -3,9 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { Result, ResultService } from 'app/entities/result';
-import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
-import { StatsForInstructorDashboard } from 'app/entities/course';
+import { ResultService } from 'app/entities/result';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -16,19 +15,9 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     courseId: number;
 
-    stats: StatsForInstructorDashboard = {
-        numberOfStudents: 0,
-        numberOfSubmissions: 0,
-        numberOfTutors: 0,
-        numberOfAssessments: 0,
-        numberOfComplaints: 0,
-        numberOfOpenComplaints: 0,
-
-        tutorLeaderboard: [],
-    };
+    stats = new StatsForDashboard();
 
     dataForAssessmentPieChart: number[];
-    tutorLeaderboardData: TutorLeaderboardData = {};
     totalAssessmentPercentage: number;
 
     constructor(
@@ -40,8 +29,9 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.courseId = +this.route.snapshot.paramMap.get('courseId');
-        this.loadExercise(+this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.loadExercise(exerciseId);
     }
 
     back() {
@@ -51,18 +41,14 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     private loadExercise(exerciseId: number) {
         this.exerciseService
             .find(exerciseId)
-            .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body), (response: HttpErrorResponse) => this.onError(response.message));
+            .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
-            (res: HttpResponse<StatsForInstructorDashboard>) => {
+            (res: HttpResponse<StatsForDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
 
                 if (this.stats.numberOfSubmissions > 0) {
                     this.totalAssessmentPercentage = Math.round((this.stats.numberOfAssessments / this.stats.numberOfSubmissions) * 100);
-                }
-
-                for (const tutor of this.stats.tutorLeaderboard) {
-                    this.tutorLeaderboardData[tutor.login] = tutor;
                 }
 
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
@@ -72,6 +58,6 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

@@ -40,9 +40,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
             this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
-                this.exercise = exerciseResponse.body;
+                this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(participationsResponse => {
-                    this.participations = participationsResponse.body;
+                    this.participations = participationsResponse.body!;
                 });
             });
         });
@@ -70,7 +70,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('arTeMiSApp.participation.addPresentation.error');
+                this.jhiAlertService.error('artemisApp.participation.addPresentation.error');
             },
         );
     }
@@ -80,7 +80,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.participationService.update(participation).subscribe(
             () => {},
             () => {
-                this.jhiAlertService.error('arTeMiSApp.participation.removePresentation.error');
+                this.jhiAlertService.error('artemisApp.participation.removePresentation.error');
             },
         );
     }

@@ -5,7 +5,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -56,7 +56,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
     template: '',
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
+    protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 

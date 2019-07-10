@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "modelingEditor": {
             "title": "Modeling Editor",
             "problemStatement": "<strong>Problem statement:</strong>",
@@ -52,15 +52,15 @@
                 },
                 "select": {
                     "title": "Multi-Selection",
-                    "text": "When selecting elements or relationships, you can keep your <code>Shift</code> button pressed to add the element to your current selection. With <code>Ctrl+A</code> you can select all available elements."
+                    "text": "When selecting elements or relationships, you can keep your <code>Shift</code> button pressed to add the element to your current selection. With <code>Ctrl + A</code> you can select all available elements."
                 },
                 "duplicate": {
                     "title": "Duplicate Elements",
-                    "text": "With <code>Ctrl+D</code> you can duplicate the currently selected elements with all their properties."
+                    "text": "With <code>Ctrl + D</code> you can duplicate the currently selected elements with all their properties."
                 },
                 "undo": {
                     "title": "Undo & Redo",
-                    "text": "With <code>Ctrl+Z</code> and <code>Ctrl+Shift+Z</code> you can undo and redo your changes."
+                    "text": "With <code>Ctrl + Z</code> and <code>Ctrl + Shift + Z</code> you can undo and redo your changes."
                 }
             }
         }

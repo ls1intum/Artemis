@@ -5,7 +5,7 @@ export class ExplanationCommand extends DomainTagCommand {
     public static readonly identifier = '[exp]';
     public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation';
+    buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addExplanation';
 
     /**
      * @function execute

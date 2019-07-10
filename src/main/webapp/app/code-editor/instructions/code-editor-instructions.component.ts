@@ -1,24 +1,29 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { Subscription } from 'rxjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-
-import { CodeEditorComponent } from '../code-editor.component';
-import { CodeEditorService } from '../code-editor.service';
 import { Participation } from '../../entities/participation';
-import { RepositoryService } from '../../entities/repository/repository.service';
-import { ResultService } from '../../entities/result';
 import { WindowRef } from '../../core/websocket/window.service';
+import { ProgrammingExercise, ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise';
+import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
+    styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit {
-    haveDetailsBeenLoaded = false;
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
+    @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) readOnlyInstructions: ProgrammingExerciseInstructionComponent;
+    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+
+    @Input() participation: Participation;
+    @Input() exercise: ProgrammingExercise;
+    @Input() editable = false;
+    @Input() templateParticipation: Participation;
+    @Output()
+    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
@@ -26,10 +31,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     interactResizable: Interactable;
     noInstructionsAvailable = false;
 
-    @Input()
-    participation: Participation;
+    resizeSubscription: Subscription;
 
-    constructor(private parent: CodeEditorComponent, private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * @function ngAfterViewInit
@@ -62,6 +66,27 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
                 // Update element width
                 target.style.width = event.rect.width + 'px';
             });
+
+        this.resizeSubscription = this.codeEditorGridService.subscribeForResizeEvents([ResizeType.SIDEBAR_RIGHT, ResizeType.MAIN_BOTTOM]).subscribe(() => {
+            if (this.editableInstructions && this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
+                this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.resizeSubscription) {
+            this.resizeSubscription.unsubscribe();
+        }
+    }
+
+    /**
+     * Update the problem statement with the new string received.
+     * This does not save the new problem statement on the server.
+     * @param newProblemStatement
+     */
+    onProblemStatementEditorUpdate(newProblemStatement: string) {
+        this.exercise = { ...this.exercise, problemStatement: newProblemStatement };
     }
 
     /**
@@ -70,8 +95,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
+    toggleEditorCollapse($event: any) {
+        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 
     onNoInstructionsAvailable() {

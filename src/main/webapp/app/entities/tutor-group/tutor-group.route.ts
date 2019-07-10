@@ -20,7 +20,7 @@ export class TutorGroupResolve implements Resolve<TutorGroup> {
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<TutorGroup>) => response.ok),
-                map((tutorGroup: HttpResponse<TutorGroup>) => tutorGroup.body),
+                map((tutorGroup: HttpResponse<TutorGroup>) => tutorGroup.body!),
             );
         }
         return of(new TutorGroup());

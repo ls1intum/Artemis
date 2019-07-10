@@ -12,7 +12,7 @@
             <input id="short-answer-question-title" class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Question Title" />
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
-            <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
+            <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()" />
         </div>
         <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4">
@@ -51,10 +51,10 @@
         </div>
         <div class="question-options">
             <div class="form-group">
-                <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                 <select class="form-control" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                    <option value="ALL_OR_NOTHING">{{ 'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
-                    <option value="PROPORTIONAL_WITH_PENALTY">{{ 'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
+                    <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | translate }}</option>
+                    <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | translate }}</option>
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
@@ -71,23 +71,23 @@
                     class="btn btn-outline-secondary"
                     [hidden]="question.invalid"
                     (click)="question.invalid = true"
-                    jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setQuestionInvalid"
+                    jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                 ></button>
                 <button
                     class="btn btn-outline-secondary"
                     [hidden]="!question.invalid"
                     [disabled]="question.invalid"
-                    jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.questionIsInvalid"
+                    jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                 ></button>
             </ng-container>
         </div>
         <div class="markupEditorArea" [hidden]="showVisualMode">
             <div class="toolbar" *ngIf="!reEvaluationInProgress">
                 <div class="btn-group">
-                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>-->
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
+                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>-->
+                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
                 </div>
             </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
@@ -104,13 +104,13 @@
             </div>
         </div>
         <div class="edit-sa-question" style="padding:20px" *ngIf="showVisualMode || reEvaluationInProgress">
-            <h4 jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
-            <span *ngIf="!reEvaluationInProgress" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
+            <h4 jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
+            <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr />
             <div
                 *ngIf="!reEvaluationInProgress"
                 class="btn btn-outline-secondary"
-                jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot"
+                jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot"
                 (click)="addSpotAtCursorVisualMode()"
             ></div>
             <hr *ngIf="!reEvaluationInProgress" />
@@ -175,10 +175,10 @@
             </div>
             <hr />
             <div *ngIf="!question.solutions || !question.solutions.length" class="instructions">
-                <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemsInstructions"></span>
+                <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
             </div>
             <div *ngIf="question.solutions && question.solutions.length" class="instructions">
-                <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
+                <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
             <div class="drag-items" *ngIf="question.solutions && question.solutions.length">
                 <div class="drag-item" *ngFor="let solution of question.solutions" dnd-draggable [dragEnabled]="true" [dragData]="solution">
@@ -209,7 +209,7 @@
                         <div class="col">
                             <button class="btn btn-outline-secondary" (click)="addTextSolution()">
                                 <i class="fa fa-plus"></i>
-                                <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemText"></span>
+                                <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                             </button>
                         </div>
                     </div>
@@ -219,14 +219,14 @@
         <hr />
         <div *ngIf="!showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
         <div *ngIf="showVisualMode && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
-                <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"></div>
             </div>
         </div>
     </div>

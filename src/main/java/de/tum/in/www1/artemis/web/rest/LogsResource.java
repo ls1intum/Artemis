@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import ch.qos.logback.classic.Level;
@@ -17,7 +16,6 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
  */
 @RestController
 @RequestMapping("/management")
-@PreAuthorize("hasRole('ADMIN')")
 public class LogsResource {
 
     @GetMapping("/logs")

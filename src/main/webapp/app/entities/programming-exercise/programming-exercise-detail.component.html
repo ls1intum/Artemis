@@ -1,96 +1,102 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="programmingExercise">
-            <h2><span jhiTranslate="arTeMiSApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
+            <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
                 <dd>
                     <span>{{ programmingExercise.title }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.exercise.shortName">Short Name</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.shortName">Short Name</span></dt>
                 <dd>
                     <span>{{ programmingExercise.shortName }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
                     <span>{{ programmingExercise.releaseDate | date: 'medium' }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
                     <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.templateParticipation.repositoryUrl }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.solutionParticipation.repositoryUrl }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.testRepositoryUrl }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span>{{ programmingExercise.templateParticipation.buildPlanId }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span>{{ programmingExercise.solutionParticipation.buildPlanId }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.sequentialTestRuns }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>
                     <span>{{ programmingExercise.publishBuildPlanUrl }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
                 <dd>
                     <span>{{ programmingExercise.allowOnlineEditor }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>
-                    <span jhiTranslate="{{ 'arTeMiSApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
+                    <span jhiTranslate="{{ 'artemisApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.packageName">Package Name</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.packageName">Package Name</span></dt>
                 <dd>
                     <span>{{ programmingExercise.packageName }}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+                <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
                 <dd>
                     <a [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/lti-configuration' } }]">LTI Configuration</a>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.templateParticipation.results" class="d-flex align-items-center">
-                        <jhi-updating-result [participation]="programmingExercise.templateParticipation" class="mr-2"></jhi-updating-result>
+                    <div *ngIf="programmingExercise?.templateParticipation?.results" class="d-flex align-items-center">
+                        <jhi-updating-result [participation]="programmingExercise.templateParticipation" [showUngradedResults]="true" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.templateParticipation.results.length"
+                            *ngIf="programmingExercise.templateParticipation.results?.length"
                             class="repository-status-icon"
                             [participationType]="ParticipationType.TEMPLATE"
-                            [result]="programmingExercise.templateParticipation.results[0]"
+                            [participation]="programmingExercise.templateParticipation"
+                            [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                     </div>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise.solutionParticipation.results" class="d-flex align-items-center">
-                        <jhi-updating-result [participation]="programmingExercise.solutionParticipation" class="mr-2"></jhi-updating-result>
+                    <div *ngIf="programmingExercise?.solutionParticipation?.results" class="d-flex align-items-center">
+                        <jhi-updating-result [participation]="programmingExercise.solutionParticipation" [showUngradedResults]="true" class="mr-2"></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
-                            *ngIf="programmingExercise.solutionParticipation.results.length"
+                            *ngIf="programmingExercise.solutionParticipation.results?.length"
                             class="repository-status-icon"
                             [participationType]="ParticipationType.SOLUTION"
-                            [result]="programmingExercise.solutionParticipation.results[0]"
+                            [participation]="programmingExercise.solutionParticipation"
+                            [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                     </div>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.problemStatement.title">Problem Statement</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.problemStatement.title">Problem Statement</span></dt>
                 <dd>
                     <jhi-programming-exercise-instructions
                         [exercise]="programmingExercise"
@@ -103,13 +109,21 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button type="button" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary mr-1">
+            <button type="button" [routerLink]="['/course', programmingExercise.course?.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
-
-            <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA" (click)="generateStructureOracle()" class="btn btn-secondary mr-1">
-                <span jhiTranslate="arTeMiSApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
-            </button>
+            <span class="mr-1">
+                <button type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.squashTemplateCommits">Squash Template Commits</span>
+                </button>
+                <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
+            </span>
+            <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
+                <button type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
+                </button>
+                <fa-icon icon="question-circle" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>
+            </span>
         </div>
     </div>
 </div>

@@ -18,9 +18,21 @@ jobs:
       - stage: Build
         name: "TypeScript"
         language: node_js
-        node_js: 12.2.0
+        node_js: 12.3.1
         install: yarn install
         script: yarn build
+      - stage: Test
+        name: "Java"
+        language: java
+        jdk: openjdk8
+        install: skip
+        script: ./gradlew executeTests
+      - stage: Test
+        name: "TypeScript"
+        language: node_js
+        node_js: 12.3.1
+        install: yarn install
+        script: yarn test
       - stage: Lint
         name: "Java"
         language: java
@@ -30,6 +42,6 @@ jobs:
       - stage: Lint
         name: "TypeScript"
         language: node_js
-        node_js: 12.2.0
+        node_js: 12.3.1
         install: yarn install
         script: yarn prettier:check

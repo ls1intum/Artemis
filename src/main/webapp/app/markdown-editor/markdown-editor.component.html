@@ -1,51 +1,70 @@
-<ngb-tabset class="md-editor-tabs" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
+<ngb-tabset #wrapper class="markdown-editor-wrapper bg-white" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
     <!--Begin Editor-->
     <ngb-tab title="{{ 'entity.action.edit' | translate }}" id="editor_edit">
         <ng-template ngbTabContent>
-            <div class="tool-bar row pt-1">
-                <div class="col-xs-6" style="margin-left: 14px">
-                    <ng-container *ngFor="let command of defaultCommands">
-                        <button type="button" class="btn btn-outline-secondary mr-1" (click)="command.execute()" [ngbTooltip]="command.buttonTranslationString | translate">
-                            <fa-icon [icon]="command.buttonIcon"></fa-icon>
-                        </button>
-                    </ng-container>
-                </div>
-                <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
-                    <button class="btn btn-outline-secondary mr-1" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                        {{ 'arTeMiSApp.multipleChoiceQuestion.editor.style' | translate }}
+            <div class="markdown-editor__commands">
+                <div class="markdown-editor__commands-default">
+                    <!--default commands (e.g. bold)-->
+                    <button
+                        *ngFor="let command of defaultCommands"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        (click)="command.execute()"
+                        [ngbTooltip]="command.buttonTranslationString | translate"
+                    >
+                        <fa-icon [icon]="command.buttonIcon"></fa-icon>
                     </button>
-                    <div class="dropdown-menu" ngbDropdownMenu>
-                        <ng-container *ngFor="let command of headerCommands"
-                            ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
-                        >
-                    </div>
-                </div>
-                <div class="btn-group col-xs-6">
-                    <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{ borderColor: selectedColor }" (click)="openColorSelector($event)">
-                        Color
-                    </div>
-                    <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
-                </div>
-            </div>
-            <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px">
-                <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
-                    <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
-                        {{ command.buttonTranslationString | translate }}
-                    </div>
-                </ng-container>
-                <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
-                    <div ngbDropdown class="d-inline-block">
-                        <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
-                            {{ command.buttonTranslationString | translate }}
+                    <!--style command -->
+                    <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                        <button class="btn btn-outline-secondary" type="button" id="dropdownBasic1" ngbDropdownToggle>
+                            {{ 'artemisApp.multipleChoiceQuestion.editor.style' | translate }}
                         </button>
-                        <div ngbDropdownMenu>
-                            <button *ngFor="let value of command.values" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
-                            <button *ngIf="!command.values.length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                        <div class="dropdown-menu" ngbDropdownMenu>
+                            <ng-container *ngFor="let command of headerCommands"
+                                ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
+                            >
                         </div>
                     </div>
-                </ng-container>
+                    <!--color picker command -->
+                    <div class="btn-group col-xs-6">
+                        <div class="color-preview form-control btn btn-outline-secondary" [ngStyle]="{ borderColor: selectedColor }" (click)="openColorSelector($event)">
+                            Color
+                        </div>
+                        <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+                    </div>
+                    <div class="ml-auto">
+                        <button
+                            *ngFor="let command of metaCommands"
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            (click)="command.execute()"
+                            [ngbTooltip]="command.buttonTranslationString | translate"
+                        >
+                            <fa-icon [icon]="command.buttonIcon"></fa-icon>
+                        </button>
+                    </div>
+                </div>
+                <!-- domain commands -->
+                <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
+                    <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
+                        <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
+                            {{ command.buttonTranslationString | translate }}
+                        </div>
+                    </ng-container>
+                    <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
+                        <div ngbDropdown class="d-inline-block">
+                            <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
+                                {{ command.buttonTranslationString | translate }}
+                            </button>
+                            <div ngbDropdownMenu>
+                                <button *ngFor="let value of command.getValues()" type="button" (click)="command.execute(value)" ngbDropdownItem>{{ value }}</button>
+                                <button *ngIf="!command.getValues().length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
             </div>
-            <div class="card border-0 markdown-editor markdown-editor__small">
+            <div class="height-100 border-0 markdown-editor d-flex flex-column">
                 <ace-editor
                     #aceEditor
                     [mode]="aceEditorOptions.mode"
@@ -54,7 +73,8 @@
                     (textChange)="markdownChange.emit($event)"
                     class="form-control markdown-editor__content"
                 ></ace-editor>
-                <div *ngIf="enableResize" class="rg-bottom"><span></span></div>
+                <!-- Required for resizing; don't remove empty span -->
+                <fa-icon *ngIf="enableResize" icon="grip-lines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
             </div>
         </ng-template>
     </ngb-tab>

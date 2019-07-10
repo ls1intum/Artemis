@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,7 +11,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.web.rest.dto.StatsTutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -81,7 +77,7 @@ abstract class AssessmentService {
         }
 
         // Update the result that was complained about with the new feedback
-        originalResult.setNewFeedback(assessmentUpdate.getFeedbacks());
+        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         originalResult.evaluateFeedback(exercise.getMaxScore());
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
@@ -128,69 +124,5 @@ abstract class AssessmentService {
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
-    }
-
-    /**
-     * Given a courseId, this method creates the tutor leaderboard collecting all the results of the course, checking who is the assessor and if there is any related complaint
-     *
-     * @param courseId - the course we are interested in
-     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
-     */
-    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForCourse(Long courseId) {
-        List<Result> resultsForCourse = resultRepository.findAllByParticipation_Exercise_CourseIdWithEagerAssessor(courseId);
-
-        return createTutorLeaderboardFromResults(resultsForCourse);
-    }
-
-    /**
-     * Given a exerciseId, this method creates the tutor leaderboard collecting all the results of the exercise, checking who is the assessor and if there is any related complaint
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a NOT SORTED tutor leaderboard with name, login, number of assessments and number of complaints
-     */
-    public List<StatsTutorLeaderboardDTO> calculateTutorLeaderboardForExercise(Long exerciseId) {
-        List<Result> resultsForExercise = resultRepository.findAllByParticipation_Exercise_IdWithEagerAssessor(exerciseId);
-
-        return createTutorLeaderboardFromResults(resultsForExercise);
-    }
-
-    /**
-     * Given a list of results, create a leaderboard counting how many assessments and how many complaints every tutor has
-     *
-     * @param results - the results to iterate over
-     * @return a tutor leaderboard
-     */
-    @NotNull
-    private List<StatsTutorLeaderboardDTO> createTutorLeaderboardFromResults(List<Result> results) {
-        List<StatsTutorLeaderboardDTO> tutorWithNumberAssessmentList = new ArrayList<>();
-
-        results.forEach(result -> {
-            User assessor = result.getAssessor();
-
-            // We count only completed assessments, not draft
-            if (assessor != null && assessor.getLogin() != null && result.getCompletionDate() != null) {
-                Optional<StatsTutorLeaderboardDTO> existingElement = tutorWithNumberAssessmentList.stream().filter(o -> o.login.equals(assessor.getLogin())).findFirst();
-                StatsTutorLeaderboardDTO element;
-
-                if (!existingElement.isPresent()) {
-                    String name = assessor.getFirstName().concat(" ").concat(assessor.getLastName());
-                    element = new StatsTutorLeaderboardDTO(name, assessor.getLogin(), 0, 0, assessor.getId());
-                    tutorWithNumberAssessmentList.add(element);
-                }
-                else {
-                    element = existingElement.get();
-                }
-
-                element.numberOfAssessments += 1;
-
-                Optional<Boolean> hasComplaint = result.getHasComplaint();
-
-                if (hasComplaint.isPresent() && hasComplaint.get()) {
-                    element.numberOfComplaints += 1;
-                }
-            }
-        });
-
-        return tutorWithNumberAssessmentList;
     }
 }

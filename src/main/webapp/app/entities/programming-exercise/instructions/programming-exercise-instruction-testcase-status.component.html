@@ -1,0 +1,26 @@
+<div *ngIf="invalidTestCases.length + missingTestCases.length > 0">
+    <fa-icon icon="exclamation-triangle" class="text-warning mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
+</div>
+<div *ngIf="invalidTestCases.length + missingTestCases.length <= 0">
+    <fa-icon icon="check-circle" class="text-success mr-1" [ngbTooltip]="tooltipContent"></fa-icon>
+    <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
+</div>
+
+<ng-template #tooltipContent>
+    <div class="text-left w-100">
+        <div *ngIf="invalidTestCases.length">
+            <span>There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span>
+            <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | translate: { number: invalidTestCases.length } }}</span>
+            <ul>
+                <li *ngFor="let test of invalidTestCases">{{ test }}</li>
+            </ul>
+        </div>
+        <div *ngIf="missingTestCases.length" class="text-left">
+            <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | translate: { number: missingTestCases.length } }}</span>
+            <ul>
+                <li *ngFor="let test of missingTestCases">{{ test }}</li>
+            </ul>
+        </div>
+    </div>
+</ng-template>

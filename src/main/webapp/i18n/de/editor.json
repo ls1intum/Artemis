@@ -1,22 +1,31 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "editor": {
             "home": {
                 "title": "Editor"
             },
             "title": "Code Editor für Übung:",
             "instructions": "Aufgabenstellung &nbsp;",
-            "unsavedChanges": "Nicht gespeicherte Änderungen vorhanden.",
-            "savingChanges": "Änderungen werden gespeichert.",
+            "unsavedChanges": "Ungespeichert.",
+            "unsavedChangesTooltip": "Nicht gespeicherte Änderungen vorhanden.",
+            "savingChanges": "Speichert...",
+            "savingChangesTooltip": "Änderungen werden gespeichert.",
             "savingFile": "Datei wird gespeichert.",
-            "changesSaved": "Alle Änderungen gespeichert.",
+            "changesSaved": "Gespeichert.",
+            "changesSavedTooltip": "Alle Änderungen gespeichert.",
             "failedToSave": "Änderungen konnten nicht gespeichert werden.",
-            "changesUndefined": "Frage Absende-Status an.",
-            "changesError": "Absende-Status konnte nicht angefragt werden.",
-            "changesSubmitted": "Alle Änderungen abgesendet.",
-            "unsubmittedChanges": "Nicht abgesendete Änderungen vorhanden.",
-            "submittingChanges": "Änderungen werden abgesendet.",
-            "preparingForSubmit": "Absendung wird vorbereitet.",
+            "changesUndefined": "Prüfe...",
+            "changesUndefinedTooltip": "Frage Absende-Status an.",
+            "changesError": "Fehler.",
+            "changesErrorTooltip": "Absende-Status konnte nicht angefragt werden.",
+            "changesSubmitted": "Abgesendet.",
+            "changesSubmittedTooltip": "Alle Änderungen abgesendet.",
+            "unsubmittedChanges": "Nicht abgesendet.",
+            "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.",
+            "submittingChanges": "Sendet...",
+            "submittingChangesTooltip": "Änderungen werden abgesendet.",
+            "preparingForSubmit": "Vorbereitet...",
+            "preparingForSubmitTooltip": "Absendung wird vorbereitet.",
             "submit": "Absenden",
             "buildOutput": "Build Ergebnisse",
             "building": "Building...",
@@ -29,11 +38,13 @@
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
+            "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
             "fileBrowser": {
+                "fileBrowser": "Datei Browser",
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
-                "deleteFileConfirm": "Sind Sie sicher, dass Sie die Datei <strong>{{filename}}</strong> löschen wollen?",
-                "deleteFolderConfirm": "Sind Sie sicher, dass Sie das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen wollen?",
+                "deleteFileConfirm": "Bist du sicher, dass du die Datei <strong>{{filename}}</strong> löschen willst?",
+                "deleteFolderConfirm": "Bist du sicher, dass du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
                 "unsavedChanges": "Datei enthält ungespeicherte Änderungen",
                 "createFolderRoot": "Verzeichnis auf Root Level erstellen",
                 "createFileRoot": "Datei auf Root Level erstellen",
@@ -46,20 +57,41 @@
                 "compressTree": "Leere Verzeichnisse zusammenfassen"
             },
             "errors": {
-                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
-                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
+                "exerciseNotFound": "Die Übung konnte nicht gefunden werden.",
+                "saveFailed": "Eine oder mehrere Dateien konnte nicht gespeichert werden.",
+                "commitFailed": "Eine oder mehrere Dateien konnte nicht commited werden.",
                 "noPermissions": "Du verfügst nicht über die notwendigen Berechtigungen.",
-                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden. Bitte versuche es in Kürze noch einmal oder wende dich an deinen Tutor.",
+                "checkoutFailed": "Dein git repository konnte nicht ausgecheckt werden.",
                 "fileExists": "Datei/Verzeichnis Name existiert bereits. Bitte wähle einen anderen Namen.",
                 "unsupportedFile": "Datei mit dieser Endung wird nicht unterstützt.",
-                "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal."
+                "fileOperationFailed": "Datei Operation konnte nicht durchgeführt werden. Bitte versuche es später noch einmal.",
+                "participationCouldNotBeDeleted": "Teilnahme konnte nicht gelöscht werden und könnte sich jetzt in einem fehlerhaften Zustand befinden.",
+                "participationCouldNotBeCreated": "Teilnahme konnte nicht erstellt werden",
+                "couldNotBeRetrieved": "Der Repository Status konnte nicht überprüft werden.",
+                "problemStatementCouldNotBeUpdated": "Die Aufgabenstellung der Übung konnte nicht aktualisiert werden.",
+                "failedToLoadBuildLogs": "Die Build Logs konnten nicht geladen werden."
             },
             "testStatusLabels": {
-                "testStatusNoResult": "Keine Ergebnisse",
-                "testStatusTestPassing": "Test bestanden",
-                "testStatusTestFailing": "Test fehlgeschlagen",
-                "totalTestsPassing": "{{totalTests}} Tests bestanden",
-                "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen"
+                "noResult": "Keine Ergebnisse",
+                "testPassing": "Test bestanden",
+                "totalTestsPassing": "{{passedTests}} von {{totalTests}} Tests bestanden"
+            },
+            "repoSelect": {
+                "assignmentRepo": "Assignment Repository",
+                "createAssignmentRepo": "Assignment Repository erstellen",
+                "resetAssignmentRepo": "Assignment Repository zurücksetzen",
+                "templateRepo": "Template Repository",
+                "solutionRepo": "Solution Repository",
+                "testRepo": "Test Repository",
+                "loadingExercise": "Aufgabe wird geladen",
+                "solutionWarning": "Das Solution Repository erfüllt einen oder mehreren Testfälle nicht. Das könnte auf ein Problem im Solution Repository hinweisen.",
+                "solutionSuccess": "Das Solution Repository erfüllt alle Testfälle",
+                "solutionInfo": "Kein Ergebnis verfügbar.",
+                "templateWarning": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem im Template Repository hinweisen.",
+                "templateSuccess": "Das Template Repository erfüllt keinen Testfall.",
+                "templateInfo": "Kein Ergebnis verfügbar.",
+                "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             }
         }
     }

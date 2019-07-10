@@ -6,25 +6,43 @@ import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorComponent } from './code-editor.component';
-import { CodeEditorService } from './code-editor.service';
-import { RepositoryService } from '../entities/repository';
-import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
-import { HomeComponent } from '../home';
+import { ArTEMiSResultModule, ResultService } from 'app/entities/result';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
-import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
-import { CodeEditorFileBrowserComponent } from './file-browser/code-editor-file-browser.component';
-import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build-output.component';
-import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
-import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
-import { CodeEditorStatusComponent } from './status/code-editor-status.component';
-import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
+
+import {
+    // services
+    CodeEditorService,
+    DomainService,
+    CodeEditorRepositoryService,
+    CodeEditorRepositoryFileService,
+    CodeEditorBuildLogService,
+    CodeEditorSessionService,
+    CodeEditorGridService,
+    // layout
+    CodeEditorGridComponent,
+    // components
+    CodeEditorAceComponent,
+    CodeEditorFileBrowserComponent,
+    CodeEditorFileBrowserDeleteComponent,
+    CodeEditorFileBrowserFileComponent,
+    CodeEditorFileBrowserFolderComponent,
+    CodeEditorFileBrowserCreateNodeComponent,
+    CodeEditorBuildOutputComponent,
+    CodeEditorStatusComponent,
+    EditorInstructionsResultDetailComponent,
+    CodeEditorActionsComponent,
+    CodeEditorInstructionsComponent,
+    // containers
+    CodeEditorInstructorContainerComponent,
+    CodeEditorStudentContainerComponent,
+    CodeEditorFileService,
+} from './';
+
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
-import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -33,34 +51,44 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSSharedModule,
         AceEditorModule,
         ArTEMiSResultModule,
+        ArTEMiSMarkdownEditorModule,
         MomentModule,
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES),
     ],
     declarations: [
-        CodeEditorComponent,
-        CodeEditorAceComponent,
+        CodeEditorGridComponent,
+        CodeEditorInstructorContainerComponent,
+        CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorFileBrowserDeleteComponent,
+        CodeEditorFileBrowserFileComponent,
+        CodeEditorFileBrowserFolderComponent,
+        CodeEditorFileBrowserCreateNodeComponent,
+        CodeEditorAceComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorInstructionsComponent,
         EditorInstructionsResultDetailComponent,
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
     ],
-    exports: [CodeEditorComponent],
-    entryComponents: [
-        HomeComponent,
-        CodeEditorComponent,
-        JhiMainComponent,
-        CodeEditorFileBrowserDeleteComponent,
-        EditorInstructionsResultDetailComponent,
-        ResultComponent,
-        CodeEditorStatusComponent,
-        CodeEditorActionsComponent,
+    exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
+    entryComponents: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent, CodeEditorFileBrowserDeleteComponent, EditorInstructionsResultDetailComponent],
+    providers: [
+        JhiAlertService,
+        ResultService,
+        ParticipationService,
+        CodeEditorService,
+        DomainService,
+        CodeEditorRepositoryService,
+        CodeEditorRepositoryFileService,
+        CodeEditorBuildLogService,
+        CodeEditorSessionService,
+        CodeEditorFileService,
+        CodeEditorGridService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService },
     ],
-    providers: [JhiAlertService, RepositoryService, ResultService, ParticipationService, CodeEditorService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSCodeEditorModule {

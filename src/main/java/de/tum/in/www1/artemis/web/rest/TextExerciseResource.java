@@ -11,10 +11,10 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -34,6 +34,9 @@ public class TextExerciseResource {
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
 
     private static final String ENTITY_NAME = "textExercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final TextAssessmentService textAssessmentService;
 
@@ -100,7 +103,8 @@ public class TextExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
                     .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -114,8 +118,8 @@ public class TextExerciseResource {
 
         TextExercise result = textExerciseRepository.save(textExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -128,7 +132,8 @@ public class TextExerciseResource {
      */
     @PutMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
+    public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
@@ -136,7 +141,8 @@ public class TextExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
                     .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -151,8 +157,10 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString())).body(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
     }
 
     /**
@@ -217,7 +225,7 @@ public class TextExerciseResource {
                 return forbidden();
             }
             textExerciseService.delete(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }
         return ResponseEntity.notFound().build();
     }
@@ -227,28 +235,29 @@ public class TextExerciseResource {
      * submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
-     * @return the ResponseEntity with json as body
+     * @return the ResponseEntity with the participation as body
      */
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID."))
-                    .body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
         TextExercise textExercise;
         if (participation.getExercise() instanceof TextExercise) {
             textExercise = (TextExercise) participation.getExercise();
             if (textExercise == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "textExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
                         .body(null);
             }
         }
         else {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
+                    .body(null);
         }
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins
@@ -264,22 +273,24 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> textSubmission = participation.findLatestTextSubmission();
+        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (textSubmission.isPresent()) {
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.get().setParticipation(null);
+        if (optionalTextSubmission.isPresent()) {
+            TextSubmission textSubmission = optionalTextSubmission.get();
 
-            Result result = textSubmission.get().getResult();
-            if (textSubmission.get().isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
                 List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission.get());
+            participation.addSubmissions(textSubmission);
         }
 
         return ResponseEntity.ok(participation);

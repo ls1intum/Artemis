@@ -9,7 +9,7 @@ export const textAssessmentRoutes: Routes = [
         component: TextAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title',
+            pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

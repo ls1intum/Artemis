@@ -2,54 +2,54 @@
     <jhi-alert></jhi-alert>
     <div class="row">
         <div class="col-12">
-            <h3>{{ 'arTeMiSApp.complaint.title' | translate }}</h3>
+            <h3>{{ 'artemisApp.complaint.title' | translate }}</h3>
             <p>
                 <span
                     *ngIf="allowedComplaints === undefined"
-                    jhiTranslate="arTeMiSApp.complaint.description"
+                    jhiTranslate="artemisApp.complaint.description"
                     [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent }"
                 ></span>
                 <span
                     *ngIf="allowedComplaints >= 0"
-                    jhiTranslate="arTeMiSApp.complaint.descriptionExtended"
+                    jhiTranslate="artemisApp.complaint.descriptionExtended"
                     [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent, allowedComplaints: allowedComplaints }"
                 ></span>
-                <fa-icon icon="info-circle" title="{{ 'arTeMiSApp.complaint.info' | translate }}" style="color:#ffc107;"></fa-icon>
+                <fa-icon icon="info-circle" title="{{ 'artemisApp.complaint.info' | translate }}" style="color:#ffc107;"></fa-icon>
             </p>
         </div>
 
         <!--TODO: uncomment again when the 'request more feedback' feature is implemented-->
         <!--<div class="col-6">-->
-        <!--<h3>{{ 'arTeMiSApp.complaint.moreFeedback' | translate }}</h3>-->
-        <!--<p>{{ 'arTeMiSApp.complaint.moreFeedbackDescription' | translate }}</p>-->
-        <!--<button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'arTeMiSApp.complaint.moreFeedbackButton' | translate }}</button>-->
+        <!--<h3>{{ 'artemisApp.complaint.moreFeedback' | translate }}</h3>-->
+        <!--<p>{{ 'artemisApp.complaint.moreFeedbackDescription' | translate }}</p>-->
+        <!--<button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{ 'artemisApp.complaint.moreFeedbackButton' | translate }}</button>-->
         <!--</div>-->
     </div>
 
     <div class="row">
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted">
-                {{ 'arTeMiSApp.complaint.beDescriptive' | translate }}
+                {{ 'artemisApp.complaint.beDescriptive' | translate }}
             </p>
 
             <p *ngIf="alreadySubmitted" class="mt-4">
-                {{ 'arTeMiSApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}:
-                <span *ngIf="handled && accepted" class="text-light bg-success"> &nbsp;{{ 'arTeMiSApp.complaint.acceptedLong' | translate }}&nbsp; </span>
-                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'arTeMiSApp.complaint.rejectedLong' | translate }}&nbsp; </span>
+                {{ 'artemisApp.complaint.alreadySubmitted' | translate }} {{ submittedDate | date: 'MMM d, y HH:mm:ss' }}:
+                <span *ngIf="handled && accepted" class="text-light bg-success"> &nbsp;{{ 'artemisApp.complaint.acceptedLong' | translate }}&nbsp; </span>
+                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejectedLong' | translate }}&nbsp; </span>
             </p>
 
-            <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
+            <textarea class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted"></textarea>
 
             <div class="row" *ngIf="!alreadySubmitted">
                 <div class="col-6">
-                    <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'arTeMiSApp.complaint.submit' | translate }}</button>
+                    <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()">{{ 'artemisApp.complaint.submit' | translate }}</button>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6">
             <p class="col-12" *ngIf="complaintResponse" class="mt-4">
-                {{ 'arTeMiSApp.complaint.responseExists' | translate }} {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br />
+                {{ 'artemisApp.complaint.responseExists' | translate }} {{ complaintResponse.submittedTime | date: 'MMM d, y HH:mm:ss' }}:<br />
             </p>
 
             <textarea class="col-12 px-1" rows="4" *ngIf="complaintResponse" [(ngModel)]="complaintResponse.responseText" [readOnly]="true" [disabled]="true"></textarea>

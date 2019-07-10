@@ -30,7 +30,7 @@ public class DatabaseUtilService {
 
     private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
-    private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
+    private static ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
     CourseRepository courseRepo;
@@ -51,7 +51,25 @@ public class DatabaseUtilService {
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
+    TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
+    ModelAssessmentConflictRepository conflictRepo;
+
+    @Autowired
+    ConflictingResultRepository conflictingResultRepo;
+
+    @Autowired
     FeedbackRepository feedbackRepo;
+
+    @Autowired
+    ComplaintRepository complaintRepo;
+
+    @Autowired
+    ComplaintResponseRepository complaintResponseRepo;
+
+    @Autowired
+    ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
     ModelingSubmissionService modelSubmissionService;
@@ -63,9 +81,15 @@ public class DatabaseUtilService {
     ObjectMapper mapper;
 
     public void resetDatabase() {
-        feedbackRepo.deleteAll();
+        conflictRepo.deleteAll();
+        conflictingResultRepo.deleteAll();
+        complaintResponseRepo.deleteAll();
+        complaintRepo.deleteAll();
         resultRepo.deleteAll();
+        feedbackRepo.deleteAll();
+        exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
+        textSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
@@ -83,14 +107,16 @@ public class DatabaseUtilService {
      * @param numberOfStudents
      * @param numberOfTutors
      */
-    public void addUsers(int numberOfStudents, int numberOfTutors) {
+    public void addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
         LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser" }, numberOfStudents);
         LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor" }, numberOfTutors);
+        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "tutor" }, numberOfInstructors);
         LinkedList<User> usersToAdd = new LinkedList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
+        usersToAdd.addAll(instructors);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors);
+        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
@@ -106,7 +132,7 @@ public class DatabaseUtilService {
         if (storedParticipation.isPresent()) {
             return storedParticipation.get();
         }
-        User user = userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login does not exist in database"));
+        User user = getUserByLogin(login);
         Participation participation = new Participation();
         participation.setStudent(user);
         participation.setExercise(exercise);
@@ -116,15 +142,28 @@ public class DatabaseUtilService {
         return participationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
     }
 
+    public void addCourseWithOneModelingExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+    }
+
     public void addCourseWithDifferentModelingExercises() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFututreTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
-        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ClassDiagram, course);
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         course.addExercises(classExercise);
-        ModelingExercise activityExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ActivityDiagram, course);
+        ModelingExercise activityExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ActivityDiagram, course);
         course.addExercises(activityExercise);
-        ModelingExercise objectExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ObjectDiagram, course);
+        ModelingExercise objectExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ObjectDiagram, course);
         course.addExercises(objectExercise);
-        ModelingExercise useCaseExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.UseCaseDiagram, course);
+        ModelingExercise useCaseExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.UseCaseDiagram, course);
         course.addExercises(useCaseExercise);
         courseRepo.save(course);
         exerciseRepo.save(classExercise);
@@ -133,13 +172,26 @@ public class DatabaseUtilService {
         exerciseRepo.save(useCaseExercise);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(4);
+        assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(4);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(4);
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(0))).as("course contains the class exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(1))).as("course contains the activity exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(2))).as("course contains the object exercise").isTrue();
-        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(3))).as("course contains the use case exercise").isTrue();
+        assertThat(courseRepoContent.get(0).getExercises()).as("Contains all exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+    }
+
+    public void addCourseWithModelingAndTextExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "tutor");
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        course.addExercises(textExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(modelingExercise);
+        exerciseRepo.save(textExercise);
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
+        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
+        assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
+        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
+        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
     /**
@@ -150,15 +202,16 @@ public class DatabaseUtilService {
      * @param login    of the user the submission belongs to
      * @return submission stored in the modelingSubmissionRepository
      */
-    public ModelingSubmission addModelingSubmission(ModelingExercise exercise, String model, String login) {
+    public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
         Participation participation = addParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, login);
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        submission.getParticipation().addResult(result);
+        participation.addResult(result);
         resultRepo.save(result);
+        participationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         return submission;
     }
@@ -167,8 +220,19 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         Participation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        modelingSubmissionRepo.save(submission);
+        participationRepo.save(participation);
+        return submission;
+    }
+
+    @Transactional
+    public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+        Participation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
         Result result = new Result();
         result.setSubmission(submission);
+        result.setAssessor(getUserByLogin(assessorLogin));
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
@@ -180,13 +244,19 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
         String model = loadFileFromResources(path);
-        ModelingSubmission submission = addModelingSubmission(exercise, model, login);
-        checkSubmissionCorrectlyStored(submission.getId(), model);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
+        submission = addModelingSubmission(exercise, submission, login);
+        checkModelingSubmissionCorrectlyStored(submission.getId(), model);
         return submission;
     }
 
-    public void checkSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
-        String storedModel = modelingSubmissionRepo.findById(submissionId).get().getModel();
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
+        assertThat(modelingSubmission).as("submission correctly stored").isPresent();
+        checkModelsAreEqual(modelingSubmission.get().getModel(), sentModel);
+    }
+
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws Exception {
         JsonParser parser = new JsonParser();
         JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
@@ -196,8 +266,15 @@ public class DatabaseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
+        result.setParticipation(submission.getParticipation().results(null));
+        result.setAssessor(getUserByLogin(login));
         result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         return result;
+    }
+
+    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {
+        modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+        return exampleSubmissionRepo.save(exampleSubmission);
     }
 
     /**
@@ -217,5 +294,36 @@ public class DatabaseUtilService {
         String fileContent = loadFileFromResources(path);
         List<Feedback> modelingAssessment = mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
         return modelingAssessment;
+    }
+
+    public User getUserByLogin(String login) {
+        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login does not exist in database"));
+    }
+
+    public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID could not be found"));
+        exercise.setDueDate(newDueDate);
+        exerciseRepo.save(exercise);
+    }
+
+    public void updateAssessmentDueDate(long exerciseId, ZonedDateTime newDueDate) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID could not be found"));
+        exercise.setAssessmentDueDate(newDueDate);
+        exerciseRepo.save(exercise);
+    }
+
+    public void updateResultCompletionDate(long resultId, ZonedDateTime newCompletionDate) {
+        Result result = resultRepo.findById(resultId).orElseThrow(() -> new IllegalArgumentException("Result with given ID could not be found"));
+        result.setCompletionDate(newCompletionDate);
+        resultRepo.save(result);
+    }
+
+    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints) {
+        for (int i = 0; i < numberOfComplaints; i++) {
+            Result dummyResult = new Result().participation(participation);
+            dummyResult = resultRepo.save(dummyResult);
+            Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult);
+            complaintRepo.save(complaint);
+        }
     }
 }

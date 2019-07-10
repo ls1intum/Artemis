@@ -1,19 +1,29 @@
-<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="card-body card resizable-instructions p-0 border-0" [ngStyle]="{ 'width.vw': 40, overflow: 'inherit' }">
-    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
-        <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
+<div *ngIf="!noInstructionsAvailable" id="cardInstructions" class="instructions-wrapper card border border-lightgrey">
+    <div class="card-header d-flex justify-content-center text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.editor.instructions"> &nbsp; Instructions &nbsp; </span>
+            <span class="ml-2" jhiTranslate="artemisApp.editor.instructions">Instructions</span>
         </h3>
+        <fa-icon class="ml-auto" icon="chevron-right"></fa-icon>
     </div>
     <jhi-programming-exercise-instructions
+        *ngIf="!editable; else markdownEditorInstructions"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable()"
-        [exercise]="participation?.exercise"
+        [exercise]="exercise"
         [participation]="participation"
-        [ngClass]="['card', 'card-body', 'p-0', 'border-0']"
-        [ngStyle]="{ overflow: 'inherit' }"
+        class="instructions-wrapper__content card-body p-0"
     >
     </jhi-programming-exercise-instructions>
+    <ng-template #markdownEditorInstructions>
+        <jhi-programming-exercise-editable-instructions
+            [(exercise)]="exercise"
+            [(participation)]="participation"
+            [templateParticipation]="templateParticipation"
+            [enableResize]="false"
+            class="instructions-wrapper__content card-body p-0"
+        >
+        </jhi-programming-exercise-editable-instructions>
+    </ng-template>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>

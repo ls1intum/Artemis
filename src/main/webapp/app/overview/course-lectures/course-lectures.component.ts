@@ -19,7 +19,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseId: number;
     private paramSubscription: Subscription;
     private translateSubscription: Subscription;
-    public course: Course;
+    public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyLecturesGrouped: object;
 
@@ -36,14 +36,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        this.paramSubscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (this.course === undefined) {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body);
+                this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
@@ -68,7 +68,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.weeklyIndexKeys = [];
         const groupedLectures = {};
         const indexKeys: string[] = [];
-        const courseLectures = this.course.lectures ? [...this.course.lectures] : [];
+        const courseLectures = this.course!.lectures ? [...this.course!.lectures] : [];
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
         sortedLectures.forEach(lecture => {
@@ -110,7 +110,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.weeklyLecturesGrouped = {
                 ...groupedLectures,
                 noDate: {
-                    label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
+                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
                     isCollapsed: false,
                     isCurrentWeek: false,
                     lectures: notAssociatedLectures,
@@ -133,9 +133,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     getTotalAttachments() {
-        if (!this.course.lectures) {
+        if (!this.course!.lectures) {
             return 0;
         }
-        return this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0);
+        return this.course!.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0);
     }
 }

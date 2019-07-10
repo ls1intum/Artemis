@@ -1,4 +1,6 @@
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 buildscript {
     repositories {
@@ -11,41 +13,55 @@ buildscript {
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.0"
-        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.0.0"
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
         // this allows us to find outdated dependencies via './gradlew dependencyUpdates'
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
 
 plugins {
-    id "org.sonarqube" version "2.7"
+    id "java"
+    id "maven"
+    id "idea"
+    id "jacoco"
+    id "com.google.cloud.tools.jib" version "1.3.0"
+    id "com.gorylenko.gradle-git-properties" version "2.0.0"
+    id "com.github.node-gradle.node" version "1.5.1"
     id "net.ltgt.apt-eclipse" version "0.21"
     id "net.ltgt.apt-idea" version "0.21"
     id "net.ltgt.apt" version "0.21"
-    id "io.spring.dependency-management" version "1.0.7.RELEASE"
     id "com.moowork.node" version "1.3.1"
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.23.0"
+    id "com.diffplug.gradle.spotless" version "3.23.1"
 }
 
-apply plugin: 'java'
 sourceCompatibility=1.8
 targetCompatibility=1.8
-// Until JHipster supports JDK 9
-//assert System.properties['java.specification.version'] == '1.8'
 
-apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
-apply plugin: 'war'
 apply plugin: 'propdeps'
-apply plugin: 'com.moowork.node'
-apply plugin: 'io.spring.dependency-management'
-apply plugin: 'idea'
 apply plugin: "com.github.ben-manes.versions"
+
+apply from: "gradle/docker.gradle"
+//this enables us to invoke ./gradlew liquibaseDiffChangelog
+apply from: 'gradle/liquibase.gradle'
+//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
+
+if (project.hasProperty("prod")) {
+    apply from: "gradle/profile_prod.gradle"
+} else {
+    apply from: "gradle/profile_dev.gradle"
+}
+
+if (project.hasProperty("zipkin")) {
+    apply from: "gradle/zipkin.gradle"
+}
+
+if (project.hasProperty("war")) {
+    apply from: "gradle/war.gradle"
+}
 
 idea {
     module {
@@ -66,59 +82,40 @@ spotless {
     }
 }
 
-dependencyManagement {
-  imports {
-    mavenBom 'io.github.jhipster:jhipster-dependencies:' + jhipster_dependencies_version
-    //jhipster-needle-gradle-dependency-management - JHipster will add additional dependencies management here
-  }
-}
-
-defaultTasks 'bootRun'
-
-group = 'de.tum.in.www1.artemis'
-version = '3.1.5'
-description = 'Automated Assessment Management System for Interactive Learning'
-
-bootWar {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
-}
-// Command for production build: './gradlew -Pprod bootWar'
-
-war {
-    webAppDirName = 'build/www/'
-    enabled = true
-    extension = 'war.original'
-}
-
-springBoot {
-    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
-}
-
+// See https://virgo47.wordpress.com/2018/09/14/classpath-too-long-with-spring-boot-and-gradle/ for details
+// https://github.com/jhipster/generator-jhipster/issues/9713
 if (OperatingSystem.current().isWindows()) {
-    // https://stackoverflow.com/questions/40037487/the-filename-or-extension-is-too-long-error-using-gradle
     task classpathJar(type: Jar) {
-        dependsOn configurations.runtime
-        appendix = 'classpath'
+        inputs.files sourceSets.main.runtimeClasspath
 
+        archiveName = "runboot-classpath.jar"
         doFirst {
             manifest {
-                attributes 'Class-Path': configurations.runtime.files.collect {
-                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/').replaceAll(' ', '%20')
-                }.join(' ')
+                def classpath = sourceSets.test.runtimeClasspath.files
+                attributes "Class-Path": classpath.collect {f -> f.toURI().toString()}.join(" ")
             }
         }
     }
 
     bootRun {
-        dependsOn classpathJar
-        doFirst {
-            classpath = files("$buildDir/classes/java/main", "$buildDir/resources/main", classpathJar.archivePath)
-        }
+        classpath = classpathJar.outputs.files
     }
 }
 
+defaultTasks 'bootRun'
+
+group = 'de.tum.in.www1.artemis'
+version = '3.3.2'
+description = 'Interactive Learning with Individual Feedback'
+
+springBoot {
+    mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
+}
+
+// Execute the test cases: ./gradlew executeTests
+
 test {
-    exclude '**/CucumberTest*'
+    exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
 
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
@@ -126,27 +123,27 @@ test {
     reports.html.enabled = false
 }
 
+task integrationTest(type: Test) {
+    description = "Execute integration tests."
+    group = "verification"
+    include "**/*IT*", "**/*IntTest*"
+    exclude "**/*CucumberIT*"
+
+    // uncomment if the tests reports are not generated
+    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
+    // ignoreFailures true
+    reports.html.enabled = false
+}
+
+check.dependsOn integrationTest
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
 }
 
-
-apply from: 'gradle/docker.gradle'
-apply from: 'gradle/sonar.gradle'
-apply from: 'gradle/liquibase.gradle'
-//this enables us to invoke ./gradlew liquibaseDiffChangelog
-//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
-
-if (project.hasProperty('prod')) {
-    apply from: 'gradle/profile_prod.gradle'
-} else {
-    apply from: 'gradle/profile_dev.gradle'
-}
-
-
-if (project.hasProperty('zipkin')) {
-    apply from: 'gradle/zipkin.gradle'
+task integrationTestReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn integrationTest
 }
 
 if (!project.hasProperty('runList')) {
@@ -155,7 +152,7 @@ if (!project.hasProperty('runList')) {
 
 configurations {
     providedRuntime
-    compile.exclude module: "spring-boot-starter-tomcat"
+    implementation.exclude module: "spring-boot-starter-tomcat"
 }
 
 repositories {
@@ -167,93 +164,97 @@ repositories {
 
 dependencies {
 
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.1.201904271842-r'
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.4.0.201906121030-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
-    compile "org.imsglobal:basiclti-util:1.2.0"
-    compile "org.jasypt:jasypt:1.9.2"
-    compile "me.xdrop:fuzzywuzzy:1.2.0"
+    implementation group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
+    implementation "org.imsglobal:basiclti-util:1.2.0"
+    implementation "org.jasypt:jasypt:1.9.2"
+    implementation "me.xdrop:fuzzywuzzy:1.2.0"
+    implementation group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
+    //TODO: instead of com.google.code.gson, we might want to use Jackson to reduce the number of json parsing frameworks
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+    implementation group: 'com.thoughtworks.qdox', name: 'qdox', version: '2.0-M10'
+    implementation 'io.sentry:sentry-spring:1.7.23'
 
-    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
+    // import JHipster dependencies BOM
+    implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
-    compile group: "io.github.jhipster", name: "jhipster-framework"
-    compile "org.springframework.boot:spring-boot-starter-cache"
-    compile "io.micrometer:micrometer-registry-prometheus:1.1.3"
-    compile "net.logstash.logback:logstash-logback-encoder:5.3"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
-    compile "com.fasterxml.jackson.core:jackson-annotations:2.9.8"
-    compile "com.fasterxml.jackson.core:jackson-databind"
-    compile "com.fasterxml.jackson.module:jackson-module-afterburner"
-    compile "javax.cache:cache-api"
-    compile "org.hibernate:hibernate-core"
-    compile "com.zaxxer:HikariCP"
-    compile "org.apache.commons:commons-lang3:3.9"
-    compile group: 'org.apache.commons', name: 'commons-text', version: '1.6'
-    compile "commons-io:commons-io"
-    compile "javax.transaction:javax.transaction-api:1.3"
-    compile "org.ehcache:ehcache"
-    compile "org.hibernate:hibernate-jcache"
-    compile "org.hibernate:hibernate-entitymanager"
-    compile "org.hibernate:hibernate-envers"
-    compile "org.hibernate.validator:hibernate-validator"
-    compile "org.liquibase:liquibase-core"
-    compile "com.mattbertolini:liquibase-slf4j"
+    implementation group: "io.github.jhipster", name: "jhipster-framework"
+    implementation "org.springframework.boot:spring-boot-starter-cache"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.2.0"
+    implementation "net.logstash.logback:logstash-logback-encoder:5.3"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.9.9"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.9"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.9.9"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.9.9"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.9.9"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.9.9"
+    implementation "javax.cache:cache-api"
+    implementation "org.hibernate:hibernate-core"
+    implementation "com.zaxxer:HikariCP"
+    implementation "org.apache.commons:commons-lang3:3.9"
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.6'
+    implementation "commons-io:commons-io"
+    implementation "javax.transaction:javax.transaction-api:1.3"
+    implementation "org.ehcache:ehcache"
+    implementation "org.hibernate:hibernate-jcache"
+    implementation "org.hibernate:hibernate-entitymanager"
+    implementation "org.hibernate:hibernate-envers"
+    implementation "org.hibernate.validator:hibernate-validator"
+    implementation "org.liquibase:liquibase-core"
 //    liquibaseRuntime "org.liquibase:liquibase-core"
 //    liquibaseRuntime "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
-//    liquibaseRuntime sourceSets.main.compileClasspath
-    compile "org.springframework.boot:spring-boot-loader-tools"
-    compile "org.springframework.boot:spring-boot-starter-mail"
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-aop"
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    compile "org.springframework.boot:spring-boot-starter-security"
-    compile ("org.springframework.boot:spring-boot-starter-web") {
+//    liquibaseRuntime sourceSets.main.implementationClasspath
+    implementation "org.springframework.boot:spring-boot-loader-tools"
+    implementation "org.springframework.boot:spring-boot-starter-mail"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation ("org.springframework.boot:spring-boot-starter-web") {
         exclude module: 'spring-boot-starter-tomcat'
     }
-    compile "org.springframework.boot:spring-boot-starter-undertow"
-    compile "org.springframework.boot:spring-boot-starter-websocket"
-    compile "org.springframework.boot:spring-boot-starter-thymeleaf"
-    compile "org.zalando:problem-spring-web:0.24.0-RC.0"
-    compile "org.springframework.security:spring-security-config"
-    compile "org.springframework.security:spring-security-data"
-    compile "org.springframework.security:spring-security-web"
-    compile "org.springframework.security:spring-security-messaging"
-    compile "io.jsonwebtoken:jjwt-api"
-    runtime "io.jsonwebtoken:jjwt-impl"
-    runtime "io.jsonwebtoken:jjwt-jackson"
-    compile ("io.springfox:springfox-swagger2") {
+    implementation "org.springframework.boot:spring-boot-starter-undertow"
+    implementation "org.springframework.boot:spring-boot-starter-websocket"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.zalando:problem-spring-web:0.24.0-RC.0"
+    implementation "org.springframework.security:spring-security-config"
+    implementation "org.springframework.security:spring-security-data"
+    implementation "org.springframework.security:spring-security-web"
+    implementation "org.springframework.security:spring-security-messaging"
+    implementation "io.jsonwebtoken:jjwt-api"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson"
+    implementation ("io.springfox:springfox-swagger2") {
         exclude module: 'mapstruct'
     }
-    compile "io.springfox:springfox-bean-validators"
-    compile "mysql:mysql-connector-java"
+    implementation "io.springfox:springfox-bean-validators"
+    implementation "mysql:mysql-connector-java"
 //    liquibaseRuntime "mysql:mysql-connector-java"
-    compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
-    //TODO: instead of com.google.code.gson, we might want to use Jackson to reduce the number of json parsing frameworks
-    compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
-    compile group: 'com.thoughtworks.qdox', name: 'qdox', version: '2.0-M10'
-
+    implementation "org.mapstruct:mapstruct:${mapstruct_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
-    annotationProcessor "org.hibernate:hibernate-jpamodelgen"
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
-        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
+    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+        exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testCompile ("org.springframework.boot:spring-boot-starter-test") {
-        exclude group: 'com.vaadin.external.google', module: 'android-json'
+    testImplementation ("org.springframework.boot:spring-boot-starter-test") {
+        exclude module: "junit"
+        exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testCompile "org.springframework.security:spring-security-test"
-    testCompile "org.mockito:mockito-core:2.27.0"
-    testCompile "com.mattbertolini:liquibase-slf4j"
-    testCompile "com.h2database:h2"
-    testCompile 'org.awaitility:awaitility:3.1.6'
+    testImplementation "org.springframework.security:spring-security-test"
+    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.assertj:assertj-core"
+    testImplementation "junit:junit"
+    testImplementation "org.mockito:mockito-core:2.28.2"
+    testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation "com.h2database:h2"
+    testImplementation 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
-    compile 'io.sentry:sentry-spring:1.7.22'
 }
 
 task cleanResources(type: Delete) {
@@ -261,11 +262,47 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
- commandLine './gradlew', 'test', '-x', 'webpackBuildDev', '-x', 'webpack'
+    commandLine './gradlew', 'test', '-x', 'webpackBuildDev', '-x', 'webpack'
+}
+
+// Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+tasks.withType(Test) {
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.FAILED,
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED
+        exceptionFormat TestExceptionFormat.FULL
+        showExceptions true
+        showCauses true
+        showStackTraces true
+
+        // set options for log level DEBUG and INFO
+        debug {
+            events TestLogEvent.STARTED,
+                TestLogEvent.FAILED,
+                TestLogEvent.PASSED,
+                TestLogEvent.SKIPPED,
+                TestLogEvent.STANDARD_ERROR,
+                TestLogEvent.STANDARD_OUT
+            exceptionFormat TestExceptionFormat.FULL
+        }
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+    }
 }
 
 wrapper {
-    gradleVersion = '5.4.1'
+    gradleVersion = '5.5'
 }
 
 task stage(dependsOn: 'bootWar') {

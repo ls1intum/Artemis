@@ -38,7 +38,41 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
 
-[apollon]{"version":"2.0.0","size":{"width":970,"height":370},"type":"ClassDiagram","interactive":{"elements":[],"relationships":[]},"elements":[{"id":"4c533243-09d5-4b95-ac4c-2148d73f60a4","name":"Client","owner":null,"type":"Class","bounds":{"x":150,"y":0,"width":200,"height":40},"attributes":[],"methods":[]},{"id":"feee4cc1-7185-4168-aa82-0cedb48ccec9","name":"SortStrategy","owner":null,"type":"Interface","bounds":{"x":620,"y":120,"width":200,"height":80},"attributes":[],"methods":["b5ab43d0-fb4d-4227-881b-cf109820ffb7"]},{"id":"b5ab43d0-fb4d-4227-881b-cf109820ffb7","name":"+ performSort()","owner":"feee4cc1-7185-4168-aa82-0cedb48ccec9","type":"ClassMethod","bounds":{"x":620,"y":170,"width":200,"height":30}},{"id":"9e55b773-eba5-42f2-957d-8d57ceca3edf","name":"MergeSort","owner":null,"type":"Class","bounds":{"x":770,"y":300,"width":200,"height":70},"attributes":[],"methods":["debe1941-635b-48f9-9bee-fa13c6027df6"]},{"id":"debe1941-635b-48f9-9bee-fa13c6027df6","name":"+ performSort()","owner":"9e55b773-eba5-42f2-957d-8d57ceca3edf","type":"ClassMethod","bounds":{"x":770,"y":340,"width":200,"height":30}},{"id":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","name":"Context","owner":null,"type":"Class","bounds":{"x":300,"y":120,"width":200,"height":100},"attributes":["781a7d8c-2727-4f8b-883a-8c34b80c9d75"],"methods":["760ddacc-d5e4-4c9b-9e39-3dff0dd7d343"]},{"id":"781a7d8c-2727-4f8b-883a-8c34b80c9d75","name":"- dates: List<Date>","owner":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","type":"ClassAttribute","bounds":{"x":300,"y":160,"width":200,"height":30}},{"id":"760ddacc-d5e4-4c9b-9e39-3dff0dd7d343","name":"+ sort()","owner":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","type":"ClassMethod","bounds":{"x":300,"y":190,"width":200,"height":30}},{"id":"39c82bc0-b29f-4db1-bcdd-3d053c007e9e","name":"BubbleSort","owner":null,"type":"Class","bounds":{"x":470,"y":300,"width":200,"height":70},"attributes":[],"methods":["8e1f14e9-892c-4ce5-9608-fb4156affc18"]},{"id":"8e1f14e9-892c-4ce5-9608-fb4156affc18","name":"+ performSort()","owner":"39c82bc0-b29f-4db1-bcdd-3d053c007e9e","type":"ClassMethod","bounds":{"x":470,"y":340,"width":200,"height":30}},{"id":"aedf0077-7a1b-4263-b488-94aad1ef42b0","name":"Policy","owner":null,"type":"Class","bounds":{"x":0,"y":120,"width":200,"height":70},"attributes":[],"methods":["b7eb65ec-9fc7-45ad-8010-2abf5b091408"]},{"id":"b7eb65ec-9fc7-45ad-8010-2abf5b091408","name":"+ configure()","owner":"aedf0077-7a1b-4263-b488-94aad1ef42b0","type":"ClassMethod","bounds":{"x":0,"y":160,"width":200,"height":30}}],"relationships":[{"id":"b6857756-9af4-4b89-85eb-54d7b33da723","name":"","type":"ClassDependency","source":{"element":"4c533243-09d5-4b95-ac4c-2148d73f60a4","direction":"Down","multiplicity":"","role":""},"target":{"element":"aedf0077-7a1b-4263-b488-94aad1ef42b0","direction":"Up","multiplicity":"","role":""},"path":[{"x":0,"y":0},{"x":0,"y":80}],"bounds":{"x":175,"y":40,"width":1,"height":80}},{"id":"11f97909-6283-46de-937e-2e84cc05f037","name":"","type":"ClassDependency","source":{"element":"4c533243-09d5-4b95-ac4c-2148d73f60a4","direction":"Down","multiplicity":"","role":""},"target":{"element":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","direction":"Up","multiplicity":"","role":""},"path":[{"x":0,"y":0},{"x":0,"y":80}],"bounds":{"x":325,"y":40,"width":1,"height":80}},{"id":"86ddf654-3e7e-46d6-8b3b-1f600666cac0","name":"","type":"ClassRealization","source":{"element":"39c82bc0-b29f-4db1-bcdd-3d053c007e9e","direction":"Up","multiplicity":"","role":""},"target":{"element":"feee4cc1-7185-4168-aa82-0cedb48ccec9","direction":"Down","multiplicity":"","role":""},"path":[{"x":0,"y":100},{"x":0,"y":0}],"bounds":{"x":645,"y":200,"width":1,"height":100}},{"id":"7393d115-03f9-49bd-91da-c70def9bbb1c","name":"","type":"ClassRealization","source":{"element":"9e55b773-eba5-42f2-957d-8d57ceca3edf","direction":"Up","multiplicity":"","role":""},"target":{"element":"feee4cc1-7185-4168-aa82-0cedb48ccec9","direction":"Down","multiplicity":"","role":""},"path":[{"x":0,"y":100},{"x":0,"y":0}],"bounds":{"x":795,"y":200,"width":1,"height":100}},{"id":"f9432cda-401c-4d33-a5d2-a3d67111ff67","name":"","type":"ClassUnidirectional","source":{"element":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","direction":"Right","multiplicity":"","role":"sortAlgorithm"},"target":{"element":"feee4cc1-7185-4168-aa82-0cedb48ccec9","direction":"Left","multiplicity":"","role":""},"path":[{"x":0,"y":24},{"x":120,"y":24}],"bounds":{"x":500,"y":136,"width":120,"height":24}},{"id":"9162607f-5fb4-48a1-ab5a-77c1578c92cd","name":"","type":"ClassUnidirectional","source":{"element":"aedf0077-7a1b-4263-b488-94aad1ef42b0","direction":"Right","multiplicity":"","role":"context"},"target":{"element":"c951f0fd-b1a2-44a7-a6ff-7c1fc545e5f5","direction":"Left","multiplicity":"","role":""},"path":[{"x":0,"y":24},{"x":100,"y":24}],"bounds":{"x":200,"y":131,"width":100,"height":24}}],"assessments":[]}[/apollon]
+@startuml
+
+class Client {
+}
+
+class Policy {
+  <color:testsColor(testMethods[Policy])>+configure()</color>
+}
+
+class Context {
+  <color:testsColor(testAttributes[Context])>-dates: List<Date></color>
+  <color:testsColor(testMethods[Context])>+sort()</color>
+}
+
+interface SortStrategy {
+  <color:testsColor(testMethods[SortStrategy])>+performSort(List<Date>)</color>
+}
+
+class BubbleSort {
+  <color:testsColor(testMethods[BubbleSort])>+performSort(List<Date>)</color>
+}
+
+class MergeSort {
+  <color:testsColor(testMethods[MergeSort])>+performSort(List<Date>)</color>
+}
+
+MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])
+BubbleSort -up-|> SortStrategy #testsColor(testClass[BubbleSort])
+Policy -right-> Context #testsColor(testAttributes[Policy]): context
+Context -right-> SortStrategy #testsColor(testAttributes[Context]): sortAlgorithm
+Client .down.> Policy
+Client .down.> Context
+
+@enduml
+
 
 ### Part 3: Optional Challenges
 

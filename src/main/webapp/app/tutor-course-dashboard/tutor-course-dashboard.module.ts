@@ -17,11 +17,22 @@ import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
+import { SortByModule } from 'app/components/pipes';
+import { ArTEMiSTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [
+        BrowserModule,
+        ArTEMiSSharedModule,
+        ArTEMiSResultModule,
+        MomentModule,
+        ClipboardModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArTEMiSTutorLeaderboardModule,
+    ],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],

@@ -28,11 +28,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     question: ShortAnswerQuestion;
     questionStatistic: ShortAnswerQuestionStatistic;
@@ -59,12 +54,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string;
+    questionTextRendered: string | null;
 
     // options for chart in chart.js style
     options: ChartOptions;
 
-    textParts: string[][];
+    textParts: (string | null)[][];
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] = [];
@@ -89,7 +84,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
+                    this.loadQuiz(res.body!, false);
                 });
             }
 
@@ -104,10 +99,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
             // add Axes-labels based on selected language
             this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
             this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
     }
@@ -162,8 +157,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     generateShortAnswerStructure() {
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
     }
 
     generateLettersForSolutions() {
@@ -279,7 +274,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.question.spots.forEach(spot => {
             const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find(sCounter => {
                 return spot.id === sCounter.spot.id;
-            });
+            })!;
             this.ratedData.push(spotCounter.ratedCounter);
             this.unratedData.push(spotCounter.unRatedCounter);
         });
@@ -379,21 +374,5 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         } else {
             return null;
         }
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
     }
 }

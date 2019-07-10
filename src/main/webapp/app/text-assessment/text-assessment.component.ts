@@ -3,9 +3,9 @@ import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
-import { TextSubmission } from 'app/entities/text-submission';
+import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { HighlightColors } from '../text-shared/highlight-colors';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -21,6 +21,8 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseType } from 'app/entities/exercise';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -31,6 +33,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     text: string;
     participation: Participation;
     submission: TextSubmission;
+    unassessedSubmission: TextSubmission;
     result: Result;
     generalFeedback: Feedback;
     referencedFeedback: Feedback[];
@@ -48,9 +51,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     userId: number;
     canOverride = false;
 
-    formattedProblemStatement: string;
-    formattedSampleSolution: string;
-    formattedGradingInstructions: string;
+    paramSub: Subscription;
+
+    formattedProblemStatement: string | null;
+    formattedSampleSolution: string | null;
+    formattedGradingInstructions: string | null;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -76,11 +81,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private $window: WindowRef,
         private artemisMarkdown: ArtemisMarkdown,
         private translateService: TranslateService,
+        private textSubmissionService: TextSubmissionService,
     ) {
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.assessmentsAreValid = false;
-        translateService.get('arTeMiSApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
@@ -92,37 +98,44 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
-            this.userId = user.id;
+            this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const submissionValue = this.route.snapshot.paramMap.get('submissionId');
-
-        if (submissionValue === 'new') {
-            this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
-                participation => {
-                    this.receiveParticipation(participation);
-
-                    // Update the url with the new id, without reloading the page, to make the history consistent
-                    const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
-                    this.location.go(newUrl);
-                },
-                (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        this.notFound = true;
-                    } else {
-                        this.onError(error.message);
-                    }
-                    this.busy = false;
-                },
-            );
-        } else {
-            const submissionId = Number(submissionValue);
-            this.assessmentsService
-                .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
-                .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
         }
+        this.paramSub = this.route.params.subscribe(params => {
+            const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+            const submissionValue = this.route.snapshot.paramMap.get('submissionId');
+
+            if (submissionValue === 'new') {
+                this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
+                    participation => {
+                        this.receiveParticipation(participation);
+
+                        // Update the url with the new id, without reloading the page, to make the history consistent
+                        const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
+                        this.location.go(newUrl);
+                    },
+                    (error: HttpErrorResponse) => {
+                        if (error.status === 404) {
+                            this.notFound = true;
+                        } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                            this.goToExerciseDashboard();
+                        } else {
+                            this.onError(error.message);
+                        }
+                        this.busy = false;
+                    },
+                );
+            } else {
+                const submissionId = Number(submissionValue);
+                this.assessmentsService
+                    .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
+                    .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+            }
+        });
     }
 
     /**
@@ -185,6 +198,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
+        this.paramSub.unsubscribe();
     }
 
     public addAssessment(assessmentText: string): void {
@@ -203,17 +217,17 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public save(): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -224,17 +238,17 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.submitSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`arTeMiSApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
         );
     }
 
@@ -249,11 +263,36 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             });
         }
     }
+    /**
+     * Load next assessment in the same page.
+     * It calls the api to load the new unassessed submission in the same page.
+     * For the new submission to appear on the same page, the url has to be reloaded.
+     */
+    assessNextOptimal() {
+        if (this.exercise.type === ExerciseType.TEXT) {
+            this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
+                (response: TextSubmission) => {
+                    this.unassessedSubmission = response;
+                    this.router.onSameUrlNavigation = 'reload';
+                    // navigate to the new assessment page to trigger re-initialization of the components
+                    this.router.navigateByUrl(`/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`, {});
+                },
+                (error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                        this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
+                    } else {
+                        this.onError(error.message);
+                    }
+                },
+            );
+        }
+    }
 
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
             response => {
-                this.loadFeedbacks(response.body.feedbacks || []);
+                this.loadFeedbacks(response.body!.feedbacks || []);
             },
             (error: HttpErrorResponse) => this.onError(error.message),
         );
@@ -319,8 +358,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.reference && f.reference.length <= 2000)) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.feedbackReferenceTooLong';
+        if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
+            this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
             return;
         }
@@ -328,18 +367,18 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const credits = this.referencedFeedback.map(assessment => assessment.credits);
 
         if (!credits.every(credit => credit !== null && !isNaN(credit))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidScoreMustBeNumber';
+            this.invalidError = 'artemisApp.textAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText && f.detailText.length > 0))) {
-            this.invalidError = 'arTeMiSApp.textAssessment.error.invalidNeedScoreOrFeedback';
+        if (!this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
+            this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
             return;
         }
 
-        this.totalScore = credits.reduce((a, b) => a + b, 0);
+        this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
     }
@@ -368,7 +407,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     public get headingTranslationKey(): string {
-        const baseKey = 'arTeMiSApp.textAssessment.heading.';
+        const baseKey = 'artemisApp.textAssessment.heading.';
 
         if (this.submission && this.submission.exampleSubmission) {
             return baseKey + 'exampleAssessment';
@@ -385,26 +424,26 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
-            this.jhiAlertService.error('arTeMiSApp.textAssessment.error.invalidAssessments');
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
         this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
             response => {
-                this.result = response.body;
+                this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();
-                this.jhiAlertService.success('arTeMiSApp.textAssessment.updateAfterComplaintSuccessful');
+                this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
             },
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('arTeMiSApp.textAssessment.updateAfterComplaintFailed');
+                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
             },
         );
     }
 
     private onError(error: string) {
         console.error(error);
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

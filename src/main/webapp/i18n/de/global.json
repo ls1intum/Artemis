@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
+        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "generic": {
             "emptyList": "Keine Elemente verfügbar"
         },
@@ -66,6 +66,7 @@
                 "shortAnswerSubmittedAnswer": "Short Answer Submitted Answer",
                 "shortAnswerSubmittedText": "Short Answer Submitted Text",
                 "shortAnswerMapping": "Short Answer Mapping",
+                "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -93,30 +94,31 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "noNotifications": "Keine Mitteilungen verfügbar"
+            "noNotifications": "Keine neuen Mitteilungen verfügbar",
+            "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
         "form": {
             "username": "Benutzername",
-            "username.placeholder": "Ihr Benutzername",
+            "username.placeholder": "Benutzername",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
             "newpassword.placeholder": "Neues Passwort",
             "confirmpassword": "Neues Passwort bestätigen",
-            "confirmpassword.placeholder": "Bestätigen Sie Ihr neues Passwort",
+            "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "Email Adresse",
-            "email.placeholder": "Ihre Email Adresse"
+            "email.placeholder": "Email Adresse"
         },
         "messages": {
             "info": {
                 "authenticated": {
-                    "prefix": "Wenn Sie sich ",
+                    "prefix": "Wenn du dich ",
                     "link": "melde",
-                    "suffix": " möchten, versuchen Sie es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchtest, versuche es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
-                    "noaccount": "Sie haben noch keinen Zugang?",
-                    "link": "Registrieren Sie sich"
+                    "noaccount": "Du hast noch keinen Zugang?",
+                    "link": "Registriere dich"
                 }
             },
             "error": {
@@ -130,15 +132,15 @@
                     "strength": "Passwortstärke:"
                 },
                 "confirmpassword": {
-                    "required": "Sie müssen das Passwort bestätigen.",
+                    "required": "Du musst das Passwort bestätigen.",
                     "minlength": "Das bestätigte Passwort muss mindestens 5 Zeichen lang sein",
                     "maxlength": "Das bestätigte Passwort darf nicht länger als 50 Zeichen sein"
                 },
                 "email": {
-                    "required": "Ihre Email Adresse wird benötigt.",
-                    "invalid": "Ihre Email Adresse ist ungültig.",
-                    "minlength": "Ihre Email Adresse muss mindestens 5 Zeichen lang sein",
-                    "maxlength": "Ihre Email Adresse darf nicht länger als 50 Zeichen sein"
+                    "required": "Deine Email Adresse wird benötigt.",
+                    "invalid": "Deine Email Adresse ist ungültig.",
+                    "minlength": "Deine Email Adresse muss mindestens 5 Zeichen lang sein",
+                    "maxlength": "Deine Email Adresse darf nicht länger als 50 Zeichen sein"
                 }
             }
         },
@@ -163,6 +165,7 @@
             "download": "Herunterladen",
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
+            "editInEditor": "In Editor bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "editLink": "Link bearbeiten",
             "open": "Öffnen",

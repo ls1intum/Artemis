@@ -1,12 +1,11 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseService, StatsForInstructorDashboard } from 'app/entities/course';
+import { Course, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { InitializationState, Participation } from 'app/entities/participation';
 import { getIcon, getIconTooltip } from 'app/entities/exercise';
 import { ResultService } from 'app/entities/result';
-import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -20,20 +19,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIconTooltip = getIconTooltip;
 
     loading = true;
+    exercisesSortingPredicate = 'assessmentDueDate';
+    exercisesReverseOrder = false;
 
-    stats: StatsForInstructorDashboard = {
-        numberOfStudents: 0,
-        numberOfSubmissions: 0,
-        numberOfTutors: 0,
-        numberOfAssessments: 0,
-        numberOfComplaints: 0,
-        numberOfOpenComplaints: 0,
-
-        tutorLeaderboard: [],
-    };
+    stats = new StatsForDashboard();
     dataForAssessmentPieChart: number[];
-
-    tutorLeaderboardData: TutorLeaderboardData = {};
 
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
@@ -48,16 +38,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
     private loadCourse(courseId: number) {
         this.courseService
             .findWithExercisesAndParticipations(courseId)
-            .subscribe((res: HttpResponse<Course>) => (this.course = res.body), (response: HttpErrorResponse) => this.onError(response.message));
+            .subscribe((res: HttpResponse<Course>) => (this.course = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
-            (res: HttpResponse<StatsForInstructorDashboard>) => {
+            (res: HttpResponse<StatsForDashboard>) => {
                 this.stats = Object.assign({}, this.stats, res.body);
-
-                for (const tutor of this.stats.tutorLeaderboard) {
-                    this.tutorLeaderboardData[tutor.login] = tutor;
-                }
-
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
             },
             (response: string) => this.onError(response),
@@ -85,7 +70,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         return 'bg-success';
     }
 
+    callback() {}
+
     private onError(error: string) {
-        this.jhiAlertService.error(error, null, null);
+        this.jhiAlertService.error(error, null, undefined);
     }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,9 @@ public class FileUploadExerciseResource {
     private final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
 
     private static final String ENTITY_NAME = "fileUploadExercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
@@ -73,7 +77,9 @@ public class FileUploadExerciseResource {
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist")).body(null);
+                    .headers(
+                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
@@ -81,8 +87,8 @@ public class FileUploadExerciseResource {
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -95,7 +101,8 @@ public class FileUploadExerciseResource {
      */
     @PutMapping("/file-upload-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
+    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() == null) {
             return createFileUploadExercise(fileUploadExercise);
@@ -104,15 +111,19 @@ public class FileUploadExerciseResource {
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist")).body(null);
+                    .headers(
+                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, fileUploadExercise.getId().toString())).body(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.getId().toString())).body(result);
     }
 
     /**
@@ -175,6 +186,6 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
         fileUploadExerciseRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

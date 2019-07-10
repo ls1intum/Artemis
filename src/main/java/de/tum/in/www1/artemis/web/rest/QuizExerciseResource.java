@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +33,9 @@ public class QuizExerciseResource {
     private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -67,13 +71,15 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to save QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
@@ -82,7 +88,7 @@ public class QuizExerciseResource {
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
@@ -91,8 +97,8 @@ public class QuizExerciseResource {
 
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-                .body(result);
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -105,7 +111,8 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
@@ -114,7 +121,8 @@ public class QuizExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
@@ -123,20 +131,18 @@ public class QuizExerciseResource {
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
         // check if quiz is has already started
         Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
         if (!originalQuiz.isPresent()) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise."))
-                    .build();
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
+                    "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
         if (originalQuiz.get().isStarted()) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections."))
-                    .body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizHasStarted",
+                    "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
         quizExercise.reconnectJSONIgnoreAttributes();
@@ -149,8 +155,10 @@ public class QuizExerciseResource {
         quizExerciseService.sendQuizExerciseToSubscribedClients(result);
 
         // NOTE: it does not make sense to notify students here!
-        // groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(result);
+        if (notificationText != null) {
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(result);
     }
 
     /**
@@ -332,7 +340,7 @@ public class QuizExerciseResource {
         quizScheduleService.cancelScheduledQuizStart(id);
         quizScheduleService.clearQuizData(id);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**
@@ -350,23 +358,24 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
-            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
+            return ResponseEntity.notFound()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
         }
         QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         if (originalQuizExercise == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise."))
-                    .build();
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
+                    "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
         if (!originalQuizExercise.isEnded()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotEnded",
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotEnded",
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
@@ -391,6 +400,6 @@ public class QuizExerciseResource {
             quizStatisticService.recalculateStatistics(updatedQuizExercise);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString())).body(updatedQuizExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(updatedQuizExercise);
     }
 }

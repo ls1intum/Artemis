@@ -11,11 +11,12 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { RouterModule } from '@angular/router';
 import { listOfComplaintsRoute } from 'app/list-of-complaints/list-of-complaints.route';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...listOfComplaintsRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
     providers: [JhiAlertService, ComplaintService, { provide: JhiLanguageService, useClass: JhiLanguageService }],

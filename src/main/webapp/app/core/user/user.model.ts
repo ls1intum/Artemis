@@ -2,14 +2,14 @@ import { Account } from '../../core';
 import { Moment } from 'moment';
 
 export class User extends Account {
-    public id: number;
-    public groups: string[];
-    public createdBy: string;
-    public createdDate: Date;
-    public lastModifiedBy: string;
-    public lastModifiedDate: Date;
-    public lastNotificationRead: Moment;
-    public password: string;
+    public id: number | null;
+    public groups: string[] | null;
+    public createdBy: string | null;
+    public createdDate: Date | null;
+    public lastModifiedBy: string | null;
+    public lastModifiedDate: Date | null;
+    public lastNotificationRead: Moment | null;
+    public password: string | null;
 
     constructor(
         id?: number,
@@ -29,7 +29,16 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
     ) {
-        super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
+        super(
+            activated || undefined,
+            authorities || undefined,
+            email || undefined,
+            firstName || undefined,
+            langKey || undefined,
+            lastName || undefined,
+            login || undefined,
+            imageUrl || undefined,
+        );
         this.id = id ? id : null;
         this.groups = groups ? groups : null;
         this.createdBy = createdBy ? createdBy : null;

@@ -13,10 +13,10 @@ export abstract class DomainCommand extends Command {
      * index 0: Get content with tags around it.
      * index 1: Get content without the tags.
      */
-    getTagRegex(): RegExp {
+    getTagRegex(flags = ''): RegExp {
         const escapedOpeningIdentifier = escapeStringForUseInRegex(this.getOpeningIdentifier()),
             escapedClosingIdentifier = escapeStringForUseInRegex(this.getClosingIdentifier());
-        return new RegExp(`${escapedOpeningIdentifier}(.*)${escapedClosingIdentifier}`, 'g');
+        return new RegExp(`${escapedOpeningIdentifier}(.*)${escapedClosingIdentifier}`, flags);
     }
 
     /**
@@ -29,7 +29,7 @@ export abstract class DomainCommand extends Command {
                 .getEditor()
                 .getSession()
                 .getLine(row),
-            regex = this.getTagRegex();
+            regex = this.getTagRegex('g');
 
         const indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
         let match;
@@ -39,5 +39,27 @@ export abstract class DomainCommand extends Command {
         }
         const matchOnCursor = indexes.find(({ matchStart, matchEnd }) => column > matchStart && column <= matchEnd);
         return matchOnCursor || null;
+    }
+
+    /**
+     * Checks if there is a tag in the line of the cursor.
+     * Returns the content between the identifiers if there is match, otherwise returns null.
+     */
+    isTagInRow(row: number): { matchStart: number; matchEnd: number; innerTagContent: string } | null {
+        const line = this.aceEditorContainer
+                .getEditor()
+                .getSession()
+                .getLine(row),
+            regex = this.getTagRegex();
+
+        if (!line) {
+            return null;
+        }
+
+        const match = line.match(regex);
+        if (!match) {
+            return null;
+        }
+        return { matchStart: match.index, matchEnd: match.index + match[0].length, innerTagContent: match[1] };
     }
 }

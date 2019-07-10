@@ -19,6 +19,8 @@ import {
     ProgrammingExerciseService,
     ProgrammingExerciseUpdateComponent,
     ProgrammingExerciseInstructorStatusComponent,
+    ProgrammingExerciseInstructionTestcaseStatusComponent,
+    ProgrammingExerciseTestCaseService,
 } from './';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { SortByModule } from 'app/components/pipes';
@@ -28,6 +30,7 @@ import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArTEMiSModelingEditorModule, ModelingEditorComponent } from 'app/modeling-editor';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -54,6 +57,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructorStatusComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseInstructionTestcaseStatusComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -63,11 +68,19 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
         ProgrammingExerciseInstructorStatusComponent,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+        ProgrammingExerciseEditableInstructionComponent,
         FaIconComponent,
         ModelingEditorComponent,
     ],
-    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent, ProgrammingExerciseEditableInstructionComponent],
-    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
+    exports: [
+        ProgrammingExerciseComponent,
+        ProgrammingExerciseInstructionComponent,
+        ProgrammingExerciseEditableInstructionComponent,
+        ProgrammingExerciseInstructorExerciseStatusComponent,
+    ],
+    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {

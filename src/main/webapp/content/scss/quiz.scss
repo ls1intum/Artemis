@@ -136,13 +136,7 @@
     left: 0;
     right: 0;
     z-index: 10;
-
-    @media (min-width: 320px) and (max-width: 480px) {
-        height: 150px;
-    }
-
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-
     background: white;
 
     .container {
@@ -213,10 +207,6 @@
 
 .quiz-footer {
     height: 100px;
-
-    @media (min-width: 320px) and (max-width: 480px) {
-        height: 150px;
-    }
 }
 
 .edit-quiz-footer-content,
@@ -326,8 +316,10 @@
     }
 
     .question-content {
-        > div {
-            height: 12em;
+        display: flex;
+        flex-flow: column;
+        > * {
+            height: 350px;
         }
     }
 }
@@ -382,6 +374,13 @@
         right: 20px;
         max-width: 30%;
 
+        @media (max-width: 900px) {
+            position: relative;
+            top: 0;
+            right: 0;
+            max-width: 100%;
+        }
+
         &.result {
             font-weight: bold;
             color: green;
@@ -395,6 +394,10 @@
     .label {
         cursor: pointer;
         margin: 2px 0;
+    }
+
+    .label + ngb-popover-window {
+        max-width: 500px;
     }
 
     .answer-options {
@@ -430,6 +433,10 @@
                 flex-direction: column;
                 align-items: flex-end;
                 font-size: 18px;
+
+                ngb-popover-window {
+                    max-width: 500px;
+                }
             }
         }
 
@@ -458,7 +465,6 @@
 .sa-question {
     .background-area {
         position: relative;
-
         -webkit-user-select: none;
         -moz-user-select: none;
         -ms-user-select: none;
@@ -474,8 +480,6 @@
 
             .drop-location {
                 position: absolute;
-                z-index: 1;
-
                 display: flex;
                 flex-direction: row;
                 align-items: flex-start;
@@ -484,21 +488,21 @@
         }
 
         img {
-            width: 100%;
+            max-width: 100%;
         }
     }
 
     .instructions {
+        display: flex;
+        justify-content: space-between;
         margin: 10px 0;
-        font-weight: bold;
+        font-weight: 500;
     }
 
     .drag-items {
         margin: 6px 0;
-
         width: 100%;
         min-height: 180px;
-
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -510,6 +514,105 @@
         /* Required for text-overflow to do anything */
         white-space: nowrap;
         overflow: hidden;
+    }
+}
+
+.dnd-question {
+    overflow: auto;
+
+    .drag-and-drop-area {
+        display: flex;
+        justify-content: center;
+
+        @media (max-width: 900px) {
+            display: block;
+        }
+
+        .background-area {
+            .click-layer {
+                .drop-location {
+                    .drag-item {
+                        background: transparent;
+                        border: none;
+                        position: relative;
+                        min-width: 160px;
+                        max-width: 360px;
+
+                        .drag-item-text {
+                            @media (max-width: 812px) {
+                                padding: 0;
+                            }
+                        }
+
+                        img {
+                            max-height: 100%;
+                            max-width: 100%;
+                            height: auto;
+                            width: auto !important;
+                            margin: auto;
+                            position: absolute;
+                            transform: translate(-50%, -50%);
+                            top: 50%;
+                            left: 50%;
+                        }
+
+                        div {
+                            @media (max-width: 812px) {
+                                padding: 0 !important;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .drag-and-drop-items {
+            @media (orientation: landscape) and (min-width: 900px) {
+                margin: -5px 0 0 20px;
+            }
+
+            .instructions {
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0 0 10px 0;
+                }
+            }
+
+            > div {
+                width: 100%;
+
+                @media (orientation: landscape) and (min-width: 900px) {
+                    width: 200px;
+                }
+            }
+
+            .drag-items {
+                width: 100%;
+
+                @media (orientation: landscape) and (min-width: 900px) {
+                    margin: 0;
+                    width: 200px;
+                }
+            }
+        }
+    }
+}
+
+.edit-dnd-question {
+    .drag-items {
+        .drag-item {
+            height: 160px;
+            img {
+                max-height: 100%;
+                max-width: 100%;
+                height: auto;
+                width: auto !important;
+                margin: auto;
+                position: absolute;
+                transform: translate(-50%, -50%);
+                top: 50%;
+                left: 50%;
+            }
+        }
     }
 }
 
@@ -766,11 +869,14 @@
 
                 .drag-item {
                     div {
-                        padding: 6px;
+                        line-height: 1;
 
                         span {
                             border: none;
                             padding: 0;
+                            vertical-align: middle;
+                            display: inline-block;
+                            white-space: nowrap;
                         }
                     }
                 }
@@ -856,21 +962,13 @@
     background: transparent;
     border: none;
     position: relative;
-    height: 160px;
     min-width: 160px;
     max-width: 360px;
     margin: 10px 4px;
 
     img {
-        max-height: 100%;
-        max-width: 100%;
-        height: auto;
-        width: auto !important;
-        margin: auto;
-        position: absolute;
-        transform: translate(-50%, -50%);
-        top: 50%;
-        left: 50%;
+        max-width: 160px;
+        max-height: 160px;
     }
 
     &.no-click {
@@ -885,8 +983,6 @@
 
     .drag-item-picture {
         cursor: move;
-        width: 0;
-        height: 0;
         padding: 0;
         margin: 0;
     }
@@ -896,8 +992,8 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        width: 100%;
         height: 100%;
+        width: 100%;
         white-space: pre-wrap;
 
         span {
@@ -929,7 +1025,8 @@
     }
 }
 
-.quiz-footer-content {
+.quiz-footer-content,
+.edit-quiz-footer-content {
     #remaining-time {
         text-align: center;
         width: 100%;
@@ -942,6 +1039,7 @@
 
     #remaining-time-value {
         font-weight: bold;
+        white-space: nowrap;
     }
 
     #quiz-score {
@@ -963,7 +1061,6 @@
     }
 
     .connection-status {
-        margin-top: 4px;
         font-size: 14px;
         color: green;
 
@@ -1124,8 +1221,24 @@ table.answer-options-result {
     width: 50%;
 }
 
-.drag-and-drop-statistic-picture {
+.drag-and-drop-quizStatistic-picture {
+    jhi-secured-image img {
+        max-width: 100%;
+    }
     .click-layer {
+        .solution {
+            .drag-item-picture {
+                img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    position: absolute;
+                    -webkit-transform: translate(-50%, -50%);
+                    transform: translate(-50%, -50%);
+                    top: 50%;
+                    left: 50%;
+                }
+            }
+        }
         .drop-location {
             background: white;
             border: 1px dashed black;
@@ -1140,11 +1253,14 @@ table.answer-options-result {
 
             .drag-item {
                 div {
-                    padding: 6px;
+                    line-height: 1;
 
                     span {
                         border: none;
                         padding: 0;
+                        white-space: nowrap;
+                        vertical-align: middle;
+                        display: inline-block;
                     }
                 }
             }
@@ -1202,12 +1318,12 @@ table.answer-options-result {
         left: 0;
         bottom: 0;
         right: 0;
+        margin-left: auto;
+        margin-right: auto;
         z-index: 1;
 
         .drop-location {
             position: absolute;
-            z-index: 1;
-
             display: flex;
             flex-direction: row;
             align-items: flex-start;
@@ -1215,16 +1331,10 @@ table.answer-options-result {
         }
     }
 
-    img {
-        width: 100%;
-    }
-
     .drag-items {
         margin: 6px 0;
-
         width: 100%;
         min-height: 180px;
-
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -1235,9 +1345,18 @@ table.answer-options-result {
         border: 1px solid dimgrey;
         background: #fafafa;
 
+        .drag-item-picture {
+            img {
+                width: auto;
+                max-width: 160px;
+                max-height: 160px;
+            }
+        }
+
         div {
             span {
                 border: 1px solid transparent;
+                padding: 0;
             }
         }
         div.invalid {
@@ -1413,6 +1532,7 @@ ngb-tooltip-window > div {
     font-family: Arial, Helvetica, sans-serif;
     border-radius: 15px;
     border-spacing: 5px;
+    padding: 6px 0;
     &.btn-light {
         border-color: #ffffff;
     }
@@ -1455,5 +1575,24 @@ ngb-tooltip-window > div {
     }
     .orange {
         color: #d86b1f;
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .hint {
+        ngb-popover-window {
+            max-width: 300px !important;
+        }
+    }
+}
+
+@include media-breakpoint-down(xs) {
+    .btn + .btn {
+        margin-top: 15px;
+    }
+    .hint {
+        ngb-popover-window {
+            max-width: 200px !important;
+        }
     }
 }

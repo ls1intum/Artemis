@@ -10,9 +10,9 @@ import interact from 'interactjs';
     styleUrls: ['./modeling-editor.component.scss'],
 })
 export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
-    @ViewChild('editorContainer')
+    @ViewChild('editorContainer', { static: false })
     editorContainer: ElementRef;
-    @ViewChild('resizeContainer')
+    @ViewChild('resizeContainer', { static: false })
     resizeContainer: ElementRef;
     @Input()
     umlModel: UMLModel;
@@ -89,7 +89,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * of the model outside of Apollon.
      */
     getCurrentModel(): UMLModel {
-        const currentModel: UMLModel = this.apollonEditor.model;
+        const currentModel: UMLModel = this.apollonEditor!.model;
         this.removeAssessments(currentModel);
         return currentModel;
     }

@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -36,15 +37,18 @@ public class ComplaintResource {
 
     private static final String ENTITY_NAME = "complaint";
 
-    private AuthorizationCheckService authCheckService;
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
-    private ExerciseService exerciseService;
+    private final AuthorizationCheckService authCheckService;
 
-    private UserService userService;
+    private final ExerciseService exerciseService;
 
-    private ComplaintService complaintService;
+    private final UserService userService;
 
-    private CourseService courseService;
+    private final ComplaintService complaintService;
+
+    private final CourseService courseService;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseService exerciseService, UserService userService, ComplaintService complaintService,
             CourseService courseService) {
@@ -74,13 +78,13 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
-        if (complaintService.getById(complaint.getResult().getId()).isPresent()) {
+        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
         }
 
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedComplaint.getId().toString())).body(savedComplaint);
     }
 
     /**

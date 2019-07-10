@@ -68,3 +68,13 @@ li:first-child::before {
 .orange::before {
     background: orange !important;
 }
+
+.progress-bar-li {
+    width: 8em;
+    background: white !important;
+    top: 0.2em;
+}
+
+.progress-bar-li::before {
+    top: 0.5em;
+}

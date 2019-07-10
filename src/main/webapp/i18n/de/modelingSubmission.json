@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "modelingSubmission": {
             "home": {
                 "title": "Modeling Submissions",
@@ -23,7 +23,7 @@
             "assessment": {
                 "title": "Bewertung",
                 "noAssessment": "Es liegt noch keine Bewertung vor.",
-                "instructions": "Wählen Sie im Editor Elemente aus, um die Bewertung zu filtern.",
+                "instructions": "Wähle im Editor Elemente aus, um die Bewertung zu filtern.",
                 "element": "Element",
                 "score": "Punkte"
             }

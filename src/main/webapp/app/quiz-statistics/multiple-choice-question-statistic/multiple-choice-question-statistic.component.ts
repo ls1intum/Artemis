@@ -18,11 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     providers: [QuizStatisticUtil, ArtemisMarkdown],
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-    // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
     quizExercise: QuizExercise;
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
@@ -50,8 +45,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     participants: number;
     websocketChannelForData: string;
 
-    questionTextRendered: string;
-    answerTextRendered: string[];
+    questionTextRendered: string | null;
+    answerTextRendered: (string | null)[];
 
     // options for chart in chart.js style
     options: ChartOptions;
@@ -75,7 +70,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
+                    this.loadQuiz(res.body!, false);
                 });
             }
 
@@ -89,11 +84,11 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.xAxes').subscribe(xLabel => {
-                this.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe(xLabel => {
+                this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.yAxes').subscribe(yLabel => {
-                this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe(yLabel => {
+                this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
     }
@@ -138,9 +133,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         if (!refresh) {
             // render Markdown-text
             this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-            this.answerTextRendered = this.question.answerOptions.map(answer => {
-                return this.artemisMarkdown.htmlForMarkdown(answer.text);
-            });
+            this.answerTextRendered = this.question.answerOptions!.map(answer => this.artemisMarkdown.htmlForMarkdown(answer.text));
             this.loadLayout();
         }
         this.loadData();
@@ -153,11 +146,12 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         // reset old data
         this.label = [];
         this.backgroundColor = [];
-        this.backgroundSolutionColor = new Array(this.question.answerOptions.length + 1);
-        this.solutionLabel = new Array(this.question.answerOptions.length + 1);
+        const answerOptions = this.question.answerOptions!;
+        this.backgroundSolutionColor = new Array(answerOptions.length + 1);
+        this.solutionLabel = new Array(answerOptions.length + 1);
 
         // set label and background-Color based on the AnswerOptions
-        this.question.answerOptions.forEach((answerOption, i) => {
+        answerOptions.forEach((answerOption, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
             this.backgroundColor.push('#428bca');
         });
@@ -172,12 +166,13 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     addLastBarLayout() {
         // set backgroundColor for last bar
         this.backgroundColor.push('#5bc0de');
-        this.backgroundSolutionColor[this.question.answerOptions.length] = '#5bc0de';
+        const answerOptionsLength = this.question.answerOptions!.length;
+        this.backgroundSolutionColor[answerOptionsLength] = '#5bc0de';
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
-            this.solutionLabel[this.question.answerOptions.length] = lastLabel.split(' ');
-            this.label[this.question.answerOptions.length] = lastLabel.split(' ');
+            this.solutionLabel[answerOptionsLength] = lastLabel.split(' ');
+            this.label[answerOptionsLength] = lastLabel.split(' ');
             this.labels.length = 0;
             for (let i = 0; i < this.label.length; i++) {
                 this.labels.push(this.label[i]);
@@ -191,7 +186,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     loadInvalidLayout() {
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
-            this.question.answerOptions.forEach((answerOption, i) => {
+            this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.invalid) {
                     this.backgroundColor[i] = '#838383';
                     this.backgroundSolutionColor[i] = '#838383';
@@ -207,8 +202,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.correct').subscribe(correctLabel => {
-            this.question.answerOptions.forEach((answerOption, i) => {
+        this.translateService.get('showStatistic.questionStatistic.correct').subscribe(correctLabel => {
+            this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.isCorrect) {
                     // check if the answer is valid and if true:
                     //      change solution-label and -color
@@ -221,8 +216,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         });
 
         // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.incorrect').subscribe(incorrectLabel => {
-            this.question.answerOptions.forEach((answerOption, i) => {
+        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe(incorrectLabel => {
+            this.question.answerOptions!.forEach((answerOption, i) => {
                 if (!answerOption.isCorrect) {
                     // check if the answer is valid and if false:
                     //      change solution-label and -color
@@ -244,7 +239,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.unratedData = [];
 
         // set data based on the answerCounters for each AnswerOption
-        this.question.answerOptions.forEach(answerOption => {
+        this.question.answerOptions!.forEach(answerOption => {
             const answerOptionCounter = this.questionStatistic.answerCounters.filter(answerCounter => answerOption.id === answerCounter.answer.id)[0];
             this.ratedData.push(answerOptionCounter.ratedCounter);
             this.unratedData.push(answerOptionCounter.unRatedCounter);
@@ -332,21 +327,5 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     switchSolution() {
         this.showSolution = !this.showSolution;
         this.loadDataInDiagram();
-    }
-
-    /**
-     * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the quiz-statistic
-     */
-    previousStatistic() {
-        this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
-     */
-    nextStatistic() {
-        this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
     }
 }

@@ -14,14 +14,14 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
     styleUrls: ['./example-modeling-solution.component.scss'],
 })
 export class ExampleModelingSolutionComponent implements OnInit {
-    @ViewChild(ModelingEditorComponent)
+    @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
     exercise: ModelingExercise;
     exerciseId: number;
     exampleSolution: UMLModel;
     isAtLeastInstructor = false;
-    formattedProblemStatement: string;
+    formattedProblemStatement: string | null;
 
     constructor(
         private exerciseService: ModelingExerciseService,
@@ -40,11 +40,11 @@ export class ExampleModelingSolutionComponent implements OnInit {
         this.modelingExercisePopupService.close();
 
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.exercise = exerciseResponse.body;
+            this.exercise = exerciseResponse.body!;
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
             this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
         });
     }
@@ -57,11 +57,11 @@ export class ExampleModelingSolutionComponent implements OnInit {
         this.exercise.sampleSolutionModel = JSON.stringify(this.exampleSolution);
         this.exerciseService.update(this.exercise).subscribe(
             (exerciseResponse: HttpResponse<ModelingExercise>) => {
-                this.exercise = exerciseResponse.body;
+                this.exercise = exerciseResponse.body!;
                 if (this.exercise.sampleSolutionModel) {
                     this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
                 }
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
                 console.error(error);
@@ -71,7 +71,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     }
 
     async back() {
-        const courseId = this.exercise.course.id;
+        const courseId = this.exercise.course!.id;
         await this.router.navigate([`/course/${courseId}/`]);
         this.router.navigate(['/', { outlets: { popup: 'modeling-exercise/' + this.exerciseId + '/edit' } }]);
     }

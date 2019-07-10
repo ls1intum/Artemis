@@ -18,7 +18,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
     templateUrl: './modeling-exercise-dialog.component.html',
-    styles: ['.invalid-feedback { display: block }'],
+    styleUrls: ['./modeling-exercise-dialog.scss'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
     modelingExercise: ModelingExercise;
@@ -28,6 +28,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    notificationText: string | null;
 
     courses: Course[];
 
@@ -45,16 +46,17 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.dueDateError = false;
         this.assessmentDueDateError = false;
+        this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
-        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course.id).subscribe(
+        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -82,7 +84,11 @@ export class ModelingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise));
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
         }
@@ -100,7 +106,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: ModelingExercise) {

@@ -53,8 +53,9 @@ export class TextResultComponent {
     }
 
     private feedbackToTextResultBlock(feedback: Feedback): TextResultBlock {
-        const indexOfReference = this.submissionText.indexOf(feedback.reference);
-        return new TextResultBlock(feedback.reference, indexOfReference, feedback);
+        const reference = feedback.reference!;
+        const indexOfReference = this.submissionText.indexOf(reference);
+        return new TextResultBlock(reference, indexOfReference, feedback);
     }
 
     public repeatForEachCredit(textResultBlock: TextResultBlock): number[] {
@@ -62,13 +63,13 @@ export class TextResultComponent {
             return [];
         }
 
-        const value = Math.ceil(Math.abs(textResultBlock.feedback.credits));
+        const value = Math.ceil(Math.abs(textResultBlock.feedback.credits || 0));
         return new Array(value).fill(1);
     }
 
     public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
-        const singular = Math.abs(textResultBlock.feedback.credits) === 1;
+        const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
-        return this.translateService.instant(`arTeMiSApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback.credits });
+        return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
     }
 }

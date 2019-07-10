@@ -1,32 +1,32 @@
 <div class="col-12 px-0 mt-2" *ngIf="!loading">
     <div class="alert alert-info" *ngIf="handled">
-        {{ 'arTeMiSApp.complaint.complaintAlreadyHandled' | translate }}
+        {{ 'artemisApp.complaint.complaintAlreadyHandled' | translate }}
     </div>
 
     <div class="row">
         <div class="col-12 col-md-6">
-            <h3>
-                {{ 'arTeMiSApp.complaint.title' | translate }}
+            <h4>
+                {{ 'artemisApp.complaint.title' | translate }}
                 <small *ngIf="handled">
-                    <span *ngIf="complaint?.accepted" class="text-light bg-success small"> &nbsp;{{ 'arTeMiSApp.complaint.accepted' | translate }}&nbsp; </span>
-                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'arTeMiSApp.complaint.rejected' | translate }}&nbsp; </span>
+                    <span *ngIf="complaint?.accepted" class="text-light bg-success small"> &nbsp;{{ 'artemisApp.complaint.accepted' | translate }}&nbsp; </span>
+                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | translate }}&nbsp; </span>
                 </small>
-            </h3>
+            </h4>
             <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
         </div>
 
         <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
-            <h3>{{ 'arTeMiSApp.complaintResponse.title' | translate }}</h3>
-            <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
+            <h4>{{ 'artemisApp.complaintResponse.title' | translate }}</h4>
+            <textarea class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
             <div *ngIf="!handled" class="row justify-content-end">
                 <div class="col-12 col-lg-6">
-                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'arTeMiSApp.complaintResponse.updateAssessmentTooltip' | translate }}">
-                        {{ 'arTeMiSApp.complaintResponse.updateAssessment' | translate }}
+                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}">
+                        {{ 'artemisApp.complaintResponse.updateAssessment' | translate }}
                     </button>
                 </div>
                 <div class="col-12 col-lg-6">
-                    <button class="btn btn-danger btn-block" (click)="respondToComplaint(false)" title="{{ 'arTeMiSApp.complaintResponse.rejectComplaintTooltip' | translate }}">
-                        {{ 'arTeMiSApp.complaintResponse.rejectComplaint' | translate }}
+                    <button class="btn btn-danger btn-block" (click)="respondToComplaint(false)" title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | translate }}">
+                        {{ 'artemisApp.complaintResponse.rejectComplaint' | translate }}
                     </button>
                 </div>
             </div>
