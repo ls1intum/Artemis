@@ -35,8 +35,8 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     Optional<Participation> findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState initializationState, Long exerciseId, String username);
 
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.login = :#{#username}")
-    Optional<Participation> findByExerciseIdAndStudentLoginWithEagerSubmissions(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+    @EntityGraph(attributePaths = "submissions")
+    Optional<Participation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, InitializationState state);
 
