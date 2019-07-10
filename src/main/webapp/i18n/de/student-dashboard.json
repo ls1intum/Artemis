@@ -77,7 +77,8 @@
                 "exerciseNotGraded": "{{ exercise }} wurde noch nicht bewertet.",
                 "exerciseNotParticipated": "Du hast an {{ exercise }} nicht teilgenommen.",
                 "exerciseParticipatedAfterDueDate": "Du hast an {{ exercise }} teilgenommen, jedoch nach dem Abgabedatum.",
-                "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten."
+                "noPointsForExercise": "Du kannst keine Punkte für diese Übung erhalten.",
+                "description": "Hier werden dir alle Ergebnisse von Übungen angezeigt, welche zu deinem Ergebnis zum Kurs dazuzählen und bei denen das Bewertungsfälligkeitsdatum bereits vorbei ist."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

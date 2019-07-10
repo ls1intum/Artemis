@@ -66,6 +66,9 @@ public class DatabaseUtilService {
     ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
+    ExampleSubmissionRepository exampleSubmissionRepo;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -81,6 +84,7 @@ public class DatabaseUtilService {
         complaintRepo.deleteAll();
         resultRepo.deleteAll();
         feedbackRepo.deleteAll();
+        exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
@@ -99,14 +103,16 @@ public class DatabaseUtilService {
      * @param numberOfStudents
      * @param numberOfTutors
      */
-    public void addUsers(int numberOfStudents, int numberOfTutors) {
+    public void addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
         LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser" }, numberOfStudents);
         LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor" }, numberOfTutors);
+        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "tutor" }, numberOfInstructors);
         LinkedList<User> usersToAdd = new LinkedList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
+        usersToAdd.addAll(instructors);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors);
+        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
@@ -218,13 +224,19 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
         String model = loadFileFromResources(path);
-        ModelingSubmission submission = addModelingSubmissionWithEmptyResult(exercise, model, login);
-        checkSubmissionCorrectlyStored(submission.getId(), model);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
+        submission = addModelingSubmission(exercise, submission, login);
+        checkModelingSubmissionCorrectlyStored(submission.getId(), model);
         return submission;
     }
 
-    public void checkSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
-        String storedModel = modelingSubmissionRepo.findById(submissionId).get().getModel();
+    public void checkModelingSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepo.findById(submissionId);
+        assertThat(modelingSubmission).as("submission correctly stored").isPresent();
+        checkModelsAreEqual(modelingSubmission.get().getModel(), sentModel);
+    }
+
+    public void checkModelsAreEqual(String storedModel, String sentModel) throws Exception {
         JsonParser parser = new JsonParser();
         JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
@@ -234,10 +246,15 @@ public class DatabaseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login) throws Exception {
         List<Feedback> assessment = loadAssessmentFomResources(path);
         Result result = modelingAssessmentService.saveManualAssessment(submission, assessment, exercise);
-        result.setParticipation(submission.getParticipation());
+        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(getUserByLogin(login));
         result = modelingAssessmentService.submitManualAssessment(result, exercise, submission.getSubmissionDate());
         return result;
+    }
+
+    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {
+        modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+        return exampleSubmissionRepo.save(exampleSubmission);
     }
 
     /**
