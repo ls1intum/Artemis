@@ -31,11 +31,13 @@ export class ResultHistoryComponent {
         }
     }
 
+    // TODO: document the implementation of this method --> it is not really obvious
+    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;
         }
-        if (result.resultString && result.resultString.indexOf('failed') !== -1) {
+        if (result.resultString && (result.resultString.indexOf('failed') || result.resultString.indexOf('passed')) !== -1) {
             return null;
         }
         if (result.resultString.indexOf('of') === -1) {
