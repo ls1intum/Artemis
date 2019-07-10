@@ -1,4 +1,4 @@
 declare module 'showdown-katex' {
-    const main: any;
-    export default any;
+    const main: () => ShowDownExtension;
+    export = main;
 }
