@@ -13,11 +13,11 @@ export class KatexCommand extends DomainTagCommand {
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 
-    getClosingIdentifier(): string {
+    getOpeningIdentifier(): string {
         return '$$ ';
     }
 
-    getOpeningIdentifier(): string {
+    getClosingIdentifier(): string {
         return ' $$';
     }
 }
