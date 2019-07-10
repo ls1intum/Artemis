@@ -27,6 +27,7 @@ import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/dom
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -84,6 +85,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         new AttachmentCommand(),
         new OrderedListCommand(),
         new UnorderedListCommand(),
+        new KatexCommand(),
     ];
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/
