@@ -85,7 +85,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
         new AttachmentCommand(),
         new OrderedListCommand(),
         new UnorderedListCommand(),
-        new KatexCommand(),
     ];
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/

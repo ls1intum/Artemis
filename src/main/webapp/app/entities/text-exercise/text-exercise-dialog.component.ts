@@ -14,6 +14,7 @@ import { Course, CourseService } from '../course';
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { KatexCommand } from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -29,6 +30,8 @@ export class TextExerciseDialogComponent implements OnInit {
     notificationText: string | null;
 
     courses: Course[];
+
+    domainCommands = [new KatexCommand()];
 
     constructor(
         public activeModal: NgbActiveModal,
