@@ -9,7 +9,7 @@ import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.com
 })
 export class ModelingEditorDialogComponent {
     DiagramType = DiagramType;
-    @ViewChild(ModelingEditorComponent) editor: ModelingEditorComponent;
+    @ViewChild(ModelingEditorComponent, { static: false }) editor: ModelingEditorComponent;
     @Input()
     umlModel: UMLModel;
     @Input()

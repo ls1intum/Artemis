@@ -108,7 +108,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             this.removeAssessments(this.umlModel);
             this.apollonEditor.model = this.umlModel;
         } else if (changes.diagramType && changes.diagramType.currentValue && this.apollonEditor) {
-            this.umlModel = undefined;
             this.initializeApollonEditor();
         }
     }
