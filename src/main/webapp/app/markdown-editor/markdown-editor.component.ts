@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
-import * as DOMPurify from 'dompurify';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import Interactable from '@interactjs/core/Interactable';

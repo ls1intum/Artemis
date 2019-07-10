@@ -17,7 +17,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
-import * as RemarkableKatex from 'remarkable-katex';
 import { intersection as _intersection } from 'lodash';
 import { faCheckCircle, faTimesCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
@@ -100,7 +99,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     ) {
         // Enabled for color picker of markdown editor that inserts spans into the markdown
         this.markdown = new Remarkable({ html: true });
-        this.markdown.use(RemarkableKatex);
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markdown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
