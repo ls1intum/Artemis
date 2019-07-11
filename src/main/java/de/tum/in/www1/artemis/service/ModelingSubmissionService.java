@@ -88,10 +88,13 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
-        ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedback(submissionId);
+        ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndParticipationResults(submissionId);
+
         if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourse().getId());
+            modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
+
         lockSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
@@ -104,8 +107,9 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
-        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutResult(modelingExercise)
+        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+        modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         lockSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
@@ -121,7 +125,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return a modeling submission without any result
      */
     @Transactional
-    public Optional<ModelingSubmission> getModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
+    public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
@@ -130,7 +134,7 @@ public class ModelingSubmissionService extends SubmissionService {
             Collections.shuffle(modelsWaitingForAssessment);
 
             for (Long submissionId : modelsWaitingForAssessment) {
-                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId);
+                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId);
                 if (submission.isPresent()) {
                     return submission;
                 }
@@ -260,6 +264,24 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.getResult().setAssessmentType(AssessmentType.MANUAL);
     }
 
+    // TODO: documentation
+    private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
+        if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getAssessmentType() != null
+                && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+            return modelingSubmission;
+        }
+
+        Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId());
+        automaticResult.setSubmission(modelingSubmission);
+        modelingSubmission.setResult(automaticResult);
+        modelingSubmission.getParticipation().addResult(automaticResult);
+        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+
+        compassService.removeAutomaticResultForSubmission(modelingSubmission.getId());
+
+        return modelingSubmission;
+    }
+
     /**
      * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
@@ -299,6 +321,12 @@ public class ModelingSubmissionService extends SubmissionService {
 
     public ModelingSubmission findOneWithEagerResultAndFeedback(Long id) {
         return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(id)
+                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+    }
+
+    // TODO: documentation
+    private ModelingSubmission findOneWithEagerResultAndFeedbackAndParticipationResults(Long id) {
+        return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
