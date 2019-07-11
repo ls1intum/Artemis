@@ -37,7 +37,7 @@ export class ResultHistoryComponent {
         if (!result.resultString) {
             return 0;
         }
-        if (result.resultString && (result.resultString.indexOf('failed') || result.resultString.indexOf('passed')) !== -1) {
+        if (result.resultString && (result.resultString.indexOf('failed') !== -1 || result.resultString.indexOf('passed')) !== -1) {
             return null;
         }
         if (result.resultString.indexOf('of') === -1) {
