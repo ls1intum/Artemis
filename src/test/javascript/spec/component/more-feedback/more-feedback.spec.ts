@@ -42,9 +42,10 @@ describe('MoreFeedbackComponent', () => {
     }));
 
     it('should initialize with correct values for complaints service', fakeAsync(() => {
-        let textarea: HTMLTextAreaElement = debugElement.query(By.css('#complainTextArea')).nativeElement;
-        expect(textarea.value).to.be.equal('');
+        //let textarea: HTMLTextAreaElement = debugElement.query(By.css('#complainTextArea')).nativeElement;
+        //expect(textarea.value).to.be.equal('');
         fixture.detectChanges();
+        let textarea: HTMLTextAreaElement = debugElement.query(By.css('#complainTextArea')).nativeElement;
         expect(comp.complaintText).to.be.equal(MockComplaintResponse.body.complaintText);
         expect(comp.alreadySubmitted).to.be.true;
         expect(comp.submittedDate).to.be.undefined;

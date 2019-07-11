@@ -24,6 +24,7 @@ import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessme
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { TextAssessmentDetailComponent } from 'app/text-assessment/text-assessment-detail/text-assessment-detail.component';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
+import { MoreFeedbackForTutorComponent } from 'app/more-feedback-for-tutor';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +50,7 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(TextAssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(MoreFeedbackForTutorComponent),
             ],
             providers: [
                 JhiLanguageHelper,
