@@ -81,7 +81,7 @@
 </h2>
 
 <div class="alert alert-info" *ngIf="complaint">
-    <ng-container *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
+    <ng-container *ngIf="!complaint.complaintType || complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
     <ng-container *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</ng-container>
 </div>
 

@@ -177,10 +177,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.complaint = res.body;
-                    // All complaints without complaint type should be treated as complaint.
-                    if (!this.complaint.complaintType) {
-                        this.complaint.complaintType = ComplaintType.COMPLAINT;
-                    }
                 },
                 (err: HttpErrorResponse) => {
                     this.onError();

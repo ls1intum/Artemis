@@ -43,9 +43,11 @@
             </button>
         </div>
     </h3>
-    <div class="alert alert-info" *ngIf="hasComplaint" jhiTranslate="artemisApp.complaint.hint">
-        You find the complaint at the end of the page
+    <div *ngIf="complaint">
+        <div class="alert alert-info" *ngIf="!complaint.complaintType || complaint.complaintType == ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</div>
+        <div class="alert alert-info" *ngIf="complaint.complaintType == ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</div>
     </div>
+
     <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAuthorized && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
         Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By submitting
         the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
