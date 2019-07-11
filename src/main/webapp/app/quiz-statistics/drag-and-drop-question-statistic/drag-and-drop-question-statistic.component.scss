@@ -1,83 +1,6 @@
+@import '../../../content/scss/_artemis-mixins.scss';
+
 .drag-and-drop-quizStatistic-picture {
-    jhi-secured-image img {
-        max-width: 100%;
-    }
-    .click-layer {
-        .solution {
-            .drag-item-picture {
-                img {
-                    max-width: 100%;
-                    max-height: 100%;
-                    position: absolute;
-                    -webkit-transform: translate(-50%, -50%);
-                    transform: translate(-50%, -50%);
-                    top: 50%;
-                    left: 50%;
-                }
-            }
-        }
-        .drop-location {
-            background: white;
-            border: 1px dashed black;
-
-            .drag-item,
-            jhi-drag-item {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                background: white;
-            }
-
-            .drag-item {
-                div {
-                    line-height: 1;
-
-                    span {
-                        border: none;
-                        padding: 0;
-                        white-space: nowrap;
-                        vertical-align: middle;
-                        display: inline-block;
-                    }
-                }
-            }
-
-            .letter {
-                color: white;
-                position: absolute;
-                top: 3%;
-                left: 3%;
-                z-index: 1;
-                opacity: 1;
-                -webkit-transform: translate3d(-63%, -63%, 0);
-                -moz-transform: translate3d(-63%, -63%, 0);
-                -ms-transform: translate3d(-63%, -63%, 0);
-                -o-transform: translate3d(-63%, -63%, 0);
-                transform: translate3d(-63%, -63%, 0);
-            }
-            .letter-solution {
-                color: white;
-                position: absolute;
-                top: 3%;
-                left: 3%;
-                z-index: 1;
-                opacity: 1;
-                -webkit-transform: translate3d(-63%, -63%, 0);
-                -moz-transform: translate3d(-63%, -63%, 0);
-                -ms-transform: translate3d(-63%, -63%, 0);
-                -o-transform: translate3d(-63%, -63%, 0);
-                transform: translate3d(-63%, -63%, 0);
-            }
-            .invalid {
-                color: red;
-                position: absolute;
-                bottom: 0;
-                left: 2px;
-                z-index: 1;
-                opacity: 1;
-            }
-        }
-    }
     position: relative;
     width: 100%;
     box-sizing: border-box;
@@ -89,95 +12,104 @@
     -ms-user-select: none;
     user-select: none;
 
-    .click-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        margin-left: auto;
-        margin-right: auto;
-        z-index: 1;
-
-        .drop-location {
-            position: absolute;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            justify-content: flex-end;
-        }
+    /* display drag and drop background image in full size */
+    jhi-secured-image ::ng-deep img {
+        max-width: 100%;
     }
 
-    .drag-items {
-        margin: 6px 0;
-        width: 100%;
-        min-height: 180px;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-    }
-
-    .drag-item {
-        border: 1px solid dimgrey;
-        background: #fafafa;
-
-        .drag-item-picture {
-            img {
-                width: auto;
-                max-width: 160px;
-                max-height: 160px;
-            }
+    /* drag items below click layer */
+    jhi-drag-item,
+    ::ng-deep .drag-item {
+        ::ng-deep .drag-item-picture {
+            cursor: default !important;
         }
 
-        div {
-            span {
+        ::ng-deep .drag-item-text {
+            ::ng-deep span {
                 border: 1px solid transparent;
+                cursor: default !important;
                 padding: 0;
             }
         }
-        div.invalid {
-            span {
-                color: red;
-                padding: 0;
-            }
+
+        ::ng-deep .invalid {
+            // is this used here?
             width: auto;
             height: auto;
-
             position: absolute;
             bottom: 0;
             left: 2px;
             z-index: 1;
             opacity: 1;
+
+            ::ng-deep span {
+                color: red;
+                padding: 0;
+            }
         }
     }
 
-    .letter {
-        position: absolute;
-        z-index: 10;
-        left: 50%;
-        top: 50%;
+    /* click-layer and drag items on background image */
+    .click-layer {
+        margin-left: auto;
+        margin-right: auto;
 
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        background-color: #428bca;
-        color: white;
-        border-radius: 50%;
-        text-align: center;
-    }
-    .letter-solution {
-        position: absolute;
-        z-index: 10;
-        left: 50%;
-        top: 50%;
+        .drop-location {
+            jhi-drag-item,
+            ::ng-deep .drag-item {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                background: white;
 
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        background-color: #5cb85c;
-        color: white;
-        border-radius: 50%;
-        text-align: center;
+                ::ng-deep .drag-item-text,
+                ::ng-deep .drag-item-picture {
+                    line-height: 1;
+
+                    ::ng-deep span {
+                        border: none;
+                        padding: 0;
+                        white-space: nowrap;
+                        vertical-align: middle;
+                        display: inline-block;
+                    }
+                }
+            }
+
+            .letter {
+                @include quiz-statistic-letter(#428bca);
+                @include dnd-letter-position;
+            }
+
+            .letter-solution {
+                @include quiz-statistic-letter(#5cb85c);
+                @include dnd-letter-position;
+            }
+
+            .invalid {
+                // is this used here?
+                color: red;
+                position: absolute;
+                bottom: 0;
+                left: 2px;
+                z-index: 1;
+                opacity: 1;
+            }
+
+            /* show solution style */
+            &.solution {
+                ::ng-deep .drag-item-picture {
+                    ::ng-deep img {
+                        max-width: 100%;
+                        max-height: 100%;
+                        position: absolute;
+                        -webkit-transform: translate(-50%, -50%);
+                        transform: translate(-50%, -50%);
+                        top: 50%;
+                        left: 50%;
+                    }
+                }
+            }
+        }
     }
 }

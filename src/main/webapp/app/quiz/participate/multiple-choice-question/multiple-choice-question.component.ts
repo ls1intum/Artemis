@@ -10,6 +10,7 @@ import { QuizExercise } from 'app/entities/quiz-exercise';
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
     providers: [ArtemisMarkdown],
+    styleUrls: ['./multiple-choice-question.component.scss'],
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;

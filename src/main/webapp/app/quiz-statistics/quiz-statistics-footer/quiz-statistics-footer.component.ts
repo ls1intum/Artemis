@@ -17,6 +17,7 @@ import * as moment from 'moment';
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
+    styleUrls: ['./quiz-statistics-footer.component.scss'],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     @Input() isQuizPointStatistic: boolean;

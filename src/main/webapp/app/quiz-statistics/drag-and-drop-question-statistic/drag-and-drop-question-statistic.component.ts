@@ -8,7 +8,6 @@ import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-que
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
-import { QuizQuestionType } from '../../entities/quiz-question';
 import { DropLocation } from '../../entities/drop-location';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
@@ -25,6 +24,7 @@ interface BackgroundColorConfig {
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
+    styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     quizExercise: QuizExercise;

@@ -26,6 +26,7 @@ window.addEventListener('touchmove', function() {}, { passive: false });
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./drag-and-drop-question.component.scss'],
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     /** needed to trigger a manual reload of the drag and drop background picture */

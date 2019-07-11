@@ -179,10 +179,10 @@
                 </span>
             </div>
             <hr />
-            <div *ngIf="!question.solutions || !question.solutions.length" class="instructions">
+            <div *ngIf="!question.solutions || !question.solutions.length" class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
             </div>
-            <div *ngIf="question.solutions && question.solutions.length" class="instructions">
+            <div *ngIf="question.solutions && question.solutions.length" class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
             </div>
             <div class="drag-items" *ngIf="question.solutions && question.solutions.length">

@@ -19,6 +19,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./edit-drag-and-drop-question.component.scss'],
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer', { static: false })

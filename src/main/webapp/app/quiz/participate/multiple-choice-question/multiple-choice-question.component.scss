@@ -1,0 +1,39 @@
+table.answer-options-result {
+    width: 100%;
+
+    .answer-option {
+        display: table-row;
+    }
+
+    th {
+        color: dimgray;
+    }
+
+    th,
+    td {
+        padding: 6px 10px;
+    }
+
+    .solution {
+        width: 100px;
+    }
+
+    .result-symbol {
+        padding: 0;
+        color: orange;
+        width: 50px;
+    }
+
+    .selection {
+        width: 36px;
+        margin-left: 0;
+    }
+
+    .correct {
+        color: green;
+    }
+
+    .wrong {
+        color: red;
+    }
+}

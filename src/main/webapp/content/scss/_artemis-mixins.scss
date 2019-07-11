@@ -1,0 +1,24 @@
+/* quiz statistic letter mixin */
+@mixin quiz-statistic-letter($color) {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: $color;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+/* dnd quiz statistic letter position mixin */
+@mixin dnd-letter-position {
+    position: absolute;
+    top: 3%;
+    left: 3%;
+    z-index: 1;
+    opacity: 1;
+    -webkit-transform: translate3d(-63%, -63%, 0);
+    -moz-transform: translate3d(-63%, -63%, 0);
+    -ms-transform: translate3d(-63%, -63%, 0);
+    -o-transform: translate3d(-63%, -63%, 0);
+    transform: translate3d(-63%, -63%, 0);
+}

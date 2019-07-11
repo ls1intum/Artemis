@@ -16,6 +16,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
     providers: [ArtemisMarkdown],
+    styleUrls: ['./edit-short-answer-question.component.scss'],
 })
 export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
     @ViewChild('questionEditor', { static: false })

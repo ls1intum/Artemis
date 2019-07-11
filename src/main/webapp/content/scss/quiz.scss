@@ -1,4 +1,6 @@
+@import './_artemis-mixins.scss';
 @import '~bootstrap/scss/bootstrap-grid.scss';
+
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -43,7 +45,7 @@
     }
 
     .background-file,
-    drag-item-file {
+    .drag-item-file {
         display: flex;
     }
 
@@ -53,16 +55,14 @@
     }
 }
 
-.edit-quiz-footer,
-.quiz-footer {
+.edit-quiz-footer {
+    height: 80px;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 10;
-
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-
     background: white;
 
     .container {
@@ -70,12 +70,8 @@
     }
 }
 
-.edit-quiz-footer {
-    height: 80px;
-}
-
-.edit-quiz-footer-content,
-.quiz-footer-content {
+.quiz-footer-content,
+.edit-quiz-footer-content {
     height: 100%;
     display: flex;
     align-items: center;
@@ -106,10 +102,6 @@
     }
 }
 
-.question:first-of-type {
-    margin-top: 18px;
-}
-
 .edit-quiz .quiz-options .form-group > div.time-picker {
     margin-top: -15px;
     margin-left: 0px;
@@ -121,6 +113,10 @@
     border: 1px solid lightgrey;
     margin-bottom: 18px;
     background: #fefefe;
+
+    &:first-of-type {
+        margin-top: 18px;
+    }
 
     .mc-question,
     .dnd-question,
@@ -193,8 +189,8 @@
     background: #f8f9fa;
 }
 
-.mc-question,
 .dnd-question,
+.mc-question,
 .sa-question {
     position: relative;
     width: 100%;
@@ -203,6 +199,14 @@
     margin-bottom: 18px;
     padding: 20px;
     background: #fefefe;
+
+    &.result {
+        border-color: green;
+
+        &.incorrect {
+            border-color: orange;
+        }
+    }
 
     h2 {
         margin: 0 90px 0 0;
@@ -215,14 +219,6 @@
     p {
         margin: 10px 0;
         font-size: 16px;
-    }
-
-    &.result {
-        border-color: green;
-
-        &.incorrect {
-            border-color: orange;
-        }
     }
 
     .question-title-display {
@@ -320,10 +316,39 @@
     }
 }
 
+/* dotted drop-location */
+.dnd-question,
 .edit-dnd-question,
 .edit-sa-question,
+.drag-and-drop-quizStatistic-picture {
+    .click-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+
+        .drop-location {
+            position: absolute;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: flex-end;
+        }
+    }
+}
+
 .dnd-question,
-.sa-question {
+.edit-dnd-question,
+.edit-sa-question {
+    .dnd-instructions {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        font-weight: 500;
+    }
+
     .background-area {
         position: relative;
         -webkit-user-select: none;
@@ -331,35 +356,37 @@
         -ms-user-select: none;
         user-select: none;
 
-        .click-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            z-index: 1;
-
-            .drop-location {
-                position: absolute;
-                display: flex;
-                flex-direction: row;
-                align-items: flex-start;
-                justify-content: flex-end;
-            }
-        }
-
         img {
             max-width: 100%;
         }
     }
+}
 
-    .instructions {
-        display: flex;
-        justify-content: space-between;
-        margin: 10px 0;
-        font-weight: 500;
+.dnd-question,
+.sa-question,
+.edit-dnd-question,
+.edit-sa-question {
+    .ellipsis {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
+}
 
+/** EDIT DRAG AND DROP AND SHORT ANSWER QUIZ **/
+
+/* highlight drop location in light blue when selecting and moving a drag item */
+.dnd-question,
+.edit-dnd-question {
+    .drop-allowed {
+        background: rgba(173, 216, 230, 0.8) !important;
+    }
+}
+
+.dnd-question,
+.edit-dnd-question,
+.edit-sa-question,
+.drag-and-drop-quizStatistic-picture {
     .drag-items {
         margin: 6px 0;
         width: 100%;
@@ -368,125 +395,96 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-evenly;
-    }
 
-    .ellipsis {
-        text-overflow: ellipsis;
-        /* Required for text-overflow to do anything */
-        white-space: nowrap;
-        overflow: hidden;
-    }
-}
-
-.dnd-question {
-    overflow: auto;
-
-    .drag-and-drop-area {
-        display: flex;
-        justify-content: center;
-
-        @media (max-width: 900px) {
-            display: block;
-        }
-
-        .background-area {
-            .click-layer {
-                .drop-location {
-                    .drag-item {
-                        background: transparent;
-                        border: none;
-                        position: relative;
-                        min-width: 160px;
-                        max-width: 360px;
-
-                        .drag-item-text {
-                            @media (max-width: 812px) {
-                                padding: 0;
-                            }
-                        }
-
-                        img {
-                            max-height: 100%;
-                            max-width: 100%;
-                            height: auto;
-                            width: auto !important;
-                            margin: auto;
-                            position: absolute;
-                            transform: translate(-50%, -50%);
-                            top: 50%;
-                            left: 50%;
-                        }
-
-                        div {
-                            @media (max-width: 812px) {
-                                padding: 0 !important;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        .drag-and-drop-items {
-            @media (orientation: landscape) and (min-width: 900px) {
-                margin: -5px 0 0 20px;
-            }
-
-            .instructions {
-                @media (orientation: landscape) and (min-width: 900px) {
-                    margin: 0 0 10px 0;
-                }
-            }
-
-            > div {
-                width: 100%;
-
-                @media (orientation: landscape) and (min-width: 900px) {
-                    width: 200px;
-                }
-            }
-
-            .drag-items {
-                width: 100%;
-
-                @media (orientation: landscape) and (min-width: 900px) {
-                    margin: 0;
-                    width: 200px;
-                }
-            }
-        }
-    }
-}
-
-.edit-dnd-question {
-    .drag-items {
         .drag-item {
-            height: 160px;
-            img {
-                max-height: 100%;
-                max-width: 100%;
-                height: auto;
-                width: auto !important;
-                margin: auto;
-                position: absolute;
-                transform: translate(-50%, -50%);
-                top: 50%;
-                left: 50%;
-            }
+            border: 1px solid dimgrey;
+            background: #fafafa;
         }
     }
 }
 
+/* drop location mapping in drag-and-drop and short answer edit view */
 .edit-dnd-question,
 .edit-sa-question {
     .markupEditorArea {
         margin-bottom: 14px;
+    }
 
-        .question-content {
-            > div {
-                height: 8em;
+    .background-area {
+        .click-layer {
+            cursor: crosshair !important;
+
+            &.disabled {
+                cursor: not-allowed !important;
+            }
+
+            .drop-location {
+                border: 1px dashed mediumpurple;
+                cursor: move !important;
+                background: rgba(255, 255, 255, 0.5);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.8);
+                }
+
+                .dimensions,
+                .invalid {
+                    position: absolute;
+                    left: 2px;
+                    bottom: 0;
+                    font-size: 14px;
+                }
+
+                .resize {
+                    position: absolute;
+                    width: 6px;
+                    height: 6px;
+                    background: mediumpurple;
+
+                    &.top {
+                        top: -3px;
+                    }
+
+                    &.middle {
+                        top: calc(50% - 3px);
+                        cursor: col-resize;
+                    }
+
+                    &.bottom {
+                        bottom: -3px;
+                    }
+
+                    &.left {
+                        left: -3px;
+                    }
+
+                    &.center {
+                        left: calc(50% - 3px);
+                        cursor: row-resize;
+                    }
+
+                    &.right {
+                        right: -3px;
+                    }
+
+                    &.top.left,
+                    &.bottom.right {
+                        cursor: nwse-resize;
+                    }
+
+                    &.top.right,
+                    &.bottom.left {
+                        cursor: nesw-resize;
+                    }
+                }
             }
         }
+    }
+
+    /* highlight drop location in light green in drag-over event */
+    .drop-hover,
+    .dnd-drag-over {
+        background: rgba(144, 238, 144, 0.8) !important;
     }
 
     .mapping-numbers-wrapper {
@@ -577,95 +575,9 @@
         background: #2c3e50;
     }
 
-    .background-area {
-        .click-layer {
-            cursor: crosshair !important;
-
-            &.disabled {
-                cursor: not-allowed !important;
-            }
-
-            .drop-location {
-                border: 1px dashed mediumpurple;
-                cursor: move !important;
-                background: rgba(255, 255, 255, 0.5);
-
-                &:hover {
-                    background: rgba(255, 255, 255, 0.8);
-                }
-
-                .dimensions {
-                    position: absolute;
-                    left: 2px;
-                    bottom: 0;
-                    font-size: 14px;
-                }
-
-                .invalid {
-                    position: absolute;
-                    left: 2px;
-                    top: 0;
-                    font-size: 14px;
-                }
-
-                .resize {
-                    position: absolute;
-                    width: 6px;
-                    height: 6px;
-                    background: mediumpurple;
-
-                    &.top {
-                        top: -3px;
-                    }
-
-                    &.middle {
-                        top: calc(50% - 3px);
-                        cursor: col-resize;
-                    }
-
-                    &.bottom {
-                        bottom: -3px;
-                    }
-
-                    &.left {
-                        left: -3px;
-                    }
-
-                    &.center {
-                        left: calc(50% - 3px);
-                        cursor: row-resize;
-                    }
-
-                    &.right {
-                        right: -3px;
-                    }
-
-                    &.top.left,
-                    &.bottom.right {
-                        cursor: nwse-resize;
-                    }
-
-                    &.top.right,
-                    &.bottom.left {
-                        cursor: nesw-resize;
-                    }
-                }
-            }
-        }
-    }
-
-    .drop-allowed {
-        background: rgba(173, 216, 230, 0.8) !important; //light blue
-    }
-
-    .drop-hover,
-    .dnd-drag-over {
-        background: rgba(144, 238, 144, 0.8) !important; //light green
-    }
-
     .drag-item {
-        border: 1px solid dimgrey;
-        background: #fafafa;
+        // border: 1px solid dimgrey;
+        // background: #fafafa;
 
         textarea {
             position: absolute;
@@ -693,6 +605,7 @@
                 padding: 2px;
             }
         }
+
         .dimensions {
             position: absolute;
             left: 2px;
@@ -712,94 +625,10 @@
     }
 }
 
+/** EDIT DRAG AND DROP AND SHORT ANSWER QUIZ **/
+
 .dnd-question,
 .sa-question {
-    .background-area {
-        .click-layer {
-            .drop-location {
-                background: white;
-                border: 1px dashed black;
-
-                .drag-item,
-                jhi-drag-item {
-                    width: 100%;
-                    height: 100%;
-                    margin: 0;
-                    background: white;
-                }
-
-                .drag-item {
-                    div {
-                        line-height: 1;
-
-                        span {
-                            border: none;
-                            padding: 0;
-                            vertical-align: middle;
-                            display: inline-block;
-                            white-space: nowrap;
-                        }
-                    }
-                }
-
-                &.drop-allowed > *,
-                &.drop-hover,
-                .dnd-drag-over > * {
-                    opacity: 0.5;
-                }
-
-                &.results {
-                    border-color: green;
-                    background: rgb(170, 255, 170);
-
-                    > * {
-                        opacity: 0.8;
-                    }
-
-                    &.incorrect {
-                        border-color: red;
-                        background: rgb(255, 170, 170);
-                    }
-                }
-
-                &.sampleSolution {
-                    border-color: black;
-                    background: white;
-
-                    > * {
-                        opacity: 1;
-                    }
-                }
-
-                .result-symbol {
-                    color: orange;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    z-index: 1;
-                    opacity: 1;
-                    -webkit-transform: translate3d(-63%, -63%, 0);
-                    -moz-transform: translate3d(-63%, -63%, 0);
-                    -ms-transform: translate3d(-63%, -63%, 0);
-                    -o-transform: translate3d(-63%, -63%, 0);
-                    transform: translate3d(-63%, -63%, 0);
-                }
-                .invalid {
-                    color: red;
-                    position: absolute;
-                    bottom: 0px;
-                    left: 2px;
-                    z-index: 1;
-                    opacity: 1;
-                }
-            }
-        }
-    }
-
-    .drop-allowed {
-        background: rgb(173, 216, 230) !important;
-    }
-
     .drop-hover,
     .dnd-drag-over {
         background: rgb(144, 238, 144) !important;
@@ -924,77 +753,6 @@
     }
 }
 
-.quiz-is-active-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    z-index: 6;
-
-    background: rgba(0, 0, 0, 0.4);
-}
-
-.quiz-submitted-overlay,
-.quiz-waiting-for-start-overlay,
-.quiz-is-active-overlay,
-.quiz-is-over-overlay {
-    position: fixed !important;
-    top: 50%;
-    left: 50%;
-    -webkit-transform: translate3d(-50%, -50%, 0);
-    -moz-transform: translate3d(-50%, -50%, 0);
-    -ms-transform: translate3d(-50%, -50%, 0);
-    -o-transform: translate3d(-50%, -50%, 0);
-    transform: translate3d(-50%, -50%, 0);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
-    font-size: 16px;
-    text-align: center;
-    font-weight: bold;
-    border-color: #3c763d;
-    z-index: 8;
-}
-
-table.answer-options-result {
-    width: 100%;
-
-    .answer-option {
-        display: table-row;
-    }
-
-    th {
-        color: dimgray;
-    }
-
-    th,
-    td {
-        padding: 6px 10px;
-    }
-
-    .solution {
-        width: 100px;
-    }
-
-    .result-symbol {
-        padding: 0;
-        color: orange;
-        width: 50px;
-    }
-
-    .selection {
-        width: 36px;
-        margin-left: 0;
-    }
-
-    .correct {
-        color: green;
-    }
-
-    .wrong {
-        color: red;
-    }
-}
-
 .colon-suffix:after {
     content: ':';
     display: inline-flex;
@@ -1012,11 +770,6 @@ table.answer-options-result {
     color: orange;
 }
 
-.align-text {
-    max-height: 22px;
-    white-space: nowrap;
-}
-
 .no-flex-shrink {
     flex-shrink: 0;
 }
@@ -1024,20 +777,10 @@ table.answer-options-result {
 .re-evaluate-button {
     display: inline-block;
     padding: 4px;
-}
 
-.re-evaluate-button:hover {
-    color: blue;
-}
-
-.re-evaluate-order-button {
-    display: inline-block;
-    padding: 4px;
-    cursor: move;
-}
-
-.re-evaluate-order-button:hover {
-    color: blue;
+    &:hover {
+        color: blue;
+    }
 }
 
 .warning-modal-window .modal-dialog {
@@ -1050,8 +793,7 @@ table.answer-options-result {
     border-color: #ccc;
 }
 
-/* CSS tooltip to overcome hybrid setup problems */
-
+/** QUIZ TOOL-TIP **/
 /* Tooltip container */
 .quiz-tooltip {
     position: relative;
@@ -1087,107 +829,13 @@ table.answer-options-result {
     opacity: 1;
 }
 
-/* StepwizardQuiz for the progress bar*/
-
-.stepwizardquiz-step .fa {
-    vertical-align: initial;
-}
-
-.stepwizardquiz {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 300px;
-    max-height: 57px;
-    position: relative;
-    text-align: center;
-
-    @media (max-width: 767px) {
-        .btn-circle.btn-circle {
-            width: 16px;
-            height: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            .fa {
-                font-size: 6px;
-            }
-        }
-    }
-
-    @media (max-width: 990px) {
-        .btn-circle.btn-circle {
-            width: 23px;
-            height: 23px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            .fa {
-                font-size: 10px;
-            }
-        }
-    }
-}
-
-/* Start Changes Progress Bar */
-
-.stepwizardquiz {
-    ngb-tooltip-window {
-        width: 200px !important;
-    }
-}
-
 ngb-tooltip-window {
     padding: 0;
-    /*background: #cf0!important;*/
-}
+    width: 200px !important;
 
-ngb-tooltip-window > div {
-    margin: auto !important;
-}
-
-/* End Changes Progress Bar */
-
-.stepwizardquiz-step button[disabled] {
-    opacity: 1 !important;
-    cursor: default;
-}
-
-.stepwizardquiz-step .btn {
-    cursor: pointer;
-    opacity: 1 !important;
-}
-
-.stepwizardquiz-step {
-    display: table-cell;
-    text-align: center;
-    position: relative;
-}
-
-.btn-circle.btn-circle {
-    width: 30px;
-    height: 30px;
-    text-align: center;
-    font-size: 12px;
-    font-family: Arial, Helvetica, sans-serif;
-    border-radius: 15px;
-    border-spacing: 5px;
-    padding: 6px 0;
-    &.btn-light {
-        border-color: #ffffff;
+    > div {
+        margin: auto !important;
     }
-}
-
-.draganddropcolor-question {
-    background-color: #86ccd5 !important;
-}
-.multiplechoicecolor-question {
-    background-color: #eee066 !important;
-}
-.shortanswercolor-question {
-    background-color: #d8956c !important;
-}
-.changed-question {
-    background-color: #527cd7 !important;
 }
 
 .markdown-preview {
@@ -1219,62 +867,57 @@ ngb-tooltip-window > div {
 
 /** SHORT ANSWER QUESTIONS **/
 
-@mixin sa-quiz-statistic-letter($color) {
-    position: absolute;
-    top: 10px;
-    right: 0;
-    z-index: 1;
-    opacity: 1;
+.sa-question,
+.edit-sa-question {
+    .short-answer-question-display {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 100%;
 
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
-    background-color: $color;
-    color: white;
-    border-radius: 50%;
-    text-align: center;
-}
+        &__element {
+            display: inline-flex;
+        }
 
-.short-answer-question-display {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 100%;
-
-    &__element {
-        display: inline-flex;
-    }
-
-    &__statistic-element {
-        display: inline-flex;
-        line-height: 35px;
-    }
-
-    .short-answer-question-container {
-        display: inline-block;
-        position: relative;
-
-        &__input {
-            border-width: 1px;
-            border-style: solid;
-            border-color: #ced4da;
+        &__statistic-element {
+            display: inline-flex;
             line-height: 35px;
-            margin-bottom: 10px;
         }
 
-        &__div-input {
-            background-color: white;
-            border: 1px solid #ced4da;
-            padding: 2px 3px;
-            width: 170px;
-            height: 40px;
-        }
+        .short-answer-question-container {
+            display: inline-block;
+            position: relative;
 
-        &__statistic-letter {
-            @include sa-quiz-statistic-letter(#428bca); // TODO add color to variables
-        }
+            &__input {
+                border: 1px solid #ced4da;
+                line-height: 35px;
+                margin-bottom: 10px;
+            }
 
-        &__statistic-letter-solution {
-            @include sa-quiz-statistic-letter(#5cb85c); // TODO add color to variables
+            &__div-input {
+                background-color: white;
+                border: 1px solid #ced4da;
+                padding: 2px 3px;
+                width: 170px;
+                height: 40px;
+            }
+
+            &__statistic-letter {
+                @include quiz-statistic-letter(#428bca);
+                position: absolute;
+                top: 10px;
+                right: 0;
+                z-index: 1;
+                opacity: 1;
+            }
+
+            &__statistic-letter-solution {
+                @include quiz-statistic-letter(#5cb85c);
+                position: absolute;
+                top: 10px;
+                right: 0;
+                z-index: 1;
+                opacity: 1;
+            }
         }
     }
 }
@@ -1295,6 +938,18 @@ ngb-tooltip-window > div {
     .hint {
         ngb-popover-window {
             max-width: 200px !important;
+        }
+    }
+}
+
+/** keep here and check later **/
+
+.background-area,
+.drag-and-drop-quizStatistic-picture {
+    .click-layer {
+        .drop-location {
+            background: white;
+            border: 1px dashed black;
         }
     }
 }
