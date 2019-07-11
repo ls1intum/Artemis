@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
+import { LocalStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
-import { TUM_REGEX } from 'app/app.constants';
+import { CUSTOM_USER_KEY } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',
@@ -14,19 +15,29 @@ import { TUM_REGEX } from 'app/app.constants';
 export class OverviewComponent {
     public courses: Course[];
     public nextRelevantCourse: Course;
+    public startLoginProcess = false;
+    public selectedUserLogin: string | null;
 
     constructor(
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
+        private localStorageService: LocalStorageService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
     ) {
+        if (this.localStorageService.retrieve(CUSTOM_USER_KEY)) {
+            this.selectedUserLogin = this.localStorageService.retrieve(CUSTOM_USER_KEY);
+        }
         this.loadAndFilterCourses();
     }
 
     loadAndFilterCourses() {
-        this.courseService.findAll().subscribe(
+        const options = {};
+        if (this.selectedUserLogin) {
+            options['userId'] = this.selectedUserLogin;
+        }
+        this.courseService.findAll(options).subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
@@ -56,5 +67,23 @@ export class OverviewComponent {
             });
         }
         return relevantExercise;
+    }
+
+    startUsingLogin(): void {
+        if (!this.selectedUserLogin) {
+            this.startLoginProcess = false;
+            this.localStorageService.clear(CUSTOM_USER_KEY);
+            return;
+        }
+        this.startLoginProcess = false;
+        this.localStorageService.store(CUSTOM_USER_KEY, this.selectedUserLogin);
+        this.loadAndFilterCourses();
+    }
+
+    removeUserLogin(): void {
+        this.selectedUserLogin = null;
+        this.startLoginProcess = false;
+        this.localStorageService.clear(CUSTOM_USER_KEY);
+        this.loadAndFilterCourses();
     }
 }

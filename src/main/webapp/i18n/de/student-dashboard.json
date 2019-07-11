@@ -6,6 +6,12 @@
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
+            "studentLogin": {
+                "loginAsStudent": "Als Student anmelden",
+                "logout": "Abmelden",
+                "login": "Anmelden",
+                "loggedInAs": "Eingeloggt als:"
+            },
             "register": {
                 "signUp": "Für einen Kurs anmelden",
                 "registerSuccessful": "Anmeldung erfolgreich",

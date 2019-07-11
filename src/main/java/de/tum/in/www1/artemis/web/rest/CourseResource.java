@@ -282,22 +282,30 @@ public class CourseResource {
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForDashboard(Principal principal) {
+    public List<Course> getAllCoursesForDashboard(Principal principal, @RequestParam(name = "userId", required = false) String userId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         log.debug("/courses/for-dashboard.start");
+        Boolean usesOtherLogin = false;
         User user = userService.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin() && userId != null) {
+            Optional<User> userByLogin = userService.getUserWithAuthoritiesByLogin(userId);
+            if (userByLogin.isPresent()) {
+                user = userByLogin.get();
+                usesOtherLogin = true;
+            }
+        }
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
+        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user, usesOtherLogin);
 
-        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("/courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
         // get all participations of this user
         // TODO: can we limit the following call to only retrieve participations and results for active courses?
         // TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
         // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
         // this would also improve the performance for other REST calls
-        List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        List<Participation> participations = participationService.findWithResultsByStudentUsername(user.getLogin());
         log.debug("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis() - start) + "ms");
 
         long exerciseCount = 0;
@@ -307,7 +315,7 @@ public class CourseResource {
             course.setLectures(lecturesWithReleasedAttachments);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                exercise.filterForCourseDashboard(participations, principal.getName());
+                exercise.filterForCourseDashboard(participations, user.getLogin());
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -316,7 +324,7 @@ public class CourseResource {
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user "
-                + principal.getName());
+                + user.getLogin());
         return courses;
     }
 

@@ -138,8 +138,8 @@ public class CourseService {
      * @return the list of all courses including exercises for the user
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllActiveWithExercisesForUser(Principal principal, User user) {
-        if (authCheckService.isAdmin()) {
+    public List<Course> findAllActiveWithExercisesForUser(Principal principal, User user, Boolean usesOtherLogin) {
+        if (authCheckService.isAdmin() && !usesOtherLogin) {
             // admin => fetch all courses with all exercises immediately
             List<Course> allCourses = findAllActiveWithExercises();
             Set<Course> userCourses = new HashSet<>();

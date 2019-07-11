@@ -63,9 +63,10 @@ export class CourseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    findAll(): Observable<EntityArrayResponseType> {
+    findAll(req?: any): Observable<EntityArrayResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));

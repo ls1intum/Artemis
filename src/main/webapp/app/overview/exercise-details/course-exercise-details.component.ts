@@ -7,8 +7,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
+import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
+import { CUSTOM_USER_KEY } from 'app/app.constants';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -41,6 +43,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private courseService: CourseService,
         private jhiWebsocketService: JhiWebsocketService,
+        private localStorageService: LocalStorageService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
@@ -65,10 +68,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
+        const options = {};
+        if (this.localStorageService.retrieve(CUSTOM_USER_KEY)) {
+            options['userId'] = this.localStorageService.retrieve(CUSTOM_USER_KEY);
+        }
         this.exercise = null;
         const cachedParticipations = this.participationWebsocketService.getAllParticipationsForExercise(this.exerciseId);
         if (cachedParticipations && cachedParticipations.length > 0) {
-            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.exerciseService.find(this.exerciseId, options).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
                 this.exercise.participations = this.filterParticipations(cachedParticipations)!;
                 this.mergeResultsAndSubmissionsForParticipations();
@@ -77,7 +84,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.subscribeForNewResults();
             });
         } else {
-            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.exerciseService.findResultsForExercise(this.exerciseId, options).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
                 this.exercise.participations = this.filterParticipations(this.exercise.participations)!;
                 this.mergeResultsAndSubmissionsForParticipations();

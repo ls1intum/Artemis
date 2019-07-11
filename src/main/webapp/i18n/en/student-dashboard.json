@@ -6,6 +6,12 @@
             "cardTitle": "Your current score:",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
+            "studentLogin": {
+                "loginAsStudent": "Login as student",
+                "logout": "Logout",
+                "login": "Login",
+                "loggedInAs": "Logged in as:"
+            },
             "register": {
                 "signUp": "Sign up for a course",
                 "registerSuccessful": "Register successful",

@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
+import { LocalStorageService } from 'ngx-webstorage';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
-    constructor(private accountService: AccountService, private websocketService: JhiWebsocketService, private authServerProvider: AuthServerProvider) {}
+    constructor(
+        private accountService: AccountService,
+        private localStorageService: LocalStorageService,
+        private websocketService: JhiWebsocketService,
+        private authServerProvider: AuthServerProvider,
+    ) {}
 
     login(credentials: Credentials, callback?: any) {
         const cb = callback || function() {};
@@ -34,6 +40,7 @@ export class LoginService {
     }
 
     logout() {
+        this.localStorageService.clear();
         this.authServerProvider.logout().subscribe();
         this.accountService.authenticate(null);
     }

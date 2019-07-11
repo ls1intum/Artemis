@@ -11,6 +11,7 @@ import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { createRequestOption } from 'app/shared';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -31,9 +32,10 @@ export class ExerciseService {
         return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(id: number, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${id}`, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
@@ -62,9 +64,10 @@ export class ExerciseService {
         });
     }
 
-    findResultsForExercise(id: number): Observable<EntityResponseType> {
+    findResultsForExercise(id: number, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}/results`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${id}/results`, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }

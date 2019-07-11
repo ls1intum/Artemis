@@ -363,9 +363,15 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
+    public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId, @RequestParam(name = "userId", required = false) String userId) {
         long start = System.currentTimeMillis();
         User student = userService.getUserWithGroupsAndAuthorities();
+        if (authCheckService.isAdmin() && userId != null) {
+            Optional<User> userByLogin = userService.getUserWithAuthoritiesByLogin(userId);
+            if (userByLogin.isPresent()) {
+                student = userByLogin.get();
+            }
+        }
         log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);

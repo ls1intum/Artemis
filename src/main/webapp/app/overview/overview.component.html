@@ -28,6 +28,23 @@
     <div class="col-12 col-sm">
         <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
+    <div *jhiHasAnyAuthority="['ROLE_ADMIN']">
+        <div class="btn btn-primary" *ngIf="!startLoginProcess && !selectedUserLogin" (click)="startLoginProcess = !startLoginProcess">
+            {{ 'artemisApp.studentDashboard.studentLogin.loginAsStudent' | translate }}
+        </div>
+        <div *ngIf="!startLoginProcess && selectedUserLogin">
+            {{ 'artemisApp.studentDashboard.studentLogin.loggedInAs' | translate }} {{ selectedUserLogin }}
+            <div class="btn btn-primary" (click)="removeUserLogin()">
+                {{ 'artemisApp.studentDashboard.studentLogin.logout' | translate }}
+            </div>
+        </div>
+        <div class="input-group" *ngIf="startLoginProcess">
+            <input [(ngModel)]="selectedUserLogin" />
+            <div class="btn btn-primary" (click)="startUsingLogin()">
+                {{ 'artemisApp.studentDashboard.studentLogin.login' | translate }}
+            </div>
+        </div>
+    </div>
     <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
 <div class="row">

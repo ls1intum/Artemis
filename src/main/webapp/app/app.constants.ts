@@ -12,4 +12,6 @@ export const MIN_POINTS_ORANGE = 40;
 
 export const TUM_REGEX = /^([a-z]{2}\d{2}[a-z]{3})$/;
 
+export const CUSTOM_USER_KEY = 'customUserLogin';
+
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
