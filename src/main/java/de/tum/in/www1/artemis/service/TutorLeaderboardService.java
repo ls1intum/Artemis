@@ -116,7 +116,7 @@ public class TutorLeaderboardService {
 
             for (TutorLeaderboardAnsweredMoreFeedbackRequestsView answeredMoreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
                 if (answeredMoreFeedbackRequestsView.getUserId().equals(tutor.getId())) {
-                    numberOfAcceptedComplaints += answeredMoreFeedbackRequestsView.getAnsweredRequests();
+                    numberOfAnsweredMoreFeedbackRequests += answeredMoreFeedbackRequestsView.getAnsweredRequests();
 
                     // TODO: decide how to count points for more feedback requests
                 }

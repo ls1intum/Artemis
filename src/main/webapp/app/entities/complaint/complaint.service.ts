@@ -35,9 +35,15 @@ export class ComplaintService implements IComplaintService {
         return this.http.get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    getForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
+    getComplaintsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
             .get<Complaint[]>(`${this.resourceUrl}/for-tutor-dashboard/${exerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
+    }
+
+    getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
+        return this.http
+            .get<Complaint[]>(`${this.resourceUrl}/for-tutor-dashboard/moreFeedback/${exerciseId}`, { observe: 'response' })
             .map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res));
     }
 

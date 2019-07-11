@@ -82,7 +82,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                     this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
-                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfAnsweredFeedbackRequests;
+                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfAnsweredMoreFeedbackRequests;
                 } else {
                     this.numberOfTutorAssessments = 0;
                     this.numberOfTutorComplaints = 0;

@@ -107,7 +107,7 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_Id_AndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
@@ -133,16 +133,54 @@ public class ComplaintService {
         }
 
         databaseComplaints.get().forEach(complaint -> {
-            String submissorName = principal.getName();
-            User assessor = complaint.getResult().getAssessor();
+            if (complaint.getComplaintType() != ComplaintType.MORE_FEEDBACK) {
+                String submissorName = principal.getName();
+                User assessor = complaint.getResult().getAssessor();
 
-            if (!assessor.getLogin().equals(submissorName)) {
-                // Remove data about the student
-                complaint.getResult().getParticipation().setStudent(null);
-                complaint.setStudent(null);
-                complaint.setResultBeforeComplaint(null);
+                if (!assessor.getLogin().equals(submissorName)) {
+                    // Remove data about the student
+                    complaint.getResult().getParticipation().setStudent(null);
+                    complaint.setStudent(null);
+                    complaint.setResultBeforeComplaint(null);
 
-                responseComplaints.add(complaint);
+                    responseComplaints.add(complaint);
+                }
+            }
+        });
+
+        return responseComplaints;
+    }
+
+    /**
+     * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
+     *
+     * @param exerciseId - the id of the exercise we are interested in
+     * @param principal  - the callee
+     * @return a list of complaints
+     */
+    @Transactional(readOnly = true)
+    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId, Principal principal) {
+        List<Complaint> responseComplaints = new ArrayList<>();
+
+        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(exerciseId);
+
+        if (!databaseComplaints.isPresent()) {
+            return responseComplaints;
+        }
+
+        databaseComplaints.get().forEach(complaint -> {
+            if (complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK) {
+                String submissorName = principal.getName();
+                User assessor = complaint.getResult().getAssessor();
+
+                if (assessor.getLogin().equals(submissorName)) {
+                    // Remove data about the student
+                    complaint.getResult().getParticipation().setStudent(null);
+                    complaint.setStudent(null);
+                    complaint.setResultBeforeComplaint(null);
+
+                    responseComplaints.add(complaint);
+                }
             }
         });
 

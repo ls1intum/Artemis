@@ -151,6 +151,26 @@ public class ComplaintResource {
         return ResponseEntity.ok(responseComplaints);
     }
 
+    /**
+     * Get /complaints/for-tutor-dashboard/:exerciseId
+     * <p>
+     * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
+     *
+     * @param exerciseId the id of the exercise we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/complaints/for-tutor-dashboard/moreFeedback/{exerciseId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+
+        List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId, principal);
+        return ResponseEntity.ok(responseComplaints);
+    }
+
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,

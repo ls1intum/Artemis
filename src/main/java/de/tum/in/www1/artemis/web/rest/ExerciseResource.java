@@ -196,8 +196,8 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments and numberOfComplaints, that are used by both stats for tutor dashboard and for
-     * instructor dashboard
+     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
      * @return a object node with the stats
@@ -213,10 +213,10 @@ public class ExerciseResource {
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_Id_AndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(exerciseId);
+        Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
         Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
         stats.setNumberOfComplaints(numberOfComplaints);
 

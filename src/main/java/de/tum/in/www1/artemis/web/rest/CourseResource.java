@@ -506,7 +506,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
-        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_Id_AndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
         Long numberOfAllComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
         Long numberOfMoreFeedbackRequestsAnswered = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,

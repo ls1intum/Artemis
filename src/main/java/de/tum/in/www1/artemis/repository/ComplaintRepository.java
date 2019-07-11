@@ -39,7 +39,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param complaintType - type of complaint we want to filter by
      * @return number of more feedback requests associated to course courseId
      */
-    long countByResult_Participation_Exercise_Course_Id_AndComplaintType(Long courseId, ComplaintType complaintType);
+    long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints associated to a course id
@@ -49,7 +49,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     long countByResult_Participation_Exercise_Course_Id(Long courseId);
 
-    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId} AND (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL)")
+    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId}")
     Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -70,6 +70,16 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return number of complaints associated to exercise exerciseId
      */
     long countByResult_Participation_Exercise_Id(Long exerciseId);
+
+    /**
+     * This magic method counts the number of complaints by complaint type associated to an exercise id
+     *
+     * @param exerciseId    - the id of the course we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return number of complaints associated to exercise exerciseId
+     */
+
+    long countByResult_Participation_Exercise_IdAndComplaintType(Long exerciseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id
