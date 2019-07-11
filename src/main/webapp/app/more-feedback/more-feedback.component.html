@@ -10,7 +10,7 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row" *ngIf="loaded; else loading">
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted">
                 {{ 'artemisApp.moreFeedback.beDescriptive' | translate }}
@@ -49,3 +49,9 @@
         </div>
     </div>
 </div>
+
+<ng-template #loading>
+    <h2>
+        <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.dashboard.loading">Loading..</span></span>
+    </h2>
+</ng-template>

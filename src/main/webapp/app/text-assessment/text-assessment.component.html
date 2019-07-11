@@ -81,8 +81,8 @@
 </h2>
 
 <div class="alert alert-info" *ngIf="complaint">
-    <ng-container *ngIf="complaint.complaintType === complaintTypes.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
-    <ng-container *ngIf="complaint.complaintType === complaintTypes.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' }}</ng-container>
+    <ng-container *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</ng-container>
+    <ng-container *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</ng-container>
 </div>
 
 <div class="row mt-4 resizable-horizontal" *ngIf="!busy && exercise" [ngStyle]="{ 'min-height.px': 500 }">
@@ -146,14 +146,14 @@
 
 <div class="mt-4" *ngIf="complaint">
     <jhi-complaints-for-tutor-form
-        *ngIf="complaint.complaintType === complaintTypes.COMPLAINT || !complaint.complaintType"
+        *ngIf="complaint.complaintType === ComplaintType.COMPLAINT || !complaint.complaintType"
         [complaint]="complaint"
         [isAllowedToRespond]="!isAuthorized"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
     </jhi-complaints-for-tutor-form>
     <jhi-more-feedback-for-tutor-form
-        *ngIf="complaint.complaintType === complaintTypes.MORE_FEEDBACK"
+        *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK"
         [complaint]="complaint"
         [isAllowedToRespond]="isAuthorized"
     ></jhi-more-feedback-for-tutor-form>

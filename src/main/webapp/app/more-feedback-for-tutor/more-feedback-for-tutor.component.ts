@@ -32,11 +32,11 @@ export class MoreFeedbackForTutorComponent implements OnInit {
         if (this.complaintResponse.responseText.length <= 0 || !this.isAllowedToRespond) {
             return;
         }
-        this.handled = true;
         this.complaint.accepted = true;
         this.complaintResponse.complaint = this.complaint;
         this.complaintResponseService.create(this.complaintResponse).subscribe(
             response => {
+                this.handled = true;
                 this.jhiAlertService.success('artemisApp.moreFeedback.response.created');
                 this.complaintResponse = response.body!;
             },

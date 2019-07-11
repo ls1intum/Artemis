@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
@@ -15,18 +15,21 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 })
 export class MoreFeedbackComponent implements OnInit {
     @Input() resultId: number;
+    @Output() submit: EventEmitter<any> = new EventEmitter();
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
     accepted: boolean;
     handled: boolean;
     complaintResponse: ComplaintResponse;
+    loaded = false;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
+                this.loaded = true;
                 if (!res.body) {
                     return;
                 }
@@ -47,6 +50,7 @@ export class MoreFeedbackComponent implements OnInit {
     }
 
     requestMoreFeedback(): void {
+        this.loaded = false;
         const complaint = new Complaint();
         complaint.complaintText = this.complaintText;
         complaint.result = new Result();
@@ -55,8 +59,10 @@ export class MoreFeedbackComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
+                this.loaded = true;
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
+                this.submit.emit();
             },
             (err: HttpErrorResponse) => {
                 this.onError(err.message);

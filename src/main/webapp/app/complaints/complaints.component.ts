@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
@@ -16,6 +16,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
+    @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText = '';
     alreadySubmitted: boolean;
     submittedDate: Moment;
@@ -61,6 +62,7 @@ export class ComplaintsComponent implements OnInit {
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
                 this.allowedComplaints--;
+                this.submit.emit();
             },
             (err: HttpErrorResponse) => {
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {

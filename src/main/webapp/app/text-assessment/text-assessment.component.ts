@@ -47,7 +47,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     busy = true;
     showResult = true;
     complaint: Complaint;
-    complaintTypes = ComplaintType;
+    ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
     canOverride = false;
@@ -348,7 +348,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.complaint = res.body;
                 // All complaints without complaint type should be treated as complaint.
                 if (!this.complaint.complaintType) {
-                    this.complaint.complaintType = this.complaintTypes.COMPLAINT;
+                    this.complaint.complaintType = ComplaintType.COMPLAINT;
                 }
             },
             (err: HttpErrorResponse) => {

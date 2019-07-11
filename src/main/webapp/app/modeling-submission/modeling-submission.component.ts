@@ -18,6 +18,7 @@ import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintType } from 'app/entities/complaint';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -57,8 +58,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     automaticSubmissionWebsocketChannel: string;
 
     showComplaintForm = false;
+    showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
     hasComplaint: boolean;
+    // indicates if there is a more feedback request for the result of the submission
+    hasRequestMoreFeedback: boolean;
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
     // indicates if the result is older than one week. if it is, the complain button is disabled.
@@ -126,7 +130,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 this.prepareAssessmentData();
                             });
                             this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                                this.hasComplaint = !!res.body;
+                                if (res.body) {
+                                    if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
+                                        this.hasComplaint = true;
+                                    } else {
+                                        this.hasRequestMoreFeedback = true;
+                                    }
+                                }
                             });
                         }
                         this.setAutoSaveTimer();
@@ -468,5 +478,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return umlModel.elements.length + umlModel.relationships.length;
         }
         return 0;
+    }
+
+    toggleComplaintForm() {
+        this.showRequestMoreFeedbackForm = false;
+        this.showComplaintForm = !this.showComplaintForm;
+    }
+
+    toggleRequestMoreFeedbackForm() {
+        this.showComplaintForm = false;
+        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }

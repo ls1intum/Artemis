@@ -9,7 +9,7 @@
             <h4>
                 <span> {{ 'artemisApp.moreFeedback.title' | translate }}</span>
                 <small *ngIf="handled">
-                    <span class="text-light bg-success small"> {{ 'artemisApp.complaint.accepted' | translate }}&nbsp; </span>
+                    <span class="text-light bg-success small"> {{ 'artemisApp.moreFeedback.accepted' | translate }}&nbsp; </span>
                 </small>
             </h4>
             <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
@@ -18,12 +18,19 @@
         <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
             <h3>{{ 'artemisApp.moreFeedback.response.title' | translate }}</h3>
             <textarea class="col-12 px-1" rows="4" maxlength="2000" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
-            <div *ngIf="!handled" class="row justify-content-end">
+            <div *ngIf="!complaint.accepted" class="row justify-content-end">
                 <div class="col-12">
                     <button class="btn btn-success btn-block" (click)="respondToComplaint()" title="{{ 'artemisApp.moreFeedback.response.sendResponseTooltip' | translate }}">
                         {{ 'artemisApp.moreFeedback.response.provideFeedback' | translate }}
                     </button>
                 </div>
+            </div>
+            <div *ngIf="complaint.accepted && !handled">
+                <h2>
+                    <span style="color:grey"
+                        ><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.dashboard.loading">Loading..</span></span
+                    >
+                </h2>
             </div>
         </div>
     </div>

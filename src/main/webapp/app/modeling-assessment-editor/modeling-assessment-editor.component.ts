@@ -15,6 +15,8 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -38,7 +40,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     isAuthorized = false;
     isAtLeastInstructor = false;
     showBackButton: boolean;
-    hasComplaint: boolean;
+    complaint: Complaint;
+    ComplaintType = ComplaintType;
     canOverride = false;
     isLoading: boolean;
     hasAutomaticFeedback = false;
@@ -57,6 +60,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private location: Location,
         private translateService: TranslateService,
+        private complaintService: ComplaintService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
         this.generalFeedback = new Feedback();
@@ -136,7 +140,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
         this.result = this.submission.result;
-        this.hasComplaint = this.result.hasComplaint;
+        if (this.result.hasComplaint) {
+            this.getComplaint();
+        }
         if (this.result.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
             this.handleFeedback(this.result.feedbacks);
@@ -161,6 +167,26 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.checkPermissions();
         this.validateFeedback();
         this.isLoading = false;
+    }
+
+    private getComplaint(): void {
+        if (this.result) {
+            this.complaintService.findByResultId(this.result.id).subscribe(
+                res => {
+                    if (!res.body) {
+                        return;
+                    }
+                    this.complaint = res.body;
+                    // All complaints without complaint type should be treated as complaint.
+                    if (!this.complaint.complaintType) {
+                        this.complaint.complaintType = ComplaintType.COMPLAINT;
+                    }
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError();
+                },
+            );
+        }
     }
 
     /**
