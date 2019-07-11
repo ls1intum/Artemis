@@ -16,6 +16,18 @@ export const MockComplaintResponse: any = {
     },
 };
 
+export const MockComplaintResponse2: any = {
+    body: {
+        complaintType: ComplaintType.MORE_FEEDBACK,
+        accepted: true,
+        complaintText: 'I think my answer was better than 2',
+        id: 111,
+        result: new Result(),
+        resultBeforeComplaint: '',
+        student: new User(),
+    },
+};
+
 export class MockComplaintService implements IComplaintService {
     create(complaint: Complaint): Observable<EntityResponseType> {
         return of();
@@ -24,6 +36,9 @@ export class MockComplaintService implements IComplaintService {
         return of();
     }
     findByResultId(resultId: number): Observable<EntityResponseType> {
+        if (resultId == 111) {
+            return of(MockComplaintResponse2);
+        }
         return of(MockComplaintResponse);
     }
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
