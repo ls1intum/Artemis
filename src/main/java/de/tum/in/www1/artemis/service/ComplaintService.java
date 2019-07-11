@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -100,8 +101,13 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public long countComplaintsByCourseId(long courseId) {
+    public long countAllComplaintsByCourseId(long courseId) {
         return complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countMoreFeedbackRequestsByCourseId(long courseId) {
+        return complaintRepository.countByResult_Participation_Exercise_Course_Id_AndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)

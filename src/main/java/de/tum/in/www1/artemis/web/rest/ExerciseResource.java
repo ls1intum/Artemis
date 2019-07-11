@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
@@ -212,7 +213,11 @@ public class ExerciseResource {
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_Id_AndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(exerciseId);
+        Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
         stats.setNumberOfComplaints(numberOfComplaints);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);

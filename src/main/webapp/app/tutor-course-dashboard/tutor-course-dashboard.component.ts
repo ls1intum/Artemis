@@ -24,6 +24,8 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
+    numberOfMoreFeedbackRequests = 0;
+    numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
 
@@ -75,13 +77,16 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;
+                this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                     this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
+                    this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfAnsweredFeedbackRequests;
                 } else {
                     this.numberOfTutorAssessments = 0;
                     this.numberOfTutorComplaints = 0;
+                    this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
                 if (this.numberOfSubmissions > 0) {

@@ -10,11 +10,11 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import * as moment from 'moment';
 
 @Component({
-    selector: 'jhi-complaint-form',
-    templateUrl: './list-of-complaints.component.html',
+    selector: 'jhi-more-feedback-form',
+    templateUrl: './list-of-more-feedback-requests.component.html',
     providers: [JhiAlertService],
 })
-export class ListOfComplaintsComponent implements OnInit {
+export class ListOfMoreFeedbackRequestsComponent implements OnInit {
     public complaints: Complaint[] = [];
     public hasStudentInformation = false;
 
@@ -48,15 +48,15 @@ export class ListOfComplaintsComponent implements OnInit {
 
         if (this.tutorId) {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, ComplaintType.MORE_FEEDBACK);
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, ComplaintType.MORE_FEEDBACK);
             }
         } else {
             if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, ComplaintType.MORE_FEEDBACK);
             } else {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, ComplaintType.COMPLAINT);
+                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, ComplaintType.MORE_FEEDBACK);
             }
         }
 

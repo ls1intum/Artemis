@@ -69,6 +69,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { ArTEMiSConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
 import { ArTEMiSListOfComplaintsModule } from 'app/list-of-complaints';
 import { DeviceDetectorModule } from 'ngx-device-detector';
+import { ArTEMiSListOfMoreFeedbackRequestsModule } from 'app/list-of-more-feedback-requests';
 
 @NgModule({
     imports: [
@@ -127,7 +128,8 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
         ArTEMiSHeaderExercisePageWithDetailsModule,
         ArTEMiSConnectionNotificationModule,
         ArTEMiSListOfComplaintsModule,
-        // jhipster-needle-angular-add-module JHipster will add new module here
+        ArTEMiSListOfMoreFeedbackRequestsModule,
+        // jhipster-needze-angular-add-module JHipster will add new module here
     ],
     declarations: [
         JhiMainComponent,

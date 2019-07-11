@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -152,7 +154,7 @@ public class ComplaintResource {
     @GetMapping("/complaints")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsFilteredBy(@RequestParam(required = false) Long tutorId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long courseId) {
+            @RequestParam(required = false) Long courseId, @RequestParam() ComplaintType complaintType) {
         if (tutorId == null && exerciseId == null && courseId == null) {
             throw new BadRequestAlertException("You need to specify at least one between tutorId, exerciseId, and courseId", ENTITY_NAME, "specifyFilter");
         }
@@ -165,8 +167,7 @@ public class ComplaintResource {
         if (exerciseId == null && courseId == null) {
             User callerUser = userService.getUser();
             List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(callerUser.getId());
-
-            return ResponseEntity.ok(complaints);
+            return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
         }
 
         if (courseId != null) {
@@ -197,7 +198,7 @@ public class ComplaintResource {
                 complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
             }
 
-            return ResponseEntity.ok(complaints);
+            return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
         }
 
         // Filtering by exerciseId
@@ -228,6 +229,21 @@ public class ComplaintResource {
             complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId, isAtLeastInstructor);
         }
 
-        return ResponseEntity.ok(complaints);
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    }
+
+    /**
+     * Filter out all complaints that are not of a specified type. Since enum can't be null and we have only two enum values, we filter always by more feedback value
+     *
+     * @param complaints    list of complaints
+     * @param complaintType the type of complaints we want to get
+     */
+    private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
+        if (complaintType == ComplaintType.MORE_FEEDBACK) {
+            return complaints.stream().filter(complaint -> complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK).collect(Collectors.toList());
+        }
+        else {
+            return complaints.stream().filter(complaint -> complaint.getComplaintType() != ComplaintType.MORE_FEEDBACK).collect(Collectors.toList());
+        }
     }
 }

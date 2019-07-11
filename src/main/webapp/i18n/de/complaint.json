@@ -65,7 +65,12 @@
                 "sendResponseTooltip": "Antwort auf Mehr Feedback Anfragen senden",
                 "provideFeedback": "Mehr Feedback geben"
             },
-            "hint": "Scrolle nach unten um die Mehr Feedback Anfrage zu prüfen"
+            "hint": "Scrolle nach unten um die Mehr Feedback Anfrage zu prüfen",
+            "list": {
+                "title": "Liste of der Mehr Feedback Anfragen",
+                "showAnsweredRequests": "Beantwortete Anfragen anzeigen",
+                "noRequestsToShow": "Es gibt im Moment keine Anfragen zu zeigen."
+            }
         }
     }
 }

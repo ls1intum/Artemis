@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -32,6 +33,15 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(Long courseId, Long tutorId);
 
     /**
+     * This magic method counts the number of complaints by complaint type associated to a course id
+     *
+     * @param courseId      - the id of the course we want to filter by
+     * @param complaintType - type of complaint we want to filter by
+     * @return number of more feedback requests associated to course courseId
+     */
+    long countByResult_Participation_Exercise_Course_Id_AndComplaintType(Long courseId, ComplaintType complaintType);
+
+    /**
      * This magic method counts the number of complaints associated to a course id
      *
      * @param courseId - the id of the course we want to filter by
@@ -39,7 +49,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     long countByResult_Participation_Exercise_Course_Id(Long courseId);
 
-    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId}")
+    @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId} AND (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL)")
     Optional<List<Complaint>> findByResult_Participation_Exercise_IdWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -50,7 +60,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId  the id of the course
      * @return the number of unaccepted
      */
-    @Query("SELECT count(c) FROM Complaint c  WHERE (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL)  AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    @Query("SELECT count(c) FROM Complaint c  WHERE (c.complaintType = 'COMPLAINT' OR c.complaintType IS NULL) AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**

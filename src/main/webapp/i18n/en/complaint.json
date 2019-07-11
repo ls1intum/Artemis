@@ -65,6 +65,11 @@
                 "sendResponseTooltip": "Send response to more feedback request",
                 "provideFeedback": "Provide more feedback"
             },
+            "list": {
+                "title": "List of more feedback requests",
+                "showAnsweredRequests": "Show answered requests",
+                "noRequestsToShow": "There are no requests to show at the moment"
+            },
             "hint": "Scroll down to review More Feedback Request"
         }
     }

@@ -11,11 +11,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAcceptedComplaintsView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmentView;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponsesView;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardAssessmentViewRepository;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintResponsesViewRepository;
 import de.tum.in.www1.artemis.repository.TutorLeaderboardComplaintsViewRepository;
+import de.tum.in.www1.artemis.repository.TutorLeaderboardMoreFeedbackRequestsViewRepository;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Service
@@ -26,15 +28,19 @@ public class TutorLeaderboardService {
 
     private final TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository;
 
+    private final TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository;
+
     private final TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository;
 
     private final UserService userService;
 
     public TutorLeaderboardService(TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository,
             TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
+            TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository,
             TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository, UserService userService) {
         this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
         this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
+        this.tutorLeaderboardMoreFeedbackRequestsViewRepository = tutorLeaderboardMoreFeedbackRequestsViewRepository;
         this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
         this.userService = userService;
     }
@@ -45,9 +51,12 @@ public class TutorLeaderboardService {
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
+        List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsViewRepository
+                .findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByCourseId(course.getId());
 
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardComplaintResponses);
+        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
+                tutorLeaderboardComplaintResponses);
     }
 
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
@@ -56,21 +65,27 @@ public class TutorLeaderboardService {
 
         List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByLeaderboardId_ExerciseId(exercise.getId());
+        List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsViewRepository
+                .findAllByLeaderboardId_ExerciseId(exercise.getId());
         List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository
                 .findAllByLeaderboardId_ExerciseId(exercise.getId());
 
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardComplaintResponses);
+        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
+                tutorLeaderboardComplaintResponses);
     }
 
     @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
-            List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardAcceptedComplaints, List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
+            List<TutorLeaderboardAcceptedComplaintsView> tutorLeaderboardAcceptedComplaints,
+            List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardAnsweredMoreFeedbackRequests,
+            List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses) {
 
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
         for (User tutor : tutors) {
 
             Long numberOfAssessments = 0L;
             Long numberOfAcceptedComplaints = 0L;
+            Long numberOfAnsweredMoreFeedbackRequests = 0L;
             Long numberOfComplaintResponses = 0L;
             Long points = 0L;
 
@@ -99,6 +114,14 @@ public class TutorLeaderboardService {
                 }
             }
 
+            for (TutorLeaderboardAnsweredMoreFeedbackRequestsView answeredMoreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
+                if (answeredMoreFeedbackRequestsView.getUserId().equals(tutor.getId())) {
+                    numberOfAcceptedComplaints += answeredMoreFeedbackRequestsView.getAnsweredRequests();
+
+                    // TODO: decide how to count points for more feedback requests
+                }
+            }
+
             for (TutorLeaderboardComplaintResponsesView complaintResponsesView : tutorLeaderboardComplaintResponses) {
                 if (complaintResponsesView.getUserId().equals(tutor.getId())) {
                     numberOfComplaintResponses += complaintResponsesView.getComplaintResponses();
@@ -112,8 +135,8 @@ public class TutorLeaderboardService {
                 }
             }
 
-            tutorLeaderBoardEntries
-                    .add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfComplaintResponses, points));
+            tutorLeaderBoardEntries.add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints,
+                    numberOfAnsweredMoreFeedbackRequests, numberOfComplaintResponses, points));
         }
         return tutorLeaderBoardEntries;
     }
