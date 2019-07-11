@@ -474,10 +474,14 @@ public class CourseResource {
             }
 
             Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            Long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            Long numberOfAllComplaints = complaintService.countAllComplaintsByExerciseId(exercise.getId());
+            Long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
+            Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
+
             exercise.setNumberOfParticipations(numberOfParticipations);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         }
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
@@ -507,9 +511,10 @@ public class CourseResource {
 
         Long numberOfAllComplaints = complaintRepository.countByResult_Participation_Exercise_Course_Id(courseId);
         Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         Long numberOfComplaints = numberOfAllComplaints - numberOfMoreFeedbackRequests;
         Long numberOfAllComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id(courseId);
-        Long numberOfMoreFeedbackRequestsAnswered = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+        Long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
                 ComplaintType.MORE_FEEDBACK);
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
@@ -517,7 +522,7 @@ public class CourseResource {
 
         Long numberOfComplaintResponses = numberOfAllComplaintResponses - numberOfMoreFeedbackRequests;
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequestsAnswered);
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);

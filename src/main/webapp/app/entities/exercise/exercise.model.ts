@@ -67,6 +67,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipations?: number;
     public numberOfAssessments?: number;
     public numberOfComplaints?: number;
+    public numberOfMoreFeedbackRequests?: number;
 
     // helper attributes
     public isAtLeastTutor = false; // default value

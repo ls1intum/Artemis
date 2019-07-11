@@ -111,8 +111,13 @@ public class ComplaintService {
     }
 
     @Transactional(readOnly = true)
-    public long countComplaintsByExerciseId(long exerciseId) {
+    public long countAllComplaintsByExerciseId(long exerciseId) {
         return complaintRepository.countByResult_Participation_Exercise_Id(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
+        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
