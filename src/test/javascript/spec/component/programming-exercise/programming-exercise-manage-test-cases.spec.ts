@@ -52,7 +52,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgxDatatableModule, NgbModule, FormsModule],
+            imports: [TranslateModule.forRoot(), ArTEMiSTestModule, NgxDatatableModule, FormsModule],
             declarations: [ProgrammingExerciseManageTestCasesComponent],
             providers: [
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
@@ -87,12 +87,11 @@ describe('ProgrammingExerciseManageTestCases', () => {
         (route as MockActivatedRoute).setSubject(routeSubject);
     });
 
-    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
+    it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', () => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        tick();
 
         fixture.detectChanges();
 
@@ -101,18 +100,14 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.filter(({ active }) => active).length);
+    });
 
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', fakeAsync(() => {
+    it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        tick();
 
         fixture.detectChanges();
 
@@ -121,12 +116,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
         expect(comp.testCases).to.deep.equal(testCases1);
         expect(rows).to.have.lengthOf(testCases1.length);
+    });
 
-        fixture.destroy();
-        flush();
-    }));
-
-    it('should enter edit mode when an edit button is clicked to edit weights', fakeAsync(() => {
+    it('should enter edit mode when an edit button is clicked to edit weights', () => {
         comp.ngOnInit();
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
@@ -134,7 +126,6 @@ describe('ProgrammingExerciseManageTestCases', () => {
         let orderedTests = _sortBy(testCases1, 'testName');
 
         (testCaseService as MockProgrammingExerciseTestCaseService).next(testCases1);
-        tick();
 
         fixture.detectChanges();
 
@@ -154,14 +145,10 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.editingInput.nativeElement.dispatchEvent(new Event('blur'));
 
         fixture.detectChanges();
-        tick();
 
         const testThatWasUpdated = _sortBy(comp.testCases, 'testName')[0];
         expect(updateWeightStub).to.have.been.calledOnceWithExactly(exerciseId, testThatWasUpdated.id, '20');
         expect(comp.editingInput).not.to.exist;
         expect(testThatWasUpdated.weight).to.equal(20);
-
-        fixture.destroy();
-        flush();
-    }));
+    });
 });
