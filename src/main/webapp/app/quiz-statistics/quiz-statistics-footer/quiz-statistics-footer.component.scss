@@ -1,6 +1,5 @@
-@import '~bootstrap/scss/functions';
-@import '~bootstrap/scss/variables';
 @import '~bootstrap/scss/mixins/_breakpoints';
+@import '~bootstrap/scss/bootstrap-grid.scss';
 
 .quiz-statistic-footer {
     position: fixed;
