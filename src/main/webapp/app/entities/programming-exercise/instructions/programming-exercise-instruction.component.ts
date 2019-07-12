@@ -14,32 +14,24 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 import { intersection as _intersection } from 'lodash';
-import { faCheckCircle, faTimesCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorService } from 'app/code-editor/service/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from 'app/code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
-import {
-    Participation,
-    hasParticipationChanged,
-    ParticipationWebsocketService,
-    StudentParticipation,
-    TemplateProgrammingExerciseParticipation,
-    SolutionProgrammingExerciseParticipation,
-} from 'app/entities/participation';
+import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Observable, Subscription } from 'rxjs';
 import { hasExerciseChanged, problemStatementHasChanged } from 'app/entities/exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
-import { isLegacyResult, isSolutionParticipation, isStudentParticipation, isTemplateParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',

@@ -3,22 +3,9 @@
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result';
-import { Participation } from 'app/entities/participation';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
 export const isLegacyResult = (result: Result) => {
     return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
-};
-
-export const isStudentParticipation = (participation: Participation) => {
-    return participation.type === 'student';
-};
-
-export const isTemplateParticipation = (participation: Participation) => {
-    return participation.type === 'template';
-};
-
-export const isSolutionParticipation = (participation: Participation) => {
-    return participation.type === 'solution';
 };
