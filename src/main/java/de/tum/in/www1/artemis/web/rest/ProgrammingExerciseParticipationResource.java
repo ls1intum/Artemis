@@ -69,7 +69,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Result> getLatestResultWithFeedbacksForSolutionParticipation(@PathVariable Long participationId) {
         Participation participation;
         try {
-            participation = participationService.findOneStudentParticipation(participationId);
+            participation = participationService.findOne(participationId);
         }
         catch (EntityNotFoundException ex) {
             return notFound();
