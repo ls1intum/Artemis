@@ -25,11 +25,24 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
-    // TODO: documentation
+    /**
+     * Load the modeling submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
+     * the participation.
+     *
+     * @param submissionId the id of the modeling submission that should be loaded from the database
+     * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
+     */
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 
-    // TODO: documentation
+    /**
+     * Load all modeling submissions with the given ids. Load every submission together with its result, the feedback list of the result, the assessor of the result, its
+     * participation and all results of the participation.
+     *
+     * @param submissionIds the ids of the modeling submissions that should be loaded from the database
+     * @return the list of modeling submissions with their results, the feedback list of the results, the assessor of the results, their participation and all results of the
+     *         participations
+     */
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
