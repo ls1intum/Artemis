@@ -3,17 +3,13 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import org.hibernate.WrongClassException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -54,30 +50,23 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
-    public void notifyPush(Long participationId, Object requestBody) {
-        ProgrammingExerciseParticipation participation;
-        // We don't know here what kind of participation to expect, so the only way is to try each one.
-        // TODO: This seems like a very bad way to handle this, but is there another way without changing the bitbucket / bamboo configuration?
-        try {
-            participation = programmingExerciseParticipationService.findStudentParticipation(participationId).get();
-        }
-        catch (WrongClassException | ObjectRetrievalFailureException ex) {
-            try {
-                participation = programmingExerciseParticipationService.findTemplateParticipation(participationId).get();
-            }
-            catch (WrongClassException | ObjectRetrievalFailureException ex2) {
-                participation = programmingExerciseParticipationService.findSolutionParticipation(participationId).get();
-            }
-        }
+    public void notifyPush(Long participationId, Object requestBody) throws IllegalArgumentException {
+        Participation participation = participationService.findOne(participationId);
+        if (!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+
         if (participation instanceof ProgrammingExerciseStudentParticipation
-                && ((ProgrammingExerciseStudentParticipation) participation).getInitializationState() == InitializationState.INACTIVE) {
+                && ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getInitializationState() == InitializationState.INACTIVE) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to
             // reactivate the
             // build plan by resuming the participation
-            participationService.resumeExercise(participation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) participation);
+            participationService.resumeExercise(programmingExerciseParticipation.getProgrammingExercise(),
+                    (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // in addition we need to trigger a build so that we receive a result in a few
             // seconds
-            continuousIntegrationService.get().triggerBuild(participation);
+            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
