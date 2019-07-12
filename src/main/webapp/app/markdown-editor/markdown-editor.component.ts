@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { WindowRef } from 'app/core/websocket/window.service';
 import 'brace/theme/chrome';
@@ -245,7 +246,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         /** check if domainCommands are passed on from the parent component */
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
-            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdownUntrusted(this.markdown);
             this.html.emit(this.previewTextAsHtml);
             return;
         } else {

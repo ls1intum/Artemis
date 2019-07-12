@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
@@ -44,6 +45,8 @@ export class ArtemisMarkdown {
             .getSession()
             .remove(new Range(from.row, from.col, to.row, to.col));
     }
+
+    constructor(private sanitizer: DomSanitizer) {}
 
     /**
      * Parse the markdown text and apply the result to the target object's data
@@ -140,10 +143,37 @@ export class ArtemisMarkdown {
             extensions: [showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
+        const sanitized = DOMPurify.sanitize(html);
+        return this.sanitizer.bypassSecurityTrustHtml(sanitized);
+    }
+
+    /**
+     * This method is used to return sanitized html for markdown, that is not trusted by angular.
+     * Angular might strip away styles or html tags!
+     *
+     * @deprecated
+     * @param markdownText
+     */
+    htmlForMarkdownUntrusted(markdownText: string | null) {
+        if (markdownText == null || markdownText === '') {
+            return '';
+        }
+        const converter = new showdown.Converter({
+            parseImgDimensions: true,
+            headerLevelStart: 3,
+            simplifiedAutoLink: true,
+            excludeTrailingPunctuationFromURLs: true,
+            strikethrough: true,
+            tables: true,
+            openLinksInNewWindow: true,
+            backslashEscapesHTMLTags: true,
+            extensions: [showdownKatex()],
+        });
+        const html = converter.makeHtml(markdownText);
         return DOMPurify.sanitize(html);
     }
 
-    markdownForHtml(htmlText: string) {
+    markdownForHtml(htmlText: string): string {
         const converter = new showdown.Converter({
             parseImgDimensions: true,
             headerLevelStart: 3,
