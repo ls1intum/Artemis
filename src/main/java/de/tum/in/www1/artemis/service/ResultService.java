@@ -210,7 +210,9 @@ public class ResultService {
                 Hibernate.initialize(savedResult.getParticipation().getExercise());
             }
 
-            ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
+            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
+                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
+            }
         }
     }
 
