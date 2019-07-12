@@ -177,7 +177,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
                     this.initializeProperties();
-                    if (domainType !== DomainType.TEST_REPOSITORY) {
+                    if (domainType === DomainType.PARTICIPATION) {
                         this.setSelectedParticipation(domainValue.id);
                     } else {
                         this.selectedParticipation = null;

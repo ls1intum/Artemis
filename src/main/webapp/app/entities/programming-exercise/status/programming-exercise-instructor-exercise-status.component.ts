@@ -30,7 +30,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.templateParticipationSubscription) {
                 this.templateParticipationSubscription.unsubscribe();
             }
-            // TODO: thilo: does this really make sense?
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
@@ -45,7 +44,6 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             if (this.solutionParticipationSubscription) {
                 this.solutionParticipationSubscription.unsubscribe();
             }
-            // TODO: thilo: does this really make sense?
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(

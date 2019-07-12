@@ -14,14 +14,14 @@ export class CodeEditorSessionService extends DomainDependent implements ICodeEd
 
     storeSession = (session: { errors: { [fileName: string]: AnnotationArray }; timestamp: number }) => {
         const [domainType, domainValue] = this.domain;
-        if (domainType !== DomainType.TEST_REPOSITORY) {
+        if (domainType === DomainType.PARTICIPATION) {
             this.localStorageService.store('sessions', JSON.stringify({ [domainValue.id]: session }));
         }
     };
 
     loadSession = () => {
         const [domainType, domainValue] = this.domain;
-        if (domainType !== DomainType.TEST_REPOSITORY) {
+        if (domainType === DomainType.PARTICIPATION) {
             const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
             const session = sessions[domainValue.id];
             return session
