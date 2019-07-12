@@ -1,3 +1,5 @@
+@import '~bootstrap/scss/mixins/_breakpoints';
+@import '~bootstrap/scss/bootstrap-grid.scss';
 @import '../../../../content/scss/_artemis-mixins.scss';
 
 .dnd-question {
@@ -7,7 +9,7 @@
         display: flex;
         justify-content: center;
 
-        @media (max-width: 900px) {
+        @include media-breakpoint-down(lg) {
             display: block;
         }
 
@@ -73,11 +75,11 @@
                 min-width: 160px;
                 max-width: 360px;
 
-                .drag-item-text {
+                /*.drag-item-text {
                     @media (max-width: 812px) {
                         padding: 0;
                     }
-                }
+                }*/
 
                 img {
                     @include dnd-drag-item-image;
@@ -92,12 +94,12 @@
         }
 
         .drag-and-drop-items {
-            @media (orientation: landscape) and (min-width: 900px) {
+            @include media-breakpoint-up(xl) {
                 margin: -6px 0 0 20px;
             }
 
             .dnd-instructions {
-                @media (orientation: landscape) and (min-width: 900px) {
+                @include media-breakpoint-up(xl) {
                     margin: 0 0 10px 0;
                 }
             }
@@ -106,8 +108,10 @@
                 background: #eee;
                 margin-left: auto;
                 margin-right: auto;
+            }
 
-                @media (orientation: landscape) and (min-width: 900px) {
+            > div {
+                @include media-breakpoint-up(xl) {
                     width: 200px;
                 }
             }
