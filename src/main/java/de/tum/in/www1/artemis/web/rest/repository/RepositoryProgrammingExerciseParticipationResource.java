@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.io.IOException;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,8 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
@@ -33,8 +33,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     private final ProgrammingExerciseParticipationService participationService;
 
     public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-                                                              Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
-                                                              ProgrammingExerciseParticipationService participationService) {
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
+            ProgrammingExerciseParticipationService participationService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.participationService = participationService;
     }
@@ -42,7 +42,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     Repository getRepository(Long participationId) throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException {
         Participation participation = participationService.findParticipation(participationId);
-        if(!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation))
             throw new IllegalArgumentException();
         return repositoryService.checkoutRepositoryByParticipation((ProgrammingExerciseParticipation) participation);
     }
@@ -180,10 +180,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         Participation participation;
         try {
             participation = participationService.findParticipation(participationId);
-        } catch(EntityNotFoundException ex) {
+        }
+        catch (EntityNotFoundException ex) {
             return notFound();
         }
-        if(!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation))
             return badRequest();
 
         if (!participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation))
