@@ -400,7 +400,7 @@ public class CompassService {
     private Result provideResultForSubmission(ModelingSubmission modelingSubmission) {
         Result result = modelingSubmission.getResult();
 
-        if (result == null || !result.getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (result == null || !AssessmentType.MANUAL.equals(result.getAssessmentType())) {
             result = automaticResultMap.get(modelingSubmission.getId());
 
             if (result == null) {

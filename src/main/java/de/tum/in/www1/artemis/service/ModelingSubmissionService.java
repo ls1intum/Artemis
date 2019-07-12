@@ -272,18 +272,20 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignAutomaticResultToSubmission(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getResult() != null && modelingSubmission.getResult().getAssessmentType() != null
-                && modelingSubmission.getResult().getAssessmentType().equals(AssessmentType.MANUAL)) {
+        Result existingResult = modelingSubmission.getResult();
+        if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(modelingSubmission.getId());
-        automaticResult.setSubmission(modelingSubmission);
-        modelingSubmission.setResult(automaticResult);
-        modelingSubmission.getParticipation().addResult(automaticResult);
-        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        if (automaticResult != null) {
+            automaticResult.setSubmission(modelingSubmission);
+            modelingSubmission.setResult(automaticResult);
+            modelingSubmission.getParticipation().addResult(automaticResult);
+            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
-        compassService.removeAutomaticResultForSubmission(modelingSubmission.getId());
+            compassService.removeAutomaticResultForSubmission(modelingSubmission.getId());
+        }
 
         return modelingSubmission;
     }
