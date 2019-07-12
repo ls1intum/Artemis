@@ -55,7 +55,7 @@
                 class="btn btn-success ml-3"
                 (click)="assessNextOptimal()"
                 [disabled]="!assessmentsAreValid"
-                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor)"
+                *ngIf="result?.completionDate && (isAuthorized || isAtLeastInstructor) && !hasComplaint"
                 jhiTranslate="artemisApp.tutorExerciseDashboard.nextAssessment"
             ></button>
         </div>

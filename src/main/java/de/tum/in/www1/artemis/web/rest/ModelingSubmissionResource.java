@@ -284,12 +284,11 @@ public class ModelingSubmissionResource {
     /**
      * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
      *
-     * @param participationId the participationId for which to find the data for the modeling editor
-     * @return the ResponseEntity with json as body
+     * @param participationId the participationId for which to find the submission and data for the modeling editor
+     * @return the ResponseEntity with the submission as body
      */
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
@@ -322,7 +321,8 @@ public class ModelingSubmissionResource {
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
         if (!optionalModelingSubmission.isPresent()) {
-            modelingSubmission = new ModelingSubmission(); // NOTE: this object is not yet persisted
+            // this should never happen as the submission is initialized along with the participation when the exercise is started
+            modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(participation);
         }
         else {

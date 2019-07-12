@@ -18,7 +18,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
     templateUrl: './modeling-exercise-dialog.component.html',
-    styles: ['.invalid-feedback { display: block }'],
+    styleUrls: ['./modeling-exercise-dialog.scss'],
 })
 export class ModelingExerciseDialogComponent implements OnInit {
     modelingExercise: ModelingExercise;

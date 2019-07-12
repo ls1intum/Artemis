@@ -179,14 +179,13 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Saves the given submission and the corresponding model and creates the result if necessary. Furthermore, the submission is added to the AutomaticSubmissionService if not
-     * submitted yet. Is used for creating and updating modeling submissions. If it is used for a submit action, Compass is notified about the new model. Rolls back if inserting
-     * fails - occurs for concurrent createModelingSubmission() calls.
+     * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions. If it is used
+     * for a submit action, Compass is notified about the new model. Rolls back if inserting fails - occurs for concurrent createModelingSubmission() calls.
      *
-     * @param modelingSubmission the submission to notifyCompass
-     * @param modelingExercise   the exercise to notifyCompass in
+     * @param modelingSubmission the submission that should be saved
+     * @param modelingExercise   the exercise the submission belongs to
      * @param username           the name of the corresponding user
-     * @return the modelingSubmission entity
+     * @return the saved modelingSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
@@ -203,7 +202,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // a chance to try it out again.
         // TODO: think about how we can enable retry again in the future in a fair way
         // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
-        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(submission -> submission.isSubmitted());
+        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(Submission::isSubmitted);
         if (submittedSubmissionExists) {
             throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission",
                     "participationExists");
@@ -263,15 +262,18 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Creates and sets new Result object in given submission and stores changes to the database.
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
+     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
-     * @param submission
+     * @param submission the submission for which a new result should be created
      */
     public void setNewResult(ModelingSubmission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        submission.getParticipation().addResult(result);
+        if (submission.getParticipation() != null) {
+            submission.getParticipation().addResult(result);
+        }
         resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
     }

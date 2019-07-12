@@ -397,43 +397,39 @@ public class LtiService {
      *
      * @param participation
      */
-    public void onNewBuildResult(ProgrammingExerciseParticipation participation) {
+    public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
 
-        if (participation instanceof StudentParticipation) {
+        // TODO investigate this call for manual results. Could it be the case that the exercise is not initialized (Hibernate) here?
+        // Get the LTI outcome URL
+        ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
-            StudentParticipation studentParticipation = (StudentParticipation) participation;
+            String score = "0.00";
 
-            // Get the LTI outcome URL
-            ltiOutcomeUrlRepository.findByUserAndExercise(studentParticipation.getStudent(), studentParticipation.getExercise()).ifPresent(ltiOutcomeUrl -> {
+            // Get the latest result
+            Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-                String score = "0.00";
+            if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                // LTI scores needs to be formatted as String between "0.00" and "1.00"
+                score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
+            }
 
-                // Get the latest result
-                Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
-
-                if (latestResult.isPresent() && latestResult.get().getScore() != null) {
-                    // LTI scores needs to be formatted as String between "0.00" and "1.00"
-                    score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
+            try {
+                // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
+                log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
+                        ltiOutcomeUrl.getSourcedId());
+                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
+                HttpClient client = HttpClientBuilder.create().build();
+                HttpResponse response = client.execute(request);
+                String responseString = new BasicResponseHandler().handleResponse(response);
+                log.info("Response from LTI consumer: {}", responseString);
+                if (response.getStatusLine().getStatusCode() >= 400) {
+                    throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 }
-
-                try {
-                    // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
-                    log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
-                            ltiOutcomeUrl.getSourcedId());
-                    HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
-                    HttpClient client = HttpClientBuilder.create().build();
-                    HttpResponse response = client.execute(request);
-                    String responseString = new BasicResponseHandler().handleResponse(response);
-                    log.info("Response from LTI consumer: {}", responseString);
-                    if (response.getStatusLine().getStatusCode() >= 400) {
-                        throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
-                    }
-                }
-                catch (Exception e) {
-                    log.error("Reporting to LTI consumer failed: {}", e, e);
-                }
-            });
-        }
+            }
+            catch (Exception e) {
+                log.error("Reporting to LTI consumer failed: {}", e, e);
+            }
+        });
     }
 
     /**

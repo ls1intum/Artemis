@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -251,9 +252,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
         }
 
-        // remove circular dependencies
-        if (result.getParticipation() != null && result.getParticipation().getResults() != null) {
-            result.getParticipation().getResults().stream().forEach(participationResult -> participationResult.setParticipation(null));
+        // remove circular dependencies if the results of the participation are there
+        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
+            result.getParticipation().setResults(null);
         }
 
         return ResponseEntity.ok(result);
