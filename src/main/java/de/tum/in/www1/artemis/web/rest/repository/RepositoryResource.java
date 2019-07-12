@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,7 +64,7 @@ public abstract class RepositoryResource {
      * @throws IllegalAccessException
      * @throws InterruptedException
      */
-    abstract Repository getRepository(Long domainId) throws IOException, IllegalAccessException, InterruptedException;
+    abstract Repository getRepository(Long domainId) throws IOException, IllegalArgumentException, IllegalAccessException, InterruptedException;
 
     public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) throws IOException, InterruptedException {
         log.debug("REST request to files for domainId : {}", domainId);
@@ -74,6 +73,9 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId);
             HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -94,6 +96,9 @@ public abstract class RepositoryResource {
         Repository repository;
         try {
             repository = getRepository(domainId);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -124,6 +129,9 @@ public abstract class RepositoryResource {
         Repository repository;
         try {
             repository = getRepository(domainId);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -162,6 +170,9 @@ public abstract class RepositoryResource {
         try {
             repository = getRepository(domainId);
         }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
+        }
         catch (IllegalAccessException ex) {
             return forbidden();
         }
@@ -198,6 +209,9 @@ public abstract class RepositoryResource {
         Repository repository;
         try {
             repository = getRepository(domainId);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -236,6 +250,9 @@ public abstract class RepositoryResource {
         try {
             repository = getRepository(domainId);
         }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
+        }
         catch (IllegalAccessException ex) {
             return forbidden();
         }
@@ -265,6 +282,9 @@ public abstract class RepositoryResource {
         try {
             repository = getRepository(domainId);
         }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
+        }
         catch (IllegalAccessException ex) {
             return forbidden();
         }
@@ -287,6 +307,9 @@ public abstract class RepositoryResource {
         Repository repository;
         try {
             repository = getRepository(domainId);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -315,6 +338,9 @@ public abstract class RepositoryResource {
         Repository repository;
         try {
             repository = getRepository(domainId);
+        }
+        catch (IllegalArgumentException ex) {
+            return badRequest();
         }
         catch (IllegalAccessException ex) {
             return forbidden();

@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Controller
 @SuppressWarnings("unused")
@@ -71,54 +72,42 @@ public class RepositoryWebsocketResource {
      * @param submissions     information about the file updates
      * @param principal       used to check if the user can update the files
      */
-    @MessageMapping("/topic/student-repository/{participationId}/files")
-    public void updateStudentParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService.findStudentParticipation(participationId);
-        String topic = "/topic/student-repository/" + participationId + "/files";
-        if (!participation.isPresent()) {
+    @MessageMapping("/topic/repository/{participationId}/files")
+    public void updateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
+        String topic = "/topic/repository/" + participationId + "/files";
+        Participation participation;
+        try {
+            participation = programmingExerciseParticipationService.findParticipation(participationId);
+        }
+        catch (EntityNotFoundException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
-        updateParticipationFiles(submissions, participation.get(), participationId, principal, topic);
-    }
-
-    /**
-     * Update a list of files based on the submission's content.
-     *
-     * @param participationId id of participation to which the files belong
-     * @param submissions     information about the file updates
-     * @param principal       used to check if the user can update the files
-     */
-    @MessageMapping("/topic/template-repository/{participationId}/files")
-    public void updateTemplateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
-        Optional<TemplateProgrammingExerciseParticipation> participation = programmingExerciseParticipationService.findTemplateParticipation(participationId);
-        String topic = "/topic/template-repository/" + participationId + "/files";
-        if (!participation.isPresent()) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
-        updateParticipationFiles(submissions, participation.get(), participationId, principal, topic);
-    }
-
-    /**
-     * Update a list of files based on the submission's content.
-     *
-     * @param participationId id of participation to which the files belong
-     * @param submissions     information about the file updates
-     * @param principal       used to check if the user can update the files
-     */
-    @MessageMapping("/topic/solution-repository/{participationId}/files")
-    public void updateSolutionParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
-        Optional<SolutionProgrammingExerciseParticipation> participation = programmingExerciseParticipationService.findSolutionParticipation(participationId);
-        String topic = "/topic/solution-repository/" + participationId + "/files";
-        if (!participation.isPresent()) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        // User must have the necessary permissions to update a file
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, principal)) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
             return;
         }
-        updateParticipationFiles(submissions, participation.get(), participationId, principal, topic);
+        // Git repository must be available to update a file
+        Repository repository;
+        try {
+            repository = gitService.get().getOrCheckoutRepository(programmingExerciseParticipation);
+        }
+        catch (IOException | InterruptedException ex) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
+            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
+            return;
+        }
+        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
+        messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
 
     /**
@@ -153,29 +142,15 @@ public class RepositoryWebsocketResource {
         messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
     }
 
-    private void updateParticipationFiles(List<FileSubmission> submissions, ProgrammingExerciseParticipation participation, Long participationId, Principal principal,
-            String topic) {
-        // User must have the necessary permissions to update a file
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation, principal)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
-            return;
-        }
-        // Git repository must be available to update a file
-        Repository repository;
-        try {
-            repository = gitService.get().getOrCheckoutRepository(participation);
-        }
-        catch (IOException | InterruptedException ex) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
-            messagingTemplate.convertAndSendToUser(principal.getName(), topic, error);
-            return;
-        }
-        Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
-        messagingTemplate.convertAndSendToUser(principal.getName(), topic, fileSaveResult);
-    }
-
-    private HashMap<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
+    /**
+     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
+     * Map.
+     * 
+     * @param submissions
+     * @param repository
+     * @return a map of <filename, error | null>
+     */
+    private Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
         // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
         HashMap<String, String> fileSaveResult = new HashMap<>();
         submissions.forEach((submission) -> {

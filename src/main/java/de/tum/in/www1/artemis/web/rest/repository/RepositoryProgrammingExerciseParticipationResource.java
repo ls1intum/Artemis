@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,27 +20,31 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
 @RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-public class RepositoryTemplateParticipationResource extends RepositoryResource {
+public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    public RepositoryTemplateParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+                                                              Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService,
+                                                              ProgrammingExerciseParticipationService participationService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
-        this.participationService = programmingExerciseParticipationService;
+        this.participationService = participationService;
     }
 
     @Override
-    Repository getRepository(Long participationId) throws IOException, IllegalAccessException, InterruptedException {
-        Optional<TemplateProgrammingExerciseParticipation> participation = participationService.findTemplateParticipation(participationId);
-        return repositoryService.checkoutRepositoryByParticipation(participation.get());
+    Repository getRepository(Long participationId) throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException {
+        Participation participation = participationService.findParticipation(participationId);
+        if(!(participation instanceof ProgrammingExerciseParticipation))
+            throw new IllegalArgumentException();
+        return repositoryService.checkoutRepositoryByParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     /**
@@ -54,7 +54,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/template-repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.getFiles(participationId);
     }
@@ -67,7 +67,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/template-repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.getFile(participationId, filename);
     }
@@ -81,7 +81,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/template-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request)
             throws IOException, InterruptedException {
         return super.createFile(participationId, filename, request);
@@ -96,7 +96,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/template-repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request)
             throws IOException, InterruptedException {
         return super.createFolder(participationId, folderName, request);
@@ -111,7 +111,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping(value = "/template-repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) throws IOException, InterruptedException {
         return super.renameFile(participationId, fileMove);
     }
@@ -124,7 +124,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @DeleteMapping(value = "/template-repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) throws IOException, InterruptedException {
         return super.deleteFile(participationId, filename);
     }
@@ -136,7 +136,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @return
      * @throws IOException
      */
-    @GetMapping(value = "/template-repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.pullChanges(participationId);
     }
@@ -149,7 +149,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/template-repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) throws IOException, InterruptedException {
         return super.commitChanges(participationId);
     }
@@ -162,7 +162,7 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/template-repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
         return super.getStatus(participationId);
     }
@@ -173,17 +173,23 @@ public class RepositoryTemplateParticipationResource extends RepositoryResource 
      * @param participationId the participationId of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/template-repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Optional<TemplateProgrammingExerciseParticipation> participation = participationService.findTemplateParticipation(participationId);
-        if (!participation.isPresent())
+        Participation participation;
+        try {
+            participation = participationService.findParticipation(participationId);
+        } catch(EntityNotFoundException ex) {
             return notFound();
-        if (!participationService.canAccessParticipation(participation.get()))
+        }
+        if(!(participation instanceof ProgrammingExerciseParticipation))
+            return badRequest();
+
+        if (!participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation))
             return forbidden();
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.get().getBuildPlanId());
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(((ProgrammingExerciseParticipation) participation).getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

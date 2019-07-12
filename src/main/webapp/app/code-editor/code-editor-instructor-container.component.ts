@@ -240,11 +240,11 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      **/
     selectParticipationDomainById(participationId: number) {
         if (participationId === this.exercise.templateParticipation.id) {
-            this.domainService.setDomain([DomainType.TEMPLATE_PARTICIPATION, this.exercise.templateParticipation]);
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
         } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.domainService.setDomain([DomainType.SOLUTION_PARTICIPATION, this.exercise.solutionParticipation]);
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
         } else if (this.exercise.participations.length && participationId === this.exercise.participations[0].id) {
-            this.domainService.setDomain([DomainType.STUDENT_PARTICIPATION, this.exercise.participations[0]]);
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.participations[0]]);
         } else {
             this.onError('participationNotFound');
         }

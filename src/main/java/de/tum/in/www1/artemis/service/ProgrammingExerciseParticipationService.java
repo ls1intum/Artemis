@@ -9,9 +9,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseParticipationService {
+
+    private ParticipationService participationService;
 
     private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
@@ -23,14 +26,19 @@ public class ProgrammingExerciseParticipationService {
 
     private UserService userService;
 
-    public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+    public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
             UserService userService, AuthorizationCheckService authCheckService) {
+        this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.authCheckService = authCheckService;
         this.userService = userService;
+    }
+
+    public Participation findParticipation(Long participationId) throws EntityNotFoundException {
+        return participationService.findOne(participationId);
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
