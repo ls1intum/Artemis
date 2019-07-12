@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,6 +100,45 @@ public class ModelingAssessmentIntegrationTest {
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getAssessmentBySubmissionId() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
+        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        Result result = request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.OK, Result.class);
+
+        checkAssessmentFinished(result, null);
+        checkFeedbackCorrectlyStored(feedback, result.getFeedbacks(), FeedbackType.MANUAL);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
+        saveModelingSubmissionAndAssessment(false);
+        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void getAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+
+        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void getAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
@@ -215,7 +255,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "student2")
     public void automaticAssessmentUponModelSubmission_identicalModel() throws Exception {
-        saveModelingSubmissionAndAssessment();
+        saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
@@ -231,7 +271,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "student2")
     public void automaticAssessmentUponModelSubmission_partialModel() throws Exception {
-        saveModelingSubmissionAndAssessment();
+        saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
@@ -251,7 +291,8 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "student2")
     public void automaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
+                true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
@@ -268,7 +309,7 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "student2")
     public void automaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", "student1");
-        database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", "tutor1");
+        database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", "tutor1", true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
@@ -286,7 +327,8 @@ public class ModelingAssessmentIntegrationTest {
     public void automaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1",
+                true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
@@ -302,7 +344,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "student2")
     public void automaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
-        saveModelingSubmissionAndAssessment();
+        saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
@@ -316,7 +358,7 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "student2")
     public void noAutomaticAssessmentUponModelSave() throws Exception {
-        saveModelingSubmissionAndAssessment();
+        saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), false);
@@ -480,7 +522,8 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void overrideAutomaticAssessment() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
+                true);
         database.addParticipationForExercise(classExercise, "tutor1");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
@@ -677,9 +720,10 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult.getAssessmentType()).as("result type is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
-    private void saveModelingSubmissionAndAssessment() throws Exception {
+    private void saveModelingSubmissionAndAssessment(boolean submitAssessment) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
+                submitAssessment);
     }
 }
