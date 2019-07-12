@@ -222,16 +222,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return this.exercise && this.exercise.id === exerciseId
             ? Observable.of(this.exercise)
-            : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(
-                  map(({ body }) => body!),
-                  // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
-                  switchMap(exercise =>
-                      this.programmingExerciseParticipationService.getLatestResultWithFeedback(exercise.templateParticipation.id).pipe(
-                          map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
-                          catchError(() => of(exercise)),
-                      ),
-                  ),
-              );
+            : this.exerciseService.findWithTemplateAndSolutionParticipation(exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**

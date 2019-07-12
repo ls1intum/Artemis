@@ -202,16 +202,12 @@ describe('CodeEditorInstructorIntegration', () => {
             id: 1,
             problemStatement,
             participations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2' },
+            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
         exercise.participations = exercise.participations.map(p => ({ ...p, exercise }));
         exercise.templateParticipation = { ...exercise.templateParticipation, exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, exercise };
-
-        const templateParticipationResult = { id: 9, successful: true };
-
-        getLatestResultWithFeedbacksStub.returns(of(templateParticipationResult));
 
         getFeedbackDetailsForResultStub.returns(of([]));
         const setDomainSpy = spy(domainService, 'setDomain');
@@ -226,10 +222,10 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(getLatestResultWithFeedbacksStub).to.have.been.calledOnceWithExactly(exercise.templateParticipation.id);
+        expect(getLatestResultWithFeedbacksStub).not.to.have.been.called;
         expect(setDomainSpy).to.have.been.calledOnce;
-        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, { ...exercise.templateParticipation, results: [templateParticipationResult] }]);
-        expect(container.exercise).to.deep.equal({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [templateParticipationResult] } });
+        expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.templateParticipation]);
+        expect(container.exercise).to.deep.equal(exercise);
         expect(container.selectedRepository).to.equal(container.REPOSITORY.TEMPLATE);
         expect(container.selectedParticipation).to.deep.equal(container.selectedParticipation);
         expect(container.loadingState).to.equal(container.LOADING_STATE.CLEAR);
