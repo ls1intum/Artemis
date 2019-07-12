@@ -48,7 +48,7 @@ public class ProgrammingExerciseTestCaseService {
      *
      * @param testCaseId
      * @param weight
-     * @return
+     * @return the test case with the updated weight.
      */
     @Transactional
     public ProgrammingExerciseTestCase updateWeight(Long testCaseId, Integer weight) {
