@@ -53,6 +53,14 @@ public class ProgrammingExerciseParticipationService {
         return solutionParticipationRepository.findById(participationId);
     }
 
+    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) {
+        Optional<ProgrammingExerciseStudentParticipation> participation;
+        participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+        if (!participation.isPresent())
+            throw new EntityNotFoundException("participation could not be found by exerciseId " + exerciseId + " and user " + username);
+        return participation.get();
+    }
+
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
     }

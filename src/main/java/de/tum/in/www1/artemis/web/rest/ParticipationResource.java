@@ -66,6 +66,8 @@ public class ParticipationResource {
 
     private final ParticipationService participationService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     private final QuizExerciseService quizExerciseService;
 
     private final ExerciseService exerciseService;
@@ -84,10 +86,12 @@ public class ParticipationResource {
 
     private final UserService userService;
 
-    public ParticipationResource(ParticipationService participationService, CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            TextSubmissionService textSubmissionService, ResultService resultService, UserService userService) {
+    public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
+            ResultService resultService, UserService userService) {
         this.participationService = participationService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -177,7 +181,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
         }
 
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneByExerciseIdAndStudentLogin(exerciseId,
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseIdAndStudentId(exerciseId,
                 principal.getName());
         if (participation == null) {
             log.info("Request to resume participation that is non-existing of Exercise with id {}.", exerciseId);

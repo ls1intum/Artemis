@@ -29,4 +29,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     // submission). In the future we can deactivate the last part.
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.student is not null and participation.exercise.course.onlineCourse = false")
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
+
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 }
