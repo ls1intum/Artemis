@@ -37,7 +37,7 @@ import { ArTEMiSResultModule, Result, ResultService } from 'app/entities/result'
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 import { Participation, ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement, problemStatementNoneExecutedRendered } from '../../sample/problemStatement.json';
@@ -45,6 +45,7 @@ import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockAccountService } from '../../mocks/mock-account.service';
+import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,7 +59,7 @@ describe('CodeEditorStudentIntegration', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
     let buildLogService: CodeEditorBuildLogService;
-    let participationService: ParticipationService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
@@ -69,7 +70,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getFileStub: SinonStub;
     let saveFilesStub: SinonStub;
     let commitStub: SinonStub;
-    let findWithLatestResultStub: SinonStub;
+    let getStudentParticipationWithLatestResultStub: SinonStub;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
     let routeSubject: Subject<Params>;
@@ -103,7 +104,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
-                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
         })
             .compileComponents()
@@ -117,7 +118,7 @@ describe('CodeEditorStudentIntegration', () => {
                 participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
                 resultService = containerDebugElement.injector.get(ResultService);
                 buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                participationService = containerDebugElement.injector.get(ParticipationService);
+                programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
@@ -136,7 +137,7 @@ describe('CodeEditorStudentIntegration', () => {
                 getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
-                findWithLatestResultStub = stub(participationService, 'findWithLatestResult');
+                getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
             });
     });
 
@@ -149,7 +150,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFileStub.restore();
         saveFilesStub.restore();
         commitStub.restore();
-        findWithLatestResultStub.restore();
+        getStudentParticipationWithLatestResultStub.restore();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
@@ -478,19 +479,19 @@ describe('CodeEditorStudentIntegration', () => {
         const result = { id: 3, successful: false };
         const participation = { id: 1, results: [result] } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
-        const findWithLatestResultSubject = new Subject<{ body: Participation }>();
+        const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
-        findWithLatestResultStub.returns(findWithLatestResultSubject);
+        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
         expect(container.loadingParticipation).to.be.true;
 
-        findWithLatestResultSubject.next({ body: participation });
+        findWithLatestResultSubject.next(participation);
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
-        expect(findWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(getStudentParticipationWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
         expect(container.loadingParticipation).to.be.false;
         expect(container.participationCouldNotBeFetched).to.be.false;
@@ -500,7 +501,7 @@ describe('CodeEditorStudentIntegration', () => {
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
         const findWithLatestResultSubject = new Subject<{ body: Participation }>();
-        findWithLatestResultStub.returns(findWithLatestResultSubject);
+        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
