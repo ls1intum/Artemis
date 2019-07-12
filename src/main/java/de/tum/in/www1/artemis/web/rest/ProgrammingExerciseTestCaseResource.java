@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
-import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseWeightUpdate;
+import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
@@ -73,8 +73,7 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/{testCaseId}/update-weight")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
-            @RequestBody ProgrammingExerciseTestCaseWeightUpdate testCaseWeightUpdate) {
+    public ResponseEntity<ProgrammingExerciseTestCase> updateWeight(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @RequestBody WeightUpdate testCaseWeightUpdate) {
         log.debug("REST request to update the weight of test case {} to {}", testCaseId, testCaseWeightUpdate.getWeight());
         try {
             // Retrieve programming exercise to check availability & permissions.
