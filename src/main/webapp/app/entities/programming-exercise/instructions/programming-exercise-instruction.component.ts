@@ -237,7 +237,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return null.
      */
     loadLatestResult(): Observable<Result | null> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation).pipe(catchError(() => Observable.of(null)));
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id).pipe(catchError(() => Observable.of(null)));
     }
 
     /**

@@ -36,14 +36,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
             this.programmingExerciseParticipationService
-                .getLatestResultWithFeedbackForSolutionParticipation(this.programmingExercise.solutionParticipation.id)
+                .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
                 .pipe(filter((result: Result) => !!result))
                 .subscribe((result: Result) => {
                     this.programmingExercise.solutionParticipation.results = [result];
                 });
 
             this.programmingExerciseParticipationService
-                .getLatestResultWithFeedbackForTemplateParticipation(this.programmingExercise.templateParticipation.id)
+                .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
                 .pipe(filter((result: Result) => !!result))
                 .subscribe((result: Result) => {
                     this.programmingExercise.templateParticipation.results = [result];

@@ -226,8 +226,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                   map(({ body }) => body!),
                   // TODO: This is a hotfix for the findWithTemplateAndSolutionParticipation endpoint that should include the templateParticipation result feedbacks but doesn't
                   switchMap(exercise =>
-                      this.programmingExerciseParticipationService.getLatestResultWithFeedbackForTemplateParticipation(exercise.templateParticipation.id).pipe(
-                          map(result => (result ? { ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } } : exercise)),
+                      this.programmingExerciseParticipationService.getLatestResultWithFeedback(exercise.templateParticipation.id).pipe(
+                          map(result => ({ ...exercise, templateParticipation: { ...exercise.templateParticipation, results: [result] } })),
                           catchError(() => of(exercise)),
                       ),
                   ),
