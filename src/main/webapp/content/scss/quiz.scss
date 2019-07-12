@@ -1,6 +1,12 @@
 @import './_artemis-mixins.scss';
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/mixins/_breakpoints';
 @import '~bootstrap/scss/bootstrap-grid.scss';
 
+/* ==========================================================================
+    Quiz styles
+========================================================================== */
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -55,58 +61,14 @@
     }
 }
 
-.edit-quiz-footer {
-    height: 80px;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-    background: white;
-
-    .container {
-        height: 100%;
-    }
-}
-
-.quiz-footer-content,
-.edit-quiz-footer-content {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .form-control,
-    .input-group-btn {
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-
-    .invalid-reasons-tooltip .tooltip-inner {
-        text-align: left;
-        max-width: 300px;
-
-        p {
-            margin: 4px 0;
-            padding: 4px;
-        }
-    }
-}
-
 .edit-quiz .quiz-options .form-group > div.time-picker {
     margin-top: -15px;
     margin-left: 0px;
 }
 
+/* ==========================================================================
+    Question styles
+========================================================================== */
 .question {
     width: 100%;
     box-sizing: border-box;
@@ -185,23 +147,23 @@
     }
 }
 
-.background-editor-color {
-    background: #f8f9fa;
-}
-
 .dnd-question,
 .mc-question,
 .sa-question {
-    position: relative;
-    width: 100%;
-    box-sizing: border-box;
+    background: #fefefe;
     border: 1px solid lightgrey;
+    box-sizing: border-box;
     margin-bottom: 18px;
     padding: 20px;
-    background: #fefefe;
+    position: relative;
+    width: 100%;
 
     &.result {
         border-color: green;
+
+        .show-explanation {
+            display: inline-block;
+        }
 
         &.incorrect {
             border-color: orange;
@@ -291,8 +253,17 @@
                 align-items: flex-end;
                 font-size: 18px;
 
+                /* adjust [ngbPopover] window style */
                 ngb-popover-window {
                     max-width: 500px;
+
+                    @include media-breakpoint-down(md) {
+                        max-width: 300px !important;
+                    }
+
+                    @include media-breakpoint-down(xs) {
+                        max-width: 200px !important;
+                    }
                 }
             }
         }
@@ -316,7 +287,64 @@
     }
 }
 
-/* dotted drop-location */
+/* ==========================================================================
+    Short answer question
+========================================================================== */
+.short-answer-question-display {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+
+    &__element {
+        display: inline-flex;
+    }
+
+    &__statistic-element {
+        display: inline-flex;
+        line-height: 35px;
+    }
+
+    .short-answer-question-container {
+        display: inline-block;
+        position: relative;
+
+        &__input {
+            border: 1px solid #ced4da;
+            line-height: 35px;
+            margin-bottom: 10px;
+        }
+
+        &__div-input {
+            background-color: white;
+            border: 1px solid #ced4da;
+            padding: 2px 3px;
+            width: 170px;
+            height: 40px;
+        }
+
+        &__statistic-letter,
+        &__statistic-letter-solution {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            z-index: 1;
+            opacity: 1;
+        }
+
+        &__statistic-letter {
+            @include quiz-statistic-letter(#428bca);
+        }
+
+        &__statistic-letter-solution {
+            @include quiz-statistic-letter(#5cb85c);
+        }
+    }
+}
+
+/* ==========================================================================
+    Drag and drop styles for dnd-question, edit-dnd-question,
+    edit-sa-question and drag-and-drop-quizStatistic-picture
+========================================================================== */
 .dnd-question,
 .edit-dnd-question,
 .edit-sa-question,
@@ -329,12 +357,15 @@
         right: 0;
         z-index: 1;
 
+        /* dotted drop-location */
         .drop-location {
             position: absolute;
             display: flex;
             flex-direction: row;
             align-items: flex-start;
             justify-content: flex-end;
+            background: white;
+            border: 1px dashed black;
         }
     }
 }
@@ -363,23 +394,15 @@
 }
 
 .dnd-question,
-.sa-question,
-.edit-dnd-question,
-.edit-sa-question {
-    .ellipsis {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-}
-
-/** EDIT DRAG AND DROP AND SHORT ANSWER QUIZ **/
-
-/* highlight drop location in light blue when selecting and moving a drag item */
-.dnd-question,
 .edit-dnd-question {
+    /* highlight drop location in light blue when selecting a drag item */
     .drop-allowed {
         background: rgba(173, 216, 230, 0.8) !important;
+    }
+    /* change highlight color to light green when dragging the item above a drop location */
+    .drop-hover,
+    .dnd-drag-over {
+        background: rgb(144, 238, 144) !important;
     }
 }
 
@@ -395,15 +418,18 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-evenly;
-
-        .drag-item {
-            border: 1px solid dimgrey;
-            background: #fafafa;
-        }
     }
 }
 
-/* drop location mapping in drag-and-drop and short answer edit view */
+.edit-dnd-question,
+.edit-sa-question,
+.drag-and-drop-quizStatistic-picture {
+    .drag-item {
+        border: 1px solid dimgrey;
+        background: #fafafa;
+    }
+}
+
 .edit-dnd-question,
 .edit-sa-question {
     .markupEditorArea {
@@ -479,12 +505,6 @@
                 }
             }
         }
-    }
-
-    /* highlight drop location in light green in drag-over event */
-    .drop-hover,
-    .dnd-drag-over {
-        background: rgba(144, 238, 144, 0.8) !important;
     }
 
     .mapping-numbers-wrapper {
@@ -576,9 +596,6 @@
     }
 
     .drag-item {
-        // border: 1px solid dimgrey;
-        // background: #fafafa;
-
         textarea {
             position: absolute;
             left: 0;
@@ -625,29 +642,6 @@
     }
 }
 
-/** EDIT DRAG AND DROP AND SHORT ANSWER QUIZ **/
-
-.dnd-question,
-.sa-question {
-    .drop-hover,
-    .dnd-drag-over {
-        background: rgb(144, 238, 144) !important;
-    }
-
-    .drag-items {
-        background: #eee;
-    }
-
-    .drag-item {
-        div {
-            span {
-                cursor: move;
-                border: 1px solid black;
-            }
-        }
-    }
-}
-
 .drag-item {
     background: transparent;
     border: none;
@@ -687,8 +681,58 @@
         white-space: pre-wrap;
 
         span {
-            color: black;
+            border: 1px solid #000;
             background: white;
+            color: black;
+            padding: 4px;
+        }
+    }
+}
+/* ==========================================================================
+    Quiz footer
+========================================================================== */
+.edit-quiz-footer {
+    height: 80px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+    background: white;
+
+    .container {
+        height: 100%;
+    }
+}
+
+.quiz-footer-content,
+.edit-quiz-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .form-control,
+    .input-group-btn {
+        width: auto;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+
+        > * {
+            margin: 0 4px;
+        }
+    }
+
+    .invalid-reasons-tooltip .tooltip-inner {
+        text-align: left;
+        max-width: 300px;
+
+        p {
+            margin: 4px 0;
             padding: 4px;
         }
     }
@@ -753,54 +797,14 @@
     }
 }
 
-.colon-suffix:after {
-    content: ':';
-    display: inline-flex;
-}
-
-.show-explanation {
-    display: inline-block;
-}
-
-.questionright {
-    color: green;
-}
-
-.questionwrong {
-    color: orange;
-}
-
-.no-flex-shrink {
-    flex-shrink: 0;
-}
-
-.re-evaluate-button {
-    display: inline-block;
-    padding: 4px;
-
-    &:hover {
-        color: blue;
-    }
-}
-
-.warning-modal-window .modal-dialog {
-    width: 50%;
-}
-
-.btn-default {
-    color: #333;
-    background-color: #fff;
-    border-color: #ccc;
-}
-
-/** QUIZ TOOL-TIP **/
-/* Tooltip container */
+/* ==========================================================================
+    Quiz tooltip and ngbTooltip
+========================================================================== */
 .quiz-tooltip {
     position: relative;
     display: inline-block;
 }
 
-/* Tooltip text */
 .quiz-tooltip .quiz-tooltiptext {
     white-space: initial;
     padding: 5px 10px;
@@ -837,8 +841,13 @@ ngb-tooltip-window {
         margin: auto !important;
     }
 }
-
+/* ==========================================================================
+    Markdown preview
+========================================================================== */
 .markdown-preview {
+    .background-editor-color {
+        background: #f8f9fa;
+    }
     .red {
         color: #ca2024;
     }
@@ -865,91 +874,30 @@ ngb-tooltip-window {
     }
 }
 
-/** SHORT ANSWER QUESTIONS **/
+/* ==========================================================================
+    Other styles
+========================================================================== */
 
-.sa-question,
-.edit-sa-question {
-    .short-answer-question-display {
-        display: flex;
-        flex-wrap: wrap;
-        max-width: 100%;
-
-        &__element {
-            display: inline-flex;
-        }
-
-        &__statistic-element {
-            display: inline-flex;
-            line-height: 35px;
-        }
-
-        .short-answer-question-container {
-            display: inline-block;
-            position: relative;
-
-            &__input {
-                border: 1px solid #ced4da;
-                line-height: 35px;
-                margin-bottom: 10px;
-            }
-
-            &__div-input {
-                background-color: white;
-                border: 1px solid #ced4da;
-                padding: 2px 3px;
-                width: 170px;
-                height: 40px;
-            }
-
-            &__statistic-letter {
-                @include quiz-statistic-letter(#428bca);
-                position: absolute;
-                top: 10px;
-                right: 0;
-                z-index: 1;
-                opacity: 1;
-            }
-
-            &__statistic-letter-solution {
-                @include quiz-statistic-letter(#5cb85c);
-                position: absolute;
-                top: 10px;
-                right: 0;
-                z-index: 1;
-                opacity: 1;
-            }
-        }
-    }
+.colon-suffix:after {
+    content: ':';
+    display: inline-flex;
 }
-/** END SHORT ANSWER QUESTIONS **/
 
-@include media-breakpoint-down(sm) {
-    .hint {
-        ngb-popover-window {
-            max-width: 300px !important;
-        }
+.re-evaluate-button {
+    display: inline-block;
+    padding: 4px;
+
+    &:hover {
+        color: blue;
     }
 }
 
-@include media-breakpoint-down(xs) {
-    .btn + .btn {
-        margin-top: 15px;
-    }
-    .hint {
-        ngb-popover-window {
-            max-width: 200px !important;
-        }
-    }
+.warning-modal-window .modal-dialog {
+    width: 50%;
 }
 
-/** keep here and check later **/
-
-.background-area,
-.drag-and-drop-quizStatistic-picture {
-    .click-layer {
-        .drop-location {
-            background: white;
-            border: 1px dashed black;
-        }
-    }
+.btn-default {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
 }

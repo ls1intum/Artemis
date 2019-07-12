@@ -175,6 +175,10 @@ Generic styles
     }
 }
 
+.no-flex-shrink {
+    flex-shrink: 0;
+}
+
 /* ==========================================================================
 make sure browsers use the pointer cursor for anchors, even with no href
 ========================================================================== */

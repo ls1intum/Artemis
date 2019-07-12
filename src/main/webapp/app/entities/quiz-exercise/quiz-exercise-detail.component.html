@@ -179,7 +179,7 @@
                 <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10">
                     <div class="custom-file">
                         <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
-                        <label class="custom-file-label ellipsis" for="importFileInput">{{ importFileName }}</label>
+                        <label class="custom-file-label overflow-ellipsis" for="importFileInput">{{ importFileName }}</label>
                     </div>
                     <div class="input-group-append">
                         <button class="btn btn-outline-primary" (click)="importQuiz()" jhiTranslate="entity.action.import" [ngClass]="{ disabled: !importFile }"></button>

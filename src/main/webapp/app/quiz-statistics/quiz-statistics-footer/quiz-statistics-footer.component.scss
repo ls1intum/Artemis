@@ -1,24 +1,22 @@
-.quizStatistic-footer {
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/mixins/_breakpoints';
+
+.quiz-statistic-footer {
     position: fixed;
     height: 60px;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
     background: white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
 
     .container {
         height: 100%;
 
         .quiz-footer-content,
         .edit-quiz-footer-content {
-            @media (min-width: 320px) and (max-width: 480px) {
-                .form-group {
-                    padding-top: 10px;
-                }
-            }
-
             .form-group {
                 justify-content: center;
 
@@ -26,31 +24,11 @@
                     text-align: center;
                     width: 100%;
                 }
+
+                @include media-breakpoint-down(xs) {
+                    padding-top: 10px;
+                }
             }
         }
     }
 }
-
-/* not used */
-.quizStatistic-footer-content {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .form-control,
-    .input-group-btn {
-        display: inline-block;
-        width: auto;
-    }
-
-    .form-group {
-        display: flex;
-        align-items: center;
-
-        > * {
-            margin: 0 4px;
-        }
-    }
-}
-/* not used */
