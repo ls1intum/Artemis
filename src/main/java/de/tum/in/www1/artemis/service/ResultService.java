@@ -73,6 +73,16 @@ public class ResultService {
         return resultRepository.findByIdWithSubmission(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
+    public Result findLatestResultWithFeedbacksForParticipation(Long participationId) throws EntityNotFoundException {
+        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (!result.isPresent()) {
+            throw new EntityNotFoundException("result for participation " + participationId + " could not be found");
+        }
+        else {
+            return result.get();
+        }
+    }
+
     /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.

@@ -271,7 +271,7 @@ public class ResultResource {
         log.debug("REST request to get Results for Participation : {}", participationId);
 
         List<Result> results = new ArrayList<>();
-        StudentParticipation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
         // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
         if (participation.getExercise() == null) {
@@ -436,7 +436,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        StudentParticipation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
             return forbidden();

@@ -240,7 +240,7 @@ public class ParticipationResource {
             participation.setPresentationScore(0);
         }
 
-        StudentParticipation currentParticipation = participationService.findOne(participation.getId());
+        StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             User user = userService.getUser();
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with id "
@@ -414,7 +414,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentParticipation> getParticipation(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
-        StudentParticipation participation = participationService.findOne(participationId);
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionOwner(participation);
         return Optional.ofNullable(participation).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(ResponseUtil.notFound());
     }
@@ -433,7 +433,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOne(id);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(id);
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if (!courseService.userHasAtLeastTAPermissions(course)) {
@@ -551,7 +551,7 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/participations/{id}/status")
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
-        StudentParticipation participation = participationService.findOne(id);
+        StudentParticipation participation = participationService.findOneStudentParticipation(id);
         // NOTE: Disable Authorization check for increased performance
         // (Unauthorized users being unable to see any participation's status is not a priority!)
         if (participation.getExercise() instanceof QuizExercise) {
@@ -575,7 +575,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
-        StudentParticipation participation = participationService.findOne(id);
+        StudentParticipation participation = participationService.findOneStudentParticipation(id);
         checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", id, participation.getExercise().getTitle(), username,
@@ -593,7 +593,7 @@ public class ParticipationResource {
     @PutMapping("/participations/{id}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOne(id);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(id);
         checkAccessPermissionAtInstructor(participation);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);

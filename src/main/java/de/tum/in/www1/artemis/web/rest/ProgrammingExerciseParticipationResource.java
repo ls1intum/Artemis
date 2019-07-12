@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api")
@@ -24,39 +28,29 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
+    private ParticipationService participationService;
+
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+    private ResultService resultService;
 
-    private TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
-
-    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
-
-    private ParticipationRepository participationRepository;
-
-    private ResultRepository resultRepository;
-
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ParticipationRepository participationRepository) {
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
+            ResultService resultService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.solutionParticipationRepository = solutionParticipationRepository;
-        this.templateParticipationRepository = templateParticipationRepository;
-        this.studentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.resultRepository = resultRepository;
-        this.participationRepository = participationRepository;
+        this.participationService = participationService;
+        this.resultService = resultService;
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * Get the given student participation with its latest result and feedbacks.
      *
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
-    @GetMapping(value = "/programming-exercises-student-participation/{participationId}/participation-with-latest-result-and-feedbacks")
+    @GetMapping(value = "/programming-exercises-participation/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
+                .findStudentParticipationWithLatestResultAndFeedbacks(participationId);
         if (!participation.isPresent()) {
             return notFound();
         }
@@ -67,55 +61,45 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * Get the latest result for a given programming exercise participation including it's result.
      *
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body.
      */
     @GetMapping(value = "/programming-exercises-participation/{participationId}/latest-result-with-feedbacks")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForSolutionParticipation(@PathVariable Long participationId) {
-        Optional<Participation> participationOpt = participationRepository.findById(participationId);
-        if (!participationOpt.isPresent()) {
+        Participation participation;
+        try {
+            participation = participationService.findOneStudentParticipation(participationId);
+        }
+        catch (EntityNotFoundException ex) {
             return notFound();
         }
-        Participation participation = participationOpt.get();
-        if (participation instanceof SolutionProgrammingExerciseParticipation) {
-            return getLatestResultWithFeedbacks((SolutionProgrammingExerciseParticipation) participation);
-        }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
-            return getLatestResultWithFeedbacks((TemplateProgrammingExerciseParticipation) participation);
+        if (participation instanceof ProgrammingExerciseParticipation) {
+            return getLatestResultWithFeedbacks((ProgrammingExerciseParticipation) participation);
         }
         else {
-            return getLatestResultWithFeedbacks((ProgrammingExerciseStudentParticipation) participation);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * Util method for retrieving the latest result with feedbacks of participation. Generates the appropriate response type (ok, forbidden, notFound).
      *
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @param participation
+     * @return the appropriate ResponseEntity for the result request.
      */
-    @GetMapping(value = "/programming-exercises-template-participation/{participationId}/latest-result-with-feedbacks")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacksForTemplateParticipation(@PathVariable Long participationId) {
-        Optional<TemplateProgrammingExerciseParticipation> participation = templateParticipationRepository.findById(participationId);
-        if (!participation.isPresent()) {
-            return notFound();
-        }
-        return getLatestResultWithFeedbacks(participation.get());
-    }
-
     private ResponseEntity<Result> getLatestResultWithFeedbacks(ProgrammingExerciseParticipation participation) {
         if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
             return forbidden();
         }
-        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
-        if (!result.isPresent()) {
+        Result result;
+        try {
+            result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId());
+        }
+        catch (EntityNotFoundException ex) {
             return notFound();
         }
-        // avoid circular serialization issue.
-        result.get().setParticipation(null);
-        return ResponseEntity.ok(result.get());
+        return ResponseEntity.ok(result);
     }
-
 }

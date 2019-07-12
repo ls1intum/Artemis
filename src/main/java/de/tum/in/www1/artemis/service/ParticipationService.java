@@ -49,6 +49,8 @@ public class ParticipationService {
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
+    private final ParticipationRepository participationRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     // TODO: move some logic into a ProgrammingExerciseParticipationService
@@ -91,13 +93,14 @@ public class ParticipationService {
 
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, StudentParticipationRepository studentParticipationRepository,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository, QuizSubmissionService quizSubmissionService,
-            ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
+            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService) {
+        this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -392,9 +395,25 @@ public class ParticipationService {
      *
      * @param participationId the id of the entity
      * @return the entity
+     **/
+    @Transactional(readOnly = true)
+    public Participation findOne(Long participationId) throws EntityNotFoundException {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findById(participationId);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one student participation by id.
+     *
+     * @param participationId the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
-    public StudentParticipation findOne(Long participationId) {
+    public StudentParticipation findOneStudentParticipation(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
         Optional<StudentParticipation> participation = studentParticipationRepository.findById(participationId);
         if (!participation.isPresent()) {

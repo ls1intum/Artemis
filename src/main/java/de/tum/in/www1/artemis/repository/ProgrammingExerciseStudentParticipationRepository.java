@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
     @EntityGraph(attributePaths = "results.feedbacks")
-    @Query("select p from ProgrammingExerciseStudentParticipation p where p.id = :participationId")
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join p.results pr where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
 
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);

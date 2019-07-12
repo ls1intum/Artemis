@@ -45,6 +45,10 @@ public class ProgrammingExerciseParticipationService {
         return solutionParticipationRepository.findById(participationId);
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {
+        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+    }
+
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation);
