@@ -404,11 +404,6 @@ public class ProgrammingExerciseResource {
                 return forbidden();
             }
         }
-        // Avoid circular serialization issues with jackson.
-        if (programmingExercise.get().getTemplateParticipation() != null) {
-            programmingExercise.get().getTemplateParticipation().setExercise(null);
-            programmingExercise.get().getSolutionParticipation().setExercise(null);
-        }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
     }
 
@@ -437,12 +432,6 @@ public class ProgrammingExerciseResource {
 
             if (!authCheckService.isAtLeastInstructorForCourse(course, user)) {
                 return forbidden();
-            }
-
-            // Avoid circular serialization issues with jackson.
-            if (programmingExercise.getTemplateParticipation() != null) {
-                programmingExercise.getTemplateParticipation().setExercise(null);
-                programmingExercise.getSolutionParticipation().setExercise(null);
             }
 
             return ResponseEntity.ok(programmingExercise);
