@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,8 +25,13 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
+    // TODO: documentation
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
+
+    // TODO: documentation
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
     List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
