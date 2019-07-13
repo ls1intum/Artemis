@@ -1,6 +1,6 @@
 {
     "name": "Artemis",
-    "version": "3.3.2",
+    "version": "3.4.0",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -44,6 +44,7 @@
         "jest-preset-angular": "7.1.1",
         "jquery": "3.4.1",
         "lodash": "4.17.14",
+        "lodash.template": "4.5.0",
         "mobile-drag-drop": "2.3.0-rc.1",
         "moment": "2.24.0",
         "ng-jhipster": "0.10.1",
