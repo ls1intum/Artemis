@@ -68,6 +68,17 @@ public class ModelFactory {
         return generateCourse(id, startDate, endDate, exercises, UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
 
+    public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(submitted);
+        if (submitted) {
+            textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return textSubmission;
+    }
+
     public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
         ModelingSubmission submission = new ModelingSubmission();
         submission.setModel(model);
