@@ -377,7 +377,7 @@ public class ParticipationService {
     private Participation configureRepositoryWebHook(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "ArTEMiS WebHook");
+                    "Artemis WebHook");
             return save(participation);
         }
         else {

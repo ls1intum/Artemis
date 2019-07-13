@@ -20,21 +20,32 @@ import com.thoughtworks.qdox.model.JavaSource;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
- * @author Kristian Dimo (kristian.dimo@tum.de) This generator is used to parse the structure of a programming exercise to be then assessed from ArTEMiS. It is used to
- *         automatically generate the structure oracle with the solution of the exercise as the system model and the template as the test model. The oracle is saved in the form of
- *         a JSON file in test.json. The structure oracle is used in the structural tests and contains information on the expected structural elements that the student has to
- *         implement. The generator uses the Spoon framework (http://spoon.gforge.inria.fr/) from the INRIA institute. It extracts first the needed elemnents by doing a so-called
- *         diff of each element e.g. the difference between the solution of an exercise and its template. The generator uses separate data structures that contain the elements of
- *         these diffs and then creates JSON representations of them. The generator currently deals with the following structural elements: - Class hierarchy: abstract modifier,
- *         stereotype, declared super- classes and implemented interfaces. - Attributes: name, type and visibility modifier. - Constructor: parameter types and visibility modifier.
- *         - Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated into types and their children classes. - Types: class
- *         hierarchy and methods. - Interfaces: the elements in the types. - Classes: the elements in the types as well as attributes and constructors. - Enums: the elements in the
- *         classes as well as enum values. The steps the oracle generator takes are the following: 1. Feed the Spoon Framework the path to the projects of the solution and template
- *         projects and also the path where the oracle file needs to be saved. 2. Extract all the types (and classes, enums, interfaces) from the metamodels of the projects using
- *         the Spoon Framework. 3. Create pairs of homonymous types from the types in the solution and their corresponding counterparts in the template. 4. Compute the diff for
- *         each pair of types and for each structural element contained in the types, e.g. for each of the structural elements described above check here which ones are present in
- *         the solution code and not in the template code. 6. Generate the JSON representation for each diff. 7. Assemble the JSON objects into a JSON array of all the types of the
- *         structure diff.
+ * This generator is used to parse the structure of a programming exercise to be then assessed from Artemis.
+ * It is used to automatically generate the structure oracle with the solution of the exercise as the system model and the template as the test model.
+ * The oracle is saved in the form of a JSON file in test.json.
+ * The structure oracle is used in the structural tests and contains information on the expected structural elements that the student has to implement.
+ * The generator uses the qdox framework (https://github.com/paul-hammant/qdox).
+ * It extracts first the needed elements by doing a so-called diff of each element e.g. the difference between the solution of an exercise and its template.
+ * The generator uses separate data structures that contain the elements of these diffs and then creates JSON representations of them.
+ *
+ * The generator currently deals with the following structural elements:
+ * - Class hierarchy: abstract modifier, stereotype, declared super classes and implemented interfaces.
+ * - Attributes: name, type and visibility modifier.
+ * - Constructor: parameter types and visibility modifier.
+ * - Methods: name, parameter types, return type and also visibility modifier. These basic elements get aggregated into types and their children classes.
+ * - Types: class hierarchy and methods.
+ * - Interfaces: the elements in the types.
+ * - Classes: the elements in the types as well as attributes and constructors.
+ * - Enums: the elements in the classes as well as enum values.
+ *
+ * The steps the oracle generator takes are the following:
+ * 1. Feed the Spoon Framework the path to the projects of the solution and template projects and also the path where the oracle file needs to be saved.
+ * 2. Extract all the types (and classes, enums, interfaces) from the meta models of the projects using the Spoon Framework.
+ * 3. Create pairs of homologous types from the types in the solution and their corresponding counterparts in the template.
+ * 4. Compute the diff for each pair of types and for each structural element contained in the types, e.g. for each of the structural elements described above check here
+ *    which ones are present in the solution code and not in the template code.
+ * 5. Generate the JSON representation for each diff.
+ * 6. Assemble the JSON objects into a JSON array of all the types of the structure diff.
  */
 public class OracleGeneratorClient {
 
