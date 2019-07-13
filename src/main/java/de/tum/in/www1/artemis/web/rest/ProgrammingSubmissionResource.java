@@ -59,7 +59,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs ArTEMiS about changed test cases for the "id" programmingExercise. e
+     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "id" programmingExercise. e
      * 
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)

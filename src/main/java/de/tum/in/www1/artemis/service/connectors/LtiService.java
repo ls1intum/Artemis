@@ -400,6 +400,9 @@ public class LtiService {
     public void onNewBuildResult(Participation participation) {
 
         // Get the LTI outcome URL
+
+        // TODO investigate this call for manual results. Could it be the case that the exercise is not initialized (Hibernate) here?
+
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
             String score = "0.00";
