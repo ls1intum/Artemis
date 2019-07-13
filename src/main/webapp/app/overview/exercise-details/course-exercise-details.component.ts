@@ -103,7 +103,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: Participation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: Participation) => {
+            const hasStudent = participation.student;
+            const isCurrentUser = hasStudent && participation.student.id === this.currentUser.id;
+            const isCustomStudent =
+                hasStudent && this.localStorageService.retrieve(CUSTOM_USER_KEY) && this.localStorageService.retrieve(CUSTOM_USER_KEY) === participation.student.login;
+            return isCurrentUser || isCustomStudent;
+        });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);
