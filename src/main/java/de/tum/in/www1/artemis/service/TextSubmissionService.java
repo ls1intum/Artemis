@@ -71,22 +71,20 @@ public class TextSubmissionService extends SubmissionService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
             }
 
-            textSubmission = save(textSubmission, textExercise, participation);
+            textSubmission = save(textSubmission, participation);
         }
         return textSubmission;
     }
 
     /**
-     * Saves the given submission. Furthermore, the submission is added to the AutomaticSubmissionService, if not submitted yet. Is used for creating and updating text submissions.
-     * If it is used for a submit action, Compass is notified about the new model. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
+     * Saves the given submission. Is used for creating and updating text submissions. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
      *
-     * @param textSubmission the submission to notifyCompass
-     * @param textExercise   the exercise to notifyCompass in
-     * @param participation  the participation
-     * @return the textSubmission entity
+     * @param textSubmission the submission that should be saved
+     * @param participation  the participation the participation the submission belongs to
+     * @return the textSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission, TextExercise textExercise, Participation participation) {
+    public TextSubmission save(TextSubmission textSubmission, Participation participation) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
@@ -103,7 +101,9 @@ public class TextSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
+
         Participation savedParticipation = participationRepository.save(participation);
+
         if (textSubmission.getId() == null) {
             Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
             if (optionalTextSubmission.isPresent()) {
