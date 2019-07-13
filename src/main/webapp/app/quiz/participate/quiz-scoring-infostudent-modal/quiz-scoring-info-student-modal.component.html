@@ -10,7 +10,7 @@
     </div>
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
-        <span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
         <br />
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
@@ -90,7 +90,7 @@
     </div>
 
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
-        <span style="font-weight:bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span>
         <br />
         <div *ngIf="this.question.type === MULTIPLE_CHOICE">
