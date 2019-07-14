@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.WeightUpdate;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
@@ -85,7 +86,7 @@ public class ProgrammingExerciseTestCaseResource {
         catch (IllegalAccessException ex) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        catch (NoSuchElementException ex) {
+        catch (EntityNotFoundException ex) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }

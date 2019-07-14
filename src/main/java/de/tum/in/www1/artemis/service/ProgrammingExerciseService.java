@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
@@ -542,10 +543,10 @@ public class ProgrammingExerciseService {
      *
      * @param id of the programming exercise.
      * @return
-     * @throws NoSuchElementException the programming exercise could not be found.
-     * @throws IllegalAccessException the retriever does not have the permissions to fetch information related to the programming exercise.
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    public ProgrammingExercise findByIdWithTestCases(Long id) throws NoSuchElementException, IllegalAccessException {
+    public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
@@ -556,7 +557,7 @@ public class ProgrammingExerciseService {
             return programmingExercise.get();
         }
         else {
-            throw new NoSuchElementException("programming exercise not found");
+            throw new EntityNotFoundException("programming exercise not found");
         }
     }
 

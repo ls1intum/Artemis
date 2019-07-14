@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingExerciseTestCaseService {
@@ -51,13 +52,13 @@ public class ProgrammingExerciseTestCaseService {
      * @return the test case with the updated weight.
      */
     @Transactional
-    public ProgrammingExerciseTestCase updateWeight(Long testCaseId, Integer weight) {
+    public ProgrammingExerciseTestCase updateWeight(Long testCaseId, Integer weight) throws EntityNotFoundException {
         Optional<ProgrammingExerciseTestCase> testCaseOpt = this.testCaseRepository.findById(testCaseId);
         if (testCaseOpt.isPresent()) {
             return testCaseOpt.get().weight(weight);
         }
         else {
-            throw new NoSuchElementException();
+            throw new EntityNotFoundException("test case with id " + testCaseId + " could not be found");
         }
     }
 
