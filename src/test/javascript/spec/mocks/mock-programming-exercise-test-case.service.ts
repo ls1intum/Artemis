@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { IProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
+import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/entities/programming-exercise';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 
 export class MockProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService {
@@ -28,7 +28,7 @@ export class MockProgrammingExerciseTestCaseService implements IProgrammingExerc
         return of();
     }
 
-    updateWeight(exerciseId: number, testCaseId: number, weight: number): Observable<ProgrammingExerciseTestCase> {
+    updateWeights(exerciseId: number, updates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]> {
         return of();
     }
 }
