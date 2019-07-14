@@ -3,7 +3,7 @@ version: '3'
 services:
   artemis-server:
     command: sh -c "./gradlew build -xwebpackBuildDev -xwebpack -xtest
-                    && java -jar build/libs/ArTEMiS-3.2.0.jar"
+                    && java -jar build/libs/ArTEMiS-*.jar"
     depends_on:
       - artemis-mysql
     image: openjdk:8-jdk-alpine
