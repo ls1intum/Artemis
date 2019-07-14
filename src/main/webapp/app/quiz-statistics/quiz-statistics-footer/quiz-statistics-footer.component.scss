@@ -1,6 +1,3 @@
-@import '~bootstrap/scss/mixins/_breakpoints';
-@import '~bootstrap/scss/bootstrap-grid.scss';
-
 .quiz-statistic-footer {
     position: fixed;
     height: 60px;
@@ -24,7 +21,7 @@
                     width: 100%;
                 }
 
-                @include media-breakpoint-down(xs) {
+                @media (max-width: 991.98px) {
                     padding-top: 10px;
                 }
             }
