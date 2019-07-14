@@ -1,4 +1,4 @@
-<div id="programming-exercise-instructions-content" class="card" *ngIf="!isLoading; else loadingInstructions">
+<div class="instructions__content border-0" *ngIf="!isLoading; else loadingInstructions">
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">
@@ -9,13 +9,20 @@
                         data-placement="bottom"
                         title="{{ step.title }}"
                         class="btn btn-light btn-circle stepwizard-circle"
-                        [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
                         [class.stepwizard-step--success]="step.done === TestCaseState.SUCCESS"
-                        [class.stepwizard-step--no-result]="step.done === TestCaseState.UNDEFINED"
+                        [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
+                        [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
+                        [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
                         (click)="triggerTestStatusClick(i)"
                     >
                         <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
-                        <fa-icon icon="times" size="lg" class="text-danger" *ngIf="step.done !== TestCaseState.SUCCESS"></fa-icon>
+                        <fa-icon icon="times" size="lg" class="text-danger" *ngIf="step.done === TestCaseState.FAIL"></fa-icon>
+                        <fa-icon
+                            icon="question"
+                            size="lg"
+                            class="text-secondary"
+                            *ngIf="step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT"
+                        ></fa-icon>
                     </div>
                 </div>
             </div>
@@ -23,7 +30,12 @@
     </div>
 
     <!-- Rendered markdown will be inserted in this div -->
-    <div class="card-body instructions markdown-preview" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown | safeHtml"></div>
+    <div
+        id="programming-exercise-instructions-content"
+        class="instructions__content__markdown markdown-preview"
+        [hidden]="!renderedMarkdown"
+        [innerHtml]="renderedMarkdown | safeHtml"
+    ></div>
 </div>
 <ng-template #loadingInstructions>
     <span id="programming-exercise-instructions-loading" class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>

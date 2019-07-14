@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -22,10 +22,10 @@ public class ClassContext {
     public static Context getStrictContext(UMLClass umlClass, UMLClassDiagram model) {
         Set<Integer> associations = findAssociationsForClassInModel(umlClass, model);
         for (UMLElement element : umlClass.getAttributes()) {
-            associations.add(element.getElementID());
+            associations.add(element.getSimilarityID());
         }
         for (UMLElement element : umlClass.getMethods()) {
-            associations.add(element.getElementID());
+            associations.add(element.getSimilarityID());
         }
         if (associations.isEmpty()) {
             return Context.NO_CONTEXT;
@@ -34,10 +34,10 @@ public class ClassContext {
     }
 
     private static Set<Integer> findAssociationsForClassInModel(UMLClass umlClass, UMLClassDiagram model) {
-        Set<Integer> relations = new HashSet<>();
+        Set<Integer> relations = ConcurrentHashMap.newKeySet();
         for (UMLClassRelationship relationship : model.getAssociationList()) {
             if (relationship.getSource().equals(umlClass) || relationship.getTarget().equals(umlClass)) {
-                relations.add(relationship.getElementID());
+                relations.add(relationship.getSimilarityID());
             }
         }
         return relations;

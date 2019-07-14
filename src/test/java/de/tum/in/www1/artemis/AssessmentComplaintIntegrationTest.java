@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
+@ActiveProfiles("artemis")
 public class AssessmentComplaintIntegrationTest {
 
     @Autowired
@@ -72,7 +72,7 @@ public class AssessmentComplaintIntegrationTest {
     @Before
     public void initTestCase() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 2);
+        database.addUsers(1, 2, 0);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();

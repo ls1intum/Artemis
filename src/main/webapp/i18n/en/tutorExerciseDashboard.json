@@ -46,7 +46,14 @@
             "exerciseInformation": "Exercise information",
             "numberOfTotalSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
-            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you"
+            "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
+            "nextAssessment": "Assess next submission",
+            "language": "Language",
+            "languages": {
+                "ENGLISH": "English",
+                "GERMAN": "German",
+                "UNKNOWN": "Unknown"
+            }
         }
     }
 }

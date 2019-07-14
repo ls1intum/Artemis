@@ -16,6 +16,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
+    styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal, WindowRef],
 })
 export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {

@@ -300,7 +300,7 @@ public class ParticipationResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutResult((TextExercise) exercise);
+        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
         if (!textSubmissionWithoutAssessment.isPresent()) {
             // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
@@ -311,7 +311,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmissionWithoutAssessment.get());
-        resultService.createNewResult(result, false);
+        resultService.createNewManualResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
@@ -392,7 +392,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
-        checkAccessPermissionOwner(participation);
+        participationService.canAccessParticipation(participation);
         Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
