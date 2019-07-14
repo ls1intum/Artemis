@@ -16,6 +16,10 @@ export enum DomainType {
     TEST_REPOSITORY = 'TEST_REPOSITORY',
 }
 
+export enum RepositoryError {
+    CHECKOUT_CONFLICT = 'checkoutConflict',
+}
+
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
@@ -181,7 +185,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     private handleWebsocketErrorResponse = <T>(): UnaryFunction<Observable<T>, Observable<T>> =>
         pipe(
             catchError((err: { error: string }) => {
-                if (err.error === 'checkoutConflict') {
+                if (err.error === RepositoryError.CHECKOUT_CONFLICT) {
                     this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
                 }
                 return throwError(err);
